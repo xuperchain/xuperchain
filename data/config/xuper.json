@@ -1,0 +1,30 @@
+{
+    "version" : "1"
+    , "predistribution":[
+        {
+            "address" : "dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN"
+            , "quota" : "100000000000000000000"
+        }
+    ]
+    , "maxblocksize" : "128"
+    , "award" : "1000000"
+    , "decimals" : "8"
+    , "award_decay": {
+        "height_gap": 31536000,
+        "ratio": 1
+    }, "genesis_consensus":{
+	"name": "tdpos",
+	"config": {
+		"timestamp": "1556444792000000000",
+		"proposer_num":"1",
+      		"period":"3000",
+                "alternate_interval":"3000",
+                "term_interval":"6000",
+      		"block_num":"20",
+      		"vote_unit_price":"1",
+      		"init_proposer": {
+			"1":["dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN"]
+			}
+		}
+	}
+}

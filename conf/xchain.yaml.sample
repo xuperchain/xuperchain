@@ -1,0 +1,29 @@
+# node config
+
+log:
+  module: xchain
+  filepath: logs
+  filename: xchain
+  fmt: logfmt
+  console: true
+  level : debug
+
+tcpServer:
+  port: :37101
+
+p2p:
+  p2p_list:
+    - 127.0.0.1:37101
+  timeout: 1
+
+miner:
+  master: true
+  keypath: ./data/keys
+
+datapath: ./data/blockchain
+
+utxo:
+  cachesize: 5000
+  tmplock_seconds: 60
+  contractExecutionTime: 500
+

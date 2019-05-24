@@ -1,0 +1,89 @@
+{
+  "author": "vyzo",
+  "bugs": {
+    "url": "github.com/libp2p/go-libp2p-circuit"
+  },
+  "gx": {
+    "dvcsimport": "github.com/libp2p/go-libp2p-circuit"
+  },
+  "gxDependencies": [
+    {
+      "hash": "QmZChCsSt8DctjceaL56Eibc29CVQq4dGKRXC5JRZ6Ppae",
+      "name": "go-log",
+      "version": "1.5.7"
+    },
+    {
+      "author": "whyrusleeping",
+      "hash": "QmdJfsSbKSZnMkfZ1kpopiyB9i3Hd6cp8VKWZmtWPa7Moc",
+      "name": "go-libp2p-host",
+      "version": "3.0.15"
+    },
+    {
+      "author": "whyrusleeping",
+      "hash": "QmXuRkCR7BNQa9uqfpTiFWsTQLzmTWYg91Ja1w95gnqb6u",
+      "name": "go-libp2p-net",
+      "version": "3.0.15"
+    },
+    {
+      "author": "whyrusleeping",
+      "hash": "QmTRhk7cgjUf2gfQ3p2M9KPECNZEW9XUrmHcFCgog4cPgB",
+      "name": "go-libp2p-peer",
+      "version": "2.4.0"
+    },
+    {
+      "author": "whyrusleeping",
+      "hash": "QmTTJcDL3gsnGDALjh2fDGg1onGRUdVgNL2hU2WEZcVrMX",
+      "name": "go-libp2p-peerstore",
+      "version": "2.0.6"
+    },
+    {
+      "author": "whyrusleeping",
+      "hash": "QmbCkisBsdejwSzusQcdbYjpSX3yvUw1ek2YSsJ89QbZYX",
+      "name": "go-libp2p-transport",
+      "version": "3.0.15"
+    },
+    {
+      "author": "multiformats",
+      "hash": "QmT4U94DnD8FRfqr21obWY32HLM5VExccPKMjQHofeYqr9",
+      "name": "go-multiaddr",
+      "version": "1.3.5"
+    },
+    {
+      "author": "multiformats",
+      "hash": "Qmaabb1tJZ2CX5cp6MuuiGgns71NYoxdgQP6Xdid1dVceC",
+      "name": "go-multiaddr-net",
+      "version": "1.6.5"
+    },
+    {
+      "author": "whyrusleeping",
+      "hash": "QmdxUuburamoF6zF9qjeQC4WYcWGbWuRmdLacMEsW8ioD8",
+      "name": "gogo-protobuf",
+      "version": "0.0.0"
+    },
+    {
+      "author": "whyrusleeping",
+      "hash": "Qmcwep23T9AwwbuQRRhVyjk9PBRbMFCyGKCKGZfTPteiFU",
+      "name": "go-libp2p-blankhost",
+      "version": "0.3.15"
+    },
+    {
+      "author": "whyrusleeping",
+      "hash": "QmVHhT8NxtApPTndiZPe4JNGNUxGWtJe3ebyxtRz4HnbEp",
+      "name": "go-libp2p-swarm",
+      "version": "3.0.22"
+    },
+    {
+      "author": "steb",
+      "hash": "QmeUjhpfGkrMtE6s7JjU2xLhfzprSDh16QUxGVr3wTrKSx",
+      "name": "go-libp2p-transport-upgrader",
+      "version": "0.1.16"
+    }
+  ],
+  "gxVersion": "0.11.0",
+  "language": "go",
+  "license": "MIT",
+  "name": "go-libp2p-circuit",
+  "releaseCmd": "git commit -a -m \"gx publish $VERSION\"",
+  "version": "2.3.2"
+}
+

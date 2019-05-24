@@ -1,0 +1,21 @@
+{
+    "version" : "1"
+    , "predistribution":[
+        {
+            "address" : "Y4TmpfV4pvhYT5W17J7TqHSLo6cqq23x3"
+            , "quota" : "1000000000000000"
+        }
+    ]
+    , "maxblocksize" : "128"
+    , "period" : "3000"
+    , "award" : "1000000"
+    , "decimals" : "8"
+    , "award_decay": {
+        "height_gap": 31536000,
+        "ratio": 1
+    }, "genesis_consensus":{
+       "name": "pow",
+       "config": {
+       }
+    }
+}

@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package xuperp2p;
+
+// XuperMessage is the message of Xuper p2p server
+message XuperMessage {
+    enum MessageType {
+        SENDBLOCK= 0;
+        POSTTX = 1;
+        BATCHPOSTTX = 2;
+        GET_BLOCK = 3;
+        PING = 4;
+        GET_BLOCKCHAINSTATUS = 5;
+        GET_BLOCK_RES = 6;
+        GET_BLOCKCHAINSTATUS_RES = 7;
+        // 向邻近确认区块是否为最新状态区块
+        CONFIRM_BLOCKCHAINSTATUS = 8;
+        CONFIRM_BLOCKCHAINSTATUS_RES = 9;
+
+        MSG_TYPE_NONE = 10;
+      
+        // 询问RPC端口信息 
+        GET_RPC_PORT = 11;
+        GET_RPC_PORT_RES = 12;
+    }
+    enum ErrorType {
+        // success 
+        SUCCESS = 0;
+        NONE = 1;
+        // common error
+        UNKNOW_ERROR = 2;
+        CHECK_SUM_ERROR = 3;
+        UNMARSHAL_MSG_BODY_ERROR = 4;
+        CONNECT_REFUSE = 5;
+        // block error
+        GET_BLOCKCHAIN_ERROR = 6;
+        BLOCKCHAIN_NOTEXIST = 7;
+        GET_BLOCK_ERROR = 8;
+        CONFIRM_BLOCKCHAINSTATUS_ERROR = 9;
+   }
+
+    // MessageHeader is the message header of Xuper p2p server
+    message MessageHeader {
+        string version = 1;
+        // dataCheckSum is the message data checksum, it can be used check where the message have been received
+        string logid = 2;
+        string from = 3;
+        string bcname = 4;
+        MessageType type = 5;
+        uint32 dataCheckSum = 6;
+        ErrorType errorType = 7;
+    }
+
+    // MessageData is the message data of Xuper p2p server
+    message MessageData {
+        // msgInfo is the message infomation, use protobuf coding style
+        bytes msgInfo = 3;
+    }
+    MessageHeader Header = 1;
+    MessageData Data = 2;
+}
+

@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package xmodel.pb;
+
+message VersionedData {
+  PureData pureData = 1;
+  bytes refTxid = 2;
+  int32 refOffset = 3;
+  bool confirmed = 4;
+}
+
+message PureData {
+  string bucket = 1;
+  bytes key = 2;
+  bytes value = 3;
+}
