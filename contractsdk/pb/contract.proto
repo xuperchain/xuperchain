@@ -1,0 +1,160 @@
+syntax = "proto3";
+option optimize_for = LITE_RUNTIME;
+
+package pb;
+
+// service provided by chain code, called by xchain
+service NativeCode {
+  rpc Call(CallRequest) returns (Response);
+  rpc Ping(PingRequest) returns (PingResponse);
+}
+
+message PingRequest {
+}
+
+message PingResponse {
+}
+
+message CallRequest {
+  // The context id of this request
+  int64  ctxid = 1;
+  // Method of request
+  string method = 2;
+  // Txid of calling tx, nil if method is query
+  bytes txid = 3;
+  // JSON format args
+  bytes args = 4;
+  // Empty if method is query
+  string caller = 5;
+}
+
+message CallArgs {
+  string method = 1;
+  map<string, bytes> args = 2;
+}
+
+// xchain syscall service
+service Syscall {
+  // KV service
+  rpc PutObject(PutRequest) returns (PutResponse);
+  rpc GetObject(GetRequest) returns (GetResponse);
+  rpc DeleteObject(DeleteRequest) returns (DeleteResponse);
+  rpc NewIterator(IteratorRequest) returns (IteratorResponse);
+
+  // Chain service
+  rpc QueryTx(QueryTxRequest) returns (QueryTxResponse);
+  rpc QueryBlock(QueryBlockRequest) returns (QueryBlockResponse);
+  rpc Transfer(TransferRequest) returns (TransferResponse);
+  rpc ContractCall(ContractCallRequest) returns (ContractCallResponse);
+
+  // Heartbeat
+  rpc Ping(PingRequest) returns (PingResponse);
+
+  rpc GetCallArgs(GetCallArgsRequest) returns (CallArgs);
+  rpc SetOutput(SetOutputRequest) returns (SetOutputResponse);
+} 
+
+message SyscallHeader {
+  int64 ctxid = 1;
+}
+
+message PutRequest {
+  SyscallHeader header = 1;
+  bytes key = 2;
+  bytes value = 3;
+}
+
+message PutResponse {
+}
+
+message GetRequest {
+  SyscallHeader header = 1;
+  bytes key = 2;
+}
+
+message GetResponse {
+  bytes value = 1;
+}
+
+message DeleteRequest {
+  SyscallHeader header = 1;
+  bytes key = 2;
+}
+
+message DeleteResponse {
+}
+
+message IteratorRequest {
+  SyscallHeader header = 1;
+  // start和limit为[start, limit)
+  bytes start = 2;
+  bytes limit = 3;
+  // cap代表一次请求的最大IteratorItem个数，如果为0则采用xchain的默认配置
+  int32 cap = 4;
+}
+
+message IteratorItem {
+  bytes key = 1;
+  bytes value = 2;
+}
+
+message IteratorResponse {
+  repeated IteratorItem items = 1;
+}
+
+message QueryTxRequest {
+  SyscallHeader header = 1;
+  bytes txid = 2;
+}
+
+message QueryTxResponse {
+  // defined in user code
+  bytes tx = 1;
+}
+
+message QueryBlockRequest {
+  SyscallHeader header = 1;
+  bytes blockid = 2;
+}
+
+message QueryBlockResponse {
+  // defined in user code
+  bytes block = 1;
+}
+
+message TransferRequest {
+  SyscallHeader header = 1;
+  string to = 2;
+  string amount = 3;
+}
+
+message TransferResponse {
+}
+
+message ContractCallRequest {
+  SyscallHeader header = 1;
+  string module = 2;
+  string method = 3;
+  string args = 4;
+}
+
+message ContractCallResponse {
+  bytes response = 1;
+}
+
+message Response {
+  int32  status = 1;
+  string message = 2;
+  bytes  body = 3;
+}
+
+message SetOutputRequest {
+	SyscallHeader header = 1;
+	Response response = 2;
+}
+message SetOutputResponse {
+}
+
+message GetCallArgsRequest {
+	SyscallHeader header = 1;
+}

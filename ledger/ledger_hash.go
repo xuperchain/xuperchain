@@ -1,0 +1,119 @@
+package ledger
+
+import (
+	"bytes"
+	"encoding/binary"
+	"math"
+	"sort"
+
+	"github.com/xuperchain/xuperunion/crypto/hash"
+	"github.com/xuperchain/xuperunion/pb"
+)
+
+func getLeafSize(txCount int) int {
+	if txCount&(txCount-1) == 0 { // 刚好是2的次幂
+		return txCount
+	}
+	exponent := uint(math.Log2(float64(txCount))) + 1
+	return 1 << exponent // 2^exponent
+}
+
+// MakeMerkleTree generate merkele-tree
+func MakeMerkleTree(txList []*pb.Transaction) [][]byte {
+	txCount := len(txList)
+	if txCount == 0 {
+		return nil
+	}
+	leafSize := getLeafSize(txCount) //需要补充为完全树
+	treeSize := leafSize*2 - 1       //整个树的节点个数
+	tree := make([][]byte, treeSize)
+	for i, tx := range txList {
+		tree[i] = tx.Txid //用现有的txid填充部分叶子节点
+	}
+	noneLeafOffset := leafSize //非叶子节点的插入点
+	for i := 0; i < treeSize-1; i += 2 {
+		switch {
+		case tree[i] == nil: //没有左孩子
+			tree[noneLeafOffset] = nil
+		case tree[i+1] == nil: //没有右孩子
+			concat := bytes.Join([][]byte{tree[i], tree[i]}, []byte{})
+			tree[noneLeafOffset] = hash.DoubleSha256(concat)
+		default: //左右都有
+			concat := bytes.Join([][]byte{tree[i], tree[i+1]}, []byte{})
+			tree[noneLeafOffset] = hash.DoubleSha256(concat)
+		}
+		noneLeafOffset++
+	}
+	return tree
+}
+
+//序列化系统合约失败的Txs
+func encodeFailedTxs(buf *bytes.Buffer, block *pb.InternalBlock) error {
+	txids := []string{}
+	for txid := range block.FailedTxs {
+		txids = append(txids, txid)
+	}
+	sort.Strings(txids) //ascii increasing order
+	for _, txid := range txids {
+		txErr := block.FailedTxs[txid]
+		err := binary.Write(buf, binary.LittleEndian, []byte(txErr))
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// MakeBlockID generate BlockID
+func MakeBlockID(block *pb.InternalBlock) ([]byte, error) {
+	buf := new(bytes.Buffer)
+	err := binary.Write(buf, binary.LittleEndian, block.Version)
+	if err != nil {
+		return nil, err
+	}
+	err = binary.Write(buf, binary.LittleEndian, block.Nonce)
+	if err != nil {
+		return nil, err
+	}
+	err = binary.Write(buf, binary.LittleEndian, block.TxCount)
+	if err != nil {
+		return nil, err
+	}
+	if block.Proposer != nil {
+		err = binary.Write(buf, binary.LittleEndian, block.Proposer)
+		if err != nil {
+			return nil, err
+		}
+	}
+	err = binary.Write(buf, binary.LittleEndian, block.Timestamp)
+	if err != nil {
+		return nil, err
+	}
+	if block.Pubkey != nil {
+		err = binary.Write(buf, binary.LittleEndian, block.Pubkey)
+		if err != nil {
+			return nil, err
+		}
+	}
+	err = binary.Write(buf, binary.LittleEndian, block.PreHash)
+	if err != nil {
+		return nil, err
+	}
+	err = binary.Write(buf, binary.LittleEndian, block.MerkleRoot)
+	if err != nil {
+		return nil, err
+	}
+	err = encodeFailedTxs(buf, block)
+	if err != nil {
+		return nil, err
+	}
+	err = binary.Write(buf, binary.LittleEndian, block.CurTerm)
+	if err != nil {
+		return nil, err
+	}
+	err = binary.Write(buf, binary.LittleEndian, block.CurBlockNum)
+	if err != nil {
+		return nil, err
+	}
+	return hash.DoubleSha256(buf.Bytes()), nil
+}

@@ -1,0 +1,106 @@
+syntax = "proto3";
+
+package pb;
+
+import "google/api/annotations.proto";
+import "xchain.proto";
+
+// 助记词、私钥的json、公钥的json、钱包地址
+message ECDSAAccount
+{
+    bytes entropyByte = 1;
+    string mnemonic = 2;
+    string jsonPrivateKey = 3;
+    string jsonPublicKey = 4;
+    string address = 5;
+}
+
+// 助记词、随机字节数组、钱包地址
+message ECDSAInfo
+{
+    bytes entropyByte = 1;
+    string mnemonic = 2;
+    string address = 3;
+}
+
+// 钱包地址、被加密后的私钥、被加密后的助记词
+message ECDSAAccountFromCloud
+{
+    string address = 1;
+    string jsonEncryptedPrivateKey = 2;
+    string encryptedMnemonic = 3;
+}
+
+// 钱包地址、被加密后的私钥、被加密后的助记词、支付密码的明文
+message ECDSAAccountToCloud
+{
+    string address = 1;
+    string jsonEncryptedPrivateKey = 2;
+    string encryptedMnemonic = 3;
+    string password = 4;
+}
+
+// 全节点
+message Node
+{
+    bytes host = 1;
+    bytes utxoQueryUrl = 2;
+    bytes txPostUrl = 3;
+    bytes balanceQueryUrl = 4;
+}
+
+// 交易输入列表
+message TxInputs
+{
+    repeated TxInput txInputList = 1;
+}
+// 交易输出列表
+message TxOutputs
+{
+    repeated TxOutput txOutputList = 1;
+}
+
+
+// 未花费的交易输出列表
+message UTXOs
+{
+    repeated UTXO uTXOList = 1;
+}
+// 未花费的交易输出
+message UTXO
+{
+    bytes amount = 1;
+    bytes toAddr = 2;
+    bytes toPubkey = 3;
+    bytes refTxid = 4;
+    int32 refOffset = 5;
+}
+
+// ReturnCode is the code for client
+enum ReturnCode {
+    // Operation success
+       RETURNSUCCESS = 0;
+    // Err about Account
+       INTERNALERR = 101000;
+       FILENOTEXIST = 101002;
+       PARAMERR = 101003;
+       HTTPREQUERTFAIL = 101004;
+       HTTPRESPONSEFAIL = 101005;
+       ACCOUNTNOTEXIST = 101008;
+       PWNOTEXIST = 101009;
+       PWEXIST = 101010;
+       NOTLOGIN = 101012;
+    // Err about Transaction
+       CONNECTNODEFAIL = 102001;
+       UTXONOTENOUGH = 102002;
+       ADDRESSINVALID = 102003;
+       FEEINVALID = 102004;
+       CONNECTREFUSED = 102005;
+       UTXOENCRYPTERR = 102006;
+       FEENOTENOUGN = 102007;
+       PARAMSINVALID = 102008;
+       TXSIGNERR = 102009;
+       REPOSTTXERR = 102010;
+       BLOCKCHAINNOTEXIST = 102011;
+       SERVERERR = 102012;
+    }
