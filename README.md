@@ -1,5 +1,6 @@
 # XuperUnion
 
+[![Build Status](https://travis-ci.org/xuperchain/xuperunion.svg?branch=master)](https://travis-ci.org/xuperchain/xuperunion)
 
 ## What is XuperUnion
 
