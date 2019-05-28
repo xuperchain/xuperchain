@@ -1,6 +1,7 @@
 # XuperUnion
 
 [![Build Status](https://travis-ci.org/xuperchain/xuperunion.svg?branch=master)](https://travis-ci.org/xuperchain/xuperunion)
+[![Go Report Card](https://goreportcard.com/badge/github.com/xuperchain/xuperunion)](https://goreportcard.com/report/github.com/xuperchain/xuperunion)
 
 ## What is XuperUnion
 
