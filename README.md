@@ -72,7 +72,7 @@ By doing this, a blockchain named "xuper" is created, you can find the data of t
 Then start the node and run XuperUnion full node servers:
 
 ```
-./xchain
+nohup ./xchain &
 ```
 
 By default, the `xuper` chain will produce a block every 3 seconds, try the following command to see the `trunkHeight` of chain and make sure it's growing.
