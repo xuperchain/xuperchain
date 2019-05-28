@@ -35,7 +35,6 @@ func NewKernel(vmm *wasm.VMManager) (*XuperKernel, error) {
 	return &XuperKernel{
 		methods: map[string]Method{
 			"Get":           &GetMethod{},
-			"Set":           &SetMethod{},
 			"NewAccount":    &NewAccountMethod{},
 			"SetAccountAcl": &SetAccountACLMethod{},
 			"SetMethodAcl":  &SetMethodACLMethod{},
