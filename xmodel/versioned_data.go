@@ -17,6 +17,15 @@ func parseVersion(version string) ([]byte, int, error) {
 	return txid, offset, nil
 }
 
+//GetTxidFromVersion parse version and fetch txid from version string
+func GetTxidFromVersion(version string) []byte {
+	txid, _, err := parseVersion(version)
+	if err != nil {
+		return []byte("")
+	}
+	return txid
+}
+
 // MakeVersion generate a version by txid and offset, version = txid_offset
 func MakeVersion(txid []byte, offset int32) string {
 	return fmt.Sprintf("%x_%d", txid, offset)

@@ -1445,6 +1445,10 @@ func (uv *UtxoVM) processUnconfirmTxs(block *pb.InternalBlock, batch kvdb.Batch,
 			localVersion := xmodel.MakeVersion(txInputExt.RefTxid, txInputExt.RefOffset)
 			remoteVersion := keysVersioinInBlock[string(bucketAndKey)]
 			if localVersion != remoteVersion && remoteVersion != "" {
+				txidInVer := xmodel.GetTxidFromVersion(remoteVersion)
+				if _, known := unconfirmTxMap[string(txidInVer)]; kown {
+					continue
+				}
 				uv.xlog.Warn("inputs version conflict", "key", bucketAndKey, "localVersion", localVersion, "remoteVersion", remoteVersion)
 				hasConflict = true
 				break
@@ -1455,6 +1459,10 @@ func (uv *UtxoVM) processUnconfirmTxs(block *pb.InternalBlock, batch kvdb.Batch,
 			localVersion := xmodel.MakeVersion(unconfirmTx.Txid, int32(txOutOffset))
 			remoteVersion := keysVersioinInBlock[string(bucketAndKey)]
 			if localVersion != remoteVersion && remoteVersion != "" {
+				txidInVer := xmodel.GetTxidFromVersion(remoteVersion)
+				if _, kown := unconfirmTxMap[string(txidInVer)]; kown {
+					continue
+				}
 				uv.xlog.Warn("outputs version conflict", "key", bucketAndKey, "localVersion", localVersion, "remoteVersion", remoteVersion)
 				hasConflict = true
 				break
