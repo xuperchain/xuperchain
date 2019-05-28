@@ -2,6 +2,7 @@ package kernel
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/xuperchain/xuperunion/contract/wasm"
 	"github.com/xuperchain/xuperunion/permission/acl/utils"
@@ -22,7 +23,7 @@ func (dm *DeployMethod) Invoke(ctx *KContext, args map[string][]byte) ([]byte, e
 	}
 	_, err := ctx.ModelCache.Get(utils.GetAccountBucket(), accountName)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get account name: %s failed", accountName)
 	}
 
 	out, gasUsed, err := dm.vmm.DeployContract(ctx.ModelCache, args, ctx.GasLimit)
