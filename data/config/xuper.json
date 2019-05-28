@@ -15,7 +15,7 @@
     }, "genesis_consensus":{
 	"name": "tdpos",
 	"config": {
-		"timestamp": "1556444792000000000",
+		"timestamp": "1559021720000000000",
 		"proposer_num":"1",
       		"period":"3000",
                 "alternate_interval":"3000",
