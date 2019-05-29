@@ -1,7 +1,10 @@
 # XuperUnion
 
 [![Build Status](https://travis-ci.org/xuperchain/xuperunion.svg?branch=master)](https://travis-ci.org/xuperchain/xuperunion)
+[![Go Report Card](https://goreportcard.com/badge/github.com/xuperchain/xuperunion)](https://goreportcard.com/report/github.com/xuperchain/xuperunion)
 
+[中文说明](#中文说明-1)
+-----
 ## What is XuperUnion
 
 **XuperUnion**, the first open source project of **XuperChain**, introduces a highly flexible blockchain architecture with great transaction performance.
@@ -71,7 +74,7 @@ By doing this, a blockchain named "xuper" is created, you can find the data of t
 Then start the node and run XuperUnion full node servers:
 
 ```
-./xchain
+nohup ./xchain &
 ```
 
 By default, the `xuper` chain will produce a block every 3 seconds, try the following command to see the `trunkHeight` of chain and make sure it's growing.
@@ -95,3 +98,83 @@ Please review the [Contribution guidelines](https://github.com/xuperchain/xuperu
 
 XuperUnion is under the [Apache License, Version 2.0](https://github.com/xuperchain/xuperunion/blob/master/LICENSE).
 
+
+=====
+
+# 中文说明
+
+## XuperUnion是什么?
+
+**XuperUion**是超级链体系下的第一个开源项目，是构建超级联盟网络的底层方案。
+
+核心特点
+
+* **高性能**
+    * 原创的XuperModel模型，真正实现了智能合约的并发执行和验证。
+    * TDPOS算法确保大规模节点下的快速共识。
+    * 使用AOT加速的WASM虚拟机，合约运行速度接近native程序。
+
+* **更安全**
+    * 多私钥保护的账户体系。
+    * 鉴权支持权重累计、集合运算等灵活的策略。
+
+* **易扩展**
+    * 鲁棒的P2P网络，支持广域网超大规模节点。
+    * 底层账本支持分叉管理，自动收敛一致性，实现真正全球化部署。
+
+* **多语言开发智能合约**
+    * 通过原创的XuperBridge技术，可插拔多语言虚拟机。
+
+* **高灵活性**
+    * 可插拔、插件化的设计使得用户可以方便选择适合自己业务场景的解决方案。
+
+## 快速试用
+
+### 环境配置
+
+* 操作系统：支持Linux以及Mac OS
+* 开发语言：Go 1.12.x及以上
+* 编译器：G++ 4.8.x及以上
+* 版本控制工具：Git
+
+### 构建
+
+克隆XuperUnion仓库
+```
+git clone https://github.com/xuperchain/xuperunion
+```
+
+编译
+```
+cd xuperunion
+make
+```
+
+跑单测
+```
+make test
+```
+
+单机版xchain
+```
+./xchain-cli createChain
+nohup ./xchain &
+./xchain-cli status
+```
+
+### 文档
+
+关于XuperUnion更详细、更深入的使用方法链接：[wiki](https://github.com/xuperchain/xuperunion/wiki)
+
+## 如何参与开发
+1. 阅读源代码，了解我们当前的开发方向
+2. 找到自己感兴趣的功能或模块
+3. 进行开发，开发完成后自测功能是否正确，并运行make & make test
+4. 发起pull request
+5. 更多详情请参见[链接](https://github.com/xuperchain/xuperunion/blob/master/CONTRIBUTING.md)
+
+## 许可证
+XuperUnion使用的许可证是Apache 2.0
+
+## 联系我们
+如果你对XuperChain开源技术及应用感兴趣，欢迎添加“百度超级链·小助手“微信，回复“技术论坛进群”，加入“百度超级链开发者社区”，与百度资深工程师深度交流!

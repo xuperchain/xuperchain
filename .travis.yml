@@ -12,7 +12,9 @@ matrix:
     - os: osx
       osx_image: xcode10.1
 
-script: make && make test
+script:
+  - diff -u <(echo -n) <(gofmt -d $(find . -type f -name '*.go' -not -path "./vendor/*")) 
+  - make && make test
 
 cache:
   directories:
