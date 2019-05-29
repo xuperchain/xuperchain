@@ -51,7 +51,7 @@ func NewMultisigGenCommand(cli *Cli) *cobra.Command {
 
 func (c *MultisigGenCommand) addFlags() {
 	c.cmd.Flags().StringVar(&c.to, "to", "", "Target account/address of transfer.")
-	c.cmd.Flags().StringVar(&c.amount, "amount", "0", "Token amount to be transferd.")
+	c.cmd.Flags().StringVar(&c.amount, "amount", "0", "Token amount to be transferred.")
 	c.cmd.Flags().StringVar(&c.descfile, "desc", "", "Desc file with the format of json for contract.")
 	c.cmd.Flags().StringVar(&c.fee, "fee", "", "Fee to run a transaction.")
 	c.cmd.Flags().Int64Var(&c.frozenHeight, "frozen", 0, "Frozen height of a transaction.")
