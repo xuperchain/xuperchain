@@ -238,6 +238,10 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 
 	xbridge := bridge.New()
 	wasmvm, err := wasm.New(&cfg.Wasm, filepath.Join(datapath, "wasm"), xbridge, xc.Utxovm.GetXModel())
+	if err != nil {
+		xc.log.Error("initialize WASM error", "error", err)
+		return err
+	}
 
 	xbridge.RegisterExecutor("native", nc)
 	xbridge.RegisterExecutor("wasm", wasmvm)
