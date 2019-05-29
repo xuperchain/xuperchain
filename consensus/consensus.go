@@ -426,8 +426,8 @@ func (pc *PluggableConsensus) Run(desc *contract.TxDesc) error {
 		}
 		return pc.updateConsensus(name, consConf, desc.Tx.Txid, pc.context.Block)
 	default:
-		pc.xlog.Warn("method not definated", "module", desc.Method, "method", desc.Method)
-		return errors.New("PluggableConsensus not definate this method")
+		pc.xlog.Warn("method not defined", "module", desc.Method, "method", desc.Method)
+		return errors.New("PluggableConsensus not define this method")
 	}
 }
 
@@ -442,8 +442,8 @@ func (pc *PluggableConsensus) Rollback(desc *contract.TxDesc) error {
 		}
 		return pc.rollbackConsensus(name, consConf, desc.Tx.Txid, pc.context.Block)
 	default:
-		pc.xlog.Warn("method not definated", "module", desc.Method, "method", desc.Method)
-		return errors.New("PluggableConsensus not definate this method")
+		pc.xlog.Warn("method not defined", "module", desc.Method, "method", desc.Method)
+		return errors.New("PluggableConsensus not define this method")
 	}
 }
 

@@ -315,7 +315,7 @@ func TestPlugConsRun(t *testing.T) {
 					"name": "single",
 				},
 			},
-			expect: errors.New("PluggableConsensus not definate this method"),
+			expect: errors.New("PluggableConsensus not define this method"),
 		},
 		"test update_consensus": {
 			desc: &contract.TxDesc{
@@ -345,7 +345,7 @@ func TestPlugConsRollback(t *testing.T) {
 			desc: &contract.TxDesc{
 				Method: "default",
 			},
-			expect: errors.New("PluggableConsensus not definate this method"),
+			expect: errors.New("PluggableConsensus not define this method"),
 		},
 		"test update_consensus": {
 			desc: &contract.TxDesc{
