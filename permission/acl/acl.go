@@ -40,7 +40,7 @@ func ValidRawAccount(accountName string) error {
 		if accountName[i] >= '0' && accountName[i] <= '9' {
 			continue
 		} else {
-			return fmt.Errorf("invoke NewAccount failed, account name expect continous %d number", utils.GetAccountSize())
+			return fmt.Errorf("invoke NewAccount failed, account name expect continuous %d number", utils.GetAccountSize())
 		}
 	}
 	return nil

@@ -16,7 +16,7 @@ import (
 // KVEngineType KV storage type
 const KVEngineType = "leveldb"
 
-// BucketSeperator seperator between bucket and raw key
+// BucketSeperator separator between bucket and raw key
 const BucketSeperator = "/"
 
 // DelFlag delete flag

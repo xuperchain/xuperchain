@@ -582,7 +582,7 @@ func (l *Ledger) ConfirmBlock(block *pb.InternalBlock, isRoot bool) ConfirmStatu
 					confirmStatus.Succ = false
 					return confirmStatus
 				}
-				l.xlog.Info("handle split succesfully", "splitBlock", fmt.Sprintf("%x", splitBlock.Blockid))
+				l.xlog.Info("handle split successfully", "splitBlock", fmt.Sprintf("%x", splitBlock.Blockid))
 			} else {
 				// 添加在分支上, 对preblock没有影响
 				block.InTrunk = false
