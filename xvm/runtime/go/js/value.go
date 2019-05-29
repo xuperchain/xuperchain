@@ -5,14 +5,14 @@ import (
 	"math"
 )
 
-// Value is the internal represention of a js object
+// Value is the internal representing of a js object
 type Value struct {
 	name  string // for debug
 	value interface{}
 	ref   Ref
 }
 
-// String return the string represention of a value
+// String return the string representing of a value
 func (v *Value) String() string {
 	return fmt.Sprintf("%s", v.value)
 }
