@@ -58,8 +58,8 @@ func (uv *UtxoVM) verifyRWACLValid(tx *pb.Transaction) (bool, error) {
 				return ok, accountErr
 			}
 		case utils.GetContractBucket():
-			seperator := utils.GetACLSeperator()
-			idx := bytes.Index(key, []byte(seperator))
+			separator := utils.GetACLSeparator()
+			idx := bytes.Index(key, []byte(separator))
 			if idx < 0 {
 				return false, errors.New("invalid raw key")
 			}

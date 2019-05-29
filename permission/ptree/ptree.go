@@ -13,7 +13,7 @@ const (
 	_ ValidateStatus = iota
 	// NotVerified : not verified by ACLValidator
 	NotVerified
-	// Success : ACLValidator verified successfull
+	// Success : ACLValidator verified successful
 	Success
 	// Failed : ACLValidator verified failed
 	Failed
@@ -22,7 +22,7 @@ const (
 // PermNode defines the node of perm tree
 type PermNode struct {
 	Name     string            // the name(id) of account/ak/method
-	ACL      *pb.Acl           // the ACL defination of this account/method
+	ACL      *pb.Acl           // the ACL definition of this account/method
 	Status   ValidateStatus    // the ACL validation status of this node
 	SignInfo *pb.SignatureInfo // the signature info of this node, only AK have this field
 	Children []*PermNode       // the children of this node, usually are ACL members of account/method

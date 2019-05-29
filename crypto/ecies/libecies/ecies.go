@@ -138,7 +138,7 @@ func (prv *PrivateKey) GenerateShared(pub *PublicKey, skLen, macLen int) (sk []b
 	return sk, nil
 }
 
-// error defination
+// error definition
 var (
 	ErrKeyDataTooLong = fmt.Errorf("ecies: can't supply requested key data")
 	ErrSharedTooLong  = fmt.Errorf("ecies: shared secret is too long")
