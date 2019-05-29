@@ -67,7 +67,7 @@ func (vm *VM) initDefaultValue() {
 	vm.cfg.Global.Register("Go", goruntime)
 
 	vm.values[ValueGlobal] = &Value{
-		name:  "Gloabl",
+		name:  "Global",
 		ref:   ValueGlobal,
 		value: vm.cfg.Global,
 	}
