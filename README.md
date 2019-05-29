@@ -83,8 +83,28 @@ By default, the `xuper` chain will produce a block every 3 seconds, try the foll
 ./xchain-cli status
 ```
 
+## Run with Docker
 
-### Documentation
+### Build image
+
+```bash
+docker build . -t xuperunion
+```
+
+### Run image
+
+```bash
+# run xchain daemon
+docker run -d -p 37101:37101 -p 47101:47101 --rm --name xchain xuperunion
+# enter running container
+docker exec -ti xchain bash
+# run command
+./xchain-cli status
+```
+
+> This is only a demo for local single container, you can use volume to mount and overwrite configurations.
+
+## Documentation
 
 Please refer to our [wiki](https://github.com/xuperchain/xuperunion/wiki) for more  information, including how to build multi-node network, transfer to others, deploy and invoke smart contract.
 
@@ -162,7 +182,28 @@ nohup ./xchain &
 ./xchain-cli status
 ```
 
-### 文档
+## 容器运行
+
+### 编译镜像
+
+```bash
+docker build . -t xuperunion
+```
+
+### 运行镜像
+
+```bash
+# 运行容器 daemon
+docker run -d -p 37101:37101 -p 47101:47101 --rm --name xchain xuperunion
+# 进入容器
+docker exec -ti xchain bash
+# 运行指令
+./xchain-cli status
+```
+
+> 本地容器化运行的示例，实际场景中可以用卷的方式挂载并覆盖配置。
+
+## 文档
 
 关于XuperUnion更详细、更深入的使用方法链接：[wiki](https://github.com/xuperchain/xuperunion/wiki)
 
