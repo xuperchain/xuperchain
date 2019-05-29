@@ -18,7 +18,7 @@ func NewACLCommand(cli *Cli) *cobra.Command {
 	c.cli = cli
 	c.cmd = &cobra.Command{
 		Use:   "acl",
-		Short: "Operate an access contral list(ACL): query.",
+		Short: "Operate an access control list(ACL): query.",
 	}
 	c.cmd.AddCommand(NewACLQueryCommand(cli))
 	return c.cmd

@@ -1,0 +1,23 @@
+# Project specific files
+plugins/
+output/
+
+# Compiled source
+*.com
+*.class
+*.dll
+*.exe
+*.o
+*.so
+
+# OSX trash
+.DS_Store
+
+# vim
+.*.sw*
+
+# vscode
+.vscode
+
+# Go test binaries
+*.test
