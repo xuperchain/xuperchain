@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
-	"strings"
+	"net"
 
 	"github.com/golang/protobuf/proto"
 
@@ -383,6 +383,6 @@ func (xm *XChainMG) handleConfirmBlockChainStatus(msg *xuper_p2p.XuperMessage) (
 // 处理获取RPC端口回调函数
 func (xm *XChainMG) handleGetRPCPort(msg *xuper_p2p.XuperMessage) (*xuper_p2p.XuperMessage, error) {
 	xm.Log.Trace("Start to handleGetRPCPort", "logid", msg.GetHeader().GetLogid())
-	port := ":" + strings.Split(xm.Cfg.TCPServer.Port, ":")[1]
-	return xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, "", msg.GetHeader().GetLogid(), xuper_p2p.XuperMessage_GET_RPC_PORT_RES, []byte(port), xuper_p2p.XuperMessage_NONE)
+	_, port, _ := net.SplitHostPort(xm.Cfg.TCPServer.Port)
+	return xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, "", msg.GetHeader().GetLogid(), xuper_p2p.XuperMessage_GET_RPC_PORT_RES, []byte(":"+port), xuper_p2p.XuperMessage_NONE)
 }
