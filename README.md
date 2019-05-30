@@ -37,7 +37,7 @@ XuperUnion is the underlying solution for union networks with following highligh
 
 * OS Support: Linux and Mac OS
 * Go 1.12.x or later
-* G++ 4.8.x or later
+* GCC 4.8.x or later
 * Git
 
 ### Build
@@ -134,7 +134,7 @@ XuperUnion is under the [Apache License, Version 2.0](https://github.com/xuperch
 
 * 操作系统：支持Linux以及Mac OS
 * 开发语言：Go 1.12.x及以上
-* 编译器：G++ 4.8.x及以上
+* 编译器：GCC 4.8.x及以上
 * 版本控制工具：Git
 
 ### 构建
