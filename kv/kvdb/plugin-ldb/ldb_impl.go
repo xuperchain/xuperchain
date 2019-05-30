@@ -10,7 +10,7 @@ import (
 	"github.com/xuperchain/xuperunion/kv/kvdb"
 )
 
-// LDBDatabase define data structure of storage
+// LDBDatabase define data structure of storage based on leveldb
 type LDBDatabase struct {
 	fn  string      // filename of db
 	db  *leveldb.DB // LevelDB instance

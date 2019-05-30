@@ -57,7 +57,7 @@ var (
 	ErrTxSizeLimitExceeded     = errors.New("tx size limit exceeded")
 	ErrOverloaded              = errors.New("this node is busy, try again later")
 	ErrInvalidAutogenTx        = errors.New("found invalid autogen-tx")
-	ErrUnmatchedExtension      = errors.New("found unmatched extention")
+	ErrUnmatchedExtension      = errors.New("found unmatched extension")
 	ErrUnsupportedContract     = errors.New("found unspported contract module")
 	ErrUTXODuplicated          = errors.New("found duplicated utxo in same tx")
 	ErrDestroyProofAlreadyUsed = errors.New("the destroy proof has been used before")
@@ -357,7 +357,7 @@ func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, priv
 	// create aclMgr
 	aclManager, aErr := acli.NewACLManager(model3)
 	if aErr != nil {
-		xlog.Warn("failed to inot acl manager", "err", aErr)
+		xlog.Warn("failed to init acl manager", "err", aErr)
 		return nil, aErr
 	}
 
@@ -1951,7 +1951,7 @@ func (uv *UtxoVM) RemoveUtxoCache(address string, utxoKey string) {
 	uv.utxoCache.Remove(address, utxoKey)
 }
 
-// GetVATList return the registerred VAT list
+// GetVATList return the registered VAT list
 func (uv *UtxoVM) GetVATList(blockHeight int64, maxCount int, timestamp int64) ([]*pb.Transaction, error) {
 	txs := []*pb.Transaction{}
 	for i := 0; i < len(uv.vatHandler.HandlerList); i++ {

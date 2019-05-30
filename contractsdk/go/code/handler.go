@@ -3,7 +3,7 @@ package code
 import "encoding/json"
 
 const (
-	// StatusOK is used when contract successfuly ends.
+	// StatusOK is used when contract successfully ends.
 	StatusOK = 200
 	// StatusErrorThreshold is the status dividing line for the normal operation of the contract
 	StatusErrorThreshold = 400

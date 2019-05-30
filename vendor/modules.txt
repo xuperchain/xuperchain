@@ -1,3 +1,5 @@
+# github.com/AndreasBriese/bbloom v0.0.0-20190306092124-e2d15f34fcf9
+github.com/AndreasBriese/bbloom
 # github.com/Microsoft/go-winio v0.4.11
 github.com/Microsoft/go-winio
 # github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412
@@ -12,6 +14,15 @@ github.com/btcsuite/btcd/btcec
 github.com/btcsuite/btcutil/base58
 # github.com/coreos/go-semver v0.2.0
 github.com/coreos/go-semver/semver
+# github.com/dgraph-io/badger v2.0.0-rc.2+incompatible
+github.com/dgraph-io/badger
+github.com/dgraph-io/badger/options
+github.com/dgraph-io/badger/pb
+github.com/dgraph-io/badger/skl
+github.com/dgraph-io/badger/table
+github.com/dgraph-io/badger/y
+# github.com/dgryski/go-farm v0.0.0-20190323231341-8198c7b169ec
+github.com/dgryski/go-farm
 # github.com/docker/distribution v2.7.0+incompatible
 github.com/docker/distribution/reference
 github.com/docker/distribution/digestset
@@ -40,6 +51,8 @@ github.com/docker/go-connections/nat
 github.com/docker/go-connections/tlsconfig
 # github.com/docker/go-units v0.3.3
 github.com/docker/go-units
+# github.com/dustin/go-humanize v1.0.0
+github.com/dustin/go-humanize
 # github.com/fd/go-nat v1.0.0
 github.com/fd/go-nat
 # github.com/fsnotify/fsnotify v1.4.7
@@ -333,7 +346,7 @@ github.com/whyrusleeping/multiaddr-filter
 github.com/whyrusleeping/yamux
 # github.com/xuperchain/go-libp2p-kad-dht v4.4.13-0.20190219145403-6d02cbb41795+incompatible
 github.com/xuperchain/go-libp2p-kad-dht
-# github.com/xuperchain/log15 v0.0.0-20181218131003-ef33fd38b97c => github.com/yucaowang/log15 v0.0.0-20181218131003-ef33fd38b97c
+# github.com/xuperchain/log15 v0.0.0-20190523125943-b2239a7cda1a
 github.com/xuperchain/log15
 # golang.org/x/crypto v0.0.0-20190103213133-ff983b9c42bc
 golang.org/x/crypto/ripemd160
