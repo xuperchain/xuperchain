@@ -60,7 +60,7 @@ func (sc *SingleConsensus) Configure(xlog log.Logger, cfg *config.NodeConfig, co
 	case string:
 		sc.masterAddr = []byte(consCfg["miner"].(string))
 	default:
-		return errors.New("the type of miner should be float64")
+		return errors.New("the type of miner should be string")
 	}
 
 	switch consCfg["period"].(type) {
