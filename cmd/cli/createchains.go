@@ -66,12 +66,13 @@ func (c *CreateChainCommand) createChain(ctx context.Context) error {
 	js := c.ccRootConfig + "/" + c.cli.RootOptions.Name + ".json"
 	data, err := ioutil.ReadFile(js)
 	if err != nil {
-		fmt.Println("read file" + js + "error")
-		return nil
+		fmt.Println("read file " + js + " error")
+		return err
 	}
 	err = k.CreateBlockChain(c.cli.RootOptions.Name, data)
 	if err != nil {
 		fmt.Println("create block chain error " + c.cli.RootOptions.Name)
+		return err
 	}
 	return nil
 }
