@@ -137,8 +137,9 @@ type XVMConfig struct {
 
 // WasmConfig wasm config
 type WasmConfig struct {
-	Driver string
-	XVM    XVMConfig
+	Driver   string
+	External bool
+	XVM      XVMConfig
 }
 
 // ConsoleConfig is the command config user input
