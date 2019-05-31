@@ -53,7 +53,7 @@ type nativeInstance struct {
 }
 
 func (n *nativeInstance) GasUsed() int64 {
-	return 0
+	return 1
 }
 
 func (n *nativeInstance) Release() {
