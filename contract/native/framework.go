@@ -461,7 +461,7 @@ func (gscf *GeneralSCFramework) activate(name string, version string) error {
 func (gscf *GeneralSCFramework) deactivate(name string, version string) error {
 	gscf.mutex.Lock()
 	defer gscf.mutex.Unlock()
-	//set state of the plugin to registed
+	//set state of the plugin to registered
 	vsnc := gscf.nativecodes[name]
 	if vsnc == nil {
 		return nil

@@ -69,7 +69,7 @@ type P2PConfig struct {
 	// bootNodes config the bootNodes the node to connect
 	BootNodes []string `yaml:"bootNodes,omitempty"`
 	// staticNodes config the nodes which you trust
-	StaticNodes []string `yaml:"staticNodes, omitempty"`
+	StaticNodes []string `yaml:"staticNodes,omitempty"`
 	// maxStreamLimits config the max stream num
 	MaxStreamLimits int32 `yaml:"maxStreamLimits,omitempty"`
 	// maxMessageSize config the max message size
@@ -98,9 +98,9 @@ type UtxoConfig struct {
 
 // FeeConfig is the config of Fee
 type FeeConfig struct {
-	NeedFee bool `yaml:"needFee, omitempty"`
+	NeedFee bool `yaml:"needFee,omitempty"`
 	// UnitFee tx 每kb大小的单价
-	UnitFee int64 `yaml:"unitFee, omitempty"`
+	UnitFee int64 `yaml:"unitFee,omitempty"`
 }
 
 // NativeDeployConfig native contract deploy config
@@ -171,15 +171,15 @@ type NodeConfig struct {
 	CPUProfile      string          `yaml:"cpuprofile,omitempty"`
 	MemProfile      string          `yaml:"memprofile,omitempty"`
 	MemberWhiteList map[string]bool `yaml:"memberWhiteList,omitempty"`
-	Native          NativeConfig    `yaml:"native, omitempty"`
+	Native          NativeConfig    `yaml:"native,omitempty"`
 	DBCache         DBCacheConfig   `yaml:"dbcache,omitempty"`
 	// 节点模式: NORMAL | FAST_SYNC 两种模式
 	// NORMAL: 为普通的全节点模式
 	// FAST_SYNC 模式下:节点需要连接一个可信的全节点; 拒绝事务提交; 同步区块时跳过块验证和tx验证; 去掉load未确认事务;
-	NodeMode        string     `yaml:"nodeMode, omitempty"`
-	PluginConfPath  string     `yaml:"pluginConfPath, omitempty"`
-	EtcdClusterAddr string     `yaml:"etcdClusterAddr, omitempty"`
-	GatewaySwitch   bool       `yaml:"gatewaySwitch, omitempty"`
+	NodeMode        string     `yaml:"nodeMode,omitempty"`
+	PluginConfPath  string     `yaml:"pluginConfPath,omitempty"`
+	EtcdClusterAddr string     `yaml:"etcdClusterAddr,omitempty"`
+	GatewaySwitch   bool       `yaml:"gatewaySwitch,omitempty"`
 	Wasm            WasmConfig `yaml:"wasm,omitempty"`
 }
 

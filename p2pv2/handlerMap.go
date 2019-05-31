@@ -20,7 +20,7 @@ const (
 // define errors
 var (
 	ErrSubscribe       = errors.New("subscribe error")
-	ErrAlreadyRegisted = errors.New("subscriber already registed")
+	ErrAlreadyRegisted = errors.New("subscriber already registered")
 	ErrUnregister      = errors.New("unregister subscriber error")
 )
 
