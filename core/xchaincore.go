@@ -511,7 +511,7 @@ func (xc *XChainCore) doMiner() {
 					curTerm = data["curTerm"].(int64)
 					curBlockNum = data["curBlockNum"].(int64)
 				case consensus.ConsensusTypePow:
-					xc.log.Trace("Minning tdpos ProcessBeforeMiner!")
+					xc.log.Trace("Minning pow ProcessBeforeMiner!")
 					targetBits = data["targetBits"].(int32)
 				}
 			}
