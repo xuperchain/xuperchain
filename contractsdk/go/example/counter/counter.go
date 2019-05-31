@@ -38,10 +38,7 @@ func (c *counter) Increase(ctx code.Context) code.Response {
 	if err != nil {
 		return code.Error(err)
 	}
-	return code.Response{
-		Status:  200,
-		Message: cntstr,
-	}
+	return code.OK([]byte(cntstr))
 }
 
 func (c *counter) Get(ctx code.Context) code.Response {
@@ -53,10 +50,7 @@ func (c *counter) Get(ctx code.Context) code.Response {
 	if err != nil {
 		return code.Error(err)
 	}
-	return code.Response{
-		Status:  200,
-		Message: string(value),
-	}
+	return code.OK(value)
 }
 
 func main() {
