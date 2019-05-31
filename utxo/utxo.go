@@ -215,7 +215,7 @@ func (uv *UtxoVM) checkInputEqualOutput(tx *pb.Transaction) error {
 				"in_utxo", amount, "txInputAmount", txInputAmount, "txid", fmt.Sprintf("%x", tx.Txid), "reftxid", fmt.Sprintf("%x", txid))
 			return ErrUnexpected
 		}
-		if frozenHeight > curLedgerHeight {
+		if frozenHeight > curLedgerHeight || frozenHeight == -1 {
 			uv.xlog.Warn("this utxo still be frozen", "frozenHeight", frozenHeight, "ledgerHeight", curLedgerHeight)
 			return ErrUTXOFrozen
 		}
