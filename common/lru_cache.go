@@ -29,6 +29,11 @@ import (
 	"sync"
 )
 
+const (
+	// DefaultCapacity is the default capacity of lru list
+	DefaultCapacity = 100
+)
+
 // LRUCache cache struct
 type LRUCache struct {
 	lock     sync.Mutex
@@ -45,6 +50,9 @@ type Pair struct {
 
 // NewLRUCache New function
 func NewLRUCache(capacity int) *LRUCache {
+	if capacity <= 0 {
+		capacity = DefaultCapacity
+	}
 	c := new(LRUCache)
 	c.capacity = capacity
 	c.cache = make(map[interface{}]*list.Element)
@@ -126,12 +134,12 @@ func (c *LRUCache) Len() int {
 
 // Keys get keys of items in cache
 func (c *LRUCache) Keys() []interface{} {
-	var keyList []interface{}
 	c.lock.Lock()
+	defer c.lock.Unlock()
+	var keyList []interface{}
 	for key := range c.cache {
 		keyList = append(keyList, key)
 	}
-	c.lock.Unlock()
 	return keyList
 }
 
@@ -141,7 +149,7 @@ func (c *LRUCache) EnlargeCapacity(newCapacity int) error {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 	// check newCapacity
-	if newCapacity < c.capacity {
+	if newCapacity <= c.capacity {
 		return fmt.Errorf("newCapacity[%d] must be larger than current[%d]",
 			newCapacity, c.capacity)
 	}
