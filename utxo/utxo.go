@@ -68,7 +68,7 @@ var (
 
 	ErrGasNotEnough   = errors.New("Gas not enough")
 	ErrInvalidAccount = errors.New("Invalid account")
-	ErrVersionInvalid = errors.New("Tx version not invalid")
+	ErrVersionInvalid = errors.New("Tx version is invalid")
 )
 
 // package constants
