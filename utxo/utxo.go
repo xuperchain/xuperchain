@@ -69,6 +69,7 @@ var (
 	ErrGasNotEnough   = errors.New("Gas not enough")
 	ErrInvalidAccount = errors.New("Invalid account")
 	ErrVersionInvalid = errors.New("Tx version not invalid")
+	ErrInvalidTxExt   = errors.New("Invalid tx ext")
 )
 
 // package constants
@@ -1297,6 +1298,10 @@ func getGasLimitFromTx(tx *pb.Transaction) (int64, error) {
 func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
 	req := tx.GetContractRequest()
 	if req == nil {
+		if tx.GetTxInputsExt() != nil || tx.GetTxOutputsExt() != nil {
+			uv.xlog.Error("verifyTxRWSets error", "error", ErrInvalidTxExt.Error())
+			return false, ErrInvalidTxExt
+		}
 		return true, nil
 	}
 	moduleName := req.GetModuleName()
