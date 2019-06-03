@@ -11,21 +11,23 @@ type BadgerIterator struct {
 	badgerIter *badger.Iterator
 	first      []byte
 	last       []byte
+	txn        *badger.Txn
+	init       bool
+	prefixIter bool
 }
 
 func NewBadgerIterator(db *badger.DB, iterOptions badger.IteratorOptions, first []byte, last []byte) *BadgerIterator {
 	var it *badger.Iterator
-	db.View(func(txn *badger.Txn) error {
-		it = txn.NewIterator(iterOptions)
-		defer it.Close()
-		return nil
-	})
-
+	badgerTxn := db.NewTransaction(false)
+	it = badgerTxn.NewIterator(iterOptions)
 	badgerIterator := &BadgerIterator{
 		badgerDB:   db,
 		badgerIter: it,
 		first:      first,
 		last:       last,
+		txn:        badgerTxn,
+		prefixIter: true,
+		init:       false,
 	}
 	return badgerIterator
 }
@@ -58,8 +60,14 @@ func (iter *BadgerIterator) Value() []byte {
 }
 
 func (iter *BadgerIterator) Next() bool {
-	if iter.badgerIter.Valid() {
+	if !iter.init {
+		iter.badgerIter.Seek(iter.first)
+		iter.init = true
+	} else {
 		iter.badgerIter.Next()
+	}
+	if iter.prefixIter {
+		return iter.badgerIter.ValidForPrefix(iter.first)
 	}
 	return iter.badgerIter.Valid()
 }
@@ -81,5 +89,6 @@ func (iter *BadgerIterator) Error() error {
 }
 
 func (iter *BadgerIterator) Release() {
-	// TODO
+	iter.badgerIter.Close()
+	iter.txn.Discard()
 }
