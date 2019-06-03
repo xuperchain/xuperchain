@@ -675,7 +675,7 @@ func (xc *XChainCore) PostTx(in *pb.TxStatus, hd *global.XContext) (*pb.CommonRe
 		switch validErr {
 		case utxo.ErrGasNotEnough:
 			out.Header.Error = pb.XChainErrorEnum_GAS_NOT_ENOUGH_ERROR
-		case utxo.ErrRWSetInvalid:
+		case utxo.ErrRWSetInvalid, utxo.ErrInvalidTxExt:
 			out.Header.Error = pb.XChainErrorEnum_RWSET_INVALID_ERROR
 		case utxo.ErrRWAclNotEnough:
 			out.Header.Error = pb.XChainErrorEnum_RWACL_INVALID_ERROR
