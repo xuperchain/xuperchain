@@ -301,7 +301,7 @@ func (l *Ledger) formatBlock(txList []*pb.Transaction,
 			gussNonce++
 			block.Nonce = gussNonce
 			block.Blockid, err = MakeBlockID(block)
-			l.xlog.Trace("Try to MakeBlockID", "blockid", fmt.Sprintf("%x", block.Blockid))
+			//l.xlog.Trace("Try to MakeBlockID", "blockid", fmt.Sprintf("%x", block.Blockid))
 			if err != nil {
 				return nil, err
 			}

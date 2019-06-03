@@ -33,8 +33,6 @@ func (bdb *BadgerDatabase) Open(path string, options map[string]interface{}) err
 	opts.Dir = path
 	opts.ValueDir = path
 	opts.SyncWrites = false
-	opts.MaxTableSize = 1 << 15
-	opts.LevelOneSize = 4 << 15
 	db, err := badger.Open(opts)
 	if err != nil {
 		fmt.Println("BadgerDatabase Open error ", err)
@@ -148,6 +146,7 @@ func (b *BadgerBatch) Exist(key []byte) bool {
 }
 
 func (b *BadgerBatch) Write() error {
+	defer b.b.Cancel()
 	return b.b.Flush()
 }
 
@@ -167,7 +166,7 @@ func (bdb *BadgerDatabase) NewIteratorWithPrefix(prefix []byte) kvdb.Iterator {
 		AllVersions:    false,
 		Prefix:         prefix,
 	}
-	return NewBadgerIterator(bdb.db, iteratorOptions, []byte("00"), []byte("00"))
+	return NewBadgerIterator(bdb.db, iteratorOptions, prefix, []byte("00"))
 }
 
 func (bdb *BadgerDatabase) NewIteratorWithRange(start []byte, limit []byte) kvdb.Iterator {
