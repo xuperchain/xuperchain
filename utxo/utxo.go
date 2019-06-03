@@ -414,12 +414,15 @@ func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, priv
 	}
 
 	latestBlockid, findErr := utxoVM.metaTable.Get([]byte(LatestBlockKey))
+	// fmt.Println("LastBlockKey: ", LatestBlockKey, "findErr ", findErr)
 	if findErr == nil {
 		utxoVM.latestBlockid = latestBlockid
 	} else {
-		if findErr.Error() != kverr.ErrNotFound.Error() {
-			return nil, findErr
-		}
+		/*
+			if findErr.Error() != kverr.ErrNotFound.Error() && findErr.Error() != "Key not found"{
+				return nil, findErr
+			}
+		*/
 	}
 	utxoTotalBytes, findTotalErr := utxoVM.metaTable.Get([]byte(UTXOTotalKey))
 	if findTotalErr == nil {
@@ -427,7 +430,7 @@ func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, priv
 		total.SetBytes(utxoTotalBytes)
 		utxoVM.utxoTotal = total
 	} else {
-		if findTotalErr.Error() != kverr.ErrNotFound.Error() {
+		if findTotalErr.Error() != kverr.ErrNotFound.Error() && findTotalErr.Error() != "Key not found" {
 			return nil, findTotalErr
 		}
 		//说明是1.1.1版本，没有utxo total字段, 估算一个
@@ -1888,6 +1891,7 @@ func (uv *UtxoVM) GetFrozenBalance(addr string) (*big.Int, error) {
 	addrPrefix := fmt.Sprintf("%s%s_", pb.UTXOTablePrefix, addr)
 	utxoFrozen := big.NewInt(0)
 	curHeight := uv.ledger.GetMeta().TrunkHeight
+	fmt.Println("addrPrefix: ", addrPrefix)
 	it := uv.ldb.NewIteratorWithPrefix([]byte(addrPrefix))
 	defer it.Release()
 	for it.Next() {

@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math/big"
 	"sort"
 	"strconv"
@@ -65,10 +66,11 @@ func (tp *TDpos) getTermProposer(term int64) []string {
 	}
 	key := GenTermCheckKey(tp.version, term)
 	val, err := tp.utxoVM.GetFromTable(nil, []byte(key))
-	if err != nil && err != leveldb.ErrNotFound {
+	if err != nil && err != leveldb.ErrNotFound && err.Error() != "Key not found" {
 		tp.log.Error("TDpos getTermProposer vote result error", "term", term, "error", err)
 		return nil
-	} else if err == leveldb.ErrNotFound {
+	} else if err == leveldb.ErrNotFound || err.Error() == "Key not found" {
+		fmt.Println("tp.version: ", tp.version)
 		it := tp.utxoVM.ScanWithPrefix([]byte(genTermCheckKeyPrefix(tp.version)))
 		if it.Last() {
 			termLast, err := parseTermCheckKey(string(it.Key()))

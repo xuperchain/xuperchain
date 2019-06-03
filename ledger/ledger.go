@@ -93,6 +93,7 @@ func NewLedger(storePath string, xlog log.Logger, otherPaths []string, kvEngineT
 		return nil, plgErr
 	}
 	var baseDB kvdb.Database
+	fmt.Println("kvEngineType ", kvEngineType)
 	soInst, err := plgMgr.PluginMgr.CreatePluginInstance("kv", kvEngineType)
 	if err != nil {
 		xlog.Warn("fail to create plugin instance", "kvtype", kvEngineType)
@@ -127,7 +128,8 @@ func NewLedger(storePath string, xlog log.Logger, otherPaths []string, kvEngineT
 	ledger.cryptoClient = cryptoClient
 	metaBuf, metaErr := ledger.metaTable.Get([]byte(""))
 	emptyLedger := false
-	if metaErr != nil && metaErr.Error() == kverr.ErrNotFound.Error() { //说明是新创建的账本
+	if metaErr != nil && (metaErr.Error() == kverr.ErrNotFound.Error() || metaErr.Error() == "Key not found") { //说明是新创建的账本
+		fmt.Println("ledger meta: ", ledger.meta)
 		metaBuf, pbErr := proto.Marshal(ledger.meta)
 		if pbErr != nil {
 			xlog.Warn("marshal meta fail", "pb_err", pbErr)

@@ -9,7 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"path/filepath"
+	//"path/filepath"
 	"sync"
 	"time"
 
@@ -21,11 +21,11 @@ import (
 	"github.com/xuperchain/xuperunion/common/probe"
 	"github.com/xuperchain/xuperunion/consensus"
 	"github.com/xuperchain/xuperunion/consensus/tdpos"
-	"github.com/xuperchain/xuperunion/contract/bridge"
+	//"github.com/xuperchain/xuperunion/contract/bridge"
 	"github.com/xuperchain/xuperunion/contract/kernel"
 	"github.com/xuperchain/xuperunion/contract/native"
 	"github.com/xuperchain/xuperunion/contract/proposal"
-	"github.com/xuperchain/xuperunion/contract/wasm"
+	//"github.com/xuperchain/xuperunion/contract/wasm"
 	crypto_client "github.com/xuperchain/xuperunion/crypto/client"
 	crypto_base "github.com/xuperchain/xuperunion/crypto/client/base"
 	"github.com/xuperchain/xuperunion/global"
@@ -197,6 +197,7 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 		utxoCacheSize, utxoTmplockSeconds, cfg.Utxo.ContractExecutionTime, datapathOthers, cfg.Utxo.IsBetaTx[bcname], kvEngineType, cryptoType)
 
 	if err != nil {
+		fmt.Println("NewUtxoVM error ", err)
 		xc.log.Warn("NewUtxoVM error", "bc", xc.bcname, "datapath", datapath, "dataPathOhters", datapathOthers)
 		return err
 	}
@@ -227,32 +228,37 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	xc.Utxovm.RegisterVM("consensus", xc.con, global.VMPrivRing0)
 	xc.Utxovm.RegisterVM("proposal", xc.proposal, global.VMPrivRing0)
 
-	nc, err := native.New(&cfg.Native, datapath+"/native", xc.log, datapathOthers, kvEngineType)
-	if err != nil {
-		xc.log.Error("make native", "error", err)
-		return err
-	}
-	xc.NativeCodeMgr = nc
+	/*
+		nc, err := native.New(&cfg.Native, datapath+"/native", xc.log, datapathOthers, kvEngineType)
+		if err != nil {
+			xc.log.Error("make native", "error", err)
+			return err
+		}
+		xc.NativeCodeMgr = nc
 
-	xc.Utxovm.RegisterVM("native", nc, global.VMPrivRing0)
+		xc.Utxovm.RegisterVM("native", nc, global.VMPrivRing0)
 
-	xbridge := bridge.New()
-	wasmvm, err := wasm.New(&cfg.Wasm, filepath.Join(datapath, "wasm"), xbridge, xc.Utxovm.GetXModel())
-	if err != nil {
-		xc.log.Error("initialize WASM error", "error", err)
-		return err
-	}
 
-	xbridge.RegisterExecutor("native", nc)
-	xbridge.RegisterExecutor("wasm", wasmvm)
-	xbridge.RegisterToXCore(xc.Utxovm.RegisterVM3)
+		xbridge := bridge.New()
+		wasmvm, err := wasm.New(&cfg.Wasm, filepath.Join(datapath, "wasm"), xbridge, xc.Utxovm.GetXModel())
+		if err != nil {
+			xc.log.Error("initialize WASM error", "error", err)
+			return err
+		}
+
+		xbridge.RegisterExecutor("native", nc)
+		xbridge.RegisterExecutor("wasm", wasmvm)
+		xbridge.RegisterToXCore(xc.Utxovm.RegisterVM3)
+	*/
 
 	// 统一注册xuper3合约虚拟机
-	x3kernel, xerr := kernel.NewKernel(wasmvm)
-	if xerr != nil {
-		return xerr
-	}
-	xc.Utxovm.RegisterVM3(x3kernel.GetName(), x3kernel)
+	/*
+		x3kernel, xerr := kernel.NewKernel(wasmvm)
+		if xerr != nil {
+			return xerr
+		}
+		xc.Utxovm.RegisterVM3(x3kernel.GetName(), x3kernel)
+	*/
 
 	// 统一注册VAT
 	xc.Utxovm.RegisterVAT("Propose", xc.proposal, nil)
