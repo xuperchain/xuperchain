@@ -1,5 +1,5 @@
 ---
-name: XuperChain Issue Template
+name: XuperChain Bug Template
 about: Report a bug to XuperChain
 title: ''
 labels: ''
