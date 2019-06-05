@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"math/big"
 	"net"
+	"strconv"
+	"time"
 
 	"github.com/golang/protobuf/proto"
 
@@ -402,55 +404,66 @@ func (xm *XChainMG) handleGetRPCPort(msg *xuper_p2p.XuperMessage) (*xuper_p2p.Xu
 // handleGetAuthentication callback function for handling identity authentication
 func (xm *XChainMG) handleGetAuthentication(msg *xuper_p2p.XuperMessage) (*xuper_p2p.XuperMessage, error) {
 	logid := msg.Header.Logid
-	xm.Log.Trace("Start to handleGetAuthentication", "logid", logid)
 	auths := &pb.IdentityAuths{}
+	errRes := errorHandleGetAuthenMsg(logid)
 	err := proto.Unmarshal(msg.Data.MsgInfo, auths)
 	if err != nil {
 		xm.Log.Error("handleGetAuthentication unmarshal msg error", "error", err.Error())
-		res, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, "", logid,
-			xuper_p2p.XuperMessage_GET_AUTHENTICATION_RES, nil, xuper_p2p.XuperMessage_UNMARSHAL_MSG_BODY_ERROR)
-		return res, errors.New("unmarshal msg error")
+		return errRes, errors.New("unmarshal msg error")
 	}
+	xm.Log.Trace("Start to handleGetAuthentication", "logid", logid, "authsrequest", auths)
 
 	addrs := &[]string{}
 	for _, v := range auths.Auth {
-		cryptoClient, err := crypto_client.CreateCryptoClient(v.CryptoType)
+		cryptoClient, err := crypto_client.CreateCryptoClientFromJSONPublicKey(v.Pubkey)
 		if err != nil {
 			xm.Log.Error("handleGetAuthentication Create crypto client error", "error", err.Error())
-			res, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, "", logid,
-				xuper_p2p.XuperMessage_GET_AUTHENTICATION_RES, nil, xuper_p2p.XuperMessage_GET_AUTHENTICATION_ERROR)
-			return res, errors.New("handleGetAuthentication Create crypto client error")
+			return errRes, errors.New("handleGetAuthentication Create crypto client error")
 		}
 
 		publicKey, err := cryptoClient.GetEcdsaPublicKeyFromJSON(v.Pubkey)
 		if err != nil {
 			xm.Log.Error("handleGetAuthentication GetEcdsaPublicKeyFromJSON error", "error", err.Error())
-			res, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, "", logid,
-				xuper_p2p.XuperMessage_GET_AUTHENTICATION_RES, nil, xuper_p2p.XuperMessage_GET_AUTHENTICATION_ERROR)
-			return res, err
+			return errRes, err
 		}
 
 		isMatch, _ := cryptoClient.VerifyAddressUsingPublicKey(v.Addr, publicKey)
 		if !isMatch {
 			xm.Log.Error("handleGetAuthentication address and public key not match")
-			res, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, "", logid,
-				xuper_p2p.XuperMessage_GET_AUTHENTICATION_RES, nil, xuper_p2p.XuperMessage_GET_AUTHENTICATION_ERROR)
-			return res, errors.New("handleGetAuthentication address and public key not match")
+			return errRes, errors.New("handleGetAuthentication address and public key not match")
 		}
 
-		data := hash.DoubleSha256([]byte(v.PeerID + v.Addr))
+		tsNow := time.Now().Unix()
+		tsPast, _ := strconv.ParseInt(v.Timestamp, 10, 64)
+		if tsNow-tsPast >= config.DefautltAuthTimeout {
+			xm.Log.Error("handleGetAuthentication timestamp expired")
+			return errRes, errors.New("handleGetAuthentication timestamp expired")
+		}
+
+		data := hash.UsingSha256([]byte(v.PeerID + v.Addr + v.Timestamp))
 		if ok, _ := cryptoClient.VerifyECDSA(publicKey, v.Sign, data); !ok {
 			xm.Log.Error("handleGetAuthentication verify sign error")
-			res, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, "", logid,
-				xuper_p2p.XuperMessage_GET_AUTHENTICATION_RES, nil, xuper_p2p.XuperMessage_GET_AUTHENTICATION_ERROR)
-			return res, errors.New("handleGetAuthentication verify sign error")
+			return errRes, errors.New("handleGetAuthentication verify sign error")
 		}
 
 		*addrs = append(*addrs, v.Addr)
 	}
 
-	resBuf, _ := json.Marshal(addrs)
+	resBuf, err := json.Marshal(addrs)
+	if err != nil {
+		xm.Log.Error("handleGetAuthentication json marshal error")
+		return errRes, errors.New("handleGetAuthentication json marshal error")
+	}
+
+	xm.Log.Trace("handleGetAuthentication success", "logid", logid, "addrs", addrs)
+
 	res, err := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, "", logid,
 		xuper_p2p.XuperMessage_GET_AUTHENTICATION_RES, resBuf, xuper_p2p.XuperMessage_SUCCESS)
 	return res, err
+}
+
+func errorHandleGetAuthenMsg(logid string) *xuper_p2p.XuperMessage {
+	res, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, "", logid,
+		xuper_p2p.XuperMessage_GET_AUTHENTICATION_RES, nil, xuper_p2p.XuperMessage_GET_AUTHENTICATION_ERROR)
+	return res
 }

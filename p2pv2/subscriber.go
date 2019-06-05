@@ -2,6 +2,7 @@ package p2pv2
 
 import (
 	"container/list"
+	"encoding/json"
 	"fmt"
 	"sync"
 
@@ -37,6 +38,11 @@ func (sub *Subscriber) handleMessage(s *Stream, msg *xuperp2p.XuperMessage) {
 	if !s.valid() {
 		return
 	}
+
+	if s.node.srv.config.IsAuthentication && !s.auth() {
+		return
+	}
+
 	if sub.handler != nil {
 		go func(sub *Subscriber, s *Stream, msg *xuperp2p.XuperMessage) {
 			res, err := sub.handler(msg)
@@ -46,6 +52,16 @@ func (sub *Subscriber) handleMessage(s *Stream, msg *xuperp2p.XuperMessage) {
 			if err := s.writeData(res); err != nil {
 				fmt.Println("subscriber handleMessage to write msg error", "err", err)
 			}
+			if res.Header.Type == xuperp2p.XuperMessage_GET_AUTHENTICATION_RES {
+				auths := &[]string{}
+				err = json.Unmarshal(res.Data.MsgInfo, auths)
+				if err != nil {
+					fmt.Println("Authenticate Get res unmarshal error")
+				}
+				fmt.Println("Subscriber handleMessage SetReceivedAddr:", auths)
+				s.SetReceivedAddr(auths)
+			}
+
 		}(sub, s, msg)
 		return
 	}

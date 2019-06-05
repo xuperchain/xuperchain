@@ -765,7 +765,7 @@ message IdentityAuth {
     bytes  pubkey = 2;
     string addr = 3;
     string peerID = 4;
-    string cryptoType = 5; 
+    string timestamp = 5;
 }
 
 // Identity authentication requests

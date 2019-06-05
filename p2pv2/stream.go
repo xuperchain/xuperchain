@@ -39,6 +39,9 @@ type Stream struct {
 	isvalid bool
 	// Grpc port
 	gp string
+
+	isAuth   bool
+	authAddr []string
 }
 
 // NewStream create Stream instance
@@ -47,15 +50,17 @@ func NewStream(s net.Stream, no *Node) *Stream {
 	wc := ggio.NewDelimitedWriter(w)
 	maxMsgSize := (int(no.srv.config.MaxMessageSize) << 20)
 	stream := &Stream{
-		p:       s.Conn().RemotePeer(),
-		addr:    s.Conn().RemoteMultiaddr(),
-		s:       s,
-		rc:      ggio.NewDelimitedReader(s, maxMsgSize),
-		w:       w,
-		wc:      wc,
-		lk:      new(sync.Mutex),
-		node:    no,
-		isvalid: true,
+		p:        s.Conn().RemotePeer(),
+		addr:     s.Conn().RemoteMultiaddr(),
+		s:        s,
+		rc:       ggio.NewDelimitedReader(s, maxMsgSize),
+		w:        w,
+		wc:       wc,
+		lk:       new(sync.Mutex),
+		node:     no,
+		isvalid:  true,
+		isAuth:   true,
+		authAddr: []string{},
 	}
 	stream.Start()
 	return stream
@@ -119,6 +124,7 @@ func (s *Stream) handlerNewMessage(msg *p2pPb.XuperMessage) error {
 		s.node.log.Warn("Stream not ready, omit", "msg", msg)
 		return nil
 	}
+
 	return s.node.srv.handlerMap.HandleMessage(s, msg)
 }
 
@@ -239,6 +245,7 @@ func (s *Stream) Authenticate() error {
 		}
 		authRequests = append(authRequests, authRequest)
 	}
+	s.node.log.Trace("Stream Authenticate request", "IdentityAuths", authRequests)
 
 	authRes := &pb.IdentityAuths{
 		Auth: authRequests,
@@ -255,16 +262,19 @@ func (s *Stream) Authenticate() error {
 	res, err := s.SendMessageWithResponse(context.Background(), msg)
 	if err != nil {
 		s.node.log.Warn("Stream Authenticate", "err", err)
+		s.isAuth = false
 		return err
 	}
 
-	auths := &[]string{}
 	if res.Header.ErrorType != p2pPb.XuperMessage_SUCCESS {
+		s.isAuth = false
 		return errors.New("Authenticate Get res type error")
 	}
 
+	auths := &[]string{}
 	err = json.Unmarshal(res.Data.MsgInfo, auths)
 	if err != nil {
+		s.isAuth = false
 		s.node.log.Warn("Authenticate unmarshal res error", "error", err)
 		return errors.New("Authenticate Get res unmarshal error")
 	}
@@ -273,4 +283,21 @@ func (s *Stream) Authenticate() error {
 		"checksum", res.Header.DataCheckSum, "res.from", res.Header.From, "peerid", s.p.Pretty(),
 		"auths", auths)
 	return nil
+}
+
+func (s *Stream) SetReceivedAddr(auths *[]string) {
+	for _, n := range *auths {
+		for _, o := range s.authAddr {
+			if n == o {
+				break
+			}
+		}
+		s.authAddr = append(s.authAddr, n)
+	}
+
+	s.node.log.Trace("Stream ReceivedAddr", "authAddr", s.authAddr, "stream.peer", s.p.Pretty())
+}
+
+func (s *Stream) auth() bool {
+	return s.isAuth
 }
