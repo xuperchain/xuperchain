@@ -25,10 +25,11 @@ var (
 type P2PServerV2 struct {
 	log log.Logger
 	// config is the p2p v2 设置
-	config     config.P2PConfig
-	node       *Node
-	handlerMap *HandlerMap
-	quitCh     chan bool
+	config      config.P2PConfig
+	node        *Node
+	handlerMap  *HandlerMap
+	quitCh      chan bool
+	streamLimit *StreamLimit
 }
 
 // NewP2PServerV2 create P2PServerV2 instance
@@ -52,13 +53,15 @@ func NewP2PServerV2(cfg config.P2PConfig, lg log.Logger) (*P2PServerV2, error) {
 	}
 
 	p2pSrv := &P2PServerV2{
-		log:        lg,
-		config:     cfg,
-		node:       no,
-		handlerMap: hm,
-		quitCh:     make(chan bool, 1),
+		log:         lg,
+		config:      cfg,
+		node:        no,
+		handlerMap:  hm,
+		quitCh:      make(chan bool, 1),
+		streamLimit: &StreamLimit{},
 	}
 
+	p2pSrv.streamLimit.Init(cfg.StreamLimitSize, lg)
 	no.SetServer(p2pSrv)
 	go p2pSrv.Start()
 	return p2pSrv, nil

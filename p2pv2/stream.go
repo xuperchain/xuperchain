@@ -83,6 +83,8 @@ func (s *Stream) reset() {
 		s.s = nil
 		s.isvalid = false
 	}
+	s.node.strPool.DelStream(s)
+	s.node.strPool.streamLimit.DelStream(s.addr.String())
 }
 
 // readData loop to read data from stream

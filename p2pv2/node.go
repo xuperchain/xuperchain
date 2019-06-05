@@ -148,6 +148,7 @@ func genHostOption(cfg config.P2PConfig) ([]libp2p.Option, error) {
 // Start start the node
 func (no *Node) Start() {
 	no.log.Trace("Start node")
+	no.strPool.SetStreamLimit(no.srv.streamLimit)
 	t := time.NewTicker(time.Duration(time.Second * 30))
 	defer t.Stop()
 	for {

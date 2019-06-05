@@ -22,6 +22,7 @@ const (
 	DefaultMaxStreamLimits = 1024
 	DefaultMaxMessageSize  = 128
 	DefaultTimeout         = 3
+	DefaultStreamLimitSize = 10
 )
 
 // LogConfig is the log config of node
@@ -75,7 +76,8 @@ type P2PConfig struct {
 	// maxMessageSize config the max message size
 	MaxMessageSize int64 `yaml:"maxMessageSize,omitempty"`
 	// timeout config the timeout of Request with response
-	Timeout int64 `yaml:"timeout,omitempty"`
+	Timeout         int64 `yaml:"timeout,omitempty"`
+	StreamLimitSize int64 `yaml:"streamLimitSize,omitempty"`
 }
 
 // MinerConfig is the config of miner
@@ -279,6 +281,7 @@ func newP2pConfigWithDefault() P2PConfig {
 		MaxStreamLimits: DefaultMaxStreamLimits,
 		MaxMessageSize:  DefaultMaxMessageSize,
 		Timeout:         DefaultTimeout,
+		StreamLimitSize: DefaultStreamLimitSize,
 	}
 }
 
