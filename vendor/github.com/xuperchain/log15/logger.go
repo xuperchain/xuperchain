@@ -115,7 +115,7 @@ type logger struct {
 func (l *logger) write(msg string, lvl Lvl, ctx []interface{}) {
 	// ignore messages with level lower than minLvl
 	// this could help improving performace since reduce initializing costs
-	if lvl < l.minLvl {
+	if lvl > l.minLvl {
 		return
 	}
 
