@@ -23,6 +23,7 @@ const (
 	DefaultMaxMessageSize   = 128
 	DefaultTimeout          = 3
 	DefaultIsAuthentication = true
+	DefautltAuthTimeout     = 30
 )
 
 // LogConfig is the log config of node

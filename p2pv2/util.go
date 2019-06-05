@@ -6,6 +6,8 @@ import (
 	"errors"
 	"io/ioutil"
 	"os"
+	"strconv"
+	"time"
 
 	crypto "github.com/libp2p/go-libp2p-crypto"
 	"github.com/xuperchain/xuperunion/common/config"
@@ -56,10 +58,9 @@ func GetKeyPairFromPath(path string) (crypto.PrivKey, error) {
 }
 
 type XchainAddrInfo struct {
-	Addr       string
-	Pubkey     []byte
-	Prikey     []byte
-	CryptoType string
+	Addr   string
+	Pubkey []byte
+	Prikey []byte
 }
 
 func GetAuthRequest(peerID string, v *XchainAddrInfo) (*pb.IdentityAuth, error) {
@@ -67,7 +68,7 @@ func GetAuthRequest(peerID string, v *XchainAddrInfo) (*pb.IdentityAuth, error) 
 	pubkey := v.Pubkey
 	prikey := v.Prikey
 
-	cryptoClient, err := crypto_client.CreateCryptoClient(v.CryptoType)
+	cryptoClient, err := crypto_client.CreateCryptoClientFromJSONPublicKey(v.Pubkey)
 	if err != nil {
 		return nil, errors.New("GetAuthRequest: Create crypto client error")
 	}
@@ -77,18 +78,21 @@ func GetAuthRequest(peerID string, v *XchainAddrInfo) (*pb.IdentityAuth, error) 
 		return nil, err
 	}
 
-	digestHash := hash.DoubleSha256([]byte(peerID + addr))
+	timeUnix := time.Now().Unix()
+	ts := strconv.FormatInt(timeUnix, 10)
+
+	digestHash := hash.UsingSha256([]byte(peerID + addr + ts))
 	sign, err := cryptoClient.SignECDSA(privateKey, digestHash)
 	if err != nil {
 		return nil, err
 	}
 
 	identityAuth := &pb.IdentityAuth{
-		Sign:       sign,
-		Pubkey:     pubkey,
-		Addr:       addr,
-		PeerID:     peerID,
-		CryptoType: v.CryptoType,
+		Sign:      sign,
+		Pubkey:    pubkey,
+		Addr:      addr,
+		PeerID:    peerID,
+		Timestamp: ts,
 	}
 
 	return identityAuth, nil

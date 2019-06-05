@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"math/big"
 	"net"
+	"strconv"
+	"time"
 
 	"github.com/golang/protobuf/proto"
 
@@ -414,7 +416,7 @@ func (xm *XChainMG) handleGetAuthentication(msg *xuper_p2p.XuperMessage) (*xuper
 
 	addrs := &[]string{}
 	for _, v := range auths.Auth {
-		cryptoClient, err := crypto_client.CreateCryptoClient(v.CryptoType)
+		cryptoClient, err := crypto_client.CreateCryptoClientFromJSONPublicKey(v.Pubkey)
 		if err != nil {
 			xm.Log.Error("handleGetAuthentication Create crypto client error", "error", err.Error())
 			res, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, "", logid,
@@ -438,7 +440,16 @@ func (xm *XChainMG) handleGetAuthentication(msg *xuper_p2p.XuperMessage) (*xuper
 			return res, errors.New("handleGetAuthentication address and public key not match")
 		}
 
-		data := hash.DoubleSha256([]byte(v.PeerID + v.Addr))
+		tsNow := time.Now().Unix()
+		tsPast, _ := strconv.ParseInt(v.Timestamp, 10, 64)
+		if tsNow-tsPast >= config.DefautltAuthTimeout {
+			xm.Log.Error("handleGetAuthentication timestamp expired")
+			res, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, "", logid,
+				xuper_p2p.XuperMessage_GET_AUTHENTICATION_RES, nil, xuper_p2p.XuperMessage_GET_AUTHENTICATION_ERROR)
+			return res, errors.New("handleGetAuthentication timestamp expired")
+		}
+
+		data := hash.UsingSha256([]byte(v.PeerID + v.Addr + v.Timestamp))
 		if ok, _ := cryptoClient.VerifyECDSA(publicKey, v.Sign, data); !ok {
 			xm.Log.Error("handleGetAuthentication verify sign error")
 			res, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, "", logid,

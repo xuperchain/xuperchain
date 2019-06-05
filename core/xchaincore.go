@@ -182,12 +182,11 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 
 	// write to p2p
 	xchainAddrInfo := &p2pv2.XchainAddrInfo{
-		Addr:       string(addr),
-		Pubkey:     pub,
-		Prikey:     pri,
-		CryptoType: cryptoType,
+		Addr:   string(addr),
+		Pubkey: pub,
+		Prikey: pri,
 	}
-	xc.P2pv2.GetXchainAddr(xc.bcname, xchainAddrInfo)
+	xc.P2pv2.SetXchainAddr(xc.bcname, xchainAddrInfo)
 
 	xc.Ledger, err = ledger.NewLedger(datapath, xc.log, datapathOthers, kvEngineType, cryptoType)
 	if err != nil {
