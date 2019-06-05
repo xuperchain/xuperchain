@@ -50,7 +50,7 @@ func (pm *PipelineMiner) doPrePlay() (needWait bool) {
 	}
 	pm.xc.mutex.Lock()
 	defer pm.xc.mutex.Unlock()
-	txsUnconf, err := pm.xc.Utxovm.GetUnconfirmedTx(true)
+	txsUnconf, err := pm.xc.Utxovm.GetUnconfirmedTx(false)
 	if err != nil {
 		pm.xc.log.Warn("[Minning] fail to get unconfirmedtx")
 		return
