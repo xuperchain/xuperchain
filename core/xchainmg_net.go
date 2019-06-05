@@ -2,6 +2,7 @@ package xchaincore
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
@@ -10,6 +11,8 @@ import (
 	"github.com/golang/protobuf/proto"
 
 	"github.com/xuperchain/xuperunion/common/config"
+	crypto_client "github.com/xuperchain/xuperunion/crypto/client"
+	"github.com/xuperchain/xuperunion/crypto/hash"
 	"github.com/xuperchain/xuperunion/global"
 	"github.com/xuperchain/xuperunion/p2pv2"
 	xuper_p2p "github.com/xuperchain/xuperunion/p2pv2/pb"
@@ -46,6 +49,11 @@ func (xm *XChainMG) RegisterSubscriber() error {
 	if _, err := xm.P2pv2.Register(p2pv2.NewSubscriber(nil, xuper_p2p.XuperMessage_GET_RPC_PORT, xm.handleGetRPCPort, "")); err != nil {
 		return err
 	}
+
+	if _, err := xm.P2pv2.Register(p2pv2.NewSubscriber(nil, xuper_p2p.XuperMessage_GET_AUTHENTICATION, xm.handleGetAuthentication, "")); err != nil {
+		return err
+	}
+
 	xm.Log.Trace("Stop to Register Subscriber")
 	return nil
 }
@@ -389,4 +397,60 @@ func (xm *XChainMG) handleGetRPCPort(msg *xuper_p2p.XuperMessage) (*xuper_p2p.Xu
 		return nil, err
 	}
 	return xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, "", msg.GetHeader().GetLogid(), xuper_p2p.XuperMessage_GET_RPC_PORT_RES, []byte(":"+port), xuper_p2p.XuperMessage_NONE)
+}
+
+// handleGetAuthentication callback function for handling identity authentication
+func (xm *XChainMG) handleGetAuthentication(msg *xuper_p2p.XuperMessage) (*xuper_p2p.XuperMessage, error) {
+	logid := msg.Header.Logid
+	xm.Log.Trace("Start to handleGetAuthentication", "logid", logid)
+	auths := &pb.IdentityAuths{}
+	err := proto.Unmarshal(msg.Data.MsgInfo, auths)
+	if err != nil {
+		xm.Log.Error("handleGetAuthentication unmarshal msg error", "error", err.Error())
+		res, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, "", logid,
+			xuper_p2p.XuperMessage_GET_AUTHENTICATION_RES, nil, xuper_p2p.XuperMessage_UNMARSHAL_MSG_BODY_ERROR)
+		return res, errors.New("unmarshal msg error")
+	}
+
+	addrs := &[]string{}
+	for _, v := range auths.Auth {
+		cryptoClient, err := crypto_client.CreateCryptoClient(v.CryptoType)
+		if err != nil {
+			xm.Log.Error("handleGetAuthentication Create crypto client error", "error", err.Error())
+			res, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, "", logid,
+				xuper_p2p.XuperMessage_GET_AUTHENTICATION_RES, nil, xuper_p2p.XuperMessage_GET_AUTHENTICATION_ERROR)
+			return res, errors.New("handleGetAuthentication Create crypto client error")
+		}
+
+		publicKey, err := cryptoClient.GetEcdsaPublicKeyFromJSON(v.Pubkey)
+		if err != nil {
+			xm.Log.Error("handleGetAuthentication GetEcdsaPublicKeyFromJSON error", "error", err.Error())
+			res, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, "", logid,
+				xuper_p2p.XuperMessage_GET_AUTHENTICATION_RES, nil, xuper_p2p.XuperMessage_GET_AUTHENTICATION_ERROR)
+			return res, err
+		}
+
+		isMatch, _ := cryptoClient.VerifyAddressUsingPublicKey(v.Addr, publicKey)
+		if !isMatch {
+			xm.Log.Error("handleGetAuthentication address and public key not match")
+			res, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, "", logid,
+				xuper_p2p.XuperMessage_GET_AUTHENTICATION_RES, nil, xuper_p2p.XuperMessage_GET_AUTHENTICATION_ERROR)
+			return res, errors.New("handleGetAuthentication address and public key not match")
+		}
+
+		data := hash.DoubleSha256([]byte(v.PeerID + v.Addr))
+		if ok, _ := cryptoClient.VerifyECDSA(publicKey, v.Sign, data); !ok {
+			xm.Log.Error("handleGetAuthentication verify sign error")
+			res, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, "", logid,
+				xuper_p2p.XuperMessage_GET_AUTHENTICATION_RES, nil, xuper_p2p.XuperMessage_GET_AUTHENTICATION_ERROR)
+			return res, errors.New("handleGetAuthentication verify sign error")
+		}
+
+		*addrs = append(*addrs, v.Addr)
+	}
+
+	resBuf, _ := json.Marshal(addrs)
+	res, err := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, "", logid,
+		xuper_p2p.XuperMessage_GET_AUTHENTICATION_RES, resBuf, xuper_p2p.XuperMessage_SUCCESS)
+	return res, err
 }

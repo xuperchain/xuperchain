@@ -3,17 +3,20 @@ package p2pv2
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"errors"
 	"io"
 	"sync"
 	"time"
 
 	ggio "github.com/gogo/protobuf/io"
+	"github.com/golang/protobuf/proto"
 	"github.com/libp2p/go-libp2p-net"
 	"github.com/libp2p/go-libp2p-peer"
 	ma "github.com/multiformats/go-multiaddr"
 
 	p2pPb "github.com/xuperchain/xuperunion/p2pv2/pb"
+	"github.com/xuperchain/xuperunion/pb"
 )
 
 // define common errors
@@ -224,4 +227,50 @@ func (s *Stream) ctxWaitRes(ctx context.Context, msg *p2pPb.XuperMessage, resCh 
 			continue
 		}
 	}
+}
+
+// Authenticate it's used for identity authentication
+func (s *Stream) Authenticate() error {
+	authRequests := []*pb.IdentityAuth{}
+	for _, v := range s.node.addrs {
+		authRequest, err := GetAuthRequest(s.p.Pretty(), v)
+		if err != nil {
+			s.node.log.Warn("Authenticate GetAuthRequest error", "error", err)
+		}
+		authRequests = append(authRequests, authRequest)
+	}
+
+	authRes := &pb.IdentityAuths{
+		Auth: authRequests,
+	}
+
+	msgbuf, err := proto.Marshal(authRes)
+	if err != nil {
+		s.node.log.Warn("Authenticate Marshal msg error", "error", err)
+	}
+
+	msg, err := p2pPb.NewXuperMessage(p2pPb.XuperMsgVersion2, "", "",
+		p2pPb.XuperMessage_GET_AUTHENTICATION, msgbuf, p2pPb.XuperMessage_NONE)
+
+	res, err := s.SendMessageWithResponse(context.Background(), msg)
+	if err != nil {
+		s.node.log.Warn("Stream Authenticate", "err", err)
+		return err
+	}
+
+	auths := &[]string{}
+	if res.Header.ErrorType != p2pPb.XuperMessage_SUCCESS {
+		return errors.New("Authenticate Get res type error")
+	}
+
+	err = json.Unmarshal(res.Data.MsgInfo, auths)
+	if err != nil {
+		s.node.log.Warn("Authenticate unmarshal res error", "error", err)
+		return errors.New("Authenticate Get res unmarshal error")
+	}
+
+	s.node.log.Trace("Stream Authenticate success", "type", res.Header.Type, "logid", res.Header.Logid,
+		"checksum", res.Header.DataCheckSum, "res.from", res.Header.From, "peerid", s.p.Pretty(),
+		"auths", auths)
+	return nil
 }

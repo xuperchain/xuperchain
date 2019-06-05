@@ -155,3 +155,10 @@ func (p *P2PServerV2) GetPeerUrls() []string {
 	}
 	return urls
 }
+
+// GetXchainAddr Get xchain address info from core
+func (p *P2PServerV2) GetXchainAddr(bcname string, info *XchainAddrInfo) {
+	if _, ok := p.node.addrs[bcname]; !ok {
+		p.node.addrs[bcname] = info
+	}
+}

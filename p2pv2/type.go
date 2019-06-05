@@ -23,4 +23,7 @@ type P2PServer interface {
 	GetNetURL() string
 	// 查询所连接节点的信息
 	GetPeerUrls() []string
+
+	// GetXchainAddr Get xchain address from xchaincore
+	GetXchainAddr(bcname string, info *XchainAddrInfo)
 }

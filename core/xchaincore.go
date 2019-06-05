@@ -26,6 +26,7 @@ import (
 	"github.com/xuperchain/xuperunion/contract/native"
 	"github.com/xuperchain/xuperunion/contract/proposal"
 	"github.com/xuperchain/xuperunion/contract/wasm"
+	"github.com/xuperchain/xuperunion/crypto/account"
 	crypto_client "github.com/xuperchain/xuperunion/crypto/client"
 	crypto_base "github.com/xuperchain/xuperunion/crypto/client/base"
 	"github.com/xuperchain/xuperunion/global"
@@ -103,7 +104,7 @@ func (xc *XChainCore) Status() int {
 
 // Init init the chain
 func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfig,
-	p2pv2 p2pv2.P2PServer, ker *kernel.Kernel, nodeMode string) error {
+	p2p p2pv2.P2PServer, ker *kernel.Kernel, nodeMode string) error {
 
 	// 设置全局随机数发生器的原始种子
 	err := global.SetSeed()
@@ -118,7 +119,7 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	xc.status = global.SafeModel
 	xc.bcname = bcname
 	xc.log = xlog
-	xc.P2pv2 = p2pv2
+	xc.P2pv2 = p2p
 	xc.nodeMode = nodeMode
 	xc.stopFlag = false
 	ledger.MemCacheSize = cfg.DBCache.MemCacheSize
@@ -177,6 +178,16 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	xc.address = address
 	xlog.Debug("Using address " + string(xc.address))
 	// this.address = utils.GetAddressFromPublicKey(1, this.publicKey)
+	addr, pub, pri, _ := account.GetAccInfoFromFile(keypath)
+
+	// write to p2p
+	xchainAddrInfo := &p2pv2.XchainAddrInfo{
+		Addr:       string(addr),
+		Pubkey:     pub,
+		Prikey:     pri,
+		CryptoType: cryptoType,
+	}
+	xc.P2pv2.GetXchainAddr(xc.bcname, xchainAddrInfo)
 
 	xc.Ledger, err = ledger.NewLedger(datapath, xc.log, datapathOthers, kvEngineType, cryptoType)
 	if err != nil {
