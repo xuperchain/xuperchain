@@ -24,7 +24,7 @@ var (
 	ErrUnregister      = errors.New("unregister subscriber error")
 )
 
-type xuperHandler func(*xuperp2p.XuperMessage) (*xuperp2p.XuperMessage, error)
+type xuperHandler func(*xuperp2p.XuperMessage, *Stream) (*xuperp2p.XuperMessage, error)
 
 // HandlerMap the message handler manager
 // keeps the message and handler mapping and recently handled messages

@@ -387,13 +387,14 @@ func TestXChainMgBasic(t *testing.T) {
 		sendBlockMsgInfo, xuper_p2p.XuperMessage_NONE)
 	xcmg.msgChan <- sendBlockMsgTmp
 	<-time.After(3 * time.Second)
-	xcmg.handleGetBlock(sendBlockMsgTmp)
+	var s *p2pv2.Stream
+	xcmg.handleGetBlock(sendBlockMsgTmp, s)
 	blkStatusMsg, _ := proto.Marshal(blkStatus)
 	blkStatusTmp, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, "xuper", "123459", xuper_p2p.XuperMessage_GET_BLOCKCHAINSTATUS,
 		blkStatusMsg, xuper_p2p.XuperMessage_NONE)
 	xcmg.msgChan <- blkStatusTmp
-	xcmg.handleGetBlockChainStatus(blkStatusTmp)
-	xcmg.handleConfirmBlockChainStatus(blkStatusTmp)
+	xcmg.handleGetBlockChainStatus(blkStatusTmp, s)
+	xcmg.handleConfirmBlockChainStatus(blkStatusTmp, s)
 
 	xcmg.Stop()
 }

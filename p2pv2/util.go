@@ -62,20 +62,17 @@ type XchainAddrInfo struct {
 	Addr   string
 	Pubkey []byte
 	Prikey []byte
+	PeerID string
 }
 
 // GetAuthRequest get auth request for authentication
-func GetAuthRequest(peerID string, v *XchainAddrInfo) (*pb.IdentityAuth, error) {
-	addr := v.Addr
-	pubkey := v.Pubkey
-	prikey := v.Prikey
-
+func GetAuthRequest(v *XchainAddrInfo) (*pb.IdentityAuth, error) {
 	cryptoClient, err := crypto_client.CreateCryptoClientFromJSONPublicKey(v.Pubkey)
 	if err != nil {
 		return nil, errors.New("GetAuthRequest: Create crypto client error")
 	}
 
-	privateKey, err := cryptoClient.GetEcdsaPrivateKeyFromJSON(prikey)
+	privateKey, err := cryptoClient.GetEcdsaPrivateKeyFromJSON(v.Prikey)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +80,7 @@ func GetAuthRequest(peerID string, v *XchainAddrInfo) (*pb.IdentityAuth, error) 
 	timeUnix := time.Now().Unix()
 	ts := strconv.FormatInt(timeUnix, 10)
 
-	digestHash := hash.UsingSha256([]byte(peerID + addr + ts))
+	digestHash := hash.UsingSha256([]byte(v.PeerID + v.Addr + ts))
 	sign, err := cryptoClient.SignECDSA(privateKey, digestHash)
 	if err != nil {
 		return nil, err
@@ -91,9 +88,9 @@ func GetAuthRequest(peerID string, v *XchainAddrInfo) (*pb.IdentityAuth, error) 
 
 	identityAuth := &pb.IdentityAuth{
 		Sign:      sign,
-		Pubkey:    pubkey,
-		Addr:      addr,
-		PeerID:    peerID,
+		Pubkey:    v.Pubkey,
+		Addr:      v.Addr,
+		PeerID:    v.PeerID,
 		Timestamp: ts,
 	}
 

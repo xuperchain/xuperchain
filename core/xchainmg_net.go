@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"math/big"
 	"net"
 	"strconv"
@@ -262,7 +263,7 @@ func (xm *XChainMG) ProcessBatchTx(batchTx *pb.BatchTxs) (*pb.BatchTxs, error) {
 }
 
 // 处理getBlock消息回调函数
-func (xm *XChainMG) handleGetBlock(msg *xuper_p2p.XuperMessage) (*xuper_p2p.XuperMessage, error) {
+func (xm *XChainMG) handleGetBlock(msg *xuper_p2p.XuperMessage, s *p2pv2.Stream) (*xuper_p2p.XuperMessage, error) {
 	bcname := msg.GetHeader().GetBcname()
 	logid := msg.GetHeader().GetLogid()
 	xm.Log.Trace("Start to handleGetBlock", "bcname", bcname, "logid", logid)
@@ -311,7 +312,7 @@ func (xm *XChainMG) handleGetBlock(msg *xuper_p2p.XuperMessage) (*xuper_p2p.Xupe
 }
 
 // 处理getBlockChainStatus消息回调函数
-func (xm *XChainMG) handleGetBlockChainStatus(msg *xuper_p2p.XuperMessage) (*xuper_p2p.XuperMessage, error) {
+func (xm *XChainMG) handleGetBlockChainStatus(msg *xuper_p2p.XuperMessage, s *p2pv2.Stream) (*xuper_p2p.XuperMessage, error) {
 	bcname := msg.GetHeader().GetBcname()
 	logid := msg.GetHeader().GetLogid()
 	xm.Log.Trace("Start to handleGetBlockChainStatus", "bcname", bcname, "logid", logid)
@@ -350,7 +351,7 @@ func (xm *XChainMG) handleGetBlockChainStatus(msg *xuper_p2p.XuperMessage) (*xup
 }
 
 // 处理confirm blockChain status 回调函数
-func (xm *XChainMG) handleConfirmBlockChainStatus(msg *xuper_p2p.XuperMessage) (*xuper_p2p.XuperMessage, error) {
+func (xm *XChainMG) handleConfirmBlockChainStatus(msg *xuper_p2p.XuperMessage, s *p2pv2.Stream) (*xuper_p2p.XuperMessage, error) {
 	bcname := msg.GetHeader().GetBcname()
 	logid := msg.GetHeader().GetLogid()
 	xm.Log.Trace("Start to handleConfirmBlockChainStatus", "bcname", bcname, "logid", logid)
@@ -391,7 +392,7 @@ func (xm *XChainMG) handleConfirmBlockChainStatus(msg *xuper_p2p.XuperMessage) (
 }
 
 // 处理获取RPC端口回调函数
-func (xm *XChainMG) handleGetRPCPort(msg *xuper_p2p.XuperMessage) (*xuper_p2p.XuperMessage, error) {
+func (xm *XChainMG) handleGetRPCPort(msg *xuper_p2p.XuperMessage, s *p2pv2.Stream) (*xuper_p2p.XuperMessage, error) {
 	xm.Log.Trace("Start to handleGetRPCPort", "logid", msg.GetHeader().GetLogid())
 	_, port, err := net.SplitHostPort(xm.Cfg.TCPServer.Port)
 	if err != nil {
@@ -402,7 +403,7 @@ func (xm *XChainMG) handleGetRPCPort(msg *xuper_p2p.XuperMessage) (*xuper_p2p.Xu
 }
 
 // handleGetAuthentication callback function for handling identity authentication
-func (xm *XChainMG) handleGetAuthentication(msg *xuper_p2p.XuperMessage) (*xuper_p2p.XuperMessage, error) {
+func (xm *XChainMG) handleGetAuthentication(msg *xuper_p2p.XuperMessage, s *p2pv2.Stream) (*xuper_p2p.XuperMessage, error) {
 	logid := msg.Header.Logid
 	auths := &pb.IdentityAuths{}
 	errRes := errorHandleGetAuthenMsg(logid)
@@ -415,6 +416,11 @@ func (xm *XChainMG) handleGetAuthentication(msg *xuper_p2p.XuperMessage) (*xuper
 
 	addrs := make([]string, 0, len(auths.Auth))
 	for _, v := range auths.Auth {
+		if s.PeerID() != v.PeerID {
+			xm.Log.Error("handleGetAuthentication peerID inconsistency", "s.PeerID", s.PeerID(), "v.PeerID", v.PeerID)
+			return errRes, errors.New("handleGetAuthentication peerID inconsistency")
+		}
+
 		cryptoClient, err := crypto_client.CreateCryptoClientFromJSONPublicKey(v.Pubkey)
 		if err != nil {
 			xm.Log.Error("handleGetAuthentication Create crypto client error", "error", err.Error())
@@ -440,7 +446,7 @@ func (xm *XChainMG) handleGetAuthentication(msg *xuper_p2p.XuperMessage) (*xuper
 			return errRes, errors.New("handleGetAuthentication timestamp fmt error")
 		}
 
-		if tsNow-tsPast >= config.DefautltAuthTimeout {
+		if math.Abs(float64(tsNow-tsPast)) >= config.DefautltAuthTimeout {
 			xm.Log.Error("handleGetAuthentication timestamp expired")
 			return errRes, errors.New("handleGetAuthentication timestamp expired")
 		}
@@ -461,6 +467,8 @@ func (xm *XChainMG) handleGetAuthentication(msg *xuper_p2p.XuperMessage) (*xuper
 	}
 
 	xm.Log.Trace("handleGetAuthentication success", "logid", logid, "addrs", addrs)
+
+	xm.P2pv2.SetReceivedAddr(addrs, s)
 
 	res, err := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, "", logid,
 		xuper_p2p.XuperMessage_GET_AUTHENTICATION_RES, resBuf, xuper_p2p.XuperMessage_SUCCESS)

@@ -239,7 +239,7 @@ func (s *Stream) ctxWaitRes(ctx context.Context, msg *p2pPb.XuperMessage, resCh 
 func (s *Stream) Authenticate() error {
 	authRequests := []*pb.IdentityAuth{}
 	for _, v := range s.node.addrs {
-		authRequest, err := GetAuthRequest(s.p.Pretty(), v)
+		authRequest, err := GetAuthRequest(v)
 		if err != nil {
 			s.node.log.Warn("Authenticate GetAuthRequest error", "error", err)
 		}
@@ -300,4 +300,9 @@ func (s *Stream) SetReceivedAddr(auths []string) {
 
 func (s *Stream) auth() bool {
 	return s.isAuth
+}
+
+// PeerID get peerID
+func (s *Stream) PeerID() string {
+	return s.p.Pretty()
 }

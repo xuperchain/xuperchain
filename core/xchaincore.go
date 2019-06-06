@@ -182,6 +182,7 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 		Addr:   string(addr),
 		Pubkey: pub,
 		Prikey: pri,
+		PeerID: xc.P2pv2.Node().NodeID().Pretty(),
 	}
 	xc.P2pv2.SetXchainAddr(xc.bcname, xchainAddrInfo)
 

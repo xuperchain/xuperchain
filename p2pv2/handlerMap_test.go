@@ -122,7 +122,7 @@ func TestMarkMsgAsHandled(t *testing.T) {
 	}
 }
 
-func testHandler(msg *xuperp2p.XuperMessage) (*xuperp2p.XuperMessage, error) {
+func testHandler(msg *xuperp2p.XuperMessage, s *Stream) (*xuperp2p.XuperMessage, error) {
 	fmt.Println("test handler ok")
 	return &xuperp2p.XuperMessage{
 		Header: &xuperp2p.XuperMessage_MessageHeader{
