@@ -66,6 +66,7 @@ type Ledger struct {
 	GenesisBlock   *GenesisBlock    //创始块
 	pendingTable   kvdb.Database    //保存临时的block区块
 	blockCache     *common.LRUCache // block cache, 加速QueryBlock
+	blkHeaderCache *common.LRUCache // block header cache, 加速fetchBlock
 	cryptoClient   crypto_base.CryptoClient
 }
 
@@ -125,6 +126,7 @@ func NewLedger(storePath string, xlog log.Logger, otherPaths []string, kvEngineT
 	ledger.xlog = xlog
 	ledger.meta = &pb.LedgerMeta{}
 	ledger.blockCache = common.NewLRUCache(BlockCacheSize)
+	ledger.blkHeaderCache = common.NewLRUCache(BlockCacheSize)
 	ledger.cryptoClient = cryptoClient
 	metaBuf, metaErr := ledger.metaTable.Get([]byte(""))
 	emptyLedger := false
@@ -325,6 +327,7 @@ func (l *Ledger) CheckBlock(blockid []byte, validator func(*pb.InternalBlock) bo
 // 注：只是打包到一个leveldb batch write对象中
 func (l *Ledger) saveBlock(block *pb.InternalBlock, batchWrite kvdb.Batch) error {
 	blockBuf, pbErr := proto.Marshal(block)
+	l.blkHeaderCache.Add(string(block.Blockid), block)
 	if pbErr != nil {
 		l.xlog.Warn("marshal block fail", "pbErr", pbErr)
 		return pbErr
@@ -335,6 +338,10 @@ func (l *Ledger) saveBlock(block *pb.InternalBlock, batchWrite kvdb.Batch) error
 
 //根据blockid获取一个Block, 只包含区块头
 func (l *Ledger) fetchBlock(blockid []byte) (*pb.InternalBlock, error) {
+	blkInCache, cacheHit := l.blkHeaderCache.Get(string(blockid))
+	if cacheHit {
+		return blkInCache.(*pb.InternalBlock), nil
+	}
 	blockBuf, findErr := l.blocksTable.Get(blockid)
 	if findErr != nil && findErr.Error() == kverr.ErrNotFound.Error() {
 		l.xlog.Warn("block can not be found", "findErr", findErr, "blockid", fmt.Sprintf("%x", blockid))
