@@ -284,6 +284,7 @@ func (s *Stream) Authenticate() error {
 	return nil
 }
 
+// SetReceivedAddr set received addr from peer
 func (s *Stream) SetReceivedAddr(auths []string) {
 	for _, n := range auths {
 		for _, o := range s.authAddr {

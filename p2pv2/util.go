@@ -57,12 +57,14 @@ func GetKeyPairFromPath(path string) (crypto.PrivKey, error) {
 	return crypto.UnmarshalPrivateKey(privData)
 }
 
+// XchainAddrInfo my xchain addr info
 type XchainAddrInfo struct {
 	Addr   string
 	Pubkey []byte
 	Prikey []byte
 }
 
+// GetAuthRequest get auth request for authentication
 func GetAuthRequest(peerID string, v *XchainAddrInfo) (*pb.IdentityAuth, error) {
 	addr := v.Addr
 	pubkey := v.Pubkey
