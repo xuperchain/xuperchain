@@ -39,8 +39,11 @@ func (sub *Subscriber) handleMessage(s *Stream, msg *xuperp2p.XuperMessage) {
 		return
 	}
 
-	if s.node.srv.config.IsAuthentication && !s.auth() {
-		return
+	if msg.Header.Type != xuperp2p.XuperMessage_GET_AUTHENTICATION_RES &&
+		msg.Header.Type != xuperp2p.XuperMessage_GET_AUTHENTICATION {
+		if s.node.srv.config.IsAuthentication && !s.auth() {
+			return
+		}
 	}
 
 	if sub.handler != nil {
@@ -53,8 +56,8 @@ func (sub *Subscriber) handleMessage(s *Stream, msg *xuperp2p.XuperMessage) {
 				fmt.Println("subscriber handleMessage to write msg error", "err", err)
 			}
 			if res.Header.Type == xuperp2p.XuperMessage_GET_AUTHENTICATION_RES {
-				auths := &[]string{}
-				err = json.Unmarshal(res.Data.MsgInfo, auths)
+				var auths []string
+				err = json.Unmarshal(res.Data.MsgInfo, &auths)
 				if err != nil {
 					fmt.Println("Authenticate Get res unmarshal error")
 				}

@@ -413,7 +413,7 @@ func (xm *XChainMG) handleGetAuthentication(msg *xuper_p2p.XuperMessage) (*xuper
 	}
 	xm.Log.Trace("Start to handleGetAuthentication", "logid", logid, "authsrequest", auths)
 
-	addrs := &[]string{}
+	addrs := make([]string, 0, len(auths.Auth))
 	for _, v := range auths.Auth {
 		cryptoClient, err := crypto_client.CreateCryptoClientFromJSONPublicKey(v.Pubkey)
 		if err != nil {
@@ -434,7 +434,12 @@ func (xm *XChainMG) handleGetAuthentication(msg *xuper_p2p.XuperMessage) (*xuper
 		}
 
 		tsNow := time.Now().Unix()
-		tsPast, _ := strconv.ParseInt(v.Timestamp, 10, 64)
+		tsPast, err := strconv.ParseInt(v.Timestamp, 10, 64)
+		if err != nil {
+			xm.Log.Error("handleGetAuthentication timestamp fmt error")
+			return errRes, errors.New("handleGetAuthentication timestamp fmt error")
+		}
+
 		if tsNow-tsPast >= config.DefautltAuthTimeout {
 			xm.Log.Error("handleGetAuthentication timestamp expired")
 			return errRes, errors.New("handleGetAuthentication timestamp expired")
@@ -446,7 +451,7 @@ func (xm *XChainMG) handleGetAuthentication(msg *xuper_p2p.XuperMessage) (*xuper
 			return errRes, errors.New("handleGetAuthentication verify sign error")
 		}
 
-		*addrs = append(*addrs, v.Addr)
+		addrs = append(addrs, v.Addr)
 	}
 
 	resBuf, err := json.Marshal(addrs)

@@ -159,26 +159,23 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	// 判断xuper.json和创世块参数的一致性，增加可读性
 	// 暂时可以不改
 	keypath := cfg.Miner.Keypath
-	privateKey, err := cryptoClient.GetEcdsaPrivateKeyFromFile(keypath + "/private.key")
-	if err != nil {
-		return err
-	}
-	xc.privateKey = privateKey
-	publicKey, err := cryptoClient.GetEcdsaPublicKeyFromFile(keypath + "/public.key")
-	if err != nil {
-		return err
-	}
-	xc.publicKey = publicKey
-	address, err := ioutil.ReadFile(keypath + "/address")
-	if err != nil {
-		xlog.Warn("load address error", "path", keypath+"/address")
-		return err
-	}
 
-	xc.address = address
-	xlog.Debug("Using address " + string(xc.address))
 	// this.address = utils.GetAddressFromPublicKey(1, this.publicKey)
-	addr, pub, pri, _ := account.GetAccInfoFromFile(keypath)
+	addr, pub, pri, err := account.GetAccInfoFromFile(keypath)
+	if err != nil {
+		xlog.Warn("load address and publickey and privatekey error", "path", keypath+"/address")
+		return err
+	}
+	xc.address = addr
+	xlog.Debug("Using address " + string(xc.address))
+	xc.privateKey, err = cryptoClient.GetEcdsaPrivateKeyFromJSON(pri)
+	if err != nil {
+		return err
+	}
+	xc.publicKey, err = cryptoClient.GetEcdsaPublicKeyFromJSON(pub)
+	if err != nil {
+		return err
+	}
 
 	// write to p2p
 	xchainAddrInfo := &p2pv2.XchainAddrInfo{
@@ -194,11 +191,11 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 		return err
 	}
 
-	publicKeyStr, err := cryptoClient.GetEcdsaPublicKeyJSONFormat(privateKey)
+	publicKeyStr, err := cryptoClient.GetEcdsaPublicKeyJSONFormat(xc.privateKey)
 	if err != nil {
 		return err
 	}
-	privateKeyStr, err := cryptoClient.GetEcdsaPrivateKeyJSONFormat(privateKey)
+	privateKeyStr, err := cryptoClient.GetEcdsaPrivateKeyJSONFormat(xc.privateKey)
 	if err != nil {
 		return err
 	}

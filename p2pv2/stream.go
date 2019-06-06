@@ -59,7 +59,7 @@ func NewStream(s net.Stream, no *Node) *Stream {
 		lk:       new(sync.Mutex),
 		node:     no,
 		isvalid:  true,
-		isAuth:   true,
+		isAuth:   false,
 		authAddr: []string{},
 	}
 	stream.Start()
@@ -262,22 +262,21 @@ func (s *Stream) Authenticate() error {
 	res, err := s.SendMessageWithResponse(context.Background(), msg)
 	if err != nil {
 		s.node.log.Warn("Stream Authenticate", "err", err)
-		s.isAuth = false
 		return err
 	}
 
 	if res.Header.ErrorType != p2pPb.XuperMessage_SUCCESS {
-		s.isAuth = false
 		return errors.New("Authenticate Get res type error")
 	}
 
-	auths := &[]string{}
-	err = json.Unmarshal(res.Data.MsgInfo, auths)
+	var auths []string
+	err = json.Unmarshal(res.Data.MsgInfo, &auths)
 	if err != nil {
-		s.isAuth = false
 		s.node.log.Warn("Authenticate unmarshal res error", "error", err)
 		return errors.New("Authenticate Get res unmarshal error")
 	}
+
+	s.isAuth = true
 
 	s.node.log.Trace("Stream Authenticate success", "type", res.Header.Type, "logid", res.Header.Logid,
 		"checksum", res.Header.DataCheckSum, "res.from", res.Header.From, "peerid", s.p.Pretty(),
@@ -285,8 +284,8 @@ func (s *Stream) Authenticate() error {
 	return nil
 }
 
-func (s *Stream) SetReceivedAddr(auths *[]string) {
-	for _, n := range *auths {
+func (s *Stream) SetReceivedAddr(auths []string) {
+	for _, n := range auths {
 		for _, o := range s.authAddr {
 			if n == o {
 				break
