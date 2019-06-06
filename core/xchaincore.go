@@ -600,15 +600,17 @@ func (xc *XChainCore) doMiner() {
 	minerTimer.Mark("ProcessConfirmBlock")
 	xc.log.Debug("[Minning] Start to BroadCast", "logid", header.Logid)
 
-	// broadcast block
-	block := &pb.Block{
-		Bcname:  xc.bcname,
-		Blockid: b.Blockid,
-		Block:   b,
-	}
-	msgInfo, _ := proto.Marshal(block)
-	msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, xc.bcname, "", xuper_p2p.XuperMessage_SENDBLOCK, msgInfo, xuper_p2p.XuperMessage_NONE)
-	go xc.P2pv2.SendMessage(context.Background(), msg, p2pv2.DefaultStrategy)
+	go func() {
+		// broadcast block
+		block := &pb.Block{
+			Bcname:  xc.bcname,
+			Blockid: b.Blockid,
+			Block:   b,
+		}
+		msgInfo, _ := proto.Marshal(block)
+		msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, xc.bcname, "", xuper_p2p.XuperMessage_SENDBLOCK, msgInfo, xuper_p2p.XuperMessage_NONE)
+		xc.P2pv2.SendMessage(context.Background(), msg, p2pv2.DefaultStrategy)
+	}()
 	minerTimer.Mark("BroadcastBlock")
 	if xc.Utxovm.IsAsync() {
 		xc.log.Warn("doMiner cost", "cost", minerTimer.Print(), "txCount", b.TxCount)
