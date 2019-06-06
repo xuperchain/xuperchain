@@ -22,7 +22,7 @@ const (
 	DefaultMaxStreamLimits  = 1024
 	DefaultMaxMessageSize   = 128
 	DefaultTimeout          = 3
-	DefaultIsAuthentication = true
+	DefaultIsAuthentication = false
 	DefautltAuthTimeout     = 30
 )
 
