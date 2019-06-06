@@ -560,12 +560,14 @@ func (l *Ledger) ConfirmBlock(block *pb.InternalBlock, isRoot bool) ConfirmStatu
 			newMeta.TipBlockid = block.Blockid
 			newMeta.TrunkHeight++
 			//因为改了pre_block的next_hash值，所以也要写回存储
-			saveErr := l.saveBlock(preBlock, batchWrite)
-			l.blockCache.Del(string(preBlock.Blockid))
-			if saveErr != nil {
-				l.xlog.Warn("save block fail", "saveErr", saveErr)
-				confirmStatus.Succ = false
-				return confirmStatus
+			if !DisableTxDedup {
+				saveErr := l.saveBlock(preBlock, batchWrite)
+				l.blockCache.Del(string(preBlock.Blockid))
+				if saveErr != nil {
+					l.xlog.Warn("save block fail", "saveErr", saveErr)
+					confirmStatus.Succ = false
+					return confirmStatus
+				}
 			}
 		} else {
 			//在分支上
