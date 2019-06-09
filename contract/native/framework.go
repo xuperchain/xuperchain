@@ -33,6 +33,11 @@ const (
 func New(cfg *config.NativeConfig, rootpath string, xlog log.Logger, otherPaths []string, kvEngineType string) (*GeneralSCFramework, error) {
 	rootpath, _ = filepath.Abs(rootpath)
 	xlog.Info("native.New", "rootpath", rootpath)
+	rootPathErr := os.MkdirAll(rootpath, 0755)
+	if rootPathErr != nil {
+		xlog.Warn("failed to create rootpath", rootpath)
+		return nil, rootPathErr
+	}
 	dbpath := rootpath + "/framework"
 	plgMgr, plgErr := pluginmgr.GetPluginMgr()
 	if plgErr != nil {

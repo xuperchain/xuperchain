@@ -4,7 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"fmt"
+	//"fmt"
 	"math/big"
 	"sort"
 	"strconv"
@@ -66,42 +66,39 @@ func (tp *TDpos) getTermProposer(term int64) []string {
 	}
 	key := GenTermCheckKey(tp.version, term)
 	val, err := tp.utxoVM.GetFromTable(nil, []byte(key))
-	tp.log.Trace("the getTermProposer - GetFromTable err is:", "err", err)
-	if err != nil {
-		if err != leveldb.ErrNotFound && err.Error() != "Key not found" {
-			tp.log.Error("TDpos getTermProposer vote result error", "term", term, "error", err)
-			return nil
-		} else if err == leveldb.ErrNotFound || err.Error() == "Key not found" {
-			fmt.Println("tp.version: ", tp.version)
-			it := tp.utxoVM.ScanWithPrefix([]byte(genTermCheckKeyPrefix(tp.version)))
-			if it.Last() {
-				termLast, err := parseTermCheckKey(string(it.Key()))
-				tp.log.Trace("TDpos getTermProposer ", "termLast", string(it.Key()))
-				if err != nil {
-					tp.log.Warn("TDpos getTermProposer parseTermCheckKey error", "error", err)
+	if err != nil && err != leveldb.ErrNotFound && err.Error() != "Key not found" {
+		tp.log.Error("TDpos getTermProposer vote result error", "term", term, "error", err)
+		return nil
+	} else if err == leveldb.ErrNotFound || err.Error() == "Key not found" {
+		tp.log.Warn("TDpos getTermProposer: ", "tp.version:", tp.version)
+		it := tp.utxoVM.ScanWithPrefix([]byte(genTermCheckKeyPrefix(tp.version)))
+		if it.Last() {
+			termLast, err := parseTermCheckKey(string(it.Key()))
+			tp.log.Trace("TDpos getTermProposer ", "termLast", string(it.Key()))
+			if err != nil {
+				tp.log.Warn("TDpos getTermProposer parseTermCheckKey error", "error", err)
+				return nil
+			}
+			if termLast == term+1 {
+				if it.Prev() {
+					tp.log.Trace("TDpos getTermProposer ", "key", string(it.Key()))
+				} else {
+					tp.log.Trace("TDpos getTermProposer parseTermCheckKey get prev nil")
+					it.Last()
+					keyLast := string(it.Key())
+					it.First()
+					ketFirst := string(it.Key())
+					if keyLast == ketFirst {
+						return tp.config.initProposer[1]
+					}
+					tp.log.Warn("TDpos getTermProposer parseTermCheckKey get prev error", "error", err)
 					return nil
 				}
-				if termLast == term+1 {
-					if it.Prev() {
-						tp.log.Trace("TDpos getTermProposer ", "key", string(it.Key()))
-					} else {
-						tp.log.Trace("TDpos getTermProposer parseTermCheckKey get prev nil")
-						it.Last()
-						keyLast := string(it.Key())
-						it.First()
-						ketFirst := string(it.Key())
-						if keyLast == ketFirst {
-							return tp.config.initProposer[1]
-						}
-						tp.log.Warn("TDpos getTermProposer parseTermCheckKey get prev error", "error", err)
-						return nil
-					}
-				}
-				val = it.Value()
-			} else {
-				tp.log.Warn("TDpos getTermProposer query from table is nil", "tp.config.initProposer[1]", tp.config.initProposer[1])
-				return tp.config.initProposer[1]
 			}
+			val = it.Value()
+		} else {
+			tp.log.Warn("TDpos getTermProposer query from table is nil", "tp.config.initProposer[1]", tp.config.initProposer[1])
+			return tp.config.initProposer[1]
 		}
 	}
 	proposers := []string{}

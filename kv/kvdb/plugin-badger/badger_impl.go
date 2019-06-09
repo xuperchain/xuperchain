@@ -166,20 +166,20 @@ func (bdb *BadgerDatabase) NewIteratorWithPrefix(prefix []byte) kvdb.Iterator {
 		AllVersions:    false,
 		Prefix:         prefix,
 	}
-	return NewBadgerIterator(bdb.db, iteratorOptions, prefix, []byte("00"))
+	return NewBadgerIterator(bdb.db, iteratorOptions, true, false, prefix, []byte("00"))
 }
 
 func (bdb *BadgerDatabase) NewIteratorWithRange(start []byte, limit []byte) kvdb.Iterator {
 	//startStr := string(start)
 	//limitStr := string(limit)
 
-	commStr := "ab"
+	//commStr := "ab"
 	opt := badger.IteratorOptions{
 		PrefetchValues: true,
 		PrefetchSize:   100,
 		Reverse:        false,
 		AllVersions:    false,
-		Prefix:         []byte(commStr),
+		//Prefix:         []byte(commStr),
 	}
-	return NewBadgerIterator(bdb.db, opt, start, limit)
+	return NewBadgerIterator(bdb.db, opt, false, true, start, limit)
 }

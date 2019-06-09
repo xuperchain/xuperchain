@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+
 	"github.com/dgraph-io/badger"
 	//"github.com/xuperchain/xuperunion/kv/kvdb"
 )
@@ -14,9 +16,12 @@ type BadgerIterator struct {
 	txn        *badger.Txn
 	init       bool
 	prefixIter bool
+	rangeIter  bool
+	opts       badger.IteratorOptions
+	direction  bool
 }
 
-func NewBadgerIterator(db *badger.DB, iterOptions badger.IteratorOptions, first []byte, last []byte) *BadgerIterator {
+func NewBadgerIterator(db *badger.DB, iterOptions badger.IteratorOptions, prefixIter bool, rangeIter bool, first []byte, last []byte) *BadgerIterator {
 	var it *badger.Iterator
 	badgerTxn := db.NewTransaction(false)
 	it = badgerTxn.NewIterator(iterOptions)
@@ -26,8 +31,11 @@ func NewBadgerIterator(db *badger.DB, iterOptions badger.IteratorOptions, first 
 		first:      first,
 		last:       last,
 		txn:        badgerTxn,
-		prefixIter: true,
+		prefixIter: prefixIter,
+		rangeIter:  rangeIter,
 		init:       false,
+		opts:       iterOptions,
+		direction:  false,
 	}
 	return badgerIterator
 }
@@ -60,27 +68,97 @@ func (iter *BadgerIterator) Value() []byte {
 }
 
 func (iter *BadgerIterator) Next() bool {
+	// last time call the function of Prev, here should renew iterator
+	if iter.direction == true {
+		key := iter.Key()
+		iter.badgerIter.Close()
+		iter.opts.Reverse = false
+		it := iter.txn.NewIterator(iter.opts)
+		iter.badgerIter = it
+		iter.badgerIter.Seek(key)
+	}
+	iter.direction = false
+	next := iter.next()
+	return next
+}
+
+func (iter *BadgerIterator) next() bool {
 	if !iter.init {
 		iter.badgerIter.Seek(iter.first)
 		iter.init = true
 	} else {
+		if !iter.badgerIter.Valid() {
+			return false
+		}
 		iter.badgerIter.Next()
 	}
 	if iter.prefixIter {
-		return iter.badgerIter.ValidForPrefix(iter.first)
+		return iter.badgerIter.Valid() && iter.badgerIter.ValidForPrefix(iter.first)
 	}
+	if iter.rangeIter {
+		valid := iter.badgerIter.Valid()
+		if valid == false {
+			return valid
+		}
+		item := iter.badgerIter.Item()
+		return bytes.Compare(item.Key(), iter.last) < 0 && bytes.Compare(item.Key(), iter.first) >= 0
+	}
+	// for general iterator
 	return iter.badgerIter.Valid()
 }
 
 func (iter *BadgerIterator) Prev() bool {
-	return true
+	// first time to call the function of Prev, renew Iterator
+	if iter.direction == false {
+		key := iter.Key()
+		iter.badgerIter.Close()
+		//iter.txn.Discard()
+		//badgerTxn := iter.badgerDB.NewTransaction(false)
+		iter.opts.Reverse = true
+		//it := badgerTxn.NewIterator(iter.opts)
+		it := iter.txn.NewIterator(iter.opts)
+		iter.badgerIter = it
+		//iter.txn = badgerTxn
+
+		iter.badgerIter.Seek(key)
+	}
+	iter.direction = true
+	// not first time to call the function of Prev, call it directly by next
+	next := iter.next()
+
+	return next
 }
 
+// Last skip to the last iterator
 func (iter *BadgerIterator) Last() bool {
+	key := iter.first
+	for iter.Next() {
+		key = iter.Key()
+	}
+	iter.badgerIter.Seek(key)
+
+	valid := iter.badgerIter.Valid()
+	if !valid {
+		return false
+	}
+	if iter.rangeIter {
+		item := iter.badgerIter.Item()
+		return bytes.Compare(item.Key(), iter.last) < 0 && bytes.Compare(item.Key(), iter.first) >= 0
+	}
+	// 如果根本不存在以iter.first为前缀, 那么应该返回false
+	if iter.prefixIter {
+		return iter.badgerIter.ValidForPrefix(key)
+	}
 	return true
 }
 
+// First skip to the first iterator
 func (iter *BadgerIterator) First() bool {
+	key := iter.first
+	for iter.Prev() {
+		key = iter.Key()
+	}
+	iter.badgerIter.Seek(key)
 	return true
 }
 

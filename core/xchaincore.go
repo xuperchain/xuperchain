@@ -9,7 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	//"path/filepath"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -21,11 +21,11 @@ import (
 	"github.com/xuperchain/xuperunion/common/probe"
 	"github.com/xuperchain/xuperunion/consensus"
 	"github.com/xuperchain/xuperunion/consensus/tdpos"
-	//"github.com/xuperchain/xuperunion/contract/bridge"
+	"github.com/xuperchain/xuperunion/contract/bridge"
 	"github.com/xuperchain/xuperunion/contract/kernel"
 	"github.com/xuperchain/xuperunion/contract/native"
 	"github.com/xuperchain/xuperunion/contract/proposal"
-	//"github.com/xuperchain/xuperunion/contract/wasm"
+	"github.com/xuperchain/xuperunion/contract/wasm"
 	crypto_client "github.com/xuperchain/xuperunion/crypto/client"
 	crypto_base "github.com/xuperchain/xuperunion/crypto/client/base"
 	"github.com/xuperchain/xuperunion/global"
@@ -228,37 +228,33 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	xc.Utxovm.RegisterVM("consensus", xc.con, global.VMPrivRing0)
 	xc.Utxovm.RegisterVM("proposal", xc.proposal, global.VMPrivRing0)
 
-	/*
-		nc, err := native.New(&cfg.Native, datapath+"/native", xc.log, datapathOthers, kvEngineType)
-		if err != nil {
-			xc.log.Error("make native", "error", err)
-			return err
-		}
-		xc.NativeCodeMgr = nc
+	nc, err := native.New(&cfg.Native, datapath+"/native", xc.log, datapathOthers, kvEngineType)
+	if err != nil {
+		xc.log.Error("make native", "error", err)
+		return err
+	}
+	xc.NativeCodeMgr = nc
 
-		xc.Utxovm.RegisterVM("native", nc, global.VMPrivRing0)
+	xc.Utxovm.RegisterVM("native", nc, global.VMPrivRing0)
 
+	xbridge := bridge.New()
+	wasmvm, err := wasm.New(&cfg.Wasm, filepath.Join(datapath, "wasm"), xbridge, xc.Utxovm.GetXModel())
+	if err != nil {
+		xc.log.Error("initialize WASM error", "error", err)
+		return err
+	}
 
-		xbridge := bridge.New()
-		wasmvm, err := wasm.New(&cfg.Wasm, filepath.Join(datapath, "wasm"), xbridge, xc.Utxovm.GetXModel())
-		if err != nil {
-			xc.log.Error("initialize WASM error", "error", err)
-			return err
-		}
-
-		xbridge.RegisterExecutor("native", nc)
-		xbridge.RegisterExecutor("wasm", wasmvm)
-		xbridge.RegisterToXCore(xc.Utxovm.RegisterVM3)
-	*/
+	xbridge.RegisterExecutor("native", nc)
+	xbridge.RegisterExecutor("wasm", wasmvm)
+	xbridge.RegisterToXCore(xc.Utxovm.RegisterVM3)
 
 	// 统一注册xuper3合约虚拟机
-	/*
-		x3kernel, xerr := kernel.NewKernel(wasmvm)
-		if xerr != nil {
-			return xerr
-		}
-		xc.Utxovm.RegisterVM3(x3kernel.GetName(), x3kernel)
-	*/
+
+	x3kernel, xerr := kernel.NewKernel(wasmvm)
+	if xerr != nil {
+		return xerr
+	}
+	xc.Utxovm.RegisterVM3(x3kernel.GetName(), x3kernel)
 
 	// 统一注册VAT
 	xc.Utxovm.RegisterVAT("Propose", xc.proposal, nil)
@@ -600,17 +596,15 @@ func (xc *XChainCore) doMiner() {
 	minerTimer.Mark("ProcessConfirmBlock")
 	xc.log.Debug("[Minning] Start to BroadCast", "logid", header.Logid)
 
-	go func() {
-		// broadcast block
-		block := &pb.Block{
-			Bcname:  xc.bcname,
-			Blockid: b.Blockid,
-			Block:   b,
-		}
-		msgInfo, _ := proto.Marshal(block)
-		msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, xc.bcname, "", xuper_p2p.XuperMessage_SENDBLOCK, msgInfo, xuper_p2p.XuperMessage_NONE)
-		xc.P2pv2.SendMessage(context.Background(), msg, p2pv2.DefaultStrategy)
-	}()
+	// broadcast block
+	block := &pb.Block{
+		Bcname:  xc.bcname,
+		Blockid: b.Blockid,
+		Block:   b,
+	}
+	msgInfo, _ := proto.Marshal(block)
+	msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, xc.bcname, "", xuper_p2p.XuperMessage_SENDBLOCK, msgInfo, xuper_p2p.XuperMessage_NONE)
+	go xc.P2pv2.SendMessage(context.Background(), msg, p2pv2.DefaultStrategy)
 	minerTimer.Mark("BroadcastBlock")
 	if xc.Utxovm.IsAsync() {
 		xc.log.Warn("doMiner cost", "cost", minerTimer.Print(), "txCount", b.TxCount)
