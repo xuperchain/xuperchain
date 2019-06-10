@@ -8,13 +8,14 @@ import (
 	"io/ioutil"
 	"math/big"
 	"net"
-	"os"
-	"os/exec"
+    "os"
+    "os/exec"
 	"testing"
 	"time"
 
 	"github.com/golang/protobuf/proto"
-	log "github.com/xuperchain/log15"
+	
+    log "github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperunion/common/config"
 	"github.com/xuperchain/xuperunion/global"
 	"github.com/xuperchain/xuperunion/p2pv2"
@@ -395,6 +396,17 @@ func TestXChainMgBasic(t *testing.T) {
 	xcmg.msgChan <- blkStatusTmp
 	xcmg.handleGetBlockChainStatus(blkStatusTmp, s)
 	xcmg.handleConfirmBlockChainStatus(blkStatusTmp, s)
+
+	// test authentication
+    res, err := xcmg.handleGetAuthentication(InitMsg(t), p2pv2.MockNewStream())
+	if err != nil {
+		t.Log(err.Error())
+	}
+
+	res, err = xcmg.handleGetAuthentication(InitEmptyMsg(t), p2pv2.MockNewStream())
+	if err != nil {
+		t.Log(err.Error())
+	}
 
 	xcmg.Stop()
 }

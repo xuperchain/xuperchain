@@ -294,8 +294,6 @@ func (s *Stream) SetReceivedAddr(auths []string) {
 		}
 		s.authAddr = append(s.authAddr, n)
 	}
-
-	s.node.log.Trace("Stream ReceivedAddr", "authAddr", s.authAddr, "stream.peer", s.p.Pretty())
 }
 
 func (s *Stream) auth() bool {
@@ -305,4 +303,12 @@ func (s *Stream) auth() bool {
 // PeerID get peerID
 func (s *Stream) PeerID() string {
 	return s.p.Pretty()
+}
+
+// MockNewStream mock new stream
+func MockNewStream() *Stream {
+	return &Stream{
+		p:        peer.ID("123456789"),
+		authAddr: []string{},
+	}
 }
