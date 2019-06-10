@@ -36,14 +36,14 @@ func TestGetKeyPairFromPath(t *testing.T) {
 }
 
 func TestGetAuthRequest(t *testing.T) {
-    xchainAddr := &XchainAddrInfo{
+	xchainAddr := &XchainAddrInfo{
 		Addr:   Address1,
 		Pubkey: []byte(Pubkey1),
 		Prikey: []byte(PrivateKey1),
 		PeerID: Peer1,
 	}
 
-    auth, err := GetAuthRequest(xchainAddr)
+	auth, err := GetAuthRequest(xchainAddr)
 	if err != nil {
 		t.Error(err.Error())
 	} else {

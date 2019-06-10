@@ -165,9 +165,9 @@ func (p *P2PServerV2) SetXchainAddr(bcname string, info *XchainAddrInfo) {
 
 // SetReceivedAddr set received addr
 func (p *P2PServerV2) SetReceivedAddr(auths []string, s *Stream) {
-    p.log.Info("SetReceivedAddr start")	
-    s.SetReceivedAddr(auths)
-    p.log.Info("SetReceivedAddr end", "s.p", s.PeerID(), "authAddrs", s.authAddr)
+	p.log.Info("SetReceivedAddr start")
+	s.SetReceivedAddr(auths)
+	p.log.Info("SetReceivedAddr end", "s.p", s.PeerID(), "authAddrs", s.authAddr)
 }
 
 // Node get node info
