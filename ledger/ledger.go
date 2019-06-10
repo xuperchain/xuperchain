@@ -600,7 +600,17 @@ func (l *Ledger) ConfirmBlock(block *pb.InternalBlock, isRoot bool) ConfirmStatu
 		return confirmStatus
 	}
 	txExist, txData := l.parallelCheckTx(realTransactions, block)
+	cbNum := 0
 	for _, tx := range realTransactions {
+		if tx.Coinbase {
+			cbNum = cbNum + 1
+		}
+		if cbNum > 1 {
+			confirmStatus.Succ = false
+			l.xlog.Warn("The num of Coinbase tx should not exceed one when confirm block")
+			return confirmStatus
+		}
+
 		pbTxBuf := txData[string(tx.Txid)]
 		if pbTxBuf == nil {
 			confirmStatus.Succ = false
