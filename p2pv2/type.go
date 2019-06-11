@@ -26,10 +26,4 @@ type P2PServer interface {
 
 	// SetXchainAddr Set xchain address from xchaincore
 	SetXchainAddr(bcname string, info *XchainAddrInfo)
-
-	// SetReceivedAddr Set received addr from peer
-	SetReceivedAddr(auths []string, s *Stream)
-
-	// RegisterSubscriber register p2p callback func
-	RegisterSubscriber() error
 }

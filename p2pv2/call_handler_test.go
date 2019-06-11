@@ -88,8 +88,13 @@ func TestHandleGetAuthentication(t *testing.T) {
 
 // MockNewStream mock new stream
 func MockNewStream() *Stream {
+	logger := log.New("module", "p2pv2")
+	logger.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
 	return &Stream{
 		p:        peer.ID("123456789"),
 		authAddr: []string{},
+		node: &Node{
+			log: logger,
+		},
 	}
 }

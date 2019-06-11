@@ -282,8 +282,9 @@ func (s *Stream) Authenticate() error {
 	return nil
 }
 
-// SetReceivedAddr set received addr from peer
-func (s *Stream) SetReceivedAddr(auths []string) {
+// setReceivedAddr set received addr from peer
+func (s *Stream) setReceivedAddr(auths []string) {
+	s.node.log.Info("SetReceivedAddr start")
 	for _, n := range auths {
 		for _, o := range s.authAddr {
 			if n == o {
@@ -292,6 +293,7 @@ func (s *Stream) SetReceivedAddr(auths []string) {
 		}
 		s.authAddr = append(s.authAddr, n)
 	}
+	s.node.log.Info("SetReceivedAddr end", "s.p", s.PeerID(), "authAddrs", s.authAddr)
 }
 
 func (s *Stream) auth() bool {

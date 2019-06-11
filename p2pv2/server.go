@@ -61,7 +61,7 @@ func NewP2PServerV2(cfg config.P2PConfig, lg log.Logger) (*P2PServerV2, error) {
 
 	no.SetServer(p2pSrv)
 
-	if err := p2pSrv.RegisterSubscriber(); err != nil {
+	if err := p2pSrv.registerSubscriber(); err != nil {
 		return nil, err
 	}
 
@@ -167,11 +167,4 @@ func (p *P2PServerV2) SetXchainAddr(bcname string, info *XchainAddrInfo) {
 		info.PeerID = p.node.id.Pretty()
 		p.node.addrs[bcname] = info
 	}
-}
-
-// SetReceivedAddr set received addr
-func (p *P2PServerV2) SetReceivedAddr(auths []string, s *Stream) {
-	p.log.Info("SetReceivedAddr start")
-	s.SetReceivedAddr(auths)
-	p.log.Info("SetReceivedAddr end", "s.p", s.PeerID(), "authAddrs", s.authAddr)
 }
