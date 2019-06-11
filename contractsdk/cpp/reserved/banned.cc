@@ -12,7 +12,7 @@ DEFINE_METHOD(Banned, add) {
     const std::string key = ctx->arg("contract");
     const std::string value = "true";
     bool ret = ctx->put_object(key, value);
-	std::string res = "add " + key;
+    std::string res = "add " + key;
     if (ret) {
         res = res + " succeed";
     } else {
@@ -25,7 +25,7 @@ DEFINE_METHOD(Banned, release) {
     xchain::Context* ctx = self.context();
     const std::string key = ctx->arg("contract");
     bool ret = ctx->delete_object(key);
-	std::string res = "release " + key;
+    std::string res = "release " + key;
     if (ret) {
         res = res + " succeed";
     } else {
