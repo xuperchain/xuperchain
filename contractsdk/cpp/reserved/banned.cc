@@ -13,11 +13,11 @@ DEFINE_METHOD(Banned, add) {
     const std::string value = "true";
     bool ret = ctx->put_object(key, value);
 	std::string res = "add " + key;
-	if (ret == false) {
-		res = res + " failed";
-	} else {
-		res = res + " succeed";
-	}
+    if (ret) {
+        res = res + " succeed";
+    } else {
+        res = res + " failed";
+    }
     ctx->ok(res);
 }
 
@@ -26,11 +26,11 @@ DEFINE_METHOD(Banned, release) {
     const std::string key = ctx->arg("contract");
     bool ret = ctx->delete_object(key);
 	std::string res = "release " + key;
-	if (ret == false) {
-		res = res + " failed";
-	} else {
-		res = res + " succeed";
-	}
+    if (ret) {
+        res = res + " succeed";
+    } else {
+        res = res + " failed";
+    }
     ctx->ok(res);
 }
 
