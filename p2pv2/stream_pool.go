@@ -100,9 +100,10 @@ func (sp *StreamPool) DelStream(stream *Stream) error {
 	if v, ok := sp.streams.Get(stream.p.Pretty()); ok {
 		val, _ := v.(*Stream)
 		sp.streams.Del(val.p.Pretty())
-		// sp call DelStream along with streamLimit.DelStream
-		sp.no.streamLimit.DelStream(stream.addr.String())
 	}
+	// sp call DelStream along with streamLimit.DelStream
+	// streams is a cache of LRU, so streamLimit.DelStream is outside
+	sp.no.streamLimit.DelStream(stream.addr.String())
 	return nil
 }
 

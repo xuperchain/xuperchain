@@ -68,7 +68,7 @@ func handleStream(s net.Stream) {
 		} else {
 			fmt.Println("new stream pool succeed ", streamPool)
 		}
-		node.strPool.SetStreamLimit(node.srv.streamLimit)
+		//node.strPool.SetStreamLimit(node.srv.streamLimit)
 		if streamPool != nil {
 			go streamPool.Start()
 		}
