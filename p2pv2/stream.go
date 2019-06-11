@@ -276,8 +276,6 @@ func (s *Stream) Authenticate() error {
 		return errors.New("Authenticate Get res unmarshal error")
 	}
 
-	s.isAuth = true
-
 	s.node.log.Trace("Stream Authenticate success", "type", res.Header.Type, "logid", res.Header.Logid,
 		"checksum", res.Header.DataCheckSum, "res.from", res.Header.From, "peerid", s.p.Pretty(),
 		"auths", auths)
@@ -303,12 +301,4 @@ func (s *Stream) auth() bool {
 // PeerID get peerID
 func (s *Stream) PeerID() string {
 	return s.p.Pretty()
-}
-
-// MockNewStream mock new stream
-func MockNewStream() *Stream {
-	return &Stream{
-		p:        peer.ID("123456789"),
-		authAddr: []string{},
-	}
 }

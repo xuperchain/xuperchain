@@ -30,6 +30,6 @@ type P2PServer interface {
 	// SetReceivedAddr Set received addr from peer
 	SetReceivedAddr(auths []string, s *Stream)
 
-	// Node get node info
-	Node() *Node
+	// RegisterSubscriber register p2p callback func
+	RegisterSubscriber() error
 }

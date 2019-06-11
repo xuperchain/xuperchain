@@ -2,20 +2,14 @@ package xchaincore
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"math"
 	"math/big"
 	"net"
-	"strconv"
-	"time"
 
 	"github.com/golang/protobuf/proto"
 
 	"github.com/xuperchain/xuperunion/common/config"
-	crypto_client "github.com/xuperchain/xuperunion/crypto/client"
-	"github.com/xuperchain/xuperunion/crypto/hash"
 	"github.com/xuperchain/xuperunion/global"
 	"github.com/xuperchain/xuperunion/p2pv2"
 	xuper_p2p "github.com/xuperchain/xuperunion/p2pv2/pb"
@@ -50,10 +44,6 @@ func (xm *XChainMG) RegisterSubscriber() error {
 	}
 
 	if _, err := xm.P2pv2.Register(p2pv2.NewSubscriber(nil, xuper_p2p.XuperMessage_GET_RPC_PORT, xm.handleGetRPCPort, "")); err != nil {
-		return err
-	}
-
-	if _, err := xm.P2pv2.Register(p2pv2.NewSubscriber(nil, xuper_p2p.XuperMessage_GET_AUTHENTICATION, xm.handleGetAuthentication, "")); err != nil {
 		return err
 	}
 
@@ -263,7 +253,7 @@ func (xm *XChainMG) ProcessBatchTx(batchTx *pb.BatchTxs) (*pb.BatchTxs, error) {
 }
 
 // 处理getBlock消息回调函数
-func (xm *XChainMG) handleGetBlock(msg *xuper_p2p.XuperMessage, s *p2pv2.Stream) (*xuper_p2p.XuperMessage, error) {
+func (xm *XChainMG) handleGetBlock(ctx context.Context, msg *xuper_p2p.XuperMessage) (*xuper_p2p.XuperMessage, error) {
 	bcname := msg.GetHeader().GetBcname()
 	logid := msg.GetHeader().GetLogid()
 	xm.Log.Trace("Start to handleGetBlock", "bcname", bcname, "logid", logid)
@@ -312,7 +302,7 @@ func (xm *XChainMG) handleGetBlock(msg *xuper_p2p.XuperMessage, s *p2pv2.Stream)
 }
 
 // 处理getBlockChainStatus消息回调函数
-func (xm *XChainMG) handleGetBlockChainStatus(msg *xuper_p2p.XuperMessage, s *p2pv2.Stream) (*xuper_p2p.XuperMessage, error) {
+func (xm *XChainMG) handleGetBlockChainStatus(ctx context.Context, msg *xuper_p2p.XuperMessage) (*xuper_p2p.XuperMessage, error) {
 	bcname := msg.GetHeader().GetBcname()
 	logid := msg.GetHeader().GetLogid()
 	xm.Log.Trace("Start to handleGetBlockChainStatus", "bcname", bcname, "logid", logid)
@@ -351,7 +341,7 @@ func (xm *XChainMG) handleGetBlockChainStatus(msg *xuper_p2p.XuperMessage, s *p2
 }
 
 // 处理confirm blockChain status 回调函数
-func (xm *XChainMG) handleConfirmBlockChainStatus(msg *xuper_p2p.XuperMessage, s *p2pv2.Stream) (*xuper_p2p.XuperMessage, error) {
+func (xm *XChainMG) handleConfirmBlockChainStatus(ctx context.Context, msg *xuper_p2p.XuperMessage) (*xuper_p2p.XuperMessage, error) {
 	bcname := msg.GetHeader().GetBcname()
 	logid := msg.GetHeader().GetLogid()
 	xm.Log.Trace("Start to handleConfirmBlockChainStatus", "bcname", bcname, "logid", logid)
@@ -392,7 +382,7 @@ func (xm *XChainMG) handleConfirmBlockChainStatus(msg *xuper_p2p.XuperMessage, s
 }
 
 // 处理获取RPC端口回调函数
-func (xm *XChainMG) handleGetRPCPort(msg *xuper_p2p.XuperMessage, s *p2pv2.Stream) (*xuper_p2p.XuperMessage, error) {
+func (xm *XChainMG) handleGetRPCPort(ctx context.Context, msg *xuper_p2p.XuperMessage) (*xuper_p2p.XuperMessage, error) {
 	xm.Log.Trace("Start to handleGetRPCPort", "logid", msg.GetHeader().GetLogid())
 	_, port, err := net.SplitHostPort(xm.Cfg.TCPServer.Port)
 	if err != nil {
@@ -400,83 +390,4 @@ func (xm *XChainMG) handleGetRPCPort(msg *xuper_p2p.XuperMessage, s *p2pv2.Strea
 		return nil, err
 	}
 	return xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, "", msg.GetHeader().GetLogid(), xuper_p2p.XuperMessage_GET_RPC_PORT_RES, []byte(":"+port), xuper_p2p.XuperMessage_NONE)
-}
-
-// handleGetAuthentication callback function for handling identity authentication
-func (xm *XChainMG) handleGetAuthentication(msg *xuper_p2p.XuperMessage, s *p2pv2.Stream) (*xuper_p2p.XuperMessage, error) {
-	logid := msg.Header.Logid
-	auths := &pb.IdentityAuths{}
-	errRes := errorHandleGetAuthenMsg(logid)
-	err := proto.Unmarshal(msg.Data.MsgInfo, auths)
-	if err != nil {
-		xm.Log.Error("handleGetAuthentication unmarshal msg error", "error", err.Error())
-		return errRes, errors.New("unmarshal msg error")
-	}
-	xm.Log.Trace("Start to handleGetAuthentication", "logid", logid, "authsrequest", auths)
-
-	addrs := make([]string, 0, len(auths.Auth))
-	for _, v := range auths.Auth {
-		if s.PeerID() != v.PeerID {
-			xm.Log.Error("handleGetAuthentication peerID inconsistency", "s.PeerID", s.PeerID(), "v.PeerID", v.PeerID)
-			return errRes, errors.New("handleGetAuthentication peerID inconsistency")
-		}
-
-		cryptoClient, err := crypto_client.CreateCryptoClientFromJSONPublicKey(v.Pubkey)
-		if err != nil {
-			xm.Log.Error("handleGetAuthentication Create crypto client error", "error", err.Error())
-			return errRes, errors.New("handleGetAuthentication Create crypto client error")
-		}
-
-		publicKey, err := cryptoClient.GetEcdsaPublicKeyFromJSON(v.Pubkey)
-		if err != nil {
-			xm.Log.Error("handleGetAuthentication GetEcdsaPublicKeyFromJSON error", "error", err.Error())
-			return errRes, err
-		}
-
-		isMatch, _ := cryptoClient.VerifyAddressUsingPublicKey(v.Addr, publicKey)
-		if !isMatch {
-			xm.Log.Error("handleGetAuthentication address and public key not match")
-			return errRes, errors.New("handleGetAuthentication address and public key not match")
-		}
-
-		tsNow := time.Now().Unix()
-		tsPast, err := strconv.ParseInt(v.Timestamp, 10, 64)
-		if err != nil {
-			xm.Log.Error("handleGetAuthentication timestamp fmt error")
-			return errRes, errors.New("handleGetAuthentication timestamp fmt error")
-		}
-
-		if math.Abs(float64(tsNow-tsPast)) >= config.DefautltAuthTimeout {
-			xm.Log.Error("handleGetAuthentication timestamp expired")
-			return errRes, errors.New("handleGetAuthentication timestamp expired")
-		}
-
-		data := hash.UsingSha256([]byte(v.PeerID + v.Addr + v.Timestamp))
-		if ok, _ := cryptoClient.VerifyECDSA(publicKey, v.Sign, data); !ok {
-			xm.Log.Error("handleGetAuthentication verify sign error")
-			return errRes, errors.New("handleGetAuthentication verify sign error")
-		}
-
-		addrs = append(addrs, v.Addr)
-	}
-
-	resBuf, err := json.Marshal(addrs)
-	if err != nil {
-		xm.Log.Error("handleGetAuthentication json marshal error")
-		return errRes, errors.New("handleGetAuthentication json marshal error")
-	}
-
-	xm.Log.Trace("handleGetAuthentication success", "logid", logid, "addrs", addrs)
-
-	xm.P2pv2.SetReceivedAddr(addrs, s)
-
-	res, err := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, "", logid,
-		xuper_p2p.XuperMessage_GET_AUTHENTICATION_RES, resBuf, xuper_p2p.XuperMessage_SUCCESS)
-	return res, err
-}
-
-func errorHandleGetAuthenMsg(logid string) *xuper_p2p.XuperMessage {
-	res, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, "", logid,
-		xuper_p2p.XuperMessage_GET_AUTHENTICATION_RES, nil, xuper_p2p.XuperMessage_GET_AUTHENTICATION_ERROR)
-	return res
 }
