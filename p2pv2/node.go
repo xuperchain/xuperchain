@@ -40,15 +40,16 @@ var (
 
 // Node is the node in the network
 type Node struct {
-	id      peer.ID
-	privKey crypto.PrivKey
-	log     log.Logger
-	host    host.Host
-	kdht    *dht.IpfsDHT
-	strPool *StreamPool
-	ctx     context.Context
-	srv     *P2PServerV2
-	quitCh  chan bool
+	id          peer.ID
+	privKey     crypto.PrivKey
+	log         log.Logger
+	host        host.Host
+	kdht        *dht.IpfsDHT
+	strPool     *StreamPool
+	ctx         context.Context
+	srv         *P2PServerV2
+	quitCh      chan bool
+	streamLimit *StreamLimit
 }
 
 // NewNode define the node of the xuper, it will set streamHandler for this node.
@@ -66,12 +67,15 @@ func NewNode(cfg config.P2PConfig, log log.Logger) (*Node, error) {
 		return nil, ErrCreateHost
 	}
 	no := &Node{
-		id:     ho.ID(),
-		log:    log,
-		ctx:    ctx,
-		host:   ho,
-		quitCh: make(chan bool, 1),
+		id:          ho.ID(),
+		log:         log,
+		ctx:         ctx,
+		host:        ho,
+		quitCh:      make(chan bool, 1),
+		streamLimit: &StreamLimit{},
 	}
+	// initialize StreamLimit, set limit size
+	no.streamLimit.Init(cfg.StreamIPLimitSize, log)
 	ho.SetStreamHandler(XuperProtocolID, no.handlerNewStream)
 
 	if no.kdht, err = dht.New(ctx, ho); err != nil {

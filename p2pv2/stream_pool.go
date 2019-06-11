@@ -62,6 +62,13 @@ func (sp *StreamPool) Stop() {
 
 // Add used to add a new net stream into pool
 func (sp *StreamPool) Add(s net.Stream) *Stream {
+	// filter by StreamLimit first
+	addrStr := s.Conn().RemoteMultiaddr().String()
+	peerID := s.Conn().RemotePeer()
+	if ok := sp.no.streamLimit.AddStream(addrStr, peerID); !ok {
+		s.Reset()
+		return nil
+	}
 	stream := NewStream(s, sp.no)
 	if err := sp.AddStream(stream); err != nil {
 		stream.Close()
@@ -95,6 +102,7 @@ func (sp *StreamPool) DelStream(stream *Stream) error {
 		val, _ := v.(*Stream)
 		sp.streams.Del(val.p.Pretty())
 	}
+	sp.no.streamLimit.DelStream(stream.addr.String())
 	return nil
 }
 
