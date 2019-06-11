@@ -62,6 +62,7 @@ func (sp *StreamPool) Stop() {
 
 // Add used to add a new net stream into pool
 func (sp *StreamPool) Add(s net.Stream) *Stream {
+	// filter by StreamLimit
 	addrStr := s.Conn().RemoteMultiaddr().String()
 	peerID := s.Conn().RemotePeer()
 	if ok := sp.no.streamLimit.AddStream(addrStr, peerID); !ok {
@@ -158,6 +159,8 @@ func (sp *StreamPool) streamForPeer(p peer.ID) (*Stream, error) {
 		if s.valid() {
 			return s, nil
 		}
+		sp.DelStream(s)
+		sp.no.streamLimit.DelStream(s.addr.String())
 	}
 
 	s, err := sp.no.host.NewStream(sp.no.ctx, p, XuperProtocolID)
