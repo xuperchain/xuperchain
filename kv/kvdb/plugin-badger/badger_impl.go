@@ -4,6 +4,7 @@ package main
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/dgraph-io/badger"
 	"github.com/xuperchain/log15"
@@ -27,6 +28,9 @@ func (bdb *BadgerDatabase) Path() string {
 }
 
 func (bdb *BadgerDatabase) Open(path string, options map[string]interface{}) error {
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		os.MkdirAll(path, 0755)
+	}
 	logger := log.New("database", path)
 	bdb.fn = path
 	opts := badger.DefaultOptions
