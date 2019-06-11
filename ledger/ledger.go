@@ -3,6 +3,7 @@ package ledger
 import (
 	"bytes"
 	"crypto/ecdsa"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"math/big"
@@ -607,7 +608,8 @@ func (l *Ledger) ConfirmBlock(block *pb.InternalBlock, isRoot bool) ConfirmStatu
 		}
 		if cbNum > 1 {
 			confirmStatus.Succ = false
-			l.xlog.Warn("The num of Coinbase tx should not exceed one when confirm block")
+			l.xlog.Warn("The num of Coinbase tx should not exceed one when confirm block",
+				"BlockID", hex.EncodeToString(tx.Blockid), "Miner", string(block.Proposer))
 			return confirmStatus
 		}
 
