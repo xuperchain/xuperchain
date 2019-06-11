@@ -22,7 +22,6 @@ func TestNewP2PServerV2(t *testing.T) {
 				IsHidden:        false,
 				BootNodes:       []string{},
 				MaxStreamLimits: 32,
-				StreamLimitSize: 10,
 			},
 		},
 	}

@@ -84,7 +84,7 @@ func (s *Stream) reset() {
 		s.isvalid = false
 	}
 	s.node.strPool.DelStream(s)
-	s.node.strPool.streamLimit.DelStream(s.addr.String())
+	s.node.streamLimit.DelStream(s.addr.String())
 }
 
 // readData loop to read data from stream

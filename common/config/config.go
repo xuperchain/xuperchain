@@ -13,16 +13,16 @@ const (
 	// NodeModeNormal NODE_MODE_NORMAL node mode for normal
 	NodeModeNormal = "Normal"
 	// NodeModeFastSync NODE_MODE_FAST_SYNC node mode for fast
-	NodeModeFastSync       = "FastSync"
-	DefaultNetPort         = 47101             // p2p port
-	DefaultNetKeyPath      = "./data/netkeys/" // node private key path
-	DefaultNetIsNat        = true              // use NAT
-	DefaultNetIsSecure     = true              // use encrypted secure transport
-	DefaultNetIsHidden     = false
-	DefaultMaxStreamLimits = 1024
-	DefaultMaxMessageSize  = 128
-	DefaultTimeout         = 3
-	DefaultStreamLimitSize = 10
+	NodeModeFastSync         = "FastSync"
+	DefaultNetPort           = 47101             // p2p port
+	DefaultNetKeyPath        = "./data/netkeys/" // node private key path
+	DefaultNetIsNat          = true              // use NAT
+	DefaultNetIsSecure       = true              // use encrypted secure transport
+	DefaultNetIsHidden       = false
+	DefaultMaxStreamLimits   = 1024
+	DefaultMaxMessageSize    = 128
+	DefaultTimeout           = 3
+	DefaultStreamIPLimitSize = 10
 )
 
 // LogConfig is the log config of node
@@ -76,8 +76,8 @@ type P2PConfig struct {
 	// maxMessageSize config the max message size
 	MaxMessageSize int64 `yaml:"maxMessageSize,omitempty"`
 	// timeout config the timeout of Request with response
-	Timeout         int64 `yaml:"timeout,omitempty"`
-	StreamLimitSize int64 `yaml:"streamLimitSize,omitempty"`
+	Timeout           int64 `yaml:"timeout,omitempty"`
+	StreamIPLimitSize int64 `yaml:"streamIPLimitSize,omitempty"`
 }
 
 // MinerConfig is the config of miner
@@ -273,15 +273,15 @@ func NewNodeConfig() *NodeConfig {
 // newP2pConfigWithDefault create default p2p configuration
 func newP2pConfigWithDefault() P2PConfig {
 	return P2PConfig{
-		Port:            DefaultNetPort,
-		KeyPath:         DefaultNetKeyPath,
-		IsNat:           DefaultNetIsNat,
-		IsSecure:        DefaultNetIsNat,
-		IsHidden:        DefaultNetIsHidden,
-		MaxStreamLimits: DefaultMaxStreamLimits,
-		MaxMessageSize:  DefaultMaxMessageSize,
-		Timeout:         DefaultTimeout,
-		StreamLimitSize: DefaultStreamLimitSize,
+		Port:              DefaultNetPort,
+		KeyPath:           DefaultNetKeyPath,
+		IsNat:             DefaultNetIsNat,
+		IsSecure:          DefaultNetIsNat,
+		IsHidden:          DefaultNetIsHidden,
+		MaxStreamLimits:   DefaultMaxStreamLimits,
+		MaxMessageSize:    DefaultMaxMessageSize,
+		Timeout:           DefaultTimeout,
+		StreamIPLimitSize: DefaultStreamIPLimitSize,
 	}
 }
 

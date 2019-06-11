@@ -3,7 +3,6 @@ package p2pv2
 import (
 	"context"
 	"errors"
-	"fmt"
 	"sync"
 
 	"github.com/libp2p/go-libp2p-net"
@@ -31,7 +30,6 @@ type StreamPool struct {
 	maxStreamLimit int32
 	no             *Node
 	quitCh         chan bool
-	streamLimit    *StreamLimit
 }
 
 // NewStreamPool create StreamPool instance
@@ -44,15 +42,6 @@ func NewStreamPool(maxStreamLimit int32, no *Node, log log.Logger) (*StreamPool,
 		maxStreamLimit: maxStreamLimit,
 		no:             no,
 	}, nil
-}
-
-// SetStreamLimit set StreamLimit
-func (sp *StreamPool) SetStreamLimit(sl *StreamLimit) {
-	if sl == nil {
-		sp.log.Warn("SetStreamLimit failed, StreamLimit is nil")
-		return
-	}
-	sp.streamLimit = sl
 }
 
 // Start start the stream pool
@@ -73,6 +62,12 @@ func (sp *StreamPool) Stop() {
 
 // Add used to add a new net stream into pool
 func (sp *StreamPool) Add(s net.Stream) *Stream {
+	addrStr := s.Conn().RemoteMultiaddr().String()
+	peerID := s.Conn().RemotePeer()
+	if ok := sp.no.streamLimit.AddStream(addrStr, peerID); !ok {
+		s.Reset()
+		return nil
+	}
 	stream := NewStream(s, sp.no)
 	if err := sp.AddStream(stream); err != nil {
 		stream.Close()
@@ -105,6 +100,8 @@ func (sp *StreamPool) DelStream(stream *Stream) error {
 	if v, ok := sp.streams.Get(stream.p.Pretty()); ok {
 		val, _ := v.(*Stream)
 		sp.streams.Del(val.p.Pretty())
+		// sp call DelStream along with streamLimit.DelStream
+		sp.no.streamLimit.DelStream(stream.addr.String())
 	}
 	return nil
 }
@@ -143,17 +140,9 @@ func (sp *StreamPool) sendMessage(ctx context.Context, msg *p2pPb.XuperMessage, 
 		sp.log.Error("StreamPool sendMessage error!", "error", err.Error())
 		return err
 	}
-
-	if ok := sp.streamLimit.AddStream(str.addr.String(), str.p); !ok {
-		sp.DelStream(str)
-		sp.streamLimit.DelStream(str.addr.String())
-		return fmt.Errorf("The peerID amount of same ip is full, addr: %s ", str.addr)
-	}
 	if err := str.SendMessage(ctx, msg); err != nil {
 		if err.Error() == "stream reset" {
 			sp.DelStream(str)
-			// 凡是有sp.DelStream的地方同时调用StreamLimit.DelStream
-			sp.streamLimit.DelStream(str.addr.String())
 		}
 		sp.log.Error("StreamPool stream SendMessage error!", "error", err)
 		return err
@@ -168,8 +157,6 @@ func (sp *StreamPool) streamForPeer(p peer.ID) (*Stream, error) {
 		if s.valid() {
 			return s, nil
 		}
-		sp.DelStream(s)
-		sp.streamLimit.DelStream(s.addr.String())
 	}
 
 	s, err := sp.no.host.NewStream(sp.no.ctx, p, XuperProtocolID)
@@ -226,13 +213,6 @@ func (sp *StreamPool) sendMessageWithResponse(ctx context.Context, msg *p2pPb.Xu
 	str, err := sp.streamForPeer(p)
 	if err != nil {
 		sp.log.Warn("StreamPool sendMessageWithResponse streamForPeer error!", "error", err.Error())
-		return
-	}
-
-	// 创建stream ok, then AddStream
-	if ok := sp.streamLimit.AddStream(str.addr.String(), str.p); !ok {
-		sp.DelStream(str)
-		sp.streamLimit.DelStream(str.addr.String())
 		return
 	}
 	res, err := str.SendMessageWithResponse(ctx, msg)
