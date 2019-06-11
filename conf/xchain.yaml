@@ -25,7 +25,6 @@ tcpServer:
 # 区块链节点配置
 p2pV2:
   port: 47101
-  streamIPLimitSize: 1
   #bootNodes:
   #  - "/ip4/<ip>/tcp/<port>/p2p/<node_hash>"
     

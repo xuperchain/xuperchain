@@ -177,13 +177,7 @@ func (no *Node) Stop() {
 
 // handlerNewStream parse message type and process message by handlerForMsgType
 func (no *Node) handlerNewStream(s net.Stream) {
-	addrStr := s.Conn().RemoteMultiaddr().String()
-	peerID := s.Conn().RemotePeer()
-	if ok := no.streamLimit.AddStream(addrStr, peerID); ok {
-		no.strPool.Add(s)
-	} else {
-		s.Reset()
-	}
+	no.strPool.Add(s)
 }
 
 // NodeID return the node ID
