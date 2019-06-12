@@ -54,8 +54,6 @@ DEFINE_METHOD(Banned, ban) {
 		}
     }
     ctx->ok("ban contract success");
-
-
 }
 
 DEFINE_METHOD(Banned, release) {
