@@ -22,7 +22,7 @@ const (
 	DefaultMaxStreamLimits   = 1024
 	DefaultMaxMessageSize    = 128
 	DefaultTimeout           = 3
-	DefaultStreamIPLimitSize = 10
+	DefaultStreamIPLimitSize = 10 // limitation size for same ip
 )
 
 // LogConfig is the log config of node
