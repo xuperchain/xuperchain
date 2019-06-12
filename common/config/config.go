@@ -13,16 +13,17 @@ const (
 	// NodeModeNormal NODE_MODE_NORMAL node mode for normal
 	NodeModeNormal = "Normal"
 	// NodeModeFastSync NODE_MODE_FAST_SYNC node mode for fast
-	NodeModeFastSync         = "FastSync"
-	DefaultNetPort           = 47101             // p2p port
-	DefaultNetKeyPath        = "./data/netkeys/" // node private key path
-	DefaultNetIsNat          = true              // use NAT
-	DefaultNetIsSecure       = true              // use encrypted secure transport
-	DefaultNetIsHidden       = false
-	DefaultMaxStreamLimits   = 1024
-	DefaultMaxMessageSize    = 128
-	DefaultTimeout           = 3
-	DefaultStreamIPLimitSize = 10 // limitation size for same ip
+	NodeModeFastSync       = "FastSync"
+	DefaultNetPort         = 47101             // p2p port
+	DefaultNetKeyPath      = "./data/netkeys/" // node private key path
+	DefaultNetIsNat        = true              // use NAT
+	DefaultNetIsSecure     = true              // use encrypted secure transport
+	DefaultNetIsHidden     = false
+	DefaultMaxStreamLimits = 1024
+	DefaultMaxMessageSize  = 128
+	DefaultTimeout         = 3
+	// limitation size for same ip
+	DefaultStreamIPLimitSize = 10
 )
 
 // LogConfig is the log config of node
