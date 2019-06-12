@@ -19,9 +19,9 @@ build:
 	PLATFORM=$(PLATFORM) ./build.sh
 
 test:
-	#go test `go list ./... | egrep -v 'test|xmodel|xvm'`
+	go test `go list ./... | egrep -v 'test'`
 	# test wasm sdk
-	#GOOS=js GOARCH=wasm go build github.com/xuperchain/xuperunion/contractsdk/go/driver
+	GOOS=js GOARCH=wasm go build github.com/xuperchain/xuperunion/contractsdk/go/driver
 
 clean:
 	rm -rf output

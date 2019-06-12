@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"math/big"
 	"os"
+	"strings"
 	"sync"
 	"testing"
 
@@ -294,7 +295,7 @@ func TestRunCheckValidater(t *testing.T) {
 		Tx: txCons,
 	}
 	checkValidErr := tdpos.runCheckValidater(desc2, block)
-	if checkValidErr != nil {
+	if checkValidErr != nil && !strings.HasSuffix(checkValidErr.Error(), "not found") {
 		t.Error("runCheckValidater error ", checkValidErr.Error())
 	}
 }

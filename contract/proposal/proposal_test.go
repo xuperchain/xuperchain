@@ -198,6 +198,7 @@ func TestSaveTrigger(t *testing.T) {
 	_, _, voteTx, _ := utxoObj.Transfer("alice", "alice", t, "19999990000000000", utxoObj.L.GetMeta().TipBlockid, []byte(voteJSON), 3)
 	t.Log("after vote ", utxoObj.L.GetMeta().TrunkHeight)
 	t.Log("vote tx id ", voteTx.Txid)
+
 	voteTx, err := prp.ledger.QueryTransaction(voteTx.Txid)
 	if err != nil {
 		t.Error("query transaction error ", err.Error())

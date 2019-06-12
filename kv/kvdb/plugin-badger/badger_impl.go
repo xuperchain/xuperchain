@@ -5,6 +5,7 @@ package main
 import (
 	"fmt"
 	"os"
+	"sync"
 
 	"github.com/dgraph-io/badger"
 	"github.com/xuperchain/log15"
@@ -39,7 +40,6 @@ func (bdb *BadgerDatabase) Open(path string, options map[string]interface{}) err
 	opts.SyncWrites = false
 	db, err := badger.Open(opts)
 	if err != nil {
-		fmt.Println("BadgerDatabase Open error ", err)
 		log.Warn("badger open failed", "path", path, "err", err)
 		return err
 	}
@@ -58,7 +58,6 @@ func (bdb *BadgerDatabase) Close() {
 }
 
 func (bdb *BadgerDatabase) Put(key []byte, value []byte) error {
-	fmt.Println("BadgerDatabase Put ", string(key), ":", string(value))
 	wb := bdb.db.NewWriteBatch()
 	defer wb.Cancel()
 	err := wb.Set(key, value, 0)
@@ -81,8 +80,6 @@ func (bdb *BadgerDatabase) Get(key []byte) ([]byte, error) {
 		if err != nil {
 			return err
 		}
-		fmt.Println("item ", item)
-		//buffer := make([]byte, badger.Options.ValueLogMaxEntries)
 		ival, err = item.ValueCopy(nil)
 		return err
 	})
@@ -104,35 +101,59 @@ func (bdb *BadgerDatabase) Has(key []byte) (bool, error) {
 }
 
 func (bdb *BadgerDatabase) NewBatch() kvdb.Batch {
-	return &BadgerBatch{db: bdb.db, b: bdb.db.NewWriteBatch(), keys: map[string]bool{}}
+	return &BadgerBatch{db: bdb.db, b: bdb.db.NewWriteBatch(), keys: map[string]bool{}, mutex: &sync.Mutex{}}
 }
 
 type BadgerBatch struct {
-	db   *badger.DB
-	b    *badger.WriteBatch
-	size int
-	keys map[string]bool
+	db      *badger.DB
+	b       *badger.WriteBatch
+	size    int
+	keys    map[string]bool
+	discard bool
+	mutex   *sync.Mutex
 }
 
 func (b *BadgerBatch) Put(key, value []byte) error {
+	b.mutex.Lock()
+	if b.discard {
+		b.b = b.db.NewWriteBatch()
+		b.discard = false
+	}
+	b.mutex.Unlock()
 	err := b.b.Set(key, value, 0)
 	if err != nil {
 		return err
 	}
+	b.mutex.Lock()
+	defer b.mutex.Unlock()
 	b.size += len(value)
 	return nil
 }
 
 func (b *BadgerBatch) Delete(key []byte) error {
+	b.mutex.Lock()
+	if b.discard {
+		b.b = b.db.NewWriteBatch()
+		b.discard = false
+	}
+	b.mutex.Unlock()
 	err := b.b.Delete(key)
 	if err != nil {
 		return err
 	}
+	b.mutex.Lock()
+	defer b.mutex.Unlock()
 	b.size += len(key)
 	return nil
 }
 
 func (b *BadgerBatch) PutIfAbsent(key, value []byte) error {
+	b.mutex.Lock()
+	defer b.mutex.Unlock()
+	if b.discard {
+		b.b = b.db.NewWriteBatch()
+		b.discard = false
+	}
 	if !b.keys[string(key)] {
 		err := b.b.Set(key, value, 0)
 		if err != nil {
@@ -146,11 +167,18 @@ func (b *BadgerBatch) PutIfAbsent(key, value []byte) error {
 }
 
 func (b *BadgerBatch) Exist(key []byte) bool {
+	b.mutex.Lock()
+	defer b.mutex.Unlock()
 	return b.keys[string(key)]
 }
 
 func (b *BadgerBatch) Write() error {
-	defer b.b.Cancel()
+	b.mutex.Lock()
+	defer func() {
+		b.b.Cancel()
+		b.discard = true
+		b.mutex.Unlock()
+	}()
 	return b.b.Flush()
 }
 
