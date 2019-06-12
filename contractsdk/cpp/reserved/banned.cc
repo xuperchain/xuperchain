@@ -6,10 +6,9 @@ class Banned : public xchain::Contract {};
 
 const char delimiter = ',';
 
-const std::vector<std::string> split(const std::string& rawStr) {
-    std::vector<std::string> res;
+void split(const std::string& rawStr, std::vector<std::string>& res) {
     if (rawStr == "") {
-        return res;
+        return;
     }
     int i = 0;
     for (; i < rawStr.size(); ++i) {
@@ -19,7 +18,7 @@ const std::vector<std::string> split(const std::string& rawStr) {
         break;
     }
     if (i >= rawStr.size()) {
-        return res;
+        return;
     }
     std::string delimStr = std::string(1, delimiter);
     std::string str = rawStr.substr(i) + delimStr;
@@ -31,7 +30,7 @@ const std::vector<std::string> split(const std::string& rawStr) {
         }
         str = str.substr(pos+1,str.size());
     }
-    return res;
+    return;
 }
 
 DEFINE_METHOD(Banned, initialize) {
@@ -44,7 +43,8 @@ DEFINE_METHOD(Banned, ban) {
     const std::string keys = ctx->arg("contract");
     const std::string value = "true";
 
-    const std::vector<std::string> contracts = split(keys);
+    std::vector<std::string> contracts;
+    split(keys, contracts);
 
     for (auto iter = contracts.begin(); iter != contracts.end(); ++iter) {
         bool ret = ctx->put_object(*iter, value);
@@ -60,7 +60,9 @@ DEFINE_METHOD(Banned, release) {
     xchain::Context* ctx = self.context();
     const std::string keys = ctx->arg("contract");
 
-    const std::vector<std::string> contracts = split(keys);
+    std::vector<std::string> contracts;
+    split(keys, contracts);
+
     for (auto iter = contracts.begin(); iter != contracts.end(); ++iter) {
         bool ret = ctx->delete_object(*iter);
         if (!ret) {
