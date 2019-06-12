@@ -80,8 +80,8 @@ func (e *elecCert) setContext(ctx code.Context, user string) {
 }
 
 func (e *elecCert) Initialize(ctx code.Context) code.Response {
-	user, ok := ctx.Args()["owner"].(string)
-	if !ok {
+	user := string(ctx.Args()["owner"])
+	if user == "" {
 		return code.Errors("Missing key: owner")
 	}
 
@@ -91,16 +91,16 @@ func (e *elecCert) Initialize(ctx code.Context) code.Response {
 }
 
 func (e *elecCert) Save(ctx code.Context) code.Response {
-	user, ok := ctx.Args()["owner"].(string)
-	if !ok {
+	user := string(ctx.Args()["owner"])
+	if user == "" {
 		return code.Errors("Missing key: owner")
 	}
-	filehash, ok := ctx.Args()["filehash"].(string)
-	if !ok {
+	filehash := string(ctx.Args()["filehash"])
+	if filehash == "" {
 		return code.Errors("Missing key: filehash")
 	}
-	ts, ok := ctx.Args()["timestamp"].(string)
-	if !ok {
+	ts := string(ctx.Args()["timestamp"])
+	if ts == "" {
 		return code.Errors("Missing key: filehash")
 	}
 
@@ -121,12 +121,12 @@ func (e *elecCert) Save(ctx code.Context) code.Response {
 }
 
 func (e *elecCert) Query(ctx code.Context) code.Response {
-	user, ok := ctx.Args()["owner"].(string)
-	if !ok {
+	user := string(ctx.Args()["owner"])
+	if user == "" {
 		return code.Errors("Missing key: owner")
 	}
-	filehash, ok := ctx.Args()["filehash"].(string)
-	if !ok {
+	filehash := string(ctx.Args()["filehash"])
+	if filehash == "" {
 		return code.Errors("Missing key: filehash")
 	}
 

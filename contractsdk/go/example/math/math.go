@@ -16,12 +16,12 @@ type math struct{}
 func (m *math) Initialize(nci code.Context) code.Response {
 	body := ""
 	for key, value := range nci.Args() {
-		err := nci.PutObject([]byte(key), []byte(value.(string)))
+		err := nci.PutObject([]byte(key), value)
 		if err != nil {
 			return code.Error(err)
 		}
 
-		body += fmt.Sprintf("[%s]=[%s]", key, value.(string))
+		body += fmt.Sprintf("[%s]=[%s]", key, value)
 	}
 
 	return code.OK([]byte(body))
@@ -31,7 +31,7 @@ func (m *math) Invoke(nci code.Context) code.Response {
 	var resp code.Response
 	args := nci.Args()
 	body := map[string]string{}
-	action := args["action"].(string)
+	action := string(args["action"])
 	if action == "query" {
 		for key := range args {
 			if key == "action" {
@@ -44,7 +44,7 @@ func (m *math) Invoke(nci code.Context) code.Response {
 			body[key] = string(res)
 		}
 	} else if action == "querytx" {
-		id := args["id"].(string)
+		id := string(args["id"])
 		rawid, _ := hex.DecodeString(id)
 		tx, err := nci.QueryTx(rawid)
 		if err != nil {
@@ -53,7 +53,7 @@ func (m *math) Invoke(nci code.Context) code.Response {
 		out, _ := json.MarshalIndent(tx, "", "  ")
 		os.Stderr.Write(out)
 	} else if action == "queryblock" {
-		id := args["id"].(string)
+		id := string(args["id"])
 		rawid, _ := hex.DecodeString(id)
 		block, err := nci.QueryBlock(rawid)
 		if err != nil {
@@ -74,7 +74,7 @@ func (m *math) Invoke(nci code.Context) code.Response {
 			if !ok {
 				return code.Error(fmt.Errorf("tmp is %s, cann't convert to int", string(res)))
 			}
-			tmpb, ok := new(big.Int).SetString(value.(string), 10)
+			tmpb, ok := new(big.Int).SetString(string(value), 10)
 			if !ok {
 				return code.Error(fmt.Errorf("tmp is %s, cann't convert to int", string(res)))
 			}
@@ -103,17 +103,12 @@ func (m *math) Invoke(nci code.Context) code.Response {
 }
 
 func (m *math) Query(nci code.Context) code.Response {
-	keys, ok := nci.Args()["keys"].([]interface{})
+	key, ok := nci.Args()["key"]
 	if !ok {
 		return code.Errors("argument keys not found")
 	}
-	result := make(map[string]string)
-	for _, ikey := range keys {
-		key := ikey.(string)
-		value, _ := nci.GetObject([]byte(key))
-		result[key] = string(value)
-	}
-	return code.JSON(result)
+	value, _ := nci.GetObject(key)
+	return code.OK(value)
 }
 
 func main() {

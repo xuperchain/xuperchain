@@ -103,8 +103,8 @@ func newERC20() *erc20 {
 }
 
 func (e *erc20) Initialize(ctx code.Context) code.Response {
-	initSupplyStr, ok := ctx.Args()["initSupply"].(string)
-	if !ok {
+	initSupplyStr := string(ctx.Args()["initSupply"])
+	if initSupplyStr == "" {
 		return code.Errors("missing initSupply")
 	}
 	caller := ctx.Caller()
@@ -144,12 +144,12 @@ func (e *erc20) transfer(from, to string, amount *big.Int) error {
 
 func (e *erc20) Transfer(ctx code.Context) code.Response {
 	from := ctx.Caller()
-	to, ok := ctx.Args()["to"].(string)
-	if !ok {
+	to := string(ctx.Args()["to"])
+	if to == "" {
 		return code.Errors("missing to argument")
 	}
-	amountstr, ok := ctx.Args()["amount"].(string)
-	if !ok {
+	amountstr := string(ctx.Args()["amount"])
+	if amountstr == "" {
 		return code.Errors("missing amount argument")
 	}
 
@@ -168,17 +168,17 @@ func (e *erc20) Transfer(ctx code.Context) code.Response {
 // TransferFrom(from string, to string, amount string)
 func (e *erc20) TransferFrom(ctx code.Context) code.Response {
 	caller := ctx.Caller()
-	from, ok := ctx.Args()["from"].(string)
-	if !ok {
+	from := string(ctx.Args()["from"])
+	if from == "" {
 		return code.Errors("missing from argument")
 	}
 
-	to, ok := ctx.Args()["to"].(string)
-	if !ok {
+	to := string(ctx.Args()["to"])
+	if to == "" {
 		return code.Errors("missing to argument")
 	}
-	amountstr, ok := ctx.Args()["amount"].(string)
-	if !ok {
+	amountstr := string(ctx.Args()["amount"])
+	if amountstr == "" {
 		return code.Errors("missing amount argument")
 	}
 
@@ -203,17 +203,17 @@ func (e *erc20) TransferFrom(ctx code.Context) code.Response {
 // Approve(spender string, amount string)
 func (e *erc20) Approve(ctx code.Context) code.Response {
 	caller := ctx.Caller()
-	spender, ok := ctx.Args()["spender"].(string)
-	if !ok {
+	spender := string(ctx.Args()["spender"])
+	if spender == "" {
 		return code.Errors("missing spender argument")
 	}
-	amountstr, ok := ctx.Args()["amount"].(string)
-	if !ok {
+	amountstr := string(ctx.Args()["amount"])
+	if amountstr == "" {
 		return code.Errors("missing amount argument")
 	}
 
 	amount := e.allowance.Get(caller + "_" + spender)
-	_, ok = amount.SetString(amountstr, 10)
+	_, ok := amount.SetString(amountstr, 10)
 	if !ok {
 		return code.Errors("bad amount number")
 	}
@@ -223,12 +223,12 @@ func (e *erc20) Approve(ctx code.Context) code.Response {
 
 // Allowance(owner string, spender string)
 func (e *erc20) Allowance(ctx code.Context) code.Response {
-	spender, ok := ctx.Args()["spender"].(string)
-	if !ok {
+	spender := string(ctx.Args()["spender"])
+	if spender == "" {
 		return code.Errors("missing spender argument")
 	}
-	owner, ok := ctx.Args()["owner"].(string)
-	if !ok {
+	owner := string(ctx.Args()["owner"])
+	if owner == "" {
 		return code.Errors("missing owner argument")
 	}
 
@@ -239,8 +239,8 @@ func (e *erc20) Allowance(ctx code.Context) code.Response {
 func (e *erc20) Invoke(ctx code.Context) code.Response {
 	var resp code.Response
 	e.xdb.SetContext(ctx)
-	action, ok := ctx.Args()["action"].(string)
-	if !ok {
+	action := string(ctx.Args()["action"])
+	if action == "" {
 		return code.Errors("missing action")
 	}
 	switch action {
@@ -264,8 +264,8 @@ func (e *erc20) Invoke(ctx code.Context) code.Response {
 }
 
 func (e *erc20) Balance(ctx code.Context) code.Response {
-	address, ok := ctx.Args()["address"].(string)
-	if !ok {
+	address := string(ctx.Args()["address"])
+	if address == "" {
 		return code.Errors("missing address argument")
 	}
 	amount := e.balanceOf.Get(address)
@@ -278,8 +278,8 @@ func (e *erc20) TotalSupply(ctx code.Context) code.Response {
 
 func (e *erc20) Query(ctx code.Context) code.Response {
 	e.xdb.SetContext(ctx)
-	action, ok := ctx.Args()["action"].(string)
-	if !ok {
+	action := string(ctx.Args()["action"])
+	if action == "" {
 		return code.Errors("missing action")
 	}
 	switch action {
