@@ -318,7 +318,7 @@ message Transaction
 
     repeated TxInputExt tx_inputs_ext = 23;
     repeated TxOutputExt tx_outputs_ext = 24;
-    InvokeRequest contract_request = 25;
+    repeated InvokeRequest contract_requests = 25;
 
     // 权限系统新增字段
     // 交易发起者, 可以是一个Address或者一个Account
@@ -670,7 +670,9 @@ message DposCheckResultsResponse
 message InvokeRPCRequest {
     Header header = 1;
     string bcname = 2;
-    InvokeRequest request = 3;
+    repeated InvokeRequest requests = 3;
+    string initiator = 4;
+    repeated string auth_require = 5;
 }
 
 message InvokeRPCResponse {
@@ -691,8 +693,9 @@ message InvokeRequest {
 message InvokeResponse {
     repeated TxInputExt inputs = 1;
     repeated TxOutputExt outputs = 2;
-    bytes response = 3;
+    repeated bytes response = 3;
     int64 gas_used = 4;
+    repeated InvokeRequest requests = 5;
 }
 
 //扩展输入

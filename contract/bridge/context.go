@@ -22,6 +22,10 @@ type Context struct {
 
 	Method string
 
+	Initiator string
+
+	AuthRequire []string
+
 	// Write by contract
 	Output *pb.Response
 }

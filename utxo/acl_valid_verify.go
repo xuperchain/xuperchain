@@ -37,7 +37,7 @@ func (uv *UtxoVM) verifyContractACLValid(contractName string, tx *pb.Transaction
 }
 
 func (uv *UtxoVM) verifyRWACLValid(tx *pb.Transaction) (bool, error) {
-	req := tx.GetContractRequest()
+	req := tx.GetContractRequests()
 	// if not contract, pass directly
 	if req == nil {
 		return true, nil
@@ -85,7 +85,7 @@ func (uv *UtxoVM) verifyRWACLValid(tx *pb.Transaction) (bool, error) {
 }
 
 func (uv *UtxoVM) verifyContractValid(tx *pb.Transaction) (bool, error) {
-	req := tx.GetContractRequest()
+	req := tx.GetContractRequests()
 	if req == nil {
 		return true, nil
 	}
@@ -93,15 +93,19 @@ func (uv *UtxoVM) verifyContractValid(tx *pb.Transaction) (bool, error) {
 	if dhErr != nil {
 		return false, dhErr
 	}
-	contractName := req.GetContractName()
-	methodName := req.GetMethodName()
 
-	ok, contractErr := pm.CheckContractMethodPerm(tx.AuthRequire, tx.AuthRequireSigns, digestHash, contractName, methodName, uv.aclMgr)
-	if !ok {
-		uv.xlog.Warn("tx info ", "AuthRequire ", tx.AuthRequire, "AuthRequireSigns ", tx.AuthRequireSigns)
+	for i := 0; i < len(req); i++ {
+		tmpReq := req[i]
+		contractName := tmpReq.GetContractName()
+		methodName := tmpReq.GetMethodName()
+
+		ok, contractErr := pm.CheckContractMethodPerm(tx.AuthRequire, tx.AuthRequireSigns, digestHash, contractName, methodName, uv.aclMgr)
+		if !ok {
+			uv.xlog.Warn("tx info ", "AuthRequire ", tx.AuthRequire, "AuthRequireSigns ", tx.AuthRequireSigns)
+		}
+		if contractErr != nil {
+			return ok, ErrRWAclNotEnough
+		}
 	}
-	if contractErr != nil {
-		return ok, ErrRWAclNotEnough
-	}
-	return ok, nil
+	return true, nil
 }
