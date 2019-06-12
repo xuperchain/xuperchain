@@ -13,15 +13,17 @@ const (
 	// NodeModeNormal NODE_MODE_NORMAL node mode for normal
 	NodeModeNormal = "Normal"
 	// NodeModeFastSync NODE_MODE_FAST_SYNC node mode for fast
-	NodeModeFastSync       = "FastSync"
-	DefaultNetPort         = 47101             // p2p port
-	DefaultNetKeyPath      = "./data/netkeys/" // node private key path
-	DefaultNetIsNat        = true              // use NAT
-	DefaultNetIsSecure     = true              // use encrypted secure transport
-	DefaultNetIsHidden     = false
-	DefaultMaxStreamLimits = 1024
-	DefaultMaxMessageSize  = 128
-	DefaultTimeout         = 3
+	NodeModeFastSync        = "FastSync"
+	DefaultNetPort          = 47101             // p2p port
+	DefaultNetKeyPath       = "./data/netkeys/" // node private key path
+	DefaultNetIsNat         = true              // use NAT
+	DefaultNetIsSecure      = true              // use encrypted secure transport
+	DefaultNetIsHidden      = false
+	DefaultMaxStreamLimits  = 1024
+	DefaultMaxMessageSize   = 128
+	DefaultTimeout          = 3
+	DefaultIsAuthentication = false
+	DefautltAuthTimeout     = 30
 	// limitation size for same ip
 	DefaultStreamIPLimitSize = 10
 )
@@ -77,7 +79,9 @@ type P2PConfig struct {
 	// maxMessageSize config the max message size
 	MaxMessageSize int64 `yaml:"maxMessageSize,omitempty"`
 	// timeout config the timeout of Request with response
-	Timeout           int64 `yaml:"timeout,omitempty"`
+	Timeout int64 `yaml:"timeout,omitempty"`
+	// IsAuthentication determine whether peerID and Xchain addr correspond
+	IsAuthentication  bool  `yaml:"isauthentication,omitempty"`
 	StreamIPLimitSize int64 `yaml:"streamIPLimitSize,omitempty"`
 }
 
@@ -274,14 +278,15 @@ func NewNodeConfig() *NodeConfig {
 // newP2pConfigWithDefault create default p2p configuration
 func newP2pConfigWithDefault() P2PConfig {
 	return P2PConfig{
-		Port:            DefaultNetPort,
-		KeyPath:         DefaultNetKeyPath,
-		IsNat:           DefaultNetIsNat,
-		IsSecure:        DefaultNetIsNat,
-		IsHidden:        DefaultNetIsHidden,
-		MaxStreamLimits: DefaultMaxStreamLimits,
-		MaxMessageSize:  DefaultMaxMessageSize,
-		Timeout:         DefaultTimeout,
+		Port:             DefaultNetPort,
+		KeyPath:          DefaultNetKeyPath,
+		IsNat:            DefaultNetIsNat,
+		IsSecure:         DefaultNetIsNat,
+		IsHidden:         DefaultNetIsHidden,
+		MaxStreamLimits:  DefaultMaxStreamLimits,
+		MaxMessageSize:   DefaultMaxMessageSize,
+		Timeout:          DefaultTimeout,
+		IsAuthentication: DefaultIsAuthentication,
 		// default stream ip limit size
 		StreamIPLimitSize: DefaultStreamIPLimitSize,
 	}

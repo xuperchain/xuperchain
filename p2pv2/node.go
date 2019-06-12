@@ -49,6 +49,7 @@ type Node struct {
 	ctx     context.Context
 	srv     *P2PServerV2
 	quitCh  chan bool
+	addrs   map[string]*XchainAddrInfo
 	// StreamLimit
 	streamLimit *StreamLimit
 }
@@ -73,6 +74,7 @@ func NewNode(cfg config.P2PConfig, log log.Logger) (*Node, error) {
 		ctx:    ctx,
 		host:   ho,
 		quitCh: make(chan bool, 1),
+		addrs:  map[string]*XchainAddrInfo{},
 		// new StreamLimit
 		streamLimit: &StreamLimit{},
 	}
