@@ -2,7 +2,6 @@ package native
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 
@@ -73,26 +72,13 @@ func (n *nativeInstance) Exec() error {
 		return fmt.Errorf("unknown status:%d", snc.status)
 	}
 
-	request := &pb.CallRequest{
+	request := &pb.NativeCallRequest{
 		Ctxid: n.ctx.ID,
-		// TODO: missing txid
-		Txid: nil,
-		// TODO: missing caller
-		Caller: "",
 	}
-	// FIXME: 为了兼容目前的数据类型
-	_args := make(map[string]string)
-	for k, v := range n.ctx.Args {
-		_args[k] = string(v)
-	}
-	out, _ := json.Marshal(_args)
-	request.Args = out
-	request.Method = n.ctx.Method
-	resp, err := snc.rpcClient.Call(context.TODO(), request)
+	_, err := snc.rpcClient.Call(context.TODO(), request)
 	if err != nil {
 		return err
 	}
 
-	n.ctx.Output = resp
 	return nil
 }

@@ -23,7 +23,7 @@ func (c *c2) Invoke(ctx code.Context) code.Response {
 	cnt += 1000
 
 	args := ctx.Args()
-	toaddr := args["to"].(string)
+	toaddr := string(args["to"])
 	amount := big.NewInt(1000)
 	err := ctx.Transfer(toaddr, amount)
 	if err != nil {
@@ -40,20 +40,6 @@ func (c *c2) Invoke(ctx code.Context) code.Response {
 		Message: string(cntstr),
 		Body:    cntstr,
 	}
-}
-
-func (c *c2) Query(ctx code.Context) code.Response {
-	keys, ok := ctx.Args()["keys"].([]interface{})
-	if !ok {
-		return code.Errors("argument keys not found")
-	}
-	result := make(map[string]string)
-	for _, ikey := range keys {
-		key := ikey.(string)
-		value, _ := ctx.GetObject([]byte(key))
-		result[key] = string(value)
-	}
-	return code.JSON(result)
 }
 
 func main() {

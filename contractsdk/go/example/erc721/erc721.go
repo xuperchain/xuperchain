@@ -184,12 +184,12 @@ func (e *erc721) setContext(ctx code.Context) {
 
 func (e *erc721) Initialize(ctx code.Context) code.Response {
 	e.setContext(ctx)
-	supplystr, ok := ctx.Args()["supply"].(string)
-	if !ok {
+	supplystr := string(ctx.Args()["supply"])
+	if supplystr == "" {
 		return code.Errors("Missing key: supply")
 	}
-	from, ok := ctx.Args()["from"].(string)
-	if !ok {
+	from := string(ctx.Args()["from"])
+	if from == "" {
 		return code.Errors("Missing key: supply")
 	}
 
@@ -223,8 +223,8 @@ func (e *erc721) Initialize(ctx code.Context) code.Response {
 
 func (e *erc721) Invoke(ctx code.Context) code.Response {
 	e.setContext(ctx)
-	action, ok := ctx.Args()["action"].(string)
-	if !ok {
+	action := string(ctx.Args()["action"])
+	if action == "" {
 		return code.Errors("Missing key: action")
 	}
 
@@ -243,16 +243,16 @@ func (e *erc721) Invoke(ctx code.Context) code.Response {
 }
 
 func (e *erc721) Transfer(ctx code.Context) code.Response {
-	from, ok := ctx.Args()["from"].(string)
-	if !ok {
+	from := string(ctx.Args()["from"])
+	if from == "" {
 		return code.Errors("Missing key: from")
 	}
-	to, ok := ctx.Args()["to"].(string)
-	if !ok {
+	to := string(ctx.Args()["to"])
+	if to == "" {
 		return code.Errors("Missing key: to")
 	}
-	tokenIDStr, ok := ctx.Args()["tokenID"].(string)
-	if !ok {
+	tokenIDStr := string(ctx.Args()["tokenID"])
+	if tokenIDStr == "" {
 		return code.Errors("Missing key: from")
 	}
 	tokenID, _ := strconv.ParseInt(tokenIDStr, 10, 64)
@@ -273,20 +273,20 @@ func (e *erc721) Transfer(ctx code.Context) code.Response {
 }
 
 func (e *erc721) TransferFrom(ctx code.Context) code.Response {
-	from, ok := ctx.Args()["from"].(string)
-	if !ok {
+	from := string(ctx.Args()["from"])
+	if from == "" {
 		return code.Errors("Missing key: from")
 	}
-	caller, ok := ctx.Args()["caller"].(string)
-	if !ok {
+	caller := string(ctx.Args()["caller"])
+	if caller == "" {
 		return code.Errors("Missing key: caller")
 	}
-	to, ok := ctx.Args()["to"].(string)
-	if !ok {
+	to := string(ctx.Args()["to"])
+	if to == "" {
 		return code.Errors("Missing key: to")
 	}
-	tokenIDStr, ok := ctx.Args()["tokenID"].(string)
-	if !ok {
+	tokenIDStr := string(ctx.Args()["tokenID"])
+	if tokenIDStr == "" {
 		return code.Errors("Missing key: from")
 	}
 	tokenID, _ := strconv.ParseInt(tokenIDStr, 10, 64)
@@ -309,16 +309,16 @@ func (e *erc721) TransferFrom(ctx code.Context) code.Response {
 }
 
 func (e *erc721) Approve(ctx code.Context) code.Response {
-	from, ok := ctx.Args()["from"].(string)
-	if !ok {
+	from := string(ctx.Args()["from"])
+	if from == "" {
 		return code.Errors("Missing key: from")
 	}
-	to, ok := ctx.Args()["to"].(string)
-	if !ok {
+	to := string(ctx.Args()["to"])
+	if to == "" {
 		return code.Errors("Missing key: to")
 	}
-	tokenIDStr, ok := ctx.Args()["tokenID"].(string)
-	if !ok {
+	tokenIDStr := string(ctx.Args()["tokenID"])
+	if tokenIDStr == "" {
 		return code.Errors("Missing key: from")
 	}
 	tokenID, _ := strconv.ParseInt(tokenIDStr, 10, 64)
@@ -338,12 +338,12 @@ func (e *erc721) Approve(ctx code.Context) code.Response {
 }
 
 func (e *erc721) ApproveAll(ctx code.Context) code.Response {
-	from, ok := ctx.Args()["from"].(string)
-	if !ok {
+	from := string(ctx.Args()["from"])
+	if from == "" {
 		return code.Errors("Missing key: from")
 	}
-	to, ok := ctx.Args()["to"].(string)
-	if !ok {
+	to := string(ctx.Args()["to"])
+	if to == "" {
 		return code.Errors("Missing key: to")
 	}
 	e.fillBalanceOf(from)
@@ -360,8 +360,8 @@ func (e *erc721) ApproveAll(ctx code.Context) code.Response {
 }
 
 func (e *erc721) Query(ctx code.Context) code.Response {
-	action, ok := ctx.Args()["action"].(string)
-	if !ok {
+	action := string(ctx.Args()["action"])
+	if action == "" {
 		return code.Errors("Missing key: action")
 	}
 
@@ -398,8 +398,8 @@ func (e *erc721) total(ctx code.Context) code.Response {
 }
 
 func (e *erc721) balance(ctx code.Context) code.Response {
-	from, ok := ctx.Args()["from"].(string)
-	if !ok {
+	from := string(ctx.Args()["from"])
+	if from == "" {
 		return code.Errors("Missing key: from")
 	}
 
@@ -424,12 +424,12 @@ func (e *erc721) balance(ctx code.Context) code.Response {
 }
 
 func (e *erc721) approval(ctx code.Context) code.Response {
-	caller, ok := ctx.Args()["to"].(string)
-	if !ok {
+	caller := string(ctx.Args()["to"])
+	if caller == "" {
 		return code.Errors("Missing key: caller")
 	}
-	from, ok := ctx.Args()["from"].(string)
-	if !ok {
+	from := string(ctx.Args()["from"])
+	if from == "" {
 		return code.Errors("Missing key: from")
 	}
 
