@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -780,6 +781,9 @@ func (xc *XChainCore) GetBlock(in *pb.BlockID) *pb.Block {
 
 	ib, err := xc.Ledger.QueryBlock(in.Blockid)
 	if err != nil {
+		if strings.HasSuffix(err.Error(), "Key not found") {
+			err = ledger.ErrBlockNotExist
+		}
 		switch err {
 		case ledger.ErrBlockNotExist:
 			out.Header.Error = pb.XChainErrorEnum_SUCCESS

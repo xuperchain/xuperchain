@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"os"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -194,8 +195,10 @@ func TestUtxoWorkWithLedgerBasic(t *testing.T) {
 	utxoVM, _ := NewUtxoVM("xuper", ledger, workspace, minerPrivateKey, minerPublicKey, []byte(minerAddress),
 		nil, false, DefaultKVEngine, crypto_client.CryptoTypeDefault)
 	_, err = utxoVM.QueryTx([]byte("123"))
-	if err != ErrTxNotFound {
-		t.Fatal("unexpected err", err)
+	if err != nil && err != ErrTxNotFound && err != errors.New("Key not found") {
+		if !strings.HasSuffix(err.Error(), "not found") {
+			t.Fatal("unexpected err", err)
+		}
 	}
 	//创建链的时候分配财富
 	tx, err := utxoVM.GenerateRootTx([]byte(`
