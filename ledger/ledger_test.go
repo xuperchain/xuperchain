@@ -133,6 +133,31 @@ func TestBasicFunc(t *testing.T) {
 	if ledger.GetMaxBlockSize() != 123 {
 		t.Fatalf("unexpected block size, %d", ledger.GetMeta().MaxBlockSize)
 	}
+
+	// coinbase txs > 1
+	t1 = &pb.Transaction{}
+	t2 = &pb.Transaction{}
+	t1.TxOutputs = append(t1.TxOutputs, &pb.TxOutput{Amount: []byte("666"), ToAddr: []byte(BobAddress)})
+	t1.Coinbase = true
+	t1.Desc = []byte("{}")
+	t1.Txid, _ = txhash.MakeTransactionID(t1)
+	t2.TxInputs = append(t2.TxInputs, &pb.TxInput{RefTxid: t1.Txid, RefOffset: 0, FromAddr: []byte(AliceAddress)})
+	t2.Coinbase = true
+	t2.Txid, _ = txhash.MakeTransactionID(t2)
+	block3, err := ledger.FormatBlock([]*pb.Transaction{t1, t2},
+		[]byte("xchain-Miner-222222"),
+		ecdsaPk,
+		223456789,
+		0,
+		0,
+		block.Blockid, big.NewInt(0),
+	)
+	t.Logf("bolock3 id %x", block3.Blockid)
+	confirmStatus = ledger.ConfirmBlock(block3, false)
+	if confirmStatus.Succ {
+		t.Fatal("The num of coinbase txs error")
+	}
+
 	ledger.Close()
 }
 
