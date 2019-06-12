@@ -15,7 +15,7 @@ const std::vector<std::string> split(const std::string& rawStr) {
     for (; i < rawStr.size(); ++i) {
         if (rawStr[i] == delimiter) {
             continue;
-		}
+        }
         break;
     }
     if (i >= rawStr.size()) {
