@@ -1,13 +1,13 @@
 #include "xchain/xchain.h"
 
-struct AntiYellow : public xchain::Contract {};
+struct ComplianceCheck : public xchain::Contract {};
 
-DEFINE_METHOD(AntiYellow, initialize) {
+DEFINE_METHOD(ComplianceCheck, initialize) {
     xchain::Context* ctx = self.context();
     ctx->ok("initialize succeed");
 }
 
-DEFINE_METHOD(AntiYellow, call) {
+DEFINE_METHOD(ComplianceCheck, call) {
     xchain::Context* ctx = self.context();
     ctx->ok("access permission succeed");
 }
