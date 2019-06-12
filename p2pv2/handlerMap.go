@@ -1,6 +1,7 @@
 package p2pv2
 
 import (
+	"context"
 	"errors"
 	"strconv"
 	"sync"
@@ -24,7 +25,7 @@ var (
 	ErrUnregister      = errors.New("unregister subscriber error")
 )
 
-type xuperHandler func(*xuperp2p.XuperMessage) (*xuperp2p.XuperMessage, error)
+type xuperHandler func(context.Context, *xuperp2p.XuperMessage) (*xuperp2p.XuperMessage, error)
 
 // HandlerMap the message handler manager
 // keeps the message and handler mapping and recently handled messages

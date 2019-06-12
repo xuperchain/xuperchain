@@ -83,6 +83,13 @@ func (sp *StreamPool) AddStream(stream *Stream) error {
 		return ErrStreamPoolFull
 	}
 
+	if sp.no.srv.config.IsAuthentication {
+		err := sp.Authenticate(stream)
+		if err != nil {
+			return err
+		}
+	}
+
 	if v, ok := sp.streams.Get(stream.p.Pretty()); ok {
 		val, _ := v.(*Stream)
 		sp.streams.Del(val.p.Pretty())
@@ -221,4 +228,10 @@ func (sp *StreamPool) sendMessageWithResponse(ctx context.Context, msg *p2pPb.Xu
 		return
 	}
 	ch <- res
+}
+
+// Authenticate it's used for identity authentication
+func (sp *StreamPool) Authenticate(stream *Stream) error {
+	err := stream.Authenticate()
+	return err
 }
