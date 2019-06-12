@@ -16,12 +16,15 @@ message XuperMessage {
         // 向邻近确认区块是否为最新状态区块
         CONFIRM_BLOCKCHAINSTATUS = 8;
         CONFIRM_BLOCKCHAINSTATUS_RES = 9;
-
+        
         MSG_TYPE_NONE = 10;
       
         // 询问RPC端口信息 
         GET_RPC_PORT = 11;
         GET_RPC_PORT_RES = 12;
+    
+        GET_AUTHENTICATION = 13;
+        GET_AUTHENTICATION_RES = 14;
     }
     enum ErrorType {
         // success 
@@ -37,7 +40,8 @@ message XuperMessage {
         BLOCKCHAIN_NOTEXIST = 7;
         GET_BLOCK_ERROR = 8;
         CONFIRM_BLOCKCHAINSTATUS_ERROR = 9;
-   }
+        GET_AUTHENTICATION_ERROR = 10;
+    }
 
     // MessageHeader is the message header of Xuper p2p server
     message MessageHeader {
