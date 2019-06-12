@@ -40,15 +40,16 @@ var (
 
 // Node is the node in the network
 type Node struct {
-	id          peer.ID
-	privKey     crypto.PrivKey
-	log         log.Logger
-	host        host.Host
-	kdht        *dht.IpfsDHT
-	strPool     *StreamPool
-	ctx         context.Context
-	srv         *P2PServerV2
-	quitCh      chan bool
+	id      peer.ID
+	privKey crypto.PrivKey
+	log     log.Logger
+	host    host.Host
+	kdht    *dht.IpfsDHT
+	strPool *StreamPool
+	ctx     context.Context
+	srv     *P2PServerV2
+	quitCh  chan bool
+	// StreamLimit
 	streamLimit *StreamLimit
 }
 
@@ -67,11 +68,12 @@ func NewNode(cfg config.P2PConfig, log log.Logger) (*Node, error) {
 		return nil, ErrCreateHost
 	}
 	no := &Node{
-		id:          ho.ID(),
-		log:         log,
-		ctx:         ctx,
-		host:        ho,
-		quitCh:      make(chan bool, 1),
+		id:     ho.ID(),
+		log:    log,
+		ctx:    ctx,
+		host:   ho,
+		quitCh: make(chan bool, 1),
+		// new StreamLimit
 		streamLimit: &StreamLimit{},
 	}
 	// initialize StreamLimit, set limit size

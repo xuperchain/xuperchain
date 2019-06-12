@@ -274,14 +274,15 @@ func NewNodeConfig() *NodeConfig {
 // newP2pConfigWithDefault create default p2p configuration
 func newP2pConfigWithDefault() P2PConfig {
 	return P2PConfig{
-		Port:              DefaultNetPort,
-		KeyPath:           DefaultNetKeyPath,
-		IsNat:             DefaultNetIsNat,
-		IsSecure:          DefaultNetIsNat,
-		IsHidden:          DefaultNetIsHidden,
-		MaxStreamLimits:   DefaultMaxStreamLimits,
-		MaxMessageSize:    DefaultMaxMessageSize,
-		Timeout:           DefaultTimeout,
+		Port:            DefaultNetPort,
+		KeyPath:         DefaultNetKeyPath,
+		IsNat:           DefaultNetIsNat,
+		IsSecure:        DefaultNetIsNat,
+		IsHidden:        DefaultNetIsHidden,
+		MaxStreamLimits: DefaultMaxStreamLimits,
+		MaxMessageSize:  DefaultMaxMessageSize,
+		Timeout:         DefaultTimeout,
+		// default stream ip limit size
 		StreamIPLimitSize: DefaultStreamIPLimitSize,
 	}
 }
