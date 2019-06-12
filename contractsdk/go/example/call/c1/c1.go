@@ -24,7 +24,7 @@ func (c *c1) Invoke(ctx code.Context) code.Response {
 
 	// 发起转账
 	args := ctx.Args()
-	toaddr := args["to"].(string)
+	toaddr := string(args["to"])
 	amount := big.NewInt(1)
 	err := ctx.Transfer(toaddr, amount)
 	if err != nil {
@@ -32,10 +32,10 @@ func (c *c1) Invoke(ctx code.Context) code.Response {
 	}
 
 	// 发起跨合约调用
-	callArgs := map[string]interface{}{
-		"to": toaddr,
+	callArgs := map[string][]byte{
+		"to": []byte(toaddr),
 	}
-	resp, err := ctx.Call("c2", "invoke", callArgs)
+	resp, err := ctx.Call("wasm", "c2", "invoke", callArgs)
 	if err != nil {
 		return code.Error(err)
 	}
@@ -62,20 +62,6 @@ func (c *c1) Invoke(ctx code.Context) code.Response {
 		Message: string(cntstr) + ":" + string(resp.Body),
 		Body:    cntstr,
 	}
-}
-
-func (c *c1) Query(ctx code.Context) code.Response {
-	keys, ok := ctx.Args()["keys"].([]interface{})
-	if !ok {
-		return code.Errors("argument keys not found")
-	}
-	result := make(map[string]string)
-	for _, ikey := range keys {
-		key := ikey.(string)
-		value, _ := ctx.GetObject([]byte(key))
-		result[key] = string(value)
-	}
-	return code.JSON(result)
 }
 
 func main() {

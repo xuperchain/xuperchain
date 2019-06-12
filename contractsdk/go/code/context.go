@@ -6,10 +6,7 @@ import (
 
 // Context is the context in which the contract runs
 type Context interface {
-	Args() map[string]interface{}
-	// TxID获取当前合约的交易id, Query调用里面为空
-	TxID() []byte
-	// Caller获取发起合约调用的用户地址，Query调用里面caller为空
+	Args() map[string][]byte
 	Caller() string
 
 	PutObject(key []byte, value []byte) error
@@ -20,7 +17,7 @@ type Context interface {
 	QueryTx(txid []byte) (*TxStatus, error)
 	QueryBlock(blockid []byte) (*Block, error)
 	Transfer(to string, amount *big.Int) error
-	Call(module, method string, args map[string]interface{}) (*Response, error)
+	Call(module, contract, method string, args map[string][]byte) (*Response, error)
 }
 
 // Iterator iterates over key/value pairs in key order
