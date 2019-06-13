@@ -289,12 +289,35 @@ func TestTermProposerBasic(t *testing.T) {
 			proposerNum:       int64(1),
 			blockNum:          int64(20),
 			voteUnitPrice:     big.NewInt(12),
-			initProposer: map[int64][]string{
-				1: []string{"Y4TmpfV4pvhYT5W17J7TqHSLo6cqq23x3", "RUEMFGDEnLBpnYYggnXukpVfR9Skm59ph", "bob"},
+			initProposer: map[int64][]*candidateInfo{
+				1: []*candidateInfo{
+					&candidateInfo{
+						Address: "Y4TmpfV4pvhYT5W17J7TqHSLo6cqq23x3",
+						PeerID:  "peerid1",
+					},
+					&candidateInfo{
+						Address: "RUEMFGDEnLBpnYYggnXukpVfR9Skm59ph",
+						PeerID:  "peerid2",
+					},
+					&candidateInfo{
+						Address: "bob",
+						PeerID:  "peerid3",
+					},
+				},
 			},
 		},
 	}
+	tdpos.context = &contract.TxContext{}
+	tdpos.context.UtxoBatch = tdpos.utxoVM.NewBatch()
+	canInfo := &candidateInfo{
+		Address: "f3prTg9itaZY6m48wXXikXdcxiByW7zgk",
+		PeerID:  "peerid4",
+	}
+	canInfoData, _ := json.Marshal(canInfo)
 	tdpos.candidateBallots.LoadOrStore("D_candidate_ballots_f3prTg9itaZY6m48wXXikXdcxiByW7zgk", int64(1))
+	tdpos.context.UtxoBatch.Put([]byte("D_candidate_info_f3prTg9itaZY6m48wXXikXdcxiByW7zgk"),
+		canInfoData)
+	tdpos.context.UtxoBatch.Write()
 	// test for genTermProposer
 	strList, genTermProposerErr := tdpos.genTermProposer()
 	if genTermProposerErr != nil {

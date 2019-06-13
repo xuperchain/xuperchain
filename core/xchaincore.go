@@ -18,8 +18,10 @@ import (
 
 	"github.com/xuperchain/xuperunion/common"
 	"github.com/xuperchain/xuperunion/common/config"
+	"github.com/xuperchain/xuperunion/common/events"
 	"github.com/xuperchain/xuperunion/common/probe"
 	"github.com/xuperchain/xuperunion/consensus"
+	cons_base "github.com/xuperchain/xuperunion/consensus/base"
 	"github.com/xuperchain/xuperunion/consensus/tdpos"
 	"github.com/xuperchain/xuperunion/contract/bridge"
 	"github.com/xuperchain/xuperunion/contract/kernel"
@@ -193,6 +195,9 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 		return err
 	}
 
+	// init events with handler
+	xc.initEvents()
+
 	xc.Utxovm, err = utxo.MakeUtxoVM(bcname, xc.Ledger, datapath, privateKeyStr, publicKeyStr, xc.address, xc.log,
 		utxoCacheSize, utxoTmplockSeconds, cfg.Utxo.ContractExecutionTime, datapathOthers, cfg.Utxo.IsBetaTx[bcname], kvEngineType, cryptoType)
 
@@ -288,7 +293,11 @@ func (xc *XChainCore) repostOfflineTx() {
 		xc.log.Debug("repost batch tx list", "size", len(batchTxMsg.Txs))
 		msgInfo, _ := proto.Marshal(batchTxMsg)
 		msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, xc.bcname, header.GetLogid(), xuper_p2p.XuperMessage_BATCHPOSTTX, msgInfo, xuper_p2p.XuperMessage_SUCCESS)
-		go xc.P2pv2.SendMessage(context.Background(), msg, p2pv2.DefaultStrategy) //p2p广播出去
+		opts := []p2pv2.MessageOption{
+			p2pv2.WithFilters([]p2pv2.FilterStrategy{p2pv2.DefaultStrategy}),
+			p2pv2.WithBcName(xc.bcname),
+		}
+		go xc.P2pv2.SendMessage(context.Background(), msg, opts...) //p2p广播出去
 	}
 }
 
@@ -602,7 +611,11 @@ func (xc *XChainCore) doMiner() {
 	}
 	msgInfo, _ := proto.Marshal(block)
 	msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, xc.bcname, "", xuper_p2p.XuperMessage_SENDBLOCK, msgInfo, xuper_p2p.XuperMessage_NONE)
-	go xc.P2pv2.SendMessage(context.Background(), msg, p2pv2.DefaultStrategy)
+	opts := []p2pv2.MessageOption{
+		p2pv2.WithFilters([]p2pv2.FilterStrategy{p2pv2.DefaultStrategy}),
+		p2pv2.WithBcName(xc.bcname),
+	}
+	go xc.P2pv2.SendMessage(context.Background(), msg, opts...)
 	minerTimer.Mark("BroadcastBlock")
 	if xc.Utxovm.IsAsync() {
 		xc.log.Warn("doMiner cost", "cost", minerTimer.Print(), "txCount", b.TxCount)
@@ -629,6 +642,7 @@ func (xc *XChainCore) Miner() int {
 	// 3 开始同步
 	xc.status = global.Normal
 	xc.SyncBlocks()
+	xc.dataInitReady()
 	for {
 		// 重要: 首次出块前一定要同步到最新的状态
 		xc.log.Trace("Miner type of consensus", "type", xc.con.Type(xc.Ledger.GetMeta().TrunkHeight+1))
@@ -651,6 +665,28 @@ func (xc *XChainCore) Miner() int {
 		}
 	}
 	return 0
+}
+
+// dataInitReady do some preparation work after blockchain data init ready
+func (xc *XChainCore) dataInitReady() {
+	eb := events.GetEventBus()
+	miners := xc.con.GetCoreMiners()
+	msg := &cons_base.MinersChangedEvent{
+		BcName:        xc.bcname,
+		CurrentMiners: miners,
+		NextMiners:    miners,
+	}
+	em := &events.EventMessage{
+		BcName:   xc.bcname,
+		Type:     events.ProposerReady,
+		Priority: 0,
+		Sender:   xc,
+		Message:  msg,
+	}
+	_, err := eb.FireEventAsync(em)
+	if err != nil {
+		xc.log.Warn("dataInitReady fire event failed", "error", err)
+	}
 }
 
 // Stop stop one xchain instance

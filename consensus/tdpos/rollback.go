@@ -115,13 +115,15 @@ func (tp *TDpos) rollbackRevokeVote(desc *contract.TxDesc, block *pb.InternalBlo
 // 回滚候选人提名
 func (tp *TDpos) rollbackNominateCandidate(desc *contract.TxDesc, block *pb.InternalBlock) error {
 	tp.log.Trace("Start to rollbackNominateCandidate", "desc", desc)
-	candidate, fromAddr, err := tp.validateNominateCandidate(desc)
+	canInfo, fromAddr, err := tp.validateNominateCandidate(desc)
+	candidate := canInfo.Address
 	if err != nil {
 		tp.log.Warn("rollbackNominateCandidate to validate nominate error", "error", err.Error())
 		return nil
 	}
 	key := GenCandidateNominateKey(candidate)
 	keyBl := genCandidateBallotsKey(candidate)
+	keyCanInfo := genCandidateInfoKey(candidate)
 
 	keyNominateRecord := GenNominateRecordsKey(fromAddr, candidate, hex.EncodeToString(desc.Tx.Txid))
 
@@ -141,6 +143,7 @@ func (tp *TDpos) rollbackNominateCandidate(desc *contract.TxDesc, block *pb.Inte
 		tp.candidateBallotsCache.Store(keyBl, canBal)
 		tp.context.UtxoBatch.Delete([]byte(key))
 		tp.context.UtxoBatch.Delete([]byte(keyNominateRecord))
+		tp.context.UtxoBatch.Delete([]byte(keyCanInfo))
 		return nil
 	}
 
@@ -152,6 +155,7 @@ func (tp *TDpos) rollbackNominateCandidate(desc *contract.TxDesc, block *pb.Inte
 		tp.candidateBallotsCache.Store(keyBl, canBal)
 		tp.context.UtxoBatch.Delete([]byte(key))
 		tp.context.UtxoBatch.Delete([]byte(keyNominateRecord))
+		tp.context.UtxoBatch.Delete([]byte(keyCanInfo))
 		return nil
 	}
 	tp.log.Warn("rollbackNominateCandidate error, not find ballots")

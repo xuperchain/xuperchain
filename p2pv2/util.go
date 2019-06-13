@@ -4,7 +4,9 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"io/ioutil"
+	math_rand "math/rand"
 	"os"
+	"time"
 
 	crypto "github.com/libp2p/go-libp2p-crypto"
 	"github.com/xuperchain/xuperunion/common/config"
@@ -49,4 +51,17 @@ func GetKeyPairFromPath(path string) (crypto.PrivKey, error) {
 		return nil, err
 	}
 	return crypto.UnmarshalPrivateKey(privData)
+}
+
+// GenerateUniqueRandList get a random unique number list
+func GenerateUniqueRandList(size int, max int) []int {
+	r := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
+	if max <= 0 || size <= 0 {
+		return nil
+	}
+	if size > max {
+		size = max
+	}
+	randList := r.Perm(max)
+	return randList[:size]
 }
