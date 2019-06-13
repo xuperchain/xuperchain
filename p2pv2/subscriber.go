@@ -2,6 +2,7 @@ package p2pv2
 
 import (
 	"container/list"
+	"context"
 	"fmt"
 	"sync"
 
@@ -37,9 +38,19 @@ func (sub *Subscriber) handleMessage(s *Stream, msg *xuperp2p.XuperMessage) {
 	if !s.valid() {
 		return
 	}
+
+	if msg.Header.Type != xuperp2p.XuperMessage_GET_AUTHENTICATION_RES &&
+		msg.Header.Type != xuperp2p.XuperMessage_GET_AUTHENTICATION {
+		if s.node.srv.config.IsAuthentication && !s.auth() {
+			s.node.log.Trace("Stream not authenticated")
+			return
+		}
+	}
+
 	if sub.handler != nil {
 		go func(sub *Subscriber, s *Stream, msg *xuperp2p.XuperMessage) {
-			res, err := sub.handler(msg)
+			ctx := context.WithValue(context.Background(), "Stream", s)
+			res, err := sub.handler(ctx, msg)
 			if err != nil {
 				fmt.Println("subscriber handleMessage error", "err", err)
 			}
