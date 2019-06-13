@@ -75,11 +75,19 @@ DEFINE_METHOD(Banned, release) {
 
 DEFINE_METHOD(Banned, get) {
     xchain::Context* ctx = self.context();
-    const std::string key = ctx->arg("contract");
+    const std::string keys = ctx->arg("contract");
+
+    std::vector<std::string> contracts;
+    split(keys, contracts);
+
     std::string value;
-    if (ctx->get_object(key, &value)) {
-        ctx->ok(value);
-    } else {
-        ctx->error("contract not found");
+    // one of contracts has been banned, return directly
+    for (auto iter = contracts.begin(); iter != contracts.end(); ++iter) {
+        bool ret = ctx->get_object(*iter, &value);
+        if (ret) {
+            ctx->ok("contract has been banned");
+            return;
+        }
     }
+    ctx->error("contract not found");
 }
