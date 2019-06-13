@@ -81,7 +81,8 @@ type P2PConfig struct {
 	// timeout config the timeout of Request with response
 	Timeout int64 `yaml:"timeout,omitempty"`
 	// IsAuthentication determine whether peerID and Xchain addr correspond
-	IsAuthentication bool  `yaml:"isauthentication,omitempty"`
+	IsAuthentication bool `yaml:"isauthentication,omitempty"`
+	// StreamIPLimitSize set the limitation size for same ip
 	StreamIPLimitSize int64 `yaml:"streamIPLimitSize,omitempty"`
 }
 
