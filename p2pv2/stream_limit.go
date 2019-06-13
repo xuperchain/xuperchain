@@ -47,18 +47,12 @@ func (sl *StreamLimit) Init(limit int64, lg log.Logger) {
 }
 
 func (sl *StreamLimit) hasStream(addrStr string) bool {
-	if sl == nil {
-		return false
-	}
 	_, exist := sl.streams.Get(addrStr)
 	return exist
 }
 
 // AddStream used to add the amount of same ip, plus one per call
 func (sl *StreamLimit) AddStream(addrStr string, peerID peer.ID) bool {
-	if sl == nil {
-		return false
-	}
 	// check if the stream has existed already
 	if sl.hasStream(addrStr) {
 		sl.log.Trace("StreamLimit AddStream already exists", "addrStr", addrStr, "peerID", peerID)
@@ -84,9 +78,6 @@ func (sl *StreamLimit) AddStream(addrStr string, peerID peer.ID) bool {
 
 // DelStream used to dec the amount of same ip, dec one per call
 func (sl *StreamLimit) DelStream(addrStr string) {
-	if sl == nil {
-		return
-	}
 	ip := sl.parseAddrStr(addrStr)
 	if ip == "" {
 		sl.log.Warn("StreamLimit DelStream failed, stream is invalid ", "addrStr ", addrStr)
@@ -99,27 +90,18 @@ func (sl *StreamLimit) DelStream(addrStr string) {
 }
 
 func (sl *StreamLimit) inc(ip string) {
-	if sl == nil {
-		return
-	}
 	sl.mutex.Lock()
 	defer sl.mutex.Unlock()
 	sl.ip2cnt[ip]++
 }
 
 func (sl *StreamLimit) dec(ip string) {
-	if sl == nil {
-		return
-	}
 	sl.mutex.Lock()
 	defer sl.mutex.Unlock()
 	sl.ip2cnt[ip]--
 }
 
 func (sl *StreamLimit) parseAddrStr(addrStr string) string {
-	if sl == nil {
-		return ""
-	}
 	strSlice := strings.Split(addrStr, "/")
 	if len(strSlice) != 5 {
 		sl.log.Warn("parseAddrStr failed, invalid addr ", "addr: ", addrStr)
@@ -129,9 +111,6 @@ func (sl *StreamLimit) parseAddrStr(addrStr string) string {
 }
 
 func (sl *StreamLimit) nearFull(ip string) bool {
-	if sl == nil {
-		return false
-	}
 	sl.mutex.Lock()
 	defer sl.mutex.Unlock()
 	return sl.ip2cnt[ip] >= sl.limit
