@@ -10,6 +10,7 @@ DEFINE_METHOD(Counter, initialize) {
         return;
     }
     ctx->put_object("creator", creator);
+    ctx->ok("initialize succeed");
 }
 
 DEFINE_METHOD(Counter, increase) {

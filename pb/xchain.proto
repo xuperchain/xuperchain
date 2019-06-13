@@ -758,3 +758,17 @@ message AclStatus {
     bool confirmed = 6;
     Acl acl = 7;
 }
+
+// Identity authentication request
+message IdentityAuth {
+    bytes  sign = 1;
+    bytes  pubkey = 2;
+    string addr = 3;
+    string peerID = 4;
+    string timestamp = 5;
+}
+
+// Identity authentication requests
+message IdentityAuths {
+    repeated IdentityAuth auth = 1;
+}

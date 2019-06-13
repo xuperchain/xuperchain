@@ -64,9 +64,10 @@ type Node struct {
 	strPool   *StreamPool
 	ctx       context.Context
 	srv       *P2PServerV2
+	quitCh    chan bool
+	addrs     map[string]*XchainAddrInfo
 	coreRoute map[string]*corePeersRoute
 	routeLock sync.RWMutex
-	quitCh    chan bool
 }
 
 // NewNode define the node of the xuper, it will set streamHandler for this node.
@@ -88,8 +89,9 @@ func NewNode(cfg config.P2PConfig, log log.Logger) (*Node, error) {
 		log:       log,
 		ctx:       ctx,
 		host:      ho,
-		coreRoute: make(map[string]*corePeersRoute),
 		quitCh:    make(chan bool, 1),
+		addrs:     map[string]*XchainAddrInfo{},
+		coreRoute: make(map[string]*corePeersRoute),
 	}
 	ho.SetStreamHandler(XuperProtocolID, no.handlerNewStream)
 

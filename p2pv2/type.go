@@ -86,4 +86,7 @@ type P2PServer interface {
 
 	// SetCorePeers set core peers' info to P2P server
 	SetCorePeers(cp *CorePeersInfo) error
+
+	// SetXchainAddr Set xchain address from xchaincore
+	SetXchainAddr(bcname string, info *XchainAddrInfo)
 }
