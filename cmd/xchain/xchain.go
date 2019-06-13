@@ -81,7 +81,6 @@ func Start(cfg *config.NodeConfig) error {
 			return nil
 		}
 	}
-	return nil
 }
 
 // Stop gracefully shut down, 各个模块实现自己需要优雅关闭的资源并在此处调用即可
