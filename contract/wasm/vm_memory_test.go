@@ -17,17 +17,16 @@ type contractCode struct {
 }
 
 func (c *contractCode) Initialize(ctx code.Context) code.Response {
-	creator := ctx.Args()["creator"].(string)
+	creator := ctx.Args()["creator"]
 	err := ctx.PutObject([]byte("creator"), []byte(creator))
 	if err != nil {
 		return code.Error(err)
 	}
 	return code.OK(nil)
-
 }
 
 func (c *contractCode) Invoke(ctx code.Context) code.Response {
-	key, ok := ctx.Args()["key"].(string)
+	key, ok := ctx.Args()["key"]
 	if !ok {
 		return code.Errors("missing key")
 	}

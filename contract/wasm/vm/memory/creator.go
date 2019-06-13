@@ -1,50 +1,42 @@
 package memory
 
 import (
-	"errors"
-	"reflect"
-	"strings"
+	"context"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/xuperchain/xuperunion/contract/bridge"
+	"github.com/xuperchain/xuperunion/contract/bridge/memrpc"
 	"github.com/xuperchain/xuperunion/contract/wasm/vm"
 	"github.com/xuperchain/xuperunion/contractsdk/go/code"
-	"github.com/xuperchain/xuperunion/contractsdk/go/pb"
+	"github.com/xuperchain/xuperunion/contractsdk/go/exec"
 )
 
 type memoryInstanceCreator struct {
 	config    vm.InstanceCreatorConfig
-	codeCache map[string]reflect.Value
+	codeCache map[string]code.Contract
 }
 
 func newMemoryInstanceCreator(config *vm.InstanceCreatorConfig) (vm.InstanceCreator, error) {
 	return &memoryInstanceCreator{
 		config:    *config,
-		codeCache: make(map[string]reflect.Value),
+		codeCache: make(map[string]code.Contract),
 	}, nil
 }
 
 func (m *memoryInstanceCreator) CreateInstance(ctx *bridge.Context, cp vm.ContractCodeProvider) (vm.Instance, error) {
-	var contractv reflect.Value
-	contractv, ok := m.codeCache[ctx.ContractName]
+	contract, ok := m.codeCache[ctx.ContractName]
 	if !ok {
 		codebuf, err := cp.GetContractCode(ctx.ContractName)
 		if err != nil {
 			return nil, err
 		}
-		contract, err := Decode(codebuf)
+		contract, err = Decode(codebuf)
 		if err != nil {
 			return nil, err
 		}
-		contractv = reflect.ValueOf(contract)
-		m.codeCache[ctx.ContractName] = contractv
+		m.codeCache[ctx.ContractName] = contract
 	}
-	return &memoryInstance{
-		contract: contractv,
-		codeContext: &codeContext{
-			bridgeCtx: ctx,
-			syscall:   m.config.SyscallService,
-		},
-	}, nil
+	return newMemoryInstance(contract, ctx, m.config.SyscallService), nil
 }
 
 func (m *memoryInstanceCreator) RemoveCache(contractName string) {
@@ -52,32 +44,31 @@ func (m *memoryInstanceCreator) RemoveCache(contractName string) {
 }
 
 type memoryInstance struct {
-	contract    reflect.Value
-	codeContext *codeContext
+	contract      code.Contract
+	bridgeContext *bridge.Context
+	rpcServer     *memrpc.Server
+}
+
+func newMemoryInstance(contract code.Contract, ctx *bridge.Context, syscall *bridge.SyscallService) *memoryInstance {
+	return &memoryInstance{
+		contract:      contract,
+		bridgeContext: ctx,
+		rpcServer:     memrpc.NewServer(syscall),
+	}
+}
+
+func (m *memoryInstance) bridgeCall(method string, request proto.Message, response proto.Message) error {
+	requestBuf, _ := proto.Marshal(request)
+	responseBuf, err := m.rpcServer.CallMethod(context.TODO(), m.bridgeContext.ID, method, requestBuf)
+	if err != nil {
+		return err
+	}
+	err = proto.Unmarshal(responseBuf, response)
+	return err
 }
 
 func (m *memoryInstance) Exec(function string) error {
-	args := make(map[string]interface{})
-	for k, v := range m.codeContext.bridgeCtx.Args {
-		args[k] = string(v)
-	}
-	m.codeContext.args = args
-	var resp code.Response
-	methodName := m.codeContext.bridgeCtx.Method
-	methodv := m.contract.MethodByName(strings.Title(methodName))
-	if !methodv.IsValid() {
-		return errors.New("bad method " + methodName)
-	}
-	method, ok := methodv.Interface().(func(code.Context) code.Response)
-	if !ok {
-		return errors.New("bad method type " + methodName)
-	}
-	resp = method(m.codeContext)
-	m.codeContext.bridgeCtx.Output = &pb.Response{
-		Status:  int32(resp.Status),
-		Message: resp.Message,
-		Body:    resp.Body,
-	}
+	exec.RunContract(m.bridgeContext.ID, m.contract, m.bridgeCall)
 	return nil
 }
 
