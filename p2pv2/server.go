@@ -164,7 +164,6 @@ func (p *P2PServerV2) GetPeerUrls() []string {
 	//rt := p.node.kdht.RoutingTable()
 	//peers := rt.ListPeers()
 	peers := p.node.ListPeers()
-	p.log.Debug("+++++++List peers", "peers", peers)
 	for _, v := range peers {
 		if s, err := p.node.strPool.FindStream(v); err == nil {
 			if s.gp == "" {
