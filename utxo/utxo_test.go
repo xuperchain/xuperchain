@@ -195,7 +195,7 @@ func TestUtxoWorkWithLedgerBasic(t *testing.T) {
 	utxoVM, _ := NewUtxoVM("xuper", ledger, workspace, minerPrivateKey, minerPublicKey, []byte(minerAddress),
 		nil, false, DefaultKVEngine, crypto_client.CryptoTypeDefault)
 	_, err = utxoVM.QueryTx([]byte("123"))
-	if err != nil && err != ErrTxNotFound && common.NormalizedKVError(err) != common.ErrKVNotFound {
+	if err != nil && err != ErrTxNotFound {
 		t.Fatal("unexpected err", err)
 	}
 	//创建链的时候分配财富
