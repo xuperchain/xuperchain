@@ -55,64 +55,76 @@ type CommTrans struct {
 
 // GenerateTx generate raw tx
 func (c *CommTrans) GenerateTx(ctx context.Context) (*pb.Transaction, error) {
-	preExeRPCRes, preExeReq, err := c.GenPreExeRes(ctx)
+	preExeRPCRes, preExeReqs, err := c.GenPreExeRes(ctx)
 	if err != nil {
 		return nil, err
 	}
 
 	desc := []byte("common transfer transaction")
-	if preExeReq != nil {
+	if preExeReqs != nil {
 		desc = []byte{}
 	}
 
-	tx, err := c.GenRawTx(ctx, desc, preExeRPCRes.GetResponse(), preExeReq)
+	tx, err := c.GenRawTx(ctx, desc, preExeRPCRes.GetResponse(), preExeReqs)
 	return tx, err
 }
 
 // GenPreExeRes 得到预执行的结果
 func (c *CommTrans) GenPreExeRes(ctx context.Context) (
-	*pb.InvokeRPCResponse, *pb.InvokeRequest, error) {
-	var preExeReq *pb.InvokeRequest
-	var preExeRPCReq *pb.InvokeRPCRequest
-	var err error
+	*pb.InvokeRPCResponse, []*pb.InvokeRequest, error) {
+	preExeReqs := []*pb.InvokeRequest{}
 	if c.ModuleName != "" {
 		if c.ModuleName == "xkernel" {
-			preExeReq = &pb.InvokeRequest{
+			preExeReqs = append(preExeReqs, &pb.InvokeRequest{
 				ModuleName: c.ModuleName,
 				MethodName: c.MethodName,
 				Args:       c.Args,
-			}
+			})
 		} else {
-			preExeReq = &pb.InvokeRequest{
+			preExeReqs = append(preExeReqs, &pb.InvokeRequest{
 				ModuleName:   c.ModuleName,
 				ContractName: c.ContractName,
 				MethodName:   c.MethodName,
 				Args:         c.Args,
-			}
+			})
 		}
 	} else {
-		preExeReq, err = c.GetInvokeRequestFromDesc()
+		tmpReq, err := c.GetInvokeRequestFromDesc()
 		if err != nil {
 			return nil, nil, fmt.Errorf("Get pb.InvokeRPCRequest error:%s", err)
 		}
+		if tmpReq != nil {
+			preExeReqs = append(preExeReqs, tmpReq)
+		}
 	}
 
-	var preExeRPCRes *pb.InvokeRPCResponse
-	if preExeReq != nil {
-		preExeRPCReq = &pb.InvokeRPCRequest{
-			Bcname:  c.ChainName,
-			Request: preExeReq,
-			Header:  global.GHeader(),
-		}
+	preExeRPCReq := &pb.InvokeRPCRequest{
+		Bcname:   c.ChainName,
+		Header:   global.GHeader(),
+		Requests: preExeReqs,
+	}
+	initiator, err := c.genInitiator()
+	if err != nil {
+		return nil, nil, fmt.Errorf("Get initiator error: %s", err.Error())
+	}
 
-		preExeRPCRes, err = c.XchainClient.PreExec(ctx, preExeRPCReq)
+	preExeRPCReq.Initiator = initiator
+	if c.MultiAddrs == "" {
+		preExeRPCReq.AuthRequire, err = c.genAuthRequireQuick()
 		if err != nil {
-			return nil, nil, fmt.Errorf("PreExe contract response : %v, logid:%s", err, preExeRPCReq.Header.Logid)
+			return nil, nil, fmt.Errorf("Get auth require quick error: %s", err.Error())
 		}
-		fmt.Fprintf(os.Stderr, "contract response: %s\n", string(preExeRPCRes.Response.Response))
+	} else {
+		preExeRPCReq.AuthRequire, err = c.genAuthRequire(c.MultiAddrs)
+		if err != nil {
+			return nil, nil, fmt.Errorf("Get auth require error: %s", err.Error())
+		}
 	}
-
-	return preExeRPCRes, preExeReq, nil
+	preExeRPCRes, err := c.XchainClient.PreExec(ctx, preExeRPCReq)
+	if err != nil {
+		return nil, nil, fmt.Errorf("PreExe contract response : %v, logid:%s", err, preExeRPCReq.Header.Logid)
+	}
+	return preExeRPCRes, preExeRPCRes.Response.Requests, nil
 }
 
 // GetInvokeRequestFromDesc get invokerequest from desc file
@@ -157,7 +169,7 @@ func (c *CommTrans) ReadPreExeReq(buf []byte) (*pb.InvokeRequest, error) {
 
 // GenRawTx 生成一个完整raw的交易
 func (c *CommTrans) GenRawTx(ctx context.Context, desc []byte, preExeRes *pb.InvokeResponse,
-	preExeReq *pb.InvokeRequest) (*pb.Transaction, error) {
+	preExeReqs []*pb.InvokeRequest) (*pb.Transaction, error) {
 	tx := &pb.Transaction{
 		Desc:      desc,
 		Coinbase:  false,
@@ -191,22 +203,29 @@ func (c *CommTrans) GenRawTx(ctx context.Context, desc []byte, preExeRes *pb.Inv
 	if preExeRes != nil {
 		tx.TxInputsExt = preExeRes.GetInputs()
 		tx.TxOutputsExt = preExeRes.GetOutputs()
-		tx.ContractRequest = preExeReq
+		tx.ContractRequests = preExeReqs
 	}
 
 	// 填充交易发起者的addr
-	var fromAddr string
-	if c.From != "" {
-		fromAddr = c.From
-	} else {
-		fromAddr, err = readAddress(c.Keys)
-		if err != nil {
-			return nil, err
-		}
+	fromAddr, err := c.genInitiator()
+	if err != nil {
+		return nil, err
 	}
 	tx.Initiator = fromAddr
 
 	return tx, nil
+}
+
+// genInitiator generate initiator of transaction
+func (c *CommTrans) genInitiator() (string, error) {
+	if c.From != "" {
+		return c.From, nil
+	}
+	fromAddr, err := readAddress(c.Keys)
+	if err != nil {
+		return "", err
+	}
+	return fromAddr, nil
 }
 
 // GenTxOutputs 填充得到transaction的repeated TxOutput tx_outputs
@@ -495,6 +514,21 @@ func (c *CommTrans) GenerateMultisigGenRawTx(ctx context.Context) error {
 	tx.AuthRequire = multiAddrs
 
 	return c.genTxFile(tx)
+}
+
+func (c *CommTrans) genAuthRequireQuick() ([]string, error) {
+
+	fromAddr, err := readAddress(c.Keys)
+	if err != nil {
+		return nil, err
+	}
+	authRequires := []string{}
+	if c.From != "" {
+		authRequires = append(authRequires, c.From+"/"+fromAddr)
+	} else {
+		authRequires = append(authRequires, fromAddr)
+	}
+	return authRequires, nil
 }
 
 func (c *CommTrans) genAuthRequire(filename string) ([]string, error) {
