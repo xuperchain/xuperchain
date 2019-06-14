@@ -196,9 +196,8 @@ func (k *Kernel) CreateBlockChain(name string, data []byte) error {
 	//TODO 因为是创建创世块，所以这里不填写publicKey和address, 后果是如果存在合约的话，肯定是执行失败
 	utxovm, err := utxo.NewUtxoVM(name, ledger, fullpath, "", "", nil, k.log, false, kvEngineType, cryptoType)
 	if err != nil {
-		fmt.Println("NewUtxoVM error ", err)
 		k.log.Warn("NewUtxoVM error", "fullpath", fullpath)
-		// os.RemoveAll(fullpath)
+		os.RemoveAll(fullpath)
 		return err
 	}
 	defer ledger.Close()
