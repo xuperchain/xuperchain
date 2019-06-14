@@ -70,7 +70,13 @@ func VerifyMsgMatch(msgRaw *XuperMessage, msgNew *XuperMessage, peerID string) b
 			return true
 		}
 		return false
+	case XuperMessage_GET_AUTHENTICATION:
+		if msgNew.GetHeader().GetType() == XuperMessage_GET_AUTHENTICATION_RES {
+			return true
+		}
+		return false
 	}
+
 	return true
 }
 
@@ -85,6 +91,8 @@ func GetResMsgType(msgType XuperMessage_MessageType) XuperMessage_MessageType {
 		return XuperMessage_CONFIRM_BLOCKCHAINSTATUS_RES
 	case XuperMessage_GET_RPC_PORT:
 		return XuperMessage_GET_RPC_PORT_RES
+	case XuperMessage_GET_AUTHENTICATION:
+		return XuperMessage_GET_AUTHENTICATION_RES
 	default:
 		return XuperMessage_MSG_TYPE_NONE
 	}

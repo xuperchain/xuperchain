@@ -155,7 +155,7 @@ func (k *Kernel) initPermissionModel(data []byte) error {
 
 // CreateBlockChain create a new block chain from xuper.json
 func (k *Kernel) CreateBlockChain(name string, data []byte) error {
-	k.log.Debug("create block chain by contract", "from", k.bcName, "toCrate", name)
+	k.log.Debug("create block chain by contract", "from", k.bcName, "toCreate", name)
 	if k.bcName != "xuper" {
 		k.log.Warn("only xuper chain can create side-chain", "bcName", k.bcName)
 		return ErrPermissionDenied

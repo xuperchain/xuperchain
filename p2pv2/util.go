@@ -3,11 +3,17 @@ package p2pv2
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"errors"
 	"io/ioutil"
 	"os"
+	"strconv"
+	"time"
 
 	crypto "github.com/libp2p/go-libp2p-crypto"
 	"github.com/xuperchain/xuperunion/common/config"
+	crypto_client "github.com/xuperchain/xuperunion/crypto/client"
+	"github.com/xuperchain/xuperunion/crypto/hash"
+	"github.com/xuperchain/xuperunion/pb"
 )
 
 // GenerateKeyPairWithPath generate xuper net key pair
@@ -49,4 +55,44 @@ func GetKeyPairFromPath(path string) (crypto.PrivKey, error) {
 		return nil, err
 	}
 	return crypto.UnmarshalPrivateKey(privData)
+}
+
+// XchainAddrInfo my xchain addr info
+type XchainAddrInfo struct {
+	Addr   string
+	Pubkey []byte
+	Prikey []byte
+	PeerID string
+}
+
+// GetAuthRequest get auth request for authentication
+func GetAuthRequest(v *XchainAddrInfo) (*pb.IdentityAuth, error) {
+	cryptoClient, err := crypto_client.CreateCryptoClientFromJSONPublicKey(v.Pubkey)
+	if err != nil {
+		return nil, errors.New("GetAuthRequest: Create crypto client error")
+	}
+
+	privateKey, err := cryptoClient.GetEcdsaPrivateKeyFromJSON(v.Prikey)
+	if err != nil {
+		return nil, err
+	}
+
+	timeUnix := time.Now().Unix()
+	ts := strconv.FormatInt(timeUnix, 10)
+
+	digestHash := hash.UsingSha256([]byte(v.PeerID + v.Addr + ts))
+	sign, err := cryptoClient.SignECDSA(privateKey, digestHash)
+	if err != nil {
+		return nil, err
+	}
+
+	identityAuth := &pb.IdentityAuth{
+		Sign:      sign,
+		Pubkey:    v.Pubkey,
+		Addr:      v.Addr,
+		PeerID:    v.PeerID,
+		Timestamp: ts,
+	}
+
+	return identityAuth, nil
 }

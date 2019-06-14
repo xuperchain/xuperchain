@@ -1,6 +1,6 @@
 ---
-name: XuperChain Issue Template
-about: Describe this issue template's purpose here.
+name: XuperChain Bug Template
+about: Report a bug to XuperChain
 title: ''
 labels: ''
 assignees: ''

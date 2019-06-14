@@ -27,6 +27,7 @@ import (
 	"github.com/xuperchain/xuperunion/contract/native"
 	"github.com/xuperchain/xuperunion/contract/proposal"
 	"github.com/xuperchain/xuperunion/contract/wasm"
+	"github.com/xuperchain/xuperunion/crypto/account"
 	crypto_client "github.com/xuperchain/xuperunion/crypto/client"
 	crypto_base "github.com/xuperchain/xuperunion/crypto/client/base"
 	"github.com/xuperchain/xuperunion/global"
@@ -104,7 +105,7 @@ func (xc *XChainCore) Status() int {
 
 // Init init the chain
 func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfig,
-	p2pv2 p2pv2.P2PServer, ker *kernel.Kernel, nodeMode string) error {
+	p2p p2pv2.P2PServer, ker *kernel.Kernel, nodeMode string) error {
 
 	// 设置全局随机数发生器的原始种子
 	err := global.SetSeed()
@@ -119,7 +120,7 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	xc.status = global.SafeModel
 	xc.bcname = bcname
 	xc.log = xlog
-	xc.P2pv2 = p2pv2
+	xc.P2pv2 = p2p
 	xc.nodeMode = nodeMode
 	xc.stopFlag = false
 	ledger.MemCacheSize = cfg.DBCache.MemCacheSize
@@ -159,25 +160,31 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	// 判断xuper.json和创世块参数的一致性，增加可读性
 	// 暂时可以不改
 	keypath := cfg.Miner.Keypath
-	privateKey, err := cryptoClient.GetEcdsaPrivateKeyFromFile(keypath + "/private.key")
+
+	// this.address = utils.GetAddressFromPublicKey(1, this.publicKey)
+	addr, pub, pri, err := account.GetAccInfoFromFile(keypath)
+	if err != nil {
+		xlog.Warn("load address and publickey and privatekey error", "path", keypath+"/address")
+		return err
+	}
+	xc.address = addr
+	xlog.Debug("Using address " + string(xc.address))
+	xc.privateKey, err = cryptoClient.GetEcdsaPrivateKeyFromJSON(pri)
 	if err != nil {
 		return err
 	}
-	xc.privateKey = privateKey
-	publicKey, err := cryptoClient.GetEcdsaPublicKeyFromFile(keypath + "/public.key")
+	xc.publicKey, err = cryptoClient.GetEcdsaPublicKeyFromJSON(pub)
 	if err != nil {
-		return err
-	}
-	xc.publicKey = publicKey
-	address, err := ioutil.ReadFile(keypath + "/address")
-	if err != nil {
-		xlog.Warn("load address error", "path", keypath+"/address")
 		return err
 	}
 
-	xc.address = address
-	xlog.Debug("Using address " + string(xc.address))
-	// this.address = utils.GetAddressFromPublicKey(1, this.publicKey)
+	// write to p2p
+	xchainAddrInfo := &p2pv2.XchainAddrInfo{
+		Addr:   string(addr),
+		Pubkey: pub,
+		Prikey: pri,
+	}
+	xc.P2pv2.SetXchainAddr(xc.bcname, xchainAddrInfo)
 
 	xc.Ledger, err = ledger.NewLedger(datapath, xc.log, datapathOthers, kvEngineType, cryptoType)
 	if err != nil {
@@ -185,11 +192,11 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 		return err
 	}
 
-	publicKeyStr, err := cryptoClient.GetEcdsaPublicKeyJSONFormat(privateKey)
+	publicKeyStr, err := cryptoClient.GetEcdsaPublicKeyJSONFormat(xc.privateKey)
 	if err != nil {
 		return err
 	}
-	privateKeyStr, err := cryptoClient.GetEcdsaPrivateKeyJSONFormat(privateKey)
+	privateKeyStr, err := cryptoClient.GetEcdsaPrivateKeyJSONFormat(xc.privateKey)
 	if err != nil {
 		return err
 	}
@@ -680,7 +687,7 @@ func (xc *XChainCore) PostTx(in *pb.TxStatus, hd *global.XContext) (*pb.CommonRe
 		switch validErr {
 		case utxo.ErrGasNotEnough:
 			out.Header.Error = pb.XChainErrorEnum_GAS_NOT_ENOUGH_ERROR
-		case utxo.ErrRWSetInvalid:
+		case utxo.ErrRWSetInvalid, utxo.ErrInvalidTxExt:
 			out.Header.Error = pb.XChainErrorEnum_RWSET_INVALID_ERROR
 		case utxo.ErrRWAclNotEnough:
 			out.Header.Error = pb.XChainErrorEnum_RWACL_INVALID_ERROR

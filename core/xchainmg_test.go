@@ -1,6 +1,7 @@
 package xchaincore
 
 import (
+	"context"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
@@ -14,6 +15,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
+
 	log "github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperunion/common/config"
 	"github.com/xuperchain/xuperunion/global"
@@ -387,6 +389,7 @@ func TestXChainMgBasic(t *testing.T) {
 		sendBlockMsgInfo, xuper_p2p.XuperMessage_NONE)
 	xcmg.msgChan <- sendBlockMsgTmp
 	<-time.After(3 * time.Second)
+
 	/*
 		xcmg.handleGetBlock(sendBlockMsgTmp)
 		blkStatusMsg, _ := proto.Marshal(blkStatus)
@@ -395,6 +398,16 @@ func TestXChainMgBasic(t *testing.T) {
 		xcmg.msgChan <- blkStatusTmp
 		xcmg.handleGetBlockChainStatus(blkStatusTmp)
 		xcmg.handleConfirmBlockChainStatus(blkStatusTmp)
+
+	ctx := context.Background()
+	xcmg.handleGetBlock(ctx, sendBlockMsgTmp)
+	blkStatusMsg, _ := proto.Marshal(blkStatus)
+	blkStatusTmp, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, "xuper", "123459", xuper_p2p.XuperMessage_GET_BLOCKCHAINSTATUS,
+		blkStatusMsg, xuper_p2p.XuperMessage_NONE)
+	xcmg.msgChan <- blkStatusTmp
+	xcmg.handleGetBlockChainStatus(ctx, blkStatusTmp)
+	xcmg.handleConfirmBlockChainStatus(ctx, blkStatusTmp)
+
 
 		xcmg.Stop()
 	*/

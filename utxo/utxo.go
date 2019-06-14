@@ -68,7 +68,8 @@ var (
 
 	ErrGasNotEnough   = errors.New("Gas not enough")
 	ErrInvalidAccount = errors.New("Invalid account")
-	ErrVersionInvalid = errors.New("Tx version not invalid")
+	ErrVersionInvalid = errors.New("Invalid tx version")
+	ErrInvalidTxExt   = errors.New("Invalid tx ext")
 )
 
 // package constants
@@ -215,7 +216,7 @@ func (uv *UtxoVM) checkInputEqualOutput(tx *pb.Transaction) error {
 				"in_utxo", amount, "txInputAmount", txInputAmount, "txid", fmt.Sprintf("%x", tx.Txid), "reftxid", fmt.Sprintf("%x", txid))
 			return ErrUnexpected
 		}
-		if frozenHeight > curLedgerHeight {
+		if frozenHeight > curLedgerHeight || frozenHeight == -1 {
 			uv.xlog.Warn("this utxo still be frozen", "frozenHeight", frozenHeight, "ledgerHeight", curLedgerHeight)
 			return ErrUTXOFrozen
 		}
@@ -1300,6 +1301,10 @@ func getGasLimitFromTx(tx *pb.Transaction) (int64, error) {
 func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
 	req := tx.GetContractRequest()
 	if req == nil {
+		if tx.GetTxInputsExt() != nil || tx.GetTxOutputsExt() != nil {
+			uv.xlog.Error("verifyTxRWSets error", "error", ErrInvalidTxExt.Error())
+			return false, ErrInvalidTxExt
+		}
 		return true, nil
 	}
 	moduleName := req.GetModuleName()
