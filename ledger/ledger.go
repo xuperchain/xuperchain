@@ -130,7 +130,7 @@ func NewLedger(storePath string, xlog log.Logger, otherPaths []string, kvEngineT
 	ledger.cryptoClient = cryptoClient
 	metaBuf, metaErr := ledger.metaTable.Get([]byte(""))
 	emptyLedger := false
-	if metaErr != nil && (metaErr.Error() == kverr.ErrNotFound.Error() || metaErr.Error() == "Key not found") { //说明是新创建的账本
+	if metaErr != nil && common.NormalizedKVError(metaErr) == common.ErrKVNotFound { //说明是新创建的账本
 		fmt.Println("ledger meta: ", ledger.meta)
 		metaBuf, pbErr := proto.Marshal(ledger.meta)
 		if pbErr != nil {

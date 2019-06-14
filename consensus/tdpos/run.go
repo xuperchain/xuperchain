@@ -10,6 +10,7 @@ import (
 
 	"encoding/hex"
 
+	"github.com/xuperchain/xuperunion/common"
 	"github.com/xuperchain/xuperunion/contract"
 	"github.com/xuperchain/xuperunion/pb"
 )
@@ -265,7 +266,7 @@ func (tp *TDpos) runCheckValidater(desc *contract.TxDesc, block *pb.InternalBloc
 	}
 	key := GenTermCheckKey(version, term)
 	_, err = tp.utxoVM.GetFromTable(nil, []byte(key))
-	if err != leveldb.ErrNotFound {
+	if common.NormalizedKVError(err) != common.ErrKVNotFound {
 		return err
 	}
 	proposers, err := tp.genTermProposer()

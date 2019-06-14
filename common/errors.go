@@ -6,6 +6,7 @@ package common
 
 import (
 	"errors"
+	"strings"
 
 	"github.com/xuperchain/xuperunion/pb"
 )
@@ -15,6 +16,7 @@ var (
 	ErrContractExecutionTimeout = errors.New("contract execution timeout")
 	// ErrContractConnectionError connect error
 	ErrContractConnectionError = errors.New("can't connect contract")
+	ErrKVNotFound              = errors.New("Key not found")
 )
 
 // ServerError xchain.proto error
@@ -25,4 +27,15 @@ type ServerError struct {
 // Error convert to name
 func (err ServerError) Error() string {
 	return pb.XChainErrorEnum_name[int32(err.Errno)]
+}
+
+// NormalizedKVError normalize kv error
+func NormalizedKVError(err error) error {
+	if err == nil {
+		return nil
+	}
+	if strings.HasSuffix(err.Error(), "not found") {
+		return ErrKVNotFound
+	}
+	return err
 }

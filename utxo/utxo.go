@@ -419,11 +419,9 @@ func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, priv
 	if findErr == nil {
 		utxoVM.latestBlockid = latestBlockid
 	} else {
-		/*
-			if findErr.Error() != kverr.ErrNotFound.Error() && findErr.Error() != "Key not found"{
-				return nil, findErr
-			}
-		*/
+		if common.NormalizedKVError(findErr) != common.ErrKVNotFound {
+			return nil, findErr
+		}
 	}
 	utxoTotalBytes, findTotalErr := utxoVM.metaTable.Get([]byte(UTXOTotalKey))
 	if findTotalErr == nil {
@@ -431,7 +429,7 @@ func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, priv
 		total.SetBytes(utxoTotalBytes)
 		utxoVM.utxoTotal = total
 	} else {
-		if findTotalErr.Error() != kverr.ErrNotFound.Error() && findTotalErr.Error() != "Key not found" {
+		if common.NormalizedKVError(findTotalErr) != common.ErrKVNotFound {
 			return nil, findTotalErr
 		}
 		//说明是1.1.1版本，没有utxo total字段, 估算一个
@@ -1776,7 +1774,7 @@ func (uv *UtxoVM) HasTx(txid []byte) (bool, error) {
 func (uv *UtxoVM) QueryTx(txid []byte) (*pb.Transaction, error) {
 	pbBuf, findErr := uv.unconfirmedTable.Get(txid)
 	if findErr != nil {
-		if findErr.Error() == kverr.ErrNotFound.Error() {
+		if common.NormalizedKVError(findErr) == common.ErrKVNotFound {
 			return nil, ErrTxNotFound
 		}
 		uv.xlog.Warn("unexpected leveldb error, when do QueryTx, it may corrupted.", "findErr", findErr)

@@ -12,7 +12,6 @@ import (
 	"io/ioutil"
 	"math/big"
 	"os"
-	"strings"
 	"testing"
 )
 
@@ -269,7 +268,7 @@ func TestSplitFunc(t *testing.T) {
 		t.Fatal("confirm block fail 4")
 	}
 	_, ibLookErr = ledger.GetPendingBlock(ib.Blockid)
-	if ibLookErr != nil && (ibLookErr != ErrBlockNotExist && !strings.HasSuffix(ibLookErr.Error(), "Key not found")) {
+	if ibLookErr != nil && ibLookErr != ErrBlockNotExist {
 		t.Fatal("pending block is expected to be deleted", ibLookErr)
 	}
 	dumpLayer, dumpErr := ledger.Dump()
