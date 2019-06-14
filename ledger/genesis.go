@@ -3,11 +3,12 @@ package ledger
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/xuperchain/xuperunion/common"
-	"github.com/xuperchain/xuperunion/pb"
 	"math"
 	"math/big"
 	"strconv"
+
+	"github.com/xuperchain/xuperunion/common"
+	"github.com/xuperchain/xuperunion/pb"
 )
 
 // awardCacheSize system award cache, in avoid of double computing
@@ -32,8 +33,9 @@ type RootConfig struct {
 		HeightGap int64   `json:"height_gap"`
 		Ratio     float64 `json:"ratio"`
 	} `json:"award_decay"`
-	Decimals         string                 `json:"decimals"`
-	GenesisConsensus map[string]interface{} `json:"genesis_consensus"`
+	Decimals          string                 `json:"decimals"`
+	GenesisConsensus  map[string]interface{} `json:"genesis_consensus"`
+	ReservedContracts []string               `json:"reserved_contracts"`
 }
 
 // GetMaxBlockSizeInByte get max block size in Byte
@@ -55,6 +57,11 @@ func (rc *RootConfig) GetGenesisConsensus() (map[string]interface{}, error) {
 		return consCfg, nil
 	}
 	return rc.GenesisConsensus, nil
+}
+
+// GetReservedContract get default contract config of genesis block
+func (rc *RootConfig) GetReservedContract() ([]string, error) {
+	return rc.ReservedContracts, nil
 }
 
 // GenesisBlock genesis block data structure
