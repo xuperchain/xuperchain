@@ -116,7 +116,7 @@ func encodeTxData(tx *pb.Transaction, includeSigns bool) ([]byte, error) {
 			}
 		}
 	}
-	if err = encoder.Encode(tx.ContractRequest); err != nil {
+	if err = encoder.Encode(tx.ContractRequests); err != nil {
 		return nil, err
 	}
 	if err = encoder.Encode(tx.Initiator); err != nil {
