@@ -97,8 +97,8 @@ type UtxoConfig struct {
 	ContractExecutionTime int                        `yaml:"contractExecutionTime,omitempty"`
 	ContractWhiteList     map[string]map[string]bool `yaml:"contractWhiteList,omitempty"`
 	// 是否开启新版本tx k = bcname, v = isBetaTx
-	IsBetaTx map[string]bool `yaml:"isBetaTx,omitempty"`
-	MaxConfirmedDelay     uint32 `yaml:"maxConfirmedDelay,omitempty"`
+	IsBetaTx          map[string]bool `yaml:"isBetaTx,omitempty"`
+	MaxConfirmedDelay uint32          `yaml:"maxConfirmedDelay,omitempty"`
 }
 
 // FeeConfig is the config of Fee
