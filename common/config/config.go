@@ -98,6 +98,7 @@ type UtxoConfig struct {
 	ContractWhiteList     map[string]map[string]bool `yaml:"contractWhiteList,omitempty"`
 	// 是否开启新版本tx k = bcname, v = isBetaTx
 	IsBetaTx map[string]bool `yaml:"isBetaTx,omitempty"`
+	MaxConfirmedDelay     uint32 `yaml:"maxConfirmedDelay,omitempty"`
 }
 
 // FeeConfig is the config of Fee
@@ -241,6 +242,7 @@ func (nc *NodeConfig) defaultNodeConfig() {
 		ContractExecutionTime: 500,
 		ContractWhiteList:     make(map[string]map[string]bool),
 		IsBetaTx:              make(map[string]bool),
+		MaxConfirmedDelay:     300,
 	}
 	nc.DedupCacheSize = 50000
 	nc.Kernel = KernelConfig{
