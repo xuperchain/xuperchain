@@ -84,81 +84,76 @@ func (m *PingResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_PingResponse proto.InternalMessageInfo
 
-type CallRequest struct {
+type NativeCallRequest struct {
 	// The context id of this request
-	Ctxid int64 `protobuf:"varint,1,opt,name=ctxid,proto3" json:"ctxid,omitempty"`
-	// Method of request
-	Method string `protobuf:"bytes,2,opt,name=method,proto3" json:"method,omitempty"`
-	// Txid of calling tx, nil if method is query
-	Txid []byte `protobuf:"bytes,3,opt,name=txid,proto3" json:"txid,omitempty"`
-	// JSON format args
-	Args []byte `protobuf:"bytes,4,opt,name=args,proto3" json:"args,omitempty"`
-	// Empty if method is query
-	Caller               string   `protobuf:"bytes,5,opt,name=caller,proto3" json:"caller,omitempty"`
+	Ctxid                int64    `protobuf:"varint,1,opt,name=ctxid,proto3" json:"ctxid,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *CallRequest) Reset()         { *m = CallRequest{} }
-func (m *CallRequest) String() string { return proto.CompactTextString(m) }
-func (*CallRequest) ProtoMessage()    {}
-func (*CallRequest) Descriptor() ([]byte, []int) {
+func (m *NativeCallRequest) Reset()         { *m = NativeCallRequest{} }
+func (m *NativeCallRequest) String() string { return proto.CompactTextString(m) }
+func (*NativeCallRequest) ProtoMessage()    {}
+func (*NativeCallRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_d19debeba7dea55a, []int{2}
 }
 
-func (m *CallRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_CallRequest.Unmarshal(m, b)
+func (m *NativeCallRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_NativeCallRequest.Unmarshal(m, b)
 }
-func (m *CallRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_CallRequest.Marshal(b, m, deterministic)
+func (m *NativeCallRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_NativeCallRequest.Marshal(b, m, deterministic)
 }
-func (m *CallRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CallRequest.Merge(m, src)
+func (m *NativeCallRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_NativeCallRequest.Merge(m, src)
 }
-func (m *CallRequest) XXX_Size() int {
-	return xxx_messageInfo_CallRequest.Size(m)
+func (m *NativeCallRequest) XXX_Size() int {
+	return xxx_messageInfo_NativeCallRequest.Size(m)
 }
-func (m *CallRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_CallRequest.DiscardUnknown(m)
+func (m *NativeCallRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_NativeCallRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_CallRequest proto.InternalMessageInfo
+var xxx_messageInfo_NativeCallRequest proto.InternalMessageInfo
 
-func (m *CallRequest) GetCtxid() int64 {
+func (m *NativeCallRequest) GetCtxid() int64 {
 	if m != nil {
 		return m.Ctxid
 	}
 	return 0
 }
 
-func (m *CallRequest) GetMethod() string {
-	if m != nil {
-		return m.Method
-	}
-	return ""
+type NativeCallResponse struct {
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *CallRequest) GetTxid() []byte {
-	if m != nil {
-		return m.Txid
-	}
-	return nil
+func (m *NativeCallResponse) Reset()         { *m = NativeCallResponse{} }
+func (m *NativeCallResponse) String() string { return proto.CompactTextString(m) }
+func (*NativeCallResponse) ProtoMessage()    {}
+func (*NativeCallResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d19debeba7dea55a, []int{3}
 }
 
-func (m *CallRequest) GetArgs() []byte {
-	if m != nil {
-		return m.Args
-	}
-	return nil
+func (m *NativeCallResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_NativeCallResponse.Unmarshal(m, b)
+}
+func (m *NativeCallResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_NativeCallResponse.Marshal(b, m, deterministic)
+}
+func (m *NativeCallResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_NativeCallResponse.Merge(m, src)
+}
+func (m *NativeCallResponse) XXX_Size() int {
+	return xxx_messageInfo_NativeCallResponse.Size(m)
+}
+func (m *NativeCallResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_NativeCallResponse.DiscardUnknown(m)
 }
 
-func (m *CallRequest) GetCaller() string {
-	if m != nil {
-		return m.Caller
-	}
-	return ""
-}
+var xxx_messageInfo_NativeCallResponse proto.InternalMessageInfo
 
 type CallArgs struct {
 	Method               string            `protobuf:"bytes,1,opt,name=method,proto3" json:"method,omitempty"`
@@ -174,7 +169,7 @@ func (m *CallArgs) Reset()         { *m = CallArgs{} }
 func (m *CallArgs) String() string { return proto.CompactTextString(m) }
 func (*CallArgs) ProtoMessage()    {}
 func (*CallArgs) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{3}
+	return fileDescriptor_d19debeba7dea55a, []int{4}
 }
 
 func (m *CallArgs) XXX_Unmarshal(b []byte) error {
@@ -234,7 +229,7 @@ func (m *SyscallHeader) Reset()         { *m = SyscallHeader{} }
 func (m *SyscallHeader) String() string { return proto.CompactTextString(m) }
 func (*SyscallHeader) ProtoMessage()    {}
 func (*SyscallHeader) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{4}
+	return fileDescriptor_d19debeba7dea55a, []int{5}
 }
 
 func (m *SyscallHeader) XXX_Unmarshal(b []byte) error {
@@ -275,7 +270,7 @@ func (m *PutRequest) Reset()         { *m = PutRequest{} }
 func (m *PutRequest) String() string { return proto.CompactTextString(m) }
 func (*PutRequest) ProtoMessage()    {}
 func (*PutRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{5}
+	return fileDescriptor_d19debeba7dea55a, []int{6}
 }
 
 func (m *PutRequest) XXX_Unmarshal(b []byte) error {
@@ -327,7 +322,7 @@ func (m *PutResponse) Reset()         { *m = PutResponse{} }
 func (m *PutResponse) String() string { return proto.CompactTextString(m) }
 func (*PutResponse) ProtoMessage()    {}
 func (*PutResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{6}
+	return fileDescriptor_d19debeba7dea55a, []int{7}
 }
 
 func (m *PutResponse) XXX_Unmarshal(b []byte) error {
@@ -360,7 +355,7 @@ func (m *GetRequest) Reset()         { *m = GetRequest{} }
 func (m *GetRequest) String() string { return proto.CompactTextString(m) }
 func (*GetRequest) ProtoMessage()    {}
 func (*GetRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{7}
+	return fileDescriptor_d19debeba7dea55a, []int{8}
 }
 
 func (m *GetRequest) XXX_Unmarshal(b []byte) error {
@@ -406,7 +401,7 @@ func (m *GetResponse) Reset()         { *m = GetResponse{} }
 func (m *GetResponse) String() string { return proto.CompactTextString(m) }
 func (*GetResponse) ProtoMessage()    {}
 func (*GetResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{8}
+	return fileDescriptor_d19debeba7dea55a, []int{9}
 }
 
 func (m *GetResponse) XXX_Unmarshal(b []byte) error {
@@ -446,7 +441,7 @@ func (m *DeleteRequest) Reset()         { *m = DeleteRequest{} }
 func (m *DeleteRequest) String() string { return proto.CompactTextString(m) }
 func (*DeleteRequest) ProtoMessage()    {}
 func (*DeleteRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{9}
+	return fileDescriptor_d19debeba7dea55a, []int{10}
 }
 
 func (m *DeleteRequest) XXX_Unmarshal(b []byte) error {
@@ -491,7 +486,7 @@ func (m *DeleteResponse) Reset()         { *m = DeleteResponse{} }
 func (m *DeleteResponse) String() string { return proto.CompactTextString(m) }
 func (*DeleteResponse) ProtoMessage()    {}
 func (*DeleteResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{10}
+	return fileDescriptor_d19debeba7dea55a, []int{11}
 }
 
 func (m *DeleteResponse) XXX_Unmarshal(b []byte) error {
@@ -528,7 +523,7 @@ func (m *IteratorRequest) Reset()         { *m = IteratorRequest{} }
 func (m *IteratorRequest) String() string { return proto.CompactTextString(m) }
 func (*IteratorRequest) ProtoMessage()    {}
 func (*IteratorRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{11}
+	return fileDescriptor_d19debeba7dea55a, []int{12}
 }
 
 func (m *IteratorRequest) XXX_Unmarshal(b []byte) error {
@@ -589,7 +584,7 @@ func (m *IteratorItem) Reset()         { *m = IteratorItem{} }
 func (m *IteratorItem) String() string { return proto.CompactTextString(m) }
 func (*IteratorItem) ProtoMessage()    {}
 func (*IteratorItem) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{12}
+	return fileDescriptor_d19debeba7dea55a, []int{13}
 }
 
 func (m *IteratorItem) XXX_Unmarshal(b []byte) error {
@@ -635,7 +630,7 @@ func (m *IteratorResponse) Reset()         { *m = IteratorResponse{} }
 func (m *IteratorResponse) String() string { return proto.CompactTextString(m) }
 func (*IteratorResponse) ProtoMessage()    {}
 func (*IteratorResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{13}
+	return fileDescriptor_d19debeba7dea55a, []int{14}
 }
 
 func (m *IteratorResponse) XXX_Unmarshal(b []byte) error {
@@ -675,7 +670,7 @@ func (m *QueryTxRequest) Reset()         { *m = QueryTxRequest{} }
 func (m *QueryTxRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryTxRequest) ProtoMessage()    {}
 func (*QueryTxRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{14}
+	return fileDescriptor_d19debeba7dea55a, []int{15}
 }
 
 func (m *QueryTxRequest) XXX_Unmarshal(b []byte) error {
@@ -722,7 +717,7 @@ func (m *QueryTxResponse) Reset()         { *m = QueryTxResponse{} }
 func (m *QueryTxResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryTxResponse) ProtoMessage()    {}
 func (*QueryTxResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{15}
+	return fileDescriptor_d19debeba7dea55a, []int{16}
 }
 
 func (m *QueryTxResponse) XXX_Unmarshal(b []byte) error {
@@ -762,7 +757,7 @@ func (m *QueryBlockRequest) Reset()         { *m = QueryBlockRequest{} }
 func (m *QueryBlockRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryBlockRequest) ProtoMessage()    {}
 func (*QueryBlockRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{16}
+	return fileDescriptor_d19debeba7dea55a, []int{17}
 }
 
 func (m *QueryBlockRequest) XXX_Unmarshal(b []byte) error {
@@ -809,7 +804,7 @@ func (m *QueryBlockResponse) Reset()         { *m = QueryBlockResponse{} }
 func (m *QueryBlockResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryBlockResponse) ProtoMessage()    {}
 func (*QueryBlockResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{17}
+	return fileDescriptor_d19debeba7dea55a, []int{18}
 }
 
 func (m *QueryBlockResponse) XXX_Unmarshal(b []byte) error {
@@ -850,7 +845,7 @@ func (m *TransferRequest) Reset()         { *m = TransferRequest{} }
 func (m *TransferRequest) String() string { return proto.CompactTextString(m) }
 func (*TransferRequest) ProtoMessage()    {}
 func (*TransferRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{18}
+	return fileDescriptor_d19debeba7dea55a, []int{19}
 }
 
 func (m *TransferRequest) XXX_Unmarshal(b []byte) error {
@@ -902,7 +897,7 @@ func (m *TransferResponse) Reset()         { *m = TransferResponse{} }
 func (m *TransferResponse) String() string { return proto.CompactTextString(m) }
 func (*TransferResponse) ProtoMessage()    {}
 func (*TransferResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{19}
+	return fileDescriptor_d19debeba7dea55a, []int{20}
 }
 
 func (m *TransferResponse) XXX_Unmarshal(b []byte) error {
@@ -924,20 +919,21 @@ func (m *TransferResponse) XXX_DiscardUnknown() {
 var xxx_messageInfo_TransferResponse proto.InternalMessageInfo
 
 type ContractCallRequest struct {
-	Header               *SyscallHeader `protobuf:"bytes,1,opt,name=header,proto3" json:"header,omitempty"`
-	Module               string         `protobuf:"bytes,2,opt,name=module,proto3" json:"module,omitempty"`
-	Method               string         `protobuf:"bytes,3,opt,name=method,proto3" json:"method,omitempty"`
-	Args                 string         `protobuf:"bytes,4,opt,name=args,proto3" json:"args,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
-	XXX_unrecognized     []byte         `json:"-"`
-	XXX_sizecache        int32          `json:"-"`
+	Header               *SyscallHeader    `protobuf:"bytes,1,opt,name=header,proto3" json:"header,omitempty"`
+	Module               string            `protobuf:"bytes,2,opt,name=module,proto3" json:"module,omitempty"`
+	Contract             string            `protobuf:"bytes,3,opt,name=contract,proto3" json:"contract,omitempty"`
+	Method               string            `protobuf:"bytes,4,opt,name=method,proto3" json:"method,omitempty"`
+	Args                 map[string][]byte `protobuf:"bytes,5,rep,name=args,proto3" json:"args,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
+	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
+	XXX_unrecognized     []byte            `json:"-"`
+	XXX_sizecache        int32             `json:"-"`
 }
 
 func (m *ContractCallRequest) Reset()         { *m = ContractCallRequest{} }
 func (m *ContractCallRequest) String() string { return proto.CompactTextString(m) }
 func (*ContractCallRequest) ProtoMessage()    {}
 func (*ContractCallRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{20}
+	return fileDescriptor_d19debeba7dea55a, []int{21}
 }
 
 func (m *ContractCallRequest) XXX_Unmarshal(b []byte) error {
@@ -972,6 +968,13 @@ func (m *ContractCallRequest) GetModule() string {
 	return ""
 }
 
+func (m *ContractCallRequest) GetContract() string {
+	if m != nil {
+		return m.Contract
+	}
+	return ""
+}
+
 func (m *ContractCallRequest) GetMethod() string {
 	if m != nil {
 		return m.Method
@@ -979,25 +982,25 @@ func (m *ContractCallRequest) GetMethod() string {
 	return ""
 }
 
-func (m *ContractCallRequest) GetArgs() string {
+func (m *ContractCallRequest) GetArgs() map[string][]byte {
 	if m != nil {
 		return m.Args
 	}
-	return ""
+	return nil
 }
 
 type ContractCallResponse struct {
-	Response             []byte   `protobuf:"bytes,1,opt,name=response,proto3" json:"response,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Response             *Response `protobuf:"bytes,1,opt,name=response,proto3" json:"response,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
+	XXX_unrecognized     []byte    `json:"-"`
+	XXX_sizecache        int32     `json:"-"`
 }
 
 func (m *ContractCallResponse) Reset()         { *m = ContractCallResponse{} }
 func (m *ContractCallResponse) String() string { return proto.CompactTextString(m) }
 func (*ContractCallResponse) ProtoMessage()    {}
 func (*ContractCallResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{21}
+	return fileDescriptor_d19debeba7dea55a, []int{22}
 }
 
 func (m *ContractCallResponse) XXX_Unmarshal(b []byte) error {
@@ -1018,7 +1021,7 @@ func (m *ContractCallResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_ContractCallResponse proto.InternalMessageInfo
 
-func (m *ContractCallResponse) GetResponse() []byte {
+func (m *ContractCallResponse) GetResponse() *Response {
 	if m != nil {
 		return m.Response
 	}
@@ -1038,7 +1041,7 @@ func (m *Response) Reset()         { *m = Response{} }
 func (m *Response) String() string { return proto.CompactTextString(m) }
 func (*Response) ProtoMessage()    {}
 func (*Response) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{22}
+	return fileDescriptor_d19debeba7dea55a, []int{23}
 }
 
 func (m *Response) XXX_Unmarshal(b []byte) error {
@@ -1092,7 +1095,7 @@ func (m *SetOutputRequest) Reset()         { *m = SetOutputRequest{} }
 func (m *SetOutputRequest) String() string { return proto.CompactTextString(m) }
 func (*SetOutputRequest) ProtoMessage()    {}
 func (*SetOutputRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{23}
+	return fileDescriptor_d19debeba7dea55a, []int{24}
 }
 
 func (m *SetOutputRequest) XXX_Unmarshal(b []byte) error {
@@ -1137,7 +1140,7 @@ func (m *SetOutputResponse) Reset()         { *m = SetOutputResponse{} }
 func (m *SetOutputResponse) String() string { return proto.CompactTextString(m) }
 func (*SetOutputResponse) ProtoMessage()    {}
 func (*SetOutputResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{24}
+	return fileDescriptor_d19debeba7dea55a, []int{25}
 }
 
 func (m *SetOutputResponse) XXX_Unmarshal(b []byte) error {
@@ -1169,7 +1172,7 @@ func (m *GetCallArgsRequest) Reset()         { *m = GetCallArgsRequest{} }
 func (m *GetCallArgsRequest) String() string { return proto.CompactTextString(m) }
 func (*GetCallArgsRequest) ProtoMessage()    {}
 func (*GetCallArgsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{25}
+	return fileDescriptor_d19debeba7dea55a, []int{26}
 }
 
 func (m *GetCallArgsRequest) XXX_Unmarshal(b []byte) error {
@@ -1200,7 +1203,8 @@ func (m *GetCallArgsRequest) GetHeader() *SyscallHeader {
 func init() {
 	proto.RegisterType((*PingRequest)(nil), "pb.PingRequest")
 	proto.RegisterType((*PingResponse)(nil), "pb.PingResponse")
-	proto.RegisterType((*CallRequest)(nil), "pb.CallRequest")
+	proto.RegisterType((*NativeCallRequest)(nil), "pb.NativeCallRequest")
+	proto.RegisterType((*NativeCallResponse)(nil), "pb.NativeCallResponse")
 	proto.RegisterType((*CallArgs)(nil), "pb.CallArgs")
 	proto.RegisterMapType((map[string][]byte)(nil), "pb.CallArgs.ArgsEntry")
 	proto.RegisterType((*SyscallHeader)(nil), "pb.SyscallHeader")
@@ -1220,6 +1224,7 @@ func init() {
 	proto.RegisterType((*TransferRequest)(nil), "pb.TransferRequest")
 	proto.RegisterType((*TransferResponse)(nil), "pb.TransferResponse")
 	proto.RegisterType((*ContractCallRequest)(nil), "pb.ContractCallRequest")
+	proto.RegisterMapType((map[string][]byte)(nil), "pb.ContractCallRequest.ArgsEntry")
 	proto.RegisterType((*ContractCallResponse)(nil), "pb.ContractCallResponse")
 	proto.RegisterType((*Response)(nil), "pb.Response")
 	proto.RegisterType((*SetOutputRequest)(nil), "pb.SetOutputRequest")
@@ -1301,7 +1306,7 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type NativeCodeClient interface {
-	Call(ctx context.Context, in *CallRequest, opts ...grpc.CallOption) (*Response, error)
+	Call(ctx context.Context, in *NativeCallRequest, opts ...grpc.CallOption) (*NativeCallResponse, error)
 	Ping(ctx context.Context, in *PingRequest, opts ...grpc.CallOption) (*PingResponse, error)
 }
 
@@ -1313,8 +1318,8 @@ func NewNativeCodeClient(cc *grpc.ClientConn) NativeCodeClient {
 	return &nativeCodeClient{cc}
 }
 
-func (c *nativeCodeClient) Call(ctx context.Context, in *CallRequest, opts ...grpc.CallOption) (*Response, error) {
-	out := new(Response)
+func (c *nativeCodeClient) Call(ctx context.Context, in *NativeCallRequest, opts ...grpc.CallOption) (*NativeCallResponse, error) {
+	out := new(NativeCallResponse)
 	err := c.cc.Invoke(ctx, "/pb.NativeCode/Call", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -1333,7 +1338,7 @@ func (c *nativeCodeClient) Ping(ctx context.Context, in *PingRequest, opts ...gr
 
 // NativeCodeServer is the server API for NativeCode service.
 type NativeCodeServer interface {
-	Call(context.Context, *CallRequest) (*Response, error)
+	Call(context.Context, *NativeCallRequest) (*NativeCallResponse, error)
 	Ping(context.Context, *PingRequest) (*PingResponse, error)
 }
 
@@ -1342,7 +1347,7 @@ func RegisterNativeCodeServer(s *grpc.Server, srv NativeCodeServer) {
 }
 
 func _NativeCode_Call_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(CallRequest)
+	in := new(NativeCallRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
@@ -1354,7 +1359,7 @@ func _NativeCode_Call_Handler(srv interface{}, ctx context.Context, dec func(int
 		FullMethod: "/pb.NativeCode/Call",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NativeCodeServer).Call(ctx, req.(*CallRequest))
+		return srv.(NativeCodeServer).Call(ctx, req.(*NativeCallRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
