@@ -176,7 +176,7 @@ func (tp *TDpos) runNominateCandidate(desc *contract.TxDesc, block *pb.InternalB
 		authRequire := desc.Tx.GetAuthRequire()
 		if ok := tp.isAuthAddress(candidate, initiator, authRequire); !ok {
 			tp.log.Warn("candidate has not been authenticated", "candidate:", candidate)
-			return errors.New("candidate has not been authenticated")
+			return nil
 		}
 
 		tp.log.Trace("runNominateCandidate candidate!", "key", keyCanBal)
