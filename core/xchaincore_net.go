@@ -17,8 +17,12 @@ func (xc *XChainCore) BroadCastGetBlock(bid *pb.BlockID) *pb.Block {
 		return nil
 	}
 	msg, err := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, bid.GetBcname(), "", xuper_p2p.XuperMessage_GET_BLOCK, msgbuf, xuper_p2p.XuperMessage_NONE)
+	filters := []p2pv2.FilterStrategy{p2pv2.NearestBucketStrategy}
+	if xc.IsCoreMiner() {
+		filters = append(filters, p2pv2.CorePeersStrategy)
+	}
 	opts := []p2pv2.MessageOption{
-		p2pv2.WithFilters([]p2pv2.FilterStrategy{p2pv2.NearestBucketStrategy}),
+		p2pv2.WithFilters(filters),
 		p2pv2.WithBcName(xc.bcname),
 	}
 	res, err := xc.P2pv2.SendMessageWithResponse(context.Background(), msg, opts...)

@@ -186,9 +186,15 @@ func (xm *XChainMG) HandleSendBlock(msg *xuper_p2p.XuperMessage) {
 		xm.Log.Error("HandleSendBlock ProcessBlock error", "error", err.Error())
 		return
 	}
+	bcname := block.GetBcname()
+	bc := xm.Get(bcname)
+	filters := []p2pv2.FilterStrategy{p2pv2.DefaultStrategy}
+	if bc.IsCoreMiner() {
+		filters = append(filters, p2pv2.CorePeersStrategy)
+	}
 	opts := []p2pv2.MessageOption{
-		p2pv2.WithFilters([]p2pv2.FilterStrategy{p2pv2.DefaultStrategy}),
-		p2pv2.WithBcName(msg.GetHeader().GetBcname()),
+		p2pv2.WithFilters(filters),
+		p2pv2.WithBcName(bcname),
 	}
 	xm.P2pv2.SendMessage(context.Background(), msg, opts...)
 	return
