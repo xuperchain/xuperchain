@@ -42,7 +42,6 @@ func (dt *table) Close() {
 
 func (dt *table) NewBatch() Batch {
 	panic("not implemented")
-	return nil
 }
 
 func (dt *table) NewIteratorWithPrefix(prefix []byte) Iterator {
