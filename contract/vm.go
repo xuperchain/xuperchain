@@ -27,17 +27,6 @@ type ContextConfig struct {
 	GasLimit     int64
 }
 
-// NewContextConfig return context config of a transaction
-func NewContextConfig(xmCache *xmodel.XMCache, initiator string, authRequire []string, contractName string, gasLimit int64) (*ContextConfig, error) {
-	return &ContextConfig{
-		XMCache:      xmCache,
-		Initiator:    initiator,
-		AuthRequire:  authRequire,
-		ContractName: contractName,
-		GasLimit:     gasLimit,
-	}, nil
-}
-
 // VirtualMachine define virtual machine interface
 type VirtualMachine interface {
 	GetName() string

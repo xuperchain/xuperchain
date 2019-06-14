@@ -100,7 +100,13 @@ func TestWasmInvoke(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			ctxCfg, _ := contract.NewContextConfig(cache, "", []string{}, "counter", contract.MaxGasLimit)
+			ctxCfg := &contract.ContextConfig{
+				XMCache:      cache,
+				Initiator:    "",
+				AuthRequire:  []string{},
+				ContractName: "counter",
+				GasLimit:     contract.MaxGasLimit,
+			}
 			ctx, err := tctx.vm.NewContext(ctxCfg)
 			if err != nil {
 				t.Fatal(err)
@@ -119,7 +125,13 @@ func TestWasmInvoke(t *testing.T) {
 
 func TestWasmContractMissing(t *testing.T) {
 	WithTestContext(t, "memory", func(tctx *FakeWASMContext) {
-		ctxCfg, _ := contract.NewContextConfig(tctx.Cache, "", []string{}, "counter", contract.MaxGasLimit)
+		ctxCfg := &contract.ContextConfig{
+			XMCache:      tctx.Cache,
+			Initiator:    "",
+			AuthRequire:  []string{},
+			ContractName: "counter",
+			GasLimit:     contract.MaxGasLimit,
+		}
 		ctx, err := tctx.vm.NewContext(ctxCfg)
 		if err == nil {
 			ctx.Release()

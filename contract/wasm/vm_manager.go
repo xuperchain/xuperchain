@@ -187,10 +187,14 @@ func (v *VMManager) initContract(contractName string, cache *xmodel.XMCache, arg
 		return nil, 0, errors.New("wasm vm not registered")
 	}
 
-	ctxCfg, err := contract.NewContextConfig(cache, "", []string{}, contractName, gasLimit)
-	if err != nil {
-		return nil, 0, err
+	ctxCfg := &contract.ContextConfig{
+		XMCache:      cache,
+		Initiator:    "",
+		AuthRequire:  []string{},
+		ContractName: contractName,
+		GasLimit:     gasLimit,
 	}
+
 	ctx, err := vm.NewContext(ctxCfg)
 	if err != nil {
 		return nil, 0, err

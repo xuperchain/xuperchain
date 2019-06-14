@@ -85,7 +85,14 @@ func TestExecutorMethod(t *testing.T) {
 	xbridge := New()
 	vm := xbridge.RegisterExecutor("code", new(codeExecutor))
 	util.WithXModelContext(t, func(x *util.XModelContext) {
-		ctxCfg, _ := contract.NewContextConfig(x.Cache, "", []string{}, "dummy", 0)
+		ctxCfg := &contract.ContextConfig{
+			XMCache:      x.Cache,
+			Initiator:    "",
+			AuthRequire:  []string{},
+			ContractName: "dummy",
+			GasLimit:     int64(0),
+		}
+
 		ctx, err := vm.NewContext(ctxCfg)
 		if err != nil {
 			t.Fatal(err)
@@ -106,7 +113,15 @@ func TestExecutorArgs(t *testing.T) {
 	xbridge := New()
 	vm := xbridge.RegisterExecutor("code", new(codeExecutor))
 	util.WithXModelContext(t, func(x *util.XModelContext) {
-		ctxCfg, _ := contract.NewContextConfig(x.Cache, "", []string{}, "dummy", 0)
+
+		ctxCfg := &contract.ContextConfig{
+			XMCache:      x.Cache,
+			Initiator:    "",
+			AuthRequire:  []string{},
+			ContractName: "dummy",
+			GasLimit:     int64(0),
+		}
+
 		ctx, err := vm.NewContext(ctxCfg)
 		if err != nil {
 			t.Fatal(err)
@@ -129,7 +144,14 @@ func TestExecutorSyscall(t *testing.T) {
 	xbridge := New()
 	vm := xbridge.RegisterExecutor("code", new(codeExecutor))
 	util.WithXModelContext(t, func(x *util.XModelContext) {
-		ctxCfg, _ := contract.NewContextConfig(x.Cache, "", []string{}, "dummy", 0)
+		ctxCfg := &contract.ContextConfig{
+			XMCache:      x.Cache,
+			Initiator:    "",
+			AuthRequire:  []string{},
+			ContractName: "dummy",
+			GasLimit:     int64(0),
+		}
+
 		ctx, err := vm.NewContext(ctxCfg)
 		if err != nil {
 			t.Fatal(err)

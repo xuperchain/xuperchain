@@ -709,9 +709,13 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 	if err != nil {
 		return nil, err
 	}
-	contextConfig, err := contract.NewContextConfig(modelCache, req.GetInitiator(), req.GetAuthRequire(), "", contract.MaxGasLimit)
-	if err != nil {
-		return nil, err
+
+	contextConfig := &contract.ContextConfig{
+		XMCache:      modelCache,
+		Initiator:    req.GetInitiator(),
+		AuthRequire:  req.GetAuthRequire(),
+		ContractName: "",
+		GasLimit:     contract.MaxGasLimit,
 	}
 	gasUesdTotal := int64(0)
 	response := [][]byte{}
@@ -1358,12 +1362,13 @@ func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-
-	contextConfig, err := contract.NewContextConfig(env.GetModelCache(), tx.GetInitiator(), tx.GetAuthRequire(), "", int64(0))
-	if err != nil {
-		return false, err
+	contextConfig := &contract.ContextConfig{
+		XMCache:      env.GetModelCache(),
+		Initiator:    tx.GetInitiator(),
+		AuthRequire:  tx.GetAuthRequire(),
+		ContractName: "",
+		GasLimit:     int64(0),
 	}
-
 	gasLimit, err := getGasLimitFromTx(tx)
 	if err != nil {
 		return false, err
@@ -1403,6 +1408,7 @@ func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
 		if i >= len(reservedRequests) {
 			gasRemain -= ctx.GasUsed()
 		}
+		ctx.Release()
 	}
 
 	_, writeSet, err := env.GetModelCache().GetRWSets()
