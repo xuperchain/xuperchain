@@ -13,7 +13,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/xuperchain/xuperunion/common"
 	"github.com/xuperchain/xuperunion/contract"
 	crypto_client "github.com/xuperchain/xuperunion/crypto/client"
 	"github.com/xuperchain/xuperunion/crypto/hash"
