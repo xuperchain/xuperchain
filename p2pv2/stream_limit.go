@@ -4,10 +4,8 @@ import (
 	"os"
 	"strings"
 	"sync"
-	"time"
 
 	peer "github.com/libp2p/go-libp2p-peer"
-	"github.com/patrickmn/go-cache"
 
 	"github.com/xuperchain/log15"
 )
