@@ -56,7 +56,7 @@ DEFINE_METHOD(Banned, ban) {
     ctx->ok("ban contract success");
 }
 
-DEFINE_METHOD(Banned, release) {
+DEFINE_METHOD(Banned, unban) {
     xchain::Context* ctx = self.context();
     const std::string keys = ctx->arg("contract");
 
@@ -73,7 +73,7 @@ DEFINE_METHOD(Banned, release) {
     ctx->ok("release contract success");
 }
 
-DEFINE_METHOD(Banned, get) {
+DEFINE_METHOD(Banned, verify) {
     xchain::Context* ctx = self.context();
     const std::string keys = ctx->arg("contract");
 
