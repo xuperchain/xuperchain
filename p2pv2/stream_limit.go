@@ -16,7 +16,7 @@ import (
 type StreamLimit struct {
 	// Store all streams available
 	// key: addr value: peerID
-	streams *cache.Cache
+	streams *sync.Map
 	// key:ip   value:  amount of same ip
 	ip2cnt map[string]int64
 	// mutex for ip2cnt
@@ -30,7 +30,7 @@ type StreamLimit struct {
 
 // Init initialize the StreamLimit
 func (sl *StreamLimit) Init(limit int64, lg log.Logger) {
-	sl.streams = cache.New(time.Duration(1)*time.Second, 1*time.Second)
+	sl.streams = &sync.Map{}
 	sl.ip2cnt = make(map[string]int64)
 	sl.mutex = &sync.Mutex{}
 	if limit <= 0 {
@@ -47,7 +47,7 @@ func (sl *StreamLimit) Init(limit int64, lg log.Logger) {
 }
 
 func (sl *StreamLimit) hasStream(addrStr string) bool {
-	_, exist := sl.streams.Get(addrStr)
+	_, exist := sl.streams.Load(addrStr)
 	return exist
 }
 
@@ -70,7 +70,7 @@ func (sl *StreamLimit) AddStream(addrStr string, peerID peer.ID) bool {
 		return false
 	}
 
-	sl.streams.Set(addrStr, peerID, cache.NoExpiration)
+	sl.streams.Store(addrStr, peerID)
 	sl.inc(ip)
 
 	return true
