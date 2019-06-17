@@ -210,7 +210,7 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	if cfg.Utxo.AsyncMode {
 		xc.Utxovm.StartAsyncWriter()
 	}
-
+	xc.Utxovm.SetMaxConfirmedDelay(cfg.Utxo.MaxConfirmedDelay)
 	gBlk := xc.Ledger.GetGenesisBlock()
 	if gBlk == nil {
 		xc.log.Warn("GenesisBlock nil")
