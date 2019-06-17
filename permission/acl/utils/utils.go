@@ -12,6 +12,7 @@ const (
 	accountBcnameSep       = "@"
 	accountContractValue   = "true"
 	newAccountGasAmount    = 1000
+	contractReservedChar   = ","
 )
 
 // GetContract2AccountBucket get the bucket name of contract to account map
@@ -77,4 +78,9 @@ func GetAkLimit() int {
 // GetAccountContractValue return accountContractValue
 func GetAccountContractValue() string {
 	return accountContractValue
+}
+
+// GetContractReservedChar return contractReservedChar
+func GetContractReservedChar() string {
+	return contractReservedChar
 }

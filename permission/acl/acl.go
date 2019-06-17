@@ -45,3 +45,8 @@ func ValidRawAccount(accountName string) error {
 	}
 	return nil
 }
+
+// ValidRawContract check if contract name is ok
+func ValidRawContract(contractName string) bool {
+	return strings.ContainsAny(contractName, utils.GetContractReservedChar())
+}
