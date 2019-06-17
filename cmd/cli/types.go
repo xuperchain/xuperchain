@@ -66,23 +66,23 @@ type SignatureInfo struct {
 
 // Transaction proto.Transaction
 type Transaction struct {
-	Txid             HexID           `json:"txid"`
-	Blockid          HexID           `json:"blockid"`
-	TxInputs         []TxInput       `json:"txInputs"`
-	TxOutputs        []TxOutput      `json:"txOutputs"`
-	Desc             string          `json:"desc"`
-	Nonce            string          `json:"nonce"`
-	Timestamp        int64           `json:"timestamp"`
-	Version          int32           `json:"version"`
-	Autogen          bool            `json:"autogen"`
-	Coinbase         bool            `json:"coinbase"`
-	TxInputsExt      []TxInputExt    `json:"txInputsExt"`
-	TxOutputsExt     []TxOutputExt   `json:"txOutputsExt"`
-	ContractRequest  *InvokeRequest  `json:"contractRequest"`
-	Initiator        string          `json:"initiator"`
-	AuthRequire      []string        `json:"authRequire"`
-	InitiatorSigns   []SignatureInfo `json:"initiatorSigns"`
-	AuthRequireSigns []SignatureInfo `json:"authRequireSigns"`
+	Txid             HexID            `json:"txid"`
+	Blockid          HexID            `json:"blockid"`
+	TxInputs         []TxInput        `json:"txInputs"`
+	TxOutputs        []TxOutput       `json:"txOutputs"`
+	Desc             string           `json:"desc"`
+	Nonce            string           `json:"nonce"`
+	Timestamp        int64            `json:"timestamp"`
+	Version          int32            `json:"version"`
+	Autogen          bool             `json:"autogen"`
+	Coinbase         bool             `json:"coinbase"`
+	TxInputsExt      []TxInputExt     `json:"txInputsExt"`
+	TxOutputsExt     []TxOutputExt    `json:"txOutputsExt"`
+	ContractRequests []*InvokeRequest `json:"contractRequests"`
+	Initiator        string           `json:"initiator"`
+	AuthRequire      []string         `json:"authRequire"`
+	InitiatorSigns   []SignatureInfo  `json:"initiatorSigns"`
+	AuthRequireSigns []SignatureInfo  `json:"authRequireSigns"`
 }
 
 // BigInt big int
@@ -143,15 +143,19 @@ func FromPBTx(tx *pb.Transaction) *Transaction {
 			Value:  string(outputExt.Value),
 		})
 	}
-	if tx.ContractRequest != nil {
-		t.ContractRequest = &InvokeRequest{
-			ModuleName:   tx.ContractRequest.ModuleName,
-			ContractName: tx.ContractRequest.ContractName,
-			MethodName:   tx.ContractRequest.MethodName,
-			Args:         map[string]string{},
-		}
-		for argKey, argV := range tx.ContractRequest.Args {
-			t.ContractRequest.Args[argKey] = string(argV)
+	if tx.ContractRequests != nil {
+		for i := 0; i < len(tx.ContractRequests); i++ {
+			req := tx.ContractRequests[i]
+			tmpReq := &InvokeRequest{
+				ModuleName:   req.ModuleName,
+				ContractName: req.ContractName,
+				MethodName:   req.MethodName,
+				Args:         map[string]string{},
+			}
+			for argKey, argV := range req.Args {
+				tmpReq.Args[argKey] = string(argV)
+			}
+			t.ContractRequests = append(t.ContractRequests, tmpReq)
 		}
 	}
 

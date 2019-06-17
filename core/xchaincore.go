@@ -1077,7 +1077,7 @@ func (xc *XChainCore) GetNodeMode() string {
 }
 
 // PreExec get read/write set for smart contract could be run in parallel
-func (xc *XChainCore) PreExec(req *pb.InvokeRequest, hd *global.XContext) (*pb.InvokeResponse, error) {
+func (xc *XChainCore) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.InvokeResponse, error) {
 	return xc.Utxovm.PreExec(req, hd)
 }
 

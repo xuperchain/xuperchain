@@ -11,6 +11,7 @@ import (
 	"github.com/golang/protobuf/proto"
 
 	"github.com/xuperchain/xuperunion/common/config"
+	"github.com/xuperchain/xuperunion/contract"
 	"github.com/xuperchain/xuperunion/contract/wasm/vm"
 	"github.com/xuperchain/xuperunion/crypto/hash"
 
@@ -185,7 +186,16 @@ func (v *VMManager) initContract(contractName string, cache *xmodel.XMCache, arg
 	if !ok {
 		return nil, 0, errors.New("wasm vm not registered")
 	}
-	ctx, err := vm.NewContext(contractName, cache, gasLimit)
+
+	ctxCfg := &contract.ContextConfig{
+		XMCache:      cache,
+		Initiator:    "",
+		AuthRequire:  []string{},
+		ContractName: contractName,
+		GasLimit:     gasLimit,
+	}
+
+	ctx, err := vm.NewContext(ctxCfg)
 	if err != nil {
 		return nil, 0, err
 	}
