@@ -11,6 +11,7 @@ import (
 	"time"
 
 	crypto "github.com/libp2p/go-libp2p-crypto"
+	peer "github.com/libp2p/go-libp2p-peer"
 	"github.com/xuperchain/xuperunion/common/config"
 	crypto_client "github.com/xuperchain/xuperunion/crypto/client"
 	"github.com/xuperchain/xuperunion/crypto/hash"
@@ -38,6 +39,20 @@ func GenerateKeyPairWithPath(path string) error {
 	}
 
 	return ioutil.WriteFile(path+"net_private.key", []byte(base64.StdEncoding.EncodeToString(privData)), 0700)
+}
+
+// GetPeerIDFromPath return peer id of given private key path
+func GetPeerIDFromPath(keypath string) (string, error) {
+	pk, err := GetKeyPairFromPath(keypath)
+	if err != nil {
+		return "", err
+	}
+
+	pid, err := peer.IDFromPrivateKey(pk)
+	if err != nil {
+		return "", err
+	}
+	return pid.Pretty(), nil
 }
 
 // GetKeyPairFromPath get xuper net key from file path
