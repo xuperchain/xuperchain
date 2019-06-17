@@ -24,6 +24,8 @@ const (
 	DefaultTimeout          = 3
 	DefaultIsAuthentication = false
 	DefautltAuthTimeout     = 30
+	// limitation size for same ip
+	DefaultStreamIPLimitSize = 10
 )
 
 // LogConfig is the log config of node
@@ -80,6 +82,8 @@ type P2PConfig struct {
 	Timeout int64 `yaml:"timeout,omitempty"`
 	// IsAuthentication determine whether peerID and Xchain addr correspond
 	IsAuthentication bool `yaml:"isauthentication,omitempty"`
+	// StreamIPLimitSize set the limitation size for same ip
+	StreamIPLimitSize int64 `yaml:"streamIPLimitSize,omitempty"`
 }
 
 // MinerConfig is the config of miner
@@ -284,6 +288,8 @@ func newP2pConfigWithDefault() P2PConfig {
 		MaxMessageSize:   DefaultMaxMessageSize,
 		Timeout:          DefaultTimeout,
 		IsAuthentication: DefaultIsAuthentication,
+		// default stream ip limit size
+		StreamIPLimitSize: DefaultStreamIPLimitSize,
 	}
 }
 
