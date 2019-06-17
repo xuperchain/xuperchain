@@ -326,7 +326,7 @@ func (tp *TDpos) triggerProposerChanged(proposers []*candidateInfo) {
 	for _, proposer := range proposers {
 		miner := &cons_base.MinerInfo{
 			Address:  proposer.Address,
-			PeerInfo: proposer.PeerID,
+			PeerInfo: proposer.PeerAddr,
 		}
 		msg.NextMiners = append(msg.NextMiners, miner)
 	}

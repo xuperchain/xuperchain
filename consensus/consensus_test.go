@@ -481,11 +481,19 @@ func TestUpdateConsensusOther(t *testing.T) {
 				"block_num":          "1",
 				"vote_unit_price":    "1",
 				"init_proposer": map[string]interface{}{
-					"1": []interface{}{"Y4TmpfV4pvhYT5W17J7TqHSLo6cqq23x3", "f3prTg9itaZY6m48wXXikXdcxiByW7zgk", "U9sKwFmgJVfzgWcfAG47dKn1kLQTqeZN3"},
-					"peerids": []interface{}{
-						"/ip4/127.0.0.1/tcp/47101/p2p/QmVxeNubpg1ZQY4TmpfV4pvhYT5W17J7TqHSLo6cqq23x3",
-						"/ip4/127.0.0.1/tcp/47102/p2p/QmVxeNubpg1ZQjQT8W5yZC9fD7ZB1ViArwvyGUB53sqf8e",
-						"/ip4/127.0.0.1/tcp/47103/p2p/U9sKwFmgJVfzgWcfAG47dKn1kLQTqeZN3ZB1ViArwvTmpa",
+					"1": []interface{}{
+						map[string]interface{}{
+							"address": "Y4TmpfV4pvhYT5W17J7TqHSLo6cqq23x3",
+							"neturl":  "/ip4/127.0.0.1/tcp/47101/p2p/QmVxeNubpg1ZQY4TmpfV4pvhYT5W17J7TqHSLo6cqq23x3",
+						},
+						map[string]interface{}{
+							"address": "f3prTg9itaZY6m48wXXikXdcxiByW7zgk",
+							"neturl":  "/ip4/127.0.0.1/tcp/47102/p2p/QmVxeNubpg1ZQjQT8W5yZC9fD7ZB1ViArwvyGUB53sqf8e",
+						},
+						map[string]interface{}{
+							"address": "U9sKwFmgJVfzgWcfAG47dKn1kLQTqeZN3",
+							"neturl":  "/ip4/127.0.0.1/tcp/47103/p2p/U9sKwFmgJVfzgWcfAG47dKn1kLQTqeZN3ZB1ViArwvTmpa",
+						},
 					},
 				},
 			},

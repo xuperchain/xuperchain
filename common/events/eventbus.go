@@ -13,7 +13,6 @@ var (
 	ErrInvalidParams    = errors.New("Invalid Params")
 	ErrQueueFull        = errors.New("Event queue is full")
 	ErrDuplicateHandler = errors.New("Duplicate handler")
-	ErrInvalidHandler   = errors.New("Invalid handler")
 	ErrPartialSuccess   = errors.New("Operations partial success")
 )
 
@@ -101,7 +100,7 @@ func (ec *EventBus) Unsubscribe(eType EventType, handler EventHandler) error {
 	idx := ec.findHandlerIndex(eType, handler)
 	if idx < 0 {
 		// handler not found, treat as unsubscribe successfully
-		return ErrInvalidHandler
+		return nil
 	}
 
 	ec.handler[eType] = append(ec.handler[eType][:idx], ec.handler[eType][idx+1:]...)

@@ -217,32 +217,31 @@ func (tp *TDpos) buildConfigs(xlog log.Logger, cfg *config.NodeConfig, consCfg m
 	initProposer := consCfg["init_proposer"].(map[string]interface{})
 	xlog.Trace("initProposer", "initProposer", initProposer)
 
-	if len(initProposer) != 2 {
+	if len(initProposer) != 1 {
 		xlog.Warn("TDpos init proposer length error", "length", len(initProposer))
 		return errors.New("TDpos init proposer length error")
 	}
 
-	// first round proposers' address
+	// first round proposers
 	if _, ok := initProposer["1"]; !ok {
 		return errors.New("TDpos init proposer error, Proposer 0 not provided")
 	}
-	initProposerAddr := initProposer["1"].([]interface{})
-	if int64(len(initProposerAddr)) != proposerNum {
-		return errors.New("TDpos init proposer address error, Proposer 0 should be equal to proposerNum")
+	initProposer1 := initProposer["1"].([]interface{})
+	if int64(len(initProposer1)) != proposerNum {
+		return errors.New("TDpos init proposer info error, Proposer 0 should be equal to proposerNum")
 	}
-	// first round proposers' peer ID
-	if _, ok := initProposer["peerids"]; !ok {
-		return errors.New("TDpos init proposer error, Proposer 0 not provided")
-	}
-	initProposerPeerIDs := initProposer["peerids"].([]interface{})
-	if int64(len(initProposerPeerIDs)) != proposerNum {
-		return errors.New("TDpos init proposer peerids error, Proposer 0 should be equal to proposerNum")
-	}
-	for idx, v := range initProposerAddr {
-		canInfo := &candidateInfo{
-			Address: v.(string),
-			PeerID:  initProposerPeerIDs[idx].(string),
+
+	for _, v := range initProposer1 {
+		canInfo := &candidateInfo{}
+		proposer := v.(map[string]interface{})
+		if _, ok := proposer["address"]; !ok {
+			return errors.New("TDPos init failed, proposer should have address")
 		}
+		canInfo.Address = proposer["address"].(string)
+		if _, ok := proposer["neturl"]; !ok {
+			return errors.New("TDPos init failed, proposer should have neturl")
+		}
+		canInfo.PeerAddr = proposer["neturl"].(string)
 		tp.config.initProposer[1] = append(tp.config.initProposer[1], canInfo)
 	}
 
@@ -547,7 +546,7 @@ func (tp *TDpos) GetCoreMiners() []*cons_base.MinerInfo {
 	for _, proposer := range proposers {
 		minerInfo := &cons_base.MinerInfo{
 			Address:  proposer.Address,
-			PeerInfo: proposer.PeerID,
+			PeerInfo: proposer.PeerAddr,
 		}
 		res = append(res, minerInfo)
 	}

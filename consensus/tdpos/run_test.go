@@ -195,7 +195,7 @@ func TestRunNominateCandidate(t *testing.T) {
 		Method: "nominate_candidate",
 		Args: map[string]interface{}{
 			"candidates": []interface{}{"f3prTg9itaZY6m48wXXikXdcxiByW7zgk"},
-			"peerids":    []interface{}{"/ip4/127.0.0.1/tcp/47101/p2p/QmVxeNubpg1ZQjQT8W5yZC9fD7ZB1ViArwvyGUB53sqf8e"},
+			"neturls":    []interface{}{"/ip4/127.0.0.1/tcp/47101/p2p/QmVxeNubpg1ZQjQT8W5yZC9fD7ZB1ViArwvyGUB53sqf8e"},
 		},
 	}
 	strDesc, _ := json.Marshal(desc)
@@ -212,7 +212,7 @@ func TestRunNominateCandidate(t *testing.T) {
 		Args: map[string]interface{}{
 			"txid":      fmt.Sprintf("%x", txCons.Txid),
 			"candidate": "f3prTg9itaZY6m48wXXikXdcxiByW7zgk",
-			"peerid":    "/ip4/127.0.0.1/tcp/47101/p2p/QmVxeNubpg1ZQjQT8W5yZC9fD7ZB1ViArwvyGUB53sqf8e",
+			"neturl":    "/ip4/127.0.0.1/tcp/47101/p2p/QmVxeNubpg1ZQjQT8W5yZC9fD7ZB1ViArwvyGUB53sqf8e",
 		},
 	}
 	nomCandErr := tdpos.runNominateCandidate(desc2, block)
@@ -231,7 +231,7 @@ func TestRunRevokeCandidate(t *testing.T) {
 		Method: "nominate_candidate",
 		Args: map[string]interface{}{
 			"candidate": "f3prTg9itaZY6m48wXXikXdcxiByW7zgk",
-			"peerid":    "/ip4/127.0.0.1/tcp/47101/p2p/QmVxeNubpg1ZQjQT8W5yZC9fD7ZB1ViArwvyGUB53sqf8e",
+			"neturl":    "/ip4/127.0.0.1/tcp/47101/p2p/QmVxeNubpg1ZQjQT8W5yZC9fD7ZB1ViArwvyGUB53sqf8e",
 		},
 	}
 	strDesc, _ := json.Marshal(desc)

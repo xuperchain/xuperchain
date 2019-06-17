@@ -39,14 +39,18 @@ func TestTDpos(t *testing.T) {
 				"vote_unit_price": "1",
 				"init_proposer": {
 					"1": [
-						"Y4TmpfV4pvhYT5W17J7TqHSLo6cqq23x3",
-						"f3prTg9itaZY6m48wXXikXdcxiByW7zgk",
-						"U9sKwFmgJVfzgWcfAG47dKn1kLQTqeZN3"
-					],
-					"peerids": [
-						"/ip4/127.0.0.1/tcp/47101/p2p/QmVxeNubpg1ZQY4TmpfV4pvhYT5W17J7TqHSLo6cqq23x3",
-						"/ip4/127.0.0.1/tcp/47102/p2p/QmVxeNubpg1ZQjQT8W5yZC9fD7ZB1ViArwvyGUB53sqf8e",
-						"/ip4/127.0.0.1/tcp/47103/p2p/U9sKwFmgJVfzgWcfAG47dKn1kLQTqeZN3ZB1ViArwvTmpa"
+						{
+							"address": "Y4TmpfV4pvhYT5W17J7TqHSLo6cqq23x3",
+							"neturl": "/ip4/127.0.0.1/tcp/47101/p2p/QmVxeNubpg1ZQY4TmpfV4pvhYT5W17J7TqHSLo6cqq23x3"
+						},
+						{
+							"address": "f3prTg9itaZY6m48wXXikXdcxiByW7zgk",
+							"neturl": "/ip4/127.0.0.1/tcp/47102/p2p/QmVxeNubpg1ZQjQT8W5yZC9fD7ZB1ViArwvyGUB53sqf8e"
+						},
+						{
+							"address": "U9sKwFmgJVfzgWcfAG47dKn1kLQTqeZN3",
+							"neturl": "/ip4/127.0.0.1/tcp/47103/p2p/U9sKwFmgJVfzgWcfAG47dKn1kLQTqeZN3ZB1ViArwvTmpa"
+						}
 					]
 				}
 			}
@@ -63,20 +67,20 @@ func TestTDpos(t *testing.T) {
 	tdpos.config.initProposer = map[int64][]*candidateInfo{
 		1: []*candidateInfo{
 			&candidateInfo{
-				Address: "dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN",
-				PeerID:  "/ip4/127.0.0.1/tcp/47101/p2p/QmVxeNubpg1ZQY4TmpfV4pvhYT5W17J7TqHSLo6cqq23x3",
+				Address:  "dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN",
+				PeerAddr: "/ip4/127.0.0.1/tcp/47101/p2p/QmVxeNubpg1ZQY4TmpfV4pvhYT5W17J7TqHSLo6cqq23x3",
 			},
 			&candidateInfo{
-				Address: "Y4TmpfV4pvhYT5W17J7TqHSLo6cqq23x3",
-				PeerID:  "/ip4/127.0.0.1/tcp/47102/p2p/QmVxeNubpg1ZQjQT8W5yZC9fD7ZB1ViArwvyGUB53sqf8e",
+				Address:  "Y4TmpfV4pvhYT5W17J7TqHSLo6cqq23x3",
+				PeerAddr: "/ip4/127.0.0.1/tcp/47102/p2p/QmVxeNubpg1ZQjQT8W5yZC9fD7ZB1ViArwvyGUB53sqf8e",
 			},
 			&candidateInfo{
-				Address: "RUEMFGDEnLBpnYYggnXukpVfR9Skm59ph",
-				PeerID:  "/ip4/127.0.0.1/tcp/47103/p2p/U9sKwFmgJVfzgWcfAG47dKn1kLQTqeZN3ZB1ViArwvTmpa",
+				Address:  "RUEMFGDEnLBpnYYggnXukpVfR9Skm59ph",
+				PeerAddr: "/ip4/127.0.0.1/tcp/47103/p2p/U9sKwFmgJVfzgWcfAG47dKn1kLQTqeZN3ZB1ViArwvTmpa",
 			},
 			&candidateInfo{
-				Address: "bob",
-				PeerID:  "peerid4",
+				Address:  "bob",
+				PeerAddr: "peerid4",
 			},
 		},
 	}

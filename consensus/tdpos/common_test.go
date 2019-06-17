@@ -292,16 +292,16 @@ func TestTermProposerBasic(t *testing.T) {
 			initProposer: map[int64][]*candidateInfo{
 				1: []*candidateInfo{
 					&candidateInfo{
-						Address: "Y4TmpfV4pvhYT5W17J7TqHSLo6cqq23x3",
-						PeerID:  "peerid1",
+						Address:  "Y4TmpfV4pvhYT5W17J7TqHSLo6cqq23x3",
+						PeerAddr: "peerid1",
 					},
 					&candidateInfo{
-						Address: "RUEMFGDEnLBpnYYggnXukpVfR9Skm59ph",
-						PeerID:  "peerid2",
+						Address:  "RUEMFGDEnLBpnYYggnXukpVfR9Skm59ph",
+						PeerAddr: "peerid2",
 					},
 					&candidateInfo{
-						Address: "bob",
-						PeerID:  "peerid3",
+						Address:  "bob",
+						PeerAddr: "peerid3",
 					},
 				},
 			},
@@ -310,8 +310,8 @@ func TestTermProposerBasic(t *testing.T) {
 	tdpos.context = &contract.TxContext{}
 	tdpos.context.UtxoBatch = tdpos.utxoVM.NewBatch()
 	canInfo := &candidateInfo{
-		Address: "f3prTg9itaZY6m48wXXikXdcxiByW7zgk",
-		PeerID:  "peerid4",
+		Address:  "f3prTg9itaZY6m48wXXikXdcxiByW7zgk",
+		PeerAddr: "peerid4",
 	}
 	canInfoData, _ := json.Marshal(canInfo)
 	tdpos.candidateBallots.LoadOrStore("D_candidate_ballots_f3prTg9itaZY6m48wXXikXdcxiByW7zgk", int64(1))

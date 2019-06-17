@@ -82,7 +82,7 @@ func TestRollBackNominateCandidate(t *testing.T) {
 		Method: "nominate_candidate",
 		Args: map[string]interface{}{
 			"candidates": []interface{}{"f3prTg9itaZY6m48wXXikXdcxiByW7zgk"},
-			"peerids":    []interface{}{"/ip4/127.0.0.1/tcp/47101/p2p/QmVxeNubpg1ZQjQT8W5yZC9fD7ZB1ViArwvyGUB53sqf8e"},
+			"neturls":    []interface{}{"/ip4/127.0.0.1/tcp/47101/p2p/QmVxeNubpg1ZQjQT8W5yZC9fD7ZB1ViArwvyGUB53sqf8e"},
 		},
 	}
 	strDesc, _ := json.Marshal(desc)
@@ -102,7 +102,7 @@ func TestRollBackNominateCandidate(t *testing.T) {
 		Tx:     txCons,
 		Args: map[string]interface{}{
 			"candidate": "f3prTg9itaZY6m48wXXikXdcxiByW7zgk",
-			"peerid":    "/ip4/127.0.0.1/tcp/47101/p2p/QmVxeNubpg1ZQjQT8W5yZC9fD7ZB1ViArwvyGUB53sqf8e",
+			"neturl":    "/ip4/127.0.0.1/tcp/47101/p2p/QmVxeNubpg1ZQjQT8W5yZC9fD7ZB1ViArwvyGUB53sqf8e",
 		},
 	}
 	rollBackNomCandErr := tdpos.rollbackNominateCandidate(desc2, block)

@@ -25,10 +25,10 @@
             "vote_unit_price": "1",
             "init_proposer": {
                 "1": [
-                    "dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN"
-                ],
-                "peerids": [
-                    "/ip4/127.0.0.1/tcp/47101/p2p/QmVxeNubpg1ZQjQT8W5yZC9fD7ZB1ViArwvyGUB53sqf8e"
+                    {
+                        "address": "dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN",
+                        "neturl": "/ip4/127.0.0.1/tcp/47101/p2p/QmVxeNubpg1ZQjQT8W5yZC9fD7ZB1ViArwvyGUB53sqf8e"
+                    }
                 ]
             }
         }

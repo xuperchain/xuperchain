@@ -131,6 +131,6 @@ type candidateBallotsCacheValue struct {
 
 // candidateInfo define the candidate info
 type candidateInfo struct {
-	Address string
-	PeerID  string
+	Address  string
+	PeerAddr string
 }
