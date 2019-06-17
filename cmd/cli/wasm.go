@@ -14,7 +14,7 @@ type WasmCommand struct {
 func NewWasmCommand(cli *Cli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "wasm",
-		Short: "Opearte a command with wasm, deploy|invoke|query",
+		Short: "Operate a command with wasm, deploy|invoke|query",
 	}
 	cmd.AddCommand(NewWasmDeployCommand(cli))
 	cmd.AddCommand(NewWasmInvokeCommand(cli))

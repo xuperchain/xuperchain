@@ -58,6 +58,8 @@ func (v *vmContextImpl) GasUsed() int64 {
 }
 
 func (v *vmContextImpl) Release() error {
+	// release the context of instance
+	v.instance.Release()
 	v.release()
 	return nil
 }
