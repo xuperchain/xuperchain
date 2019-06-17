@@ -192,7 +192,7 @@ type NodeConfig struct {
 	Wasm            WasmConfig `yaml:"wasm,omitempty"`
 }
 
-// KernelConfig kerner config
+// KernelConfig kernel config
 type KernelConfig struct {
 	MinNewChainAmount string          `yaml:"minNewChainAmount,omitempty"`
 	NewChainWhiteList map[string]bool `yaml:"newChainWhiteList,omitempty"`
@@ -282,7 +282,7 @@ func newP2pConfigWithDefault() P2PConfig {
 		Port:             DefaultNetPort,
 		KeyPath:          DefaultNetKeyPath,
 		IsNat:            DefaultNetIsNat,
-		IsSecure:         DefaultNetIsNat,
+		IsSecure:         DefaultNetIsSecure,
 		IsHidden:         DefaultNetIsHidden,
 		MaxStreamLimits:  DefaultMaxStreamLimits,
 		MaxMessageSize:   DefaultMaxMessageSize,
