@@ -99,6 +99,9 @@ func NewNode(cfg config.P2PConfig, log log.Logger) (*Node, error) {
 	// connect to bootNodes
 	succNum := 0
 	retryCount := 5
+	isConnectFail := func() bool {
+		return len(cfg.BootNodes) != 0 && succNum == 0
+	}
 	for retryCount > 0 {
 		for _, peerAddr := range cfg.BootNodes {
 			addr, err := iaddr.ParseString(peerAddr)
@@ -119,14 +122,14 @@ func NewNode(cfg config.P2PConfig, log log.Logger) (*Node, error) {
 				log.Info("Connection established with bootstrap node, ", "nodeInfo", *peerinfo)
 			}
 		}
-		if len(cfg.BootNodes) != 0 && succNum == 0 {
+		if isConnectFail() {
 			retryCount--
 			time.Sleep(1 * time.Second)
 		} else {
 			break
 		}
 	}
-	if len(cfg.BootNodes) != 0 && succNum == 0 {
+	if isConnectFail() {
 		return nil, ErrConnectBootStrap
 	}
 	return no, nil
