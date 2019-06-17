@@ -564,16 +564,16 @@ func (uv *UtxoVM) GenerateRootTx(js []byte) (*pb.Transaction, error) {
 
 //SelectUtxos 选择足够的utxo
 //输入: 转账人地址、公钥、金额、是否需要锁定utxo
-//输出：选出的utxo、utxo keys、实际构成的金额(可能大于需要的金额)、错误码
+//输出: 选出的utxo、utxo keys、实际构成的金额(可能大于需要的金额)、错误码
 func (uv *UtxoVM) SelectUtxos(fromAddr string, fromPubKey string, totalNeed *big.Int, needLock, excludeUnconfirmed bool) ([]*pb.TxInput, [][]byte, *big.Int, error) {
-	uv.clearExpiredLocks()
-	curLedgerHeight := uv.ledger.GetMeta().TrunkHeight
-	willLockKeys := make([][]byte, 0)
-	utxoTotal := big.NewInt(0)
-	foundEnough := false
-	// 先从cache里找找，不够再从leveldb找,因为leveldb prefix scan比较慢
-	cacheKeys := map[string]bool{}
-	txInputs := []*pb.TxInput{}
+	var(
+		curLedgerHeight = uv.ledger.GetMeta().TrunkHeight
+		willLockKeys    = make([][]byte, 0)
+		foundEnough     = false
+		utxoTotal       = big.NewInt(0)
+		cacheKeys       = map[string]bool{} // 先从cache里找找，不够再从leveldb找,因为leveldb prefix scan比较慢
+		txInputs        = []*pb.TxInput{}
+	)
 	uv.clearExpiredLocks()
 	uv.utxoCache.Lock()
 	if l2Cache, exist := uv.utxoCache.Available[fromAddr]; exist {
@@ -604,13 +604,14 @@ func (uv *UtxoVM) SelectUtxos(fromAddr string, fromPubKey string, totalNeed *big
 			}
 			uv.utxoCache.Use(fromAddr, uKey)
 			utxoTotal.Add(utxoTotal, uItem.Amount)
-			txInput := &pb.TxInput{}
-			txInput.RefTxid = refTxid
 			offset, _ := strconv.Atoi(keyTuple[len(keyTuple)-1])
-			txInput.RefOffset = int32(offset)
-			txInput.FromAddr = []byte(fromAddr)
-			txInput.Amount = uItem.Amount.Bytes()
-			txInput.FrozenHeight = uItem.FrozenHeight
+			txInput := &pb.TxInput{
+				RefTxid:      refTxid,
+				RefOffset:    int32(offset),
+				FromAddr:     []byte(fromAddr),
+				Amount:       uItem.Amount.Bytes(),
+				FrozenHeight: uItem.FrozenHeight,
+			}
 			txInputs = append(txInputs, txInput)
 			cacheKeys[uKey] = true
 			if utxoTotal.Cmp(totalNeed) >= 0 {
@@ -622,8 +623,10 @@ func (uv *UtxoVM) SelectUtxos(fromAddr string, fromPubKey string, totalNeed *big
 	uv.utxoCache.Unlock()
 	if !foundEnough {
 		// 底层key: table_prefix from_addr "_" txid "_" offset
-		addrPrefix := pb.UTXOTablePrefix + fromAddr + "_"
-		var middleKey []byte
+		var (
+			middleKey []byte
+			addrPrefix = pb.UTXOTablePrefix + fromAddr + "_"
+		)
 		preFoundUtxoKey, mdOK := uv.prevFoundKeyCache.Get(fromAddr)
 		if mdOK {
 			middleKey = preFoundUtxoKey.([]byte)
@@ -632,14 +635,13 @@ func (uv *UtxoVM) SelectUtxos(fromAddr string, fromPubKey string, totalNeed *big
 		defer it.Release()
 		for it.Next() {
 			key := append([]byte{}, it.Key()...)
-			uBinary := it.Value()
-			uItem := &UtxoItem{}
-			uErr := uItem.Loads(uBinary)
-			if uErr != nil {
-				return nil, nil, nil, uErr
-			}
 			if _, inCache := cacheKeys[string(key)]; inCache {
 				continue // cache已经命中了，跳过
+			}
+			uBinary := it.Value()
+			uItem := &UtxoItem{}
+			if uErr := uItem.Loads(uBinary);uErr != nil {
+				return nil, nil, nil, uErr
 			}
 			if uItem.FrozenHeight > curLedgerHeight || uItem.FrozenHeight == -1 {
 				uv.xlog.Trace("utxo still frozen, skip it", "key", string(key), "fheight", uItem.FrozenHeight)
@@ -664,13 +666,14 @@ func (uv *UtxoVM) SelectUtxos(fromAddr string, fromPubKey string, totalNeed *big
 					continue
 				}
 			}
-			txInput := &pb.TxInput{}
-			txInput.RefTxid = refTxid
 			offset, _ := strconv.Atoi(string(keyTuple[len(keyTuple)-1]))
-			txInput.RefOffset = int32(offset)
-			txInput.FromAddr = []byte(fromAddr)
-			txInput.Amount = uItem.Amount.Bytes()
-			txInput.FrozenHeight = uItem.FrozenHeight
+			txInput := &pb.TxInput{
+				RefTxid:      refTxid,
+				RefOffset:    int32(offset),
+				FromAddr:     []byte(fromAddr),
+				Amount:       uItem.Amount.Bytes(),
+				FrozenHeight: uItem.FrozenHeight,
+			}
 			txInputs = append(txInputs, txInput)
 			utxoTotal.Add(utxoTotal, uItem.Amount) // utxo累加
 			// uv.xlog.Debug("select", "utxo_amount", utxo_amount, "txid", fmt.Sprintf("%x", txInput.RefTxid))
