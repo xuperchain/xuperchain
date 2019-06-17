@@ -24,7 +24,7 @@ var (
 	// ErrNegativeAmount error
 	ErrNegativeAmount = errors.New("Amount in transaction can not be negative number")
 	// ErrPutTx error
-	ErrPutTx = errors.New("Put tx error=")
+	ErrPutTx = errors.New("Put tx error")
 	// ErrSelectUtxo error
 	ErrSelectUtxo = errors.New("Select utxo error")
 )

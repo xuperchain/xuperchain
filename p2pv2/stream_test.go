@@ -183,7 +183,6 @@ func makeHost(listenF int, target string, secio bool, seed int64) error {
 		tmpStream, _ = ha.NewStream(context.Background(), peerid, "/xuper/2.0.0")
 		select {}
 	}
-	return nil
 }
 
 func getFullPath(basicHost host.Host) {

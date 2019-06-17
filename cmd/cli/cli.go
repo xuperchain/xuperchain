@@ -322,7 +322,7 @@ func (c *Cli) tansferSupportAccount(ctx context.Context, client pb.XchainClient,
 
 func assembleTxSupportAccount(ctx context.Context, client pb.XchainClient, opt *TransferOptions, initAddr string) (*pb.TxStatus, error) {
 	bigZero := big.NewInt(0)
-	totalNeed := bigZero
+	totalNeed := big.NewInt(0)
 	tx := &pb.Transaction{
 		Version:   opt.Version,
 		Coinbase:  false,
@@ -370,6 +370,24 @@ func assembleTxSupportAccount(ctx context.Context, client pb.XchainClient, opt *
 	if err != nil {
 		return nil, err
 	}
+
+	preExeRPCReq := &pb.InvokeRPCRequest{
+		Bcname:      opt.BlockchainName,
+		Requests:    []*pb.InvokeRequest{},
+		Header:      global.GHeader(),
+		Initiator:   initAddr,
+		AuthRequire: tx.AuthRequire,
+	}
+
+	preExeRes, err := client.PreExec(ctx, preExeRPCReq)
+	if err != nil {
+		return nil, err
+	}
+
+	tx.ContractRequests = preExeRes.GetResponse().GetRequests()
+	tx.TxInputsExt = preExeRes.GetResponse().GetInputs()
+	tx.TxOutputsExt = preExeRes.GetResponse().GetOutputs()
+
 	txStatus := &pb.TxStatus{
 		Bcname: opt.BlockchainName,
 		Status: pb.TransactionStatus_UNCONFIRM,
