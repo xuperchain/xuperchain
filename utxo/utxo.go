@@ -788,7 +788,7 @@ func (uv *UtxoVM) sortUnconfirmedTx() (map[string]*pb.Transaction, TxGraph, map[
 	var totalDelay int64
 	now := time.Now().UnixNano()
 	for txID, tx := range txMap {
-		txDelay := (now - tx.Timestamp)
+		txDelay := (now - tx.ReceivedTimestamp)
 		totalDelay += txDelay
 		if uint32(txDelay/1e9) > uv.maxConfirmedDelay {
 			delayedTxMap[txID] = true
@@ -1440,6 +1440,7 @@ func (uv *UtxoVM) IsInUnConfirm(txid string) bool {
 
 // DoTx 执行一个交易, 影响utxo表和unconfirm-transaction表
 func (uv *UtxoVM) DoTx(tx *pb.Transaction) error {
+	tx.ReceivedTimestamp = time.Now().UnixNano()
 	if tx.Coinbase {
 		uv.xlog.Warn("coinbase tx can not be given by PostTx", "txid", global.F(tx.Txid))
 		return ErrUnexpected

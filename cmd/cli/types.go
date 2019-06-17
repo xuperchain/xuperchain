@@ -66,23 +66,24 @@ type SignatureInfo struct {
 
 // Transaction proto.Transaction
 type Transaction struct {
-	Txid             HexID            `json:"txid"`
-	Blockid          HexID            `json:"blockid"`
-	TxInputs         []TxInput        `json:"txInputs"`
-	TxOutputs        []TxOutput       `json:"txOutputs"`
-	Desc             string           `json:"desc"`
-	Nonce            string           `json:"nonce"`
-	Timestamp        int64            `json:"timestamp"`
-	Version          int32            `json:"version"`
-	Autogen          bool             `json:"autogen"`
-	Coinbase         bool             `json:"coinbase"`
-	TxInputsExt      []TxInputExt     `json:"txInputsExt"`
-	TxOutputsExt     []TxOutputExt    `json:"txOutputsExt"`
-	ContractRequests []*InvokeRequest `json:"contractRequests"`
-	Initiator        string           `json:"initiator"`
-	AuthRequire      []string         `json:"authRequire"`
-	InitiatorSigns   []SignatureInfo  `json:"initiatorSigns"`
-	AuthRequireSigns []SignatureInfo  `json:"authRequireSigns"`
+	Txid              HexID            `json:"txid"`
+	Blockid           HexID            `json:"blockid"`
+	TxInputs          []TxInput        `json:"txInputs"`
+	TxOutputs         []TxOutput       `json:"txOutputs"`
+	Desc              string           `json:"desc"`
+	Nonce             string           `json:"nonce"`
+	Timestamp         int64            `json:"timestamp"`
+	Version           int32            `json:"version"`
+	Autogen           bool             `json:"autogen"`
+	Coinbase          bool             `json:"coinbase"`
+	TxInputsExt       []TxInputExt     `json:"txInputsExt"`
+	TxOutputsExt      []TxOutputExt    `json:"txOutputsExt"`
+	ContractRequests  []*InvokeRequest `json:"contractRequests"`
+	Initiator         string           `json:"initiator"`
+	AuthRequire       []string         `json:"authRequire"`
+	InitiatorSigns    []SignatureInfo  `json:"initiatorSigns"`
+	AuthRequireSigns  []SignatureInfo  `json:"authRequireSigns"`
+	ReceivedTimestamp int64            `json:"receivedTimestamp:`
 }
 
 // BigInt big int
@@ -104,15 +105,16 @@ func (b *BigInt) MarshalJSON() ([]byte, error) {
 // FromPBTx get tx
 func FromPBTx(tx *pb.Transaction) *Transaction {
 	t := &Transaction{
-		Txid:      tx.Txid,
-		Blockid:   tx.Blockid,
-		Nonce:     tx.Nonce,
-		Timestamp: tx.Timestamp,
-		Version:   tx.Version,
-		Desc:      string(tx.Desc),
-		Autogen:   tx.Autogen,
-		Coinbase:  tx.Coinbase,
-		Initiator: tx.Initiator,
+		Txid:              tx.Txid,
+		Blockid:           tx.Blockid,
+		Nonce:             tx.Nonce,
+		Timestamp:         tx.Timestamp,
+		Version:           tx.Version,
+		Desc:              string(tx.Desc),
+		Autogen:           tx.Autogen,
+		Coinbase:          tx.Coinbase,
+		Initiator:         tx.Initiator,
+		ReceivedTimestamp: tx.ReceivedTimestamp,
 	}
 	for _, input := range tx.TxInputs {
 		t.TxInputs = append(t.TxInputs, TxInput{
