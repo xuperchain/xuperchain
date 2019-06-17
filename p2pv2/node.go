@@ -99,8 +99,9 @@ func NewNode(cfg config.P2PConfig, log log.Logger) (*Node, error) {
 	// connect to bootNodes
 	succNum := 0
 	retryCount := 5
+	bootNodeSize := len(cfg.BootNodes)
 	isConnectFail := func() bool {
-		return len(cfg.BootNodes) != 0 && succNum == 0
+		return bootNodeSize != 0 && succNum == 0
 	}
 	for retryCount > 0 {
 		for _, peerAddr := range cfg.BootNodes {
