@@ -62,6 +62,13 @@ func (sp *StreamPool) Stop() {
 
 // Add used to add a new net stream into pool
 func (sp *StreamPool) Add(s net.Stream) *Stream {
+	// filter by StreamLimit first
+	addrStr := s.Conn().RemoteMultiaddr().String()
+	peerID := s.Conn().RemotePeer()
+	if ok := sp.no.streamLimit.AddStream(addrStr, peerID); !ok {
+		s.Reset()
+		return nil
+	}
 	stream := NewStream(s, sp.no)
 	if err := sp.AddStream(stream); err != nil {
 		stream.Close()
@@ -74,6 +81,13 @@ func (sp *StreamPool) Add(s net.Stream) *Stream {
 func (sp *StreamPool) AddStream(stream *Stream) error {
 	if sp.streamLength > sp.maxStreamLimit {
 		return ErrStreamPoolFull
+	}
+
+	if sp.no.srv.config.IsAuthentication {
+		err := sp.Authenticate(stream)
+		if err != nil {
+			return err
+		}
 	}
 
 	if v, ok := sp.streams.Get(stream.p.Pretty()); ok {
@@ -95,6 +109,7 @@ func (sp *StreamPool) DelStream(stream *Stream) error {
 		val, _ := v.(*Stream)
 		sp.streams.Del(val.p.Pretty())
 	}
+	sp.no.streamLimit.DelStream(stream.addr.String())
 	return nil
 }
 
@@ -213,4 +228,10 @@ func (sp *StreamPool) sendMessageWithResponse(ctx context.Context, msg *p2pPb.Xu
 		return
 	}
 	ch <- res
+}
+
+// Authenticate it's used for identity authentication
+func (sp *StreamPool) Authenticate(stream *Stream) error {
+	err := stream.Authenticate()
+	return err
 }

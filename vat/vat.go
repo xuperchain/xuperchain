@@ -31,7 +31,7 @@ func (hs HandlerSlice) Less(i, j int) bool {
 	return hs[j] < hs[i]
 }
 
-// VATHandler define the VAT hanlder struct
+// VATHandler define the VAT handler struct
 type VATHandler struct {
 	HandlerList HandlerSlice
 	Handlers    map[string]VATInterface

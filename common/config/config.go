@@ -13,15 +13,19 @@ const (
 	// NodeModeNormal NODE_MODE_NORMAL node mode for normal
 	NodeModeNormal = "Normal"
 	// NodeModeFastSync NODE_MODE_FAST_SYNC node mode for fast
-	NodeModeFastSync       = "FastSync"
-	DefaultNetPort         = 47101             // p2p port
-	DefaultNetKeyPath      = "./data/netkeys/" // node private key path
-	DefaultNetIsNat        = true              // use NAT
-	DefaultNetIsSecure     = true              // use encrypted secure transport
-	DefaultNetIsHidden     = false
-	DefaultMaxStreamLimits = 1024
-	DefaultMaxMessageSize  = 128
-	DefaultTimeout         = 3
+	NodeModeFastSync        = "FastSync"
+	DefaultNetPort          = 47101             // p2p port
+	DefaultNetKeyPath       = "./data/netkeys/" // node private key path
+	DefaultNetIsNat         = true              // use NAT
+	DefaultNetIsSecure      = true              // use encrypted secure transport
+	DefaultNetIsHidden      = false
+	DefaultMaxStreamLimits  = 1024
+	DefaultMaxMessageSize   = 128
+	DefaultTimeout          = 3
+	DefaultIsAuthentication = false
+	DefautltAuthTimeout     = 30
+	// limitation size for same ip
+	DefaultStreamIPLimitSize = 10
 )
 
 // LogConfig is the log config of node
@@ -69,13 +73,17 @@ type P2PConfig struct {
 	// bootNodes config the bootNodes the node to connect
 	BootNodes []string `yaml:"bootNodes,omitempty"`
 	// staticNodes config the nodes which you trust
-	StaticNodes []string `yaml:"staticNodes, omitempty"`
+	StaticNodes []string `yaml:"staticNodes,omitempty"`
 	// maxStreamLimits config the max stream num
 	MaxStreamLimits int32 `yaml:"maxStreamLimits,omitempty"`
 	// maxMessageSize config the max message size
 	MaxMessageSize int64 `yaml:"maxMessageSize,omitempty"`
 	// timeout config the timeout of Request with response
 	Timeout int64 `yaml:"timeout,omitempty"`
+	// IsAuthentication determine whether peerID and Xchain addr correspond
+	IsAuthentication bool `yaml:"isauthentication,omitempty"`
+	// StreamIPLimitSize set the limitation size for same ip
+	StreamIPLimitSize int64 `yaml:"streamIPLimitSize,omitempty"`
 }
 
 // MinerConfig is the config of miner
@@ -98,9 +106,9 @@ type UtxoConfig struct {
 
 // FeeConfig is the config of Fee
 type FeeConfig struct {
-	NeedFee bool `yaml:"needFee, omitempty"`
+	NeedFee bool `yaml:"needFee,omitempty"`
 	// UnitFee tx 每kb大小的单价
-	UnitFee int64 `yaml:"unitFee, omitempty"`
+	UnitFee int64 `yaml:"unitFee,omitempty"`
 }
 
 // NativeDeployConfig native contract deploy config
@@ -137,8 +145,9 @@ type XVMConfig struct {
 
 // WasmConfig wasm config
 type WasmConfig struct {
-	Driver string
-	XVM    XVMConfig
+	Driver   string
+	External bool
+	XVM      XVMConfig
 }
 
 // ConsoleConfig is the command config user input
@@ -171,15 +180,15 @@ type NodeConfig struct {
 	CPUProfile      string          `yaml:"cpuprofile,omitempty"`
 	MemProfile      string          `yaml:"memprofile,omitempty"`
 	MemberWhiteList map[string]bool `yaml:"memberWhiteList,omitempty"`
-	Native          NativeConfig    `yaml:"native, omitempty"`
+	Native          NativeConfig    `yaml:"native,omitempty"`
 	DBCache         DBCacheConfig   `yaml:"dbcache,omitempty"`
 	// 节点模式: NORMAL | FAST_SYNC 两种模式
 	// NORMAL: 为普通的全节点模式
 	// FAST_SYNC 模式下:节点需要连接一个可信的全节点; 拒绝事务提交; 同步区块时跳过块验证和tx验证; 去掉load未确认事务;
-	NodeMode        string     `yaml:"nodeMode, omitempty"`
-	PluginConfPath  string     `yaml:"pluginConfPath, omitempty"`
-	EtcdClusterAddr string     `yaml:"etcdClusterAddr, omitempty"`
-	GatewaySwitch   bool       `yaml:"gatewaySwitch, omitempty"`
+	NodeMode        string     `yaml:"nodeMode,omitempty"`
+	PluginConfPath  string     `yaml:"pluginConfPath,omitempty"`
+	EtcdClusterAddr string     `yaml:"etcdClusterAddr,omitempty"`
+	GatewaySwitch   bool       `yaml:"gatewaySwitch,omitempty"`
 	Wasm            WasmConfig `yaml:"wasm,omitempty"`
 }
 
@@ -270,14 +279,17 @@ func NewNodeConfig() *NodeConfig {
 // newP2pConfigWithDefault create default p2p configuration
 func newP2pConfigWithDefault() P2PConfig {
 	return P2PConfig{
-		Port:            DefaultNetPort,
-		KeyPath:         DefaultNetKeyPath,
-		IsNat:           DefaultNetIsNat,
-		IsSecure:        DefaultNetIsNat,
-		IsHidden:        DefaultNetIsHidden,
-		MaxStreamLimits: DefaultMaxStreamLimits,
-		MaxMessageSize:  DefaultMaxMessageSize,
-		Timeout:         DefaultTimeout,
+		Port:             DefaultNetPort,
+		KeyPath:          DefaultNetKeyPath,
+		IsNat:            DefaultNetIsNat,
+		IsSecure:         DefaultNetIsNat,
+		IsHidden:         DefaultNetIsHidden,
+		MaxStreamLimits:  DefaultMaxStreamLimits,
+		MaxMessageSize:   DefaultMaxMessageSize,
+		Timeout:          DefaultTimeout,
+		IsAuthentication: DefaultIsAuthentication,
+		// default stream ip limit size
+		StreamIPLimitSize: DefaultStreamIPLimitSize,
 	}
 }
 

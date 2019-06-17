@@ -11,8 +11,11 @@ import (
 	"github.com/golang/protobuf/proto"
 
 	"github.com/xuperchain/xuperunion/common/config"
+	"github.com/xuperchain/xuperunion/contract"
 	"github.com/xuperchain/xuperunion/contract/wasm/vm"
 	"github.com/xuperchain/xuperunion/crypto/hash"
+
+	"github.com/xuperchain/xuperunion/pluginmgr"
 
 	// import xvm wasm virtual machine
 	"github.com/xuperchain/xuperunion/contract/bridge"
@@ -41,6 +44,18 @@ func New(cfg *config.WasmConfig, basedir string, xbridge *bridge.XBridge, xmodel
 		xbridge:      xbridge,
 		codeProvider: newCodeProvider(xmodel),
 	}
+
+	pluginMgr, err := pluginmgr.GetPluginMgr()
+	if err != nil {
+		return nil, err
+	}
+
+	if cfg.External {
+		if _, err = pluginMgr.PluginMgr.CreatePluginInstance("wasm", cfg.Driver); err != nil {
+			return nil, err
+		}
+	}
+
 	return vmm, nil
 }
 
@@ -171,7 +186,16 @@ func (v *VMManager) initContract(contractName string, cache *xmodel.XMCache, arg
 	if !ok {
 		return nil, 0, errors.New("wasm vm not registered")
 	}
-	ctx, err := vm.NewContext(contractName, cache, gasLimit)
+
+	ctxCfg := &contract.ContextConfig{
+		XMCache:      cache,
+		Initiator:    "",
+		AuthRequire:  []string{},
+		ContractName: contractName,
+		GasLimit:     gasLimit,
+	}
+
+	ctx, err := vm.NewContext(ctxCfg)
 	if err != nil {
 		return nil, 0, err
 	}

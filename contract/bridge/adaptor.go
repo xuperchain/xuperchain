@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/xuperchain/xuperunion/contract"
-	"github.com/xuperchain/xuperunion/xmodel"
 )
 
 const (
@@ -59,6 +58,8 @@ func (v *vmContextImpl) GasUsed() int64 {
 }
 
 func (v *vmContextImpl) Release() error {
+	// release the context of instance
+	v.instance.Release()
 	v.release()
 	return nil
 }
@@ -75,14 +76,16 @@ func (v *vmImpl) GetName() string {
 	return v.name
 }
 
-func (v *vmImpl) NewContext(contractName string, model *xmodel.XMCache, gasLimit int64) (contract.Context, error) {
+func (v *vmImpl) NewContext(ctxCfg *contract.ContextConfig) (contract.Context, error) {
 	ctx := v.ctxmgr.MakeContext()
-	ctx.Cache = model
-	ctx.ContractName = contractName
+	ctx.Cache = ctxCfg.XMCache
+	ctx.ContractName = ctxCfg.ContractName
+	ctx.Initiator = ctxCfg.Initiator
+	ctx.AuthRequire = ctxCfg.AuthRequire
 	release := func() {
 		v.ctxmgr.DestroyContext(ctx)
 	}
-	ctx.GasLimit = scaleUpGas(gasLimit)
+	ctx.GasLimit = scaleUpGas(ctxCfg.GasLimit)
 	instance, err := v.exec.NewInstance(ctx)
 	if err != nil {
 		return nil, err

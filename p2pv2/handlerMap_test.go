@@ -1,6 +1,7 @@
 package p2pv2
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"testing"
@@ -122,7 +123,7 @@ func TestMarkMsgAsHandled(t *testing.T) {
 	}
 }
 
-func testHandler(msg *xuperp2p.XuperMessage) (*xuperp2p.XuperMessage, error) {
+func testHandler(ctx context.Context, msg *xuperp2p.XuperMessage) (*xuperp2p.XuperMessage, error) {
 	fmt.Println("test handler ok")
 	return &xuperp2p.XuperMessage{
 		Header: &xuperp2p.XuperMessage_MessageHeader{

@@ -3,17 +3,20 @@ package p2pv2
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"errors"
 	"io"
 	"sync"
 	"time"
 
 	ggio "github.com/gogo/protobuf/io"
+	"github.com/golang/protobuf/proto"
 	"github.com/libp2p/go-libp2p-net"
 	"github.com/libp2p/go-libp2p-peer"
 	ma "github.com/multiformats/go-multiaddr"
 
 	p2pPb "github.com/xuperchain/xuperunion/p2pv2/pb"
+	"github.com/xuperchain/xuperunion/pb"
 )
 
 // define common errors
@@ -36,6 +39,9 @@ type Stream struct {
 	isvalid bool
 	// Grpc port
 	gp string
+
+	isAuth   bool
+	authAddr []string
 }
 
 // NewStream create Stream instance
@@ -44,15 +50,17 @@ func NewStream(s net.Stream, no *Node) *Stream {
 	wc := ggio.NewDelimitedWriter(w)
 	maxMsgSize := (int(no.srv.config.MaxMessageSize) << 20)
 	stream := &Stream{
-		p:       s.Conn().RemotePeer(),
-		addr:    s.Conn().RemoteMultiaddr(),
-		s:       s,
-		rc:      ggio.NewDelimitedReader(s, maxMsgSize),
-		w:       w,
-		wc:      wc,
-		lk:      new(sync.Mutex),
-		node:    no,
-		isvalid: true,
+		p:        s.Conn().RemotePeer(),
+		addr:     s.Conn().RemoteMultiaddr(),
+		s:        s,
+		rc:       ggio.NewDelimitedReader(s, maxMsgSize),
+		w:        w,
+		wc:       wc,
+		lk:       new(sync.Mutex),
+		node:     no,
+		isvalid:  true,
+		isAuth:   false,
+		authAddr: []string{},
 	}
 	stream.Start()
 	return stream
@@ -83,6 +91,7 @@ func (s *Stream) reset() {
 		s.s = nil
 		s.isvalid = false
 	}
+	s.node.strPool.DelStream(s)
 }
 
 // readData loop to read data from stream
@@ -116,6 +125,7 @@ func (s *Stream) handlerNewMessage(msg *p2pPb.XuperMessage) error {
 		s.node.log.Warn("Stream not ready, omit", "msg", msg)
 		return nil
 	}
+
 	return s.node.srv.handlerMap.HandleMessage(s, msg)
 }
 
@@ -224,4 +234,74 @@ func (s *Stream) ctxWaitRes(ctx context.Context, msg *p2pPb.XuperMessage, resCh 
 			continue
 		}
 	}
+}
+
+// Authenticate it's used for identity authentication
+func (s *Stream) Authenticate() error {
+	authRequests := []*pb.IdentityAuth{}
+	for _, v := range s.node.addrs {
+		authRequest, err := GetAuthRequest(v)
+		if err != nil {
+			s.node.log.Warn("Authenticate GetAuthRequest error", "error", err)
+		}
+		authRequests = append(authRequests, authRequest)
+	}
+	s.node.log.Trace("Stream Authenticate request", "IdentityAuths", authRequests)
+
+	authRes := &pb.IdentityAuths{
+		Auth: authRequests,
+	}
+
+	msgbuf, err := proto.Marshal(authRes)
+	if err != nil {
+		s.node.log.Warn("Authenticate Marshal msg error", "error", err)
+	}
+
+	msg, err := p2pPb.NewXuperMessage(p2pPb.XuperMsgVersion2, "", "",
+		p2pPb.XuperMessage_GET_AUTHENTICATION, msgbuf, p2pPb.XuperMessage_NONE)
+
+	res, err := s.SendMessageWithResponse(context.Background(), msg)
+	if err != nil {
+		s.node.log.Warn("Stream Authenticate", "err", err)
+		return err
+	}
+
+	if res.Header.ErrorType != p2pPb.XuperMessage_SUCCESS {
+		return errors.New("Authenticate Get res type error")
+	}
+
+	var auths []string
+	err = json.Unmarshal(res.Data.MsgInfo, &auths)
+	if err != nil {
+		s.node.log.Warn("Authenticate unmarshal res error", "error", err)
+		return errors.New("Authenticate Get res unmarshal error")
+	}
+
+	s.node.log.Trace("Stream Authenticate success", "type", res.Header.Type, "logid", res.Header.Logid,
+		"checksum", res.Header.DataCheckSum, "res.from", res.Header.From, "peerid", s.p.Pretty(),
+		"auths", auths)
+	return nil
+}
+
+// setReceivedAddr set received addr from peer
+func (s *Stream) setReceivedAddr(auths []string) {
+	s.node.log.Info("SetReceivedAddr start")
+	for _, n := range auths {
+		for _, o := range s.authAddr {
+			if n == o {
+				break
+			}
+		}
+		s.authAddr = append(s.authAddr, n)
+	}
+	s.node.log.Info("SetReceivedAddr end", "s.p", s.PeerID(), "authAddrs", s.authAddr)
+}
+
+func (s *Stream) auth() bool {
+	return s.isAuth
+}
+
+// PeerID get peerID
+func (s *Stream) PeerID() string {
+	return s.p.Pretty()
 }

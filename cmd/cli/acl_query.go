@@ -31,7 +31,7 @@ func NewACLQueryCommand(cli *Cli) *cobra.Command {
 	t.cli = cli
 	t.cmd = &cobra.Command{
 		Use:   "query [OPTIONS] account contract method",
-		Short: "query an access contral list(ACL) for an account or contract method.",
+		Short: "query an access control list(ACL) for an account or contract method.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := context.TODO()
 			return t.queryACL(ctx)

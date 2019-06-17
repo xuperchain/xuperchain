@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"net"
 
 	"github.com/golang/protobuf/proto"
 
@@ -45,6 +46,7 @@ func (xm *XChainMG) RegisterSubscriber() error {
 	if _, err := xm.P2pv2.Register(p2pv2.NewSubscriber(nil, xuper_p2p.XuperMessage_GET_RPC_PORT, xm.handleGetRPCPort, "")); err != nil {
 		return err
 	}
+
 	xm.Log.Trace("Stop to Register Subscriber")
 	return nil
 }
@@ -251,7 +253,7 @@ func (xm *XChainMG) ProcessBatchTx(batchTx *pb.BatchTxs) (*pb.BatchTxs, error) {
 }
 
 // 处理getBlock消息回调函数
-func (xm *XChainMG) handleGetBlock(msg *xuper_p2p.XuperMessage) (*xuper_p2p.XuperMessage, error) {
+func (xm *XChainMG) handleGetBlock(ctx context.Context, msg *xuper_p2p.XuperMessage) (*xuper_p2p.XuperMessage, error) {
 	bcname := msg.GetHeader().GetBcname()
 	logid := msg.GetHeader().GetLogid()
 	xm.Log.Trace("Start to handleGetBlock", "bcname", bcname, "logid", logid)
@@ -300,7 +302,7 @@ func (xm *XChainMG) handleGetBlock(msg *xuper_p2p.XuperMessage) (*xuper_p2p.Xupe
 }
 
 // 处理getBlockChainStatus消息回调函数
-func (xm *XChainMG) handleGetBlockChainStatus(msg *xuper_p2p.XuperMessage) (*xuper_p2p.XuperMessage, error) {
+func (xm *XChainMG) handleGetBlockChainStatus(ctx context.Context, msg *xuper_p2p.XuperMessage) (*xuper_p2p.XuperMessage, error) {
 	bcname := msg.GetHeader().GetBcname()
 	logid := msg.GetHeader().GetLogid()
 	xm.Log.Trace("Start to handleGetBlockChainStatus", "bcname", bcname, "logid", logid)
@@ -339,7 +341,7 @@ func (xm *XChainMG) handleGetBlockChainStatus(msg *xuper_p2p.XuperMessage) (*xup
 }
 
 // 处理confirm blockChain status 回调函数
-func (xm *XChainMG) handleConfirmBlockChainStatus(msg *xuper_p2p.XuperMessage) (*xuper_p2p.XuperMessage, error) {
+func (xm *XChainMG) handleConfirmBlockChainStatus(ctx context.Context, msg *xuper_p2p.XuperMessage) (*xuper_p2p.XuperMessage, error) {
 	bcname := msg.GetHeader().GetBcname()
 	logid := msg.GetHeader().GetLogid()
 	xm.Log.Trace("Start to handleConfirmBlockChainStatus", "bcname", bcname, "logid", logid)
@@ -380,7 +382,12 @@ func (xm *XChainMG) handleConfirmBlockChainStatus(msg *xuper_p2p.XuperMessage) (
 }
 
 // 处理获取RPC端口回调函数
-func (xm *XChainMG) handleGetRPCPort(msg *xuper_p2p.XuperMessage) (*xuper_p2p.XuperMessage, error) {
+func (xm *XChainMG) handleGetRPCPort(ctx context.Context, msg *xuper_p2p.XuperMessage) (*xuper_p2p.XuperMessage, error) {
 	xm.Log.Trace("Start to handleGetRPCPort", "logid", msg.GetHeader().GetLogid())
-	return xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, "", msg.GetHeader().GetLogid(), xuper_p2p.XuperMessage_GET_RPC_PORT_RES, []byte(xm.Cfg.TCPServer.Port), xuper_p2p.XuperMessage_NONE)
+	_, port, err := net.SplitHostPort(xm.Cfg.TCPServer.Port)
+	if err != nil {
+		xm.Log.Error("handleGetRPCPort SplitHostPort error", "error", err.Error())
+		return nil, err
+	}
+	return xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, "", msg.GetHeader().GetLogid(), xuper_p2p.XuperMessage_GET_RPC_PORT_RES, []byte(":"+port), xuper_p2p.XuperMessage_NONE)
 }

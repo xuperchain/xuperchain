@@ -582,7 +582,7 @@ func (l *Ledger) ConfirmBlock(block *pb.InternalBlock, isRoot bool) ConfirmStatu
 					confirmStatus.Succ = false
 					return confirmStatus
 				}
-				l.xlog.Info("handle split succesfully", "splitBlock", fmt.Sprintf("%x", splitBlock.Blockid))
+				l.xlog.Info("handle split successfully", "splitBlock", fmt.Sprintf("%x", splitBlock.Blockid))
 			} else {
 				// 添加在分支上, 对preblock没有影响
 				block.InTrunk = false
@@ -600,7 +600,18 @@ func (l *Ledger) ConfirmBlock(block *pb.InternalBlock, isRoot bool) ConfirmStatu
 		return confirmStatus
 	}
 	txExist, txData := l.parallelCheckTx(realTransactions, block)
+	cbNum := 0
 	for _, tx := range realTransactions {
+		if tx.Coinbase {
+			cbNum = cbNum + 1
+		}
+		if cbNum > 1 {
+			confirmStatus.Succ = false
+			l.xlog.Warn("The num of Coinbase tx should not exceed one when confirm block",
+				"BlockID", global.F(tx.Blockid), "Miner", string(block.Proposer))
+			return confirmStatus
+		}
+
 		pbTxBuf := txData[string(tx.Txid)]
 		if pbTxBuf == nil {
 			confirmStatus.Succ = false

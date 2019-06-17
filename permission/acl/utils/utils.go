@@ -8,7 +8,7 @@ const (
 	contract2AccountBucket = "XCContract2Account"
 	account2ContractBucket = "XCAccount2Contract"
 	akLimit                = 1024
-	aclSeperator           = "\x01"
+	aclSeparator           = "\x01"
 	accountBcnameSep       = "@"
 	accountContractValue   = "true"
 	newAccountGasAmount    = 1000
@@ -26,12 +26,12 @@ func GetAccount2ContractBucket() string {
 
 // MakeAccountContractKey generate account and contract mapping key
 func MakeAccountContractKey(accountName string, contractName string) string {
-	return accountName + aclSeperator + contractName
+	return accountName + aclSeparator + contractName
 }
 
 // MakeContractMethodKey generate contract and account mapping key
 func MakeContractMethodKey(contractName string, methodName string) string {
-	return contractName + aclSeperator + methodName
+	return contractName + aclSeparator + methodName
 }
 
 // MakeAccountKey generate account key using blockchain name and account number
@@ -49,12 +49,12 @@ func GetAccountBucket() string {
 	return accountBucket
 }
 
-// GetACLSeperator return the acl seperator string
-func GetACLSeperator() string {
-	return aclSeperator
+// GetACLSeparator return the acl separator string
+func GetACLSeparator() string {
+	return aclSeparator
 }
 
-// GetAccountBcnameSep return the seperator string for account and blockchain name
+// GetAccountBcnameSep return the separator string for account and blockchain name
 func GetAccountBcnameSep() string {
 	return accountBcnameSep
 }

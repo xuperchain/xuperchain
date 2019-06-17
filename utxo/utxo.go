@@ -57,7 +57,7 @@ var (
 	ErrTxSizeLimitExceeded     = errors.New("tx size limit exceeded")
 	ErrOverloaded              = errors.New("this node is busy, try again later")
 	ErrInvalidAutogenTx        = errors.New("found invalid autogen-tx")
-	ErrUnmatchedExtension      = errors.New("found unmatched extention")
+	ErrUnmatchedExtension      = errors.New("found unmatched extension")
 	ErrUnsupportedContract     = errors.New("found unspported contract module")
 	ErrUTXODuplicated          = errors.New("found duplicated utxo in same tx")
 	ErrDestroyProofAlreadyUsed = errors.New("the destroy proof has been used before")
@@ -68,7 +68,8 @@ var (
 
 	ErrGasNotEnough   = errors.New("Gas not enough")
 	ErrInvalidAccount = errors.New("Invalid account")
-	ErrVersionInvalid = errors.New("Tx version not invalid")
+	ErrVersionInvalid = errors.New("Invalid tx version")
+	ErrInvalidTxExt   = errors.New("Invalid tx ext")
 )
 
 // package constants
@@ -215,7 +216,7 @@ func (uv *UtxoVM) checkInputEqualOutput(tx *pb.Transaction) error {
 				"in_utxo", amount, "txInputAmount", txInputAmount, "txid", fmt.Sprintf("%x", tx.Txid), "reftxid", fmt.Sprintf("%x", txid))
 			return ErrUnexpected
 		}
-		if frozenHeight > curLedgerHeight {
+		if frozenHeight > curLedgerHeight || frozenHeight == -1 {
 			uv.xlog.Warn("this utxo still be frozen", "frozenHeight", frozenHeight, "ledgerHeight", curLedgerHeight)
 			return ErrUTXOFrozen
 		}
@@ -357,7 +358,7 @@ func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, priv
 	// create aclMgr
 	aclManager, aErr := acli.NewACLManager(model3)
 	if aErr != nil {
-		xlog.Warn("failed to inot acl manager", "err", aErr)
+		xlog.Warn("failed to init acl manager", "err", aErr)
 		return nil, aErr
 	}
 
@@ -693,25 +694,66 @@ func (uv *UtxoVM) SelectUtxos(fromAddr string, fromPubKey string, totalNeed *big
 }
 
 // PreExec the Xuper3 contract model uses previous execution to generate RWSets
-func (uv *UtxoVM) PreExec(req *pb.InvokeRequest, hd *global.XContext) (*pb.InvokeResponse, error) {
-	moduleName := req.ModuleName
-	vm, err := uv.vmMgr3.GetVM(moduleName)
+func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.InvokeResponse, error) {
+	reservedRequests, err := uv.getReservedContractRequests(req, nil)
 	if err != nil {
+		uv.xlog.Error("PreExec getReservedContractRequests error", "error", err)
 		return nil, err
 	}
+
+	// contract request with reservedRequests
+	req.Requests = append(reservedRequests, req.Requests...)
+	uv.xlog.Error("PreExec requests after merge", "requests", req.Requests)
+	// init modelCache
 	modelCache, err := xmodel.NewXModelCache(uv.GetXModel(), true)
 	if err != nil {
 		return nil, err
 	}
-	ctx, err := vm.NewContext(req.GetContractName(), modelCache, contract.MaxGasLimit)
-	if err != nil {
-		return nil, err
+
+	contextConfig := &contract.ContextConfig{
+		XMCache:      modelCache,
+		Initiator:    req.GetInitiator(),
+		AuthRequire:  req.GetAuthRequire(),
+		ContractName: "",
+		GasLimit:     contract.MaxGasLimit,
 	}
-	response, err := ctx.Invoke(req.MethodName, req.Args)
-	defer ctx.Release()
-	if err != nil {
-		return nil, err
+	gasUesdTotal := int64(0)
+	response := [][]byte{}
+
+	for i := 0; i < len(req.Requests); i++ {
+		tmpReq := req.Requests[i]
+		moduleName := tmpReq.GetModuleName()
+		vm, err := uv.vmMgr3.GetVM(moduleName)
+		if err != nil {
+			return nil, err
+		}
+
+		contextConfig.ContractName = tmpReq.GetMethodName()
+		ctx, err := vm.NewContext(contextConfig)
+		if err != nil {
+			// FIXME zq @icexin need to return contract not found error
+			uv.xlog.Error("PreExec NewContext error", "error", err,
+				"contractName", tmpReq.GetContractName())
+			if i < len(reservedRequests) && err.Error() == "Key not found" {
+				continue
+			}
+			return nil, err
+		}
+		res, err := ctx.Invoke(tmpReq.GetMethodName(), tmpReq.GetArgs())
+		if err != nil {
+			ctx.Release()
+			uv.xlog.Error("PreExec Invoke error", "error", err,
+				"contractName", tmpReq.GetContractName())
+			return nil, err
+		}
+		response = append(response, res)
+
+		if i >= len(reservedRequests) {
+			gasUesdTotal += ctx.GasUsed()
+		}
+		ctx.Release()
 	}
+
 	inputs, outputs, err := modelCache.GetRWSets()
 	if err != nil {
 		return nil, err
@@ -720,7 +762,8 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRequest, hd *global.XContext) (*pb.Invok
 		Inputs:   xmodel.GetTxInputs(inputs),
 		Outputs:  xmodel.GetTxOutputs(outputs),
 		Response: response,
-		GasUsed:  ctx.GasUsed(),
+		Requests: req.Requests,
+		GasUsed:  gasUesdTotal,
 	}
 	return rsps, nil
 }
@@ -1295,33 +1338,79 @@ func getGasLimitFromTx(tx *pb.Transaction) (int64, error) {
 
 // verifyTxRWSets verify tx read sets and write sets
 func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
-	req := tx.GetContractRequest()
-	if req == nil {
-		return true, nil
-	}
-	moduleName := req.GetModuleName()
-	vm, err := uv.vmMgr3.GetVM(moduleName)
+	req := tx.GetContractRequests()
+	reservedRequests, err := uv.getReservedContractRequests(nil, tx)
 	if err != nil {
+		uv.xlog.Error("getReservedContractRequests error", "error", err.Error())
 		return false, err
 	}
+
+	if !verifyReservedContractRequests(reservedRequests, req) {
+		uv.xlog.Error("verifyReservedContractRequests error", "reservedRequests", reservedRequests, "req", req)
+		return false, fmt.Errorf("verify reservedContracts error")
+	}
+
+	if req == nil {
+		if tx.GetTxInputsExt() != nil || tx.GetTxOutputsExt() != nil {
+			uv.xlog.Error("verifyTxRWSets error", "error", ErrInvalidTxExt.Error())
+			return false, ErrInvalidTxExt
+		}
+		return true, nil
+	}
+
 	env, err := uv.model3.PrepareEnv(tx)
 	if err != nil {
 		return false, err
+	}
+	contextConfig := &contract.ContextConfig{
+		XMCache:      env.GetModelCache(),
+		Initiator:    tx.GetInitiator(),
+		AuthRequire:  tx.GetAuthRequire(),
+		ContractName: "",
+		GasLimit:     int64(0),
 	}
 	gasLimit, err := getGasLimitFromTx(tx)
 	if err != nil {
 		return false, err
 	}
+	gasRemain := int64(contract.MaxGasLimit)
 	uv.xlog.Trace("get gas limit from tx", "gasLimit", gasLimit, "txid", hex.EncodeToString(tx.Txid))
-	ctx, err := vm.NewContext(req.GetContractName(), env.GetModelCache(), gasLimit)
-	if err != nil {
-		return false, err
+
+	for i := 0; i < len(tx.GetContractRequests()); i++ {
+		if i == len(reservedRequests) {
+			gasRemain = gasLimit
+		}
+		tmpReq := tx.GetContractRequests()[i]
+		moduleName := tmpReq.GetModuleName()
+		vm, err := uv.vmMgr3.GetVM(moduleName)
+		if err != nil {
+			return false, err
+		}
+
+		contextConfig.GasLimit = gasRemain
+		contextConfig.ContractName = tmpReq.GetContractName()
+		ctx, err := vm.NewContext(contextConfig)
+		if err != nil {
+			// FIXME zq @icexin: need to return contract not found
+			uv.xlog.Error("verifyTxRWSets NewContext error", "err", err, "contractName", tmpReq.GetContractName())
+			if i < len(reservedRequests) && err.Error() == "leveldb: not found" {
+				continue
+			}
+			return false, err
+		}
+
+		_, err = ctx.Invoke(tmpReq.MethodName, tmpReq.Args)
+		if err != nil {
+			ctx.Release()
+			uv.xlog.Error("verifyTxRWSets Invoke error", "error", err, "contractName", tmpReq.GetContractName())
+			return false, err
+		}
+		if i >= len(reservedRequests) {
+			gasRemain -= ctx.GasUsed()
+		}
+		ctx.Release()
 	}
-	_, err = ctx.Invoke(req.MethodName, req.Args)
-	defer ctx.Release()
-	if err != nil {
-		return false, err
-	}
+
 	_, writeSet, err := env.GetModelCache().GetRWSets()
 	if err != nil {
 		return false, err
@@ -1951,7 +2040,7 @@ func (uv *UtxoVM) RemoveUtxoCache(address string, utxoKey string) {
 	uv.utxoCache.Remove(address, utxoKey)
 }
 
-// GetVATList return the registerred VAT list
+// GetVATList return the registered VAT list
 func (uv *UtxoVM) GetVATList(blockHeight int64, maxCount int, timestamp int64) ([]*pb.Transaction, error) {
 	txs := []*pb.Transaction{}
 	for i := 0; i < len(uv.vatHandler.HandlerList); i++ {

@@ -17,17 +17,16 @@ type contractCode struct {
 }
 
 func (c *contractCode) Initialize(ctx code.Context) code.Response {
-	creator := ctx.Args()["creator"].(string)
+	creator := ctx.Args()["creator"]
 	err := ctx.PutObject([]byte("creator"), []byte(creator))
 	if err != nil {
 		return code.Error(err)
 	}
 	return code.OK(nil)
-
 }
 
 func (c *contractCode) Invoke(ctx code.Context) code.Response {
-	key, ok := ctx.Args()["key"].(string)
+	key, ok := ctx.Args()["key"]
 	if !ok {
 		return code.Errors("missing key")
 	}
@@ -100,7 +99,14 @@ func TestWasmInvoke(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			ctx, err := tctx.vm.NewContext("counter", cache, contract.MaxGasLimit)
+			ctxCfg := &contract.ContextConfig{
+				XMCache:      cache,
+				Initiator:    "",
+				AuthRequire:  []string{},
+				ContractName: "counter",
+				GasLimit:     contract.MaxGasLimit,
+			}
+			ctx, err := tctx.vm.NewContext(ctxCfg)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -118,7 +124,14 @@ func TestWasmInvoke(t *testing.T) {
 
 func TestWasmContractMissing(t *testing.T) {
 	WithTestContext(t, "memory", func(tctx *FakeWASMContext) {
-		ctx, err := tctx.vm.NewContext("counter", tctx.Cache, contract.MaxGasLimit)
+		ctxCfg := &contract.ContextConfig{
+			XMCache:      tctx.Cache,
+			Initiator:    "",
+			AuthRequire:  []string{},
+			ContractName: "counter",
+			GasLimit:     contract.MaxGasLimit,
+		}
+		ctx, err := tctx.vm.NewContext(ctxCfg)
 		if err == nil {
 			ctx.Release()
 			t.Fatal("expect none nil error, go nil")

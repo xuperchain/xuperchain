@@ -5,7 +5,7 @@ package pb;
 
 // service provided by chain code, called by xchain
 service NativeCode {
-  rpc Call(CallRequest) returns (Response);
+  rpc Call(NativeCallRequest) returns (NativeCallResponse);
   rpc Ping(PingRequest) returns (PingResponse);
 }
 
@@ -15,22 +15,19 @@ message PingRequest {
 message PingResponse {
 }
 
-message CallRequest {
+message NativeCallRequest {
   // The context id of this request
   int64  ctxid = 1;
-  // Method of request
-  string method = 2;
-  // Txid of calling tx, nil if method is query
-  bytes txid = 3;
-  // JSON format args
-  bytes args = 4;
-  // Empty if method is query
-  string caller = 5;
+}
+
+message NativeCallResponse {
 }
 
 message CallArgs {
   string method = 1;
   map<string, bytes> args = 2;
+  string initiator = 3;
+  repeated string auth_require = 4;
 }
 
 // xchain syscall service
@@ -134,12 +131,13 @@ message TransferResponse {
 message ContractCallRequest {
   SyscallHeader header = 1;
   string module = 2;
-  string method = 3;
-  string args = 4;
+  string contract = 3;
+  string method = 4;
+  map<string,bytes> args = 5;
 }
 
 message ContractCallResponse {
-  bytes response = 1;
+  Response response = 1;
 }
 
 message Response {
