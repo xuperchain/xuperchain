@@ -26,7 +26,7 @@ import (
 
 	"github.com/xuperchain/xuperunion/common"
 	"github.com/xuperchain/xuperunion/consensus"
-	"github.com/xuperchain/xuperunion/core"
+	xchaincore "github.com/xuperchain/xuperunion/core"
 	"github.com/xuperchain/xuperunion/crypto/hash"
 	"github.com/xuperchain/xuperunion/global"
 	"github.com/xuperchain/xuperunion/p2pv2"
@@ -607,7 +607,7 @@ func (s *server) PreExec(ctx context.Context, request *pb.InvokeRPCRequest) (*pb
 		return rsps, nil
 	}
 	hd := &global.XContext{Timer: global.NewXTimer()}
-	vmResponse, err := bc.PreExec(request.Request, hd)
+	vmResponse, err := bc.PreExec(request, hd)
 	if err != nil {
 		return nil, err
 	}

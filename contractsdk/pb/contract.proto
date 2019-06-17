@@ -26,6 +26,8 @@ message NativeCallResponse {
 message CallArgs {
   string method = 1;
   map<string, bytes> args = 2;
+  string initiator = 3;
+  repeated string auth_require = 4;
 }
 
 // xchain syscall service

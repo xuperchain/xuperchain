@@ -18,10 +18,19 @@ var (
 	ErrVMNotExist = errors.New("Vm not exist in vm manager")
 )
 
+// ContextConfig define the config of context
+type ContextConfig struct {
+	XMCache      *xmodel.XMCache
+	Initiator    string
+	AuthRequire  []string
+	ContractName string
+	GasLimit     int64
+}
+
 // VirtualMachine define virtual machine interface
 type VirtualMachine interface {
 	GetName() string
-	NewContext(string, *xmodel.XMCache, int64) (Context, error)
+	NewContext(*ContextConfig) (Context, error)
 }
 
 // Context define context interface
