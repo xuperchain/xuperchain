@@ -635,13 +635,13 @@ func (uv *UtxoVM) SelectUtxos(fromAddr string, fromPubKey string, totalNeed *big
 		defer it.Release()
 		for it.Next() {
 			key := append([]byte{}, it.Key()...)
-			if _, inCache := cacheKeys[string(key)]; inCache {
-				continue // cache已经命中了，跳过
-			}
 			uBinary := it.Value()
 			uItem := &UtxoItem{}
 			if uErr := uItem.Loads(uBinary);uErr != nil {
 				return nil, nil, nil, uErr
+			}
+			if _, inCache := cacheKeys[string(key)]; inCache {
+				continue // cache已经命中了，跳过
 			}
 			if uItem.FrozenHeight > curLedgerHeight || uItem.FrozenHeight == -1 {
 				uv.xlog.Trace("utxo still frozen, skip it", "key", string(key), "fheight", uItem.FrozenHeight)
