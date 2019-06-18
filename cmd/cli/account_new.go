@@ -65,9 +65,8 @@ func (c *AccountNewCommand) newAccount(ctx context.Context) error {
 		MethodName: "NewAccount",
 		Args:       make(map[string][]byte),
 
-		Descfile: c.descfile,
-		IsQuick:  false,
-
+		Descfile:     c.descfile,
+		IsQuick:      false,
 		ChainName:    c.cli.RootOptions.Name,
 		Keys:         c.cli.RootOptions.Keys,
 		XchainClient: c.cli.XchainClient(),
