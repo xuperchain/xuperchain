@@ -329,6 +329,8 @@ message Transaction
     repeated SignatureInfo initiator_signs = 28;
     // 收集到的签名
     repeated SignatureInfo auth_require_signs = 29;
+    // 节点收到tx的时间戳，不参与签名
+    int64 received_timestamp = 30;
 }
 
 // Ledger metadata
