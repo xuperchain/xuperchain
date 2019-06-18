@@ -1,0 +1,3 @@
+t=2019-06-18T11:18:47+0800 lvl=trce msg="Plugin conf load successfully!" module=xchain pluginCount=5
+t=2019-06-18T11:18:47+0800 lvl=trce msg="Load a plugin successfully" module=xchain name=crypto subtype=default
+t=2019-06-18T11:18:47+0800 lvl=trce msg="Load a plugin successfully" module=xchain name=crypto subtype=default
