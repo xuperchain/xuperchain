@@ -24,6 +24,8 @@ const (
 	DefaultTimeout          = 3
 	DefaultIsAuthentication = false
 	DefautltAuthTimeout     = 30
+	// limitation size for same ip
+	DefaultStreamIPLimitSize = 10
 )
 
 // LogConfig is the log config of node
@@ -80,6 +82,8 @@ type P2PConfig struct {
 	Timeout int64 `yaml:"timeout,omitempty"`
 	// IsAuthentication determine whether peerID and Xchain addr correspond
 	IsAuthentication bool `yaml:"isauthentication,omitempty"`
+	// StreamIPLimitSize set the limitation size for same ip
+	StreamIPLimitSize int64 `yaml:"streamIPLimitSize,omitempty"`
 }
 
 // MinerConfig is the config of miner
@@ -97,7 +101,8 @@ type UtxoConfig struct {
 	ContractExecutionTime int                        `yaml:"contractExecutionTime,omitempty"`
 	ContractWhiteList     map[string]map[string]bool `yaml:"contractWhiteList,omitempty"`
 	// 是否开启新版本tx k = bcname, v = isBetaTx
-	IsBetaTx map[string]bool `yaml:"isBetaTx,omitempty"`
+	IsBetaTx          map[string]bool `yaml:"isBetaTx,omitempty"`
+	MaxConfirmedDelay uint32          `yaml:"maxConfirmedDelay,omitempty"`
 }
 
 // FeeConfig is the config of Fee
@@ -188,7 +193,7 @@ type NodeConfig struct {
 	Wasm            WasmConfig `yaml:"wasm,omitempty"`
 }
 
-// KernelConfig kerner config
+// KernelConfig kernel config
 type KernelConfig struct {
 	MinNewChainAmount string          `yaml:"minNewChainAmount,omitempty"`
 	NewChainWhiteList map[string]bool `yaml:"newChainWhiteList,omitempty"`
@@ -241,6 +246,7 @@ func (nc *NodeConfig) defaultNodeConfig() {
 		ContractExecutionTime: 500,
 		ContractWhiteList:     make(map[string]map[string]bool),
 		IsBetaTx:              make(map[string]bool),
+		MaxConfirmedDelay:     300,
 	}
 	nc.DedupCacheSize = 50000
 	nc.Kernel = KernelConfig{
@@ -278,12 +284,14 @@ func newP2pConfigWithDefault() P2PConfig {
 		Port:             DefaultNetPort,
 		KeyPath:          DefaultNetKeyPath,
 		IsNat:            DefaultNetIsNat,
-		IsSecure:         DefaultNetIsNat,
+		IsSecure:         DefaultNetIsSecure,
 		IsHidden:         DefaultNetIsHidden,
 		MaxStreamLimits:  DefaultMaxStreamLimits,
 		MaxMessageSize:   DefaultMaxMessageSize,
 		Timeout:          DefaultTimeout,
 		IsAuthentication: DefaultIsAuthentication,
+		// default stream ip limit size
+		StreamIPLimitSize: DefaultStreamIPLimitSize,
 	}
 }
 
