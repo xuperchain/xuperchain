@@ -212,7 +212,7 @@ docker exec -ti xchain bash
 2. 找到自己感兴趣的功能或模块
 3. 进行开发，开发完成后自测功能是否正确，并运行make & make test
 4. 发起pull request
-5. 更多详情请参见[链接](https://github.com/xuperchain/xuperunion/blob/master/CONTRIBUTING.md)
+5. 更多详情请参见[链接](https://github.com/xuperchain/xuperunion/blob/master/CONTRIBUTING_CN.md)
 
 ## 许可证
 XuperUnion使用的许可证是Apache 2.0
