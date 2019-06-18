@@ -569,14 +569,12 @@ func (uv *UtxoVM) GenerateRootTx(js []byte) (*pb.Transaction, error) {
 //输入: 转账人地址、公钥、金额、是否需要锁定utxo
 //输出：选出的utxo、utxo keys、实际构成的金额(可能大于需要的金额)、错误码
 func (uv *UtxoVM) SelectUtxos(fromAddr string, fromPubKey string, totalNeed *big.Int, needLock, excludeUnconfirmed bool) ([]*pb.TxInput, [][]byte, *big.Int, error) {
-	var (
-		curLedgerHeight = uv.ledger.GetMeta().TrunkHeight
-		willLockKeys    = make([][]byte, 0)
-		foundEnough     = false
-		utxoTotal       = big.NewInt(0)
-		cacheKeys       = map[string]bool{} // 先从cache里找找，不够再从leveldb找,因为leveldb prefix scan比较慢
-		txInputs        = []*pb.TxInput{}
-	)
+	curLedgerHeight := uv.ledger.GetMeta().TrunkHeight
+	willLockKeys := make([][]byte, 0)
+	foundEnough := false
+	utxoTotal := big.NewInt(0)
+	cacheKeys := map[string]bool{} // 先从cache里找找，不够再从leveldb找,因为leveldb prefix scan比较慢
+	txInputs := []*pb.TxInput{}
 	uv.clearExpiredLocks()
 	uv.utxoCache.Lock()
 	if l2Cache, exist := uv.utxoCache.Available[fromAddr]; exist {
