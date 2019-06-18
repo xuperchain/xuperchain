@@ -73,6 +73,7 @@ func (c *WasmInvokeCommand) invoke(ctx context.Context, codeName string) error {
 		MethodName:   c.methodName,
 		Args:         make(map[string][]byte),
 		MultiAddrs:   c.multiAddrs,
+		IsQuick:      c.isMulti,
 		Output:       c.output,
 
 		ChainName:    c.cli.RootOptions.Name,
