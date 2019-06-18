@@ -571,11 +571,11 @@ func (uv *UtxoVM) GenerateRootTx(js []byte) (*pb.Transaction, error) {
 func (uv *UtxoVM) SelectUtxos(fromAddr string, fromPubKey string, totalNeed *big.Int, needLock, excludeUnconfirmed bool) ([]*pb.TxInput, [][]byte, *big.Int, error) {
 	var(
 		curLedgerHeight = uv.ledger.GetMeta().TrunkHeight
-		willLockKeys    = make([][]byte, 0)
-		foundEnough     = false
-		utxoTotal       = big.NewInt(0)
-		cacheKeys       = map[string]bool{} // 先从cache里找找，不够再从leveldb找,因为leveldb prefix scan比较慢
-		txInputs        = []*pb.TxInput{}
+		willLockKeys = make([][]byte, 0)
+		foundEnough = false
+		utxoTotal = big.NewInt(0)
+		cacheKeys = map[string]bool{} // 先从cache里找找，不够再从leveldb找,因为leveldb prefix scan比较慢
+		txInputs = []*pb.TxInput{}
 	)
 	uv.clearExpiredLocks()
 	uv.utxoCache.Lock()
