@@ -72,7 +72,7 @@ func (c *WasmDeployCommand) deploy(ctx context.Context, codepath string) error {
 		Args:         make(map[string][]byte),
 		MultiAddrs:   c.multiAddrs,
 		Output:       c.output,
-		IsMulti:      c.isMulti,
+		IsQuick:      c.isMulti,
 		ChainName:    c.cli.RootOptions.Name,
 		Keys:         c.cli.RootOptions.Keys,
 		XchainClient: c.cli.XchainClient(),

@@ -18,6 +18,7 @@ type WasmQueryCommand struct {
 
 	args       string
 	methodName string
+	isMulti    bool
 }
 
 // NewWasmQueryCommand new wasm query cmd
@@ -41,6 +42,7 @@ func NewWasmQueryCommand(cli *Cli) *cobra.Command {
 func (c *WasmQueryCommand) addFlags() {
 	c.cmd.Flags().StringVarP(&c.args, "args", "a", "{}", "query method args")
 	c.cmd.Flags().StringVarP(&c.methodName, "method", "", "get", "contract method name")
+	c.cmd.Flags().BoolVarP(&c.isMulti, "isMulti", "m", false, "multisig scene")
 }
 
 func (c *WasmQueryCommand) example() string {
@@ -55,7 +57,7 @@ func (c *WasmQueryCommand) query(ctx context.Context, codeName string) error {
 		ContractName: codeName,
 		MethodName:   c.methodName,
 		Args:         make(map[string][]byte),
-		IsMulti:      false,
+		IsQuick:      c.isMulti,
 		Keys:         c.cli.RootOptions.Keys,
 
 		ChainName:    c.cli.RootOptions.Name,

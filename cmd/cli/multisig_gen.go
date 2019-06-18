@@ -82,7 +82,7 @@ func (c *MultisigGenCommand) generateTx(ctx context.Context) error {
 		MultiAddrs:   c.multiAddrs,
 		Output:       c.output,
 		IsPrint:      true,
-		IsMulti:      true,
+		IsQuick:      true,
 
 		ChainName:    c.cli.RootOptions.Name,
 		Keys:         c.cli.RootOptions.Keys,

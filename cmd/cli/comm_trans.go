@@ -45,7 +45,7 @@ type CommTrans struct {
 	// 走mulitisig gen流程
 	MultiAddrs string
 	Output     string
-	IsMulti    bool
+	IsQuick    bool
 	IsPrint    bool
 
 	ChainName    string
@@ -110,7 +110,7 @@ func (c *CommTrans) GenPreExeRes(ctx context.Context) (
 	}
 
 	preExeRPCReq.Initiator = initiator
-	if !c.IsMulti {
+	if !c.IsQuick {
 		preExeRPCReq.AuthRequire, err = c.genAuthRequireQuick()
 		if err != nil {
 			return nil, nil, fmt.Errorf("Get auth require quick error: %s", err.Error())
