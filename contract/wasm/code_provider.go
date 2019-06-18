@@ -25,7 +25,7 @@ func newCodeProvider(xstore xmodelStore) vm.ContractCodeProvider {
 }
 
 func (c *codeProvider) GetContractCode(name string) ([]byte, error) {
-	value, err := c.xstore.Get("contract", []byte(name+"."+"code"))
+	value, err := c.xstore.Get("contract", contractCodeKey(name))
 	if err != nil {
 		return nil, err
 	}
@@ -37,7 +37,7 @@ func (c *codeProvider) GetContractCode(name string) ([]byte, error) {
 }
 
 func (c *codeProvider) GetContractCodeDesc(name string) (*pb.WasmCodeDesc, error) {
-	value, err := c.xstore.Get("contract", []byte(name+"."+"desc"))
+	value, err := c.xstore.Get("contract", contractCodeDescKey(name))
 	if err != nil {
 		return nil, err
 	}

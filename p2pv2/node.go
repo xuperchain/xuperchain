@@ -356,6 +356,12 @@ func (no *Node) connectToPeersByAddr(addrs []string) int {
 
 // connectToPeers connect to given peers, return the connected number of peers
 func (no *Node) connectToPeers(ppi []*pstore.PeerInfo) int {
+	// empty slice, do nothing
+	ppiSize := len(ppi)
+	if ppiSize <= 0 {
+		return 0
+	}
+
 	// connect to bootNodes
 	succNum := 0
 	retryCount := 5
@@ -368,12 +374,12 @@ func (no *Node) connectToPeers(ppi []*pstore.PeerInfo) int {
 				no.log.Info("Connection established with peer node, ", "nodeInfo", *pi)
 			}
 		}
-		if len(ppi) != 0 && succNum == 0 {
-			retryCount--
-			time.Sleep(1 * time.Second)
-		} else {
+		if succNum > 0 {
 			break
 		}
+		// only retry if all connection failed
+		retryCount--
+		time.Sleep(1 * time.Second)
 	}
 	return succNum
 }
