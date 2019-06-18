@@ -55,6 +55,8 @@ func (c *WasmQueryCommand) query(ctx context.Context, codeName string) error {
 		ContractName: codeName,
 		MethodName:   c.methodName,
 		Args:         make(map[string][]byte),
+		IsMulti:      false,
+		Keys:         c.cli.RootOptions.Keys,
 
 		ChainName:    c.cli.RootOptions.Name,
 		XchainClient: c.cli.XchainClient(),
@@ -71,7 +73,6 @@ func (c *WasmQueryCommand) query(ctx context.Context, codeName string) error {
 	}
 
 	_, _, err = ct.GenPreExeRes(ctx)
+	//fmt.Println(preExeRPCRes.GetResponse().GetResponse())
 	return err
-
-	// fmt.Println(string(preExeRPCRes.GetResponse().GetResponse()))
 }

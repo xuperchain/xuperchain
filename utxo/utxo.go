@@ -728,7 +728,7 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 			return nil, err
 		}
 
-		contextConfig.ContractName = tmpReq.GetMethodName()
+		contextConfig.ContractName = tmpReq.GetContractName()
 		ctx, err := vm.NewContext(contextConfig)
 		if err != nil {
 			// FIXME zq @icexin need to return contract not found error
