@@ -4,10 +4,10 @@
 
 class Identity : public xchain::Contract {};
 
-const char delimiter = ',';
+const char delimiter_authrequire = ',';
+const char delimiter_account = '/';
 
-void split_str(const std::string& aks, std::vector<std::string>& ak_sets) {
-    std::string sub_str = std::string(1, delimiter);
+void split_str(const std::string& aks, std::vector<std::string>& ak_sets, const std::string& sub_str) {
     std::string::size_type pos1, pos2;
     pos2 = aks.find(sub_str);
     pos1 = 0;
@@ -33,9 +33,10 @@ DEFINE_METHOD(Identity, register_aks) {
     // aks register to identity contract
     const std::string aks = ctx->arg("aks");
     std::vector<std::string> ak_sets;
-    split_str(aks, ak_sets);
+    std::string sub_str = std::string(1, delimiter_authrequire);
+    split_str(aks, ak_sets, sub_str);
 
-    for(auto iter = ak_sets.begin(); iter != ak_sets.end(); iter++) {
+    for(auto iter = ak_sets.begin(); iter != ak_sets.end(); ++iter) {
         if (!ctx->put_object(*iter, "true")) {
             ctx->error("register aks to identify contract error");
             return;
@@ -52,9 +53,10 @@ DEFINE_METHOD(Identity, unregister_aks) {
     // aks unregister form identity contract
     const std::string aks = ctx->arg("aks");
     std::vector<std::string> ak_sets;
-    split_str(aks, ak_sets);
+    std::string sub_str = std::string(1, delimiter_authrequire);
+    split_str(aks, ak_sets, sub_str);
   
-    for (auto iter = ak_sets.begin(); iter != ak_sets.end(); iter++) {
+    for (auto iter = ak_sets.begin(); iter != ak_sets.end(); ++iter) {
         if (!ctx->delete_object(*iter)) {
             ctx->error("unregister from identify contract error");
             return;
@@ -78,8 +80,16 @@ DEFINE_METHOD(Identity, verify) {
 
     // FIXME zq: @icexin contex need to support auth_require
     std::vector<std::string> auth_require;
-    for (auto iter = auth_require.begin(); iter != auth_require.end(); iter++) {
-        ctx->get_object(*iter, &value);
+    std::vector<std::string> accounts;
+    std::string sub_str = std::string(1, delimiter_account);
+    for (auto iter = auth_require.begin(); iter != auth_require.end(); ++iter) {
+        split_str(*iter, accounts, sub_str);
+        int size;
+        size = accounts.size();
+        if (size == 0) {
+          continue;
+        }
+        ctx->get_object(accounts[size - 1], &value);
         if (value != "true") {
             ctx->error("verify auth_require error");
             return;
