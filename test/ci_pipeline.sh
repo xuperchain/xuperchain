@@ -247,13 +247,15 @@ function deploy_invoke_contract()
 	./xchain-cli multisig send --tx ./tx.out ./key1.sign,./key2.sign ./key1.sign,./key2.sign
 	sleep 3
 	will_out=$(./xchain-cli wasm invoke counter -a '{"key":"dudu"}' --method increase)
-	will_fee=$(echo $will_out | awk -F' ' '{print $6}')
+	will_fee=$(echo $will_out | awk -F' ' '{print $9}')
 	output=$(./xchain-cli wasm invoke counter -a '{"key":"dudu"}' --method increase --fee=$will_fee 2>&1)
 	echo "output :$output"
 	will_result=$(echo $output | awk -F' ' '{print $3}')
 	query_out=$(./xchain-cli wasm query  -a '{"key":"dudu"}' counter --method get 2>&1)
 	echo "will_result :$will_result"
+	echo "query_out :$query_out"
 	query_result=$(echo $query_out | awk -F': ' '{print $2}')
+	echo "query_result :$query_result"
 	if [ $will_result = $query_result ];then
 		echo -e "\033[42;30m will_result=$will_result query_result=$query_result \033[0m \n"
 	else
