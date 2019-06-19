@@ -3,6 +3,7 @@ package p2pv2
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"sync"
 	"time"
 
@@ -387,6 +388,8 @@ func (no *Node) connectToPeers(ppi []*pstore.PeerInfo) int {
 // connectToPeers connect to given peers, return the connected number of peers
 func (no *Node) createPeerStream(ppi []*pstore.PeerInfo) int {
 	succNum := 0
+	maxSleepMS := 1000
+	rand.Seed(time.Now().Unix())
 	for _, pi := range ppi {
 		retries := 3
 		for retries > 0 {
@@ -396,6 +399,7 @@ func (no *Node) createPeerStream(ppi []*pstore.PeerInfo) int {
 				break
 			}
 			no.log.Warn("create stream for peer failed", "peer", pi.ID.Pretty(), "error", err)
+			time.Sleep(time.Duration(rand.Intn(maxSleepMS)) * time.Millisecond)
 			retries--
 		}
 	}
