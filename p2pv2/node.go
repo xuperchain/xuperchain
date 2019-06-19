@@ -385,7 +385,7 @@ func (no *Node) connectToPeers(ppi []*pstore.PeerInfo) int {
 	return succNum
 }
 
-// connectToPeers connect to given peers, return the connected number of peers
+// createPeerStream create stream to given peers, return the connected number of peers
 func (no *Node) createPeerStream(ppi []*pstore.PeerInfo) int {
 	succNum := 0
 	maxSleepMS := 1000
