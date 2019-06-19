@@ -34,9 +34,9 @@ function deploy_env()
 			cd $basepath/node$i
 			$basepath/node$i/xchain-cli account newkeys
 			$basepath/node$i/xchain-cli netURL gen
-			sed -i "18s/  port:.*/  port: :$tcp_port/" $basepath/node$i/conf/xchain.yaml
-			sed -i "20s/  metricPort:.*/  metricPort: :$metric_port/" $basepath/node$i/conf/xchain.yaml
-			sed -i "27s/  port:.*/  port: $p2p_port/" $basepath/node$i/conf/xchain.yaml
+			sed -i'' -e "18s/  port:.*/  port: :$tcp_port/" $basepath/node$i/conf/xchain.yaml
+			sed -i'' -e "20s/  metricPort:.*/  metricPort: :$metric_port/" $basepath/node$i/conf/xchain.yaml
+			sed -i'' -e "27s/  port:.*/  port: $p2p_port/" $basepath/node$i/conf/xchain.yaml
 		fi
 		#修改xuper.json文件
 		if [ $i -eq 1 ];then
@@ -46,9 +46,9 @@ function deploy_env()
 			proposer_num=2
 			init_proposer="$addr1\",\"$addr2"
 		    echo "timestamp=$timestamp proposer_num=$proposer_num init_proposer=$init_proposer"
-			sed -i 's/\("timestamp": "\).*/\1'"$timestamp"'000000000"\,/' $basepath/node$i/data/config/xuper.json
-			sed -i 's/\("proposer_num":"\).*/\1'"$proposer_num"'"\,/' $basepath/node$i/data/config/xuper.json
-			sed -i 's/\("1":\["\).*/\1'"$init_proposer"'"\]/' $basepath/node$i/data/config/xuper.json
+			sed -i'' -e 's/\("timestamp": "\).*/\1'"$timestamp"'000000000"\,/' $basepath/node$i/data/config/xuper.json
+			sed -i'' -e 's/\("proposer_num":"\).*/\1'"$proposer_num"'"\,/' $basepath/node$i/data/config/xuper.json
+			sed -i'' -e 's/\("1":\["\).*/\1'"$init_proposer"'"\]/' $basepath/node$i/data/config/xuper.json
             cp $basepath/node1/data/config/xuper.json $basepath/node2/data/config/xuper.json
             cp $basepath/node1/data/config/xuper.json $basepath/node3/data/config/xuper.json
 			cd $basepath/node$i
@@ -58,11 +58,11 @@ function deploy_env()
 			netUrl=$($basepath/node$i/xchain-cli netURL get)
 			echo $netUrl > $basepath/node$i/neturl.txt
 			hostname=`hostname -i`
-			sed -i 's/127.0.0.1/'"$hostname"'/' $basepath/node$i/neturl.txt
+			sed -i'' -e 's/127.0.0.1/'"$hostname"'/' $basepath/node$i/neturl.txt
 		fi
     }
-	sed -i "s/#bootNodes/bootNodes/; s@#  - \"/ip4/<ip>.*@  - $(cat $basepath/node1/neturl.txt)@" $basepath/node2/conf/xchain.yaml
-	sed -i "s/#bootNodes/bootNodes/; s@#  - \"/ip4/<ip>.*@  - $(cat $basepath/node1/neturl.txt)@" $basepath/node3/conf/xchain.yaml
+	sed -i'' -e "s/#bootNodes/bootNodes/; s@#  - \"/ip4/<ip>.*@  - $(cat $basepath/node1/neturl.txt)@" $basepath/node2/conf/xchain.yaml
+	sed -i'' -e "s/#bootNodes/bootNodes/; s@#  - \"/ip4/<ip>.*@  - $(cat $basepath/node1/neturl.txt)@" $basepath/node3/conf/xchain.yaml
     ##node2,3节点创建链并启动
 	cd $basepath/node2 && $basepath/node2/xchain-cli createChain && nohup $basepath/node2/xchain &
 	cd $basepath/node3 && $basepath/node3/xchain-cli createChain && nohup $basepath/node3/xchain &
@@ -100,7 +100,7 @@ function tdpos_nominate()
 	for ((i=1;i<=3;i++))
 	{
 		nominate_addr=$(cat $basepath/node$i/data/keys/address)
-		sed -i 's/\("candidate": "\).*/\1'"$nominate_addr"'"/' $basepath/relate_file/nominate.json
+		sed -i'' -e 's/\("candidate": "\).*/\1'"$nominate_addr"'"/' $basepath/relate_file/nominate.json
 		./xchain-cli transfer --to=$(cat ./data/keys/address) --desc=$basepath/relate_file/nominate.json --amount=1100000000027440 --frozen=-1
 		sleep 3
 	}
@@ -137,7 +137,7 @@ function vote_nominate()
 	echo "--------> $before_info"
 	for ((i=0;i<=1;i++))
 	{
-		sed -i "4s/\".*/\"${nominate_list[$i]}\"/" $basepath/relate_file/vote.json
+		sed -i'' -e "4s/\".*/\"${nominate_list[$i]}\"/" $basepath/relate_file/vote.json
 		txid_out=$(./xchain-cli transfer --to=$(cat ./data/keys/address) --desc=$basepath/relate_file/vote.json --amount=$[$[i+1]*100] --frozen=-1)
 		echo $txid_out > $basepath/relate_file/txid.txt
 		sleep 1
@@ -192,7 +192,7 @@ function tdpos_revoke()
 	cd $basepath/node1
 	while read -r line
 	do
-		sed -i 's/\("txid": "\).*/\1'"$line"'"/' $basepath/relate_file/revoke.json
+		sed -i'' -e 's/\("txid": "\).*/\1'"$line"'"/' $basepath/relate_file/revoke.json
 		./xchain-cli transfer --to=$(cat ./data/keys/address) --desc=$basepath/relate_file/revoke.json --amount=1
 	done < $basepath/relate_file/txid.txt
     before_revoke=$(get_TermProposer)
@@ -230,7 +230,7 @@ function deploy_invoke_contract()
 	cp $basepath/counter.wasm  $basepath/relate_file/
 	cd $basepath/node1 
 	rand_name=`date +%s%N | cut -c 1-16`
-	sed -i "s/\(\"account_name\": \"\).*/\1$rand_name\"\,/; s/TH/$addr2/" $basepath/relate_file/account.json
+	sed -i'' -e "s/\(\"account_name\": \"\).*/\1$rand_name\"\,/; s/TH/$addr2/" $basepath/relate_file/account.json
 	account_out=$(./xchain-cli account new --desc=$basepath/relate_file/account.json --fee=1000)
 	account_name=$(echo $account_out | awk -F'account name: ' '{print $2}')
 	echo $account_name > $basepath/relate_file/account_name.txt
