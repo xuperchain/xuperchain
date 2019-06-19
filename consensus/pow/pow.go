@@ -11,6 +11,7 @@ import (
 
 	log "github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperunion/common/config"
+	cons_base "github.com/xuperchain/xuperunion/consensus/base"
 	crypto_base "github.com/xuperchain/xuperunion/crypto/client/base"
 	"github.com/xuperchain/xuperunion/global"
 	"github.com/xuperchain/xuperunion/ledger"
@@ -149,4 +150,11 @@ func (pc *PowConsensus) ProcessConfirmBlock(block *pb.InternalBlock) error {
 // todo: 后续增加难度系数动态调整
 func (pc *PowConsensus) calDifficulty() int32 {
 	return pc.config.targetBits
+}
+
+// GetCoreMiners get the information of core miners
+func (pc *PowConsensus) GetCoreMiners() []*cons_base.MinerInfo {
+	// PoW don't have definite miner
+	res := []*cons_base.MinerInfo{}
+	return res
 }

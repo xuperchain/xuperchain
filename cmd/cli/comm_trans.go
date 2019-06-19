@@ -125,6 +125,9 @@ func (c *CommTrans) GenPreExeRes(ctx context.Context) (
 	if err != nil {
 		return nil, nil, fmt.Errorf("PreExe contract response : %v, logid:%s", err, preExeRPCReq.Header.Logid)
 	}
+	for _, res := range preExeRPCRes.Response.Response {
+		fmt.Printf("contract response: %s\n", string(res))
+	}
 	return preExeRPCRes, preExeRPCRes.Response.Requests, nil
 }
 

@@ -10,7 +10,7 @@ import (
 
 	log "github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperunion/common/config"
-	"github.com/xuperchain/xuperunion/consensus/base"
+	cons_base "github.com/xuperchain/xuperunion/consensus/base"
 	"github.com/xuperchain/xuperunion/contract"
 	crypto_client "github.com/xuperchain/xuperunion/crypto/client"
 	crypto_base "github.com/xuperchain/xuperunion/crypto/client/base"
@@ -35,7 +35,7 @@ const (
 type StepConsensus struct {
 	StartHeight int64
 	Txid        []byte
-	Conn        base.ConsensusInterface
+	Conn        cons_base.ConsensusInterface
 }
 
 // PluggableConsensus is the struct stored the pluggable consensus of a chain
@@ -275,7 +275,7 @@ func (pc *PluggableConsensus) updateConsensusByName(name string, height int64,
 		return nil, err
 	}
 
-	consInstance := pluginIns.(base.ConsensusInterface)
+	consInstance := pluginIns.(cons_base.ConsensusInterface)
 	err = consInstance.Configure(pc.xlog, pc.cfg, consConf, extParams)
 	if err != nil {
 		return nil, err
@@ -478,4 +478,11 @@ func (pc *PluggableConsensus) GetVATWhiteList() map[string]bool {
 		updateConsensusMethod: true,
 	}
 	return whiteList
+}
+
+// GetCoreMiners get the information of core miners
+func (pc *PluggableConsensus) GetCoreMiners() []*cons_base.MinerInfo {
+	currentConsIndex := len(pc.cons) - 1
+	res := pc.cons[currentConsIndex].Conn.GetCoreMiners()
+	return res
 }
