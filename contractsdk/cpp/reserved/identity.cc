@@ -70,7 +70,7 @@ DEFINE_METHOD(Identity, unregister_aks) {
 DEFINE_METHOD(Identity, verify) {
     xchain::Context* ctx = self.context();
     std::string value;
-    // FIXME zq: @icexin contex need to support initiator
+    // FIXME zq: @icexin context need to support initiator and if initiator is an account, should check account's aks.
     const std::string initiator;
     ctx->get_object(initiator, &value);
     if (value != "true") {
@@ -78,14 +78,13 @@ DEFINE_METHOD(Identity, verify) {
         return;
     }
 
-    // FIXME zq: @icexin contex need to support auth_require
+    // FIXME zq: @icexin context need to support auth_require
     std::vector<std::string> auth_require;
     std::vector<std::string> accounts;
     std::string sub_str = std::string(1, delimiter_account);
     for (auto iter = auth_require.begin(); iter != auth_require.end(); ++iter) {
         split_str(*iter, accounts, sub_str);
-        int size;
-        size = accounts.size();
+        int size = accounts.size();
         if (size == 0) {
           continue;
         }
@@ -95,5 +94,5 @@ DEFINE_METHOD(Identity, verify) {
             return;
         }
     }
-    ctx-> ok("verify all aks success");
+    ctx->ok("verify all aks success");
 }
