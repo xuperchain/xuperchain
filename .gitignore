@@ -1,6 +1,7 @@
 # Project specific files
 plugins/
 output/
+xvm/compile/wabt/build/
 
 # Compiled source
 *.com
