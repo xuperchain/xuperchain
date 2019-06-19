@@ -269,15 +269,15 @@ deploy_env
 sleep 3
 echo "--------> start to gen relate file"
 gen_file
-echo "--------> start to tdpos nominate"
-tdpos_nominate
-sleep 2
-echo "--------> start to tdpos vote nominate"
-vote_nominate
-sleep 2
-echo "--------> start to tdpos revoke"
-tdpos_revoke
-sleep 2
+#echo "--------> start to tdpos nominate"
+#tdpos_nominate
+#sleep 2
+#echo "--------> start to tdpos vote nominate"
+#vote_nominate
+#sleep 2
+#echo "--------> start to tdpos revoke"
+#tdpos_revoke
+#sleep 2
 echo "--------> start to deploy_invoke_contract"
 get_addrs
 deploy_invoke_contract
