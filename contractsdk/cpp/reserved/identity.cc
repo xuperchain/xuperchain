@@ -26,7 +26,7 @@ DEFINE_METHOD(Identity, initialize) {
     ctx->ok("initialize identity contract success");
 }
 
-// register method register aks to identify contract
+// register_aks method register aks to identify contract
 DEFINE_METHOD(Identity, register_aks) {
     xchain::Context* ctx = self.context();
 
@@ -46,7 +46,7 @@ DEFINE_METHOD(Identity, register_aks) {
     ctx->ok("register aks to identify contract success");
 }
 
-// unregister method unregister aks from identify contract
+// unregister_aks method unregister aks from identify contract
 DEFINE_METHOD(Identity, unregister_aks) {
     xchain::Context* ctx = self.context();
 
@@ -70,6 +70,7 @@ DEFINE_METHOD(Identity, unregister_aks) {
 DEFINE_METHOD(Identity, verify) {
     xchain::Context* ctx = self.context();
     std::string value;
+
     // FIXME zq: @icexin context need to support initiator and if initiator is an account, should check account's aks.
     const std::string initiator;
     ctx->get_object(initiator, &value);
@@ -83,12 +84,9 @@ DEFINE_METHOD(Identity, verify) {
     std::vector<std::string> accounts;
     std::string sub_str = std::string(1, delimiter_account);
     for (auto iter = auth_require.begin(); iter != auth_require.end(); ++iter) {
-        split_str(*iter, accounts, sub_str);
-        int size = accounts.size();
-        if (size == 0) {
-          continue;
-        }
-        ctx->get_object(accounts[size - 1], &value);
+        std::size_t found = (*iter).rfind(sub_str);
+        std::string ak = (*iter).substr(found + 1, std::string::npos);
+        ctx->get_object(ak, &value);
         if (value != "true") {
             ctx->error("verify auth_require error");
             return;
