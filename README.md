@@ -48,9 +48,12 @@ Clone the repository
 git clone https://github.com/xuperchain/xuperunion
 ```
 
+**Note**: `master` branch contains latest features but might be **unstable**. for production use, please checkout our release branch. the latest release branch is `v3.1`.
+
 Enter the xuperunion folder and build the code:
 
 ```
+cd xuperunion
 make
 ```
 
@@ -163,6 +166,8 @@ XuperUnion is under the [Apache License, Version 2.0](https://github.com/xuperch
 ```
 git clone https://github.com/xuperchain/xuperunion
 ```
+
+**注意**: `master` 分支是日常开发分支，会包含最新的功能，但是 **不稳定**。生产环境请使用最新的已发布分支，最新的已发布分支是`v3.1`。
 
 编译
 ```
