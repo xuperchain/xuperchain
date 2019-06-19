@@ -229,14 +229,15 @@ function deploy_invoke_contract()
 {
 	cp $basepath/counter.wasm  $basepath/relate_file/
 	cd $basepath/node1 
-	rand_name=`date +%s%N | cut -c 1-16`
+	rand_name=`date +%y%s%m%d`
 	sed -i'' -e "s/\(\"account_name\": \"\).*/\1$rand_name\"\,/; s/TH/$addr2/" $basepath/relate_file/account.json
 	account_out=$(./xchain-cli account new --desc=$basepath/relate_file/account.json --fee=1000)
 	account_name=$(echo $account_out | awk -F'account name: ' '{print $2}')
 	echo $account_name > $basepath/relate_file/account_name.txt
 
 	mkdir $basepath/node1/data/acl && touch addrs
-	echo -e "$account_name/$addr1\n$account_name/$addr2" > $basepath/node1/data/acl/addrs
+	echo "$account_name/$addr1" > $basepath/node1/data/acl/addrs
+	echo "$account_name/$addr2" >> $basepath/node1/data/acl/addrs
 	./xchain-cli transfer --to=$account_name --amount=5000000
 	sleep 2
 	#发起部署
