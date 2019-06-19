@@ -84,8 +84,13 @@ DEFINE_METHOD(Identity, verify) {
     std::vector<std::string> accounts;
     std::string sub_str = std::string(1, delimiter_account);
     for (auto iter = auth_require.begin(); iter != auth_require.end(); ++iter) {
+        std::string ak;
         std::size_t found = (*iter).rfind(sub_str);
-        std::string ak = (*iter).substr(found + 1, std::string::npos);
+        if (found != std::string::npos) {
+            ak = (*iter).substr(found + 1, std::string::npos);
+        } else {
+            ak = *iter;
+        }
         ctx->get_object(ak, &value);
         if (value != "true") {
             ctx->error("verify auth_require error");
