@@ -227,8 +227,7 @@ function tdpos_revoke()
 #合约部分
 function deploy_invoke_contract()
 {
-	cd $outputpath/contractsdk/cpp && sh build.sh
-	cp $outputpath/contractsdk/cpp/build/counter.wasm  $basepath/relate_file/
+	cp $basepath/counter.wasm  $basepath/relate_file/
 	cd $basepath/node1 
 	rand_name=`date +%s%N | cut -c 1-16`
 	sed -i "s/\(\"account_name\": \"\).*/\1$rand_name\"\,/; s/TH/$addr2/" $basepath/relate_file/account.json
