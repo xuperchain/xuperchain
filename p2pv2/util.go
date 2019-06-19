@@ -5,11 +5,13 @@ import (
 	"encoding/base64"
 	"errors"
 	"io/ioutil"
+	math_rand "math/rand"
 	"os"
 	"strconv"
 	"time"
 
 	crypto "github.com/libp2p/go-libp2p-crypto"
+	peer "github.com/libp2p/go-libp2p-peer"
 	"github.com/xuperchain/xuperunion/common/config"
 	crypto_client "github.com/xuperchain/xuperunion/crypto/client"
 	"github.com/xuperchain/xuperunion/crypto/hash"
@@ -39,6 +41,20 @@ func GenerateKeyPairWithPath(path string) error {
 	return ioutil.WriteFile(path+"net_private.key", []byte(base64.StdEncoding.EncodeToString(privData)), 0700)
 }
 
+// GetPeerIDFromPath return peer id of given private key path
+func GetPeerIDFromPath(keypath string) (string, error) {
+	pk, err := GetKeyPairFromPath(keypath)
+	if err != nil {
+		return "", err
+	}
+
+	pid, err := peer.IDFromPrivateKey(pk)
+	if err != nil {
+		return "", err
+	}
+	return pid.Pretty(), nil
+}
+
 // GetKeyPairFromPath get xuper net key from file path
 func GetKeyPairFromPath(path string) (crypto.PrivKey, error) {
 	if len(path) == 0 {
@@ -55,6 +71,19 @@ func GetKeyPairFromPath(path string) (crypto.PrivKey, error) {
 		return nil, err
 	}
 	return crypto.UnmarshalPrivateKey(privData)
+}
+
+// GenerateUniqueRandList get a random unique number list
+func GenerateUniqueRandList(size int, max int) []int {
+	r := math_rand.New(math_rand.NewSource(time.Now().UnixNano()))
+	if max <= 0 || size <= 0 {
+		return nil
+	}
+	if size > max {
+		size = max
+	}
+	randList := r.Perm(max)
+	return randList[:size]
 }
 
 // XchainAddrInfo my xchain addr info

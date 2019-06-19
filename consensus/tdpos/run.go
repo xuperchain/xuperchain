@@ -1,6 +1,7 @@
 package tdpos
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -8,8 +9,8 @@ import (
 	"github.com/pkg/errors"
 	"github.com/syndtr/goleveldb/leveldb"
 
-	"encoding/hex"
-
+	"github.com/xuperchain/xuperunion/common/events"
+	cons_base "github.com/xuperchain/xuperunion/consensus/base"
 	"github.com/xuperchain/xuperunion/contract"
 	"github.com/xuperchain/xuperunion/pb"
 )
@@ -141,14 +142,22 @@ func (tp *TDpos) runRevokeVote(desc *contract.TxDesc, block *pb.InternalBlock) e
 // 执行提名候选人
 func (tp *TDpos) runNominateCandidate(desc *contract.TxDesc, block *pb.InternalBlock) error {
 	tp.log.Trace("start to runNominateCandidate", "desc", desc)
-	candidate, fromAddr, err := tp.validateNominateCandidate(desc)
+	canInfo, fromAddr, err := tp.validateNominateCandidate(desc)
+	candidate := canInfo.Address
 	if err != nil {
 		tp.log.Warn("run to validate nominate error", "error", err.Error())
 		return nil
 	}
 	key := GenCandidateNominateKey(candidate)
 	keyCanBal := genCandidateBallotsKey(candidate)
+	keyCanInfo := genCandidateInfoKey(candidate)
 	keyNominateRecord := GenNominateRecordsKey(fromAddr, candidate, hex.EncodeToString(desc.Tx.Txid))
+
+	canInfoValue, err := json.Marshal(canInfo)
+	if err != nil {
+		tp.log.Warn("runNominateCandidate json marshal failed", "err", err)
+		return err
+	}
 
 	// 判断内存中是否已经提过名
 	val, ok := tp.candidateBallotsCache.Load(keyCanBal)
@@ -165,6 +174,7 @@ func (tp *TDpos) runNominateCandidate(desc *contract.TxDesc, block *pb.InternalB
 		tp.candidateBallotsCache.Store(keyCanBal, canBal)
 		tp.context.UtxoBatch.Put([]byte(key), desc.Tx.Txid)
 		tp.context.UtxoBatch.Put([]byte(keyNominateRecord), desc.Tx.Txid)
+		tp.context.UtxoBatch.Put([]byte(keyCanInfo), []byte(canInfoValue))
 		return nil
 
 	}
@@ -179,6 +189,7 @@ func (tp *TDpos) runNominateCandidate(desc *contract.TxDesc, block *pb.InternalB
 		tp.candidateBallotsCache.Store(keyCanBal, canBal)
 		tp.context.UtxoBatch.Put([]byte(key), desc.Tx.Txid)
 		tp.context.UtxoBatch.Put([]byte(keyNominateRecord), desc.Tx.Txid)
+		tp.context.UtxoBatch.Put([]byte(keyCanInfo), []byte(canInfoValue))
 		return nil
 	}
 	// 内存中已经存在了, 说明被重复提名
@@ -290,8 +301,40 @@ func (tp *TDpos) runCheckValidater(desc *contract.TxDesc, block *pb.InternalBloc
 		proposersJSON, _ := json.Marshal(proposers)
 		tp.log.Info("runCheckValidater", "key", key, "proposersJson", proposersJSON, "proposers", proposers)
 		tp.context.UtxoBatch.Put([]byte(key), proposersJSON)
+		tp.triggerProposerChanged(proposers)
 		return nil
 	}
 	tp.log.Warn("runCheckValidater error")
 	return nil
+}
+
+// triggerProposerChanged triggers a ProposerChanged event
+func (tp *TDpos) triggerProposerChanged(proposers []*candidateInfo) {
+	em := &events.EventMessage{
+		BcName:   tp.bcname,
+		Type:     events.ProposerChanged,
+		Priority: 0,
+		Sender:   tp,
+	}
+
+	msg := &cons_base.MinersChangedEvent{
+		BcName:        tp.bcname,
+		CurrentMiners: tp.GetCoreMiners(),
+		NextMiners:    make([]*cons_base.MinerInfo, 0),
+	}
+
+	for _, proposer := range proposers {
+		miner := &cons_base.MinerInfo{
+			Address:  proposer.Address,
+			PeerInfo: proposer.PeerAddr,
+		}
+		msg.NextMiners = append(msg.NextMiners, miner)
+	}
+
+	em.Message = msg
+	eb := events.GetEventBus()
+	_, err := eb.FireEventAsync(em)
+	if err != nil {
+		tp.log.Warn("triggerProposerChanged fire event failed", "error", err)
+	}
 }

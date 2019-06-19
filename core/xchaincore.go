@@ -18,8 +18,10 @@ import (
 
 	"github.com/xuperchain/xuperunion/common"
 	"github.com/xuperchain/xuperunion/common/config"
+	"github.com/xuperchain/xuperunion/common/events"
 	"github.com/xuperchain/xuperunion/common/probe"
 	"github.com/xuperchain/xuperunion/consensus"
+	cons_base "github.com/xuperchain/xuperunion/consensus/base"
 	"github.com/xuperchain/xuperunion/consensus/tdpos"
 	"github.com/xuperchain/xuperunion/contract/bridge"
 	"github.com/xuperchain/xuperunion/contract/kernel"
@@ -95,6 +97,9 @@ type XChainCore struct {
 	proposal      *proposal.Proposal
 	NativeCodeMgr *native.GeneralSCFramework
 	pipelineM     *PipelineMiner
+
+	// isCoreMiner if current node is one of the core miners
+	isCoreMiner bool
 }
 
 // Status return the status of the chain
@@ -200,6 +205,9 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 		return err
 	}
 
+	// init events with handler
+	xc.initEvents()
+
 	xc.Utxovm, err = utxo.MakeUtxoVM(bcname, xc.Ledger, datapath, privateKeyStr, publicKeyStr, xc.address, xc.log,
 		utxoCacheSize, utxoTmplockSeconds, cfg.Utxo.ContractExecutionTime, datapathOthers, cfg.Utxo.IsBetaTx[bcname], kvEngineType, cryptoType)
 
@@ -295,7 +303,16 @@ func (xc *XChainCore) repostOfflineTx() {
 		xc.log.Debug("repost batch tx list", "size", len(batchTxMsg.Txs))
 		msgInfo, _ := proto.Marshal(batchTxMsg)
 		msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, xc.bcname, header.GetLogid(), xuper_p2p.XuperMessage_BATCHPOSTTX, msgInfo, xuper_p2p.XuperMessage_SUCCESS)
-		go xc.P2pv2.SendMessage(context.Background(), msg, p2pv2.DefaultStrategy) //p2p广播出去
+
+		filters := []p2pv2.FilterStrategy{p2pv2.DefaultStrategy}
+		if xc.IsCoreMiner() {
+			filters = append(filters, p2pv2.CorePeersStrategy)
+		}
+		opts := []p2pv2.MessageOption{
+			p2pv2.WithFilters(filters),
+			p2pv2.WithBcName(xc.bcname),
+		}
+		go xc.P2pv2.SendMessage(context.Background(), msg, opts...) //p2p广播出去
 	}
 }
 
@@ -609,7 +626,15 @@ func (xc *XChainCore) doMiner() {
 	}
 	msgInfo, _ := proto.Marshal(block)
 	msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, xc.bcname, "", xuper_p2p.XuperMessage_SENDBLOCK, msgInfo, xuper_p2p.XuperMessage_NONE)
-	go xc.P2pv2.SendMessage(context.Background(), msg, p2pv2.DefaultStrategy)
+	filters := []p2pv2.FilterStrategy{p2pv2.DefaultStrategy}
+	if xc.IsCoreMiner() {
+		filters = append(filters, p2pv2.CorePeersStrategy)
+	}
+	opts := []p2pv2.MessageOption{
+		p2pv2.WithFilters(filters),
+		p2pv2.WithBcName(xc.bcname),
+	}
+	go xc.P2pv2.SendMessage(context.Background(), msg, opts...)
 	minerTimer.Mark("BroadcastBlock")
 	if xc.Utxovm.IsAsync() {
 		xc.log.Warn("doMiner cost", "cost", minerTimer.Print(), "txCount", b.TxCount)
@@ -636,11 +661,13 @@ func (xc *XChainCore) Miner() int {
 	// 3 开始同步
 	xc.status = global.Normal
 	xc.SyncBlocks()
+	xc.dataInitReady()
 	for {
 		// 重要: 首次出块前一定要同步到最新的状态
 		xc.log.Trace("Miner type of consensus", "type", xc.con.Type(xc.Ledger.GetMeta().TrunkHeight+1))
 		b, s := xc.con.CompeteMaster(xc.Ledger.GetMeta().TrunkHeight + 1)
 		xc.log.Debug("competemaster", "blockchain", xc.bcname, "master", b, "needSync", s)
+		xc.updateIsCoreMiner()
 		if b {
 			// todo 首次切换为矿工时SyncBlcok, Bug: 可能会导致第一次出块失败
 			if s {
@@ -658,6 +685,40 @@ func (xc *XChainCore) Miner() int {
 		}
 	}
 	return 0
+}
+
+// dataInitReady do some preparation work after blockchain data init ready
+func (xc *XChainCore) dataInitReady() {
+	eb := events.GetEventBus()
+	miners := xc.con.GetCoreMiners()
+	msg := &cons_base.MinersChangedEvent{
+		BcName:        xc.bcname,
+		CurrentMiners: miners,
+		NextMiners:    miners,
+	}
+	em := &events.EventMessage{
+		BcName:   xc.bcname,
+		Type:     events.ProposerReady,
+		Priority: 0,
+		Sender:   xc,
+		Message:  msg,
+	}
+	_, err := eb.FireEventAsync(em)
+	if err != nil {
+		xc.log.Warn("dataInitReady fire event failed", "error", err)
+	}
+}
+
+func (xc *XChainCore) updateIsCoreMiner() {
+	miners := xc.con.GetCoreMiners()
+	for _, miner := range miners {
+		if miner.Address == string(xc.address) {
+			xc.isCoreMiner = true
+			xc.log.Debug("updateIsCoreMiner", "bcname", xc.bcname, "isCoreMiner", xc.isCoreMiner)
+			return
+		}
+	}
+	xc.isCoreMiner = false
 }
 
 // Stop stop one xchain instance
@@ -1018,4 +1079,10 @@ func (xc *XChainCore) GetNodeMode() string {
 // PreExec get read/write set for smart contract could be run in parallel
 func (xc *XChainCore) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.InvokeResponse, error) {
 	return xc.Utxovm.PreExec(req, hd)
+}
+
+// IsCoreMiner return true if current node is one of the current core miners
+// Note that is could be a little delay since it updated at each CompeteMaster.
+func (xc *XChainCore) IsCoreMiner() bool {
+	return xc.isCoreMiner
 }
