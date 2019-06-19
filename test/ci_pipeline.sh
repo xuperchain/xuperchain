@@ -132,7 +132,7 @@ function vote_nominate()
 	#投票结果，使的后node2与node3节点的出块
 	cd $basepath/node1
 	nominate_list=("$addr2\",\"$addr3" "$addr1\",\"$addr3")
-	echo "--------> $nominate_list[0] $nominate_list[1]"
+	echo "--------> ${nominate_list[0]} ${nominate_list[1]}"
 	before_info=$(get_TermProposer)
 	echo "--------> $before_info"
 	for ((i=0;i<=1;i++))
@@ -185,8 +185,6 @@ function get_TermProposer()
 			break
 		fi
 	done
-	#term=$(echo $log_out | awk -F"=| " '{print $(NF-3)}')
-	#proposers=$(echo $log_out | awk -F"proposers=" '{print $NF}')
 }
 #revoke结束：node2，node3出块
 function tdpos_revoke()
@@ -199,8 +197,8 @@ function tdpos_revoke()
 	done < $basepath/relate_file/txid.txt
     before_revoke=$(get_TermProposer)
 	before_term=$(echo $before_revoke | awk -F"=| " '{print $(NF-3)}')
-	after_term=$[$before_term+2]
-	for ((i=1;i<=28;i++))
+	after_term=$[$before_term+3]
+	for ((i=1;i<=50;i++))
 	{
 	    for ch in - \\ \| /
 	    {
@@ -252,8 +250,10 @@ function deploy_invoke_contract()
 	will_out=$(./xchain-cli wasm invoke counter -a '{"key":"dudu"}' --method increase)
 	will_fee=$(echo $will_out | awk -F' ' '{print $6}')
 	output=$(./xchain-cli wasm invoke counter -a '{"key":"dudu"}' --method increase --fee=$will_fee 2>&1)
+	echo "output :$output"
 	will_result=$(echo $output | awk -F' ' '{print $3}')
 	query_out=$(./xchain-cli wasm query  -a '{"key":"dudu"}' counter --method get 2>&1)
+	echo "will_result :$will_result"
 	query_result=$(echo $query_out | awk -F': ' '{print $2}')
 	if [ $will_result = $query_result ];then
 		echo -e "\033[42;30m will_result=$will_result query_result=$query_result \033[0m \n"
