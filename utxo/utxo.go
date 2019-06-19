@@ -86,6 +86,7 @@ const (
 	UTXOTotalKey              = "xtotal"
 	UTXOContractExecutionTime = 500
 	TxWaitTimeout             = 5
+	DefaultMaxConfirmedDelay  = 300
 )
 
 // UtxoVM UTXO VM
@@ -132,6 +133,7 @@ type UtxoVM struct {
 	contractExectionTime int
 	unconfirmTxInMem     *sync.Map //未确认Tx表的内存镜像
 	defaultTxVersion     int32     // 默认的tx version
+	maxConfirmedDelay    uint32    // 交易处于unconfirm状态的最长时间，超过后会被回滚
 }
 
 // InboundTx is tx wrapper
@@ -407,6 +409,7 @@ func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, priv
 		model3:               model3,
 		vmMgr3:               vmManager,
 		aclMgr:               aclManager,
+		maxConfirmedDelay:    DefaultMaxConfirmedDelay,
 	}
 	if iBeta {
 		utxoVM.defaultTxVersion = BetaTxVersion
@@ -566,13 +569,11 @@ func (uv *UtxoVM) GenerateRootTx(js []byte) (*pb.Transaction, error) {
 //输入: 转账人地址、公钥、金额、是否需要锁定utxo
 //输出：选出的utxo、utxo keys、实际构成的金额(可能大于需要的金额)、错误码
 func (uv *UtxoVM) SelectUtxos(fromAddr string, fromPubKey string, totalNeed *big.Int, needLock, excludeUnconfirmed bool) ([]*pb.TxInput, [][]byte, *big.Int, error) {
-	uv.clearExpiredLocks()
 	curLedgerHeight := uv.ledger.GetMeta().TrunkHeight
 	willLockKeys := make([][]byte, 0)
-	utxoTotal := big.NewInt(0)
 	foundEnough := false
-	// 先从cache里找找，不够再从leveldb找,因为leveldb prefix scan比较慢
-	cacheKeys := map[string]bool{}
+	utxoTotal := big.NewInt(0)
+	cacheKeys := map[string]bool{} // 先从cache里找找，不够再从leveldb找,因为leveldb prefix scan比较慢
 	txInputs := []*pb.TxInput{}
 	uv.clearExpiredLocks()
 	uv.utxoCache.Lock()
@@ -604,13 +605,14 @@ func (uv *UtxoVM) SelectUtxos(fromAddr string, fromPubKey string, totalNeed *big
 			}
 			uv.utxoCache.Use(fromAddr, uKey)
 			utxoTotal.Add(utxoTotal, uItem.Amount)
-			txInput := &pb.TxInput{}
-			txInput.RefTxid = refTxid
 			offset, _ := strconv.Atoi(keyTuple[len(keyTuple)-1])
-			txInput.RefOffset = int32(offset)
-			txInput.FromAddr = []byte(fromAddr)
-			txInput.Amount = uItem.Amount.Bytes()
-			txInput.FrozenHeight = uItem.FrozenHeight
+			txInput := &pb.TxInput{
+				RefTxid:      refTxid,
+				RefOffset:    int32(offset),
+				FromAddr:     []byte(fromAddr),
+				Amount:       uItem.Amount.Bytes(),
+				FrozenHeight: uItem.FrozenHeight,
+			}
 			txInputs = append(txInputs, txInput)
 			cacheKeys[uKey] = true
 			if utxoTotal.Cmp(totalNeed) >= 0 {
@@ -664,13 +666,14 @@ func (uv *UtxoVM) SelectUtxos(fromAddr string, fromPubKey string, totalNeed *big
 					continue
 				}
 			}
-			txInput := &pb.TxInput{}
-			txInput.RefTxid = refTxid
 			offset, _ := strconv.Atoi(string(keyTuple[len(keyTuple)-1]))
-			txInput.RefOffset = int32(offset)
-			txInput.FromAddr = []byte(fromAddr)
-			txInput.Amount = uItem.Amount.Bytes()
-			txInput.FrozenHeight = uItem.FrozenHeight
+			txInput := &pb.TxInput{
+				RefTxid:      refTxid,
+				RefOffset:    int32(offset),
+				FromAddr:     []byte(fromAddr),
+				Amount:       uItem.Amount.Bytes(),
+				FrozenHeight: uItem.FrozenHeight,
+			}
 			txInputs = append(txInputs, txInput)
 			utxoTotal.Add(utxoTotal, uItem.Amount) // utxo累加
 			// uv.xlog.Debug("select", "utxo_amount", utxo_amount, "txid", fmt.Sprintf("%x", txInput.RefTxid))
@@ -772,9 +775,10 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 // 参数:	dedup : true-删除已经确认tx, false-保留已经确认tx
 //  返回：txMap : txid -> Transaction
 //        txGraph:  txid ->  [依赖此txid的tx]
-func (uv *UtxoVM) sortUnconfirmedTx() (map[string]*pb.Transaction, TxGraph, error) {
+func (uv *UtxoVM) sortUnconfirmedTx() (map[string]*pb.Transaction, TxGraph, map[string]bool, error) {
 	// 构造反向依赖关系图, key是被依赖的交易
 	txMap := map[string]*pb.Transaction{}
+	delayedTxMap := map[string]bool{}
 	txGraph := TxGraph{}
 	uv.unconfirmTxInMem.Range(func(k, v interface{}) bool {
 		txMap[k.(string)] = v.(*pb.Transaction)
@@ -784,7 +788,11 @@ func (uv *UtxoVM) sortUnconfirmedTx() (map[string]*pb.Transaction, TxGraph, erro
 	var totalDelay int64
 	now := time.Now().UnixNano()
 	for txID, tx := range txMap {
-		totalDelay += (now - tx.Timestamp)
+		txDelay := (now - tx.ReceivedTimestamp)
+		totalDelay += txDelay
+		if uint32(txDelay/1e9) > uv.maxConfirmedDelay {
+			delayedTxMap[txID] = true
+		}
 		for _, refTx := range tx.TxInputs {
 			refTxID := string(refTx.RefTxid)
 			if _, exist := txMap[refTxID]; !exist {
@@ -805,7 +813,7 @@ func (uv *UtxoVM) sortUnconfirmedTx() (map[string]*pb.Transaction, TxGraph, erro
 		avgDelay := totalDelay / int64(len(txMap)) //平均unconfirm滞留时间
 		uv.xlog.Info("average unconfirm delay", "micro-senconds", avgDelay/1e6, "count", len(txMap))
 	}
-	return txMap, txGraph, nil
+	return txMap, txGraph, delayedTxMap, nil
 }
 
 //从disk还原unconfirm表到内存, 初始化的时候
@@ -834,7 +842,7 @@ func (uv *UtxoVM) GetUnconfirmedTx(dedup bool) ([]*pb.Transaction, error) {
 		dedup = false
 	}
 	var selectedTxs []*pb.Transaction
-	txMap, txGraph, loadErr := uv.sortUnconfirmedTx()
+	txMap, txGraph, _, loadErr := uv.sortUnconfirmedTx()
 	if loadErr != nil {
 		return nil, loadErr
 	}
@@ -1432,6 +1440,7 @@ func (uv *UtxoVM) IsInUnConfirm(txid string) bool {
 
 // DoTx 执行一个交易, 影响utxo表和unconfirm-transaction表
 func (uv *UtxoVM) DoTx(tx *pb.Transaction) error {
+	tx.ReceivedTimestamp = time.Now().UnixNano()
 	if tx.Coinbase {
 		uv.xlog.Warn("coinbase tx can not be given by PostTx", "txid", global.F(tx.Txid))
 		return ErrUnexpected
@@ -1498,7 +1507,7 @@ func (uv *UtxoVM) processUnconfirmTxs(block *pb.InternalBlock, batch kvdb.Batch,
 	}
 	uv.mutex.Lock()
 	// 下面开始处理unconfirmed的交易
-	unconfirmTxMap, unconfirmTxGraph, loadErr := uv.sortUnconfirmedTx()
+	unconfirmTxMap, unconfirmTxGraph, delayedTxMap, loadErr := uv.sortUnconfirmedTx()
 	if loadErr != nil {
 		return nil, nil, loadErr
 	}
@@ -1557,7 +1566,11 @@ func (uv *UtxoVM) processUnconfirmTxs(block *pb.InternalBlock, batch kvdb.Batch,
 				break
 			}
 		}
-		if hasConflict {
+		tooDelayed := delayedTxMap[string(unconfirmTx.Txid)]
+		if tooDelayed {
+			uv.xlog.Warn("will undo tx because it is beyond confirmed delay", "txid", global.F(unconfirmTx.Txid))
+		}
+		if hasConflict || tooDelayed {
 			undoErr := uv.undoUnconfirmedTx(unconfirmTx, unconfirmTxMap, unconfirmTxGraph, batch, undoDone)
 			if undoErr != nil {
 				uv.xlog.Warn("fail to undo tx", "undoErr", undoErr)
@@ -1723,7 +1736,7 @@ func (uv *UtxoVM) PlayForMiner(blockid []byte, batch kvdb.Batch) error {
 // RollBackUnconfirmedTx 回滚本地未确认交易
 func (uv *UtxoVM) RollBackUnconfirmedTx() (map[string]bool, error) {
 	batch := uv.ldb.NewBatch()
-	unconfirmTxMap, unconfirmTxGraph, loadErr := uv.sortUnconfirmedTx()
+	unconfirmTxMap, unconfirmTxGraph, _, loadErr := uv.sortUnconfirmedTx()
 	if loadErr != nil {
 		return nil, loadErr
 	}
@@ -2078,4 +2091,10 @@ func (uv *UtxoVM) GetXModel() *xmodel.XModel {
 // GetACLManager return ACLManager instance
 func (uv *UtxoVM) GetACLManager() *acli.Manager {
 	return uv.aclMgr
+}
+
+// SetMaxConfirmedDelay set the max value of tx confirm delay. If beyond, tx will be rollbacked
+func (uv *UtxoVM) SetMaxConfirmedDelay(seconds uint32) {
+	uv.maxConfirmedDelay = seconds
+	uv.xlog.Info("set max confirmed delay of tx", "seconds", seconds)
 }

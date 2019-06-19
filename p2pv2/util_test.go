@@ -35,6 +35,31 @@ func TestGetKeyPairFromPath(t *testing.T) {
 	}
 }
 
+func TestGenerateUniqueRandList(t *testing.T) {
+	max := 10
+	size := 12
+	resList := GenerateUniqueRandList(size, max)
+	if len(resList) != max {
+		t.Errorf("generate rand list failed, list len should be equal to max\n")
+	}
+	size = 0
+	resList = GenerateUniqueRandList(size, max)
+	if len(resList) != size {
+		t.Errorf("generate rand list failed, list len should be equal to size\n")
+	}
+
+	size = 10
+	resList = GenerateUniqueRandList(size, max)
+	dupCheck := make(map[int]bool)
+	for i := 0; i < len(resList); i++ {
+		if dupCheck[resList[i]] {
+			t.Errorf("duplicate value found, list=%v\n", resList)
+			break
+		}
+		dupCheck[resList[i]] = true
+	}
+}
+
 func TestGetAuthRequest(t *testing.T) {
 	xchainAddr := &XchainAddrInfo{
 		Addr:   Address1,
