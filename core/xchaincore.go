@@ -100,6 +100,8 @@ type XChainCore struct {
 
 	// isCoreMiner if current node is one of the core miners
 	isCoreMiner bool
+	// enable core peer connection or not
+	coreConnection bool
 }
 
 // Status return the status of the chain
@@ -127,6 +129,7 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	xc.P2pv2 = p2p
 	xc.nodeMode = nodeMode
 	xc.stopFlag = false
+	xc.coreConnection = cfg.CoreConnection
 	ledger.MemCacheSize = cfg.DBCache.MemCacheSize
 	ledger.FileHandlersCacheSize = cfg.DBCache.FdCacheSize
 	datapath := cfg.Datapath + "/" + bcname
@@ -305,7 +308,7 @@ func (xc *XChainCore) repostOfflineTx() {
 		msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, xc.bcname, header.GetLogid(), xuper_p2p.XuperMessage_BATCHPOSTTX, msgInfo, xuper_p2p.XuperMessage_SUCCESS)
 
 		filters := []p2pv2.FilterStrategy{p2pv2.DefaultStrategy}
-		if xc.IsCoreMiner() {
+		if xc.NeedCoreConnection() {
 			filters = append(filters, p2pv2.CorePeersStrategy)
 		}
 		opts := []p2pv2.MessageOption{
@@ -627,7 +630,7 @@ func (xc *XChainCore) doMiner() {
 	msgInfo, _ := proto.Marshal(block)
 	msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, xc.bcname, "", xuper_p2p.XuperMessage_SENDBLOCK, msgInfo, xuper_p2p.XuperMessage_NONE)
 	filters := []p2pv2.FilterStrategy{p2pv2.DefaultStrategy}
-	if xc.IsCoreMiner() {
+	if xc.NeedCoreConnection() {
 		filters = append(filters, p2pv2.CorePeersStrategy)
 	}
 	opts := []p2pv2.MessageOption{
@@ -1085,4 +1088,11 @@ func (xc *XChainCore) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*p
 // Note that is could be a little delay since it updated at each CompeteMaster.
 func (xc *XChainCore) IsCoreMiner() bool {
 	return xc.isCoreMiner
+}
+
+// NeedCoreConnection return true if current node is one of the core miners
+// and coreConnection configure to true. True means block and batch tx messages
+// need to send to core peers using p2p core peer connections
+func (xc *XChainCore) NeedCoreConnection() bool {
+	return xc.isCoreMiner && xc.coreConnection
 }

@@ -11,8 +11,10 @@ func (xc *XChainCore) initEvents() {
 	eb := events.GetEventBus()
 	subsTypes := []events.EventType{}
 	// register events here
-	subsTypes = append(subsTypes, events.ProposerReady)
-	subsTypes = append(subsTypes, events.ProposerChanged)
+	if xc.coreConnection {
+		subsTypes = append(subsTypes, events.ProposerReady)
+		subsTypes = append(subsTypes, events.ProposerChanged)
+	}
 
 	// subscribe all events with handler
 	failedTypes, err := eb.SubscribeMulti(subsTypes, xc.handleEvents)

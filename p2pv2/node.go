@@ -286,7 +286,7 @@ func (no *Node) updateCoreConnection(oldInfo *corePeersRoute,
 		}
 	}
 	for _, paddr := range newInfo.CurrentPeerIDs {
-		if processedPeers[paddr] {
+		if paddr == "" || processedPeers[paddr] {
 			continue
 		}
 		newPeer, err := no.getRoutePeerFromAddr(paddr)
@@ -298,7 +298,7 @@ func (no *Node) updateCoreConnection(oldInfo *corePeersRoute,
 		allPeers = append(allPeers, newPeer.PeerInfo)
 	}
 	for _, paddr := range newInfo.NextPeerIDs {
-		if processedPeers[paddr] {
+		if paddr == "" || processedPeers[paddr] {
 			continue
 		}
 		newPeer, err := no.getRoutePeerFromAddr(paddr)
@@ -311,7 +311,7 @@ func (no *Node) updateCoreConnection(oldInfo *corePeersRoute,
 	}
 
 	// connect new peers
-	succNum := no.connectToPeers(allPeers)
+	succNum := no.createPeerStream(allPeers)
 	if len(allPeers) != 0 && succNum == 0 {
 		return nil, ErrConnectCorePeers
 	}
@@ -380,6 +380,24 @@ func (no *Node) connectToPeers(ppi []*pstore.PeerInfo) int {
 		// only retry if all connection failed
 		retryCount--
 		time.Sleep(1 * time.Second)
+	}
+	return succNum
+}
+
+// connectToPeers connect to given peers, return the connected number of peers
+func (no *Node) createPeerStream(ppi []*pstore.PeerInfo) int {
+	succNum := 0
+	for _, pi := range ppi {
+		retries := 3
+		for retries > 0 {
+			_, err := no.strPool.streamForPeer(pi.ID)
+			if err == nil {
+				succNum++
+				break
+			}
+			no.log.Warn("create stream for peer failed", "peer", pi.ID.Pretty(), "error", err)
+			retries--
+		}
 	}
 	return succNum
 }

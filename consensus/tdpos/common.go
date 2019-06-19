@@ -317,14 +317,16 @@ func (tp *TDpos) validateNominateCandidate(desc *contract.TxDesc) (*candidateInf
 
 	// process candidate peerid
 	if desc.Args["neturl"] == nil {
-		return nil, "", errors.New("validateNominateCandidate neturl can not be null")
-	}
-	switch desc.Args["neturl"].(type) {
-	case string:
-		peerid := desc.Args["neturl"].(string)
-		canInfo.PeerAddr = peerid
-	default:
-		return nil, "", errors.New("validateNominateCandidate neturl should be string")
+		tp.log.Warn("validateNominateCandidate candidate have no neturl info",
+			"address", canInfo.Address)
+	} else {
+		switch desc.Args["neturl"].(type) {
+		case string:
+			peerid := desc.Args["neturl"].(string)
+			canInfo.PeerAddr = peerid
+		default:
+			return nil, "", errors.New("validateNominateCandidate neturl should be string")
+		}
 	}
 
 	return canInfo, fromAddr, nil
