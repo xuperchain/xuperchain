@@ -50,8 +50,11 @@ func ValidRawAccount(accountName string) error {
 func validContractName(contractName string) error {
 	// param absence check
 	// contract naming rule check
-	if len(contractName) != utils.GetContractNameSize() {
-		return fmt.Errorf("contract name length expect %d, actual: %d", utils.GetContractNameSize(), len(contractName))
+	contractSize := len(contractName)
+	contractMaxSize := utils.GetContractNameMaxSize()
+	contractMinSize := utils.GetContractNameMinSize()
+	if contractSize > contractMaxSize || contractSize < contractMinSize {
+		return fmt.Errorf("contract name length expect [%d~%d], actual: %d", contractMinSize, contractMaxSize, contractSize)
 	}
 	if m, _ := regexp.MatchString("^[a-z,A-Z,_]{1}[0-9,a-z,A-Z,_,.]{14}[0-9,a-z,A-Z,_]{1}$", contractName); !m {
 		return fmt.Errorf("contract name does not fit the rule of contract name")

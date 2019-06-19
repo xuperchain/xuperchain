@@ -2,7 +2,8 @@ package utils
 
 const (
 	accountSize            = 16
-	contractNameSize       = 16
+	contractNameMaxSize    = 16
+	contractNameMinSize    = 4
 	accountPrefix          = "XC"
 	accountBucket          = "XCAccount"
 	contractBucket         = "XCContract"
@@ -80,7 +81,12 @@ func GetAccountContractValue() string {
 	return accountContractValue
 }
 
-// GetContractNameSize return the contract name size
-func GetContractNameSize() int {
-	return contractNameSize
+// GetContractNameMaxSize return the contract name max size
+func GetContractNameMaxSize() int {
+	return contractNameMaxSize
+}
+
+// GetContractNameMinSize return the contract name min size
+func GetContractNameMinSize() int {
+	return contractNameMinSize
 }
