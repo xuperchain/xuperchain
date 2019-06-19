@@ -57,7 +57,7 @@ function deploy_env()
 			sleep 5
 			netUrl=$($basepath/node$i/xchain-cli netURL get)
 			echo $netUrl > $basepath/node$i/neturl.txt
-			hostname=`hostname -i`
+			hostname=`ifconfig -a | grep inet | grep -v 127.0.0.1 | grep -v inet6 | awk '{print $2}' | tr -d "addrs:"`
 			sed -i'' -e 's/127.0.0.1/'"$hostname"'/' $basepath/node$i/neturl.txt
 		fi
     }
