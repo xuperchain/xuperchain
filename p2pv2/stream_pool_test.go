@@ -47,7 +47,7 @@ func TestStreamPoolBasic(t *testing.T) {
 
 			// test for SendMessageWithResponse
 			// so far, SendMessageWithResponse is not implemented
-			streamPool.SendMessageWithResponse(nil, nil, nil, false)
+			streamPool.SendMessageWithResponse(nil, nil, nil, 1)
 		}
 	}
 }
