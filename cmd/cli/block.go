@@ -20,8 +20,9 @@ import (
 
 // BlockCommand query block
 type BlockCommand struct {
-	cli *Cli
-	cmd *cobra.Command
+	cli      *Cli
+	cmd      *cobra.Command
+	byHeight bool
 }
 
 // NewBlockCommand new block cmd
@@ -29,7 +30,7 @@ func NewBlockCommand(cli *Cli) *cobra.Command {
 	b := new(BlockCommand)
 	b.cli = cli
 	b.cmd = &cobra.Command{
-		Use:   "block [OPTIONS] blockid",
+		Use:   "block [OPTIONS] blockid or height",
 		Short: "Operate a block: [OPTIONS].",
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -37,14 +38,17 @@ func NewBlockCommand(cli *Cli) *cobra.Command {
 				return errors.New("expect blockid")
 			}
 			ctx := context.TODO()
-			height, err := strconv.Atoi(args[0])
-			if err != nil { //blockid
-				return b.queryBlock(ctx, args[0])
-			} else {
+			if b.byHeight {
+				height, err := strconv.Atoi(args[0])
+				if err != nil {
+					return err
+				}
 				return b.queryBlockByHeight(ctx, int64(height))
 			}
+			return b.queryBlock(ctx, args[0])
 		},
 	}
+	b.addFlags()
 	return b.cmd
 }
 
@@ -107,6 +111,10 @@ func (b *BlockCommand) queryBlockByHeight(ctx context.Context, height int64) err
 	}
 	fmt.Println(string(output))
 	return nil
+}
+
+func (b *BlockCommand) addFlags() {
+	b.cmd.Flags().BoolVarP(&b.byHeight, "byHeight", "N", false, "Get block by height.")
 }
 
 func init() {
