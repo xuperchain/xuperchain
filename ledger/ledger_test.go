@@ -109,7 +109,7 @@ func TestBasicFunc(t *testing.T) {
 	} else {
 		t.Logf("block detail: %v", proto.MarshalTextString(blockCopy))
 	}
-	blockByHeight, hErr := ledger.QueryBlockByHeight(block.Height)
+	blockByHeight, _ := ledger.QueryBlockByHeight(block.Height)
 	if string(blockByHeight.Blockid) != string(blockCopy.Blockid) {
 		t.Fatalf("query block by height failed")
 	}
