@@ -716,17 +716,17 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 	}
 
 	contextConfig := &contract.ContextConfig{
-		XMCache:      modelCache,
-		Initiator:    req.GetInitiator(),
-		AuthRequire:  req.GetAuthRequire(),
-		ContractName: "",
-		GasLimit:     contract.MaxGasLimit,
+		XMCache:        modelCache,
+		Initiator:      req.GetInitiator(),
+		AuthRequire:    req.GetAuthRequire(),
+		ContractName:   "",
+		ResourceLimits: contract.MaxLimits,
 	}
 	gasUesdTotal := int64(0)
 	response := [][]byte{}
 
-	for i := 0; i < len(req.Requests); i++ {
-		tmpReq := req.Requests[i]
+	var requests []*pb.InvokeRequest
+	for i, tmpReq := range req.Requests {
 		moduleName := tmpReq.GetModuleName()
 		vm, err := uv.vmMgr3.GetVM(moduleName)
 		if err != nil {
@@ -753,9 +753,13 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 		}
 		response = append(response, res)
 
+		resourceUsed := ctx.ResourceUsed()
 		if i >= len(reservedRequests) {
-			gasUesdTotal += ctx.GasUsed()
+			gasUesdTotal += resourceUsed.TotalGas()
 		}
+		request := *tmpReq
+		request.ResourceLimits = contract.ToPbLimits(resourceUsed)
+		requests = append(requests, &request)
 		ctx.Release()
 	}
 
@@ -767,7 +771,7 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 		Inputs:   xmodel.GetTxInputs(inputs),
 		Outputs:  xmodel.GetTxOutputs(outputs),
 		Response: response,
-		Requests: req.Requests,
+		Requests: requests,
 		GasUsed:  gasUesdTotal,
 	}
 	return rsps, nil
@@ -1382,27 +1386,31 @@ func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
 		Initiator:    tx.GetInitiator(),
 		AuthRequire:  tx.GetAuthRequire(),
 		ContractName: "",
-		GasLimit:     int64(0),
 	}
 	gasLimit, err := getGasLimitFromTx(tx)
 	if err != nil {
 		return false, err
 	}
-	gasRemain := int64(contract.MaxGasLimit)
 	uv.xlog.Trace("get gas limit from tx", "gasLimit", gasLimit, "txid", hex.EncodeToString(tx.Txid))
 
-	for i := 0; i < len(tx.GetContractRequests()); i++ {
-		if i == len(reservedRequests) {
-			gasRemain = gasLimit
+	for i, tmpReq := range tx.GetContractRequests() {
+		if gasLimit <= 0 {
+			uv.xlog.Error("virifyTxRWSets error:out of gas", "contractName", tmpReq.GetContractName(),
+				"txid", hex.EncodeToString(tx.Txid))
+			return false, errors.New("out of gas")
 		}
-		tmpReq := tx.GetContractRequests()[i]
+
 		moduleName := tmpReq.GetModuleName()
 		vm, err := uv.vmMgr3.GetVM(moduleName)
 		if err != nil {
 			return false, err
 		}
 
-		contextConfig.GasLimit = gasRemain
+		limits := contract.FromPbLimits(tmpReq.GetResourceLimits())
+		if i >= len(reservedRequests) {
+			gasLimit -= limits.TotalGas()
+		}
+		contextConfig.ResourceLimits = limits
 		contextConfig.ContractName = tmpReq.GetContractName()
 		ctx, err := vm.NewContext(contextConfig)
 		if err != nil {
@@ -1420,9 +1428,7 @@ func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
 			uv.xlog.Error("verifyTxRWSets Invoke error", "error", err, "contractName", tmpReq.GetContractName())
 			return false, err
 		}
-		if i >= len(reservedRequests) {
-			gasRemain -= ctx.GasUsed()
-		}
+
 		ctx.Release()
 	}
 

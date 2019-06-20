@@ -4,6 +4,8 @@ import (
 	"github.com/xuperchain/xuperunion/contract"
 )
 
+type ResourceType int
+
 // Executor 为用户态虚拟机工厂类
 type Executor interface {
 	// RegisterSyscallService 用于虚拟机把系统调用链接到合约代码上，类似vdso
@@ -17,7 +19,9 @@ type Executor interface {
 type Instance interface {
 	// Exec根据ctx里面的参数执行合约代码
 	Exec() error
-	GasUsed() int64
+	// ResourceUsed returns the resource used by contract
+	ResourceUsed() contract.Limits
+	// Release releases contract instance
 	Release()
 }
 

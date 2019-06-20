@@ -2,21 +2,10 @@ package bridge
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/xuperchain/xuperunion/contract"
 )
-
-const (
-	gasScale = 100000
-)
-
-func scaleUpGas(gas int64) int64 {
-	return gas * gasScale
-}
-
-func scaleDownGas(gas int64) int64 {
-	return (gas + gasScale - 1) / gasScale
-}
 
 // ContractError indicates the error of the contract running result
 type ContractError struct {
@@ -53,8 +42,10 @@ func (v *vmContextImpl) Invoke(method string, args map[string][]byte) ([]byte, e
 	return v.ctx.Output.GetBody(), nil
 }
 
-func (v *vmContextImpl) GasUsed() int64 {
-	return scaleDownGas(v.instance.GasUsed())
+func (v *vmContextImpl) ResourceUsed() contract.Limits {
+	resourceUsed := v.instance.ResourceUsed()
+	resourceUsed.Disk += v.ctx.DiskUsed()
+	return resourceUsed
 }
 
 func (v *vmContextImpl) Release() error {
@@ -82,10 +73,11 @@ func (v *vmImpl) NewContext(ctxCfg *contract.ContextConfig) (contract.Context, e
 	ctx.ContractName = ctxCfg.ContractName
 	ctx.Initiator = ctxCfg.Initiator
 	ctx.AuthRequire = ctxCfg.AuthRequire
+	log.Printf("limits:%#v", ctxCfg.ResourceLimits)
+	ctx.ResourceLimits = ctxCfg.ResourceLimits
 	release := func() {
 		v.ctxmgr.DestroyContext(ctx)
 	}
-	ctx.GasLimit = scaleUpGas(ctxCfg.GasLimit)
 	instance, err := v.exec.NewInstance(ctx)
 	if err != nil {
 		return nil, err

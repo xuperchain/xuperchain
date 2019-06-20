@@ -706,6 +706,7 @@ message InvokeRequest {
     string contract_name = 2;
     string method_name = 3;
     map<string, bytes> args = 4;
+    repeated ResourceLimit resource_limits = 5;
 }
 
 //预执行的返回结构
@@ -793,4 +794,16 @@ message IdentityAuth {
 // Identity authentication requests
 message IdentityAuths {
     repeated IdentityAuth auth = 1;
+}
+
+enum ResourceType {
+    CPU = 0;
+    MEMORY = 1;
+    DISK = 2;
+    GAS = 3;
+}
+
+message ResourceLimit {
+    ResourceType type = 1;
+    int64 limit = 2;
 }

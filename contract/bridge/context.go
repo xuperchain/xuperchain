@@ -3,6 +3,7 @@ package bridge
 import (
 	"sync"
 
+	"github.com/xuperchain/xuperunion/contract"
 	"github.com/xuperchain/xuperunion/contractsdk/go/pb"
 	"github.com/xuperchain/xuperunion/xmodel"
 )
@@ -14,7 +15,7 @@ type Context struct {
 	// 合约名字
 	ContractName string
 
-	GasLimit int64
+	ResourceLimits contract.Limits
 
 	Cache *xmodel.XMCache
 
@@ -28,6 +29,23 @@ type Context struct {
 
 	// Write by contract
 	Output *pb.Response
+}
+
+// DiskUsed returns the bytes written to xmodel
+func (c *Context) DiskUsed() int64 {
+	size := 0
+	_, wset, _ := c.Cache.GetRWSets()
+	for _, w := range wset {
+		size += len(w.GetKey())
+		size += len(w.GetValue())
+	}
+	return int64(size)
+}
+
+// ExceedDiskLimit check whether disk usage exceeds limit
+func (c *Context) ExceedDiskLimit() bool {
+	size := c.DiskUsed()
+	return size > c.ResourceLimits.Disk
 }
 
 // ContextManager 用于管理产生和销毁Context

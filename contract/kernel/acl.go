@@ -67,7 +67,7 @@ func validACL(acl *pb.Acl) error {
 
 // Invoke NewAccount method implementation
 func (na *NewAccountMethod) Invoke(ctx *KContext, args map[string][]byte) ([]byte, error) {
-	if ctx.GasLimit < newAccountGasAmount {
+	if ctx.ResourceLimit.Gas < newAccountGasAmount {
 		return nil, fmt.Errorf("gas not enough, expect no less than %d", newAccountGasAmount)
 	}
 	// json -> pb.Acl
@@ -113,7 +113,7 @@ func (na *NewAccountMethod) Invoke(ctx *KContext, args map[string][]byte) ([]byt
 
 // Invoke SetAccountACL method implementation
 func (saa *SetAccountACLMethod) Invoke(ctx *KContext, args map[string][]byte) ([]byte, error) {
-	if ctx.GasLimit < setACLGasAmount {
+	if ctx.ResourceLimit.Gas < setACLGasAmount {
 		return nil, fmt.Errorf("gas not enough, expect no less than %d", setACLGasAmount)
 	}
 	// json -> pb.Acl
@@ -140,7 +140,7 @@ func (saa *SetAccountACLMethod) Invoke(ctx *KContext, args map[string][]byte) ([
 
 // Invoke SetMethodACL method implementation
 func (sma *SetMethodACLMethod) Invoke(ctx *KContext, args map[string][]byte) ([]byte, error) {
-	if ctx.GasLimit < setACLGasAmount {
+	if ctx.ResourceLimit.Gas < setACLGasAmount {
 		return nil, fmt.Errorf("gas not enough, expect no less than %d", setACLGasAmount)
 	}
 	contractNameBuf := args["contract_name"]

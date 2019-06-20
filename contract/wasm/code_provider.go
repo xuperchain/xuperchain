@@ -2,6 +2,7 @@ package wasm
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/xuperchain/xuperunion/contract/wasm/vm"
 	"github.com/xuperchain/xuperunion/pb"
@@ -27,7 +28,7 @@ func newCodeProvider(xstore xmodelStore) vm.ContractCodeProvider {
 func (c *codeProvider) GetContractCode(name string) ([]byte, error) {
 	value, err := c.xstore.Get("contract", contractCodeKey(name))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get contract code for '%s' error:%s", name, err)
 	}
 	codebuf := value.GetPureData().GetValue()
 	if len(codebuf) == 0 {
@@ -39,7 +40,7 @@ func (c *codeProvider) GetContractCode(name string) ([]byte, error) {
 func (c *codeProvider) GetContractCodeDesc(name string) (*pb.WasmCodeDesc, error) {
 	value, err := c.xstore.Get("contract", contractCodeDescKey(name))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("get contract desc for '%s' error:%s", name, err)
 	}
 	descbuf := value.GetPureData().GetValue()
 	// FIXME: 如果key不存在ModuleCache不应该返回零长度的value
