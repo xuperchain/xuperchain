@@ -239,9 +239,10 @@ func (tp *TDpos) buildConfigs(xlog log.Logger, cfg *config.NodeConfig, consCfg m
 		}
 		canInfo.Address = proposer["address"].(string)
 		if _, ok := proposer["neturl"]; !ok {
-			return errors.New("TDPos init failed, proposer should have neturl")
+			tp.log.Warn("TDPos config warning, no neturl set for peer", "address", proposer["address"])
+		} else {
+			canInfo.PeerAddr = proposer["neturl"].(string)
 		}
-		canInfo.PeerAddr = proposer["neturl"].(string)
 		tp.config.initProposer[1] = append(tp.config.initProposer[1], canInfo)
 	}
 
