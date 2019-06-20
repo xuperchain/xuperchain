@@ -59,7 +59,7 @@ func (tp *TDpos) isProposer(term int64, pos int64, address []byte) bool {
 }
 
 // 查询当前轮的验证者名单
-func (tp *TDpos) getTermProposer(term int64) []*candidateInfo {
+func (tp *TDpos) getTermProposer(term int64) []*CandidateInfo {
 	if term == 1 {
 		return tp.config.initProposer[1]
 	}
@@ -99,7 +99,7 @@ func (tp *TDpos) getTermProposer(term int64) []*candidateInfo {
 			return tp.config.initProposer[1]
 		}
 	}
-	proposers := []*candidateInfo{}
+	proposers := []*CandidateInfo{}
 	err = json.Unmarshal(val, &proposers)
 	if err != nil {
 		tp.log.Error("TDpos Unmarshal vote result error", "term", term, "error", err)
@@ -110,10 +110,10 @@ func (tp *TDpos) getTermProposer(term int64) []*candidateInfo {
 }
 
 // 生成当前轮的验证者名单
-func (tp *TDpos) genTermProposer() ([]*candidateInfo, error) {
+func (tp *TDpos) genTermProposer() ([]*CandidateInfo, error) {
 	//var res []string
 	var termBallotSli termBallotsSlice
-	res := []*candidateInfo{}
+	res := []*CandidateInfo{}
 
 	tp.candidateBallots.Range(func(k, v interface{}) bool {
 		key := k.(string)
@@ -147,7 +147,7 @@ func (tp *TDpos) genTermProposer() ([]*candidateInfo, error) {
 		if err != nil {
 			return nil, err
 		}
-		var canInfo *candidateInfo
+		var canInfo *CandidateInfo
 		err = json.Unmarshal(ciValue, &canInfo)
 		if err != nil {
 			return nil, err
@@ -283,7 +283,7 @@ func (tp *TDpos) inCandidate(candidate string) bool {
 }
 
 // 验证提名候选人合约参数是否合法
-func (tp *TDpos) validateNominateCandidate(desc *contract.TxDesc) (*candidateInfo, string, error) {
+func (tp *TDpos) validateNominateCandidate(desc *contract.TxDesc) (*CandidateInfo, string, error) {
 	utxoTotal := tp.utxoVM.GetTotal()
 	amount, err := calAmount(desc.Tx)
 	if err != nil {
@@ -291,7 +291,7 @@ func (tp *TDpos) validateNominateCandidate(desc *contract.TxDesc) (*candidateInf
 	}
 	// TODO: zq 多来源以后, 这里需要优化一下
 	fromAddr := string(desc.Tx.TxInputs[0].FromAddr)
-	canInfo := &candidateInfo{}
+	canInfo := &CandidateInfo{}
 
 	utxoTotal.Div(utxoTotal, big.NewInt(minNominateProportion))
 	if ok := amount.Cmp(utxoTotal) >= 0; !ok {
