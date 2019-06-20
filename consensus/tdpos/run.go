@@ -309,7 +309,7 @@ func (tp *TDpos) runCheckValidater(desc *contract.TxDesc, block *pb.InternalBloc
 }
 
 // triggerProposerChanged triggers a ProposerChanged event
-func (tp *TDpos) triggerProposerChanged(proposers []*candidateInfo) {
+func (tp *TDpos) triggerProposerChanged(proposers []*CandidateInfo) {
 	em := &events.EventMessage{
 		BcName:   tp.bcname,
 		Type:     events.ProposerChanged,
