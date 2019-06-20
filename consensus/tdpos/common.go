@@ -348,11 +348,11 @@ func (tp *TDpos) validateCheckValidater(desc *contract.TxDesc) (int64, int64, er
 }
 
 func (tp *TDpos) isAuthAddress(candidate string, initiator string, authRequire []string) bool {
-	if candidate == initiator {
+	if strings.HasSuffix(initiator, candidate) {
 		return true
 	}
 	for _, value := range authRequire {
-		if candidate == value {
+		if strings.HasSuffix(value, candidate) {
 			return true
 		}
 	}
