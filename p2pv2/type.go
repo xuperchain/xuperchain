@@ -16,56 +16,6 @@ type CorePeersInfo struct {
 	NextPeerIDs    []string // upcoming core peer IDs
 }
 
-type msgOptions struct {
-	filters         []FilterStrategy
-	bcname          string
-	targetPeerAddrs []string
-	isBreak         bool
-}
-
-// MessageOption define single option function
-type MessageOption func(*msgOptions)
-
-// WithBreak set is break option
-func WithBreak() MessageOption {
-	return func(o *msgOptions) {
-		o.isBreak = true
-	}
-}
-
-// WithFilters add filter strategies to message option
-func WithFilters(filter []FilterStrategy) MessageOption {
-	return func(o *msgOptions) {
-		o.filters = filter
-	}
-}
-
-// WithBcName add bcname to message option
-func WithBcName(bcname string) MessageOption {
-	return func(o *msgOptions) {
-		o.bcname = bcname
-	}
-}
-
-// WithTargetPeerAddrs add target peer addresses to message option
-func WithTargetPeerAddrs(peerAddrs []string) MessageOption {
-	return func(o *msgOptions) {
-		o.targetPeerAddrs = peerAddrs
-	}
-}
-
-// getMessageOption create MessageOptions with given options
-func getMessageOption(opts []MessageOption) *msgOptions {
-	msgOpts := &msgOptions{
-		isBreak: false,
-		filters: []FilterStrategy{DefaultStrategy},
-	}
-	for _, f := range opts {
-		f(msgOpts)
-	}
-	return msgOpts
-}
-
 // P2PServer is the p2p server interface of Xuper
 type P2PServer interface {
 	Start()

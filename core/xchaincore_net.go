@@ -16,7 +16,7 @@ func (xc *XChainCore) BroadCastGetBlock(bid *pb.BlockID) *pb.Block {
 		xc.log.Warn("BroadCastGetBlock Marshal msg error", "error", err)
 		return nil
 	}
-	msg, err := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, bid.GetBcname(), "", xuper_p2p.XuperMessage_GET_BLOCK, msgbuf, xuper_p2p.XuperMessage_NONE)
+	msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, bid.GetBcname(), "", xuper_p2p.XuperMessage_GET_BLOCK, msgbuf, xuper_p2p.XuperMessage_NONE)
 	filters := []p2pv2.FilterStrategy{p2pv2.NearestBucketStrategy}
 	if xc.IsCoreMiner() {
 		filters = append(filters, p2pv2.CorePeersStrategy)
@@ -24,6 +24,7 @@ func (xc *XChainCore) BroadCastGetBlock(bid *pb.BlockID) *pb.Block {
 	opts := []p2pv2.MessageOption{
 		p2pv2.WithFilters(filters),
 		p2pv2.WithBcName(xc.bcname),
+		p2pv2.WithPercentage(0.5),
 	}
 	res, err := xc.P2pv2.SendMessageWithResponse(context.Background(), msg, opts...)
 	if err != nil || len(res) < 1 {
