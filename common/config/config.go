@@ -191,6 +191,7 @@ type NodeConfig struct {
 	EtcdClusterAddr string     `yaml:"etcdClusterAddr,omitempty"`
 	GatewaySwitch   bool       `yaml:"gatewaySwitch,omitempty"`
 	Wasm            WasmConfig `yaml:"wasm,omitempty"`
+	CoreConnection  bool       `yaml:"coreConnection,omitempty"`
 }
 
 // KernelConfig kernel config
@@ -269,6 +270,7 @@ func (nc *NodeConfig) defaultNodeConfig() {
 			OptLevel: 0,
 		},
 	}
+	nc.CoreConnection = false
 }
 
 // NewNodeConfig returns a config of a node
