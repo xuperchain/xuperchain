@@ -45,6 +45,7 @@ type CommTrans struct {
 	// 走mulitisig gen流程
 	MultiAddrs string
 	Output     string
+	IsQuick    bool
 	IsPrint    bool
 
 	ChainName    string
@@ -109,7 +110,7 @@ func (c *CommTrans) GenPreExeRes(ctx context.Context) (
 	}
 
 	preExeRPCReq.Initiator = initiator
-	if c.MultiAddrs == "" {
+	if !c.IsQuick {
 		preExeRPCReq.AuthRequire, err = c.genAuthRequireQuick()
 		if err != nil {
 			return nil, nil, fmt.Errorf("Get auth require quick error: %s", err.Error())
@@ -123,6 +124,9 @@ func (c *CommTrans) GenPreExeRes(ctx context.Context) (
 	preExeRPCRes, err := c.XchainClient.PreExec(ctx, preExeRPCReq)
 	if err != nil {
 		return nil, nil, fmt.Errorf("PreExe contract response : %v, logid:%s", err, preExeRPCReq.Header.Logid)
+	}
+	for _, res := range preExeRPCRes.Response.Response {
+		fmt.Printf("contract response: %s\n", string(res))
 	}
 	return preExeRPCRes, preExeRPCRes.Response.Requests, nil
 }

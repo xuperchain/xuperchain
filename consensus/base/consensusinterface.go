@@ -21,4 +21,7 @@ type ConsensusInterface interface {
 	ProcessBeforeMiner(timestamp int64) (map[string]interface{}, bool)
 	// 用于确认块后进行相应的处理
 	ProcessConfirmBlock(block *pb.InternalBlock) error
+
+	// Get current core miner info
+	GetCoreMiners() []*MinerInfo
 }

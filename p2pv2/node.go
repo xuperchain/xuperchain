@@ -3,6 +3,7 @@ package p2pv2
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	iaddr "github.com/ipfs/go-ipfs-addr"
@@ -24,8 +25,9 @@ import (
 
 // define the common config
 const (
-	XuperProtocolID   = "/xuper/2.0.0" // protocol version
-	MaxBroadCastPeers = 20             // the maximum peers to broadcast messages
+	XuperProtocolID       = "/xuper/2.0.0" // protocol version
+	MaxBroadCastPeers     = 20             // the maximum peers to broadcast messages
+	MaxBroadCastCorePeers = 10             // the maximum core peers to broadcast messages
 )
 
 // define errors
@@ -36,20 +38,36 @@ var (
 	ErrCreateStreamPool = errors.New("create stream pool error")
 	ErrCreateBootStrap  = errors.New("create bootstrap error pool error")
 	ErrConnectBootStrap = errors.New("error to connect to all bootstrap")
+	ErrConnectCorePeers = errors.New("error to connect to all core peers")
+	ErrInvalidParams    = errors.New("invalid params")
 )
+
+type corePeerInfo struct {
+	Distance  int
+	PeerAddr  string
+	PeerInfo  *pstore.PeerInfo
+	XuperAddr string
+}
+
+type corePeersRoute struct {
+	CurrentPeers []*corePeerInfo
+	NextPeers    []*corePeerInfo
+}
 
 // Node is the node in the network
 type Node struct {
-	id      peer.ID
-	privKey crypto.PrivKey
-	log     log.Logger
-	host    host.Host
-	kdht    *dht.IpfsDHT
-	strPool *StreamPool
-	ctx     context.Context
-	srv     *P2PServerV2
-	quitCh  chan bool
-	addrs   map[string]*XchainAddrInfo
+	id        peer.ID
+	privKey   crypto.PrivKey
+	log       log.Logger
+	host      host.Host
+	kdht      *dht.IpfsDHT
+	strPool   *StreamPool
+	ctx       context.Context
+	srv       *P2PServerV2
+	quitCh    chan bool
+	addrs     map[string]*XchainAddrInfo
+	coreRoute map[string]*corePeersRoute
+	routeLock sync.RWMutex
 	// StreamLimit
 	streamLimit *StreamLimit
 }
@@ -69,12 +87,13 @@ func NewNode(cfg config.P2PConfig, log log.Logger) (*Node, error) {
 		return nil, ErrCreateHost
 	}
 	no := &Node{
-		id:     ho.ID(),
-		log:    log,
-		ctx:    ctx,
-		host:   ho,
-		quitCh: make(chan bool, 1),
-		addrs:  map[string]*XchainAddrInfo{},
+		id:        ho.ID(),
+		log:       log,
+		ctx:       ctx,
+		host:      ho,
+		quitCh:    make(chan bool, 1),
+		addrs:     map[string]*XchainAddrInfo{},
+		coreRoute: make(map[string]*corePeersRoute),
 		// new StreamLimit
 		streamLimit: &StreamLimit{},
 	}
@@ -97,35 +116,7 @@ func NewNode(cfg config.P2PConfig, log log.Logger) (*Node, error) {
 	}
 
 	// connect to bootNodes
-	succNum := 0
-	retryCount := 5
-	for retryCount > 0 {
-		for _, peerAddr := range cfg.BootNodes {
-			addr, err := iaddr.ParseString(peerAddr)
-			if err != nil {
-				log.Error("Parse boot node address error!", "bootnode", peerAddr, "error", err.Error())
-				continue
-			}
-			peerinfo, err := pstore.InfoFromP2pAddr(addr.Multiaddr())
-			if err != nil {
-				log.Error("Get boot node info error!", "bootnode", peerAddr, "error", err.Error())
-				continue
-			}
-
-			if err := no.host.Connect(ctx, *peerinfo); err != nil {
-				log.Error("Connection with bootstrap node error!", "error", err.Error())
-			} else {
-				succNum++
-				log.Info("Connection established with bootstrap node, ", "nodeInfo", *peerinfo)
-			}
-		}
-		if len(cfg.BootNodes) != 0 && succNum == 0 {
-			retryCount--
-			time.Sleep(1 * time.Second)
-		} else {
-			break
-		}
-	}
+	succNum := no.connectToPeersByAddr(cfg.BootNodes)
 	if len(cfg.BootNodes) != 0 && succNum == 0 {
 		return nil, ErrConnectBootStrap
 	}
@@ -206,4 +197,189 @@ func (no *Node) SendMessage(ctx context.Context, msg *p2pPb.XuperMessage, peers 
 // SendMessageWithResponse send message to given peers, expecting response from peers
 func (no *Node) SendMessageWithResponse(ctx context.Context, msg *p2pPb.XuperMessage, peers []peer.ID, withBreak bool) ([]*p2pPb.XuperMessage, error) {
 	return no.strPool.SendMessageWithResponse(ctx, msg, peers, withBreak)
+}
+
+// ListPeers return the list of peer ID in routing table
+func (no *Node) ListPeers() []peer.ID {
+	// get peer list from kdht routing table
+	rt := no.kdht.RoutingTable()
+	peers := rt.ListPeers()
+	idmap := make(map[string]bool)
+	for _, pid := range peers {
+		idmap[pid.Pretty()] = true
+	}
+
+	no.routeLock.RLock()
+	defer no.routeLock.RUnlock()
+	for _, coreRoute := range no.coreRoute {
+		for _, cpi := range coreRoute.CurrentPeers {
+			pid := cpi.PeerInfo.ID
+			if _, ok := idmap[pid.Pretty()]; ok {
+				continue
+			}
+			peers = append(peers, pid)
+			idmap[pid.Pretty()] = true
+		}
+		for _, cpi := range coreRoute.NextPeers {
+			pid := cpi.PeerInfo.ID
+			if _, ok := idmap[pid.Pretty()]; ok {
+				continue
+			}
+			peers = append(peers, pid)
+			idmap[pid.Pretty()] = true
+		}
+	}
+	return peers
+}
+
+func (no *Node) getIDFromAddr(peerAddr string) (peer.ID, error) {
+	addr, err := iaddr.ParseString(peerAddr)
+	if err != nil {
+		log.Error("peer parse error", "peerAddr", peerAddr, "error", err.Error())
+		return "", err
+	}
+	peerinfo, err := pstore.InfoFromP2pAddr(addr.Multiaddr())
+	if err != nil {
+		log.Error("peer node info error", "peerAddr", peerAddr, "error", err.Error())
+		return "", err
+	}
+	return peerinfo.ID, nil
+}
+
+// UpdateCorePeers update core peers' info and keep connection to core peers
+func (no *Node) UpdateCorePeers(cp *CorePeersInfo) error {
+	if cp == nil {
+		return ErrInvalidParams
+	}
+	no.routeLock.Lock()
+	defer no.routeLock.Unlock()
+	var oldInfo *corePeersRoute
+	if _, ok := no.coreRoute[cp.Name]; ok {
+		oldInfo = no.coreRoute[cp.Name]
+	}
+
+	// update connections
+	newInfo, err := no.updateCoreConnection(oldInfo, cp)
+	if err != nil {
+		return err
+	}
+
+	// update routing table
+	no.coreRoute[cp.Name] = newInfo
+	return nil
+}
+
+// updateCoreConnection update direct connections to core peers.
+// this function remove out-of-date core peers and create connections to new peers
+func (no *Node) updateCoreConnection(oldInfo *corePeersRoute,
+	newInfo *CorePeersInfo) (*corePeersRoute, error) {
+	newCurrentPeers := make([]*corePeerInfo, 0)
+	newNextPeers := make([]*corePeerInfo, 0)
+	allPeers := make([]*pstore.PeerInfo, 0)
+	processedPeers := make(map[string]bool)
+	if oldInfo != nil {
+		for _, pr := range oldInfo.CurrentPeers {
+			processedPeers[pr.PeerAddr] = true
+		}
+		for _, pr := range oldInfo.NextPeers {
+			processedPeers[pr.PeerAddr] = true
+		}
+	}
+	for _, paddr := range newInfo.CurrentPeerIDs {
+		if processedPeers[paddr] {
+			continue
+		}
+		newPeer, err := no.getRoutePeerFromAddr(paddr)
+		if err != nil {
+			no.log.Warn("parse peer address failed, ignore this one", "peer", paddr, "error", err)
+			continue
+		}
+		newCurrentPeers = append(newCurrentPeers, newPeer)
+		allPeers = append(allPeers, newPeer.PeerInfo)
+	}
+	for _, paddr := range newInfo.NextPeerIDs {
+		if processedPeers[paddr] {
+			continue
+		}
+		newPeer, err := no.getRoutePeerFromAddr(paddr)
+		if err != nil {
+			no.log.Warn("parse peer address failed, ignore this one", "peer", paddr, "error", err)
+			continue
+		}
+		newNextPeers = append(newNextPeers, newPeer)
+		allPeers = append(allPeers, newPeer.PeerInfo)
+	}
+
+	// connect new peers
+	succNum := no.connectToPeers(allPeers)
+	if len(allPeers) != 0 && succNum == 0 {
+		return nil, ErrConnectCorePeers
+	}
+	newRoute := &corePeersRoute{
+		CurrentPeers: newCurrentPeers,
+		NextPeers:    newNextPeers,
+	}
+
+	return newRoute, nil
+}
+
+func (no *Node) getRoutePeerFromAddr(peerAddr string) (*corePeerInfo, error) {
+	addr, err := iaddr.ParseString(peerAddr)
+	if err != nil {
+		no.log.Error("Parse peer address error!", "peerAddr", peerAddr, "error", err.Error())
+		return nil, err
+	}
+	peerinfo, err := pstore.InfoFromP2pAddr(addr.Multiaddr())
+	if err != nil {
+		no.log.Error("Get peer node info error!", "peerAddr", peerAddr, "error", err.Error())
+		return nil, err
+	}
+	cpi := &corePeerInfo{
+		PeerAddr: peerAddr,
+		PeerInfo: peerinfo,
+		Distance: 0, // TODO: calc the distance between peers
+	}
+	return cpi, nil
+}
+
+func (no *Node) connectToPeersByAddr(addrs []string) int {
+	peers := make([]*pstore.PeerInfo, 0)
+	for _, addr := range addrs {
+		pi, err := no.getRoutePeerFromAddr(addr)
+		if err != nil {
+			continue
+		}
+		peers = append(peers, pi.PeerInfo)
+	}
+	return no.connectToPeers(peers)
+}
+
+// connectToPeers connect to given peers, return the connected number of peers
+func (no *Node) connectToPeers(ppi []*pstore.PeerInfo) int {
+	// empty slice, do nothing
+	ppiSize := len(ppi)
+	if ppiSize <= 0 {
+		return 0
+	}
+
+	// connect to bootNodes
+	succNum := 0
+	retryCount := 5
+	for retryCount > 0 {
+		for _, pi := range ppi {
+			if err := no.host.Connect(no.ctx, *pi); err != nil {
+				no.log.Error("Connection with peer node error!", "error", err.Error())
+			} else {
+				succNum++
+				no.log.Info("Connection established with peer node, ", "nodeInfo", *pi)
+			}
+		}
+		if succNum > 0 {
+			break
+		}
+		// only retry if all connection failed
+		retryCount--
+		time.Sleep(1 * time.Second)
+	}
+	return succNum
 }

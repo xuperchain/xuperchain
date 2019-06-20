@@ -1,3 +1,4 @@
+// Package main is the plugin implementation of single consensus
 package main
 
 import (
@@ -9,6 +10,7 @@ import (
 
 	log "github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperunion/common/config"
+	cons_base "github.com/xuperchain/xuperunion/consensus/base"
 	crypto_base "github.com/xuperchain/xuperunion/crypto/client/base"
 	"github.com/xuperchain/xuperunion/global"
 	"github.com/xuperchain/xuperunion/ledger"
@@ -167,4 +169,16 @@ func (sc *SingleConsensus) ProcessBeforeMiner(timestamp int64) (map[string]inter
 // ProcessConfirmBlock is the specific implementation of ConsensusInterface
 func (sc *SingleConsensus) ProcessConfirmBlock(block *pb.InternalBlock) error {
 	return nil
+}
+
+// GetCoreMiners get the information of core miners
+func (sc *SingleConsensus) GetCoreMiners() []*cons_base.MinerInfo {
+	// single consensus only have one definite miner
+	res := []*cons_base.MinerInfo{}
+	master := &cons_base.MinerInfo{
+		Address:  string(sc.masterAddr),
+		PeerInfo: "",
+	}
+	res = append(res, master)
+	return res
 }
