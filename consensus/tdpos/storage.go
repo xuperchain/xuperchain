@@ -20,6 +20,16 @@ func genCandidateBallotsKey(address string) string {
 	return baseKey + address
 }
 
+// GetCandidateInfoPrefix generate key prefix of candidate info
+func GetCandidateInfoPrefix() string {
+	return pb.ConsTDposPrefix + "_candidate_info_"
+}
+
+func genCandidateInfoKey(address string) string {
+	baseKey := GetCandidateInfoPrefix()
+	return baseKey + address
+}
+
 //ParseCandidateBallotsKey parse candidate ballots key
 func ParseCandidateBallotsKey(key string) (string, error) {
 	subKeys := strings.Split(key, "_")

@@ -55,11 +55,11 @@ func (tp *TDpos) isProposer(term int64, pos int64, address []byte) bool {
 		tp.log.Warn("TDpos getTermProposer error, pos index out of range", "pos", pos, "proposers", proposers)
 		return false
 	}
-	return string(address) == proposers[pos]
+	return string(address) == proposers[pos].Address
 }
 
 // 查询当前轮的验证者名单
-func (tp *TDpos) getTermProposer(term int64) []string {
+func (tp *TDpos) getTermProposer(term int64) []*candidateInfo {
 	if term == 1 {
 		return tp.config.initProposer[1]
 	}
@@ -99,7 +99,7 @@ func (tp *TDpos) getTermProposer(term int64) []string {
 			return tp.config.initProposer[1]
 		}
 	}
-	proposers := []string{}
+	proposers := []*candidateInfo{}
 	err = json.Unmarshal(val, &proposers)
 	if err != nil {
 		tp.log.Error("TDpos Unmarshal vote result error", "term", term, "error", err)
@@ -110,9 +110,10 @@ func (tp *TDpos) getTermProposer(term int64) []string {
 }
 
 // 生成当前轮的验证者名单
-func (tp *TDpos) genTermProposer() ([]string, error) {
-	var res []string
+func (tp *TDpos) genTermProposer() ([]*candidateInfo, error) {
+	//var res []string
 	var termBallotSli termBallotsSlice
+	res := []*candidateInfo{}
 
 	tp.candidateBallots.Range(func(k, v interface{}) bool {
 		key := k.(string)
@@ -140,7 +141,21 @@ func (tp *TDpos) genTermProposer() ([]string, error) {
 	sort.Stable(termBallotSli)
 	for i := int64(0); i < tp.config.proposerNum; i++ {
 		tp.log.Trace("genTermVote sort result", "address", termBallotSli[i].Address, "ballot", termBallotSli[i].Ballots)
-		res = append(res, termBallotSli[i].Address)
+		addr := termBallotSli[i].Address
+		keyCanInfo := genCandidateInfoKey(addr)
+		ciValue, err := tp.utxoVM.GetFromTable(nil, []byte(keyCanInfo))
+		if err != nil {
+			return nil, err
+		}
+		var canInfo *candidateInfo
+		err = json.Unmarshal(ciValue, &canInfo)
+		if err != nil {
+			return nil, err
+		}
+		if canInfo.Address != addr {
+			return nil, errors.New("candidate address not match vote address")
+		}
+		res = append(res, canInfo)
 	}
 	tp.log.Trace("genTermVote sort result", "result", res)
 	return res, nil
@@ -268,35 +283,53 @@ func (tp *TDpos) inCandidate(candidate string) bool {
 }
 
 // 验证提名候选人合约参数是否合法
-func (tp *TDpos) validateNominateCandidate(desc *contract.TxDesc) (string, string, error) {
+func (tp *TDpos) validateNominateCandidate(desc *contract.TxDesc) (*candidateInfo, string, error) {
 	utxoTotal := tp.utxoVM.GetTotal()
 	amount, err := calAmount(desc.Tx)
 	if err != nil {
-		return "", "", err
+		return nil, "", err
 	}
 	// TODO: zq 多来源以后, 这里需要优化一下
 	fromAddr := string(desc.Tx.TxInputs[0].FromAddr)
+	canInfo := &candidateInfo{}
 
 	utxoTotal.Div(utxoTotal, big.NewInt(minNominateProportion))
 	if ok := amount.Cmp(utxoTotal) >= 0; !ok {
 		tp.log.Warn("validateNominateCandidate error for amount not enough", "amount", amount.String(), "utxoNeed",
 			utxoTotal.String())
-		return "", "", errors.New("validateNominateCandidate amount not enough")
+		return nil, "", errors.New("validateNominateCandidate amount not enough")
 	}
 
+	// process candidate address
 	if desc.Args["candidate"] == nil {
-		return "", "", errors.New("validateNominateCandidate candidate can not be null")
+		return nil, "", errors.New("validateNominateCandidate candidate can not be null")
 	}
 	switch desc.Args["candidate"].(type) {
 	case string:
 		candidate := desc.Args["candidate"].(string)
 		if checkCandidateName(candidate) {
-			return "", "", errors.New("validateNominateCandidate candidate name invalid")
+			return nil, "", errors.New("validateNominateCandidate candidate name invalid")
 		}
-		return candidate, fromAddr, nil
+		canInfo.Address = candidate
 	default:
-		return "", "", errors.New("validateNominateCandidate candidates should be string")
+		return nil, "", errors.New("validateNominateCandidate candidates should be string")
 	}
+
+	// process candidate peerid
+	if desc.Args["neturl"] == nil {
+		tp.log.Warn("validateNominateCandidate candidate have no neturl info",
+			"address", canInfo.Address)
+	} else {
+		switch desc.Args["neturl"].(type) {
+		case string:
+			peerid := desc.Args["neturl"].(string)
+			canInfo.PeerAddr = peerid
+		default:
+			return nil, "", errors.New("validateNominateCandidate neturl should be string")
+		}
+	}
+
+	return canInfo, fromAddr, nil
 }
 
 // 验证撤销候选人是否合法

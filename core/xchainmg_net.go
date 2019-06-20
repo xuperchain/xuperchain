@@ -109,7 +109,11 @@ func (xm *XChainMG) handlePostTx(msg *xuper_p2p.XuperMessage) {
 		txStatus.Header = global.GHeader()
 	}
 	if _, needRepost, _ := xm.ProcessTx(txStatus); needRepost {
-		xm.P2pv2.SendMessage(context.Background(), msg, p2pv2.DefaultStrategy)
+		opts := []p2pv2.MessageOption{
+			p2pv2.WithFilters([]p2pv2.FilterStrategy{p2pv2.DefaultStrategy}),
+			p2pv2.WithBcName(msg.GetHeader().GetBcname()),
+		}
+		xm.P2pv2.SendMessage(context.Background(), msg, opts...)
 	}
 	return
 }
@@ -182,7 +186,17 @@ func (xm *XChainMG) HandleSendBlock(msg *xuper_p2p.XuperMessage) {
 		xm.Log.Error("HandleSendBlock ProcessBlock error", "error", err.Error())
 		return
 	}
-	xm.P2pv2.SendMessage(context.Background(), msg, p2pv2.DefaultStrategy)
+	bcname := block.GetBcname()
+	bc := xm.Get(bcname)
+	filters := []p2pv2.FilterStrategy{p2pv2.DefaultStrategy}
+	if bc.NeedCoreConnection() {
+		filters = append(filters, p2pv2.CorePeersStrategy)
+	}
+	opts := []p2pv2.MessageOption{
+		p2pv2.WithFilters(filters),
+		p2pv2.WithBcName(bcname),
+	}
+	xm.P2pv2.SendMessage(context.Background(), msg, opts...)
 	return
 }
 
@@ -234,7 +248,11 @@ func (xm *XChainMG) handleBatchPostTx(msg *xuper_p2p.XuperMessage) {
 		}
 		msg.Data.MsgInfo = txsData
 		msg.Header.DataCheckSum = xuper_p2p.CalDataCheckSum(msg)
-		xm.P2pv2.SendMessage(context.Background(), msg, p2pv2.DefaultStrategy)
+		opts := []p2pv2.MessageOption{
+			p2pv2.WithFilters([]p2pv2.FilterStrategy{p2pv2.DefaultStrategy}),
+			p2pv2.WithBcName(msg.GetHeader().GetBcname()),
+		}
+		xm.P2pv2.SendMessage(context.Background(), msg, opts...)
 	}
 	return
 }

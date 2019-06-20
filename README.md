@@ -48,9 +48,12 @@ Clone the repository
 git clone https://github.com/xuperchain/xuperunion
 ```
 
+**Note**: `master` branch contains latest features but might be **unstable**. for production use, please checkout our release branch. the latest release branch is `v3.1`.
+
 Enter the xuperunion folder and build the code:
 
 ```
+cd xuperunion
 make
 ```
 
@@ -164,6 +167,8 @@ XuperUnion is under the [Apache License, Version 2.0](https://github.com/xuperch
 git clone https://github.com/xuperchain/xuperunion
 ```
 
+**注意**: `master` 分支是日常开发分支，会包含最新的功能，但是 **不稳定**。生产环境请使用最新的已发布分支，最新的已发布分支是`v3.1`。
+
 编译
 ```
 cd xuperunion
@@ -212,7 +217,7 @@ docker exec -ti xchain bash
 2. 找到自己感兴趣的功能或模块
 3. 进行开发，开发完成后自测功能是否正确，并运行make & make test
 4. 发起pull request
-5. 更多详情请参见[链接](https://github.com/xuperchain/xuperunion/blob/master/CONTRIBUTING.md)
+5. 更多详情请参见[链接](https://github.com/xuperchain/xuperunion/blob/master/CONTRIBUTING_CN.md)
 
 ## 许可证
 XuperUnion使用的许可证是Apache 2.0
