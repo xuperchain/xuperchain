@@ -2,7 +2,6 @@ package bridge
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/xuperchain/xuperunion/contract"
 )
@@ -73,7 +72,6 @@ func (v *vmImpl) NewContext(ctxCfg *contract.ContextConfig) (contract.Context, e
 	ctx.ContractName = ctxCfg.ContractName
 	ctx.Initiator = ctxCfg.Initiator
 	ctx.AuthRequire = ctxCfg.AuthRequire
-	log.Printf("limits:%#v", ctxCfg.ResourceLimits)
 	ctx.ResourceLimits = ctxCfg.ResourceLimits
 	release := func() {
 		v.ctxmgr.DestroyContext(ctx)
