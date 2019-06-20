@@ -86,7 +86,7 @@ type tDposConfig struct {
 	// 投票单价
 	voteUnitPrice *big.Int
 	// 系统指定的前两轮的候选人名单
-	initProposer map[int64][]*candidateInfo
+	initProposer map[int64][]*CandidateInfo
 }
 
 // 每个选票的详情, 支持一票多投
@@ -129,8 +129,8 @@ type candidateBallotsCacheValue struct {
 	isDel bool
 }
 
-// candidateInfo define the candidate info
-type candidateInfo struct {
+// CandidateInfo define the candidate info
+type CandidateInfo struct {
 	Address  string
 	PeerAddr string
 }

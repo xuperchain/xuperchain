@@ -289,17 +289,17 @@ func TestTermProposerBasic(t *testing.T) {
 			proposerNum:       int64(1),
 			blockNum:          int64(20),
 			voteUnitPrice:     big.NewInt(12),
-			initProposer: map[int64][]*candidateInfo{
-				1: []*candidateInfo{
-					&candidateInfo{
+			initProposer: map[int64][]*CandidateInfo{
+				1: []*CandidateInfo{
+					&CandidateInfo{
 						Address:  "Y4TmpfV4pvhYT5W17J7TqHSLo6cqq23x3",
 						PeerAddr: "peerid1",
 					},
-					&candidateInfo{
+					&CandidateInfo{
 						Address:  "RUEMFGDEnLBpnYYggnXukpVfR9Skm59ph",
 						PeerAddr: "peerid2",
 					},
-					&candidateInfo{
+					&CandidateInfo{
 						Address:  "bob",
 						PeerAddr: "peerid3",
 					},
@@ -309,7 +309,7 @@ func TestTermProposerBasic(t *testing.T) {
 	}
 	tdpos.context = &contract.TxContext{}
 	tdpos.context.UtxoBatch = tdpos.utxoVM.NewBatch()
-	canInfo := &candidateInfo{
+	canInfo := &CandidateInfo{
 		Address:  "f3prTg9itaZY6m48wXXikXdcxiByW7zgk",
 		PeerAddr: "peerid4",
 	}
