@@ -196,8 +196,8 @@ func (no *Node) SendMessage(ctx context.Context, msg *p2pPb.XuperMessage, peers 
 }
 
 // SendMessageWithResponse send message to given peers, expecting response from peers
-func (no *Node) SendMessageWithResponse(ctx context.Context, msg *p2pPb.XuperMessage, peers []peer.ID, withBreak bool) ([]*p2pPb.XuperMessage, error) {
-	return no.strPool.SendMessageWithResponse(ctx, msg, peers, withBreak)
+func (no *Node) SendMessageWithResponse(ctx context.Context, msg *p2pPb.XuperMessage, peers []peer.ID, percentage float32) ([]*p2pPb.XuperMessage, error) {
+	return no.strPool.SendMessageWithResponse(ctx, msg, peers, percentage)
 }
 
 // ListPeers return the list of peer ID in routing table
