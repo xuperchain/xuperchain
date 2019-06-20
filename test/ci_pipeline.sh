@@ -202,7 +202,7 @@ function tdpos_revoke()
     before_revoke=$(get_TermProposer)
 	before_term=$(echo $before_revoke | awk -F"=| " '{print $(NF-3)}')
 	after_term=$[$before_term+3]
-	for ((i=1;i<=50;i++))
+	for ((i=1;i<=80;i++))
 	{
 	    for ch in - \\ \| /
 	    {
