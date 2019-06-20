@@ -7,7 +7,8 @@ body1 = {
     "module": "tdpos",
     "method": "nominate_candidate",
     "args": {
-        "candidate": "提名address"
+        "candidate": "提名address",
+        "neturl": "提名neturl"
          }
 }
 
@@ -36,7 +37,48 @@ body4 = {
     }
 }
 
-body_dict = {'./relate_file/nominate.json':body1, './relate_file/vote.json':body2, './relate_file/revoke.json':body3, './relate_file/account.json':body4}
+body5 = {
+    "version": "1",
+    "predistribution": [
+        {
+            "address": "dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN",
+            "quota": "100000000000000000000"
+        }
+    ],
+    "maxblocksize": "128",
+    "award": "1000000",
+    "decimals": "8",
+    "award_decay": {
+        "height_gap": 31536000,
+        "ratio": 1
+    },
+    "genesis_consensus": {
+        "name": "tdpos",
+        "config": {
+            "timestamp": "1559021720000000000",
+            "proposer_num": "1",
+            "period": "3000",
+            "alternate_interval": "3000",
+            "term_interval": "6000",
+            "block_num": "20",
+            "vote_unit_price": "1",
+            "init_proposer": {
+                "1": [
+                    {
+                        "address": "dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN",
+                        "neturl": "/ip4/127.0.0.1/tcp/47101/p2p/QmVxeNubpg1ZQjQT8W5yZC9fD7ZB1ViArwvyGUB53sqf8e"
+                    },
+                    {
+                        "address": "nodeaddress",
+                        "neturl": "nodeneturl"
+                    }
+                ]
+            }
+        }
+    }
+}
+
+body_dict = {'./relate_file/nominate.json':body1, './relate_file/vote.json':body2, './relate_file/revoke.json':body3, './relate_file/account.json':body4, './relate_file/xuper.json':body5}
 for key in body_dict:
     body_file = json.dumps(body_dict[key], indent=4)
     f = open(key,'w')

@@ -42,13 +42,15 @@ function deploy_env()
 		if [ $i -eq 1 ];then
 			addr1=`cat $basepath/node1/data/keys/address`
 			addr2=`cat $basepath/node2/data/keys/address`
+			neturl2=`cd $basepath/node2 && ./xchain-cli netURL preview --port 47102`
 			timestamp=`date +%s`
 			proposer_num=2
-			init_proposer="$addr1\",\"$addr2"
-		    echo "timestamp=$timestamp proposer_num=$proposer_num init_proposer=$init_proposer"
+		    echo "timestamp=$timestamp proposer_num=$proposer_num addr2=$addr2 neturl2=$neturl2"
+			cp $basepath/relate_file/xuper.json $basepath/node$i/data/config/xuper.json
 			sed -i'' -e 's/\("timestamp": "\).*/\1'"$timestamp"'000000000"\,/' $basepath/node$i/data/config/xuper.json
-			sed -i'' -e 's/\("proposer_num":"\).*/\1'"$proposer_num"'"\,/' $basepath/node$i/data/config/xuper.json
-			sed -i'' -e 's/\("1":\["\).*/\1'"$init_proposer"'"\]/' $basepath/node$i/data/config/xuper.json
+			sed -i'' -e 's/\("proposer_num": "\).*/\1'"$proposer_num"'"\,/' $basepath/node$i/data/config/xuper.json
+			sed -i'' -e "s/nodeaddress/$addr2/" $basepath/node$i/data/config/xuper.json
+            sed -i'' -e "s@nodeneturl@$neturl2@" $basepath/node$i/data/config/xuper.json
             cp $basepath/node1/data/config/xuper.json $basepath/node2/data/config/xuper.json
             cp $basepath/node1/data/config/xuper.json $basepath/node3/data/config/xuper.json
 			cd $basepath/node$i
@@ -62,7 +64,7 @@ function deploy_env()
 		fi
     }
 	sed -i'' -e "s/#bootNodes/bootNodes/; s@#  - \"/ip4/<ip>.*@  - $(cat $basepath/node1/neturl.txt)@" $basepath/node2/conf/xchain.yaml
-	sed -i'' -e "s/#bootNodes/bootNodes/; s@#  - \"/ip4/<ip>.*@  - $(cat $basepath/node1/neturl.txt)@" $basepath/node3/conf/xchain.yaml
+    sed -i'' -e "s/#bootNodes/bootNodes/; s@#  - \"/ip4/<ip>.*@  - $(cat $basepath/node1/neturl.txt)@" $basepath/node3/conf/xchain.yaml
     ##node2,3节点创建链并启动
 	cd $basepath/node2 && $basepath/node2/xchain-cli createChain && nohup $basepath/node2/xchain &
 	cd $basepath/node3 && $basepath/node3/xchain-cli createChain && nohup $basepath/node3/xchain &
@@ -96,10 +98,12 @@ function gen_file()
 
 function tdpos_nominate()
 {
-	cd $basepath/node1
 	for ((i=1;i<=3;i++))
 	{
 		nominate_addr=$(cat $basepath/node$i/data/keys/address)
+		nominate_url=$(cd $basepath/node$i && ./xchain-cli netURL preview --port 4710$i)
+		cd $basepath/node1
+		sed -i'' -e 's@\("neturl": "\).*@\1'"$nominate_url"'"\,@' $basepath/relate_file/nominate.json
 		sed -i'' -e 's/\("candidate": "\).*/\1'"$nominate_addr"'"/' $basepath/relate_file/nominate.json
 		./xchain-cli transfer --to=$(cat ./data/keys/address) --desc=$basepath/relate_file/nominate.json --amount=1100000000027440 --frozen=-1
 		sleep 3
@@ -265,20 +269,21 @@ function deploy_invoke_contract()
 	fi
 }
 
+echo "--------> start to gen relate file"
+gen_file
+sleep 2
 echo "--------> start to deploy env"
 deploy_env
 sleep 3
-echo "--------> start to gen relate file"
-gen_file
-#echo "--------> start to tdpos nominate"
-#tdpos_nominate
-#sleep 2
-#echo "--------> start to tdpos vote nominate"
-#vote_nominate
-#sleep 2
-#echo "--------> start to tdpos revoke"
-#tdpos_revoke
-#sleep 2
+echo "--------> start to tdpos nominate"
+tdpos_nominate
+sleep 2
+echo "--------> start to tdpos vote nominate"
+vote_nominate
+sleep 2
+echo "--------> start to tdpos revoke"
+tdpos_revoke
+sleep 2
 echo "--------> start to deploy_invoke_contract"
 get_addrs
 deploy_invoke_contract
