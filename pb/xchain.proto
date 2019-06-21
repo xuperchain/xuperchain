@@ -800,7 +800,7 @@ enum ResourceType {
     CPU = 0;
     MEMORY = 1;
     DISK = 2;
-    GAS = 3;
+    XFEE = 3; // the fee used in kernel contract
 }
 
 message ResourceLimit {

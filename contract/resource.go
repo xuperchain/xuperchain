@@ -11,13 +11,17 @@ type Limits struct {
 	Cpu    int64
 	Memory int64
 	Disk   int64
-	Gas    int64
+	XFee   int64
 }
 
 // TotalGas converts resource to gas
 func (l *Limits) TotalGas() int64 {
 	// FIXME:
-	return l.Cpu/1000 + l.Memory/1000000 + l.Disk + l.Gas
+	cpuGas := roundup(l.Cpu, 1000)
+	memGas := roundup(l.Memory, 1000000)
+	diskGas := roundup(l.Disk, 1)
+	feeGas := roundup(l.XFee, 1)
+	return cpuGas + memGas + diskGas + feeGas
 }
 
 // MaxLimits describes the maximum limit of resources
@@ -25,7 +29,7 @@ var MaxLimits = Limits{
 	Cpu:    maxResourceLimit,
 	Memory: maxResourceLimit,
 	Disk:   maxResourceLimit,
-	Gas:    maxResourceLimit,
+	XFee:   maxResourceLimit,
 }
 
 // FromPbLimits converts []*pb.ResourceLimit to Limits
@@ -39,8 +43,8 @@ func FromPbLimits(rlimits []*pb.ResourceLimit) Limits {
 			limits.Memory = l.GetLimit()
 		case pb.ResourceType_DISK:
 			limits.Disk = l.GetLimit()
-		case pb.ResourceType_GAS:
-			limits.Gas = l.GetLimit()
+		case pb.ResourceType_XFEE:
+			limits.XFee = l.GetLimit()
 		}
 	}
 	return limits
@@ -52,6 +56,10 @@ func ToPbLimits(limits Limits) []*pb.ResourceLimit {
 		{Type: pb.ResourceType_CPU, Limit: limits.Cpu},
 		{Type: pb.ResourceType_MEMORY, Limit: limits.Memory},
 		{Type: pb.ResourceType_DISK, Limit: limits.Disk},
-		{Type: pb.ResourceType_GAS, Limit: limits.Gas},
+		{Type: pb.ResourceType_XFEE, Limit: limits.XFee},
 	}
+}
+
+func roundup(n, scale int64) int64 {
+	return (n + scale - 1) / scale
 }

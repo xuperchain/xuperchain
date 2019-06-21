@@ -76,18 +76,18 @@ func (kc *KContext) Invoke(methodName string, args map[string][]byte) ([]byte, e
 }
 
 // AddGasUsed set gas used when invoking kernel contract method
-func (kc *KContext) AddGasUsed(delta int64) {
+func (kc *KContext) AddXFeeUsed(delta int64) {
 	if delta < 0 {
-		panic(fmt.Sprintf("bad gas delta %d", delta))
+		panic(fmt.Sprintf("bad xfee delta %d", delta))
 	}
-	kc.resourceUsed.Gas += delta
+	kc.resourceUsed.XFee += delta
 }
 
 func (kc *KContext) AddResourceUsed(delta contract.Limits) {
 	kc.resourceUsed.Cpu += delta.Cpu
 	kc.resourceUsed.Memory += delta.Memory
 	kc.resourceUsed.Disk += delta.Disk
-	kc.resourceUsed.Gas += delta.Gas
+	kc.resourceUsed.XFee += delta.XFee
 }
 
 func (kc *KContext) ResourceUsed() contract.Limits {

@@ -54,7 +54,7 @@ type nativeInstance struct {
 
 func (n *nativeInstance) ResourceUsed() contract.Limits {
 	return contract.Limits{
-		Gas: 1,
+		XFee: 1,
 	}
 }
 
