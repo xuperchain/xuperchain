@@ -7,12 +7,13 @@ package utxo
 import (
 	"bytes"
 	"fmt"
+	"time"
+
 	"github.com/xuperchain/xuperunion/common"
 	"github.com/xuperchain/xuperunion/contract"
 	"github.com/xuperchain/xuperunion/global"
 	"github.com/xuperchain/xuperunion/kv/kvdb"
 	"github.com/xuperchain/xuperunion/pb"
-	"time"
 )
 
 func (uv *UtxoVM) isSmartContract(desc []byte) (*contract.TxDesc, bool) {
@@ -99,7 +100,7 @@ func (uv *UtxoVM) TxOfRunningContractGenerate(txlist []*pb.Transaction, pendingB
 			// 执行合约
 			err := uv.runContract(pendingBlock.Blockid, tx, nil, deadline)
 			if err != nil {
-				if txDesc.Module == contract.KernelModuleName {
+				if txDesc.Module == contract.KernelModuleName || txDesc.Module == contract.ConsensusModueName {
 					addFailedNoRollback(tx, pendingBlock, err)
 					continue
 				}
