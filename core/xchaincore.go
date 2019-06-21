@@ -100,6 +100,8 @@ type XChainCore struct {
 
 	// isCoreMiner if current node is one of the core miners
 	isCoreMiner bool
+	// enable core peer connection or not
+	coreConnection bool
 }
 
 // Status return the status of the chain
@@ -127,6 +129,7 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	xc.P2pv2 = p2p
 	xc.nodeMode = nodeMode
 	xc.stopFlag = false
+	xc.coreConnection = cfg.CoreConnection
 	ledger.MemCacheSize = cfg.DBCache.MemCacheSize
 	ledger.FileHandlersCacheSize = cfg.DBCache.FdCacheSize
 	datapath := cfg.Datapath + "/" + bcname
@@ -305,7 +308,7 @@ func (xc *XChainCore) repostOfflineTx() {
 		msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, xc.bcname, header.GetLogid(), xuper_p2p.XuperMessage_BATCHPOSTTX, msgInfo, xuper_p2p.XuperMessage_SUCCESS)
 
 		filters := []p2pv2.FilterStrategy{p2pv2.DefaultStrategy}
-		if xc.IsCoreMiner() {
+		if xc.NeedCoreConnection() {
 			filters = append(filters, p2pv2.CorePeersStrategy)
 		}
 		opts := []p2pv2.MessageOption{
@@ -627,7 +630,7 @@ func (xc *XChainCore) doMiner() {
 	msgInfo, _ := proto.Marshal(block)
 	msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, xc.bcname, "", xuper_p2p.XuperMessage_SENDBLOCK, msgInfo, xuper_p2p.XuperMessage_NONE)
 	filters := []p2pv2.FilterStrategy{p2pv2.DefaultStrategy}
-	if xc.IsCoreMiner() {
+	if xc.NeedCoreConnection() {
 		filters = append(filters, p2pv2.CorePeersStrategy)
 	}
 	opts := []p2pv2.MessageOption{
@@ -1057,7 +1060,8 @@ func (xc *XChainCore) GetDposVotedRecords(addr string) ([]*pb.VotedRecord, error
 
 // GetCheckResults get all proposers for specific term
 func (xc *XChainCore) GetCheckResults(term int64) ([]string, error) {
-	proposers := []string{}
+	res := []string{}
+	proposers := []*tdpos.CandidateInfo{}
 	version := xc.con.Version(xc.Ledger.GetMeta().TrunkHeight + 1)
 	key := tdpos.GenTermCheckKey(version, term)
 	val, err := xc.Utxovm.GetFromTable(nil, []byte(key))
@@ -1068,7 +1072,10 @@ func (xc *XChainCore) GetCheckResults(term int64) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	return proposers, nil
+	for _, proposer := range proposers {
+		res = append(res, proposer.Address)
+	}
+	return res, nil
 }
 
 // GetNodeMode get node running mode, such as Normal mode, FastSync mode
@@ -1085,4 +1092,44 @@ func (xc *XChainCore) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*p
 // Note that is could be a little delay since it updated at each CompeteMaster.
 func (xc *XChainCore) IsCoreMiner() bool {
 	return xc.isCoreMiner
+}
+
+// NeedCoreConnection return true if current node is one of the core miners
+// and coreConnection configure to true. True means block and batch tx messages
+// need to send to core peers using p2p core peer connections
+func (xc *XChainCore) NeedCoreConnection() bool {
+	return xc.isCoreMiner && xc.coreConnection
+}
+
+// GetBlockByHeight get block from ledger on trunk, by Block Height
+func (xc *XChainCore) GetBlockByHeight(in *pb.BlockHeight) *pb.Block {
+	out := &pb.Block{Header: in.Header}
+	out.Header.Error = pb.XChainErrorEnum_SUCCESS
+	out.Bcname = in.Bcname
+	if xc.Status() != global.Normal {
+		out.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE
+		xc.log.Debug("refused a connection a function call GetBlock", "logid", in.Header.Logid)
+		return out
+	}
+	ib, err := xc.Ledger.QueryBlockByHeight(in.Height)
+	if err != nil {
+		switch err {
+		case ledger.ErrBlockNotExist:
+			out.Header.Error = pb.XChainErrorEnum_SUCCESS
+			out.Status = pb.Block_NOEXIST
+			return out
+		default:
+			xc.log.Warn("getblock by height", "logid", in.Header.Logid, "error", err)
+			out.Header.Error = pb.XChainErrorEnum_UNKNOW_ERROR
+			return out
+		}
+	} else {
+		out.Block = ib
+		if ib.InTrunk {
+			out.Status = pb.Block_TRUNK
+		} else {
+			out.Status = pb.Block_BRANCH
+		}
+	}
+	return out
 }

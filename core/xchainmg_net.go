@@ -189,7 +189,7 @@ func (xm *XChainMG) HandleSendBlock(msg *xuper_p2p.XuperMessage) {
 	bcname := block.GetBcname()
 	bc := xm.Get(bcname)
 	filters := []p2pv2.FilterStrategy{p2pv2.DefaultStrategy}
-	if bc.IsCoreMiner() {
+	if bc.NeedCoreConnection() {
 		filters = append(filters, p2pv2.CorePeersStrategy)
 	}
 	opts := []p2pv2.MessageOption{

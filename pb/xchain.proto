@@ -104,6 +104,14 @@ service Xchain {
 		};
 	}
 
+	// GetBlockByHeight get block by height and return if the block in trunk or in branch
+	rpc GetBlockByHeight(BlockHeight) returns (Block) {
+		option (google.api.http) = {
+			post: "/v1/get_block_by_height"
+			body: "*"
+		};
+	}
+
 	rpc GetBlockChainStatus(BCStatus) returns (BCStatus) {
 		option (google.api.http) = {
 			post: "/v1/get_bcstatus"
@@ -242,6 +250,13 @@ message BlockID
 	bool need_content = 3;	//是否需要内容
 }
 
+message BlockHeight
+{
+	Header header = 3;
+	string bcname = 1;
+	int64  height = 2;
+}
+
 message CommonReply
 {
 	Header header = 1;
@@ -352,6 +367,8 @@ message UtxoMeta
     bytes latest_blockid = 1; // utxo vm目前执行到的blockid
     repeated string lock_key_list = 2;
     string utxo_total = 3; //当前utxo vm上的总资产
+    int64 avgDelay = 4; //平均上链延时
+    int64 unconfirmTxAmount = 5; //待确认交易量
 }
 
 // The internal block struct

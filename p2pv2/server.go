@@ -108,9 +108,9 @@ func (p *P2PServerV2) SendMessageWithResponse(ctx context.Context, msg *p2pPb.Xu
 	msgOpts := getMessageOption(opts)
 	filter := p.getFilter(msgOpts.filters)
 	peers, _ := filter.Filter()
-	withBreak := msgOpts.isBreak
+	percentage := msgOpts.percentage
 	p.log.Trace("Server SendMessage with response", "logid", msg.GetHeader().GetLogid(), "msgType", msg.GetHeader().GetType(), "checksum", msg.GetHeader().GetDataCheckSum())
-	return p.node.SendMessageWithResponse(ctx, msg, peers, withBreak)
+	return p.node.SendMessageWithResponse(ctx, msg, peers, percentage)
 }
 
 // Register register message subscribers to handle messages

@@ -251,6 +251,10 @@ type UtxoMeta struct {
 	LockKeyList []string `json:"lockKeyList"`
 	// UtxoTotal UtxoTotal
 	UtxoTotal string `json:"utxoTotal"`
+	// Average confirmed dealy (ms)
+	AvgDelay int64 `json:"avgDelay"`
+	// Current unconfirmed tx amount
+	UnconfirmTxAmount int64 `json:"unconfirmed"`
 }
 
 // ChainStatus proto.ChainStatus
@@ -282,9 +286,11 @@ func FromSystemStatusPB(statuspb *pb.SystemsStatus) *SystemStatus {
 				MaxBlockSize: ledgerMeta.GetMaxBlockSize(),
 			},
 			UtxoMeta: UtxoMeta{
-				LatestBlockid: utxoMeta.GetLatestBlockid(),
-				LockKeyList:   utxoMeta.GetLockKeyList(),
-				UtxoTotal:     utxoMeta.GetUtxoTotal(),
+				LatestBlockid:     utxoMeta.GetLatestBlockid(),
+				LockKeyList:       utxoMeta.GetLockKeyList(),
+				UtxoTotal:         utxoMeta.GetUtxoTotal(),
+				AvgDelay:          utxoMeta.GetAvgDelay(),
+				UnconfirmTxAmount: utxoMeta.GetUnconfirmTxAmount(),
 			},
 		})
 	}

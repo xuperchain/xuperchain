@@ -5,10 +5,10 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/libp2p/go-libp2p-net"
-	"github.com/libp2p/go-libp2p-peer"
-	"github.com/xuperchain/log15"
+	net "github.com/libp2p/go-libp2p-net"
+	peer "github.com/libp2p/go-libp2p-peer"
 
+	log "github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperunion/common"
 	p2pPb "github.com/xuperchain/xuperunion/p2pv2/pb"
 )
@@ -180,7 +180,7 @@ func (sp *StreamPool) streamForPeer(p peer.ID) (*Stream, error) {
 
 // SendMessageWithResponse will send message to peers with response
 // withBreak means whether request wait for all response
-func (sp *StreamPool) SendMessageWithResponse(ctx context.Context, msg *p2pPb.XuperMessage, peers []peer.ID, withBreak bool) ([]*p2pPb.XuperMessage, error) {
+func (sp *StreamPool) SendMessageWithResponse(ctx context.Context, msg *p2pPb.XuperMessage, peers []peer.ID, percentage float32) ([]*p2pPb.XuperMessage, error) {
 	ch := make(chan *p2pPb.XuperMessage, len(peers))
 	defer close(ch)
 	wg := &sync.WaitGroup{}
@@ -198,10 +198,8 @@ func (sp *StreamPool) SendMessageWithResponse(ctx context.Context, msg *p2pPb.Xu
 
 	i := 0
 	for r := range ch {
-		if withBreak {
-			if len(res) > 0 {
-				break
-			}
+		if len(res) > int(float32(len(peers))*percentage) {
+			break
 		}
 		if p2pPb.VerifyDataCheckSum(r) {
 			res = append(res, r)
