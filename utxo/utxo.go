@@ -134,6 +134,8 @@ type UtxoVM struct {
 	unconfirmTxInMem     *sync.Map //未确认Tx表的内存镜像
 	defaultTxVersion     int32     // 默认的tx version
 	maxConfirmedDelay    uint32    // 交易处于unconfirm状态的最长时间，超过后会被回滚
+	unconfirmTxAmount    int64     // 未确认的Tx数目，用于监控
+	avgDelay             int64     // 平均上链延时
 }
 
 // InboundTx is tx wrapper
@@ -812,7 +814,9 @@ func (uv *UtxoVM) sortUnconfirmedTx() (map[string]*pb.Transaction, TxGraph, map[
 	if len(txMap) > 0 {
 		avgDelay := totalDelay / int64(len(txMap)) //平均unconfirm滞留时间
 		uv.xlog.Info("average unconfirm delay", "micro-senconds", avgDelay/1e6, "count", len(txMap))
+		uv.avgDelay = avgDelay / 1e6
 	}
+	uv.unconfirmTxAmount = int64(len(txMap))
 	return txMap, txGraph, delayedTxMap, nil
 }
 
@@ -820,6 +824,7 @@ func (uv *UtxoVM) sortUnconfirmedTx() (map[string]*pb.Transaction, TxGraph, map[
 func (uv *UtxoVM) loadUnconfirmedTxFromDisk() error {
 	iter := uv.ldb.NewIteratorWithPrefix([]byte(pb.UnconfirmedTablePrefix))
 	defer iter.Release()
+	count := 0
 	for iter.Next() {
 		rawKey := iter.Key()
 		txid := string(rawKey[1:])
@@ -831,7 +836,9 @@ func (uv *UtxoVM) loadUnconfirmedTxFromDisk() error {
 			return pbErr
 		}
 		uv.unconfirmTxInMem.Store(txid, tx)
+		count++
 	}
+	uv.unconfirmTxAmount = int64(count)
 	return nil
 }
 
@@ -1511,7 +1518,7 @@ func (uv *UtxoVM) processUnconfirmTxs(block *pb.InternalBlock, batch kvdb.Batch,
 	if loadErr != nil {
 		return nil, nil, loadErr
 	}
-	uv.xlog.Info("unconfirm table size", "unconfirmTxMap", len(unconfirmTxMap))
+	uv.xlog.Info("unconfirm table size", "unconfirmTxMap", uv.unconfirmTxAmount)
 	undoDone := map[string]bool{}
 	unconfirmToConfirm := map[string]bool{}
 	for txid, unconfirmTx := range unconfirmTxMap {
@@ -2026,6 +2033,8 @@ func (uv *UtxoVM) GetMeta() *pb.UtxoMeta {
 	meta := &pb.UtxoMeta{}
 	meta.LatestBlockid = uv.latestBlockid
 	meta.UtxoTotal = uv.utxoTotal.String() // pb没有bigint，所以转换为字符串
+	meta.AvgDelay = uv.avgDelay
+	meta.UnconfirmTxAmount = uv.unconfirmTxAmount
 	return meta
 }
 
