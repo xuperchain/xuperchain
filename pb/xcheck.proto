@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package pb;
+
+import "google/api/annotations.proto";
+import "xchain.proto";
+
+service Xcheck {
+    rpc ComplianceCheck(TxStatus) returns (ComplianceCheckResponse);
+}
+
+message ComplianceCheckResponse {
+    Header header = 1;
+	SignatureInfo signature = 2;
+}
