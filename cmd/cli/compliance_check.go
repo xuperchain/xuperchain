@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"io/ioutil"
 	//"encoding/hex"
-	"encoding/base64"
+	//"encoding/base64"
+	"encoding/json"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/spf13/cobra"
@@ -22,8 +23,9 @@ type GetSignCommand struct {
 	cmd          *cobra.Command
 	xcheckclient pb.XcheckClient
 
-	tx   string
-	host string
+	tx     string
+	host   string
+	output string
 }
 
 func NewGetSignCommand(cli *Cli) *cobra.Command {
@@ -39,17 +41,10 @@ func NewGetSignCommand(cli *Cli) *cobra.Command {
 		},
 	}
 	c.addFlags()
-	/*
-		err := c.initXcheckClient()
-		if err != nil {
-			fmt.Errorf("connect to Xcheck service failed, error ", err)
-		}*/
 	return c.cmd
 }
 
 func (c *GetSignCommand) initXcheckClient() error {
-	fmt.Println("host: ", c.host)
-	fmt.Println("tx: ", c.tx)
 	conn, err := grpc.Dial(c.host, grpc.WithInsecure(), grpc.WithMaxMsgSize(64<<20-1))
 	if err != nil {
 		return err
@@ -66,6 +61,7 @@ func (c *GetSignCommand) XcheckClient() pb.XcheckClient {
 func (c *GetSignCommand) addFlags() {
 	c.cmd.Flags().StringVar(&c.tx, "tx", "./tx.out", "Serialized transaction data file")
 	c.cmd.Flags().StringVar(&c.host, "host", "localhost:6718", "host to get signature from compliance check service")
+	c.cmd.Flags().StringVar(&c.output, "output", "./compliance_check_sign.out", "Generate signature file for a transaction.")
 }
 
 func (c *GetSignCommand) get(ctx context.Context) error {
@@ -99,8 +95,15 @@ func (c *GetSignCommand) get(ctx context.Context) error {
 	if reply.Header.Error != pb.XChainErrorEnum_SUCCESS {
 		return fmt.Errorf("Failed to post tx:%s, logid:%s", reply.Header.Error.String(), reply.Header.Logid)
 	}
-	sign := reply.GetSignature()
-	fmt.Println(sign.GetPublicKey())
-	fmt.Println(base64.StdEncoding.EncodeToString(sign.GetSign()))
+	signInfo := reply.GetSignature()
+	signJSON, err3 := json.MarshalIndent(signInfo, "", "  ")
+	if err3 != nil {
+		return err3
+	}
+	fmt.Println(string(signJSON))
+	err3 = ioutil.WriteFile(c.output, signJSON, 0755)
+	if err3 != nil {
+		return errors.New("WriteFile error")
+	}
 	return nil
 }
