@@ -33,13 +33,13 @@ type Context struct {
 
 // DiskUsed returns the bytes written to xmodel
 func (c *Context) DiskUsed() int64 {
-	size := 0
+	size := int64(0)
 	_, wset, _ := c.Cache.GetRWSets()
 	for _, w := range wset {
-		size += len(w.GetKey())
-		size += len(w.GetValue())
+		size += int64(len(w.GetKey()))
+		size += int64(len(w.GetValue()))
 	}
-	return int64(size)
+	return size
 }
 
 // ExceedDiskLimit check whether disk usage exceeds limit
