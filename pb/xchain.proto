@@ -352,8 +352,8 @@ message UtxoMeta
     bytes latest_blockid = 1; // utxo vm目前执行到的blockid
     repeated string lock_key_list = 2;
     string utxo_total = 3; //当前utxo vm上的总资产
-	int64 avgDelay = 4; //平均上链延时
-	int64 unconfirmTxAmount = 5; //待确认交易量
+    int64 avgDelay = 4; //平均上链延时
+    int64 unconfirmTxAmount = 5; //待确认交易量
 }
 
 // The internal block struct
