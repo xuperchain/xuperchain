@@ -49,7 +49,7 @@ func (uv *UtxoVM) getReservedContractRequests(req *pb.InvokeRPCRequest, tx *pb.T
 func parseReservedContractCfg(contract string) (*pb.InvokeRequest, error) {
 	subContract := strings.Split(contract, ".")
 	if len(subContract) != 2 {
-		return nil, fmt.Errorf("parseReservedContractCfg error!")
+		return nil, fmt.Errorf("ParseReservedContractCfg error")
 	}
 
 	req := &pb.InvokeRequest{
