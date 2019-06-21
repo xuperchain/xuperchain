@@ -1100,3 +1100,36 @@ func (xc *XChainCore) IsCoreMiner() bool {
 func (xc *XChainCore) NeedCoreConnection() bool {
 	return xc.isCoreMiner && xc.coreConnection
 }
+
+// GetBlockByHeight get block from ledger on trunk, by Block Height
+func (xc *XChainCore) GetBlockByHeight(in *pb.BlockHeight) *pb.Block {
+	out := &pb.Block{Header: in.Header}
+	out.Header.Error = pb.XChainErrorEnum_SUCCESS
+	out.Bcname = in.Bcname
+	if xc.Status() != global.Normal {
+		out.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE
+		xc.log.Debug("refused a connection a function call GetBlock", "logid", in.Header.Logid)
+		return out
+	}
+	ib, err := xc.Ledger.QueryBlockByHeight(in.Height)
+	if err != nil {
+		switch err {
+		case ledger.ErrBlockNotExist:
+			out.Header.Error = pb.XChainErrorEnum_SUCCESS
+			out.Status = pb.Block_NOEXIST
+			return out
+		default:
+			xc.log.Warn("getblock by height", "logid", in.Header.Logid, "error", err)
+			out.Header.Error = pb.XChainErrorEnum_UNKNOW_ERROR
+			return out
+		}
+	} else {
+		out.Block = ib
+		if ib.InTrunk {
+			out.Status = pb.Block_TRUNK
+		} else {
+			out.Status = pb.Block_BRANCH
+		}
+	}
+	return out
+}
