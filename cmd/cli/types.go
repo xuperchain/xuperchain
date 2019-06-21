@@ -250,9 +250,11 @@ type UtxoMeta struct {
 	// LockKeyList LockKeyList
 	LockKeyList []string `json:"lockKeyList"`
 	// UtxoTotal UtxoTotal
-	UtxoTotal         string `json:"utxoTotal"`
-	AvgDelay          int64  `json:"avgDelay"`
-	UnconfirmTxAmount int64  `json:"unconfirmed"`
+	UtxoTotal string `json:"utxoTotal"`
+	// Average confirmed dealy (ms)
+	AvgDelay int64 `json:"avgDelay"`
+	// Current unconfirmed tx amount
+	UnconfirmTxAmount int64 `json:"unconfirmed"`
 }
 
 // ChainStatus proto.ChainStatus
