@@ -104,6 +104,14 @@ service Xchain {
 		};
 	}
 
+	// GetBlockByHeight get block by height and return if the block in trunk or in branch
+	rpc GetBlockByHeight(BlockHeight) returns (Block) {
+		option (google.api.http) = {
+			post: "/v1/get_block_by_height"
+			body: "*"
+		};
+	}
+
 	rpc GetBlockChainStatus(BCStatus) returns (BCStatus) {
 		option (google.api.http) = {
 			post: "/v1/get_bcstatus"
@@ -240,6 +248,13 @@ message BlockID
 	bytes blockid = 2;
 	// if need content
 	bool need_content = 3;	//是否需要内容
+}
+
+message BlockHeight
+{
+	Header header = 3;
+	string bcname = 1;
+	int64  height = 2;
 }
 
 message CommonReply

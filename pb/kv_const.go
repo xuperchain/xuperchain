@@ -18,4 +18,5 @@ const (
 	WithdrawPrefix           = "W"
 	ExtUtxoTablePrefix       = "ZU"
 	ExtUtxoDelTablePrefix    = "ZD"
+	BlockHeightPrefix        = "ZH"
 )

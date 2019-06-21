@@ -624,6 +624,24 @@ func (s *server) PreExec(ctx context.Context, request *pb.InvokeRPCRequest) (*pb
 	return rsps, nil
 }
 
+// GetBlockByHeight  get trunk block by height
+func (s *server) GetBlockByHeight(ctx context.Context, in *pb.BlockHeight) (*pb.Block, error) {
+	if in.Header == nil {
+		in.Header = global.GHeader()
+	}
+	s.log.Trace("Start to get dealwith GetBlockByHeight", "logid", in.Header.Logid, "bcname", in.Bcname, "height", in.Height)
+	bc := s.mg.Get(in.Bcname)
+	if bc == nil {
+		out := pb.Block{Header: &pb.Header{}}
+		out.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
+		return &out, nil
+	}
+	out := bc.GetBlockByHeight(in)
+	s.log.Trace("GetBlockByHeight result", "logid", in.Header.Logid, "bcname", in.Bcname, "height", in.Height,
+		"blockid", out.GetBlockid())
+	return out, nil
+}
+
 func startTCPServer(xchainmg *xchaincore.XChainMG) error {
 	var (
 		cfg   = xchainmg.Cfg
