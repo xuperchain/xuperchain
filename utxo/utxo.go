@@ -168,8 +168,18 @@ func GenUtxoKeyWithPrefix(addr []byte, txid []byte, offset int32) string {
 
 // checkInputEqualOutput 校验交易的输入输出是否相等
 func (uv *UtxoVM) checkInputEqualOutput(tx *pb.Transaction) error {
-	inputSum := big.NewInt(0)
+	// first check outputs
 	outputSum := big.NewInt(0)
+	for _, txOutput := range tx.TxOutputs {
+		amount := big.NewInt(0)
+		amount.SetBytes(txOutput.Amount)
+		if amount.Cmp(big.NewInt(0)) < 0 {
+			return ErrNegativeAmount
+		}
+		outputSum.Add(outputSum, amount)
+	}
+	// then we check inputs
+	inputSum := big.NewInt(0)
 	curLedgerHeight := uv.ledger.GetMeta().TrunkHeight
 	utxoDedup := map[string]bool{}
 	for _, txInput := range tx.TxInputs {
@@ -226,14 +236,6 @@ func (uv *UtxoVM) checkInputEqualOutput(tx *pb.Transaction) error {
 		}
 		inputSum.Add(inputSum, amount)
 	}
-	for _, txOutput := range tx.TxOutputs {
-		amount := big.NewInt(0)
-		amount.SetBytes(txOutput.Amount)
-		if amount.Cmp(big.NewInt(0)) < 0 {
-			return ErrNegativeAmount
-		}
-		outputSum.Add(outputSum, amount)
-	}
 	if inputSum.Cmp(outputSum) == 0 {
 		return nil
 	}
@@ -273,7 +275,6 @@ func (uv *UtxoVM) tryLockKey(key []byte) bool {
 		}
 		return true
 	}
-
 	return false
 }
 
