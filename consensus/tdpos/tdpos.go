@@ -13,12 +13,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/syndtr/goleveldb/leveldb"
 	log "github.com/xuperchain/log15"
 
 	"encoding/hex"
 	"encoding/json"
 
+	"github.com/xuperchain/xuperunion/common"
 	"github.com/xuperchain/xuperunion/common/config"
 	"github.com/xuperchain/xuperunion/contract"
 	crypto_base "github.com/xuperchain/xuperunion/crypto/client/base"
@@ -497,7 +497,7 @@ func (tp *TDpos) GetVerifiableAutogenTx(blockHeight int64, maxCount int, timesta
 	key := GenTermCheckKey(tp.version, term+1)
 	val, err := tp.utxoVM.GetFromTable(nil, []byte(key))
 	txs := []*pb.Transaction{}
-	if val == nil && err == leveldb.ErrNotFound {
+	if val == nil && common.NormalizedKVError(err) == common.ErrKVNotFound {
 		desc := &contract.TxDesc{
 			Module: "tdpos",
 			Method: checkvValidaterMethod,

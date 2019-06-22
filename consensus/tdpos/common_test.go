@@ -87,7 +87,7 @@ func TestValidateCheckValidater(t *testing.T) {
 }
 
 var (
-	kvengine    = "leveldb"
+	kvengine    = "default"
 	tCryptoType = crypto_client.CryptoTypeDefault
 )
 

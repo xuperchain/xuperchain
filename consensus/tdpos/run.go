@@ -6,7 +6,6 @@ import (
 	"strconv"
 
 	"github.com/pkg/errors"
-	"github.com/syndtr/goleveldb/leveldb"
 
 	"encoding/hex"
 
@@ -85,7 +84,7 @@ func (tp *TDpos) runRevokeVote(desc *contract.TxDesc, block *pb.InternalBlock) e
 		return nil
 	}
 	val, err := tp.utxoVM.GetFromTable(nil, []byte(keyRevoke))
-	if (err != nil && err != leveldb.ErrNotFound) || val != nil {
+	if (err != nil && common.NormalizedKVError(err) != common.ErrKVNotFound) || val != nil {
 		tp.log.Warn("runRevokeVote error revoke repeated or get revoke key from db error", "val", hex.EncodeToString(val),
 			"error", err)
 		return nil
@@ -202,7 +201,7 @@ func (tp *TDpos) runRevokeCandidate(desc *contract.TxDesc, block *pb.InternalBlo
 		return nil
 	}
 	val, err := tp.utxoVM.GetFromTable(nil, []byte(keyRevoke))
-	if (err != nil && err != leveldb.ErrNotFound) || val != nil {
+	if (err != nil && common.NormalizedKVError(err) != common.ErrKVNotFound) || val != nil {
 		tp.log.Warn("runRevokeCandidate error revoke repeated or get revoke key from db error", "val", hex.EncodeToString(val),
 			"error", err)
 		return nil

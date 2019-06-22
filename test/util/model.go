@@ -85,9 +85,9 @@ func openDB(dbPath string, logger log.Logger) (kvdb.Database, error) {
 		return nil, plgErr
 	}
 	var baseDB kvdb.Database
-	soInst, err := plgMgr.PluginMgr.CreatePluginInstance("kv", "leveldb")
+	soInst, err := plgMgr.PluginMgr.CreatePluginInstance("kv", "default")
 	if err != nil {
-		logger.Warn("fail to create plugin instance", "kvtype", "leveldb")
+		logger.Warn("fail to create plugin instance", "kvtype", "default")
 		return nil, err
 	}
 	baseDB = soInst.(kvdb.Database)

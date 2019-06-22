@@ -16,7 +16,7 @@ func main() {
 		dataPathOthers = strings.Split(os.Args[2], ",")
 	}
 	workspace := os.Args[1]
-	lg, err := ledger.NewLedger(workspace, nil, dataPathOthers, "leveldb", client.CryptoTypeDefault)
+	lg, err := ledger.NewLedger(workspace, nil, dataPathOthers, "default", client.CryptoTypeDefault)
 	if err != nil {
 		fmt.Println(err, workspace, dataPathOthers)
 	}
