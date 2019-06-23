@@ -35,12 +35,18 @@ func (uv *UtxoVM) getReservedContractRequests(req *pb.InvokeRPCRequest, tx *pb.T
 
 	reservedContracts := []*pb.InvokeRequest{}
 	// FIXME zq: need to suport contract args
+	// initialize contract name and method name
 	for _, v := range reservedContractCfgs {
-		req, err := parseReservedContractCfg(v)
+		reservedReq, err := parseReservedContractCfg(v)
 		if err != nil {
 			return nil, err
 		}
-		reservedContracts = append(reservedContracts, req)
+		// set args for all reserved contracts
+		reservedReq, err = setReservedContractArg(reservedReq, req)
+		if err != nil {
+			return nil, err
+		}
+		reservedContracts = append(reservedContracts, reservedReq)
 	}
 	uv.xlog.Trace("geReservedContractRequest results", "results", reservedContracts)
 	return reservedContracts, nil
