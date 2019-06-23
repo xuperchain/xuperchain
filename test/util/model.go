@@ -106,7 +106,7 @@ func openDB(dbPath string, logger log.Logger) (kvdb.Database, error) {
 // WithXModelContext set xmodel context
 func WithXModelContext(t *testing.T, callback func(x *XModelContext)) {
 	logger := log.New("module", "xmodel")
-	logger.SetHandler(log.StreamHandler(NewTestLogWriter(t), log.LogfmtFormat()))
+	logger.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
 	basedir, err := ioutil.TempDir("", "xmodel-data")
 	if err != nil {
 		t.Fatal(err)
