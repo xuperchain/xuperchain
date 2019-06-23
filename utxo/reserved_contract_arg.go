@@ -13,10 +13,6 @@ func setReservedContractArg(reservedReq *pb.InvokeRequest, customReq *pb.InvokeR
 	switch reservedContractName {
 	case "banned":
 		return setBannedContractArg(reservedReq, customReq)
-	case "complianceCheck":
-		return setComplianceCheckContractArg(reservedReq, customReq)
-	case "identity":
-		return setIdentityContractArg(reservedReq, customReq)
 	default:
 		return reservedReq, nil
 	}
@@ -30,13 +26,5 @@ func setBannedContractArg(reservedReq *pb.InvokeRequest, customReq *pb.InvokeRPC
 		contractNames += "," + contractName
 	}
 	reservedReq.Args["contracts"] = []byte(contractNames)
-	return reservedReq, nil
-}
-
-func setComplianceCheckContractArg(reservedReq *pb.InvokeRequest, customReq *pb.InvokeRPCRequest) (*pb.InvokeRequest, error) {
-	return reservedReq, nil
-}
-
-func setIdentityContractArg(reservedReq *pb.InvokeRequest, customReq *pb.InvokeRPCRequest) (*pb.InvokeRequest, error) {
 	return reservedReq, nil
 }
