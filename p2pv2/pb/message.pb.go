@@ -3,9 +3,11 @@
 
 package xuperp2p
 
-import proto "github.com/golang/protobuf/proto"
-import fmt "fmt"
-import math "math"
+import (
+	fmt "fmt"
+	proto "github.com/golang/protobuf/proto"
+	math "math"
+)
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
@@ -16,7 +18,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 type XuperMessage_MessageType int32
 
@@ -57,6 +59,7 @@ var XuperMessage_MessageType_name = map[int32]string{
 	13: "GET_AUTHENTICATION",
 	14: "GET_AUTHENTICATION_RES",
 }
+
 var XuperMessage_MessageType_value = map[string]int32{
 	"SENDBLOCK":                    0,
 	"POSTTX":                       1,
@@ -78,8 +81,9 @@ var XuperMessage_MessageType_value = map[string]int32{
 func (x XuperMessage_MessageType) String() string {
 	return proto.EnumName(XuperMessage_MessageType_name, int32(x))
 }
+
 func (XuperMessage_MessageType) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_message_e7cb1efa063ec37b, []int{0, 0}
+	return fileDescriptor_33c57e4bae7b9afd, []int{0, 0}
 }
 
 type XuperMessage_ErrorType int32
@@ -114,6 +118,7 @@ var XuperMessage_ErrorType_name = map[int32]string{
 	9:  "CONFIRM_BLOCKCHAINSTATUS_ERROR",
 	10: "GET_AUTHENTICATION_ERROR",
 }
+
 var XuperMessage_ErrorType_value = map[string]int32{
 	"SUCCESS":                        0,
 	"NONE":                           1,
@@ -131,8 +136,9 @@ var XuperMessage_ErrorType_value = map[string]int32{
 func (x XuperMessage_ErrorType) String() string {
 	return proto.EnumName(XuperMessage_ErrorType_name, int32(x))
 }
+
 func (XuperMessage_ErrorType) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_message_e7cb1efa063ec37b, []int{0, 1}
+	return fileDescriptor_33c57e4bae7b9afd, []int{0, 1}
 }
 
 // XuperMessage is the message of Xuper p2p server
@@ -148,16 +154,17 @@ func (m *XuperMessage) Reset()         { *m = XuperMessage{} }
 func (m *XuperMessage) String() string { return proto.CompactTextString(m) }
 func (*XuperMessage) ProtoMessage()    {}
 func (*XuperMessage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_message_e7cb1efa063ec37b, []int{0}
+	return fileDescriptor_33c57e4bae7b9afd, []int{0}
 }
+
 func (m *XuperMessage) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_XuperMessage.Unmarshal(m, b)
 }
 func (m *XuperMessage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_XuperMessage.Marshal(b, m, deterministic)
 }
-func (dst *XuperMessage) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_XuperMessage.Merge(dst, src)
+func (m *XuperMessage) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_XuperMessage.Merge(m, src)
 }
 func (m *XuperMessage) XXX_Size() int {
 	return xxx_messageInfo_XuperMessage.Size(m)
@@ -201,16 +208,17 @@ func (m *XuperMessage_MessageHeader) Reset()         { *m = XuperMessage_Message
 func (m *XuperMessage_MessageHeader) String() string { return proto.CompactTextString(m) }
 func (*XuperMessage_MessageHeader) ProtoMessage()    {}
 func (*XuperMessage_MessageHeader) Descriptor() ([]byte, []int) {
-	return fileDescriptor_message_e7cb1efa063ec37b, []int{0, 0}
+	return fileDescriptor_33c57e4bae7b9afd, []int{0, 0}
 }
+
 func (m *XuperMessage_MessageHeader) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_XuperMessage_MessageHeader.Unmarshal(m, b)
 }
 func (m *XuperMessage_MessageHeader) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_XuperMessage_MessageHeader.Marshal(b, m, deterministic)
 }
-func (dst *XuperMessage_MessageHeader) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_XuperMessage_MessageHeader.Merge(dst, src)
+func (m *XuperMessage_MessageHeader) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_XuperMessage_MessageHeader.Merge(m, src)
 }
 func (m *XuperMessage_MessageHeader) XXX_Size() int {
 	return xxx_messageInfo_XuperMessage_MessageHeader.Size(m)
@@ -283,16 +291,17 @@ func (m *XuperMessage_MessageData) Reset()         { *m = XuperMessage_MessageDa
 func (m *XuperMessage_MessageData) String() string { return proto.CompactTextString(m) }
 func (*XuperMessage_MessageData) ProtoMessage()    {}
 func (*XuperMessage_MessageData) Descriptor() ([]byte, []int) {
-	return fileDescriptor_message_e7cb1efa063ec37b, []int{0, 1}
+	return fileDescriptor_33c57e4bae7b9afd, []int{0, 1}
 }
+
 func (m *XuperMessage_MessageData) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_XuperMessage_MessageData.Unmarshal(m, b)
 }
 func (m *XuperMessage_MessageData) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_XuperMessage_MessageData.Marshal(b, m, deterministic)
 }
-func (dst *XuperMessage_MessageData) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_XuperMessage_MessageData.Merge(dst, src)
+func (m *XuperMessage_MessageData) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_XuperMessage_MessageData.Merge(m, src)
 }
 func (m *XuperMessage_MessageData) XXX_Size() int {
 	return xxx_messageInfo_XuperMessage_MessageData.Size(m)
@@ -311,16 +320,16 @@ func (m *XuperMessage_MessageData) GetMsgInfo() []byte {
 }
 
 func init() {
+	proto.RegisterEnum("xuperp2p.XuperMessage_MessageType", XuperMessage_MessageType_name, XuperMessage_MessageType_value)
+	proto.RegisterEnum("xuperp2p.XuperMessage_ErrorType", XuperMessage_ErrorType_name, XuperMessage_ErrorType_value)
 	proto.RegisterType((*XuperMessage)(nil), "xuperp2p.XuperMessage")
 	proto.RegisterType((*XuperMessage_MessageHeader)(nil), "xuperp2p.XuperMessage.MessageHeader")
 	proto.RegisterType((*XuperMessage_MessageData)(nil), "xuperp2p.XuperMessage.MessageData")
-	proto.RegisterEnum("xuperp2p.XuperMessage_MessageType", XuperMessage_MessageType_name, XuperMessage_MessageType_value)
-	proto.RegisterEnum("xuperp2p.XuperMessage_ErrorType", XuperMessage_ErrorType_name, XuperMessage_ErrorType_value)
 }
 
-func init() { proto.RegisterFile("message.proto", fileDescriptor_message_e7cb1efa063ec37b) }
+func init() { proto.RegisterFile("message.proto", fileDescriptor_33c57e4bae7b9afd) }
 
-var fileDescriptor_message_e7cb1efa063ec37b = []byte{
+var fileDescriptor_33c57e4bae7b9afd = []byte{
 	// 566 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0x94, 0xd1, 0x4e, 0xdb, 0x30,
 	0x14, 0x86, 0x69, 0x69, 0xd3, 0xe6, 0xb4, 0x01, 0xef, 0x80, 0x58, 0x84, 0xd0, 0x54, 0x45, 0x93,

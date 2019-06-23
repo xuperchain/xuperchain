@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/xuperchain/xuperunion/contract"
 	"github.com/xuperchain/xuperunion/pb"
 )
 
@@ -36,7 +37,10 @@ func makeXvmDeployArgs(t *testing.T) map[string][]byte {
 func TestXvmDeploy(t *testing.T) {
 	WithTestContext(t, "xvm", func(tctx *FakeWASMContext) {
 		deployArgs := makeXvmDeployArgs(t)
-		out, _, err := tctx.vmm.DeployContract(tctx.Cache, deployArgs, 0)
+		out, _, err := tctx.vmm.DeployContract(&contract.ContextConfig{
+			XMCache:        tctx.Cache,
+			ResourceLimits: contract.MaxLimits,
+		}, deployArgs)
 		if err != nil {
 			t.Fatal(err)
 		}

@@ -1,6 +1,7 @@
 package vm
 
 import (
+	"github.com/xuperchain/xuperunion/contract"
 	"github.com/xuperchain/xuperunion/contract/bridge"
 	"github.com/xuperchain/xuperunion/pb"
 )
@@ -32,6 +33,6 @@ type InstanceCreator interface {
 // Instance is a wasm virtual machine instance which can run a single contract call
 type Instance interface {
 	Exec(function string) error
-	GasUsed() int64
+	ResourceUsed() contract.Limits
 	Release()
 }

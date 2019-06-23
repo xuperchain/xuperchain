@@ -50,12 +50,18 @@ type TxOutputExt struct {
 	Value  string `json:"value"`
 }
 
+type ResourceLimit struct {
+	Type  string `json:"type"`
+	Limit int64  `json:"limit"`
+}
+
 // InvokeRequest proto.InvokeRequest
 type InvokeRequest struct {
-	ModuleName   string            `json:"moduleName"`
-	ContractName string            `json:"contractName"`
-	MethodName   string            `json:"methodName"`
-	Args         map[string]string `json:"args"`
+	ModuleName    string            `json:"moduleName"`
+	ContractName  string            `json:"contractName"`
+	MethodName    string            `json:"methodName"`
+	Args          map[string]string `json:"args"`
+	ResouceLimits []ResourceLimit   `json:"resource_limits"`
 }
 
 // SignatureInfo proto.SignatureInfo
@@ -156,6 +162,13 @@ func FromPBTx(tx *pb.Transaction) *Transaction {
 			}
 			for argKey, argV := range req.Args {
 				tmpReq.Args[argKey] = string(argV)
+			}
+			for _, rlimit := range req.ResourceLimits {
+				resource := ResourceLimit{
+					Type:  rlimit.Type.String(),
+					Limit: rlimit.Limit,
+				}
+				tmpReq.ResouceLimits = append(tmpReq.ResouceLimits, resource)
 			}
 			t.ContractRequests = append(t.ContractRequests, tmpReq)
 		}

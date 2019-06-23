@@ -155,6 +155,6 @@ const char SECTION_NAME(declarations)[] =
 "DEFINE_REINTERPRET(f64_reinterpret_i64, u64, f64)\n"
 "DEFINE_REINTERPRET(i64_reinterpret_f64, f64, u64)\n"
 "\n"
-"#define ADD_AND_CHECK_GAS(delta) (LIKELY(h->gas.used+delta < h->gas.limit) ? h->gas.used+=(delta) : TRAP(GAS_EXHAUSTION))\n"
+"#define ADD_AND_CHECK_GAS(delta) (LIKELY(h->gas.used+delta <= h->gas.limit) ? h->gas.used+=(delta) : TRAP(GAS_EXHAUSTION))\n"
 "\n"
 ;

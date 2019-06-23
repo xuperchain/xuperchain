@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/xuperchain/xuperunion/contract"
 	"github.com/xuperchain/xuperunion/contract/bridge"
 	"github.com/xuperchain/xuperunion/contract/bridge/memrpc"
 	"github.com/xuperchain/xuperunion/contract/wasm/vm"
@@ -72,8 +73,8 @@ func (m *memoryInstance) Exec(function string) error {
 	return nil
 }
 
-func (m *memoryInstance) GasUsed() int64 {
-	return 0
+func (m *memoryInstance) ResourceUsed() contract.Limits {
+	return contract.Limits{}
 }
 
 func (m *memoryInstance) Release() {
