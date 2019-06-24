@@ -85,9 +85,9 @@ DEFINE_METHOD(Banned, verify) {
     for (auto iter = contracts.begin(); iter != contracts.end(); ++iter) {
         bool ret = ctx->get_object(*iter, &value);
         if (ret) {
-            ctx->ok("contract has been banned");
+            ctx->error("contract has been banned");
             return;
         }
     }
-    ctx->error("contract not found");
+    ctx->ok("contract has not been banned");
 }
