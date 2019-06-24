@@ -1,6 +1,7 @@
 #ifndef XCHAIN_CONTEXT_IMPL_H
 #define XCHAIN_CONTEXT_IMPL_H
 
+#include "xchain/contract.pb.h"
 #include "xchain/xchain.h"
 
 namespace xchain {
@@ -14,6 +15,9 @@ public:
     virtual const std::string& method();
     virtual const std::map<std::string, std::string>& args() const;
     virtual const std::string& arg(const std::string& name) const;
+    virtual const std::string& initiator() const;
+    virtual int auth_require_size() const;
+    virtual const std::string& auth_require(int idx) const;
     virtual bool get_object(const std::string& key, std::string* value);
     virtual bool put_object(const std::string& key, const std::string& value);
     virtual bool delete_object(const std::string& key);
@@ -22,7 +26,7 @@ public:
     virtual Response* mutable_response();
 
 private:
-    std::string _method;
+    pb::CallArgs _call_args;
     std::map<std::string, std::string> _args;
     Response _resp;
 };
