@@ -1353,7 +1353,7 @@ func getGasLimitFromTx(tx *pb.Transaction) (int64, error) {
 		return gasLimit, nil
 	}
 	// FIXME: 没有小费的tx如何得到gas limit?
-	return 0, ErrGasNotEnough
+	return 0, nil
 }
 
 // verifyTxRWSets verify tx read sets and write sets
@@ -1417,7 +1417,7 @@ func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
 		if err != nil {
 			// FIXME zq @icexin: need to return contract not found
 			uv.xlog.Error("verifyTxRWSets NewContext error", "err", err, "contractName", tmpReq.GetContractName())
-			if i < len(reservedRequests) && err.Error() == "leveldb: not found" {
+			if i < len(reservedRequests) && (err.Error() == "leveldb: not found" || strings.HasSuffix(err.Error(), "not found")) {
 				continue
 			}
 			return false, err

@@ -13,12 +13,12 @@ func verifyReservedContractRequests(reservedReqs, txReqs []*pb.InvokeRequest) bo
 		return false
 	}
 	for i := 0; i < len(reservedReqs); i++ {
-		if (reservedReqs[i].ModuleName != txReqs[i].ModuleName) || (reservedReqs[i].ContractName != txReqs[i].ContractName) ||
-			(reservedReqs[i].MethodName != txReqs[i].MethodName) {
+		if (reservedReqs[i].GetModuleName() != txReqs[i].GetModuleName()) || (reservedReqs[i].GetContractName() != txReqs[i].GetContractName()) ||
+			(reservedReqs[i].GetMethodName() != txReqs[i].GetMethodName()) {
 			return false
 		}
 		for k, v := range txReqs[i].Args {
-			if !bytes.Equal(reservedReqs[i].Args[k], v) {
+			if !bytes.Equal(reservedReqs[i].GetArgs()[k], v) {
 				return false
 			}
 		}
