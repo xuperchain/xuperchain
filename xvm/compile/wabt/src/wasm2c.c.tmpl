@@ -152,5 +152,5 @@ DEFINE_REINTERPRET(i32_reinterpret_f32, f32, u32)
 DEFINE_REINTERPRET(f64_reinterpret_i64, u64, f64)
 DEFINE_REINTERPRET(i64_reinterpret_f64, f64, u64)
 
-#define ADD_AND_CHECK_GAS(delta) (LIKELY(h->gas.used+delta < h->gas.limit) ? h->gas.used+=(delta) : TRAP(GAS_EXHAUSTION))
+#define ADD_AND_CHECK_GAS(delta) (LIKELY(h->gas.used+delta <= h->gas.limit) ? h->gas.used+=(delta) : TRAP(GAS_EXHAUSTION))
 

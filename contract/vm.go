@@ -8,11 +8,6 @@ import (
 	"github.com/xuperchain/xuperunion/xmodel"
 )
 
-const (
-	// MaxGasLimit FIXME: 设置一个更合理的
-	MaxGasLimit = 0xFFFFFFFF
-)
-
 var (
 	// ErrVMNotExist is returned when found vm not exist
 	ErrVMNotExist = errors.New("Vm not exist in vm manager")
@@ -20,11 +15,11 @@ var (
 
 // ContextConfig define the config of context
 type ContextConfig struct {
-	XMCache      *xmodel.XMCache
-	Initiator    string
-	AuthRequire  []string
-	ContractName string
-	GasLimit     int64
+	XMCache        *xmodel.XMCache
+	Initiator      string
+	AuthRequire    []string
+	ContractName   string
+	ResourceLimits Limits
 }
 
 // VirtualMachine define virtual machine interface
@@ -36,7 +31,7 @@ type VirtualMachine interface {
 // Context define context interface
 type Context interface {
 	Invoke(method string, args map[string][]byte) ([]byte, error)
-	GasUsed() int64
+	ResourceUsed() Limits
 	Release() error
 }
 

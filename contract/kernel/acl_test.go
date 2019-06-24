@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	log "github.com/xuperchain/log15"
+	"github.com/xuperchain/xuperunion/contract"
 	crypto_client "github.com/xuperchain/xuperunion/crypto/client"
 	"github.com/xuperchain/xuperunion/kv/kvdb"
 	"github.com/xuperchain/xuperunion/ledger"
@@ -113,8 +114,8 @@ func TestNewAccountMethod(t *testing.T) {
 		t.Fatal(err)
 	}
 	ctx := &KContext{
-		ModelCache: modelCache,
-		GasLimit:   10000,
+		ModelCache:    modelCache,
+		ResourceLimit: contract.MaxLimits,
 	}
 	arr := [2]string{"1", "2"}
 	for _, value := range arr {
@@ -173,8 +174,8 @@ func TestSetContractMethodAclMethod(t *testing.T) {
 		t.Fatal(err)
 	}
 	ctx := &KContext{
-		ModelCache: modelCache,
-		GasLimit:   10,
+		ModelCache:    modelCache,
+		ResourceLimit: contract.MaxLimits,
 	}
 	for _, testCase := range testCases {
 		args := map[string][]byte{

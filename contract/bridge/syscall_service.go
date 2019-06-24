@@ -7,9 +7,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 
 	"github.com/xuperchain/xuperunion/contractsdk/go/pb"
+)
+
+var (
+	ErrOutOfDiskLimit = errors.New("out of disk limit")
 )
 
 // SyscallService is the handler of contract syscalls
@@ -96,7 +99,10 @@ func (c *SyscallService) PutObject(ctx context.Context, in *pb.PutRequest) (*pb.
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("put value:%s=%s", in.Key, in.Value)
+
+	if nctx.ExceedDiskLimit() {
+		return nil, ErrOutOfDiskLimit
+	}
 	return &pb.PutResponse{}, nil
 }
 
@@ -111,7 +117,6 @@ func (c *SyscallService) GetObject(ctx context.Context, in *pb.GetRequest) (*pb.
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("get value:%s=%s", in.Key, value.GetPureData().GetValue())
 	return &pb.GetResponse{
 		Value: value.GetPureData().GetValue(),
 	}, nil
