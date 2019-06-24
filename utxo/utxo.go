@@ -1176,6 +1176,10 @@ func (uv *UtxoVM) ImmediateVerifyTx(tx *pb.Transaction, isRootTx bool) (bool, er
 	if tx.Version > BetaTxVersion {
 		return false, ErrVersionInvalid
 	}
+	// autogen tx should not run ImmediateVerifyTx, this could be a fake tx
+	if tx.Autogen {
+		return false, ErrInvalidAutogenTx
+	}
 	if tx.Version >= TxVersion {
 		// verify rwset
 		ok, err := uv.verifyTxRWSets(tx)
@@ -1646,6 +1650,10 @@ func (uv *UtxoVM) PlayAndRepost(blockid []byte, needRepost bool, isRootTx bool) 
 		tx := block.Transactions[idx]
 		txid := string(tx.Txid)
 		if unconfirmToConfirm[txid] == false { // 本地没预执行过的Tx, 从block中收到的，需要Play执行
+			if !uv.verifyAutogenTx(tx) {
+				uv.xlog.Warn("PlayAndRepost found invalid autogen tx", "txid", fmt.Sprintf("%x", tx.Txid))
+				return ErrInvalidAutogenTx
+			}
 			if !tx.Autogen && !tx.Coinbase {
 				if ok, err := uv.ImmediateVerifyTx(tx, isRootTx); !ok {
 					uv.xlog.Warn("dotx failed to ImmediateVerifyTx", "txid", fmt.Sprintf("%x", tx.Txid), "err", err)
@@ -1745,6 +1753,26 @@ func (uv *UtxoVM) PlayForMiner(blockid []byte, batch kvdb.Batch) error {
 		uv.unconfirmTxInMem.Delete(string(tx.Txid))
 	}
 	return nil
+}
+
+// verifyAutogenTx verify if a autogen tx is valid, return true if tx is valid.
+func (uv *UtxoVM) verifyAutogenTx(tx *pb.Transaction) bool {
+	if !tx.Autogen {
+		// not autogen tx, just return true
+		return true
+	}
+
+	if len(tx.TxInputs) > 0 || len(tx.TxOutputs) > 0 {
+		// autogen tx must have no tx inputs/outputs
+		return false
+	}
+
+	if len(tx.TxInputsExt) > 0 || len(tx.TxOutputsExt) > 0 {
+		// autogen tx must have no tx inputs/outputs extend
+		return false
+	}
+
+	return true
 }
 
 // RollBackUnconfirmedTx 回滚本地未确认交易
