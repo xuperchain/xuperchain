@@ -1767,6 +1767,11 @@ func (uv *UtxoVM) verifyAutogenTx(tx *pb.Transaction) bool {
 		return false
 	}
 
+	if len(tx.TxInputsExt) > 0 || len(tx.TxOutputsExt) > 0 {
+		// autogen tx must have no tx inputs/outputs extend
+		return false
+	}
+
 	return true
 }
 
