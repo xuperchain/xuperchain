@@ -354,16 +354,6 @@ func TestXChainMgBasic(t *testing.T) {
 	t.Log("is accepted: ", rootXCore.syncConfirm(blkStatus))
 	res2, _ := rootXCore.syncForOnce()
 	t.Log("sync for once", res2)
-	// test for xc.pipelineM
-	rollBackErr := rootXCore.pipelineM.RollbackPrePlay()
-	if rollBackErr != nil {
-		t.Error("roll back error ", rollBackErr.Error())
-	}
-	rootXCore.pipelineM.FetchTxs()
-	rootXCore.pipelineM.Pause()
-	rootXCore.pipelineM.Resume()
-	t.Log(rootXCore.pipelineM.NeedInitCtx())
-	rootXCore.pipelineM.doPrePlay()
 	rootXCore.doMiner()
 	// test fot BroadCastGetBlock
 	rootXCore.BroadCastGetBlock(blockID)
