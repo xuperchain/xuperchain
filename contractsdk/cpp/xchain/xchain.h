@@ -16,6 +16,9 @@ public:
     virtual ~Context() {}
     virtual const std::map<std::string, std::string>& args() const = 0;
     virtual const std::string& arg(const std::string& name) const = 0;
+    virtual const std::string& initiator() const = 0;
+    virtual int auth_require_size() const = 0;
+    virtual const std::string& auth_require(int idx) const = 0;
     virtual bool get_object(const std::string& key, std::string* value) = 0;
     virtual bool put_object(const std::string& key,
                             const std::string& value) = 0;
