@@ -91,3 +91,13 @@ func (ib *InternalBlock) ContainsTx(txid []byte) bool {
 	}
 	return false
 }
+
+// GetTx returns a tx included in a block
+func (ib *InternalBlock) GetTx(txid []byte) *Transaction {
+	for _, tx := range ib.Transactions {
+		if bytes.Equal(txid, tx.Txid) {
+			return tx
+		}
+	}
+	return nil
+}
