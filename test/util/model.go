@@ -114,7 +114,7 @@ func WithXModelContext(t *testing.T, callback func(x *XModelContext)) {
 	defer os.RemoveAll(basedir)
 
 	ledgerdir := filepath.Join(basedir, "ledger")
-	ledger, err := ledger.NewLedger(ledgerdir, logger, nil, "leveldb", crypto_client.CryptoTypeDefault)
+	ledger, err := ledger.NewLedger(ledgerdir, logger, nil, "default", crypto_client.CryptoTypeDefault)
 	if err != nil {
 		t.Fatal(err)
 	}

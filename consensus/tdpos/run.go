@@ -1,15 +1,16 @@
 package tdpos
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"strconv"
 
 	"github.com/pkg/errors"
 
-	"encoding/hex"
-
 	"github.com/xuperchain/xuperunion/common"
+	"github.com/xuperchain/xuperunion/common/events"
+	cons_base "github.com/xuperchain/xuperunion/consensus/base"
 	"github.com/xuperchain/xuperunion/contract"
 	"github.com/xuperchain/xuperunion/pb"
 )
@@ -21,7 +22,7 @@ func (tp *TDpos) runVote(desc *contract.TxDesc, block *pb.InternalBlock) error {
 	voteInfo, err := tp.validateVote(desc)
 	if err != nil {
 		tp.log.Warn("runVote error", "error", err)
-		return nil
+		return err
 	}
 
 	for i := 0; i < len(voteInfo.candidates); i++ {
@@ -41,7 +42,7 @@ func (tp *TDpos) runVote(desc *contract.TxDesc, block *pb.InternalBlock) error {
 				tp.candidateBallotsCache.Store(keyCanBal, canBal)
 			} else {
 				tp.log.Warn("runVote error", "error", "the candidate was revoked!")
-				return nil
+				return errors.New("runVote error the candidate was revoked")
 			}
 		} else {
 			// 尝试从内存里load出来再进行记票
@@ -58,7 +59,7 @@ func (tp *TDpos) runVote(desc *contract.TxDesc, block *pb.InternalBlock) error {
 			} else {
 				// 候选人不在内存中, 说明已经被删除了
 				tp.log.Warn("runVote error", "error", "the candidate not found!")
-				return nil
+				return errors.New("runVote error, the candidate not found")
 			}
 		}
 		// 记录某个候选人被谁投了票
@@ -75,19 +76,19 @@ func (tp *TDpos) runRevokeVote(desc *contract.TxDesc, block *pb.InternalBlock) e
 	voteInfo, txVote, err := tp.validateRevokeVote(desc)
 	if err != nil {
 		tp.log.Warn("runRevokeVote error", "error", err)
-		return nil
+		return err
 	}
 
 	keyRevoke := genRevokeKey(txVote)
 	if _, ok := tp.revokeCache.Load(txVote); ok {
 		tp.log.Warn("runRevokeVote error", "error", "revoke repeated")
-		return nil
+		return errors.New("runRevokeVote error revoke repeated")
 	}
 	val, err := tp.utxoVM.GetFromTable(nil, []byte(keyRevoke))
 	if (err != nil && common.NormalizedKVError(err) != common.ErrKVNotFound) || val != nil {
 		tp.log.Warn("runRevokeVote error revoke repeated or get revoke key from db error", "val", hex.EncodeToString(val),
 			"error", err)
-		return nil
+		return errors.New("runRevokeVote error revoke repeated or get revoke key from db error")
 	}
 
 	for i := 0; i < len(voteInfo.candidates); i++ {
@@ -107,7 +108,7 @@ func (tp *TDpos) runRevokeVote(desc *contract.TxDesc, block *pb.InternalBlock) e
 				tp.candidateBallotsCache.Store(keyCanBal, canBal)
 			} else {
 				tp.log.Warn("runRevokeVote error", "error", "the candidate was revoked!")
-				return nil
+				return errors.New("runRevokeVote error, the candidate was revoked")
 			}
 		} else {
 			// 尝试从内存里load出来再进行票撤销
@@ -124,7 +125,7 @@ func (tp *TDpos) runRevokeVote(desc *contract.TxDesc, block *pb.InternalBlock) e
 			} else {
 				// 候选人不在内存中, 说明已经被删除了
 				tp.log.Warn("runRevokeVote error", "error", "the candidate not found!")
-				return nil
+				return errors.New("runRevokeVote error, the candidate not found")
 			}
 		}
 		// 清除某个候选人被谁投了票的记录
@@ -141,14 +142,22 @@ func (tp *TDpos) runRevokeVote(desc *contract.TxDesc, block *pb.InternalBlock) e
 // 执行提名候选人
 func (tp *TDpos) runNominateCandidate(desc *contract.TxDesc, block *pb.InternalBlock) error {
 	tp.log.Trace("start to runNominateCandidate", "desc", desc)
-	candidate, fromAddr, err := tp.validateNominateCandidate(desc)
+	canInfo, fromAddr, err := tp.validateNominateCandidate(desc)
+	candidate := canInfo.Address
 	if err != nil {
 		tp.log.Warn("run to validate nominate error", "error", err.Error())
-		return nil
+		return err
 	}
 	key := GenCandidateNominateKey(candidate)
 	keyCanBal := genCandidateBallotsKey(candidate)
+	keyCanInfo := genCandidateInfoKey(candidate)
 	keyNominateRecord := GenNominateRecordsKey(fromAddr, candidate, hex.EncodeToString(desc.Tx.Txid))
+
+	canInfoValue, err := json.Marshal(canInfo)
+	if err != nil {
+		tp.log.Warn("runNominateCandidate json marshal failed", "err", err)
+		return err
+	}
 
 	// 判断内存中是否已经提过名
 	val, ok := tp.candidateBallotsCache.Load(keyCanBal)
@@ -157,7 +166,7 @@ func (tp *TDpos) runNominateCandidate(desc *contract.TxDesc, block *pb.InternalB
 		canBal := val.(*candidateBallotsCacheValue)
 		if !canBal.isDel {
 			tp.log.Warn("runNominateCandidate this candidate had been nominate!")
-			return nil
+			return errors.New("runNominateCandidate this candidate had been nominate!")
 		}
 		tp.log.Trace("runNominateCandidate recover candidate!", "key", keyCanBal)
 		canBal.isDel = false
@@ -165,6 +174,7 @@ func (tp *TDpos) runNominateCandidate(desc *contract.TxDesc, block *pb.InternalB
 		tp.candidateBallotsCache.Store(keyCanBal, canBal)
 		tp.context.UtxoBatch.Put([]byte(key), desc.Tx.Txid)
 		tp.context.UtxoBatch.Put([]byte(keyNominateRecord), desc.Tx.Txid)
+		tp.context.UtxoBatch.Put([]byte(keyCanInfo), []byte(canInfoValue))
 		return nil
 
 	}
@@ -179,6 +189,7 @@ func (tp *TDpos) runNominateCandidate(desc *contract.TxDesc, block *pb.InternalB
 		tp.candidateBallotsCache.Store(keyCanBal, canBal)
 		tp.context.UtxoBatch.Put([]byte(key), desc.Tx.Txid)
 		tp.context.UtxoBatch.Put([]byte(keyNominateRecord), desc.Tx.Txid)
+		tp.context.UtxoBatch.Put([]byte(keyCanInfo), []byte(canInfoValue))
 		return nil
 	}
 	// 内存中已经存在了, 说明被重复提名
@@ -192,19 +203,19 @@ func (tp *TDpos) runRevokeCandidate(desc *contract.TxDesc, block *pb.InternalBlo
 	candidate, fromAddr, txNom, err := tp.validateRevokeCandidate(desc)
 	if err != nil {
 		tp.log.Warn("runRevokeCandidate to validate Revoke error", "error", err.Error())
-		return nil
+		return err
 	}
 
 	keyRevoke := genRevokeKey(txNom)
 	if _, ok := tp.revokeCache.Load(txNom); ok {
 		tp.log.Warn("runRevokeCandidate error", "error", "revoke repeated")
-		return nil
+		return errors.New("runRevokeCandidate error revoke repeated")
 	}
 	val, err := tp.utxoVM.GetFromTable(nil, []byte(keyRevoke))
 	if (err != nil && common.NormalizedKVError(err) != common.ErrKVNotFound) || val != nil {
 		tp.log.Warn("runRevokeCandidate error revoke repeated or get revoke key from db error", "val", hex.EncodeToString(val),
 			"error", err)
-		return nil
+		return errors.New("runRevokeCandidate error revoke repeated or get revoke key from db error")
 	}
 
 	key := GenCandidateNominateKey(candidate)
@@ -261,7 +272,7 @@ func (tp *TDpos) runCheckValidater(desc *contract.TxDesc, block *pb.InternalBloc
 	version, term, err := tp.validateCheckValidater(desc)
 	if err != nil {
 		tp.log.Warn("runCheckValidater error for validateCheckValidater error", "error", err)
-		return nil
+		return err
 	}
 	key := GenTermCheckKey(version, term)
 	_, err = tp.utxoVM.GetFromTable(nil, []byte(key))
@@ -269,6 +280,7 @@ func (tp *TDpos) runCheckValidater(desc *contract.TxDesc, block *pb.InternalBloc
 		return err
 	}
 	proposers, err := tp.genTermProposer()
+	tp.log.Trace("runCheckValidater", "proposers", proposers, "err", err)
 	if err == ErrProposerNotEnough {
 		// 没有检出足够的候选人, 则往前回溯, 使用上一轮的候选人代替
 		for i := term - 1; i >= 1; i-- {
@@ -290,8 +302,40 @@ func (tp *TDpos) runCheckValidater(desc *contract.TxDesc, block *pb.InternalBloc
 		proposersJSON, _ := json.Marshal(proposers)
 		tp.log.Info("runCheckValidater", "key", key, "proposersJson", proposersJSON, "proposers", proposers)
 		tp.context.UtxoBatch.Put([]byte(key), proposersJSON)
+		tp.triggerProposerChanged(proposers)
 		return nil
 	}
 	tp.log.Warn("runCheckValidater error")
-	return nil
+	return errors.New("runCheckValidater error")
+}
+
+// triggerProposerChanged triggers a ProposerChanged event
+func (tp *TDpos) triggerProposerChanged(proposers []*CandidateInfo) {
+	em := &events.EventMessage{
+		BcName:   tp.bcname,
+		Type:     events.ProposerChanged,
+		Priority: 0,
+		Sender:   tp,
+	}
+
+	msg := &cons_base.MinersChangedEvent{
+		BcName:        tp.bcname,
+		CurrentMiners: tp.GetCoreMiners(),
+		NextMiners:    make([]*cons_base.MinerInfo, 0),
+	}
+
+	for _, proposer := range proposers {
+		miner := &cons_base.MinerInfo{
+			Address:  proposer.Address,
+			PeerInfo: proposer.PeerAddr,
+		}
+		msg.NextMiners = append(msg.NextMiners, miner)
+	}
+
+	em.Message = msg
+	eb := events.GetEventBus()
+	_, err := eb.FireEventAsync(em)
+	if err != nil {
+		tp.log.Warn("triggerProposerChanged fire event failed", "error", err)
+	}
 }
