@@ -56,6 +56,14 @@ func (c *contractContext) Caller() string {
 	return ""
 }
 
+func (c *contractContext) Initiator() string {
+	return c.callArgs.Initiator
+}
+
+func (c *contractContext) AuthRequire() []string {
+	return c.callArgs.AuthRequire
+}
+
 func (c *contractContext) PutObject(key, value []byte) error {
 	req := &pb.PutRequest{
 		Header: &c.header,

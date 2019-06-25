@@ -168,9 +168,10 @@ func (c *SyscallService) GetCallArgs(ctx context.Context, in *pb.GetCallArgsRequ
 		return nil, fmt.Errorf("bad ctx id:%d", in.Header.Ctxid)
 	}
 	return &pb.CallArgs{
-		Method: nctx.Method,
-		Args:   nctx.Args,
-		// TODO zq
+		Method:      nctx.Method,
+		Args:        nctx.Args,
+		Initiator:   nctx.Initiator,
+		AuthRequire: nctx.AuthRequire,
 	}, nil
 }
 
