@@ -325,7 +325,7 @@ func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
 		xc.log.Debug("refused a connection at function call GenerateTx", "logid", in.Header.Logid, "cost", hd.Timer.Print())
 		return ErrServiceRefused
 	}
-	blockSize,_ := common.GetIntBlkSerializedSize(in.Block)
+	blockSize, _ := common.GetIntBlkSerializedSize(in.Block)
 	if blockSize > xc.Ledger.GetMaxBlockSize() {
 		xc.log.Debug("refused a connection because block is too large", "logid", in.Header.Logid, "cost", hd.Timer.Print(), "size", blockSize)
 		return ErrServiceRefused
@@ -390,7 +390,7 @@ func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
 					xc.log.Warn("Save Pending Block error, after got it from network! ", "logid", in.Header.Logid, "blockid", in.Block.Blockid)
 					return ErrCannotSyncBlock
 				}
-				ibSize,_ := common.GetIntBlkSerializedSize(ib.Block)
+				ibSize, _ := common.GetIntBlkSerializedSize(ib.Block)
 				if ibSize > xc.Ledger.GetMaxBlockSize() {
 					xc.log.Warn("too large block", "size", ibSize, "blockid", global.F(ib.Block.Blockid))
 					return ErrBlockTooLarge
@@ -519,7 +519,6 @@ func (xc *XChainCore) doMiner() {
 
 	// 打包块起始时间
 	t := time.Now()
-	txs := []*pb.Transaction{}
 	// 挖矿前共识的预处理
 	var curTerm, curBlockNum int64
 	var targetBits int32
@@ -550,6 +549,7 @@ func (xc *XChainCore) doMiner() {
 	var freshBlock *pb.InternalBlock
 	var freshBatch kvdb.Batch
 	for realBlockSize == 0 || realBlockSize > maxBlockSize {
+		txs := []*pb.Transaction{}
 		//1. 查询自动生成的交易
 		vatList, err := xc.Utxovm.GetVATList(xc.Ledger.GetMeta().TrunkHeight+1, -1, t.UnixNano())
 		minerTimer.Mark("GetAutogenTxs")
