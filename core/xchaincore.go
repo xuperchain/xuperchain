@@ -18,8 +18,10 @@ import (
 
 	"github.com/xuperchain/xuperunion/common"
 	"github.com/xuperchain/xuperunion/common/config"
+	"github.com/xuperchain/xuperunion/common/events"
 	"github.com/xuperchain/xuperunion/common/probe"
 	"github.com/xuperchain/xuperunion/consensus"
+	cons_base "github.com/xuperchain/xuperunion/consensus/base"
 	"github.com/xuperchain/xuperunion/consensus/tdpos"
 	"github.com/xuperchain/xuperunion/contract/bridge"
 	"github.com/xuperchain/xuperunion/contract/kernel"
@@ -94,7 +96,11 @@ type XChainCore struct {
 	stopFlag      bool
 	proposal      *proposal.Proposal
 	NativeCodeMgr *native.GeneralSCFramework
-	pipelineM     *PipelineMiner
+
+	// isCoreMiner if current node is one of the core miners
+	isCoreMiner bool
+	// enable core peer connection or not
+	coreConnection bool
 }
 
 // Status return the status of the chain
@@ -122,6 +128,7 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	xc.P2pv2 = p2p
 	xc.nodeMode = nodeMode
 	xc.stopFlag = false
+	xc.coreConnection = cfg.CoreConnection
 	ledger.MemCacheSize = cfg.DBCache.MemCacheSize
 	ledger.FileHandlersCacheSize = cfg.DBCache.FdCacheSize
 	datapath := cfg.Datapath + "/" + bcname
@@ -200,18 +207,20 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 		return err
 	}
 
+	// init events with handler
+	xc.initEvents()
+
 	xc.Utxovm, err = utxo.MakeUtxoVM(bcname, xc.Ledger, datapath, privateKeyStr, publicKeyStr, xc.address, xc.log,
 		utxoCacheSize, utxoTmplockSeconds, cfg.Utxo.ContractExecutionTime, datapathOthers, cfg.Utxo.IsBetaTx[bcname], kvEngineType, cryptoType)
 
 	if err != nil {
-		fmt.Println("NewUtxoVM error ", err)
 		xc.log.Warn("NewUtxoVM error", "bc", xc.bcname, "datapath", datapath, "dataPathOhters", datapathOthers)
 		return err
 	}
 	if cfg.Utxo.AsyncMode {
 		xc.Utxovm.StartAsyncWriter()
 	}
-
+	xc.Utxovm.SetMaxConfirmedDelay(cfg.Utxo.MaxConfirmedDelay)
 	gBlk := xc.Ledger.GetGenesisBlock()
 	if gBlk == nil {
 		xc.log.Warn("GenesisBlock nil")
@@ -256,7 +265,6 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	xbridge.RegisterToXCore(xc.Utxovm.RegisterVM3)
 
 	// 统一注册xuper3合约虚拟机
-
 	x3kernel, xerr := kernel.NewKernel(wasmvm)
 	if xerr != nil {
 		return xerr
@@ -268,8 +276,6 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	xc.Utxovm.RegisterVAT("consensus", xc.con, xc.con.GetVATWhiteList())
 	xc.Utxovm.RegisterVAT("kernel", ker, ker.GetVATWhiteList())
 
-	xc.pipelineM = NewPipelineMiner(xc)
-	go xc.pipelineM.Start()
 	go xc.Speed.ShowLoop(xc.log)
 	go xc.repostOfflineTx()
 	return nil
@@ -297,7 +303,16 @@ func (xc *XChainCore) repostOfflineTx() {
 		xc.log.Debug("repost batch tx list", "size", len(batchTxMsg.Txs))
 		msgInfo, _ := proto.Marshal(batchTxMsg)
 		msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, xc.bcname, header.GetLogid(), xuper_p2p.XuperMessage_BATCHPOSTTX, msgInfo, xuper_p2p.XuperMessage_SUCCESS)
-		go xc.P2pv2.SendMessage(context.Background(), msg, p2pv2.DefaultStrategy) //p2p广播出去
+
+		filters := []p2pv2.FilterStrategy{p2pv2.DefaultStrategy}
+		if xc.NeedCoreConnection() {
+			filters = append(filters, p2pv2.CorePeersStrategy)
+		}
+		opts := []p2pv2.MessageOption{
+			p2pv2.WithFilters(filters),
+			p2pv2.WithBcName(xc.bcname),
+		}
+		go xc.P2pv2.SendMessage(context.Background(), msg, opts...) //p2p广播出去
 	}
 }
 
@@ -376,11 +391,6 @@ func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
 	xc.log.Debug("End to Find the same", "logid", in.Header.Logid, "blocks size", len(blocksIds), "cost", hd.Timer.Print(),
 		"genesis", global.F(xc.Ledger.GetMeta().RootBlockid),
 		"prehash", global.F(preblkhash), "utxo", global.F(xc.Utxovm.GetLatestBlockid()))
-	rbErr := xc.pipelineM.RollbackPrePlay()
-	if rbErr != nil {
-		xc.log.Warn("fail to rollback preplay contract", "err", rbErr)
-		return rbErr
-	}
 	// preblk 是跟区块同步的交点，判断preblk是不是当前utxo的位置
 	if bytes.Equal(xc.Utxovm.GetLatestBlockid(), preblkhash) {
 		xc.log.Debug("Equal The Same", "logid", in.Header.Logid, "cost", hd.Timer.Print())
@@ -482,11 +492,6 @@ func (xc *XChainCore) doMiner() {
 	// 如果Walk一直失败，建议不要挖矿了，而是报警处理
 	for !bytes.Equal(ledgerLastID, utxovmLastID) {
 		xc.log.Warn("ledger last blockid is not equal utxovm last id")
-		rbErr := xc.pipelineM.RollbackPrePlay()
-		if rbErr != nil {
-			xc.log.Warn("fail to rollback preplay contract", "err", rbErr)
-			return
-		}
 		err := xc.Utxovm.Walk(ledgerLastID)
 		if err != nil {
 			xc.log.Error("Walk error ", "ledger blockid", global.F(ledgerLastID),
@@ -539,28 +544,25 @@ func (xc *XChainCore) doMiner() {
 	}
 	xc.log.Trace("[Minning] get vatList success", "vatList", vatList)
 	txs = append(txs, vatList...)
-	// make fake block
+	txsUnconf, err := xc.Utxovm.GetUnconfirmedTx(false)
+	if err != nil {
+		xc.log.Warn("[Minning] fail to get unconfirmedtx")
+		return
+	}
+	txs = append(txs, txsUnconf...)
 	fakeBlock, err := xc.Ledger.FormatFakeBlock(txs, xc.address, xc.privateKey,
 		t.UnixNano(), curTerm, curBlockNum, meta.TipBlockid, xc.Utxovm.GetTotal())
 	if err != nil {
-		xc.log.Warn("[Minning] format block error", "logid")
+		xc.log.Warn("[Minning] format fake block error", "logid")
 		return
 	}
-	allFailedTxs := map[string]string{}
-	if txs, _, err = xc.Utxovm.TxOfRunningContractGenerate(txs, fakeBlock, xc.pipelineM.batch, xc.pipelineM.NeedInitCtx()); err != nil {
+	//2. pre-execute the contract
+	batch := xc.Utxovm.NewBatch()
+	if txs, _, err = xc.Utxovm.TxOfRunningContractGenerate(txs, fakeBlock, batch, true); err != nil {
 		if err.Error() != common.ErrContractExecutionTimeout.Error() {
-			xc.log.Warn("PrePlay failed", "error", err)
+			xc.log.Warn("PrePlay fake block failed", "error", err) //unexpected error
 			return
 		}
-	}
-	for txid, txErr := range fakeBlock.FailedTxs {
-		allFailedTxs[txid] = txErr
-	}
-	//2. 打包已经预执行过的未确认交易
-	batch, txsUnconf, failedTxs := xc.pipelineM.FetchTxs()
-	txs = append(txs, txsUnconf...)
-	for txid, txErr := range failedTxs {
-		allFailedTxs[txid] = txErr
 	}
 	minerTimer.Mark("PrePlay")
 	//3. 统一在最后插入矿工奖励
@@ -569,7 +571,7 @@ func (xc *XChainCore) doMiner() {
 	minerTimer.Mark("GenAwardTx")
 	txs = append(txs, awardtx)
 	b, err := xc.Ledger.FormatPOWBlock(txs, xc.address, xc.privateKey,
-		t.UnixNano(), curTerm, curBlockNum, meta.TipBlockid, targetBits, xc.Utxovm.GetTotal(), allFailedTxs)
+		t.UnixNano(), curTerm, curBlockNum, meta.TipBlockid, targetBits, xc.Utxovm.GetTotal(), fakeBlock.FailedTxs)
 	if err != nil {
 		xc.log.Warn("[Minning] format block error", "logid", header.Logid, "err", err)
 		return
@@ -612,7 +614,15 @@ func (xc *XChainCore) doMiner() {
 		}
 		msgInfo, _ := proto.Marshal(block)
 		msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, xc.bcname, "", xuper_p2p.XuperMessage_SENDBLOCK, msgInfo, xuper_p2p.XuperMessage_NONE)
-		go xc.P2pv2.SendMessage(context.Background(), msg, p2pv2.DefaultStrategy)
+		filters := []p2pv2.FilterStrategy{p2pv2.DefaultStrategy}
+		if xc.NeedCoreConnection() {
+			filters = append(filters, p2pv2.CorePeersStrategy)
+		}
+		opts := []p2pv2.MessageOption{
+			p2pv2.WithFilters(filters),
+			p2pv2.WithBcName(xc.bcname),
+		}
+		xc.P2pv2.SendMessage(context.Background(), msg, opts...)
 	}()
 	minerTimer.Mark("BroadcastBlock")
 	if xc.Utxovm.IsAsync() {
@@ -640,20 +650,19 @@ func (xc *XChainCore) Miner() int {
 	// 3 开始同步
 	xc.status = global.Normal
 	xc.SyncBlocks()
+	xc.dataInitReady()
 	for {
 		// 重要: 首次出块前一定要同步到最新的状态
 		xc.log.Trace("Miner type of consensus", "type", xc.con.Type(xc.Ledger.GetMeta().TrunkHeight+1))
 		b, s := xc.con.CompeteMaster(xc.Ledger.GetMeta().TrunkHeight + 1)
 		xc.log.Debug("competemaster", "blockchain", xc.bcname, "master", b, "needSync", s)
+		xc.updateIsCoreMiner()
 		if b {
 			// todo 首次切换为矿工时SyncBlcok, Bug: 可能会导致第一次出块失败
 			if s {
 				xc.SyncBlocks()
 			}
-			xc.pipelineM.Resume()
 			xc.doMiner()
-		} else {
-			xc.pipelineM.Pause()
 		}
 		meta := xc.Ledger.GetMeta()
 		xc.log.Info("Minner", "genesis", fmt.Sprintf("%x", meta.RootBlockid), "last", fmt.Sprintf("%x", meta.TipBlockid), "height", meta.TrunkHeight, "utxovm", fmt.Sprintf("%x", xc.Utxovm.GetLatestBlockid()))
@@ -662,6 +671,40 @@ func (xc *XChainCore) Miner() int {
 		}
 	}
 	return 0
+}
+
+// dataInitReady do some preparation work after blockchain data init ready
+func (xc *XChainCore) dataInitReady() {
+	eb := events.GetEventBus()
+	miners := xc.con.GetCoreMiners()
+	msg := &cons_base.MinersChangedEvent{
+		BcName:        xc.bcname,
+		CurrentMiners: miners,
+		NextMiners:    miners,
+	}
+	em := &events.EventMessage{
+		BcName:   xc.bcname,
+		Type:     events.ProposerReady,
+		Priority: 0,
+		Sender:   xc,
+		Message:  msg,
+	}
+	_, err := eb.FireEventAsync(em)
+	if err != nil {
+		xc.log.Warn("dataInitReady fire event failed", "error", err)
+	}
+}
+
+func (xc *XChainCore) updateIsCoreMiner() {
+	miners := xc.con.GetCoreMiners()
+	for _, miner := range miners {
+		if miner.Address == string(xc.address) {
+			xc.isCoreMiner = true
+			xc.log.Debug("updateIsCoreMiner", "bcname", xc.bcname, "isCoreMiner", xc.isCoreMiner)
+			return
+		}
+	}
+	xc.isCoreMiner = false
 }
 
 // Stop stop one xchain instance
@@ -1000,7 +1043,8 @@ func (xc *XChainCore) GetDposVotedRecords(addr string) ([]*pb.VotedRecord, error
 
 // GetCheckResults get all proposers for specific term
 func (xc *XChainCore) GetCheckResults(term int64) ([]string, error) {
-	proposers := []string{}
+	res := []string{}
+	proposers := []*tdpos.CandidateInfo{}
 	version := xc.con.Version(xc.Ledger.GetMeta().TrunkHeight + 1)
 	key := tdpos.GenTermCheckKey(version, term)
 	val, err := xc.Utxovm.GetFromTable(nil, []byte(key))
@@ -1011,7 +1055,10 @@ func (xc *XChainCore) GetCheckResults(term int64) ([]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	return proposers, nil
+	for _, proposer := range proposers {
+		res = append(res, proposer.Address)
+	}
+	return res, nil
 }
 
 // GetNodeMode get node running mode, such as Normal mode, FastSync mode
@@ -1020,6 +1067,52 @@ func (xc *XChainCore) GetNodeMode() string {
 }
 
 // PreExec get read/write set for smart contract could be run in parallel
-func (xc *XChainCore) PreExec(req *pb.InvokeRequest, hd *global.XContext) (*pb.InvokeResponse, error) {
+func (xc *XChainCore) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.InvokeResponse, error) {
 	return xc.Utxovm.PreExec(req, hd)
+}
+
+// IsCoreMiner return true if current node is one of the current core miners
+// Note that is could be a little delay since it updated at each CompeteMaster.
+func (xc *XChainCore) IsCoreMiner() bool {
+	return xc.isCoreMiner
+}
+
+// NeedCoreConnection return true if current node is one of the core miners
+// and coreConnection configure to true. True means block and batch tx messages
+// need to send to core peers using p2p core peer connections
+func (xc *XChainCore) NeedCoreConnection() bool {
+	return xc.isCoreMiner && xc.coreConnection
+}
+
+// GetBlockByHeight get block from ledger on trunk, by Block Height
+func (xc *XChainCore) GetBlockByHeight(in *pb.BlockHeight) *pb.Block {
+	out := &pb.Block{Header: in.Header}
+	out.Header.Error = pb.XChainErrorEnum_SUCCESS
+	out.Bcname = in.Bcname
+	if xc.Status() != global.Normal {
+		out.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE
+		xc.log.Debug("refused a connection a function call GetBlock", "logid", in.Header.Logid)
+		return out
+	}
+	ib, err := xc.Ledger.QueryBlockByHeight(in.Height)
+	if err != nil {
+		switch err {
+		case ledger.ErrBlockNotExist:
+			out.Header.Error = pb.XChainErrorEnum_SUCCESS
+			out.Status = pb.Block_NOEXIST
+			return out
+		default:
+			xc.log.Warn("getblock by height", "logid", in.Header.Logid, "error", err)
+			out.Header.Error = pb.XChainErrorEnum_UNKNOW_ERROR
+			return out
+		}
+	} else {
+		out.Block = ib
+		if ib.InTrunk {
+			out.Status = pb.Block_TRUNK
+		} else {
+			out.Status = pb.Block_BRANCH
+		}
+	}
+	return out
 }
