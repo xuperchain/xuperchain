@@ -210,7 +210,7 @@ func (prp *Proposal) runVote(desc *contract.TxDesc) error {
 	proposalTx, err := prp.ledger.QueryTransaction(proposalTxid)
 	if err != nil {
 		proposalTx = prp.context.Block.GetTx(proposalTxid)
-		if proposalTxid == nil {
+		if proposalTx == nil {
 			prp.log.Warn("vote fail, because proposal tx not found", "proposalTxid", fmt.Sprintf("%x", proposalTxid))
 			return err
 		}
