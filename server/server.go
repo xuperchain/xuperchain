@@ -147,6 +147,9 @@ func (s *server) QueryTx(ctx context.Context, in *pb.TxStatus) (*pb.TxStatus, er
 		out.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
 		return out, nil
 	}
+	if bc.QueryTxFromForbidden(in.Txid) {
+		return out, nil
+	}
 	out = bc.QueryTx(in)
 	return out, nil
 }
@@ -215,6 +218,15 @@ func (s *server) GetBlock(ctx context.Context, in *pb.BlockID) (*pb.Block, error
 		return &out, nil
 	}
 	out := bc.GetBlock(in)
+
+	block := out.GetBlock()
+	transactions := block.GetTransactions()
+	for _, transaction := range transactions {
+		txid := transaction.GetTxid()
+		if bc.QueryTxFromForbidden(txid) {
+			return &pb.Block{Header: &pb.Header{}}, nil
+		}
+	}
 	s.log.Trace("Start to dealwith GetBlock result", "logid", in.Header.Logid,
 		"blockid", out.Blockid, "height", out.GetBlock().GetHeight())
 	return out, nil
@@ -618,6 +630,12 @@ func (s *server) PreExec(ctx context.Context, request *pb.InvokeRPCRequest) (*pb
 	vmResponse, err := bc.PreExec(request, hd)
 	if err != nil {
 		return nil, err
+	}
+	txInputs := vmResponse.GetInputs()
+	for _, txInput := range txInputs {
+		if bc.QueryTxFromForbidden(txInput.GetRefTxid()) {
+			return rsps, nil
+		}
 	}
 	rsps.Response = vmResponse
 	s.log.Info("PreExec", "logid", request.Header.Logid, "cost", hd.Timer.Print())
