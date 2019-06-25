@@ -321,7 +321,7 @@ func (nc *NodeConfig) loadConfigFile(configPath string, confName string) error {
 }
 
 // LoadConfig load config from config file
-func (nc *NodeConfig) LoadConfig(flags *pflag.FlagSet) {
+func (nc *NodeConfig) LoadConfig() {
 
 	confPath := "conf"
 	confName := "xchain"

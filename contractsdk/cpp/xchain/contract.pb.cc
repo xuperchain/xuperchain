@@ -14,6 +14,7 @@
 #include <google/protobuf/port_def.inc>
 
 extern PROTOBUF_INTERNAL_EXPORT_contract_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_CallArgs_ArgsEntry_DoNotUse_contract_2eproto;
+extern PROTOBUF_INTERNAL_EXPORT_contract_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_ContractCallRequest_ArgsEntry_DoNotUse_contract_2eproto;
 extern PROTOBUF_INTERNAL_EXPORT_contract_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_IteratorItem_contract_2eproto;
 extern PROTOBUF_INTERNAL_EXPORT_contract_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_Response_contract_2eproto;
 extern PROTOBUF_INTERNAL_EXPORT_contract_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_SyscallHeader_contract_2eproto;
@@ -26,10 +27,14 @@ class PingResponseDefaultTypeInternal {
  public:
   ::google::protobuf::internal::ExplicitlyConstructed<PingResponse> _instance;
 } _PingResponse_default_instance_;
-class CallRequestDefaultTypeInternal {
+class NativeCallRequestDefaultTypeInternal {
  public:
-  ::google::protobuf::internal::ExplicitlyConstructed<CallRequest> _instance;
-} _CallRequest_default_instance_;
+  ::google::protobuf::internal::ExplicitlyConstructed<NativeCallRequest> _instance;
+} _NativeCallRequest_default_instance_;
+class NativeCallResponseDefaultTypeInternal {
+ public:
+  ::google::protobuf::internal::ExplicitlyConstructed<NativeCallResponse> _instance;
+} _NativeCallResponse_default_instance_;
 class CallArgs_ArgsEntry_DoNotUseDefaultTypeInternal {
  public:
   ::google::protobuf::internal::ExplicitlyConstructed<CallArgs_ArgsEntry_DoNotUse> _instance;
@@ -102,6 +107,10 @@ class TransferResponseDefaultTypeInternal {
  public:
   ::google::protobuf::internal::ExplicitlyConstructed<TransferResponse> _instance;
 } _TransferResponse_default_instance_;
+class ContractCallRequest_ArgsEntry_DoNotUseDefaultTypeInternal {
+ public:
+  ::google::protobuf::internal::ExplicitlyConstructed<ContractCallRequest_ArgsEntry_DoNotUse> _instance;
+} _ContractCallRequest_ArgsEntry_DoNotUse_default_instance_;
 class ContractCallRequestDefaultTypeInternal {
  public:
   ::google::protobuf::internal::ExplicitlyConstructed<ContractCallRequest> _instance;
@@ -155,19 +164,33 @@ static void InitDefaultsPingResponse_contract_2eproto() {
 ::google::protobuf::internal::SCCInfo<0> scc_info_PingResponse_contract_2eproto =
     {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsPingResponse_contract_2eproto}, {}};
 
-static void InitDefaultsCallRequest_contract_2eproto() {
+static void InitDefaultsNativeCallRequest_contract_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   {
-    void* ptr = &::pb::_CallRequest_default_instance_;
-    new (ptr) ::pb::CallRequest();
+    void* ptr = &::pb::_NativeCallRequest_default_instance_;
+    new (ptr) ::pb::NativeCallRequest();
     ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
   }
-  ::pb::CallRequest::InitAsDefaultInstance();
+  ::pb::NativeCallRequest::InitAsDefaultInstance();
 }
 
-::google::protobuf::internal::SCCInfo<0> scc_info_CallRequest_contract_2eproto =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsCallRequest_contract_2eproto}, {}};
+::google::protobuf::internal::SCCInfo<0> scc_info_NativeCallRequest_contract_2eproto =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsNativeCallRequest_contract_2eproto}, {}};
+
+static void InitDefaultsNativeCallResponse_contract_2eproto() {
+  GOOGLE_PROTOBUF_VERIFY_VERSION;
+
+  {
+    void* ptr = &::pb::_NativeCallResponse_default_instance_;
+    new (ptr) ::pb::NativeCallResponse();
+    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
+  }
+  ::pb::NativeCallResponse::InitAsDefaultInstance();
+}
+
+::google::protobuf::internal::SCCInfo<0> scc_info_NativeCallResponse_contract_2eproto =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsNativeCallResponse_contract_2eproto}, {}};
 
 static void InitDefaultsCallArgs_ArgsEntry_DoNotUse_contract_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
@@ -429,6 +452,19 @@ static void InitDefaultsTransferResponse_contract_2eproto() {
 ::google::protobuf::internal::SCCInfo<0> scc_info_TransferResponse_contract_2eproto =
     {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsTransferResponse_contract_2eproto}, {}};
 
+static void InitDefaultsContractCallRequest_ArgsEntry_DoNotUse_contract_2eproto() {
+  GOOGLE_PROTOBUF_VERIFY_VERSION;
+
+  {
+    void* ptr = &::pb::_ContractCallRequest_ArgsEntry_DoNotUse_default_instance_;
+    new (ptr) ::pb::ContractCallRequest_ArgsEntry_DoNotUse();
+  }
+  ::pb::ContractCallRequest_ArgsEntry_DoNotUse::InitAsDefaultInstance();
+}
+
+::google::protobuf::internal::SCCInfo<0> scc_info_ContractCallRequest_ArgsEntry_DoNotUse_contract_2eproto =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsContractCallRequest_ArgsEntry_DoNotUse_contract_2eproto}, {}};
+
 static void InitDefaultsContractCallRequest_contract_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
@@ -440,9 +476,10 @@ static void InitDefaultsContractCallRequest_contract_2eproto() {
   ::pb::ContractCallRequest::InitAsDefaultInstance();
 }
 
-::google::protobuf::internal::SCCInfo<1> scc_info_ContractCallRequest_contract_2eproto =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 1, InitDefaultsContractCallRequest_contract_2eproto}, {
-      &scc_info_SyscallHeader_contract_2eproto.base,}};
+::google::protobuf::internal::SCCInfo<2> scc_info_ContractCallRequest_contract_2eproto =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 2, InitDefaultsContractCallRequest_contract_2eproto}, {
+      &scc_info_SyscallHeader_contract_2eproto.base,
+      &scc_info_ContractCallRequest_ArgsEntry_DoNotUse_contract_2eproto.base,}};
 
 static void InitDefaultsContractCallResponse_contract_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
@@ -455,8 +492,9 @@ static void InitDefaultsContractCallResponse_contract_2eproto() {
   ::pb::ContractCallResponse::InitAsDefaultInstance();
 }
 
-::google::protobuf::internal::SCCInfo<0> scc_info_ContractCallResponse_contract_2eproto =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsContractCallResponse_contract_2eproto}, {}};
+::google::protobuf::internal::SCCInfo<1> scc_info_ContractCallResponse_contract_2eproto =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 1, InitDefaultsContractCallResponse_contract_2eproto}, {
+      &scc_info_Response_contract_2eproto.base,}};
 
 static void InitDefaultsResponse_contract_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
@@ -518,17 +556,6 @@ static void InitDefaultsGetCallArgsRequest_contract_2eproto() {
       &scc_info_SyscallHeader_contract_2eproto.base,}};
 
 namespace pb {
-bool Method_IsValid(int value) {
-  switch (value) {
-    case 0:
-    case 1:
-    case 2:
-      return true;
-    default:
-      return false;
-  }
-}
-
 
 // ===================================================================
 
@@ -888,97 +915,64 @@ void PingResponse::InternalSwap(PingResponse* other) {
 
 // ===================================================================
 
-void CallRequest::InitAsDefaultInstance() {
+void NativeCallRequest::InitAsDefaultInstance() {
 }
-class CallRequest::HasBitSetters {
+class NativeCallRequest::HasBitSetters {
  public:
 };
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int CallRequest::kCtxidFieldNumber;
-const int CallRequest::kMethodFieldNumber;
-const int CallRequest::kTxidFieldNumber;
-const int CallRequest::kArgsFieldNumber;
-const int CallRequest::kCallerFieldNumber;
+const int NativeCallRequest::kCtxidFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
-CallRequest::CallRequest()
+NativeCallRequest::NativeCallRequest()
   : ::google::protobuf::MessageLite(), _internal_metadata_(nullptr) {
   SharedCtor();
-  // @@protoc_insertion_point(constructor:pb.CallRequest)
+  // @@protoc_insertion_point(constructor:pb.NativeCallRequest)
 }
-CallRequest::CallRequest(const CallRequest& from)
+NativeCallRequest::NativeCallRequest(const NativeCallRequest& from)
   : ::google::protobuf::MessageLite(),
       _internal_metadata_(nullptr) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
-  txid_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.txid().size() > 0) {
-    txid_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.txid_);
-  }
-  args_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.args().size() > 0) {
-    args_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.args_);
-  }
-  caller_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.caller().size() > 0) {
-    caller_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.caller_);
-  }
-  ::memcpy(&ctxid_, &from.ctxid_,
-    static_cast<size_t>(reinterpret_cast<char*>(&method_) -
-    reinterpret_cast<char*>(&ctxid_)) + sizeof(method_));
-  // @@protoc_insertion_point(copy_constructor:pb.CallRequest)
+  ctxid_ = from.ctxid_;
+  // @@protoc_insertion_point(copy_constructor:pb.NativeCallRequest)
 }
 
-void CallRequest::SharedCtor() {
-  ::google::protobuf::internal::InitSCC(
-      &scc_info_CallRequest_contract_2eproto.base);
-  txid_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  args_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  caller_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  ::memset(&ctxid_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&method_) -
-      reinterpret_cast<char*>(&ctxid_)) + sizeof(method_));
+void NativeCallRequest::SharedCtor() {
+  ctxid_ = PROTOBUF_LONGLONG(0);
 }
 
-CallRequest::~CallRequest() {
-  // @@protoc_insertion_point(destructor:pb.CallRequest)
+NativeCallRequest::~NativeCallRequest() {
+  // @@protoc_insertion_point(destructor:pb.NativeCallRequest)
   SharedDtor();
 }
 
-void CallRequest::SharedDtor() {
-  txid_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  args_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  caller_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+void NativeCallRequest::SharedDtor() {
 }
 
-void CallRequest::SetCachedSize(int size) const {
+void NativeCallRequest::SetCachedSize(int size) const {
   _cached_size_.Set(size);
 }
-const CallRequest& CallRequest::default_instance() {
-  ::google::protobuf::internal::InitSCC(&::scc_info_CallRequest_contract_2eproto.base);
+const NativeCallRequest& NativeCallRequest::default_instance() {
+  ::google::protobuf::internal::InitSCC(&::scc_info_NativeCallRequest_contract_2eproto.base);
   return *internal_default_instance();
 }
 
 
-void CallRequest::Clear() {
-// @@protoc_insertion_point(message_clear_start:pb.CallRequest)
+void NativeCallRequest::Clear() {
+// @@protoc_insertion_point(message_clear_start:pb.NativeCallRequest)
   ::google::protobuf::uint32 cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  txid_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  args_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  caller_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  ::memset(&ctxid_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&method_) -
-      reinterpret_cast<char*>(&ctxid_)) + sizeof(method_));
+  ctxid_ = PROTOBUF_LONGLONG(0);
   _internal_metadata_.Clear();
 }
 
 #if GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
-const char* CallRequest::_InternalParse(const char* begin, const char* end, void* object,
+const char* NativeCallRequest::_InternalParse(const char* begin, const char* end, void* object,
                   ::google::protobuf::internal::ParseContext* ctx) {
-  auto msg = static_cast<CallRequest*>(object);
+  auto msg = static_cast<NativeCallRequest*>(object);
   ::google::protobuf::int32 size; (void)size;
   int depth; (void)depth;
   ::google::protobuf::uint32 tag;
@@ -993,60 +987,6 @@ const char* CallRequest::_InternalParse(const char* begin, const char* end, void
         if (static_cast<::google::protobuf::uint8>(tag) != 8) goto handle_unusual;
         msg->set_ctxid(::google::protobuf::internal::ReadVarint(&ptr));
         GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
-        break;
-      }
-      // .pb.Method method = 2;
-      case 2: {
-        if (static_cast<::google::protobuf::uint8>(tag) != 16) goto handle_unusual;
-        ::google::protobuf::uint64 val = ::google::protobuf::internal::ReadVarint(&ptr);
-        msg->set_method(static_cast<::pb::Method>(val));
-        GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
-        break;
-      }
-      // bytes txid = 3;
-      case 3: {
-        if (static_cast<::google::protobuf::uint8>(tag) != 26) goto handle_unusual;
-        ptr = ::google::protobuf::io::ReadSize(ptr, &size);
-        GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
-        object = msg->mutable_txid();
-        if (size > end - ptr + ::google::protobuf::internal::ParseContext::kSlopBytes) {
-          parser_till_end = ::google::protobuf::internal::GreedyStringParser;
-          goto string_till_end;
-        }
-        GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheck(ptr, size, ctx));
-        ::google::protobuf::internal::InlineGreedyStringParser(object, ptr, size, ctx);
-        ptr += size;
-        break;
-      }
-      // bytes args = 4;
-      case 4: {
-        if (static_cast<::google::protobuf::uint8>(tag) != 34) goto handle_unusual;
-        ptr = ::google::protobuf::io::ReadSize(ptr, &size);
-        GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
-        object = msg->mutable_args();
-        if (size > end - ptr + ::google::protobuf::internal::ParseContext::kSlopBytes) {
-          parser_till_end = ::google::protobuf::internal::GreedyStringParser;
-          goto string_till_end;
-        }
-        GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheck(ptr, size, ctx));
-        ::google::protobuf::internal::InlineGreedyStringParser(object, ptr, size, ctx);
-        ptr += size;
-        break;
-      }
-      // string caller = 5;
-      case 5: {
-        if (static_cast<::google::protobuf::uint8>(tag) != 42) goto handle_unusual;
-        ptr = ::google::protobuf::io::ReadSize(ptr, &size);
-        GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
-        ctx->extra_parse_data().SetFieldName(nullptr);
-        object = msg->mutable_caller();
-        if (size > end - ptr + ::google::protobuf::internal::ParseContext::kSlopBytes) {
-          parser_till_end = ::google::protobuf::internal::GreedyStringParserUTF8;
-          goto string_till_end;
-        }
-        GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheckUTF8(ptr, size, ctx));
-        ::google::protobuf::internal::InlineGreedyStringParser(object, ptr, size, ctx);
-        ptr += size;
         break;
       }
       default: {
@@ -1064,16 +1004,9 @@ const char* CallRequest::_InternalParse(const char* begin, const char* end, void
     }  // switch
   }  // while
   return ptr;
-string_till_end:
-  static_cast<::std::string*>(object)->clear();
-  static_cast<::std::string*>(object)->reserve(size);
-  goto len_delim_till_end;
-len_delim_till_end:
-  return ctx->StoreAndTailCall(ptr, end, {_InternalParse, msg},
-                               {parser_till_end, object}, size);
 }
 #else  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
-bool CallRequest::MergePartialFromCodedStream(
+bool NativeCallRequest::MergePartialFromCodedStream(
     ::google::protobuf::io::CodedInputStream* input) {
 #define DO_(EXPRESSION) if (!PROTOBUF_PREDICT_TRUE(EXPRESSION)) goto failure
   ::google::protobuf::uint32 tag;
@@ -1083,7 +1016,7 @@ bool CallRequest::MergePartialFromCodedStream(
       unknown_fields_setter.buffer());
   ::google::protobuf::io::CodedOutputStream unknown_fields_stream(
       &unknown_fields_output, false);
-  // @@protoc_insertion_point(parse_start:pb.CallRequest)
+  // @@protoc_insertion_point(parse_start:pb.NativeCallRequest)
   for (;;) {
     ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
     tag = p.first;
@@ -1102,57 +1035,6 @@ bool CallRequest::MergePartialFromCodedStream(
         break;
       }
 
-      // .pb.Method method = 2;
-      case 2: {
-        if (static_cast< ::google::protobuf::uint8>(tag) == (16 & 0xFF)) {
-          int value = 0;
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   int, ::google::protobuf::internal::WireFormatLite::TYPE_ENUM>(
-                 input, &value)));
-          set_method(static_cast< ::pb::Method >(value));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      // bytes txid = 3;
-      case 3: {
-        if (static_cast< ::google::protobuf::uint8>(tag) == (26 & 0xFF)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
-                input, this->mutable_txid()));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      // bytes args = 4;
-      case 4: {
-        if (static_cast< ::google::protobuf::uint8>(tag) == (34 & 0xFF)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
-                input, this->mutable_args()));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      // string caller = 5;
-      case 5: {
-        if (static_cast< ::google::protobuf::uint8>(tag) == (42 & 0xFF)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
-                input, this->mutable_caller()));
-          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-            this->caller().data(), static_cast<int>(this->caller().length()),
-            ::google::protobuf::internal::WireFormatLite::PARSE,
-            "pb.CallRequest.caller"));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
       default: {
       handle_unusual:
         if (tag == 0) {
@@ -1165,18 +1047,18 @@ bool CallRequest::MergePartialFromCodedStream(
     }
   }
 success:
-  // @@protoc_insertion_point(parse_success:pb.CallRequest)
+  // @@protoc_insertion_point(parse_success:pb.NativeCallRequest)
   return true;
 failure:
-  // @@protoc_insertion_point(parse_failure:pb.CallRequest)
+  // @@protoc_insertion_point(parse_failure:pb.NativeCallRequest)
   return false;
 #undef DO_
 }
 #endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
 
-void CallRequest::SerializeWithCachedSizes(
+void NativeCallRequest::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:pb.CallRequest)
+  // @@protoc_insertion_point(serialize_start:pb.NativeCallRequest)
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
@@ -1185,41 +1067,13 @@ void CallRequest::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteInt64(1, this->ctxid(), output);
   }
 
-  // .pb.Method method = 2;
-  if (this->method() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteEnum(
-      2, this->method(), output);
-  }
-
-  // bytes txid = 3;
-  if (this->txid().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      3, this->txid(), output);
-  }
-
-  // bytes args = 4;
-  if (this->args().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      4, this->args(), output);
-  }
-
-  // string caller = 5;
-  if (this->caller().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-      this->caller().data(), static_cast<int>(this->caller().length()),
-      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "pb.CallRequest.caller");
-    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
-      5, this->caller(), output);
-  }
-
   output->WriteRaw(_internal_metadata_.unknown_fields().data(),
                    static_cast<int>(_internal_metadata_.unknown_fields().size()));
-  // @@protoc_insertion_point(serialize_end:pb.CallRequest)
+  // @@protoc_insertion_point(serialize_end:pb.NativeCallRequest)
 }
 
-size_t CallRequest::ByteSizeLong() const {
-// @@protoc_insertion_point(message_byte_size_start:pb.CallRequest)
+size_t NativeCallRequest::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:pb.NativeCallRequest)
   size_t total_size = 0;
 
   total_size += _internal_metadata_.unknown_fields().size();
@@ -1228,27 +1082,6 @@ size_t CallRequest::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // bytes txid = 3;
-  if (this->txid().size() > 0) {
-    total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::BytesSize(
-        this->txid());
-  }
-
-  // bytes args = 4;
-  if (this->args().size() > 0) {
-    total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::BytesSize(
-        this->args());
-  }
-
-  // string caller = 5;
-  if (this->caller().size() > 0) {
-    total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::StringSize(
-        this->caller());
-  }
-
   // int64 ctxid = 1;
   if (this->ctxid() != 0) {
     total_size += 1 +
@@ -1256,79 +1089,229 @@ size_t CallRequest::ByteSizeLong() const {
         this->ctxid());
   }
 
-  // .pb.Method method = 2;
-  if (this->method() != 0) {
-    total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::EnumSize(this->method());
+  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  SetCachedSize(cached_size);
+  return total_size;
+}
+
+void NativeCallRequest::CheckTypeAndMergeFrom(
+    const ::google::protobuf::MessageLite& from) {
+  MergeFrom(*::google::protobuf::down_cast<const NativeCallRequest*>(&from));
+}
+
+void NativeCallRequest::MergeFrom(const NativeCallRequest& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:pb.NativeCallRequest)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from.ctxid() != 0) {
+    set_ctxid(from.ctxid());
   }
+}
+
+void NativeCallRequest::CopyFrom(const NativeCallRequest& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:pb.NativeCallRequest)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool NativeCallRequest::IsInitialized() const {
+  return true;
+}
+
+void NativeCallRequest::Swap(NativeCallRequest* other) {
+  if (other == this) return;
+  InternalSwap(other);
+}
+void NativeCallRequest::InternalSwap(NativeCallRequest* other) {
+  using std::swap;
+  _internal_metadata_.Swap(&other->_internal_metadata_);
+  swap(ctxid_, other->ctxid_);
+}
+
+::std::string NativeCallRequest::GetTypeName() const {
+  return "pb.NativeCallRequest";
+}
+
+
+// ===================================================================
+
+void NativeCallResponse::InitAsDefaultInstance() {
+}
+class NativeCallResponse::HasBitSetters {
+ public:
+};
+
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
+#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+
+NativeCallResponse::NativeCallResponse()
+  : ::google::protobuf::MessageLite(), _internal_metadata_(nullptr) {
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:pb.NativeCallResponse)
+}
+NativeCallResponse::NativeCallResponse(const NativeCallResponse& from)
+  : ::google::protobuf::MessageLite(),
+      _internal_metadata_(nullptr) {
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  // @@protoc_insertion_point(copy_constructor:pb.NativeCallResponse)
+}
+
+void NativeCallResponse::SharedCtor() {
+}
+
+NativeCallResponse::~NativeCallResponse() {
+  // @@protoc_insertion_point(destructor:pb.NativeCallResponse)
+  SharedDtor();
+}
+
+void NativeCallResponse::SharedDtor() {
+}
+
+void NativeCallResponse::SetCachedSize(int size) const {
+  _cached_size_.Set(size);
+}
+const NativeCallResponse& NativeCallResponse::default_instance() {
+  ::google::protobuf::internal::InitSCC(&::scc_info_NativeCallResponse_contract_2eproto.base);
+  return *internal_default_instance();
+}
+
+
+void NativeCallResponse::Clear() {
+// @@protoc_insertion_point(message_clear_start:pb.NativeCallResponse)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  _internal_metadata_.Clear();
+}
+
+#if GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+const char* NativeCallResponse::_InternalParse(const char* begin, const char* end, void* object,
+                  ::google::protobuf::internal::ParseContext* ctx) {
+  auto msg = static_cast<NativeCallResponse*>(object);
+  ::google::protobuf::int32 size; (void)size;
+  int depth; (void)depth;
+  ::google::protobuf::uint32 tag;
+  ::google::protobuf::internal::ParseFunc parser_till_end; (void)parser_till_end;
+  auto ptr = begin;
+  while (ptr < end) {
+    ptr = ::google::protobuf::io::Parse32(ptr, &tag);
+    GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+    switch (tag >> 3) {
+      default: {
+        if ((tag & 7) == 4 || tag == 0) {
+          ctx->EndGroup(tag);
+          return ptr;
+        }
+        auto res = UnknownFieldParse(tag, {_InternalParse, msg},
+          ptr, end, msg->_internal_metadata_.mutable_unknown_fields(), ctx);
+        ptr = res.first;
+        GOOGLE_PROTOBUF_PARSER_ASSERT(ptr != nullptr);
+        if (res.second) return ptr;
+      }
+    }  // switch
+  }  // while
+  return ptr;
+}
+#else  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+bool NativeCallResponse::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!PROTOBUF_PREDICT_TRUE(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  ::google::protobuf::internal::LiteUnknownFieldSetter unknown_fields_setter(
+      &_internal_metadata_);
+  ::google::protobuf::io::StringOutputStream unknown_fields_output(
+      unknown_fields_setter.buffer());
+  ::google::protobuf::io::CodedOutputStream unknown_fields_stream(
+      &unknown_fields_output, false);
+  // @@protoc_insertion_point(parse_start:pb.NativeCallResponse)
+  for (;;) {
+    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+  handle_unusual:
+    if (tag == 0) {
+      goto success;
+    }
+    DO_(::google::protobuf::internal::WireFormatLite::SkipField(
+        input, tag, &unknown_fields_stream));
+  }
+success:
+  // @@protoc_insertion_point(parse_success:pb.NativeCallResponse)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:pb.NativeCallResponse)
+  return false;
+#undef DO_
+}
+#endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+
+void NativeCallResponse::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:pb.NativeCallResponse)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  output->WriteRaw(_internal_metadata_.unknown_fields().data(),
+                   static_cast<int>(_internal_metadata_.unknown_fields().size()));
+  // @@protoc_insertion_point(serialize_end:pb.NativeCallResponse)
+}
+
+size_t NativeCallResponse::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:pb.NativeCallResponse)
+  size_t total_size = 0;
+
+  total_size += _internal_metadata_.unknown_fields().size();
+
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
 
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
   SetCachedSize(cached_size);
   return total_size;
 }
 
-void CallRequest::CheckTypeAndMergeFrom(
+void NativeCallResponse::CheckTypeAndMergeFrom(
     const ::google::protobuf::MessageLite& from) {
-  MergeFrom(*::google::protobuf::down_cast<const CallRequest*>(&from));
+  MergeFrom(*::google::protobuf::down_cast<const NativeCallResponse*>(&from));
 }
 
-void CallRequest::MergeFrom(const CallRequest& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:pb.CallRequest)
+void NativeCallResponse::MergeFrom(const NativeCallResponse& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:pb.NativeCallResponse)
   GOOGLE_DCHECK_NE(&from, this);
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  if (from.txid().size() > 0) {
-
-    txid_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.txid_);
-  }
-  if (from.args().size() > 0) {
-
-    args_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.args_);
-  }
-  if (from.caller().size() > 0) {
-
-    caller_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.caller_);
-  }
-  if (from.ctxid() != 0) {
-    set_ctxid(from.ctxid());
-  }
-  if (from.method() != 0) {
-    set_method(from.method());
-  }
 }
 
-void CallRequest::CopyFrom(const CallRequest& from) {
-// @@protoc_insertion_point(class_specific_copy_from_start:pb.CallRequest)
+void NativeCallResponse::CopyFrom(const NativeCallResponse& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:pb.NativeCallResponse)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
-bool CallRequest::IsInitialized() const {
+bool NativeCallResponse::IsInitialized() const {
   return true;
 }
 
-void CallRequest::Swap(CallRequest* other) {
+void NativeCallResponse::Swap(NativeCallResponse* other) {
   if (other == this) return;
   InternalSwap(other);
 }
-void CallRequest::InternalSwap(CallRequest* other) {
+void NativeCallResponse::InternalSwap(NativeCallResponse* other) {
   using std::swap;
   _internal_metadata_.Swap(&other->_internal_metadata_);
-  txid_.Swap(&other->txid_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-    GetArenaNoVirtual());
-  args_.Swap(&other->args_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-    GetArenaNoVirtual());
-  caller_.Swap(&other->caller_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-    GetArenaNoVirtual());
-  swap(ctxid_, other->ctxid_);
-  swap(method_, other->method_);
 }
 
-::std::string CallRequest::GetTypeName() const {
-  return "pb.CallRequest";
+::std::string NativeCallResponse::GetTypeName() const {
+  return "pb.NativeCallResponse";
 }
 
 
@@ -1371,6 +1354,8 @@ class CallArgs::HasBitSetters {
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
 const int CallArgs::kMethodFieldNumber;
 const int CallArgs::kArgsFieldNumber;
+const int CallArgs::kInitiatorFieldNumber;
+const int CallArgs::kAuthRequireFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 CallArgs::CallArgs()
@@ -1380,12 +1365,17 @@ CallArgs::CallArgs()
 }
 CallArgs::CallArgs(const CallArgs& from)
   : ::google::protobuf::MessageLite(),
-      _internal_metadata_(nullptr) {
+      _internal_metadata_(nullptr),
+      auth_require_(from.auth_require_) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   args_.MergeFrom(from.args_);
   method_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (from.method().size() > 0) {
     method_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.method_);
+  }
+  initiator_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.initiator().size() > 0) {
+    initiator_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.initiator_);
   }
   // @@protoc_insertion_point(copy_constructor:pb.CallArgs)
 }
@@ -1394,6 +1384,7 @@ void CallArgs::SharedCtor() {
   ::google::protobuf::internal::InitSCC(
       &scc_info_CallArgs_contract_2eproto.base);
   method_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  initiator_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 
 CallArgs::~CallArgs() {
@@ -1403,6 +1394,7 @@ CallArgs::~CallArgs() {
 
 void CallArgs::SharedDtor() {
   method_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  initiator_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 
 void CallArgs::SetCachedSize(int size) const {
@@ -1421,7 +1413,9 @@ void CallArgs::Clear() {
   (void) cached_has_bits;
 
   args_.Clear();
+  auth_require_.Clear();
   method_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  initiator_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   _internal_metadata_.Clear();
 }
 
@@ -1471,6 +1465,41 @@ const char* CallArgs::_InternalParse(const char* begin, const char* end, void* o
           ptr = newend;
           if (ptr >= end) break;
         } while ((::google::protobuf::io::UnalignedLoad<::google::protobuf::uint64>(ptr) & 255) == 18 && (ptr += 1));
+        break;
+      }
+      // string initiator = 3;
+      case 3: {
+        if (static_cast<::google::protobuf::uint8>(tag) != 26) goto handle_unusual;
+        ptr = ::google::protobuf::io::ReadSize(ptr, &size);
+        GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+        ctx->extra_parse_data().SetFieldName(nullptr);
+        object = msg->mutable_initiator();
+        if (size > end - ptr + ::google::protobuf::internal::ParseContext::kSlopBytes) {
+          parser_till_end = ::google::protobuf::internal::GreedyStringParserUTF8;
+          goto string_till_end;
+        }
+        GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheckUTF8(ptr, size, ctx));
+        ::google::protobuf::internal::InlineGreedyStringParser(object, ptr, size, ctx);
+        ptr += size;
+        break;
+      }
+      // repeated string auth_require = 4;
+      case 4: {
+        if (static_cast<::google::protobuf::uint8>(tag) != 34) goto handle_unusual;
+        do {
+          ptr = ::google::protobuf::io::ReadSize(ptr, &size);
+          GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+          ctx->extra_parse_data().SetFieldName(nullptr);
+          object = msg->add_auth_require();
+          if (size > end - ptr + ::google::protobuf::internal::ParseContext::kSlopBytes) {
+            parser_till_end = ::google::protobuf::internal::GreedyStringParserUTF8;
+            goto string_till_end;
+          }
+          GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheckUTF8(ptr, size, ctx));
+          ::google::protobuf::internal::InlineGreedyStringParser(object, ptr, size, ctx);
+          ptr += size;
+          if (ptr >= end) break;
+        } while ((::google::protobuf::io::UnalignedLoad<::google::protobuf::uint64>(ptr) & 255) == 34 && (ptr += 1));
         break;
       }
       default: {
@@ -1544,6 +1573,37 @@ bool CallArgs::MergePartialFromCodedStream(
             parser.key().data(), static_cast<int>(parser.key().length()),
             ::google::protobuf::internal::WireFormatLite::PARSE,
             "pb.CallArgs.ArgsEntry.key"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // string initiator = 3;
+      case 3: {
+        if (static_cast< ::google::protobuf::uint8>(tag) == (26 & 0xFF)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_initiator()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->initiator().data(), static_cast<int>(this->initiator().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "pb.CallArgs.initiator"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // repeated string auth_require = 4;
+      case 4: {
+        if (static_cast< ::google::protobuf::uint8>(tag) == (34 & 0xFF)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->add_auth_require()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->auth_require(this->auth_require_size() - 1).data(),
+            static_cast<int>(this->auth_require(this->auth_require_size() - 1).length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "pb.CallArgs.auth_require"));
         } else {
           goto handle_unusual;
         }
@@ -1632,6 +1692,26 @@ void CallArgs::SerializeWithCachedSizes(
     }
   }
 
+  // string initiator = 3;
+  if (this->initiator().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->initiator().data(), static_cast<int>(this->initiator().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "pb.CallArgs.initiator");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      3, this->initiator(), output);
+  }
+
+  // repeated string auth_require = 4;
+  for (int i = 0, n = this->auth_require_size(); i < n; i++) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->auth_require(i).data(), static_cast<int>(this->auth_require(i).length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "pb.CallArgs.auth_require");
+    ::google::protobuf::internal::WireFormatLite::WriteString(
+      4, this->auth_require(i), output);
+  }
+
   output->WriteRaw(_internal_metadata_.unknown_fields().data(),
                    static_cast<int>(_internal_metadata_.unknown_fields().size()));
   // @@protoc_insertion_point(serialize_end:pb.CallArgs)
@@ -1661,11 +1741,26 @@ size_t CallArgs::ByteSizeLong() const {
     }
   }
 
+  // repeated string auth_require = 4;
+  total_size += 1 *
+      ::google::protobuf::internal::FromIntSize(this->auth_require_size());
+  for (int i = 0, n = this->auth_require_size(); i < n; i++) {
+    total_size += ::google::protobuf::internal::WireFormatLite::StringSize(
+      this->auth_require(i));
+  }
+
   // string method = 1;
   if (this->method().size() > 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::StringSize(
         this->method());
+  }
+
+  // string initiator = 3;
+  if (this->initiator().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::StringSize(
+        this->initiator());
   }
 
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
@@ -1686,9 +1781,14 @@ void CallArgs::MergeFrom(const CallArgs& from) {
   (void) cached_has_bits;
 
   args_.MergeFrom(from.args_);
+  auth_require_.MergeFrom(from.auth_require_);
   if (from.method().size() > 0) {
 
     method_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.method_);
+  }
+  if (from.initiator().size() > 0) {
+
+    initiator_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.initiator_);
   }
 }
 
@@ -1711,7 +1811,10 @@ void CallArgs::InternalSwap(CallArgs* other) {
   using std::swap;
   _internal_metadata_.Swap(&other->_internal_metadata_);
   args_.Swap(&other->args_);
+  auth_require_.InternalSwap(CastToBase(&other->auth_require_));
   method_.Swap(&other->method_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+    GetArenaNoVirtual());
+  initiator_.Swap(&other->initiator_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
     GetArenaNoVirtual());
 }
 
@@ -6118,6 +6221,34 @@ void TransferResponse::InternalSwap(TransferResponse* other) {
 
 // ===================================================================
 
+ContractCallRequest_ArgsEntry_DoNotUse::ContractCallRequest_ArgsEntry_DoNotUse() {}
+ContractCallRequest_ArgsEntry_DoNotUse::ContractCallRequest_ArgsEntry_DoNotUse(::google::protobuf::Arena* arena)
+    : SuperType(arena) {}
+void ContractCallRequest_ArgsEntry_DoNotUse::MergeFrom(const ContractCallRequest_ArgsEntry_DoNotUse& other) {
+  MergeFromInternal(other);
+}
+#if GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+bool ContractCallRequest_ArgsEntry_DoNotUse::_ParseMap(const char* begin, const char* end, void* object, ::google::protobuf::internal::ParseContext* ctx) {
+  using MF = ::google::protobuf::internal::MapFieldLite<
+      ContractCallRequest_ArgsEntry_DoNotUse, EntryKeyType, EntryValueType,
+      kEntryKeyFieldType, kEntryValueFieldType,
+      kEntryDefaultEnumValue>;
+  auto mf = static_cast<MF*>(object);
+  Parser<MF, ::google::protobuf::Map<EntryKeyType, EntryValueType>> parser(mf);
+#define DO_(x) if (!(x)) return false
+  DO_(parser.ParseMap(begin, end));
+  DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+    parser.key().data(), static_cast<int>(parser.key().length()),
+    ::google::protobuf::internal::WireFormatLite::PARSE,
+    "pb.ContractCallRequest.ArgsEntry.key"));
+#undef DO_
+  return true;
+}
+#endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+
+
+// ===================================================================
+
 void ContractCallRequest::InitAsDefaultInstance() {
   ::pb::_ContractCallRequest_default_instance_._instance.get_mutable()->header_ = const_cast< ::pb::SyscallHeader*>(
       ::pb::SyscallHeader::internal_default_instance());
@@ -6134,6 +6265,7 @@ ContractCallRequest::HasBitSetters::header(const ContractCallRequest* msg) {
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
 const int ContractCallRequest::kHeaderFieldNumber;
 const int ContractCallRequest::kModuleFieldNumber;
+const int ContractCallRequest::kContractFieldNumber;
 const int ContractCallRequest::kMethodFieldNumber;
 const int ContractCallRequest::kArgsFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
@@ -6147,17 +6279,18 @@ ContractCallRequest::ContractCallRequest(const ContractCallRequest& from)
   : ::google::protobuf::MessageLite(),
       _internal_metadata_(nullptr) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
+  args_.MergeFrom(from.args_);
   module_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (from.module().size() > 0) {
     module_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.module_);
   }
+  contract_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.contract().size() > 0) {
+    contract_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.contract_);
+  }
   method_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (from.method().size() > 0) {
     method_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.method_);
-  }
-  args_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.args().size() > 0) {
-    args_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.args_);
   }
   if (from.has_header()) {
     header_ = new ::pb::SyscallHeader(*from.header_);
@@ -6171,8 +6304,8 @@ void ContractCallRequest::SharedCtor() {
   ::google::protobuf::internal::InitSCC(
       &scc_info_ContractCallRequest_contract_2eproto.base);
   module_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  contract_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   method_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  args_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   header_ = nullptr;
 }
 
@@ -6183,8 +6316,8 @@ ContractCallRequest::~ContractCallRequest() {
 
 void ContractCallRequest::SharedDtor() {
   module_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  contract_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   method_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  args_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (this != internal_default_instance()) delete header_;
 }
 
@@ -6203,9 +6336,10 @@ void ContractCallRequest::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
+  args_.Clear();
   module_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  contract_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   method_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  args_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (GetArenaNoVirtual() == nullptr && header_ != nullptr) {
     delete header_;
   }
@@ -6255,9 +6389,25 @@ const char* ContractCallRequest::_InternalParse(const char* begin, const char* e
         ptr += size;
         break;
       }
-      // string method = 3;
+      // string contract = 3;
       case 3: {
         if (static_cast<::google::protobuf::uint8>(tag) != 26) goto handle_unusual;
+        ptr = ::google::protobuf::io::ReadSize(ptr, &size);
+        GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+        ctx->extra_parse_data().SetFieldName(nullptr);
+        object = msg->mutable_contract();
+        if (size > end - ptr + ::google::protobuf::internal::ParseContext::kSlopBytes) {
+          parser_till_end = ::google::protobuf::internal::GreedyStringParserUTF8;
+          goto string_till_end;
+        }
+        GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheckUTF8(ptr, size, ctx));
+        ::google::protobuf::internal::InlineGreedyStringParser(object, ptr, size, ctx);
+        ptr += size;
+        break;
+      }
+      // string method = 4;
+      case 4: {
+        if (static_cast<::google::protobuf::uint8>(tag) != 34) goto handle_unusual;
         ptr = ::google::protobuf::io::ReadSize(ptr, &size);
         GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
         ctx->extra_parse_data().SetFieldName(nullptr);
@@ -6271,20 +6421,23 @@ const char* ContractCallRequest::_InternalParse(const char* begin, const char* e
         ptr += size;
         break;
       }
-      // string args = 4;
-      case 4: {
-        if (static_cast<::google::protobuf::uint8>(tag) != 34) goto handle_unusual;
-        ptr = ::google::protobuf::io::ReadSize(ptr, &size);
-        GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
-        ctx->extra_parse_data().SetFieldName(nullptr);
-        object = msg->mutable_args();
-        if (size > end - ptr + ::google::protobuf::internal::ParseContext::kSlopBytes) {
-          parser_till_end = ::google::protobuf::internal::GreedyStringParserUTF8;
-          goto string_till_end;
-        }
-        GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheckUTF8(ptr, size, ctx));
-        ::google::protobuf::internal::InlineGreedyStringParser(object, ptr, size, ctx);
-        ptr += size;
+      // map<string, bytes> args = 5;
+      case 5: {
+        if (static_cast<::google::protobuf::uint8>(tag) != 42) goto handle_unusual;
+        do {
+          ptr = ::google::protobuf::io::ReadSize(ptr, &size);
+          GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+          parser_till_end = ::google::protobuf::internal::SlowMapEntryParser;
+          auto parse_map = ::pb::ContractCallRequest_ArgsEntry_DoNotUse::_ParseMap;
+          ctx->extra_parse_data().payload.clear();
+          ctx->extra_parse_data().parse_map = parse_map;
+          object = &msg->args_;
+          if (size > end - ptr) goto len_delim_till_end;
+          auto newend = ptr + size;
+          GOOGLE_PROTOBUF_PARSER_ASSERT(parse_map(ptr, newend, object, ctx));
+          ptr = newend;
+          if (ptr >= end) break;
+        } while ((::google::protobuf::io::UnalignedLoad<::google::protobuf::uint64>(ptr) & 255) == 42 && (ptr += 1));
         break;
       }
       default: {
@@ -6353,9 +6506,24 @@ bool ContractCallRequest::MergePartialFromCodedStream(
         break;
       }
 
-      // string method = 3;
+      // string contract = 3;
       case 3: {
         if (static_cast< ::google::protobuf::uint8>(tag) == (26 & 0xFF)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_contract()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->contract().data(), static_cast<int>(this->contract().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "pb.ContractCallRequest.contract"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // string method = 4;
+      case 4: {
+        if (static_cast< ::google::protobuf::uint8>(tag) == (34 & 0xFF)) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadString(
                 input, this->mutable_method()));
           DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
@@ -6368,15 +6536,22 @@ bool ContractCallRequest::MergePartialFromCodedStream(
         break;
       }
 
-      // string args = 4;
-      case 4: {
-        if (static_cast< ::google::protobuf::uint8>(tag) == (34 & 0xFF)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
-                input, this->mutable_args()));
+      // map<string, bytes> args = 5;
+      case 5: {
+        if (static_cast< ::google::protobuf::uint8>(tag) == (42 & 0xFF)) {
+          ContractCallRequest_ArgsEntry_DoNotUse::Parser< ::google::protobuf::internal::MapFieldLite<
+              ContractCallRequest_ArgsEntry_DoNotUse,
+              ::std::string, ::std::string,
+              ::google::protobuf::internal::WireFormatLite::TYPE_STRING,
+              ::google::protobuf::internal::WireFormatLite::TYPE_BYTES,
+              0 >,
+            ::google::protobuf::Map< ::std::string, ::std::string > > parser(&args_);
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
+              input, &parser));
           DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-            this->args().data(), static_cast<int>(this->args().length()),
+            parser.key().data(), static_cast<int>(parser.key().length()),
             ::google::protobuf::internal::WireFormatLite::PARSE,
-            "pb.ContractCallRequest.args"));
+            "pb.ContractCallRequest.ArgsEntry.key"));
         } else {
           goto handle_unusual;
         }
@@ -6426,24 +6601,69 @@ void ContractCallRequest::SerializeWithCachedSizes(
       2, this->module(), output);
   }
 
-  // string method = 3;
+  // string contract = 3;
+  if (this->contract().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->contract().data(), static_cast<int>(this->contract().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "pb.ContractCallRequest.contract");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      3, this->contract(), output);
+  }
+
+  // string method = 4;
   if (this->method().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->method().data(), static_cast<int>(this->method().length()),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
       "pb.ContractCallRequest.method");
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
-      3, this->method(), output);
+      4, this->method(), output);
   }
 
-  // string args = 4;
-  if (this->args().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-      this->args().data(), static_cast<int>(this->args().length()),
-      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "pb.ContractCallRequest.args");
-    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
-      4, this->args(), output);
+  // map<string, bytes> args = 5;
+  if (!this->args().empty()) {
+    typedef ::google::protobuf::Map< ::std::string, ::std::string >::const_pointer
+        ConstPtr;
+    typedef ConstPtr SortItem;
+    typedef ::google::protobuf::internal::CompareByDerefFirst<SortItem> Less;
+    struct Utf8Check {
+      static void Check(ConstPtr p) {
+        ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+          p->first.data(), static_cast<int>(p->first.length()),
+          ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+          "pb.ContractCallRequest.ArgsEntry.key");
+      }
+    };
+
+    if (output->IsSerializationDeterministic() &&
+        this->args().size() > 1) {
+      ::std::unique_ptr<SortItem[]> items(
+          new SortItem[this->args().size()]);
+      typedef ::google::protobuf::Map< ::std::string, ::std::string >::size_type size_type;
+      size_type n = 0;
+      for (::google::protobuf::Map< ::std::string, ::std::string >::const_iterator
+          it = this->args().begin();
+          it != this->args().end(); ++it, ++n) {
+        items[static_cast<ptrdiff_t>(n)] = SortItem(&*it);
+      }
+      ::std::sort(&items[0], &items[static_cast<ptrdiff_t>(n)], Less());
+      ::std::unique_ptr<ContractCallRequest_ArgsEntry_DoNotUse> entry;
+      for (size_type i = 0; i < n; i++) {
+        entry.reset(args_.NewEntryWrapper(items[static_cast<ptrdiff_t>(i)]->first, items[static_cast<ptrdiff_t>(i)]->second));
+        ::google::protobuf::internal::WireFormatLite::WriteMessage(5, *entry, output);
+        Utf8Check::Check(&(*items[static_cast<ptrdiff_t>(i)]));
+      }
+    } else {
+      ::std::unique_ptr<ContractCallRequest_ArgsEntry_DoNotUse> entry;
+      for (::google::protobuf::Map< ::std::string, ::std::string >::const_iterator
+          it = this->args().begin();
+          it != this->args().end(); ++it) {
+        entry.reset(args_.NewEntryWrapper(it->first, it->second));
+        ::google::protobuf::internal::WireFormatLite::WriteMessage(5, *entry, output);
+        Utf8Check::Check(&(*it));
+      }
+    }
   }
 
   output->WriteRaw(_internal_metadata_.unknown_fields().data(),
@@ -6461,6 +6681,20 @@ size_t ContractCallRequest::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
+  // map<string, bytes> args = 5;
+  total_size += 1 *
+      ::google::protobuf::internal::FromIntSize(this->args_size());
+  {
+    ::std::unique_ptr<ContractCallRequest_ArgsEntry_DoNotUse> entry;
+    for (::google::protobuf::Map< ::std::string, ::std::string >::const_iterator
+        it = this->args().begin();
+        it != this->args().end(); ++it) {
+      entry.reset(args_.NewEntryWrapper(it->first, it->second));
+      total_size += ::google::protobuf::internal::WireFormatLite::
+          MessageSizeNoVirtual(*entry);
+    }
+  }
+
   // string module = 2;
   if (this->module().size() > 0) {
     total_size += 1 +
@@ -6468,18 +6702,18 @@ size_t ContractCallRequest::ByteSizeLong() const {
         this->module());
   }
 
-  // string method = 3;
+  // string contract = 3;
+  if (this->contract().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::StringSize(
+        this->contract());
+  }
+
+  // string method = 4;
   if (this->method().size() > 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::StringSize(
         this->method());
-  }
-
-  // string args = 4;
-  if (this->args().size() > 0) {
-    total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::StringSize(
-        this->args());
   }
 
   // .pb.SyscallHeader header = 1;
@@ -6506,17 +6740,18 @@ void ContractCallRequest::MergeFrom(const ContractCallRequest& from) {
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
+  args_.MergeFrom(from.args_);
   if (from.module().size() > 0) {
 
     module_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.module_);
   }
+  if (from.contract().size() > 0) {
+
+    contract_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.contract_);
+  }
   if (from.method().size() > 0) {
 
     method_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.method_);
-  }
-  if (from.args().size() > 0) {
-
-    args_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.args_);
   }
   if (from.has_header()) {
     mutable_header()->::pb::SyscallHeader::MergeFrom(from.header());
@@ -6541,11 +6776,12 @@ void ContractCallRequest::Swap(ContractCallRequest* other) {
 void ContractCallRequest::InternalSwap(ContractCallRequest* other) {
   using std::swap;
   _internal_metadata_.Swap(&other->_internal_metadata_);
+  args_.Swap(&other->args_);
   module_.Swap(&other->module_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
     GetArenaNoVirtual());
-  method_.Swap(&other->method_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+  contract_.Swap(&other->contract_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
     GetArenaNoVirtual());
-  args_.Swap(&other->args_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+  method_.Swap(&other->method_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
     GetArenaNoVirtual());
   swap(header_, other->header_);
 }
@@ -6558,11 +6794,18 @@ void ContractCallRequest::InternalSwap(ContractCallRequest* other) {
 // ===================================================================
 
 void ContractCallResponse::InitAsDefaultInstance() {
+  ::pb::_ContractCallResponse_default_instance_._instance.get_mutable()->response_ = const_cast< ::pb::Response*>(
+      ::pb::Response::internal_default_instance());
 }
 class ContractCallResponse::HasBitSetters {
  public:
+  static const ::pb::Response& response(const ContractCallResponse* msg);
 };
 
+const ::pb::Response&
+ContractCallResponse::HasBitSetters::response(const ContractCallResponse* msg) {
+  return *msg->response_;
+}
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
 const int ContractCallResponse::kResponseFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
@@ -6576,9 +6819,10 @@ ContractCallResponse::ContractCallResponse(const ContractCallResponse& from)
   : ::google::protobuf::MessageLite(),
       _internal_metadata_(nullptr) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
-  response_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.response().size() > 0) {
-    response_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.response_);
+  if (from.has_response()) {
+    response_ = new ::pb::Response(*from.response_);
+  } else {
+    response_ = nullptr;
   }
   // @@protoc_insertion_point(copy_constructor:pb.ContractCallResponse)
 }
@@ -6586,7 +6830,7 @@ ContractCallResponse::ContractCallResponse(const ContractCallResponse& from)
 void ContractCallResponse::SharedCtor() {
   ::google::protobuf::internal::InitSCC(
       &scc_info_ContractCallResponse_contract_2eproto.base);
-  response_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  response_ = nullptr;
 }
 
 ContractCallResponse::~ContractCallResponse() {
@@ -6595,7 +6839,7 @@ ContractCallResponse::~ContractCallResponse() {
 }
 
 void ContractCallResponse::SharedDtor() {
-  response_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (this != internal_default_instance()) delete response_;
 }
 
 void ContractCallResponse::SetCachedSize(int size) const {
@@ -6613,7 +6857,10 @@ void ContractCallResponse::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  response_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (GetArenaNoVirtual() == nullptr && response_ != nullptr) {
+    delete response_;
+  }
+  response_ = nullptr;
   _internal_metadata_.Clear();
 }
 
@@ -6630,19 +6877,17 @@ const char* ContractCallResponse::_InternalParse(const char* begin, const char* 
     ptr = ::google::protobuf::io::Parse32(ptr, &tag);
     GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
     switch (tag >> 3) {
-      // bytes response = 1;
+      // .pb.Response response = 1;
       case 1: {
         if (static_cast<::google::protobuf::uint8>(tag) != 10) goto handle_unusual;
         ptr = ::google::protobuf::io::ReadSize(ptr, &size);
         GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+        parser_till_end = ::pb::Response::_InternalParse;
         object = msg->mutable_response();
-        if (size > end - ptr + ::google::protobuf::internal::ParseContext::kSlopBytes) {
-          parser_till_end = ::google::protobuf::internal::GreedyStringParser;
-          goto string_till_end;
-        }
-        GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheck(ptr, size, ctx));
-        ::google::protobuf::internal::InlineGreedyStringParser(object, ptr, size, ctx);
+        if (size > end - ptr) goto len_delim_till_end;
         ptr += size;
+        GOOGLE_PROTOBUF_PARSER_ASSERT(ctx->ParseExactRange(
+            {parser_till_end, object}, ptr - size, ptr));
         break;
       }
       default: {
@@ -6660,10 +6905,6 @@ const char* ContractCallResponse::_InternalParse(const char* begin, const char* 
     }  // switch
   }  // while
   return ptr;
-string_till_end:
-  static_cast<::std::string*>(object)->clear();
-  static_cast<::std::string*>(object)->reserve(size);
-  goto len_delim_till_end;
 len_delim_till_end:
   return ctx->StoreAndTailCall(ptr, end, {_InternalParse, msg},
                                {parser_till_end, object}, size);
@@ -6685,11 +6926,11 @@ bool ContractCallResponse::MergePartialFromCodedStream(
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // bytes response = 1;
+      // .pb.Response response = 1;
       case 1: {
         if (static_cast< ::google::protobuf::uint8>(tag) == (10 & 0xFF)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
-                input, this->mutable_response()));
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
+               input, mutable_response()));
         } else {
           goto handle_unusual;
         }
@@ -6723,10 +6964,10 @@ void ContractCallResponse::SerializeWithCachedSizes(
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // bytes response = 1;
-  if (this->response().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      1, this->response(), output);
+  // .pb.Response response = 1;
+  if (this->has_response()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessage(
+      1, HasBitSetters::response(this), output);
   }
 
   output->WriteRaw(_internal_metadata_.unknown_fields().data(),
@@ -6744,11 +6985,11 @@ size_t ContractCallResponse::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // bytes response = 1;
-  if (this->response().size() > 0) {
+  // .pb.Response response = 1;
+  if (this->has_response()) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::BytesSize(
-        this->response());
+      ::google::protobuf::internal::WireFormatLite::MessageSize(
+        *response_);
   }
 
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
@@ -6768,9 +7009,8 @@ void ContractCallResponse::MergeFrom(const ContractCallResponse& from) {
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  if (from.response().size() > 0) {
-
-    response_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.response_);
+  if (from.has_response()) {
+    mutable_response()->::pb::Response::MergeFrom(from.response());
   }
 }
 
@@ -6792,8 +7032,7 @@ void ContractCallResponse::Swap(ContractCallResponse* other) {
 void ContractCallResponse::InternalSwap(ContractCallResponse* other) {
   using std::swap;
   _internal_metadata_.Swap(&other->_internal_metadata_);
-  response_.Swap(&other->response_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-    GetArenaNoVirtual());
+  swap(response_, other->response_);
 }
 
 ::std::string ContractCallResponse::GetTypeName() const {
@@ -7896,8 +8135,11 @@ template<> PROTOBUF_NOINLINE ::pb::PingRequest* Arena::CreateMaybeMessage< ::pb:
 template<> PROTOBUF_NOINLINE ::pb::PingResponse* Arena::CreateMaybeMessage< ::pb::PingResponse >(Arena* arena) {
   return Arena::CreateInternal< ::pb::PingResponse >(arena);
 }
-template<> PROTOBUF_NOINLINE ::pb::CallRequest* Arena::CreateMaybeMessage< ::pb::CallRequest >(Arena* arena) {
-  return Arena::CreateInternal< ::pb::CallRequest >(arena);
+template<> PROTOBUF_NOINLINE ::pb::NativeCallRequest* Arena::CreateMaybeMessage< ::pb::NativeCallRequest >(Arena* arena) {
+  return Arena::CreateInternal< ::pb::NativeCallRequest >(arena);
+}
+template<> PROTOBUF_NOINLINE ::pb::NativeCallResponse* Arena::CreateMaybeMessage< ::pb::NativeCallResponse >(Arena* arena) {
+  return Arena::CreateInternal< ::pb::NativeCallResponse >(arena);
 }
 template<> PROTOBUF_NOINLINE ::pb::CallArgs_ArgsEntry_DoNotUse* Arena::CreateMaybeMessage< ::pb::CallArgs_ArgsEntry_DoNotUse >(Arena* arena) {
   return Arena::CreateInternal< ::pb::CallArgs_ArgsEntry_DoNotUse >(arena);
@@ -7952,6 +8194,9 @@ template<> PROTOBUF_NOINLINE ::pb::TransferRequest* Arena::CreateMaybeMessage< :
 }
 template<> PROTOBUF_NOINLINE ::pb::TransferResponse* Arena::CreateMaybeMessage< ::pb::TransferResponse >(Arena* arena) {
   return Arena::CreateInternal< ::pb::TransferResponse >(arena);
+}
+template<> PROTOBUF_NOINLINE ::pb::ContractCallRequest_ArgsEntry_DoNotUse* Arena::CreateMaybeMessage< ::pb::ContractCallRequest_ArgsEntry_DoNotUse >(Arena* arena) {
+  return Arena::CreateInternal< ::pb::ContractCallRequest_ArgsEntry_DoNotUse >(arena);
 }
 template<> PROTOBUF_NOINLINE ::pb::ContractCallRequest* Arena::CreateMaybeMessage< ::pb::ContractCallRequest >(Arena* arena) {
   return Arena::CreateInternal< ::pb::ContractCallRequest >(arena);
