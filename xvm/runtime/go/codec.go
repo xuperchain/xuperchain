@@ -22,31 +22,31 @@ func NewDecoder(mem []byte, offset uint32) *Decoder {
 }
 
 func (r *Decoder) readSlice(v reflect.Value, t reflect.Type) {
-	var ptr, len, cap int64
+	var ptr, length, capacity int64
 	binary.Read(r.buf, binary.LittleEndian, &ptr)
-	binary.Read(r.buf, binary.LittleEndian, &len)
-	binary.Read(r.buf, binary.LittleEndian, &cap)
+	binary.Read(r.buf, binary.LittleEndian, &length)
+	binary.Read(r.buf, binary.LittleEndian, &capacity)
 	if t.Elem().Kind() == reflect.Uint8 {
-		v.SetBytes(r.mem[ptr : ptr+len])
+		v.SetBytes(r.mem[ptr : ptr+length])
 		return
 	}
 	s := (*reflect.SliceHeader)(unsafe.Pointer(v.Addr().Pointer()))
 	s.Data = uintptr(unsafe.Pointer(&r.mem[ptr]))
-	s.Len = int(len)
-	s.Cap = int(cap)
-	// v.Set(reflect.MakeSlice(t, int(len), int(cap)))
+	s.Len = int(length)
+	s.Cap = int(capacity)
+	// v.Set(reflect.MakeSlice(t, int(length), int(capacity)))
 	// buf := bytes.NewBuffer(r.mem[ptr:])
-	// for i := 0; i < int(len); i++ {
+	// for i := 0; i < int(length); i++ {
 	// 	elem := v.Index(i)
 	// 	binary.Read(buf, binary.LittleEndian, elem.Addr().Interface())
 	// }
 }
 
 func (r *Decoder) readString() string {
-	var ptr, len int64
+	var ptr, length int64
 	binary.Read(r.buf, binary.LittleEndian, &ptr)
-	binary.Read(r.buf, binary.LittleEndian, &len)
-	return string(r.mem[ptr : ptr+len])
+	binary.Read(r.buf, binary.LittleEndian, &length)
+	return string(r.mem[ptr : ptr+length])
 }
 
 // Decode decode go type from memory, ref must be a pointer type
