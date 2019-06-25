@@ -12,7 +12,6 @@ import (
 	"sync"
 
 	"github.com/golang/protobuf/proto"
-	kverr "github.com/syndtr/goleveldb/leveldb/errors"
 	log "github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperunion/common"
 	crypto_client "github.com/xuperchain/xuperunion/crypto/client"
@@ -129,7 +128,7 @@ func NewLedger(storePath string, xlog log.Logger, otherPaths []string, kvEngineT
 	ledger.cryptoClient = cryptoClient
 	metaBuf, metaErr := ledger.metaTable.Get([]byte(""))
 	emptyLedger := false
-	if metaErr != nil && metaErr.Error() == kverr.ErrNotFound.Error() { //说明是新创建的账本
+	if metaErr != nil && common.NormalizedKVError(metaErr) == common.ErrKVNotFound { //说明是新创建的账本
 		metaBuf, pbErr := proto.Marshal(ledger.meta)
 		if pbErr != nil {
 			xlog.Warn("marshal meta fail", "pb_err", pbErr)
@@ -340,7 +339,7 @@ func (l *Ledger) saveBlock(block *pb.InternalBlock, batchWrite kvdb.Batch) error
 //根据blockid获取一个Block, 只包含区块头
 func (l *Ledger) fetchBlock(blockid []byte) (*pb.InternalBlock, error) {
 	blockBuf, findErr := l.blocksTable.Get(blockid)
-	if findErr != nil && findErr.Error() == kverr.ErrNotFound.Error() {
+	if common.NormalizedKVError(findErr) == common.ErrKVNotFound {
 		l.xlog.Warn("block can not be found", "findErr", findErr, "blockid", fmt.Sprintf("%x", blockid))
 		return nil, findErr
 	} else if findErr != nil {
@@ -705,7 +704,7 @@ func (l *Ledger) ExistBlock(blockid []byte) bool {
 func (l *Ledger) queryBlock(blockid []byte, needBody bool) (*pb.InternalBlock, error) {
 	pbBlockBuf, err := l.blocksTable.Get(blockid)
 	if err != nil {
-		if err == kverr.ErrNotFound {
+		if common.NormalizedKVError(err) == common.ErrKVNotFound {
 			err = ErrBlockNotExist
 		}
 		return nil, err
@@ -767,7 +766,7 @@ func (l *Ledger) QueryTransaction(txid []byte) (*pb.Transaction, error) {
 	table := l.confirmedTable
 	pbTxBuf, kvErr := table.Get(txid)
 	if kvErr != nil {
-		if kvErr.Error() == kverr.ErrNotFound.Error() {
+		if common.NormalizedKVError(kvErr) == common.ErrKVNotFound {
 			return nil, ErrTxNotFound
 		}
 		return nil, kvErr
@@ -938,7 +937,7 @@ func (l *Ledger) GetPendingBlock(blockID []byte) (*pb.Block, error) {
 	l.xlog.Debug("get pending block", "bockid", fmt.Sprintf("%x", blockID))
 	blockBuf, ldbErr := l.pendingTable.Get(blockID)
 	if ldbErr != nil {
-		if ldbErr.Error() != kverr.ErrNotFound.Error() { //其他kv错误
+		if common.NormalizedKVError(ldbErr) != common.ErrKVNotFound { //其他kv错误
 			l.xlog.Warn("get pending block fail", "err", ldbErr, "blockid", fmt.Sprintf("%x", blockID))
 		} else { //不存在表里面
 			l.xlog.Debug("the block not in pending blocks", "blocid", fmt.Sprintf("%x", blockID))
@@ -974,7 +973,7 @@ func (l *Ledger) QueryBlockByHeight(height int64) (*pb.InternalBlock, error) {
 	sHeight := []byte(fmt.Sprintf("%020d", height))
 	blockID, kvErr := l.heightTable.Get(sHeight)
 	if kvErr != nil {
-		if kvErr.Error() == kverr.ErrNotFound.Error() {
+		if common.NormalizedKVError(kvErr) == common.ErrKVNotFound {
 			return nil, ErrBlockNotExist
 		}
 		return nil, kvErr
