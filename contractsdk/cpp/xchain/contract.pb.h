@@ -33,7 +33,6 @@
 #include <google/protobuf/map.h>  // IWYU pragma: export
 #include <google/protobuf/map_entry_lite.h>
 #include <google/protobuf/map_field_lite.h>
-#include <google/protobuf/generated_enum_util.h>
 // @@protoc_insertion_point(includes)
 #include <google/protobuf/port_def.inc>
 #define PROTOBUF_INTERNAL_EXPORT_contract_2eproto
@@ -44,7 +43,7 @@ struct TableStruct_contract_2eproto {
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
   static const ::google::protobuf::internal::AuxillaryParseTableField aux[]
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
-  static const ::google::protobuf::internal::ParseTable schema[27]
+  static const ::google::protobuf::internal::ParseTable schema[29]
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
   static const ::google::protobuf::internal::FieldMetadata field_metadata[];
   static const ::google::protobuf::internal::SerializationTable serialization_table[];
@@ -57,12 +56,12 @@ extern CallArgsDefaultTypeInternal _CallArgs_default_instance_;
 class CallArgs_ArgsEntry_DoNotUse;
 class CallArgs_ArgsEntry_DoNotUseDefaultTypeInternal;
 extern CallArgs_ArgsEntry_DoNotUseDefaultTypeInternal _CallArgs_ArgsEntry_DoNotUse_default_instance_;
-class CallRequest;
-class CallRequestDefaultTypeInternal;
-extern CallRequestDefaultTypeInternal _CallRequest_default_instance_;
 class ContractCallRequest;
 class ContractCallRequestDefaultTypeInternal;
 extern ContractCallRequestDefaultTypeInternal _ContractCallRequest_default_instance_;
+class ContractCallRequest_ArgsEntry_DoNotUse;
+class ContractCallRequest_ArgsEntry_DoNotUseDefaultTypeInternal;
+extern ContractCallRequest_ArgsEntry_DoNotUseDefaultTypeInternal _ContractCallRequest_ArgsEntry_DoNotUse_default_instance_;
 class ContractCallResponse;
 class ContractCallResponseDefaultTypeInternal;
 extern ContractCallResponseDefaultTypeInternal _ContractCallResponse_default_instance_;
@@ -90,6 +89,12 @@ extern IteratorRequestDefaultTypeInternal _IteratorRequest_default_instance_;
 class IteratorResponse;
 class IteratorResponseDefaultTypeInternal;
 extern IteratorResponseDefaultTypeInternal _IteratorResponse_default_instance_;
+class NativeCallRequest;
+class NativeCallRequestDefaultTypeInternal;
+extern NativeCallRequestDefaultTypeInternal _NativeCallRequest_default_instance_;
+class NativeCallResponse;
+class NativeCallResponseDefaultTypeInternal;
+extern NativeCallResponseDefaultTypeInternal _NativeCallResponse_default_instance_;
 class PingRequest;
 class PingRequestDefaultTypeInternal;
 extern PingRequestDefaultTypeInternal _PingRequest_default_instance_;
@@ -137,8 +142,8 @@ namespace google {
 namespace protobuf {
 template<> ::pb::CallArgs* Arena::CreateMaybeMessage<::pb::CallArgs>(Arena*);
 template<> ::pb::CallArgs_ArgsEntry_DoNotUse* Arena::CreateMaybeMessage<::pb::CallArgs_ArgsEntry_DoNotUse>(Arena*);
-template<> ::pb::CallRequest* Arena::CreateMaybeMessage<::pb::CallRequest>(Arena*);
 template<> ::pb::ContractCallRequest* Arena::CreateMaybeMessage<::pb::ContractCallRequest>(Arena*);
+template<> ::pb::ContractCallRequest_ArgsEntry_DoNotUse* Arena::CreateMaybeMessage<::pb::ContractCallRequest_ArgsEntry_DoNotUse>(Arena*);
 template<> ::pb::ContractCallResponse* Arena::CreateMaybeMessage<::pb::ContractCallResponse>(Arena*);
 template<> ::pb::DeleteRequest* Arena::CreateMaybeMessage<::pb::DeleteRequest>(Arena*);
 template<> ::pb::DeleteResponse* Arena::CreateMaybeMessage<::pb::DeleteResponse>(Arena*);
@@ -148,6 +153,8 @@ template<> ::pb::GetResponse* Arena::CreateMaybeMessage<::pb::GetResponse>(Arena
 template<> ::pb::IteratorItem* Arena::CreateMaybeMessage<::pb::IteratorItem>(Arena*);
 template<> ::pb::IteratorRequest* Arena::CreateMaybeMessage<::pb::IteratorRequest>(Arena*);
 template<> ::pb::IteratorResponse* Arena::CreateMaybeMessage<::pb::IteratorResponse>(Arena*);
+template<> ::pb::NativeCallRequest* Arena::CreateMaybeMessage<::pb::NativeCallRequest>(Arena*);
+template<> ::pb::NativeCallResponse* Arena::CreateMaybeMessage<::pb::NativeCallResponse>(Arena*);
 template<> ::pb::PingRequest* Arena::CreateMaybeMessage<::pb::PingRequest>(Arena*);
 template<> ::pb::PingResponse* Arena::CreateMaybeMessage<::pb::PingResponse>(Arena*);
 template<> ::pb::PutRequest* Arena::CreateMaybeMessage<::pb::PutRequest>(Arena*);
@@ -165,18 +172,6 @@ template<> ::pb::TransferResponse* Arena::CreateMaybeMessage<::pb::TransferRespo
 }  // namespace protobuf
 }  // namespace google
 namespace pb {
-
-enum Method {
-  INITIALIZE = 0,
-  INVOKE = 1,
-  QUERY = 2,
-  Method_INT_MIN_SENTINEL_DO_NOT_USE_ = std::numeric_limits<::google::protobuf::int32>::min(),
-  Method_INT_MAX_SENTINEL_DO_NOT_USE_ = std::numeric_limits<::google::protobuf::int32>::max()
-};
-bool Method_IsValid(int value);
-const Method Method_MIN = INITIALIZE;
-const Method Method_MAX = QUERY;
-const int Method_ARRAYSIZE = Method_MAX + 1;
 
 // ===================================================================
 
@@ -382,25 +377,25 @@ class PingResponse :
 };
 // -------------------------------------------------------------------
 
-class CallRequest :
-    public ::google::protobuf::MessageLite /* @@protoc_insertion_point(class_definition:pb.CallRequest) */ {
+class NativeCallRequest :
+    public ::google::protobuf::MessageLite /* @@protoc_insertion_point(class_definition:pb.NativeCallRequest) */ {
  public:
-  CallRequest();
-  virtual ~CallRequest();
+  NativeCallRequest();
+  virtual ~NativeCallRequest();
 
-  CallRequest(const CallRequest& from);
+  NativeCallRequest(const NativeCallRequest& from);
 
-  inline CallRequest& operator=(const CallRequest& from) {
+  inline NativeCallRequest& operator=(const NativeCallRequest& from) {
     CopyFrom(from);
     return *this;
   }
   #if LANG_CXX11
-  CallRequest(CallRequest&& from) noexcept
-    : CallRequest() {
+  NativeCallRequest(NativeCallRequest&& from) noexcept
+    : NativeCallRequest() {
     *this = ::std::move(from);
   }
 
-  inline CallRequest& operator=(CallRequest&& from) noexcept {
+  inline NativeCallRequest& operator=(NativeCallRequest&& from) noexcept {
     if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
       if (this != &from) InternalSwap(&from);
     } else {
@@ -409,34 +404,34 @@ class CallRequest :
     return *this;
   }
   #endif
-  static const CallRequest& default_instance();
+  static const NativeCallRequest& default_instance();
 
   static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
-  static inline const CallRequest* internal_default_instance() {
-    return reinterpret_cast<const CallRequest*>(
-               &_CallRequest_default_instance_);
+  static inline const NativeCallRequest* internal_default_instance() {
+    return reinterpret_cast<const NativeCallRequest*>(
+               &_NativeCallRequest_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
     2;
 
-  void Swap(CallRequest* other);
-  friend void swap(CallRequest& a, CallRequest& b) {
+  void Swap(NativeCallRequest* other);
+  friend void swap(NativeCallRequest& a, NativeCallRequest& b) {
     a.Swap(&b);
   }
 
   // implements Message ----------------------------------------------
 
-  inline CallRequest* New() const final {
-    return CreateMaybeMessage<CallRequest>(nullptr);
+  inline NativeCallRequest* New() const final {
+    return CreateMaybeMessage<NativeCallRequest>(nullptr);
   }
 
-  CallRequest* New(::google::protobuf::Arena* arena) const final {
-    return CreateMaybeMessage<CallRequest>(arena);
+  NativeCallRequest* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<NativeCallRequest>(arena);
   }
   void CheckTypeAndMergeFrom(const ::google::protobuf::MessageLite& from)
     final;
-  void CopyFrom(const CallRequest& from);
-  void MergeFrom(const CallRequest& from);
+  void CopyFrom(const NativeCallRequest& from);
+  void MergeFrom(const NativeCallRequest& from);
   PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
   bool IsInitialized() const final;
 
@@ -457,7 +452,7 @@ class CallRequest :
   void SharedCtor();
   void SharedDtor();
   void SetCachedSize(int size) const;
-  void InternalSwap(CallRequest* other);
+  void InternalSwap(NativeCallRequest* other);
   private:
   inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
     return nullptr;
@@ -473,70 +468,119 @@ class CallRequest :
 
   // accessors -------------------------------------------------------
 
-  // bytes txid = 3;
-  void clear_txid();
-  static const int kTxidFieldNumber = 3;
-  const ::std::string& txid() const;
-  void set_txid(const ::std::string& value);
-  #if LANG_CXX11
-  void set_txid(::std::string&& value);
-  #endif
-  void set_txid(const char* value);
-  void set_txid(const void* value, size_t size);
-  ::std::string* mutable_txid();
-  ::std::string* release_txid();
-  void set_allocated_txid(::std::string* txid);
-
-  // bytes args = 4;
-  void clear_args();
-  static const int kArgsFieldNumber = 4;
-  const ::std::string& args() const;
-  void set_args(const ::std::string& value);
-  #if LANG_CXX11
-  void set_args(::std::string&& value);
-  #endif
-  void set_args(const char* value);
-  void set_args(const void* value, size_t size);
-  ::std::string* mutable_args();
-  ::std::string* release_args();
-  void set_allocated_args(::std::string* args);
-
-  // string caller = 5;
-  void clear_caller();
-  static const int kCallerFieldNumber = 5;
-  const ::std::string& caller() const;
-  void set_caller(const ::std::string& value);
-  #if LANG_CXX11
-  void set_caller(::std::string&& value);
-  #endif
-  void set_caller(const char* value);
-  void set_caller(const char* value, size_t size);
-  ::std::string* mutable_caller();
-  ::std::string* release_caller();
-  void set_allocated_caller(::std::string* caller);
-
   // int64 ctxid = 1;
   void clear_ctxid();
   static const int kCtxidFieldNumber = 1;
   ::google::protobuf::int64 ctxid() const;
   void set_ctxid(::google::protobuf::int64 value);
 
-  // .pb.Method method = 2;
-  void clear_method();
-  static const int kMethodFieldNumber = 2;
-  ::pb::Method method() const;
-  void set_method(::pb::Method value);
-
-  // @@protoc_insertion_point(class_scope:pb.CallRequest)
+  // @@protoc_insertion_point(class_scope:pb.NativeCallRequest)
  private:
   class HasBitSetters;
 
   ::google::protobuf::internal::InternalMetadataWithArenaLite _internal_metadata_;
-  ::google::protobuf::internal::ArenaStringPtr txid_;
-  ::google::protobuf::internal::ArenaStringPtr args_;
-  ::google::protobuf::internal::ArenaStringPtr caller_;
   ::google::protobuf::int64 ctxid_;
-  int method_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  friend struct ::TableStruct_contract_2eproto;
+};
+// -------------------------------------------------------------------
+
+class NativeCallResponse :
+    public ::google::protobuf::MessageLite /* @@protoc_insertion_point(class_definition:pb.NativeCallResponse) */ {
+ public:
+  NativeCallResponse();
+  virtual ~NativeCallResponse();
+
+  NativeCallResponse(const NativeCallResponse& from);
+
+  inline NativeCallResponse& operator=(const NativeCallResponse& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  NativeCallResponse(NativeCallResponse&& from) noexcept
+    : NativeCallResponse() {
+    *this = ::std::move(from);
+  }
+
+  inline NativeCallResponse& operator=(NativeCallResponse&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const NativeCallResponse& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const NativeCallResponse* internal_default_instance() {
+    return reinterpret_cast<const NativeCallResponse*>(
+               &_NativeCallResponse_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    3;
+
+  void Swap(NativeCallResponse* other);
+  friend void swap(NativeCallResponse& a, NativeCallResponse& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline NativeCallResponse* New() const final {
+    return CreateMaybeMessage<NativeCallResponse>(nullptr);
+  }
+
+  NativeCallResponse* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<NativeCallResponse>(arena);
+  }
+  void CheckTypeAndMergeFrom(const ::google::protobuf::MessageLite& from)
+    final;
+  void CopyFrom(const NativeCallResponse& from);
+  void MergeFrom(const NativeCallResponse& from);
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  #if GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+  static const char* _InternalParse(const char* begin, const char* end, void* object, ::google::protobuf::internal::ParseContext* ctx);
+  ::google::protobuf::internal::ParseFunc _ParseFunc() const final { return _InternalParse; }
+  #else
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  #endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  void DiscardUnknownFields();
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  void InternalSwap(NativeCallResponse* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return nullptr;
+  }
+  inline void* MaybeArenaPtr() const {
+    return nullptr;
+  }
+  public:
+
+  ::std::string GetTypeName() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // @@protoc_insertion_point(class_scope:pb.NativeCallResponse)
+ private:
+  class HasBitSetters;
+
+  ::google::protobuf::internal::InternalMetadataWithArenaLite _internal_metadata_;
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_contract_2eproto;
 };
@@ -599,7 +643,7 @@ class CallArgs :
                &_CallArgs_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    4;
+    5;
 
   void Swap(CallArgs* other);
   friend void swap(CallArgs& a, CallArgs& b) {
@@ -665,6 +709,28 @@ class CallArgs :
   ::google::protobuf::Map< ::std::string, ::std::string >*
       mutable_args();
 
+  // repeated string auth_require = 4;
+  int auth_require_size() const;
+  void clear_auth_require();
+  static const int kAuthRequireFieldNumber = 4;
+  const ::std::string& auth_require(int index) const;
+  ::std::string* mutable_auth_require(int index);
+  void set_auth_require(int index, const ::std::string& value);
+  #if LANG_CXX11
+  void set_auth_require(int index, ::std::string&& value);
+  #endif
+  void set_auth_require(int index, const char* value);
+  void set_auth_require(int index, const char* value, size_t size);
+  ::std::string* add_auth_require();
+  void add_auth_require(const ::std::string& value);
+  #if LANG_CXX11
+  void add_auth_require(::std::string&& value);
+  #endif
+  void add_auth_require(const char* value);
+  void add_auth_require(const char* value, size_t size);
+  const ::google::protobuf::RepeatedPtrField<::std::string>& auth_require() const;
+  ::google::protobuf::RepeatedPtrField<::std::string>* mutable_auth_require();
+
   // string method = 1;
   void clear_method();
   static const int kMethodFieldNumber = 1;
@@ -679,6 +745,20 @@ class CallArgs :
   ::std::string* release_method();
   void set_allocated_method(::std::string* method);
 
+  // string initiator = 3;
+  void clear_initiator();
+  static const int kInitiatorFieldNumber = 3;
+  const ::std::string& initiator() const;
+  void set_initiator(const ::std::string& value);
+  #if LANG_CXX11
+  void set_initiator(::std::string&& value);
+  #endif
+  void set_initiator(const char* value);
+  void set_initiator(const char* value, size_t size);
+  ::std::string* mutable_initiator();
+  ::std::string* release_initiator();
+  void set_allocated_initiator(::std::string* initiator);
+
   // @@protoc_insertion_point(class_scope:pb.CallArgs)
  private:
   class HasBitSetters;
@@ -690,7 +770,9 @@ class CallArgs :
       ::google::protobuf::internal::WireFormatLite::TYPE_STRING,
       ::google::protobuf::internal::WireFormatLite::TYPE_BYTES,
       0 > args_;
+  ::google::protobuf::RepeatedPtrField<::std::string> auth_require_;
   ::google::protobuf::internal::ArenaStringPtr method_;
+  ::google::protobuf::internal::ArenaStringPtr initiator_;
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_contract_2eproto;
 };
@@ -731,7 +813,7 @@ class SyscallHeader :
                &_SyscallHeader_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    5;
+    6;
 
   void Swap(SyscallHeader* other);
   friend void swap(SyscallHeader& a, SyscallHeader& b) {
@@ -839,7 +921,7 @@ class PutRequest :
                &_PutRequest_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    6;
+    7;
 
   void Swap(PutRequest* other);
   friend void swap(PutRequest& a, PutRequest& b) {
@@ -980,7 +1062,7 @@ class PutResponse :
                &_PutResponse_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    7;
+    8;
 
   void Swap(PutResponse* other);
   friend void swap(PutResponse& a, PutResponse& b) {
@@ -1081,7 +1163,7 @@ class GetRequest :
                &_GetRequest_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    8;
+    9;
 
   void Swap(GetRequest* other);
   friend void swap(GetRequest& a, GetRequest& b) {
@@ -1207,7 +1289,7 @@ class GetResponse :
                &_GetResponse_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    9;
+    10;
 
   void Swap(GetResponse* other);
   friend void swap(GetResponse& a, GetResponse& b) {
@@ -1323,7 +1405,7 @@ class DeleteRequest :
                &_DeleteRequest_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    10;
+    11;
 
   void Swap(DeleteRequest* other);
   friend void swap(DeleteRequest& a, DeleteRequest& b) {
@@ -1449,7 +1531,7 @@ class DeleteResponse :
                &_DeleteResponse_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    11;
+    12;
 
   void Swap(DeleteResponse* other);
   friend void swap(DeleteResponse& a, DeleteResponse& b) {
@@ -1550,7 +1632,7 @@ class IteratorRequest :
                &_IteratorRequest_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    12;
+    13;
 
   void Swap(IteratorRequest* other);
   friend void swap(IteratorRequest& a, IteratorRequest& b) {
@@ -1698,7 +1780,7 @@ class IteratorItem :
                &_IteratorItem_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    13;
+    14;
 
   void Swap(IteratorItem* other);
   friend void swap(IteratorItem& a, IteratorItem& b) {
@@ -1829,7 +1911,7 @@ class IteratorResponse :
                &_IteratorResponse_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    14;
+    15;
 
   void Swap(IteratorResponse* other);
   friend void swap(IteratorResponse& a, IteratorResponse& b) {
@@ -1943,7 +2025,7 @@ class QueryTxRequest :
                &_QueryTxRequest_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    15;
+    16;
 
   void Swap(QueryTxRequest* other);
   friend void swap(QueryTxRequest& a, QueryTxRequest& b) {
@@ -2069,7 +2151,7 @@ class QueryTxResponse :
                &_QueryTxResponse_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    16;
+    17;
 
   void Swap(QueryTxResponse* other);
   friend void swap(QueryTxResponse& a, QueryTxResponse& b) {
@@ -2185,7 +2267,7 @@ class QueryBlockRequest :
                &_QueryBlockRequest_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    17;
+    18;
 
   void Swap(QueryBlockRequest* other);
   friend void swap(QueryBlockRequest& a, QueryBlockRequest& b) {
@@ -2311,7 +2393,7 @@ class QueryBlockResponse :
                &_QueryBlockResponse_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    18;
+    19;
 
   void Swap(QueryBlockResponse* other);
   friend void swap(QueryBlockResponse& a, QueryBlockResponse& b) {
@@ -2427,7 +2509,7 @@ class TransferRequest :
                &_TransferRequest_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    19;
+    20;
 
   void Swap(TransferRequest* other);
   friend void swap(TransferRequest& a, TransferRequest& b) {
@@ -2568,7 +2650,7 @@ class TransferResponse :
                &_TransferResponse_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    20;
+    21;
 
   void Swap(TransferResponse* other);
   friend void swap(TransferResponse& a, TransferResponse& b) {
@@ -2634,6 +2716,28 @@ class TransferResponse :
 };
 // -------------------------------------------------------------------
 
+class ContractCallRequest_ArgsEntry_DoNotUse : public ::google::protobuf::internal::MapEntryLite<ContractCallRequest_ArgsEntry_DoNotUse, 
+    ::std::string, ::std::string,
+    ::google::protobuf::internal::WireFormatLite::TYPE_STRING,
+    ::google::protobuf::internal::WireFormatLite::TYPE_BYTES,
+    0 > {
+public:
+#if GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+static bool _ParseMap(const char* begin, const char* end, void* object, ::google::protobuf::internal::ParseContext* ctx);
+#endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+  typedef ::google::protobuf::internal::MapEntryLite<ContractCallRequest_ArgsEntry_DoNotUse, 
+    ::std::string, ::std::string,
+    ::google::protobuf::internal::WireFormatLite::TYPE_STRING,
+    ::google::protobuf::internal::WireFormatLite::TYPE_BYTES,
+    0 > SuperType;
+  ContractCallRequest_ArgsEntry_DoNotUse();
+  ContractCallRequest_ArgsEntry_DoNotUse(::google::protobuf::Arena* arena);
+  void MergeFrom(const ContractCallRequest_ArgsEntry_DoNotUse& other);
+  static const ContractCallRequest_ArgsEntry_DoNotUse* internal_default_instance() { return reinterpret_cast<const ContractCallRequest_ArgsEntry_DoNotUse*>(&_ContractCallRequest_ArgsEntry_DoNotUse_default_instance_); }
+};
+
+// -------------------------------------------------------------------
+
 class ContractCallRequest :
     public ::google::protobuf::MessageLite /* @@protoc_insertion_point(class_definition:pb.ContractCallRequest) */ {
  public:
@@ -2669,7 +2773,7 @@ class ContractCallRequest :
                &_ContractCallRequest_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    21;
+    23;
 
   void Swap(ContractCallRequest* other);
   friend void swap(ContractCallRequest& a, ContractCallRequest& b) {
@@ -2723,7 +2827,17 @@ class ContractCallRequest :
 
   // nested types ----------------------------------------------------
 
+
   // accessors -------------------------------------------------------
+
+  // map<string, bytes> args = 5;
+  int args_size() const;
+  void clear_args();
+  static const int kArgsFieldNumber = 5;
+  const ::google::protobuf::Map< ::std::string, ::std::string >&
+      args() const;
+  ::google::protobuf::Map< ::std::string, ::std::string >*
+      mutable_args();
 
   // string module = 2;
   void clear_module();
@@ -2739,9 +2853,23 @@ class ContractCallRequest :
   ::std::string* release_module();
   void set_allocated_module(::std::string* module);
 
-  // string method = 3;
+  // string contract = 3;
+  void clear_contract();
+  static const int kContractFieldNumber = 3;
+  const ::std::string& contract() const;
+  void set_contract(const ::std::string& value);
+  #if LANG_CXX11
+  void set_contract(::std::string&& value);
+  #endif
+  void set_contract(const char* value);
+  void set_contract(const char* value, size_t size);
+  ::std::string* mutable_contract();
+  ::std::string* release_contract();
+  void set_allocated_contract(::std::string* contract);
+
+  // string method = 4;
   void clear_method();
-  static const int kMethodFieldNumber = 3;
+  static const int kMethodFieldNumber = 4;
   const ::std::string& method() const;
   void set_method(const ::std::string& value);
   #if LANG_CXX11
@@ -2752,20 +2880,6 @@ class ContractCallRequest :
   ::std::string* mutable_method();
   ::std::string* release_method();
   void set_allocated_method(::std::string* method);
-
-  // string args = 4;
-  void clear_args();
-  static const int kArgsFieldNumber = 4;
-  const ::std::string& args() const;
-  void set_args(const ::std::string& value);
-  #if LANG_CXX11
-  void set_args(::std::string&& value);
-  #endif
-  void set_args(const char* value);
-  void set_args(const char* value, size_t size);
-  ::std::string* mutable_args();
-  ::std::string* release_args();
-  void set_allocated_args(::std::string* args);
 
   // .pb.SyscallHeader header = 1;
   bool has_header() const;
@@ -2781,9 +2895,15 @@ class ContractCallRequest :
   class HasBitSetters;
 
   ::google::protobuf::internal::InternalMetadataWithArenaLite _internal_metadata_;
+  ::google::protobuf::internal::MapFieldLite<
+      ContractCallRequest_ArgsEntry_DoNotUse,
+      ::std::string, ::std::string,
+      ::google::protobuf::internal::WireFormatLite::TYPE_STRING,
+      ::google::protobuf::internal::WireFormatLite::TYPE_BYTES,
+      0 > args_;
   ::google::protobuf::internal::ArenaStringPtr module_;
+  ::google::protobuf::internal::ArenaStringPtr contract_;
   ::google::protobuf::internal::ArenaStringPtr method_;
-  ::google::protobuf::internal::ArenaStringPtr args_;
   ::pb::SyscallHeader* header_;
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_contract_2eproto;
@@ -2825,7 +2945,7 @@ class ContractCallResponse :
                &_ContractCallResponse_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    22;
+    24;
 
   void Swap(ContractCallResponse* other);
   friend void swap(ContractCallResponse& a, ContractCallResponse& b) {
@@ -2881,26 +3001,21 @@ class ContractCallResponse :
 
   // accessors -------------------------------------------------------
 
-  // bytes response = 1;
+  // .pb.Response response = 1;
+  bool has_response() const;
   void clear_response();
   static const int kResponseFieldNumber = 1;
-  const ::std::string& response() const;
-  void set_response(const ::std::string& value);
-  #if LANG_CXX11
-  void set_response(::std::string&& value);
-  #endif
-  void set_response(const char* value);
-  void set_response(const void* value, size_t size);
-  ::std::string* mutable_response();
-  ::std::string* release_response();
-  void set_allocated_response(::std::string* response);
+  const ::pb::Response& response() const;
+  ::pb::Response* release_response();
+  ::pb::Response* mutable_response();
+  void set_allocated_response(::pb::Response* response);
 
   // @@protoc_insertion_point(class_scope:pb.ContractCallResponse)
  private:
   class HasBitSetters;
 
   ::google::protobuf::internal::InternalMetadataWithArenaLite _internal_metadata_;
-  ::google::protobuf::internal::ArenaStringPtr response_;
+  ::pb::Response* response_;
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_contract_2eproto;
 };
@@ -2941,7 +3056,7 @@ class Response :
                &_Response_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    23;
+    25;
 
   void Swap(Response* other);
   friend void swap(Response& a, Response& b) {
@@ -3079,7 +3194,7 @@ class SetOutputRequest :
                &_SetOutputRequest_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    24;
+    26;
 
   void Swap(SetOutputRequest* other);
   friend void swap(SetOutputRequest& a, SetOutputRequest& b) {
@@ -3200,7 +3315,7 @@ class SetOutputResponse :
                &_SetOutputResponse_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    25;
+    27;
 
   void Swap(SetOutputResponse* other);
   friend void swap(SetOutputResponse& a, SetOutputResponse& b) {
@@ -3301,7 +3416,7 @@ class GetCallArgsRequest :
                &_GetCallArgsRequest_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    26;
+    28;
 
   void Swap(GetCallArgsRequest* other);
   friend void swap(GetCallArgsRequest& a, GetCallArgsRequest& b) {
@@ -3392,194 +3507,25 @@ class GetCallArgsRequest :
 
 // -------------------------------------------------------------------
 
-// CallRequest
+// NativeCallRequest
 
 // int64 ctxid = 1;
-inline void CallRequest::clear_ctxid() {
+inline void NativeCallRequest::clear_ctxid() {
   ctxid_ = PROTOBUF_LONGLONG(0);
 }
-inline ::google::protobuf::int64 CallRequest::ctxid() const {
-  // @@protoc_insertion_point(field_get:pb.CallRequest.ctxid)
+inline ::google::protobuf::int64 NativeCallRequest::ctxid() const {
+  // @@protoc_insertion_point(field_get:pb.NativeCallRequest.ctxid)
   return ctxid_;
 }
-inline void CallRequest::set_ctxid(::google::protobuf::int64 value) {
+inline void NativeCallRequest::set_ctxid(::google::protobuf::int64 value) {
   
   ctxid_ = value;
-  // @@protoc_insertion_point(field_set:pb.CallRequest.ctxid)
+  // @@protoc_insertion_point(field_set:pb.NativeCallRequest.ctxid)
 }
 
-// .pb.Method method = 2;
-inline void CallRequest::clear_method() {
-  method_ = 0;
-}
-inline ::pb::Method CallRequest::method() const {
-  // @@protoc_insertion_point(field_get:pb.CallRequest.method)
-  return static_cast< ::pb::Method >(method_);
-}
-inline void CallRequest::set_method(::pb::Method value) {
-  
-  method_ = value;
-  // @@protoc_insertion_point(field_set:pb.CallRequest.method)
-}
+// -------------------------------------------------------------------
 
-// bytes txid = 3;
-inline void CallRequest::clear_txid() {
-  txid_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline const ::std::string& CallRequest::txid() const {
-  // @@protoc_insertion_point(field_get:pb.CallRequest.txid)
-  return txid_.GetNoArena();
-}
-inline void CallRequest::set_txid(const ::std::string& value) {
-  
-  txid_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:pb.CallRequest.txid)
-}
-#if LANG_CXX11
-inline void CallRequest::set_txid(::std::string&& value) {
-  
-  txid_.SetNoArena(
-    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:pb.CallRequest.txid)
-}
-#endif
-inline void CallRequest::set_txid(const char* value) {
-  GOOGLE_DCHECK(value != nullptr);
-  
-  txid_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:pb.CallRequest.txid)
-}
-inline void CallRequest::set_txid(const void* value, size_t size) {
-  
-  txid_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:pb.CallRequest.txid)
-}
-inline ::std::string* CallRequest::mutable_txid() {
-  
-  // @@protoc_insertion_point(field_mutable:pb.CallRequest.txid)
-  return txid_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline ::std::string* CallRequest::release_txid() {
-  // @@protoc_insertion_point(field_release:pb.CallRequest.txid)
-  
-  return txid_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline void CallRequest::set_allocated_txid(::std::string* txid) {
-  if (txid != nullptr) {
-    
-  } else {
-    
-  }
-  txid_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), txid);
-  // @@protoc_insertion_point(field_set_allocated:pb.CallRequest.txid)
-}
-
-// bytes args = 4;
-inline void CallRequest::clear_args() {
-  args_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline const ::std::string& CallRequest::args() const {
-  // @@protoc_insertion_point(field_get:pb.CallRequest.args)
-  return args_.GetNoArena();
-}
-inline void CallRequest::set_args(const ::std::string& value) {
-  
-  args_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:pb.CallRequest.args)
-}
-#if LANG_CXX11
-inline void CallRequest::set_args(::std::string&& value) {
-  
-  args_.SetNoArena(
-    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:pb.CallRequest.args)
-}
-#endif
-inline void CallRequest::set_args(const char* value) {
-  GOOGLE_DCHECK(value != nullptr);
-  
-  args_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:pb.CallRequest.args)
-}
-inline void CallRequest::set_args(const void* value, size_t size) {
-  
-  args_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:pb.CallRequest.args)
-}
-inline ::std::string* CallRequest::mutable_args() {
-  
-  // @@protoc_insertion_point(field_mutable:pb.CallRequest.args)
-  return args_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline ::std::string* CallRequest::release_args() {
-  // @@protoc_insertion_point(field_release:pb.CallRequest.args)
-  
-  return args_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline void CallRequest::set_allocated_args(::std::string* args) {
-  if (args != nullptr) {
-    
-  } else {
-    
-  }
-  args_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), args);
-  // @@protoc_insertion_point(field_set_allocated:pb.CallRequest.args)
-}
-
-// string caller = 5;
-inline void CallRequest::clear_caller() {
-  caller_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline const ::std::string& CallRequest::caller() const {
-  // @@protoc_insertion_point(field_get:pb.CallRequest.caller)
-  return caller_.GetNoArena();
-}
-inline void CallRequest::set_caller(const ::std::string& value) {
-  
-  caller_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:pb.CallRequest.caller)
-}
-#if LANG_CXX11
-inline void CallRequest::set_caller(::std::string&& value) {
-  
-  caller_.SetNoArena(
-    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:pb.CallRequest.caller)
-}
-#endif
-inline void CallRequest::set_caller(const char* value) {
-  GOOGLE_DCHECK(value != nullptr);
-  
-  caller_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:pb.CallRequest.caller)
-}
-inline void CallRequest::set_caller(const char* value, size_t size) {
-  
-  caller_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:pb.CallRequest.caller)
-}
-inline ::std::string* CallRequest::mutable_caller() {
-  
-  // @@protoc_insertion_point(field_mutable:pb.CallRequest.caller)
-  return caller_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline ::std::string* CallRequest::release_caller() {
-  // @@protoc_insertion_point(field_release:pb.CallRequest.caller)
-  
-  return caller_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline void CallRequest::set_allocated_caller(::std::string* caller) {
-  if (caller != nullptr) {
-    
-  } else {
-    
-  }
-  caller_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), caller);
-  // @@protoc_insertion_point(field_set_allocated:pb.CallRequest.caller)
-}
+// NativeCallResponse
 
 // -------------------------------------------------------------------
 
@@ -3656,6 +3602,128 @@ inline ::google::protobuf::Map< ::std::string, ::std::string >*
 CallArgs::mutable_args() {
   // @@protoc_insertion_point(field_mutable_map:pb.CallArgs.args)
   return args_.MutableMap();
+}
+
+// string initiator = 3;
+inline void CallArgs::clear_initiator() {
+  initiator_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& CallArgs::initiator() const {
+  // @@protoc_insertion_point(field_get:pb.CallArgs.initiator)
+  return initiator_.GetNoArena();
+}
+inline void CallArgs::set_initiator(const ::std::string& value) {
+  
+  initiator_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:pb.CallArgs.initiator)
+}
+#if LANG_CXX11
+inline void CallArgs::set_initiator(::std::string&& value) {
+  
+  initiator_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:pb.CallArgs.initiator)
+}
+#endif
+inline void CallArgs::set_initiator(const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  
+  initiator_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:pb.CallArgs.initiator)
+}
+inline void CallArgs::set_initiator(const char* value, size_t size) {
+  
+  initiator_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:pb.CallArgs.initiator)
+}
+inline ::std::string* CallArgs::mutable_initiator() {
+  
+  // @@protoc_insertion_point(field_mutable:pb.CallArgs.initiator)
+  return initiator_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* CallArgs::release_initiator() {
+  // @@protoc_insertion_point(field_release:pb.CallArgs.initiator)
+  
+  return initiator_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void CallArgs::set_allocated_initiator(::std::string* initiator) {
+  if (initiator != nullptr) {
+    
+  } else {
+    
+  }
+  initiator_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), initiator);
+  // @@protoc_insertion_point(field_set_allocated:pb.CallArgs.initiator)
+}
+
+// repeated string auth_require = 4;
+inline int CallArgs::auth_require_size() const {
+  return auth_require_.size();
+}
+inline void CallArgs::clear_auth_require() {
+  auth_require_.Clear();
+}
+inline const ::std::string& CallArgs::auth_require(int index) const {
+  // @@protoc_insertion_point(field_get:pb.CallArgs.auth_require)
+  return auth_require_.Get(index);
+}
+inline ::std::string* CallArgs::mutable_auth_require(int index) {
+  // @@protoc_insertion_point(field_mutable:pb.CallArgs.auth_require)
+  return auth_require_.Mutable(index);
+}
+inline void CallArgs::set_auth_require(int index, const ::std::string& value) {
+  // @@protoc_insertion_point(field_set:pb.CallArgs.auth_require)
+  auth_require_.Mutable(index)->assign(value);
+}
+#if LANG_CXX11
+inline void CallArgs::set_auth_require(int index, ::std::string&& value) {
+  // @@protoc_insertion_point(field_set:pb.CallArgs.auth_require)
+  auth_require_.Mutable(index)->assign(std::move(value));
+}
+#endif
+inline void CallArgs::set_auth_require(int index, const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  auth_require_.Mutable(index)->assign(value);
+  // @@protoc_insertion_point(field_set_char:pb.CallArgs.auth_require)
+}
+inline void CallArgs::set_auth_require(int index, const char* value, size_t size) {
+  auth_require_.Mutable(index)->assign(
+    reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_set_pointer:pb.CallArgs.auth_require)
+}
+inline ::std::string* CallArgs::add_auth_require() {
+  // @@protoc_insertion_point(field_add_mutable:pb.CallArgs.auth_require)
+  return auth_require_.Add();
+}
+inline void CallArgs::add_auth_require(const ::std::string& value) {
+  auth_require_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add:pb.CallArgs.auth_require)
+}
+#if LANG_CXX11
+inline void CallArgs::add_auth_require(::std::string&& value) {
+  auth_require_.Add(std::move(value));
+  // @@protoc_insertion_point(field_add:pb.CallArgs.auth_require)
+}
+#endif
+inline void CallArgs::add_auth_require(const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  auth_require_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add_char:pb.CallArgs.auth_require)
+}
+inline void CallArgs::add_auth_require(const char* value, size_t size) {
+  auth_require_.Add()->assign(reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_add_pointer:pb.CallArgs.auth_require)
+}
+inline const ::google::protobuf::RepeatedPtrField<::std::string>&
+CallArgs::auth_require() const {
+  // @@protoc_insertion_point(field_list:pb.CallArgs.auth_require)
+  return auth_require_;
+}
+inline ::google::protobuf::RepeatedPtrField<::std::string>*
+CallArgs::mutable_auth_require() {
+  // @@protoc_insertion_point(field_mutable_list:pb.CallArgs.auth_require)
+  return &auth_require_;
 }
 
 // -------------------------------------------------------------------
@@ -4934,6 +5002,8 @@ inline void TransferRequest::set_allocated_amount(::std::string* amount) {
 
 // -------------------------------------------------------------------
 
+// -------------------------------------------------------------------
+
 // ContractCallRequest
 
 // .pb.SyscallHeader header = 1;
@@ -5040,7 +5110,60 @@ inline void ContractCallRequest::set_allocated_module(::std::string* module) {
   // @@protoc_insertion_point(field_set_allocated:pb.ContractCallRequest.module)
 }
 
-// string method = 3;
+// string contract = 3;
+inline void ContractCallRequest::clear_contract() {
+  contract_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& ContractCallRequest::contract() const {
+  // @@protoc_insertion_point(field_get:pb.ContractCallRequest.contract)
+  return contract_.GetNoArena();
+}
+inline void ContractCallRequest::set_contract(const ::std::string& value) {
+  
+  contract_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:pb.ContractCallRequest.contract)
+}
+#if LANG_CXX11
+inline void ContractCallRequest::set_contract(::std::string&& value) {
+  
+  contract_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:pb.ContractCallRequest.contract)
+}
+#endif
+inline void ContractCallRequest::set_contract(const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  
+  contract_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:pb.ContractCallRequest.contract)
+}
+inline void ContractCallRequest::set_contract(const char* value, size_t size) {
+  
+  contract_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:pb.ContractCallRequest.contract)
+}
+inline ::std::string* ContractCallRequest::mutable_contract() {
+  
+  // @@protoc_insertion_point(field_mutable:pb.ContractCallRequest.contract)
+  return contract_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* ContractCallRequest::release_contract() {
+  // @@protoc_insertion_point(field_release:pb.ContractCallRequest.contract)
+  
+  return contract_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void ContractCallRequest::set_allocated_contract(::std::string* contract) {
+  if (contract != nullptr) {
+    
+  } else {
+    
+  }
+  contract_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), contract);
+  // @@protoc_insertion_point(field_set_allocated:pb.ContractCallRequest.contract)
+}
+
+// string method = 4;
 inline void ContractCallRequest::clear_method() {
   method_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -5093,113 +5216,76 @@ inline void ContractCallRequest::set_allocated_method(::std::string* method) {
   // @@protoc_insertion_point(field_set_allocated:pb.ContractCallRequest.method)
 }
 
-// string args = 4;
+// map<string, bytes> args = 5;
+inline int ContractCallRequest::args_size() const {
+  return args_.size();
+}
 inline void ContractCallRequest::clear_args() {
-  args_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  args_.Clear();
 }
-inline const ::std::string& ContractCallRequest::args() const {
-  // @@protoc_insertion_point(field_get:pb.ContractCallRequest.args)
-  return args_.GetNoArena();
+inline const ::google::protobuf::Map< ::std::string, ::std::string >&
+ContractCallRequest::args() const {
+  // @@protoc_insertion_point(field_map:pb.ContractCallRequest.args)
+  return args_.GetMap();
 }
-inline void ContractCallRequest::set_args(const ::std::string& value) {
-  
-  args_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:pb.ContractCallRequest.args)
-}
-#if LANG_CXX11
-inline void ContractCallRequest::set_args(::std::string&& value) {
-  
-  args_.SetNoArena(
-    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:pb.ContractCallRequest.args)
-}
-#endif
-inline void ContractCallRequest::set_args(const char* value) {
-  GOOGLE_DCHECK(value != nullptr);
-  
-  args_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:pb.ContractCallRequest.args)
-}
-inline void ContractCallRequest::set_args(const char* value, size_t size) {
-  
-  args_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:pb.ContractCallRequest.args)
-}
-inline ::std::string* ContractCallRequest::mutable_args() {
-  
-  // @@protoc_insertion_point(field_mutable:pb.ContractCallRequest.args)
-  return args_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline ::std::string* ContractCallRequest::release_args() {
-  // @@protoc_insertion_point(field_release:pb.ContractCallRequest.args)
-  
-  return args_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline void ContractCallRequest::set_allocated_args(::std::string* args) {
-  if (args != nullptr) {
-    
-  } else {
-    
-  }
-  args_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), args);
-  // @@protoc_insertion_point(field_set_allocated:pb.ContractCallRequest.args)
+inline ::google::protobuf::Map< ::std::string, ::std::string >*
+ContractCallRequest::mutable_args() {
+  // @@protoc_insertion_point(field_mutable_map:pb.ContractCallRequest.args)
+  return args_.MutableMap();
 }
 
 // -------------------------------------------------------------------
 
 // ContractCallResponse
 
-// bytes response = 1;
+// .pb.Response response = 1;
+inline bool ContractCallResponse::has_response() const {
+  return this != internal_default_instance() && response_ != nullptr;
+}
 inline void ContractCallResponse::clear_response() {
-  response_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (GetArenaNoVirtual() == nullptr && response_ != nullptr) {
+    delete response_;
+  }
+  response_ = nullptr;
 }
-inline const ::std::string& ContractCallResponse::response() const {
+inline const ::pb::Response& ContractCallResponse::response() const {
+  const ::pb::Response* p = response_;
   // @@protoc_insertion_point(field_get:pb.ContractCallResponse.response)
-  return response_.GetNoArena();
+  return p != nullptr ? *p : *reinterpret_cast<const ::pb::Response*>(
+      &::pb::_Response_default_instance_);
 }
-inline void ContractCallResponse::set_response(const ::std::string& value) {
-  
-  response_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:pb.ContractCallResponse.response)
-}
-#if LANG_CXX11
-inline void ContractCallResponse::set_response(::std::string&& value) {
-  
-  response_.SetNoArena(
-    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:pb.ContractCallResponse.response)
-}
-#endif
-inline void ContractCallResponse::set_response(const char* value) {
-  GOOGLE_DCHECK(value != nullptr);
-  
-  response_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:pb.ContractCallResponse.response)
-}
-inline void ContractCallResponse::set_response(const void* value, size_t size) {
-  
-  response_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:pb.ContractCallResponse.response)
-}
-inline ::std::string* ContractCallResponse::mutable_response() {
-  
-  // @@protoc_insertion_point(field_mutable:pb.ContractCallResponse.response)
-  return response_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline ::std::string* ContractCallResponse::release_response() {
+inline ::pb::Response* ContractCallResponse::release_response() {
   // @@protoc_insertion_point(field_release:pb.ContractCallResponse.response)
   
-  return response_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  ::pb::Response* temp = response_;
+  response_ = nullptr;
+  return temp;
 }
-inline void ContractCallResponse::set_allocated_response(::std::string* response) {
-  if (response != nullptr) {
+inline ::pb::Response* ContractCallResponse::mutable_response() {
+  
+  if (response_ == nullptr) {
+    auto* p = CreateMaybeMessage<::pb::Response>(GetArenaNoVirtual());
+    response_ = p;
+  }
+  // @@protoc_insertion_point(field_mutable:pb.ContractCallResponse.response)
+  return response_;
+}
+inline void ContractCallResponse::set_allocated_response(::pb::Response* response) {
+  ::google::protobuf::Arena* message_arena = GetArenaNoVirtual();
+  if (message_arena == nullptr) {
+    delete response_;
+  }
+  if (response) {
+    ::google::protobuf::Arena* submessage_arena = nullptr;
+    if (message_arena != submessage_arena) {
+      response = ::google::protobuf::internal::GetOwnedMessage(
+          message_arena, response, submessage_arena);
+    }
     
   } else {
     
   }
-  response_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), response);
+  response_ = response;
   // @@protoc_insertion_point(field_set_allocated:pb.ContractCallResponse.response)
 }
 
@@ -5547,18 +5633,14 @@ inline void GetCallArgsRequest::set_allocated_header(::pb::SyscallHeader* header
 
 // -------------------------------------------------------------------
 
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
 
 // @@protoc_insertion_point(namespace_scope)
 
 }  // namespace pb
-
-namespace google {
-namespace protobuf {
-
-template <> struct is_proto_enum< ::pb::Method> : ::std::true_type {};
-
-}  // namespace protobuf
-}  // namespace google
 
 // @@protoc_insertion_point(global_scope)
 
