@@ -35,7 +35,7 @@ type RootConfig struct {
 	} `json:"award_decay"`
 	Decimals          string                 `json:"decimals"`
 	GenesisConsensus  map[string]interface{} `json:"genesis_consensus"`
-	ReservedContracts []string               `json:"reserved_contracts"`
+	ReservedContracts []*pb.InvokeRequest    `json:"reserved_contracts"`
 }
 
 // GetMaxBlockSizeInByte get max block size in Byte
@@ -60,7 +60,7 @@ func (rc *RootConfig) GetGenesisConsensus() (map[string]interface{}, error) {
 }
 
 // GetReservedContract get default contract config of genesis block
-func (rc *RootConfig) GetReservedContract() ([]string, error) {
+func (rc *RootConfig) GetReservedContract() ([]*pb.InvokeRequest, error) {
 	return rc.ReservedContracts, nil
 }
 
@@ -91,8 +91,10 @@ func NewGenesisBlock(ib *pb.InternalBlock) (*GenesisBlock, error) {
 	if rootTx == nil {
 		return nil, fmt.Errorf("genesis tx can not be found in the block: %x", ib.Blockid)
 	}
+	fmt.Println("testlog", rootTx)
 	jsErr := json.Unmarshal(rootTx.Desc, config)
 	if jsErr != nil {
+		fmt.Println("testlog", jsErr)
 		return nil, jsErr
 	}
 	gb.config = config

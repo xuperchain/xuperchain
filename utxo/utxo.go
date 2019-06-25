@@ -701,7 +701,7 @@ func (uv *UtxoVM) SelectUtxos(fromAddr string, fromPubKey string, totalNeed *big
 
 // PreExec the Xuper3 contract model uses previous execution to generate RWSets
 func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.InvokeResponse, error) {
-	reservedRequests, err := uv.getReservedContractRequests(req, nil)
+	reservedRequests, err := uv.getReservedContractRequests(req.GetRequests(), true)
 	if err != nil {
 		uv.xlog.Error("PreExec getReservedContractRequests error", "error", err)
 		return nil, err
@@ -1363,7 +1363,7 @@ func getGasLimitFromTx(tx *pb.Transaction) (int64, error) {
 // verifyTxRWSets verify tx read sets and write sets
 func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
 	req := tx.GetContractRequests()
-	reservedRequests, err := uv.getReservedContractRequests(nil, tx)
+	reservedRequests, err := uv.getReservedContractRequests(tx.GetContractRequests(), false)
 	if err != nil {
 		uv.xlog.Error("getReservedContractRequests error", "error", err.Error())
 		return false, err
