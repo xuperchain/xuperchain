@@ -65,6 +65,8 @@ var (
 	ErrBlockChainNotExist = errors.New("Error block chain is not exist")
 	// ErrBlockChainIsExist is returned when find out blockachin has been loaded
 	ErrBlockChainIsExist = errors.New("Error block chain is exist already")
+	// ErrBlockTooLarge is returned when its size greater than the max block size defined
+	ErrBlockTooLarge = errors.New("block is too large")
 )
 
 const (
@@ -323,6 +325,11 @@ func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
 		xc.log.Debug("refused a connection at function call GenerateTx", "logid", in.Header.Logid, "cost", hd.Timer.Print())
 		return ErrServiceRefused
 	}
+	blockSize,_ := common.GetIntBlkSerializedSize(in.Block)
+	if blockSize > xc.Ledger.GetMaxBlockSize() {
+		xc.log.Debug("refused a connection because block is too large", "logid", in.Header.Logid, "cost", hd.Timer.Print(), "size", blockSize)
+		return ErrServiceRefused
+	}
 	xc.mutex.Lock()
 	defer xc.mutex.Unlock()
 
@@ -382,6 +389,11 @@ func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
 				if err != nil {
 					xc.log.Warn("Save Pending Block error, after got it from network! ", "logid", in.Header.Logid, "blockid", in.Block.Blockid)
 					return ErrCannotSyncBlock
+				}
+				ibSize,_ := common.GetIntBlkSerializedSize(ib.Block)
+				if ibSize > xc.Ledger.GetMaxBlockSize() {
+					xc.log.Warn("too large block", "size", ibSize, "blockid", global.F(ib.Block.Blockid))
+					return ErrBlockTooLarge
 				}
 			}
 		}
