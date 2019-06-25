@@ -107,7 +107,7 @@ func main() {
 	flags.BoolVar(&showVersion, "version", false, "show xchain version")
 
 	cfg := config.NewNodeConfig()
-	cfg.LoadConfig(flags)
+	cfg.LoadConfig()
 	cfg.ApplyFlags(flags)
 
 	flags.Parse(os.Args[1:])
