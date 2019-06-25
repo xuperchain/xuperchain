@@ -9,6 +9,7 @@ import (
 
 	"encoding/json"
 	"errors"
+	"sync"
 )
 
 const (
@@ -21,23 +22,45 @@ const (
 	CryptoTypeGM = "gm"
 )
 
+// cryptoClientFactory is the factory to hold all kinds of crypto clients' instance
+type cryptoClientFactory struct {
+	mutex   sync.Mutex
+	clients map[string]base.CryptoClient
+}
+
+func (ccf *cryptoClientFactory) GetCryptoClient(cryptoType string) (base.CryptoClient, error) {
+	if _, ok := ccf.clients[cryptoType]; !ok {
+		ccf.mutex.Lock()
+		defer ccf.mutex.Unlock()
+		if _, ok := ccf.clients[cryptoType]; !ok {
+			// load crypto plugin
+			pluginMgr, err := pluginmgr.GetPluginMgr()
+			if err != nil {
+				return nil, errors.New("CreateCryptoClient: get plugin mgr failed " + err.Error())
+			}
+
+			pluginIns, err := pluginMgr.PluginMgr.CreatePluginInstance(PluginName, cryptoType)
+			if err != nil {
+				errmsg := "CreateCryptoClient: create plugin failed! name=" + cryptoType
+				return nil, errors.New(errmsg)
+			}
+			cryptoClient := pluginIns.(base.CryptoClient)
+			ccf.clients[cryptoType] = cryptoClient
+		}
+	}
+	return ccf.clients[cryptoType], nil
+}
+
+var ccf cryptoClientFactory
+
+// init cryptoClientFactory
+func init() {
+	ccf.clients = make(map[string]base.CryptoClient)
+}
+
 // CreateCryptoClient create CryptoClient of specified cryptoType
 func CreateCryptoClient(cryptoType string) (base.CryptoClient, error) {
-
-	// load crypto plugin
-	pluginMgr, err := pluginmgr.GetPluginMgr()
-	if err != nil {
-		return nil, errors.New("CreateCryptoClient: get plugin mgr failed " + err.Error())
-	}
-
-	pluginIns, err := pluginMgr.PluginMgr.CreatePluginInstance(PluginName, cryptoType)
-	if err != nil {
-		errmsg := "CreateCryptoClient: create plugin failed! name=" + cryptoType
-		return nil, errors.New(errmsg)
-	}
-
-	cryptoClient := pluginIns.(base.CryptoClient)
-	return cryptoClient, nil
+	return ccf.GetCryptoClient(cryptoType)
 }
 
 // CreateCryptoClientFromFilePublicKey create CryptoClient by public key in local file
