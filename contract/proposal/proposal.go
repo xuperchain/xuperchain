@@ -209,8 +209,10 @@ func (prp *Proposal) runVote(desc *contract.TxDesc) error {
 	}
 	proposalTx, err := prp.ledger.QueryTransaction(proposalTxid)
 	if err != nil {
-		prp.log.Warn("vote fail, because proposal tx not found", "proposalTxid", fmt.Sprintf("%x", proposalTxid))
-		return err
+		if !prp.context.Block.ContainsTx(proposalTxid) {
+			prp.log.Warn("vote fail, because proposal tx not found", "proposalTxid", fmt.Sprintf("%x", proposalTxid))
+			return err
+		}
 	}
 
 	argValue, err := prp.getDescArg(proposalTx, "stop_vote_height")
