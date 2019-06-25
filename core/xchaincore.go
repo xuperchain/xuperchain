@@ -551,7 +551,7 @@ func (xc *XChainCore) doMiner() {
 	}
 	txs = append(txs, txsUnconf...)
 	fakeBlock, err := xc.Ledger.FormatFakeBlock(txs, xc.address, xc.privateKey,
-		t.UnixNano(), 0, 0, meta.TipBlockid, xc.Utxovm.GetTotal())
+		t.UnixNano(), curTerm, curBlockNum, meta.TipBlockid, xc.Utxovm.GetTotal())
 	if err != nil {
 		xc.log.Warn("[Minning] format fake block error", "logid")
 		return
@@ -560,7 +560,7 @@ func (xc *XChainCore) doMiner() {
 	batch := xc.Utxovm.NewBatch()
 	if txs, _, err = xc.Utxovm.TxOfRunningContractGenerate(txs, fakeBlock, batch, true); err != nil {
 		if err.Error() != common.ErrContractExecutionTimeout.Error() {
-			xc.log.Warn("PrePlay failed", "error", err)
+			xc.log.Warn("PrePlay fake block failed", "error", err) //unexpected error
 			return
 		}
 	}
