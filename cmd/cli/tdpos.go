@@ -14,7 +14,7 @@ type TDposCommand struct {
 func NewTDposCommand(cli *Cli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "tdpos",
-		Short: "Operate a command with tdpos, query-candidates|query-checkResult|query-nominate-records|query-nominee-record|query-vote-records|query-voted-records",
+		Short: "Operate a command with tdpos, query-candidates|query-checkResult|query-nominate-records|query-nominee-record|query-vote-records|query-voted-records|status",
 	}
 	cmd.AddCommand(NewQueryCandidatesCommand(cli))
 	cmd.AddCommand(NewQueryCheckResultCommand(cli))
@@ -22,6 +22,7 @@ func NewTDposCommand(cli *Cli) *cobra.Command {
 	cmd.AddCommand(NewQueryNomineeRecordsCommand(cli))
 	cmd.AddCommand(NewQueryVoteRecordsCommand(cli))
 	cmd.AddCommand(NewQueryVotedRecordsCommand(cli))
+	cmd.AddCommand(NewQueryStatusCommand(cli))
 	return cmd
 }
 

@@ -1086,6 +1086,11 @@ func (xc *XChainCore) GetCheckResults(term int64) ([]string, error) {
 	return res, nil
 }
 
+// GetConsStatus get current consensus status
+func (xc *XChainCore) GetConsStatus() *cons_base.ConsensusStatus {
+	return xc.con.GetStatus()
+}
+
 // GetNodeMode get node running mode, such as Normal mode, FastSync mode
 func (xc *XChainCore) GetNodeMode() string {
 	return xc.nodeMode
