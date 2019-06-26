@@ -633,8 +633,8 @@ func (xc *XChainCore) doMiner() {
 		// broadcast block
 		block := &pb.Block{
 			Bcname:  xc.bcname,
-			Blockid: b.Blockid,
-			Block:   b,
+			Blockid: freshBlock.Blockid,
+			Block:   freshBlock,
 		}
 		msgInfo, _ := proto.Marshal(block)
 		msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, xc.bcname, "", xuper_p2p.XuperMessage_SENDBLOCK, msgInfo, xuper_p2p.XuperMessage_NONE)
