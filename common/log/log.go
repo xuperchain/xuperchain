@@ -9,7 +9,7 @@ import (
 )
 
 // LogBufSize define log buffer channel size
-const LogBufSize = 10240
+const LogBufSize = 102400
 
 // Logger wrapper
 type Logger struct {
@@ -30,12 +30,14 @@ func OpenLog(lc *config.LogConfig) (Logger, error) {
 	}
 
 	xlog := log.New("module", lc.Module)
-	hstd := log.StreamHandler(os.Stderr, lfmt)
 
 	lvLevel, err := log.LvlFromString(lc.Level)
 	if nil != err {
 		fmt.Printf("log level error%v\n", err)
 	}
+
+	// set lowest level as level limit, this may improve performance
+	xlog.SetLevelLimit(lvLevel)
 
 	// init normal and warn/fault log file handler, RotateFileHandler
 	// only valid if `RotateInterval` and `RotateBackups` greater than 0
@@ -53,6 +55,11 @@ func OpenLog(lc *config.LogConfig) (Logger, error) {
 		wfHandler = log.Must.FileHandler(wfFile, lfmt)
 	}
 
+	if lc.Async {
+		nmHandler = log.BufferedHandler(LogBufSize, nmHandler)
+		wfHandler = log.BufferedHandler(LogBufSize, wfHandler)
+	}
+
 	// prints log level between `lvLevel` to Info to common log
 	nmfileh := log.BoundLvlFilterHandler(lvLevel, log.LvlError, nmHandler)
 
@@ -61,13 +68,12 @@ func OpenLog(lc *config.LogConfig) (Logger, error) {
 
 	var lhd log.Handler
 	if lc.Console {
+		hstd := log.StreamHandler(os.Stderr, lfmt)
 		lhd = log.SyncHandler(log.MultiHandler(hstd, nmfileh, wffileh))
 	} else {
 		lhd = log.SyncHandler(log.MultiHandler(nmfileh, wffileh))
 	}
-	if lc.Async {
-		lhd = log.BufferedHandler(LogBufSize, lhd)
-	}
+
 	xlog.SetHandler(lhd)
 	l := Logger{xlog}
 	return l, err
