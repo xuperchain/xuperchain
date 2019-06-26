@@ -96,7 +96,6 @@ type XChainCore struct {
 	stopFlag      bool
 	proposal      *proposal.Proposal
 	NativeCodeMgr *native.GeneralSCFramework
-	pipelineM     *PipelineMiner
 
 	// isCoreMiner if current node is one of the core miners
 	isCoreMiner bool
@@ -277,8 +276,6 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	xc.Utxovm.RegisterVAT("consensus", xc.con, xc.con.GetVATWhiteList())
 	xc.Utxovm.RegisterVAT("kernel", ker, ker.GetVATWhiteList())
 
-	xc.pipelineM = NewPipelineMiner(xc)
-	go xc.pipelineM.Start()
 	go xc.Speed.ShowLoop(xc.log)
 	go xc.repostOfflineTx()
 	return nil
@@ -394,11 +391,6 @@ func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
 	xc.log.Debug("End to Find the same", "logid", in.Header.Logid, "blocks size", len(blocksIds), "cost", hd.Timer.Print(),
 		"genesis", global.F(xc.Ledger.GetMeta().RootBlockid),
 		"prehash", global.F(preblkhash), "utxo", global.F(xc.Utxovm.GetLatestBlockid()))
-	rbErr := xc.pipelineM.RollbackPrePlay()
-	if rbErr != nil {
-		xc.log.Warn("fail to rollback preplay contract", "err", rbErr)
-		return rbErr
-	}
 	// preblk 是跟区块同步的交点，判断preblk是不是当前utxo的位置
 	if bytes.Equal(xc.Utxovm.GetLatestBlockid(), preblkhash) {
 		xc.log.Debug("Equal The Same", "logid", in.Header.Logid, "cost", hd.Timer.Print())
@@ -500,11 +492,6 @@ func (xc *XChainCore) doMiner() {
 	// 如果Walk一直失败，建议不要挖矿了，而是报警处理
 	for !bytes.Equal(ledgerLastID, utxovmLastID) {
 		xc.log.Warn("ledger last blockid is not equal utxovm last id")
-		rbErr := xc.pipelineM.RollbackPrePlay()
-		if rbErr != nil {
-			xc.log.Warn("fail to rollback preplay contract", "err", rbErr)
-			return
-		}
 		err := xc.Utxovm.Walk(ledgerLastID)
 		if err != nil {
 			xc.log.Error("Walk error ", "ledger blockid", global.F(ledgerLastID),
@@ -557,28 +544,25 @@ func (xc *XChainCore) doMiner() {
 	}
 	xc.log.Trace("[Minning] get vatList success", "vatList", vatList)
 	txs = append(txs, vatList...)
-	// make fake block
+	txsUnconf, err := xc.Utxovm.GetUnconfirmedTx(false)
+	if err != nil {
+		xc.log.Warn("[Minning] fail to get unconfirmedtx")
+		return
+	}
+	txs = append(txs, txsUnconf...)
 	fakeBlock, err := xc.Ledger.FormatFakeBlock(txs, xc.address, xc.privateKey,
 		t.UnixNano(), curTerm, curBlockNum, meta.TipBlockid, xc.Utxovm.GetTotal())
 	if err != nil {
-		xc.log.Warn("[Minning] format block error", "logid")
+		xc.log.Warn("[Minning] format fake block error", "logid")
 		return
 	}
-	allFailedTxs := map[string]string{}
-	if txs, _, err = xc.Utxovm.TxOfRunningContractGenerate(txs, fakeBlock, xc.pipelineM.batch, xc.pipelineM.NeedInitCtx()); err != nil {
+	//2. pre-execute the contract
+	batch := xc.Utxovm.NewBatch()
+	if txs, _, err = xc.Utxovm.TxOfRunningContractGenerate(txs, fakeBlock, batch, true); err != nil {
 		if err.Error() != common.ErrContractExecutionTimeout.Error() {
-			xc.log.Warn("PrePlay failed", "error", err)
+			xc.log.Warn("PrePlay fake block failed", "error", err) //unexpected error
 			return
 		}
-	}
-	for txid, txErr := range fakeBlock.FailedTxs {
-		allFailedTxs[txid] = txErr
-	}
-	//2. 打包已经预执行过的未确认交易
-	batch, txsUnconf, failedTxs := xc.pipelineM.FetchTxs()
-	txs = append(txs, txsUnconf...)
-	for txid, txErr := range failedTxs {
-		allFailedTxs[txid] = txErr
 	}
 	minerTimer.Mark("PrePlay")
 	//3. 统一在最后插入矿工奖励
@@ -587,7 +571,7 @@ func (xc *XChainCore) doMiner() {
 	minerTimer.Mark("GenAwardTx")
 	txs = append(txs, awardtx)
 	b, err := xc.Ledger.FormatPOWBlock(txs, xc.address, xc.privateKey,
-		t.UnixNano(), curTerm, curBlockNum, meta.TipBlockid, targetBits, xc.Utxovm.GetTotal(), allFailedTxs)
+		t.UnixNano(), curTerm, curBlockNum, meta.TipBlockid, targetBits, xc.Utxovm.GetTotal(), fakeBlock.FailedTxs)
 	if err != nil {
 		xc.log.Warn("[Minning] format block error", "logid", header.Logid, "err", err)
 		return
@@ -676,10 +660,7 @@ func (xc *XChainCore) Miner() int {
 			if s {
 				xc.SyncBlocks()
 			}
-			xc.pipelineM.Resume()
 			xc.doMiner()
-		} else {
-			xc.pipelineM.Pause()
 		}
 		meta := xc.Ledger.GetMeta()
 		xc.log.Info("Minner", "genesis", fmt.Sprintf("%x", meta.RootBlockid), "last", fmt.Sprintf("%x", meta.TipBlockid), "height", meta.TrunkHeight, "utxovm", fmt.Sprintf("%x", xc.Utxovm.GetLatestBlockid()))

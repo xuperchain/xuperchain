@@ -81,3 +81,23 @@ func (txIn *TxInputExt) GetVersion() string {
 	}
 	return fmt.Sprintf("%x_%d", txIn.RefTxid, txIn.RefOffset)
 }
+
+// ContainsTx returns whether a tx is included in a block
+func (ib *InternalBlock) ContainsTx(txid []byte) bool {
+	for _, tx := range ib.Transactions {
+		if bytes.Equal(txid, tx.Txid) {
+			return true
+		}
+	}
+	return false
+}
+
+// GetTx returns a tx included in a block
+func (ib *InternalBlock) GetTx(txid []byte) *Transaction {
+	for _, tx := range ib.Transactions {
+		if bytes.Equal(txid, tx.Txid) {
+			return tx
+		}
+	}
+	return nil
+}
