@@ -69,6 +69,7 @@ var (
 	ErrInvalidAccount = errors.New("Invalid account")
 	ErrVersionInvalid = errors.New("Invalid tx version")
 	ErrInvalidTxExt   = errors.New("Invalid tx ext")
+	ErrTxTooLarge     = errors.New("Tx size is too large")
 )
 
 // package constants
@@ -1111,6 +1112,10 @@ func (uv *UtxoVM) doTxSync(tx *pb.Transaction) error {
 	if pbErr != nil {
 		uv.xlog.Warn("    fail to marshal tx", "pbErr", pbErr)
 		return pbErr
+	}
+	if int64(len(pbTxBuf)) > uv.ledger.GetMaxBlockSize()/2 {
+		uv.xlog.Warn("tx too large, should not be greater than half of max blocksize", "size", len(pbTxBuf))
+		return ErrTxTooLarge
 	}
 	recvTime := time.Now().Unix()
 	uv.mutex.Lock()
