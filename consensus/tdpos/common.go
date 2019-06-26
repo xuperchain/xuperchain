@@ -9,8 +9,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/syndtr/goleveldb/leveldb"
-
 	"github.com/xuperchain/xuperunion/common"
 	"github.com/xuperchain/xuperunion/contract"
 	"github.com/xuperchain/xuperunion/pb"
@@ -65,10 +63,10 @@ func (tp *TDpos) getTermProposer(term int64) []*CandidateInfo {
 	}
 	key := GenTermCheckKey(tp.version, term)
 	val, err := tp.utxoVM.GetFromTable(nil, []byte(key))
-	if err != nil && err != leveldb.ErrNotFound {
+	if err != nil && common.NormalizedKVError(err) != common.ErrKVNotFound {
 		tp.log.Error("TDpos getTermProposer vote result error", "term", term, "error", err)
 		return nil
-	} else if err == leveldb.ErrNotFound {
+	} else if common.NormalizedKVError(err) == common.ErrKVNotFound {
 		it := tp.utxoVM.ScanWithPrefix([]byte(genTermCheckKeyPrefix(tp.version)))
 		if it.Last() {
 			termLast, err := parseTermCheckKey(string(it.Key()))

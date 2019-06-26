@@ -629,23 +629,26 @@ func (xc *XChainCore) doMiner() {
 	minerTimer.Mark("ProcessConfirmBlock")
 	xc.log.Debug("[Minning] Start to BroadCast", "logid", header.Logid)
 
-	// broadcast block
-	block := &pb.Block{
-		Bcname:  xc.bcname,
-		Blockid: freshBlock.Blockid,
-		Block:   freshBlock,
-	}
-	msgInfo, _ := proto.Marshal(block)
-	msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, xc.bcname, "", xuper_p2p.XuperMessage_SENDBLOCK, msgInfo, xuper_p2p.XuperMessage_NONE)
-	filters := []p2pv2.FilterStrategy{p2pv2.DefaultStrategy}
-	if xc.NeedCoreConnection() {
-		filters = append(filters, p2pv2.CorePeersStrategy)
-	}
-	opts := []p2pv2.MessageOption{
-		p2pv2.WithFilters(filters),
-		p2pv2.WithBcName(xc.bcname),
-	}
-	go xc.P2pv2.SendMessage(context.Background(), msg, opts...)
+	go func() {
+		// broadcast block
+		block := &pb.Block{
+			Bcname:  xc.bcname,
+			Blockid: freshBlock.Blockid,
+			Block:   freshBlock,
+		}
+		msgInfo, _ := proto.Marshal(block)
+		msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, xc.bcname, "", xuper_p2p.XuperMessage_SENDBLOCK, msgInfo, xuper_p2p.XuperMessage_NONE)
+		filters := []p2pv2.FilterStrategy{p2pv2.DefaultStrategy}
+		if xc.NeedCoreConnection() {
+			filters = append(filters, p2pv2.CorePeersStrategy)
+		}
+		opts := []p2pv2.MessageOption{
+			p2pv2.WithFilters(filters),
+			p2pv2.WithBcName(xc.bcname),
+		}
+		xc.P2pv2.SendMessage(context.Background(), msg, opts...)
+	}()
+
 	minerTimer.Mark("BroadcastBlock")
 	if xc.Utxovm.IsAsync() {
 		xc.log.Warn("doMiner cost", "cost", minerTimer.Print(), "txCount", freshBlock.TxCount)
