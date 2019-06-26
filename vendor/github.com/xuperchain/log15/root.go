@@ -12,7 +12,7 @@ var (
 )
 
 func init() {
-	root = &logger{[]interface{}{}, new(swapHandler)}
+	root = &logger{[]interface{}{}, new(swapHandler), LvlDebug}
 	root.SetHandler(DiscardHandler())
 }
 
