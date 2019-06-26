@@ -553,3 +553,20 @@ func (tp *TDpos) GetCoreMiners() []*cons_base.MinerInfo {
 	}
 	return res
 }
+
+// GetStatus get the current status of consensus
+func (tp *TDpos) GetStatus() *cons_base.ConsensusStatus {
+	timestamp := time.Now().UnixNano()
+	term, pos, blockPos := tp.minerScheduling(timestamp)
+	proposers := tp.getTermProposer(term)
+	status := &cons_base.ConsensusStatus{
+		Term:     term,
+		BlockNum: blockPos,
+	}
+	if int(pos) < 0 || int(pos) >= len(proposers) {
+		tp.log.Warn("current pos illegal", "pos", pos)
+	} else {
+		status.Proposer = proposers[int(pos)].Address
+	}
+	return status
+}
