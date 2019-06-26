@@ -9,6 +9,8 @@ import (
 	proto "github.com/golang/protobuf/proto"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
 	math "math"
 )
 
@@ -55,6 +57,7 @@ const (
 	XChainErrorEnum_RWACL_INVALID_ERROR            XChainErrorEnum = 34
 	XChainErrorEnum_GAS_NOT_ENOUGH_ERROR           XChainErrorEnum = 35
 	XChainErrorEnum_TX_VERSION_INVALID_ERROR       XChainErrorEnum = 36
+	XChainErrorEnum_COMPLIANCE_CHECK_NOT_APPROVED  XChainErrorEnum = 37
 )
 
 var XChainErrorEnum_name = map[int32]string{
@@ -87,6 +90,7 @@ var XChainErrorEnum_name = map[int32]string{
 	34: "RWACL_INVALID_ERROR",
 	35: "GAS_NOT_ENOUGH_ERROR",
 	36: "TX_VERSION_INVALID_ERROR",
+	37: "COMPLIANCE_CHECK_NOT_APPROVED",
 }
 
 var XChainErrorEnum_value = map[string]int32{
@@ -119,6 +123,7 @@ var XChainErrorEnum_value = map[string]int32{
 	"RWACL_INVALID_ERROR":            34,
 	"GAS_NOT_ENOUGH_ERROR":           35,
 	"TX_VERSION_INVALID_ERROR":       36,
+	"COMPLIANCE_CHECK_NOT_APPROVED":  37,
 }
 
 func (x XChainErrorEnum) String() string {
@@ -5197,6 +5202,74 @@ type XchainServer interface {
 	DposStatus(context.Context, *DposStatusRequest) (*DposStatusResponse, error)
 	//预执行合约
 	PreExec(context.Context, *InvokeRPCRequest) (*InvokeRPCResponse, error)
+}
+
+// UnimplementedXchainServer can be embedded to have forward compatible implementations.
+type UnimplementedXchainServer struct {
+}
+
+func (*UnimplementedXchainServer) PostTx(ctx context.Context, req *TxStatus) (*CommonReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PostTx not implemented")
+}
+func (*UnimplementedXchainServer) QueryACL(ctx context.Context, req *AclStatus) (*AclStatus, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method QueryACL not implemented")
+}
+func (*UnimplementedXchainServer) QueryTx(ctx context.Context, req *TxStatus) (*TxStatus, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method QueryTx not implemented")
+}
+func (*UnimplementedXchainServer) GetBalance(ctx context.Context, req *AddressStatus) (*AddressStatus, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetBalance not implemented")
+}
+func (*UnimplementedXchainServer) GetFrozenBalance(ctx context.Context, req *AddressStatus) (*AddressStatus, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFrozenBalance not implemented")
+}
+func (*UnimplementedXchainServer) GetBlock(ctx context.Context, req *BlockID) (*Block, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetBlock not implemented")
+}
+func (*UnimplementedXchainServer) GetBlockByHeight(ctx context.Context, req *BlockHeight) (*Block, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetBlockByHeight not implemented")
+}
+func (*UnimplementedXchainServer) GetBlockChainStatus(ctx context.Context, req *BCStatus) (*BCStatus, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetBlockChainStatus not implemented")
+}
+func (*UnimplementedXchainServer) GetBlockChains(ctx context.Context, req *CommonIn) (*BlockChains, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetBlockChains not implemented")
+}
+func (*UnimplementedXchainServer) GetSystemStatus(ctx context.Context, req *CommonIn) (*SystemsStatusReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetSystemStatus not implemented")
+}
+func (*UnimplementedXchainServer) GetNetURL(ctx context.Context, req *CommonIn) (*RawUrl, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetNetURL not implemented")
+}
+func (*UnimplementedXchainServer) SelectUTXO(ctx context.Context, req *UtxoInput) (*UtxoOutput, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SelectUTXO not implemented")
+}
+func (*UnimplementedXchainServer) DeployNativeCode(ctx context.Context, req *DeployNativeCodeRequest) (*DeployNativeCodeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeployNativeCode not implemented")
+}
+func (*UnimplementedXchainServer) NativeCodeStatus(ctx context.Context, req *NativeCodeStatusRequest) (*NativeCodeStatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method NativeCodeStatus not implemented")
+}
+func (*UnimplementedXchainServer) DposCandidates(ctx context.Context, req *DposCandidatesRequest) (*DposCandidatesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DposCandidates not implemented")
+}
+func (*UnimplementedXchainServer) DposNominateRecords(ctx context.Context, req *DposNominateRecordsRequest) (*DposNominateRecordsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DposNominateRecords not implemented")
+}
+func (*UnimplementedXchainServer) DposNomineeRecords(ctx context.Context, req *DposNomineeRecordsRequest) (*DposNomineeRecordsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DposNomineeRecords not implemented")
+}
+func (*UnimplementedXchainServer) DposVoteRecords(ctx context.Context, req *DposVoteRecordsRequest) (*DposVoteRecordsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DposVoteRecords not implemented")
+}
+func (*UnimplementedXchainServer) DposVotedRecords(ctx context.Context, req *DposVotedRecordsRequest) (*DposVotedRecordsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DposVotedRecords not implemented")
+}
+func (*UnimplementedXchainServer) DposCheckResults(ctx context.Context, req *DposCheckResultsRequest) (*DposCheckResultsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DposCheckResults not implemented")
+}
+func (*UnimplementedXchainServer) PreExec(ctx context.Context, req *InvokeRPCRequest) (*InvokeRPCResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method PreExec not implemented")
 }
 
 func RegisterXchainServer(s *grpc.Server, srv XchainServer) {
