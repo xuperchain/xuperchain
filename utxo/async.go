@@ -12,7 +12,7 @@ import (
 // Async settings
 const (
 	AsyncMaxWaitMS   = 100
-	AsyncMaxWaitSize = 3000
+	AsyncMaxWaitSize = 7000
 	AsyncQueueBuffer = 500000
 )
 
@@ -113,7 +113,7 @@ func (uv *UtxoVM) asyncWriter(ctx context.Context) {
 				txList = []*pb.Transaction{}
 			}
 		case <-tick:
-			uv.flushTxList(txList)
+			go uv.flushTxList(txList)
 			txList = []*pb.Transaction{}
 		case <-ctx.Done():
 			uv.asyncWriterWG.Done()

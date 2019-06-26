@@ -1,3 +1,5 @@
+# github.com/AndreasBriese/bbloom v0.0.0-20190306092124-e2d15f34fcf9
+github.com/AndreasBriese/bbloom
 # github.com/Microsoft/go-winio v0.4.11
 github.com/Microsoft/go-winio
 # github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412
@@ -12,6 +14,15 @@ github.com/btcsuite/btcd/btcec
 github.com/btcsuite/btcutil/base58
 # github.com/coreos/go-semver v0.2.0
 github.com/coreos/go-semver/semver
+# github.com/dgraph-io/badger v2.0.0-rc.2+incompatible
+github.com/dgraph-io/badger
+github.com/dgraph-io/badger/options
+github.com/dgraph-io/badger/pb
+github.com/dgraph-io/badger/skl
+github.com/dgraph-io/badger/table
+github.com/dgraph-io/badger/y
+# github.com/dgryski/go-farm v0.0.0-20190423205320-6a90982ecee2
+github.com/dgryski/go-farm
 # github.com/docker/distribution v2.7.0+incompatible
 github.com/docker/distribution/reference
 github.com/docker/distribution/digestset
@@ -40,6 +51,8 @@ github.com/docker/go-connections/nat
 github.com/docker/go-connections/tlsconfig
 # github.com/docker/go-units v0.3.3
 github.com/docker/go-units
+# github.com/dustin/go-humanize v1.0.0
+github.com/dustin/go-humanize
 # github.com/fd/go-nat v1.0.0
 github.com/fd/go-nat
 # github.com/fsnotify/fsnotify v1.4.7
@@ -300,8 +313,8 @@ github.com/spf13/pflag
 github.com/spf13/viper
 # github.com/syndtr/goleveldb v0.0.0-20181127023241-353a9fca669c
 github.com/syndtr/goleveldb/leveldb/errors
-github.com/syndtr/goleveldb/leveldb
 github.com/syndtr/goleveldb/leveldb/util
+github.com/syndtr/goleveldb/leveldb
 github.com/syndtr/goleveldb/leveldb/filter
 github.com/syndtr/goleveldb/leveldb/opt
 github.com/syndtr/goleveldb/leveldb/storage

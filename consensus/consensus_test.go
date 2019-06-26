@@ -57,7 +57,7 @@ var Users = map[string]struct {
 var (
 	//workspace   = "/tmp/test_workspace"
 	//testspace   = "/tmp/testspace"
-	kvengine    = "leveldb"
+	kvengine    = "default"
 	tCryptoType = crypto_client.CryptoTypeDefault
 )
 
@@ -401,7 +401,7 @@ func TestRollbackConsensus(t *testing.T) {
 	pc := plugPrepare(t)
 	plgMgr, _ := pluginmgr.GetPluginMgr()
 	var ldb kvdb.Database
-	soInst, _ := plgMgr.PluginMgr.CreatePluginInstance("kv", "leveldb")
+	soInst, _ := plgMgr.PluginMgr.CreatePluginInstance("kv", "default")
 	ldb = soInst.(kvdb.Database)
 	err := ldb.Open(testspace, map[string]interface{}{
 		"cache":     512,

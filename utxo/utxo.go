@@ -22,7 +22,6 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
-	kverr "github.com/syndtr/goleveldb/leveldb/errors"
 	log "github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperunion/common"
 	"github.com/xuperchain/xuperunion/contract"
@@ -70,6 +69,7 @@ var (
 	ErrInvalidAccount = errors.New("Invalid account")
 	ErrVersionInvalid = errors.New("Invalid tx version")
 	ErrInvalidTxExt   = errors.New("Invalid tx ext")
+	ErrTxTooLarge     = errors.New("Tx size is too large")
 )
 
 // package constants
@@ -206,7 +206,7 @@ func (uv *UtxoVM) checkInputEqualOutput(tx *pb.Transaction) error {
 		if amountBytes == nil {
 			uBinary, findErr := uv.utxoTable.Get([]byte(utxoKey))
 			if findErr != nil {
-				if findErr.Error() == kverr.ErrNotFound.Error() {
+				if common.NormalizedKVError(findErr) == common.ErrKVNotFound {
 					uv.xlog.Warn("not found utxo key:", "utxoKey", utxoKey)
 					return ErrUTXONotFound
 				}
@@ -424,7 +424,7 @@ func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, priv
 	if findErr == nil {
 		utxoVM.latestBlockid = latestBlockid
 	} else {
-		if findErr.Error() != kverr.ErrNotFound.Error() {
+		if common.NormalizedKVError(findErr) != common.ErrKVNotFound {
 			return nil, findErr
 		}
 	}
@@ -434,7 +434,7 @@ func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, priv
 		total.SetBytes(utxoTotalBytes)
 		utxoVM.utxoTotal = total
 	} else {
-		if findTotalErr.Error() != kverr.ErrNotFound.Error() {
+		if common.NormalizedKVError(findTotalErr) != common.ErrKVNotFound {
 			return nil, findTotalErr
 		}
 		//说明是1.1.1版本，没有utxo total字段, 估算一个
@@ -1112,6 +1112,10 @@ func (uv *UtxoVM) doTxSync(tx *pb.Transaction) error {
 	if pbErr != nil {
 		uv.xlog.Warn("    fail to marshal tx", "pbErr", pbErr)
 		return pbErr
+	}
+	if int64(len(pbTxBuf)) > uv.ledger.GetMaxBlockSize()/2 {
+		uv.xlog.Warn("tx too large, should not be greater than half of max blocksize", "size", len(pbTxBuf))
+		return ErrTxTooLarge
 	}
 	recvTime := time.Now().Unix()
 	uv.mutex.Lock()
@@ -1912,7 +1916,7 @@ func (uv *UtxoVM) HasTx(txid []byte) (bool, error) {
 func (uv *UtxoVM) QueryTx(txid []byte) (*pb.Transaction, error) {
 	pbBuf, findErr := uv.unconfirmedTable.Get(txid)
 	if findErr != nil {
-		if findErr.Error() == kverr.ErrNotFound.Error() {
+		if common.NormalizedKVError(findErr) == common.ErrKVNotFound {
 			return nil, ErrTxNotFound
 		}
 		uv.xlog.Warn("unexpected leveldb error, when do QueryTx, it may corrupted.", "findErr", findErr)

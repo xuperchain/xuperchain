@@ -13,12 +13,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/syndtr/goleveldb/leveldb"
 	log "github.com/xuperchain/log15"
 
 	"encoding/hex"
 	"encoding/json"
 
+	"github.com/xuperchain/xuperunion/common"
 	"github.com/xuperchain/xuperunion/common/config"
 	cons_base "github.com/xuperchain/xuperunion/consensus/base"
 	"github.com/xuperchain/xuperunion/contract"
@@ -520,7 +520,7 @@ func (tp *TDpos) GetVerifiableAutogenTx(blockHeight int64, maxCount int, timesta
 	key := GenTermCheckKey(tp.version, term+1)
 	val, err := tp.utxoVM.GetFromTable(nil, []byte(key))
 	txs := []*pb.Transaction{}
-	if val == nil && err == leveldb.ErrNotFound {
+	if val == nil && common.NormalizedKVError(err) == common.ErrKVNotFound {
 		desc := &contract.TxDesc{
 			Module: "tdpos",
 			Method: checkvValidaterMethod,
@@ -561,4 +561,21 @@ func (tp *TDpos) GetCoreMiners() []*cons_base.MinerInfo {
 		res = append(res, minerInfo)
 	}
 	return res
+}
+
+// GetStatus get the current status of consensus
+func (tp *TDpos) GetStatus() *cons_base.ConsensusStatus {
+	timestamp := time.Now().UnixNano()
+	term, pos, blockPos := tp.minerScheduling(timestamp)
+	proposers := tp.getTermProposer(term)
+	status := &cons_base.ConsensusStatus{
+		Term:     term,
+		BlockNum: blockPos,
+	}
+	if int(pos) < 0 || int(pos) >= len(proposers) {
+		tp.log.Warn("current pos illegal", "pos", pos)
+	} else {
+		status.Proposer = proposers[int(pos)].Address
+	}
+	return status
 }
