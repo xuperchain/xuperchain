@@ -166,6 +166,8 @@ service Xchain {
 	rpc DposVotedRecords(DposVotedRecordsRequest) returns (DposVotedRecordsResponse);
 	//  DposCheckResults get check results of a specific term
 	rpc DposCheckResults(DposCheckResultsRequest) returns (DposCheckResultsResponse);
+  // DposStatus get dpos status 
+  rpc DposStatus(DposStatusRequest) returns (DposStatusResponse);
 
   	//预执行合约
   	rpc PreExec(InvokeRPCRequest) returns (InvokeRPCResponse);
@@ -685,6 +687,28 @@ message DposCheckResultsResponse
 	int64 term = 2;
 	repeated string checkResult = 3;
 }
+
+// query dpos consensus current status request
+message DposStatusRequest
+{
+  Header header = 1;
+  string bcname = 2;
+}
+
+// query dpos consensus current status reply
+message DposStatusResponse
+{
+  Header header = 1;
+  DposStatus status = 2;
+}
+
+message DposStatus
+{ 
+  int64 term = 1;
+  int64 block_num = 2;
+  string proposer = 3;
+}
+
 
 message InvokeRPCRequest {
     Header header = 1;
