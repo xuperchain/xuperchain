@@ -32,5 +32,21 @@
                 ]
             }
         }
-    }
+    },
+    "reserved_contracts":[
+    	{
+            "module_name":"wasm",
+            "contract_name":"banned",
+            "method_name":"verify",
+            "args":{
+                "contract":"{{.ContractNames}}"
+            }
+    	},
+    	{
+            "module_name":"wasm",
+            "contract_name":"identity",
+            "method_name":"verify",
+            "args":{}
+    	}
+    ]
 }

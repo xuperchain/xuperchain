@@ -23,6 +23,12 @@ void split_str(const std::string& aks, std::vector<std::string>& ak_sets, const 
 
 DEFINE_METHOD(Identity, initialize) {
     xchain::Context* ctx = self.context();
+    const std::string& creator = ctx->arg("creator");
+    if (creator.empty()) {
+        ctx->error("missing creator");
+        return;
+    }
+    ctx->put_object(creator, "true");
     ctx->ok("initialize identity contract success");
 }
 
