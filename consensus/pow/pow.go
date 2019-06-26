@@ -158,3 +158,8 @@ func (pc *PowConsensus) GetCoreMiners() []*cons_base.MinerInfo {
 	res := []*cons_base.MinerInfo{}
 	return res
 }
+
+// GetStatus get current status of consensus
+func (pc *PowConsensus) GetStatus() *cons_base.ConsensusStatus {
+	return &cons_base.ConsensusStatus{}
+}
