@@ -85,7 +85,7 @@ func (c *AccountSplitUtxoCommand) splitUtxo(ctx context.Context) error {
 		Version:      utxo.TxVersion,
 		From:         c.account,
 		Args:         make(map[string][]byte),
-
+		IsQuick:      false,
 		ChainName:    c.cli.RootOptions.Name,
 		Keys:         c.cli.RootOptions.Keys,
 		XchainClient: c.cli.XchainClient(),

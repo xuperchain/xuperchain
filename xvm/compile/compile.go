@@ -85,8 +85,8 @@ func CompileNativeLibrary(cfg *Config, target, source string) error {
 		"-o"+target,
 		"-I.",
 		"-I"+tmpdir,
-		"-lm",
 		csource,
+		"-lm",
 	)
 	cmd.Stderr = stderr
 	err = cmd.Run()

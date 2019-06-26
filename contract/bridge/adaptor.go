@@ -4,20 +4,7 @@ import (
 	"fmt"
 
 	"github.com/xuperchain/xuperunion/contract"
-	"github.com/xuperchain/xuperunion/xmodel"
 )
-
-const (
-	gasScale = 100000
-)
-
-func scaleUpGas(gas int64) int64 {
-	return gas * gasScale
-}
-
-func scaleDownGas(gas int64) int64 {
-	return (gas + gasScale - 1) / gasScale
-}
 
 // ContractError indicates the error of the contract running result
 type ContractError struct {
@@ -54,11 +41,15 @@ func (v *vmContextImpl) Invoke(method string, args map[string][]byte) ([]byte, e
 	return v.ctx.Output.GetBody(), nil
 }
 
-func (v *vmContextImpl) GasUsed() int64 {
-	return scaleDownGas(v.instance.GasUsed())
+func (v *vmContextImpl) ResourceUsed() contract.Limits {
+	resourceUsed := v.instance.ResourceUsed()
+	resourceUsed.Disk += v.ctx.DiskUsed()
+	return resourceUsed
 }
 
 func (v *vmContextImpl) Release() error {
+	// release the context of instance
+	v.instance.Release()
 	v.release()
 	return nil
 }
@@ -75,14 +66,16 @@ func (v *vmImpl) GetName() string {
 	return v.name
 }
 
-func (v *vmImpl) NewContext(contractName string, model *xmodel.XMCache, gasLimit int64) (contract.Context, error) {
+func (v *vmImpl) NewContext(ctxCfg *contract.ContextConfig) (contract.Context, error) {
 	ctx := v.ctxmgr.MakeContext()
-	ctx.Cache = model
-	ctx.ContractName = contractName
+	ctx.Cache = ctxCfg.XMCache
+	ctx.ContractName = ctxCfg.ContractName
+	ctx.Initiator = ctxCfg.Initiator
+	ctx.AuthRequire = ctxCfg.AuthRequire
+	ctx.ResourceLimits = ctxCfg.ResourceLimits
 	release := func() {
 		v.ctxmgr.DestroyContext(ctx)
 	}
-	ctx.GasLimit = scaleUpGas(gasLimit)
 	instance, err := v.exec.NewInstance(ctx)
 	if err != nil {
 		return nil, err

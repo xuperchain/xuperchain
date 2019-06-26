@@ -66,7 +66,7 @@ func (c *NativeInvokeCommand) invoke(ctx context.Context, codeName string) error
 		ContractName: codeName,
 		MethodName:   c.methodName,
 		Args:         make(map[string][]byte),
-
+		IsQuick:      false,
 		ChainName:    c.cli.RootOptions.Name,
 		Keys:         c.cli.RootOptions.Keys,
 		XchainClient: c.cli.XchainClient(),

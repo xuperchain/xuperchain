@@ -50,12 +50,18 @@ type TxOutputExt struct {
 	Value  string `json:"value"`
 }
 
+type ResourceLimit struct {
+	Type  string `json:"type"`
+	Limit int64  `json:"limit"`
+}
+
 // InvokeRequest proto.InvokeRequest
 type InvokeRequest struct {
-	ModuleName   string            `json:"moduleName"`
-	ContractName string            `json:"contractName"`
-	MethodName   string            `json:"methodName"`
-	Args         map[string]string `json:"args"`
+	ModuleName    string            `json:"moduleName"`
+	ContractName  string            `json:"contractName"`
+	MethodName    string            `json:"methodName"`
+	Args          map[string]string `json:"args"`
+	ResouceLimits []ResourceLimit   `json:"resource_limits"`
 }
 
 // SignatureInfo proto.SignatureInfo
@@ -66,23 +72,24 @@ type SignatureInfo struct {
 
 // Transaction proto.Transaction
 type Transaction struct {
-	Txid             HexID           `json:"txid"`
-	Blockid          HexID           `json:"blockid"`
-	TxInputs         []TxInput       `json:"txInputs"`
-	TxOutputs        []TxOutput      `json:"txOutputs"`
-	Desc             string          `json:"desc"`
-	Nonce            string          `json:"nonce"`
-	Timestamp        int64           `json:"timestamp"`
-	Version          int32           `json:"version"`
-	Autogen          bool            `json:"autogen"`
-	Coinbase         bool            `json:"coinbase"`
-	TxInputsExt      []TxInputExt    `json:"txInputsExt"`
-	TxOutputsExt     []TxOutputExt   `json:"txOutputsExt"`
-	ContractRequest  *InvokeRequest  `json:"contractRequest"`
-	Initiator        string          `json:"initiator"`
-	AuthRequire      []string        `json:"authRequire"`
-	InitiatorSigns   []SignatureInfo `json:"initiatorSigns"`
-	AuthRequireSigns []SignatureInfo `json:"authRequireSigns"`
+	Txid              HexID            `json:"txid"`
+	Blockid           HexID            `json:"blockid"`
+	TxInputs          []TxInput        `json:"txInputs"`
+	TxOutputs         []TxOutput       `json:"txOutputs"`
+	Desc              string           `json:"desc"`
+	Nonce             string           `json:"nonce"`
+	Timestamp         int64            `json:"timestamp"`
+	Version           int32            `json:"version"`
+	Autogen           bool             `json:"autogen"`
+	Coinbase          bool             `json:"coinbase"`
+	TxInputsExt       []TxInputExt     `json:"txInputsExt"`
+	TxOutputsExt      []TxOutputExt    `json:"txOutputsExt"`
+	ContractRequests  []*InvokeRequest `json:"contractRequests"`
+	Initiator         string           `json:"initiator"`
+	AuthRequire       []string         `json:"authRequire"`
+	InitiatorSigns    []SignatureInfo  `json:"initiatorSigns"`
+	AuthRequireSigns  []SignatureInfo  `json:"authRequireSigns"`
+	ReceivedTimestamp int64            `json:"receivedTimestamp:`
 }
 
 // BigInt big int
@@ -104,15 +111,16 @@ func (b *BigInt) MarshalJSON() ([]byte, error) {
 // FromPBTx get tx
 func FromPBTx(tx *pb.Transaction) *Transaction {
 	t := &Transaction{
-		Txid:      tx.Txid,
-		Blockid:   tx.Blockid,
-		Nonce:     tx.Nonce,
-		Timestamp: tx.Timestamp,
-		Version:   tx.Version,
-		Desc:      string(tx.Desc),
-		Autogen:   tx.Autogen,
-		Coinbase:  tx.Coinbase,
-		Initiator: tx.Initiator,
+		Txid:              tx.Txid,
+		Blockid:           tx.Blockid,
+		Nonce:             tx.Nonce,
+		Timestamp:         tx.Timestamp,
+		Version:           tx.Version,
+		Desc:              string(tx.Desc),
+		Autogen:           tx.Autogen,
+		Coinbase:          tx.Coinbase,
+		Initiator:         tx.Initiator,
+		ReceivedTimestamp: tx.ReceivedTimestamp,
 	}
 	for _, input := range tx.TxInputs {
 		t.TxInputs = append(t.TxInputs, TxInput{
@@ -143,15 +151,26 @@ func FromPBTx(tx *pb.Transaction) *Transaction {
 			Value:  string(outputExt.Value),
 		})
 	}
-	if tx.ContractRequest != nil {
-		t.ContractRequest = &InvokeRequest{
-			ModuleName:   tx.ContractRequest.ModuleName,
-			ContractName: tx.ContractRequest.ContractName,
-			MethodName:   tx.ContractRequest.MethodName,
-			Args:         map[string]string{},
-		}
-		for argKey, argV := range tx.ContractRequest.Args {
-			t.ContractRequest.Args[argKey] = string(argV)
+	if tx.ContractRequests != nil {
+		for i := 0; i < len(tx.ContractRequests); i++ {
+			req := tx.ContractRequests[i]
+			tmpReq := &InvokeRequest{
+				ModuleName:   req.ModuleName,
+				ContractName: req.ContractName,
+				MethodName:   req.MethodName,
+				Args:         map[string]string{},
+			}
+			for argKey, argV := range req.Args {
+				tmpReq.Args[argKey] = string(argV)
+			}
+			for _, rlimit := range req.ResourceLimits {
+				resource := ResourceLimit{
+					Type:  rlimit.Type.String(),
+					Limit: rlimit.Limit,
+				}
+				tmpReq.ResouceLimits = append(tmpReq.ResouceLimits, resource)
+			}
+			t.ContractRequests = append(t.ContractRequests, tmpReq)
 		}
 	}
 
@@ -245,6 +264,10 @@ type UtxoMeta struct {
 	LockKeyList []string `json:"lockKeyList"`
 	// UtxoTotal UtxoTotal
 	UtxoTotal string `json:"utxoTotal"`
+	// Average confirmed dealy (ms)
+	AvgDelay int64 `json:"avgDelay"`
+	// Current unconfirmed tx amount
+	UnconfirmTxAmount int64 `json:"unconfirmed"`
 }
 
 // ChainStatus proto.ChainStatus
@@ -276,9 +299,11 @@ func FromSystemStatusPB(statuspb *pb.SystemsStatus) *SystemStatus {
 				MaxBlockSize: ledgerMeta.GetMaxBlockSize(),
 			},
 			UtxoMeta: UtxoMeta{
-				LatestBlockid: utxoMeta.GetLatestBlockid(),
-				LockKeyList:   utxoMeta.GetLockKeyList(),
-				UtxoTotal:     utxoMeta.GetUtxoTotal(),
+				LatestBlockid:     utxoMeta.GetLatestBlockid(),
+				LockKeyList:       utxoMeta.GetLockKeyList(),
+				UtxoTotal:         utxoMeta.GetUtxoTotal(),
+				AvgDelay:          utxoMeta.GetAvgDelay(),
+				UnconfirmTxAmount: utxoMeta.GetUnconfirmTxAmount(),
 			},
 		})
 	}

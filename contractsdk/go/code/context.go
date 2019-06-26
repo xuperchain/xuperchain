@@ -8,6 +8,8 @@ import (
 type Context interface {
 	Args() map[string][]byte
 	Caller() string
+	Initiator() string
+	AuthRequire() []string
 
 	PutObject(key []byte, value []byte) error
 	GetObject(key []byte) ([]byte, error)

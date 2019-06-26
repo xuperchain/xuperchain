@@ -65,6 +65,7 @@ type Ledger struct {
 	meta           *pb.LedgerMeta   //账本关键的元数据{genesis, tip, height}
 	GenesisBlock   *GenesisBlock    //创始块
 	pendingTable   kvdb.Database    //保存临时的block区块
+	heightTable    kvdb.Database    //保存高度到Blockid的映射
 	blockCache     *common.LRUCache // block cache, 加速QueryBlock
 	cryptoClient   crypto_base.CryptoClient
 }
@@ -121,6 +122,7 @@ func NewLedger(storePath string, xlog log.Logger, otherPaths []string, kvEngineT
 	ledger.confirmedTable = kvdb.NewTable(baseDB, pb.ConfirmedTablePrefix)
 	ledger.blocksTable = kvdb.NewTable(baseDB, pb.BlocksTablePrefix)
 	ledger.pendingTable = kvdb.NewTable(baseDB, pb.PendingBlocksTablePrefix)
+	ledger.heightTable = kvdb.NewTable(baseDB, pb.BlockHeightPrefix)
 	ledger.xlog = xlog
 	ledger.meta = &pb.LedgerMeta{}
 	ledger.blockCache = common.NewLRUCache(BlockCacheSize)
@@ -328,6 +330,10 @@ func (l *Ledger) saveBlock(block *pb.InternalBlock, batchWrite kvdb.Batch) error
 		return pbErr
 	}
 	batchWrite.Put(append([]byte(pb.BlocksTablePrefix), block.Blockid...), blockBuf)
+	if block.InTrunk {
+		sHeight := []byte(fmt.Sprintf("%020d", block.Height))
+		batchWrite.Put(append([]byte(pb.BlockHeightPrefix), sHeight...), block.Blockid)
+	}
 	return nil
 }
 
@@ -961,4 +967,17 @@ func (l *Ledger) GetEstimatedTotal() *big.Int {
 		total = total.Add(total, l.GenesisBlock.CalcAward(i))
 	}
 	return total
+}
+
+// QueryBlockByHeight query block by height
+func (l *Ledger) QueryBlockByHeight(height int64) (*pb.InternalBlock, error) {
+	sHeight := []byte(fmt.Sprintf("%020d", height))
+	blockID, kvErr := l.heightTable.Get(sHeight)
+	if kvErr != nil {
+		if kvErr.Error() == kverr.ErrNotFound.Error() {
+			return nil, ErrBlockNotExist
+		}
+		return nil, kvErr
+	}
+	return l.QueryBlock(blockID)
 }

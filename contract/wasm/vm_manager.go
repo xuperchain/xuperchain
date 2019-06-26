@@ -11,6 +11,7 @@ import (
 	"github.com/golang/protobuf/proto"
 
 	"github.com/xuperchain/xuperunion/common/config"
+	"github.com/xuperchain/xuperunion/contract"
 	"github.com/xuperchain/xuperunion/contract/wasm/vm"
 	"github.com/xuperchain/xuperunion/crypto/hash"
 
@@ -116,40 +117,41 @@ func (v *VMManager) verifyContractName(name string) error {
 }
 
 // DeployContract deploy contract and initialize contract
-func (v *VMManager) DeployContract(store *xmodel.XMCache, args map[string][]byte, gasLimit int64) ([]byte, int64, error) {
+func (v *VMManager) DeployContract(contextConfig *contract.ContextConfig, args map[string][]byte) ([]byte, contract.Limits, error) {
+	store := contextConfig.XMCache
 	name := args["contract_name"]
 	if name == nil {
-		return nil, 0, errors.New("bad contract name")
+		return nil, contract.Limits{}, errors.New("bad contract name")
 	}
 	contractName := string(name)
 	err := v.verifyContractName(contractName)
 	if err != nil {
-		return nil, 0, err
+		return nil, contract.Limits{}, err
 	}
 	_, err = v.codeProvider.GetContractCodeDesc(contractName)
 	if err == nil {
-		return nil, 0, fmt.Errorf("contract %s already exists", contractName)
+		return nil, contract.Limits{}, fmt.Errorf("contract %s already exists", contractName)
 	}
 
 	code := args["contract_code"]
 	if code == nil {
-		return nil, 0, errors.New("missing contract code")
+		return nil, contract.Limits{}, errors.New("missing contract code")
 	}
 	initArgsBuf := args["init_args"]
 	if initArgsBuf == nil {
-		return nil, 0, errors.New("missing args field in args")
+		return nil, contract.Limits{}, errors.New("missing args field in args")
 	}
 	var initArgs map[string][]byte
 	err = json.Unmarshal(initArgsBuf, &initArgs)
 	if err != nil {
-		return nil, 0, err
+		return nil, contract.Limits{}, err
 	}
 
 	descbuf := args["contract_desc"]
 	var desc pb.WasmCodeDesc
 	err = proto.Unmarshal(descbuf, &desc)
 	if err != nil {
-		return nil, 0, err
+		return nil, contract.Limits{}, err
 	}
 	desc.Digest = hash.DoubleSha256(code)
 	descbuf, _ = proto.Marshal(&desc)
@@ -161,37 +163,40 @@ func (v *VMManager) DeployContract(store *xmodel.XMCache, args map[string][]byte
 	// FIXME: 确保InstanceCreator缓存了已经编译的代码
 	cp := newCodeProvider(store)
 	instance, err := v.vmimpl.CreateInstance(&bridge.Context{
-		ContractName: contractName,
-		GasLimit:     gasLimit,
+		ContractName:   contractName,
+		ResourceLimits: contextConfig.ResourceLimits,
 	}, cp)
 	if err != nil {
 		v.vmimpl.RemoveCache(contractName)
-		return nil, 0, err
+		return nil, contract.Limits{}, err
 	}
 	instance.Release()
 
-	out, gasUsed, err := v.initContract(contractName, store, initArgs, gasLimit)
+	initConfig := *contextConfig
+	initConfig.ContractName = contractName
+	out, resourceUsed, err := v.initContract(&initConfig, initArgs)
 	if err != nil {
 		if _, ok := err.(*bridge.ContractError); !ok {
 			v.vmimpl.RemoveCache(contractName)
 		}
-		return nil, 0, err
+		return nil, contract.Limits{}, err
 	}
-	return out, gasUsed, nil
+	return out, resourceUsed, nil
 }
 
-func (v *VMManager) initContract(contractName string, cache *xmodel.XMCache, args map[string][]byte, gasLimit int64) ([]byte, int64, error) {
+func (v *VMManager) initContract(contextConfig *contract.ContextConfig, args map[string][]byte) ([]byte, contract.Limits, error) {
 	vm, ok := v.xbridge.GetVirtualMachine("wasm")
 	if !ok {
-		return nil, 0, errors.New("wasm vm not registered")
+		return nil, contract.Limits{}, errors.New("wasm vm not registered")
 	}
-	ctx, err := vm.NewContext(contractName, cache, gasLimit)
+
+	ctx, err := vm.NewContext(contextConfig)
 	if err != nil {
-		return nil, 0, err
+		return nil, contract.Limits{}, err
 	}
 	out, err := ctx.Invoke("initialize", args)
 	if err != nil {
-		return nil, 0, err
+		return nil, contract.Limits{}, err
 	}
-	return out, ctx.GasUsed(), nil
+	return out, ctx.ResourceUsed(), nil
 }

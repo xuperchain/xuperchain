@@ -55,7 +55,12 @@ func (xc *XChainCore) syncForOnce() (*pb.BCStatus, bool) {
 		xc.log.Warn("syncForOnce error", "error", err)
 		return nil, false
 	}
-	hbcs, err := xc.P2pv2.SendMessageWithResponse(context.Background(), msg, p2pv2.NearestBucketStrategy, false)
+	filters := []p2pv2.FilterStrategy{p2pv2.NearestBucketStrategy}
+	opts := []p2pv2.MessageOption{
+		p2pv2.WithFilters(filters),
+		p2pv2.WithBcName(xc.bcname),
+	}
+	hbcs, err := xc.P2pv2.SendMessageWithResponse(context.Background(), msg, opts...)
 	if err != nil {
 		return nil, false
 	}
@@ -95,7 +100,12 @@ func countGetBlockChainStatus(hbcs []*xuper_p2p.XuperMessage) *pb.BCStatus {
 func (xc *XChainCore) syncConfirm(bcs *pb.BCStatus) bool {
 	bcsBuf, err := proto.Marshal(bcs)
 	msg, err := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, bcs.GetBcname(), "", xuper_p2p.XuperMessage_CONFIRM_BLOCKCHAINSTATUS, bcsBuf, xuper_p2p.XuperMessage_NONE)
-	res, err := xc.P2pv2.SendMessageWithResponse(context.Background(), msg, p2pv2.NearestBucketStrategy, false)
+	filters := []p2pv2.FilterStrategy{p2pv2.NearestBucketStrategy}
+	opts := []p2pv2.MessageOption{
+		p2pv2.WithFilters(filters),
+		p2pv2.WithBcName(xc.bcname),
+	}
+	res, err := xc.P2pv2.SendMessageWithResponse(context.Background(), msg, opts...)
 	if err != nil {
 		return false
 	}

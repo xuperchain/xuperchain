@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/xuperchain/xuperunion/contract"
 	"github.com/xuperchain/xuperunion/contractsdk/go/pb"
 	"github.com/xuperchain/xuperunion/test/util"
 )
@@ -46,8 +47,8 @@ func (c *codeInstance) Exec() error {
 	return nil
 }
 
-func (c *codeInstance) GasUsed() int64 {
-	return 0
+func (c *codeInstance) ResourceUsed() contract.Limits {
+	return contract.Limits{}
 }
 
 func (c *codeInstance) Release() {
@@ -84,7 +85,15 @@ func TestExecutorMethod(t *testing.T) {
 	xbridge := New()
 	vm := xbridge.RegisterExecutor("code", new(codeExecutor))
 	util.WithXModelContext(t, func(x *util.XModelContext) {
-		ctx, err := vm.NewContext("dummy", x.Cache, 0)
+		ctxCfg := &contract.ContextConfig{
+			XMCache:        x.Cache,
+			Initiator:      "",
+			AuthRequire:    []string{},
+			ContractName:   "dummy",
+			ResourceLimits: contract.MaxLimits,
+		}
+
+		ctx, err := vm.NewContext(ctxCfg)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -104,7 +113,16 @@ func TestExecutorArgs(t *testing.T) {
 	xbridge := New()
 	vm := xbridge.RegisterExecutor("code", new(codeExecutor))
 	util.WithXModelContext(t, func(x *util.XModelContext) {
-		ctx, err := vm.NewContext("dummy", x.Cache, 0)
+
+		ctxCfg := &contract.ContextConfig{
+			XMCache:        x.Cache,
+			Initiator:      "",
+			AuthRequire:    []string{},
+			ContractName:   "dummy",
+			ResourceLimits: contract.MaxLimits,
+		}
+
+		ctx, err := vm.NewContext(ctxCfg)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -126,7 +144,15 @@ func TestExecutorSyscall(t *testing.T) {
 	xbridge := New()
 	vm := xbridge.RegisterExecutor("code", new(codeExecutor))
 	util.WithXModelContext(t, func(x *util.XModelContext) {
-		ctx, err := vm.NewContext("dummy", x.Cache, 0)
+		ctxCfg := &contract.ContextConfig{
+			XMCache:        x.Cache,
+			Initiator:      "",
+			AuthRequire:    []string{},
+			ContractName:   "dummy",
+			ResourceLimits: contract.MaxLimits,
+		}
+
+		ctx, err := vm.NewContext(ctxCfg)
 		if err != nil {
 			t.Fatal(err)
 		}

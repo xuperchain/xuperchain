@@ -195,6 +195,7 @@ func TestRunNominateCandidate(t *testing.T) {
 		Method: "nominate_candidate",
 		Args: map[string]interface{}{
 			"candidates": []interface{}{"f3prTg9itaZY6m48wXXikXdcxiByW7zgk"},
+			"neturls":    []interface{}{"/ip4/127.0.0.1/tcp/47101/p2p/QmVxeNubpg1ZQjQT8W5yZC9fD7ZB1ViArwvyGUB53sqf8e"},
 		},
 	}
 	strDesc, _ := json.Marshal(desc)
@@ -211,6 +212,7 @@ func TestRunNominateCandidate(t *testing.T) {
 		Args: map[string]interface{}{
 			"txid":      fmt.Sprintf("%x", txCons.Txid),
 			"candidate": "f3prTg9itaZY6m48wXXikXdcxiByW7zgk",
+			"neturl":    "/ip4/127.0.0.1/tcp/47101/p2p/QmVxeNubpg1ZQjQT8W5yZC9fD7ZB1ViArwvyGUB53sqf8e",
 		},
 	}
 	nomCandErr := tdpos.runNominateCandidate(desc2, block)
@@ -218,8 +220,8 @@ func TestRunNominateCandidate(t *testing.T) {
 		t.Error("runNominateCandidate error ", nomCandErr.Error())
 	}
 	nomCandErr = tdpos.runNominateCandidate(desc2, block)
-	if nomCandErr != nil {
-		t.Error("runNominateCandidate error ", nomCandErr.Error())
+	if nomCandErr == nil {
+		t.Error("runNominateCandidate error ")
 	}
 }
 
@@ -229,6 +231,7 @@ func TestRunRevokeCandidate(t *testing.T) {
 		Method: "nominate_candidate",
 		Args: map[string]interface{}{
 			"candidate": "f3prTg9itaZY6m48wXXikXdcxiByW7zgk",
+			"neturl":    "/ip4/127.0.0.1/tcp/47101/p2p/QmVxeNubpg1ZQjQT8W5yZC9fD7ZB1ViArwvyGUB53sqf8e",
 		},
 	}
 	strDesc, _ := json.Marshal(desc)
@@ -282,7 +285,7 @@ func TestRunCheckValidater(t *testing.T) {
 	tdpos.context = &contract.TxContext{}
 	tdpos.context.UtxoBatch = tdpos.utxoVM.NewBatch()
 	tdpos.candidateBallots.LoadOrStore("D_candidate_ballots_f3prTg9itaZY6m48wXXikXdcxiByW7zgk", int64(1))
-	tdpos.candidateBallots.LoadOrStore("D_candidate_ballots_dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN", int64(1))
+	tdpos.candidateBallots.LoadOrStore("D_candixdate_ballots_dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN", int64(1))
 	tdpos.candidateBallots.LoadOrStore("D_candidate_ballots_Y4TmpfV4pvhYT5W17J7TqHSLo6cqq23x3", int64(1))
 	desc2 := &contract.TxDesc{
 		Module: "tdpos",
@@ -294,7 +297,7 @@ func TestRunCheckValidater(t *testing.T) {
 		Tx: txCons,
 	}
 	checkValidErr := tdpos.runCheckValidater(desc2, block)
-	if checkValidErr != nil {
-		t.Error("runCheckValidater error ", checkValidErr.Error())
+	if checkValidErr == nil {
+		t.Error("runCheckValidater error ")
 	}
 }

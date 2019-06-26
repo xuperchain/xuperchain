@@ -75,7 +75,10 @@ func makeDeployArgs(t *testing.T) map[string][]byte {
 func TestWasmDeploy(t *testing.T) {
 	WithTestContext(t, "memory", func(tctx *FakeWASMContext) {
 		deployArgs := makeDeployArgs(t)
-		out, _, err := tctx.vmm.DeployContract(tctx.Cache, deployArgs, 0)
+		out, _, err := tctx.vmm.DeployContract(&contract.ContextConfig{
+			XMCache:        tctx.Cache,
+			ResourceLimits: contract.MaxLimits,
+		}, deployArgs)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -86,7 +89,10 @@ func TestWasmDeploy(t *testing.T) {
 func TestWasmInvoke(t *testing.T) {
 	WithTestContext(t, "memory", func(tctx *FakeWASMContext) {
 		deployArgs := makeDeployArgs(t)
-		_, _, err := tctx.vmm.DeployContract(tctx.Cache, deployArgs, 0)
+		_, _, err := tctx.vmm.DeployContract(&contract.ContextConfig{
+			XMCache:        tctx.Cache,
+			ResourceLimits: contract.MaxLimits,
+		}, deployArgs)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -99,7 +105,14 @@ func TestWasmInvoke(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			ctx, err := tctx.vm.NewContext("counter", cache, contract.MaxGasLimit)
+			ctxCfg := &contract.ContextConfig{
+				XMCache:        cache,
+				Initiator:      "",
+				AuthRequire:    []string{},
+				ContractName:   "counter",
+				ResourceLimits: contract.MaxLimits,
+			}
+			ctx, err := tctx.vm.NewContext(ctxCfg)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -117,7 +130,14 @@ func TestWasmInvoke(t *testing.T) {
 
 func TestWasmContractMissing(t *testing.T) {
 	WithTestContext(t, "memory", func(tctx *FakeWASMContext) {
-		ctx, err := tctx.vm.NewContext("counter", tctx.Cache, contract.MaxGasLimit)
+		ctxCfg := &contract.ContextConfig{
+			XMCache:        tctx.Cache,
+			Initiator:      "",
+			AuthRequire:    []string{},
+			ContractName:   "counter",
+			ResourceLimits: contract.MaxLimits,
+		}
+		ctx, err := tctx.vm.NewContext(ctxCfg)
 		if err == nil {
 			ctx.Release()
 			t.Fatal("expect none nil error, go nil")

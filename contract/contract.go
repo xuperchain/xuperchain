@@ -12,6 +12,9 @@ import (
 // KernelModuleName is the name of kernel contract
 const KernelModuleName = "kernel"
 
+// ConsensusModueName is the name of consensus contract
+const ConsensusModueName = "consensus"
+
 // AutoGenWhiteList 为必须通过提案机制才能触发调用的智能合约名单
 var AutoGenWhiteList = map[string]bool{
 	"consensus.update_consensus": true,

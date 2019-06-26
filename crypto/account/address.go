@@ -69,8 +69,8 @@ func VerifyAddressUsingPublicKey(address string, pub *ecdsa.PublicKey) (bool, ui
 	byteVersion := slice[:1]
 	nVersion := uint8(byteVersion[0])
 
-	realAddress, error := GetAddressFromPublicKey(pub)
-	if error != nil {
+	realAddress, err := GetAddressFromPublicKey(pub)
+	if err != nil {
 		return false, 0
 	}
 

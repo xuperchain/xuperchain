@@ -23,11 +23,13 @@ type XuperKernel struct {
 
 // KContext define kernel contract context type
 type KContext struct {
-	xk      *XuperKernel
-	gasUsed int64
-
-	ModelCache *xmodel.XMCache
-	GasLimit   int64
+	xk            *XuperKernel
+	resourceUsed  contract.Limits
+	ResourceLimit contract.Limits
+	ModelCache    *xmodel.XMCache
+	Initiator     string
+	AuthRequire   []string
+	ContextConfig *contract.ContextConfig
 }
 
 // NewKernel new an instance of XuperKernel, initialized with kernel contract method
@@ -49,8 +51,15 @@ func (xk *XuperKernel) GetName() string {
 }
 
 // NewContext new a context, initialized with KernelContext
-func (xk *XuperKernel) NewContext(contractName string, modelCache *xmodel.XMCache, gasLimit int64) (contract.Context, error) {
-	return &KContext{ModelCache: modelCache, xk: xk, GasLimit: gasLimit}, nil
+func (xk *XuperKernel) NewContext(ctxCfg *contract.ContextConfig) (contract.Context, error) {
+	return &KContext{
+		ModelCache:    ctxCfg.XMCache,
+		xk:            xk,
+		Initiator:     ctxCfg.Initiator,
+		AuthRequire:   ctxCfg.AuthRequire,
+		ResourceLimit: ctxCfg.ResourceLimits,
+		ContextConfig: ctxCfg,
+	}, nil
 }
 
 // Invoke entrance for kernel contract method invoke
@@ -67,16 +76,22 @@ func (kc *KContext) Invoke(methodName string, args map[string][]byte) ([]byte, e
 }
 
 // AddGasUsed set gas used when invoking kernel contract method
-func (kc *KContext) AddGasUsed(delta int64) {
+func (kc *KContext) AddXFeeUsed(delta int64) {
 	if delta < 0 {
-		panic(fmt.Sprintf("bad gas delta %d", delta))
+		panic(fmt.Sprintf("bad xfee delta %d", delta))
 	}
-	kc.gasUsed += delta
+	kc.resourceUsed.XFee += delta
 }
 
-// GasUsed return gas used for calling specific kernel contract method
-func (kc *KContext) GasUsed() int64 {
-	return kc.gasUsed
+func (kc *KContext) AddResourceUsed(delta contract.Limits) {
+	kc.resourceUsed.Cpu += delta.Cpu
+	kc.resourceUsed.Memory += delta.Memory
+	kc.resourceUsed.Disk += delta.Disk
+	kc.resourceUsed.XFee += delta.XFee
+}
+
+func (kc *KContext) ResourceUsed() contract.Limits {
+	return kc.resourceUsed
 }
 
 // Release release context
