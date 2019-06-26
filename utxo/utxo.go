@@ -706,7 +706,6 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 		uv.xlog.Error("PreExec getReservedContractRequests error", "error", err)
 		return nil, err
 	}
-
 	// contract request with reservedRequests
 	req.Requests = append(reservedRequests, req.Requests...)
 	uv.xlog.Error("PreExec requests after merge", "requests", req.Requests)
@@ -740,7 +739,9 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 			// FIXME zq @icexin need to return contract not found error
 			uv.xlog.Error("PreExec NewContext error", "error", err,
 				"contractName", tmpReq.GetContractName())
-			if i < len(reservedRequests) && err.Error() == "Key not found" {
+			if i < len(reservedRequests) && strings.HasSuffix(err.Error(), "not found") {
+				request := *tmpReq
+				requests = append(requests, &request)
 				continue
 			}
 			return nil, err

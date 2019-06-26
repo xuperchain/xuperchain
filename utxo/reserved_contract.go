@@ -44,11 +44,13 @@ func (uv *UtxoVM) getReservedContractRequests(req []*pb.InvokeRequest, isPreExec
 	if err != nil {
 		return nil, err
 	}
+	// if all reservedContracts have not been updated, return nil, nil
 	ra := &reservedArgs{}
 	if isPreExec || len(reservedContracts) == 0 {
 		ra = genArgs(req)
 	} else {
-		ra = genArgs(req[len(reservedContracts)-1:])
+		// TODO
+		ra = genArgs(req[len(reservedContracts):])
 	}
 
 	for _, rc := range reservedContracts {
