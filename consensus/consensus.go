@@ -486,3 +486,9 @@ func (pc *PluggableConsensus) GetCoreMiners() []*cons_base.MinerInfo {
 	res := pc.cons[currentConsIndex].Conn.GetCoreMiners()
 	return res
 }
+
+// GetStatus get current consensus status
+func (pc *PluggableConsensus) GetStatus() *cons_base.ConsensusStatus {
+	currentConsIndex := len(pc.cons) - 1
+	return pc.cons[currentConsIndex].Conn.GetStatus()
+}

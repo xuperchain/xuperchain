@@ -13,3 +13,10 @@ type MinersChangedEvent struct {
 	CurrentMiners []*MinerInfo
 	NextMiners    []*MinerInfo
 }
+
+// ConsensusStatus define the status of Consensus
+type ConsensusStatus struct {
+	Proposer string
+	Term     int64
+	BlockNum int64
+}
