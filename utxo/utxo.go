@@ -19,6 +19,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"os"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/xuperchain/log15"
@@ -37,7 +38,6 @@ import (
 	"github.com/xuperchain/xuperunion/utxo/txhash"
 	"github.com/xuperchain/xuperunion/vat"
 	"github.com/xuperchain/xuperunion/xmodel"
-	"os"
 )
 
 // 常用VM执行错误码
