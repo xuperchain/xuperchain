@@ -8,6 +8,10 @@ import (
 	"github.com/xuperchain/xuperunion/permission/acl/utils"
 )
 
+var (
+	contractNameRegex = regexp.MustCompile("^[a-zA-Z_]{1}[0-9a-zA-Z_.]+[0-9a-zA-Z_]$")
+)
+
 // IsAccount check the type of name
 // return : -1 if name is invalid
 //           0 if name is account
@@ -56,15 +60,13 @@ func validContractName(contractName string) error {
 	if contractSize > contractMaxSize || contractSize < contractMinSize {
 		return fmt.Errorf("contract name length expect [%d~%d], actual: %d", contractMinSize, contractMaxSize, contractSize)
 	}
-	if m, _ := regexp.MatchString("^[a-z,A-Z,_]{1}[0-9,a-z,A-Z,_,.]{14}[0-9,a-z,A-Z,_]{1}$", contractName); !m {
+	if !contractNameRegex.MatchString(contractName) {
 		return fmt.Errorf("contract name does not fit the rule of contract name")
 	}
 	return nil
 }
 
 // ValidContractName check if contract name is ok
-// rules: contract name has the length of 16 including a-z,A-Z,0-9,_.
-// rules: the character of a-z,A-Z,_ is accepted.
 func ValidContractName(contractName string) error {
 	return validContractName(contractName)
 }
