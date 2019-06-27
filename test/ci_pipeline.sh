@@ -245,7 +245,9 @@ function deploy_invoke_contract()
 	./xchain-cli transfer --to=$account_name --amount=5000000
 	sleep 2
 	#发起部署
-	./xchain-cli wasm deploy --account=$account_name --cname counter --arg '{"creator":"counterwasm"}' -m --multiAddrs=$basepath/node1/data/acl/addrs --output=./tx.out $basepath/relate_file/counter.wasm --fee=50000
+	will_takeout=$(./xchain-cli wasm deploy --account=$account_name --cname counter --arg '{"creator":"counterwasm"}' -m --multiAddrs=$basepath/node1/data/acl/addrs --output=./tx.out $basepath/relate_file/counter.wasm)
+	will_fee=$(echo $will_takeout | awk -F' ' '{print $8}')
+	./xchain-cli wasm deploy --account=$account_name --cname counter --arg '{"creator":"counterwasm"}' -m --multiAddrs=$basepath/node1/data/acl/addrs --output=./tx.out $basepath/relate_file/counter.wasm --fee=$will_fee
 	./xchain-cli multisig sign --tx=./tx.out --keys=$basepath/node1/data/keys --output=./key1.sign
 	./xchain-cli multisig sign --tx=./tx.out --keys=$basepath/node2/data/keys --output=./key2.sign
 	sleep 2

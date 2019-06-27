@@ -84,7 +84,7 @@ func (k *Kernel) GetKVEngineType(data []byte) (string, error) {
 	}
 	kvEngineType := rootJSON["kvengine"]
 	if kvEngineType == nil {
-		return "leveldb", nil
+		return "default", nil
 	}
 	return kvEngineType.(string), nil
 }

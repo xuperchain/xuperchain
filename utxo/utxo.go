@@ -22,7 +22,6 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
-	kverr "github.com/syndtr/goleveldb/leveldb/errors"
 	log "github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperunion/common"
 	"github.com/xuperchain/xuperunion/contract"
@@ -70,6 +69,7 @@ var (
 	ErrInvalidAccount = errors.New("Invalid account")
 	ErrVersionInvalid = errors.New("Invalid tx version")
 	ErrInvalidTxExt   = errors.New("Invalid tx ext")
+	ErrTxTooLarge     = errors.New("Tx size is too large")
 )
 
 // package constants
@@ -206,7 +206,7 @@ func (uv *UtxoVM) checkInputEqualOutput(tx *pb.Transaction) error {
 		if amountBytes == nil {
 			uBinary, findErr := uv.utxoTable.Get([]byte(utxoKey))
 			if findErr != nil {
-				if findErr.Error() == kverr.ErrNotFound.Error() {
+				if common.NormalizedKVError(findErr) == common.ErrKVNotFound {
 					uv.xlog.Warn("not found utxo key:", "utxoKey", utxoKey)
 					return ErrUTXONotFound
 				}
@@ -424,7 +424,7 @@ func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, priv
 	if findErr == nil {
 		utxoVM.latestBlockid = latestBlockid
 	} else {
-		if findErr.Error() != kverr.ErrNotFound.Error() {
+		if common.NormalizedKVError(findErr) != common.ErrKVNotFound {
 			return nil, findErr
 		}
 	}
@@ -434,7 +434,7 @@ func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, priv
 		total.SetBytes(utxoTotalBytes)
 		utxoVM.utxoTotal = total
 	} else {
-		if findTotalErr.Error() != kverr.ErrNotFound.Error() {
+		if common.NormalizedKVError(findTotalErr) != common.ErrKVNotFound {
 			return nil, findTotalErr
 		}
 		//说明是1.1.1版本，没有utxo total字段, 估算一个
@@ -717,17 +717,17 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 	}
 
 	contextConfig := &contract.ContextConfig{
-		XMCache:      modelCache,
-		Initiator:    req.GetInitiator(),
-		AuthRequire:  req.GetAuthRequire(),
-		ContractName: "",
-		GasLimit:     contract.MaxGasLimit,
+		XMCache:        modelCache,
+		Initiator:      req.GetInitiator(),
+		AuthRequire:    req.GetAuthRequire(),
+		ContractName:   "",
+		ResourceLimits: contract.MaxLimits,
 	}
 	gasUesdTotal := int64(0)
 	response := [][]byte{}
 
-	for i := 0; i < len(req.Requests); i++ {
-		tmpReq := req.Requests[i]
+	var requests []*pb.InvokeRequest
+	for i, tmpReq := range req.Requests {
 		moduleName := tmpReq.GetModuleName()
 		vm, err := uv.vmMgr3.GetVM(moduleName)
 		if err != nil {
@@ -754,9 +754,13 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 		}
 		response = append(response, res)
 
+		resourceUsed := ctx.ResourceUsed()
 		if i >= len(reservedRequests) {
-			gasUesdTotal += ctx.GasUsed()
+			gasUesdTotal += resourceUsed.TotalGas()
 		}
+		request := *tmpReq
+		request.ResourceLimits = contract.ToPbLimits(resourceUsed)
+		requests = append(requests, &request)
 		ctx.Release()
 	}
 
@@ -768,7 +772,7 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 		Inputs:   xmodel.GetTxInputs(inputs),
 		Outputs:  xmodel.GetTxOutputs(outputs),
 		Response: response,
-		Requests: req.Requests,
+		Requests: requests,
 		GasUsed:  gasUesdTotal,
 	}
 	return rsps, nil
@@ -1109,6 +1113,10 @@ func (uv *UtxoVM) doTxSync(tx *pb.Transaction) error {
 		uv.xlog.Warn("    fail to marshal tx", "pbErr", pbErr)
 		return pbErr
 	}
+	if int64(len(pbTxBuf)) > uv.ledger.GetMaxBlockSize()/2 {
+		uv.xlog.Warn("tx too large, should not be greater than half of max blocksize", "size", len(pbTxBuf))
+		return ErrTxTooLarge
+	}
 	recvTime := time.Now().Unix()
 	uv.mutex.Lock()
 	defer uv.mutex.Unlock() //lock guard
@@ -1171,6 +1179,10 @@ func (uv *UtxoVM) ImmediateVerifyTx(tx *pb.Transaction, isRootTx bool) (bool, er
 	}
 	if tx.Version > BetaTxVersion {
 		return false, ErrVersionInvalid
+	}
+	// autogen tx should not run ImmediateVerifyTx, this could be a fake tx
+	if tx.Autogen {
+		return false, ErrInvalidAutogenTx
 	}
 	if tx.Version >= TxVersion {
 		// verify rwset
@@ -1349,7 +1361,7 @@ func getGasLimitFromTx(tx *pb.Transaction) (int64, error) {
 		return gasLimit, nil
 	}
 	// FIXME: 没有小费的tx如何得到gas limit?
-	return 0, ErrGasNotEnough
+	return 0, nil
 }
 
 // verifyTxRWSets verify tx read sets and write sets
@@ -1383,33 +1395,37 @@ func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
 		Initiator:    tx.GetInitiator(),
 		AuthRequire:  tx.GetAuthRequire(),
 		ContractName: "",
-		GasLimit:     int64(0),
 	}
 	gasLimit, err := getGasLimitFromTx(tx)
 	if err != nil {
 		return false, err
 	}
-	gasRemain := int64(contract.MaxGasLimit)
 	uv.xlog.Trace("get gas limit from tx", "gasLimit", gasLimit, "txid", hex.EncodeToString(tx.Txid))
 
-	for i := 0; i < len(tx.GetContractRequests()); i++ {
-		if i == len(reservedRequests) {
-			gasRemain = gasLimit
+	for i, tmpReq := range tx.GetContractRequests() {
+		if gasLimit <= 0 {
+			uv.xlog.Error("virifyTxRWSets error:out of gas", "contractName", tmpReq.GetContractName(),
+				"txid", hex.EncodeToString(tx.Txid))
+			return false, errors.New("out of gas")
 		}
-		tmpReq := tx.GetContractRequests()[i]
+
 		moduleName := tmpReq.GetModuleName()
 		vm, err := uv.vmMgr3.GetVM(moduleName)
 		if err != nil {
 			return false, err
 		}
 
-		contextConfig.GasLimit = gasRemain
+		limits := contract.FromPbLimits(tmpReq.GetResourceLimits())
+		if i >= len(reservedRequests) {
+			gasLimit -= limits.TotalGas()
+		}
+		contextConfig.ResourceLimits = limits
 		contextConfig.ContractName = tmpReq.GetContractName()
 		ctx, err := vm.NewContext(contextConfig)
 		if err != nil {
 			// FIXME zq @icexin: need to return contract not found
 			uv.xlog.Error("verifyTxRWSets NewContext error", "err", err, "contractName", tmpReq.GetContractName())
-			if i < len(reservedRequests) && err.Error() == "leveldb: not found" {
+			if i < len(reservedRequests) && (err.Error() == "leveldb: not found" || strings.HasSuffix(err.Error(), "not found")) {
 				continue
 			}
 			return false, err
@@ -1421,9 +1437,7 @@ func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
 			uv.xlog.Error("verifyTxRWSets Invoke error", "error", err, "contractName", tmpReq.GetContractName())
 			return false, err
 		}
-		if i >= len(reservedRequests) {
-			gasRemain -= ctx.GasUsed()
-		}
+
 		ctx.Release()
 	}
 
@@ -1640,6 +1654,10 @@ func (uv *UtxoVM) PlayAndRepost(blockid []byte, needRepost bool, isRootTx bool) 
 		tx := block.Transactions[idx]
 		txid := string(tx.Txid)
 		if unconfirmToConfirm[txid] == false { // 本地没预执行过的Tx, 从block中收到的，需要Play执行
+			if !uv.verifyAutogenTx(tx) {
+				uv.xlog.Warn("PlayAndRepost found invalid autogen tx", "txid", fmt.Sprintf("%x", tx.Txid))
+				return ErrInvalidAutogenTx
+			}
 			if !tx.Autogen && !tx.Coinbase {
 				if ok, err := uv.ImmediateVerifyTx(tx, isRootTx); !ok {
 					uv.xlog.Warn("dotx failed to ImmediateVerifyTx", "txid", fmt.Sprintf("%x", tx.Txid), "err", err)
@@ -1739,6 +1757,26 @@ func (uv *UtxoVM) PlayForMiner(blockid []byte, batch kvdb.Batch) error {
 		uv.unconfirmTxInMem.Delete(string(tx.Txid))
 	}
 	return nil
+}
+
+// verifyAutogenTx verify if a autogen tx is valid, return true if tx is valid.
+func (uv *UtxoVM) verifyAutogenTx(tx *pb.Transaction) bool {
+	if !tx.Autogen {
+		// not autogen tx, just return true
+		return true
+	}
+
+	if len(tx.TxInputs) > 0 || len(tx.TxOutputs) > 0 {
+		// autogen tx must have no tx inputs/outputs
+		return false
+	}
+
+	if len(tx.TxInputsExt) > 0 || len(tx.TxOutputsExt) > 0 {
+		// autogen tx must have no tx inputs/outputs extend
+		return false
+	}
+
+	return true
 }
 
 // RollBackUnconfirmedTx 回滚本地未确认交易
@@ -1878,7 +1916,7 @@ func (uv *UtxoVM) HasTx(txid []byte) (bool, error) {
 func (uv *UtxoVM) QueryTx(txid []byte) (*pb.Transaction, error) {
 	pbBuf, findErr := uv.unconfirmedTable.Get(txid)
 	if findErr != nil {
-		if findErr.Error() == kverr.ErrNotFound.Error() {
+		if common.NormalizedKVError(findErr) == common.ErrKVNotFound {
 			return nil, ErrTxNotFound
 		}
 		uv.xlog.Warn("unexpected leveldb error, when do QueryTx, it may corrupted.", "findErr", findErr)

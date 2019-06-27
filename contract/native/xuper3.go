@@ -7,6 +7,7 @@ import (
 
 	"github.com/docker/go-connections/sockets"
 	"github.com/xuperchain/xuperunion/common"
+	"github.com/xuperchain/xuperunion/contract"
 	"github.com/xuperchain/xuperunion/contract/bridge"
 	"github.com/xuperchain/xuperunion/contractsdk/go/pb"
 	"google.golang.org/grpc"
@@ -51,8 +52,10 @@ type nativeInstance struct {
 	snc *standardNativeContract
 }
 
-func (n *nativeInstance) GasUsed() int64 {
-	return 1
+func (n *nativeInstance) ResourceUsed() contract.Limits {
+	return contract.Limits{
+		XFee: 1,
+	}
 }
 
 func (n *nativeInstance) Release() {

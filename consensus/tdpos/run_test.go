@@ -23,11 +23,11 @@ import (
 func commonWork(t *testing.T) (U *utxo.UtxoVM, L *ledger.Ledger, T *TDpos) {
 	workspace, _ := ioutil.TempDir("/tmp", "")
 	defer os.RemoveAll(workspace)
-	L, err1 := ledger.NewLedger(workspace, nil, nil, "leveldb", crypto_client.CryptoTypeDefault)
+	L, err1 := ledger.NewLedger(workspace, nil, nil, "default", crypto_client.CryptoTypeDefault)
 	if err1 != nil {
 		t.Fatal(err1)
 	}
-	U, err2 := utxo.NewUtxoVM("xuper", L, workspace, minerPrivateKey, minerPublicKey, []byte(minerAddress), nil, false, "leveldb", crypto_client.CryptoTypeDefault)
+	U, err2 := utxo.NewUtxoVM("xuper", L, workspace, minerPrivateKey, minerPublicKey, []byte(minerAddress), nil, false, "default", crypto_client.CryptoTypeDefault)
 	if err2 != nil {
 		t.Fatal(err2)
 	}

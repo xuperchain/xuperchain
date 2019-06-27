@@ -33,7 +33,7 @@ func NewFakeUtxoVM(t *testing.T, workspace string, recreate bool) *FakeUtxoVM {
 	if recreate {
 		os.RemoveAll(workspace)
 	}
-	ledger, err := ledger_pkg.NewLedger(workspace, nil, nil, "leveldb", crypto_client.CryptoTypeDefault)
+	ledger, err := ledger_pkg.NewLedger(workspace, nil, nil, "default", crypto_client.CryptoTypeDefault)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -42,7 +42,7 @@ func NewFakeUtxoVM(t *testing.T, workspace string, recreate bool) *FakeUtxoVM {
 	publicKey := `{"Curvname":"P-256","X":74695617477160058757747208220371236837474210247114418775262229497812962582435,"Y":51348715319124770392993866417088542497927816017012182211244120852620959209571}`
 	address := []byte(`dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN`)
 
-	utxoVM, err := NewUtxoVM("xuper", ledger, workspace, privateKey, publicKey, address, nil, false, "leveldb",
+	utxoVM, err := NewUtxoVM("xuper", ledger, workspace, privateKey, publicKey, address, nil, false, "default",
 		crypto_client.CryptoTypeDefault)
 	if err != nil {
 		t.Fatal(err)
