@@ -22,7 +22,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
-	log "github.com/xuperchain/log15"
+	"github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperunion/common"
 	"github.com/xuperchain/xuperunion/contract"
 	crypto_client "github.com/xuperchain/xuperunion/crypto/client"
@@ -32,7 +32,7 @@ import (
 	ledger_pkg "github.com/xuperchain/xuperunion/ledger"
 	"github.com/xuperchain/xuperunion/pb"
 	pm "github.com/xuperchain/xuperunion/permission"
-	acl "github.com/xuperchain/xuperunion/permission/acl"
+	"github.com/xuperchain/xuperunion/permission/acl"
 	acli "github.com/xuperchain/xuperunion/permission/acl/impl"
 	"github.com/xuperchain/xuperunion/pluginmgr"
 	"github.com/xuperchain/xuperunion/utxo/txhash"
@@ -314,6 +314,10 @@ func NewUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, priva
 // MakeUtxoVM 这个函数比NewUtxoVM更加可订制化
 func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, privateKey, publicKey string, address []byte, xlog log.Logger,
 	cachesize int, tmplockSeconds, contractExectionTime int, otherPaths []string, iBeta bool, kvEngineType string, cryptoType string) (*UtxoVM, error) {
+	if xlog == nil { // 如果外面没传进来log对象的话
+		xlog = log.New("module", "utxoVM")
+		xlog.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
+	}
 	dbPath := filepath.Join(storePath, "utxoVM")
 	plgMgr, plgErr := pluginmgr.GetPluginMgr()
 	if plgErr != nil {
@@ -335,11 +339,6 @@ func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, priv
 	if err != nil {
 		xlog.Warn("fail to open db", "dbPath", dbPath)
 		return nil, err
-	}
-
-	if xlog == nil { // 如果外面没传进来log对象的话
-		xlog = log.New("module", "utxoVM")
-		xlog.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
 	}
 	if err != nil {
 		xlog.Warn("fail to open leveldb", "dbPath", dbPath, "err", err)
