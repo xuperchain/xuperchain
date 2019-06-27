@@ -148,7 +148,7 @@ func (s *server) QueryTx(ctx context.Context, in *pb.TxStatus) (*pb.TxStatus, er
 		return out, nil
 	}
 	if bc.QueryTxFromForbidden(in.Txid) {
-		return out, nil
+		return out, errors.New("tx has been forbidden")
 	}
 	out = bc.QueryTx(in)
 	return out, nil
@@ -221,11 +221,16 @@ func (s *server) GetBlock(ctx context.Context, in *pb.BlockID) (*pb.Block, error
 
 	block := out.GetBlock()
 	transactions := block.GetTransactions()
+	transactionsFilter := []*pb.Transaction{}
 	for _, transaction := range transactions {
 		txid := transaction.GetTxid()
 		if bc.QueryTxFromForbidden(txid) {
-			return &pb.Block{Header: &pb.Header{}}, nil
+			continue
 		}
+		transactionsFilter = append(transactionsFilter, transaction)
+	}
+	if transactions != nil {
+		out.Block.Transactions = transactionsFilter
 	}
 	s.log.Trace("Start to dealwith GetBlock result", "logid", in.Header.Logid,
 		"blockid", out.Blockid, "height", out.GetBlock().GetHeight())
@@ -655,6 +660,21 @@ func (s *server) GetBlockByHeight(ctx context.Context, in *pb.BlockHeight) (*pb.
 		return &out, nil
 	}
 	out := bc.GetBlockByHeight(in)
+
+	block := out.GetBlock()
+	transactions := block.GetTransactions()
+	transactionsFilter := []*pb.Transaction{}
+	for _, transaction := range transactions {
+		txid := transaction.GetTxid()
+		if bc.QueryTxFromForbidden(txid) {
+			continue
+		}
+		transactionsFilter = append(transactionsFilter, transaction)
+	}
+	if transactions != nil {
+		out.Block.Transactions = transactionsFilter
+	}
+
 	s.log.Trace("GetBlockByHeight result", "logid", in.Header.Logid, "bcname", in.Bcname, "height", in.Height,
 		"blockid", out.GetBlockid())
 	return out, nil

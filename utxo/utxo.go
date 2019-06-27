@@ -1943,17 +1943,17 @@ func (uv *UtxoVM) queryTxFromForbiddenWithConfirmed(txid []byte) (bool, bool, er
 	}
 	_, err = ctx.Invoke(request.GetMethodName(), request.GetArgs())
 	if err != nil {
+		ctx.Release()
 		return false, false, err
 	}
 	ctx.Release()
 	// inputs as []*xmodel_pb.VersionedData
 	inputs, _, _ := modelCache.GetRWSets()
 	versionData := &xmodel_pb.VersionedData{}
-	if len(inputs) == 2 {
-		versionData = inputs[1]
-	} else {
+	if len(inputs) != 2 {
 		return false, false, nil
 	}
+	versionData = inputs[1]
 	confirmed := versionData.GetConfirmed()
 	return true, confirmed, nil
 }
