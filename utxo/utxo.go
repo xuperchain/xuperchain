@@ -740,8 +740,7 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 			uv.xlog.Error("PreExec NewContext error", "error", err,
 				"contractName", tmpReq.GetContractName())
 			if i < len(reservedRequests) && strings.HasSuffix(err.Error(), "not found") {
-				request := *tmpReq
-				requests = append(requests, &request)
+				requests = append(requests, tmpReq)
 				continue
 			}
 			return nil, err
