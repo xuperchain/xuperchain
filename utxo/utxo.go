@@ -14,12 +14,12 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"os"
 	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
-	"os"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/xuperchain/log15"
