@@ -38,6 +38,31 @@ type RootConfig struct {
 	ReservedContracts []InvokeRequest        `json:"reserved_contracts"`
 }
 
+// InvokeRequest define genesis reserved_contracts configure
+type InvokeRequest struct {
+	ModuleName   string            `json:"module_name"`
+	ContractName string            `json:"contract_name"`
+	MethodName   string            `json:"method_name"`
+	Args         map[string]string `json:"args"`
+}
+
+func invokeRequestFromJSON2Pb(jsonRequest []InvokeRequest) ([]*pb.InvokeRequest, error) {
+	requestsWithPb := []*pb.InvokeRequest{}
+	for _, request := range jsonRequest {
+		tmpReqWithPB := &pb.InvokeRequest{
+			ModuleName:   request.ModuleName,
+			ContractName: request.ContractName,
+			MethodName:   request.MethodName,
+			Args:         make(map[string][]byte),
+		}
+		for k, v := range request.Args {
+			tmpReqWithPB.Args[k] = []byte(v)
+		}
+		requestsWithPb = append(requestsWithPb, tmpReqWithPB)
+	}
+	return requestsWithPb, nil
+}
+
 // GetMaxBlockSizeInByte get max block size in Byte
 func (rc *RootConfig) GetMaxBlockSizeInByte() (n int64) {
 	maxSizeMB, _ := strconv.Atoi(rc.MaxBlockSize)
@@ -61,7 +86,7 @@ func (rc *RootConfig) GetGenesisConsensus() (map[string]interface{}, error) {
 
 // GetReservedContract get default contract config of genesis block
 func (rc *RootConfig) GetReservedContract() ([]*pb.InvokeRequest, error) {
-	return invokeRequestFromJson2Pb(rc.ReservedContracts)
+	return invokeRequestFromJSON2Pb(rc.ReservedContracts)
 }
 
 // GenesisBlock genesis block data structure

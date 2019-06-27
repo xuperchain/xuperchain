@@ -14,8 +14,11 @@ type reservedArgs struct {
 
 func genArgs(req []*pb.InvokeRequest) *reservedArgs {
 	ra := &reservedArgs{}
-	for _, v := range req {
-		ra.ContractNames += v.GetContractName() + ","
+	for i, v := range req {
+		ra.ContractNames += v.GetContractName()
+		if i < len(req)-1 {
+			ra.ContractNames += ","
+		}
 	}
 	return ra
 }
