@@ -7,8 +7,8 @@ import (
 	"strconv"
 
 	"github.com/pkg/errors"
-	"github.com/syndtr/goleveldb/leveldb"
 
+	"github.com/xuperchain/xuperunion/common"
 	"github.com/xuperchain/xuperunion/common/events"
 	cons_base "github.com/xuperchain/xuperunion/consensus/base"
 	"github.com/xuperchain/xuperunion/contract"
@@ -85,7 +85,7 @@ func (tp *TDpos) runRevokeVote(desc *contract.TxDesc, block *pb.InternalBlock) e
 		return errors.New("runRevokeVote error revoke repeated")
 	}
 	val, err := tp.utxoVM.GetFromTable(nil, []byte(keyRevoke))
-	if (err != nil && err != leveldb.ErrNotFound) || val != nil {
+	if (err != nil && common.NormalizedKVError(err) != common.ErrKVNotFound) || val != nil {
 		tp.log.Warn("runRevokeVote error revoke repeated or get revoke key from db error", "val", hex.EncodeToString(val),
 			"error", err)
 		return errors.New("runRevokeVote error revoke repeated or get revoke key from db error")
@@ -212,7 +212,7 @@ func (tp *TDpos) runRevokeCandidate(desc *contract.TxDesc, block *pb.InternalBlo
 		return errors.New("runRevokeCandidate error revoke repeated")
 	}
 	val, err := tp.utxoVM.GetFromTable(nil, []byte(keyRevoke))
-	if (err != nil && err != leveldb.ErrNotFound) || val != nil {
+	if (err != nil && common.NormalizedKVError(err) != common.ErrKVNotFound) || val != nil {
 		tp.log.Warn("runRevokeCandidate error revoke repeated or get revoke key from db error", "val", hex.EncodeToString(val),
 			"error", err)
 		return errors.New("runRevokeCandidate error revoke repeated or get revoke key from db error")
@@ -276,7 +276,7 @@ func (tp *TDpos) runCheckValidater(desc *contract.TxDesc, block *pb.InternalBloc
 	}
 	key := GenTermCheckKey(version, term)
 	_, err = tp.utxoVM.GetFromTable(nil, []byte(key))
-	if err != leveldb.ErrNotFound {
+	if common.NormalizedKVError(err) != common.ErrKVNotFound {
 		return err
 	}
 	proposers, err := tp.genTermProposer()

@@ -25,7 +25,7 @@ const BobAddress = "dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN"
 const BobPubkey = `{"Curvname":"P-256","X":74695617477160058757747208220371236837474210247114418775262229497812962582435,"Y":51348715319124770392993866417088542497927816017012182211244120852620959209571}`
 const BobPrivateKey = `{"Curvname":"P-256","X":74695617477160058757747208220371236837474210247114418775262229497812962582435,"Y":51348715319124770392993866417088542497927816017012182211244120852620959209571,"D":29079635126530934056640915735344231956621504557963207107451663058887647996601}`
 const AliceAddress = "WNWk3ekXeM5M2232dY2uCJmEqWhfQiDYT"
-const defaultKVEngine = "leveldb"
+const defaultKVEngine = "default"
 
 func bobToAlice(t *testing.T, utxovm *utxo.UtxoVM, ledger *ledger.Ledger, amount string, prehash []byte, desc string) ([]byte, error) {
 	t.Logf("pre_hash of this block: %x", prehash)
@@ -245,7 +245,7 @@ func TestCreateBlockChainPermission(t *testing.T) {
 
 func TestGetKVEngineType(t *testing.T) {
 	data := map[string]interface{}{
-		"kvengine": "leveldb",
+		"kvengine": "default",
 		"crypto":   client.CryptoTypeDefault,
 	}
 	json, _ := json.Marshal(data)
@@ -261,7 +261,7 @@ func TestGetKVEngineType(t *testing.T) {
 
 func TestGetCryptoType(t *testing.T) {
 	data := map[string]interface{}{
-		"kvengine": "leveldb",
+		"kvengine": "default",
 		"crypto":   client.CryptoTypeDefault,
 	}
 	json, _ := json.Marshal(data)

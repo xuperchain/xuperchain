@@ -182,3 +182,10 @@ func (sc *SingleConsensus) GetCoreMiners() []*cons_base.MinerInfo {
 	res = append(res, master)
 	return res
 }
+
+// GetStatus get current status of consensus
+func (sc *SingleConsensus) GetStatus() *cons_base.ConsensusStatus {
+	return &cons_base.ConsensusStatus{
+		Proposer: string(sc.masterAddr),
+	}
+}
