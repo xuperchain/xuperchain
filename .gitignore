@@ -22,3 +22,6 @@ xvm/compile/wabt/build/
 
 # Go test binaries
 *.test
+
+# idea
+.idea
