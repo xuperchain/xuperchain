@@ -1,5 +1,3 @@
-# Pull Request Template
-
 ## Description
 
 What is the purpose of the change?
