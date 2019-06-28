@@ -147,6 +147,9 @@ func (s *server) QueryTx(ctx context.Context, in *pb.TxStatus) (*pb.TxStatus, er
 		out.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
 		return out, nil
 	}
+	if bc.QueryTxFromForbidden(in.Txid) {
+		return out, errors.New("tx has been forbidden")
+	}
 	out = bc.QueryTx(in)
 	return out, nil
 }
@@ -215,6 +218,20 @@ func (s *server) GetBlock(ctx context.Context, in *pb.BlockID) (*pb.Block, error
 		return &out, nil
 	}
 	out := bc.GetBlock(in)
+
+	block := out.GetBlock()
+	transactions := block.GetTransactions()
+	transactionsFilter := []*pb.Transaction{}
+	for _, transaction := range transactions {
+		txid := transaction.GetTxid()
+		if bc.QueryTxFromForbidden(txid) {
+			continue
+		}
+		transactionsFilter = append(transactionsFilter, transaction)
+	}
+	if transactions != nil {
+		out.Block.Transactions = transactionsFilter
+	}
 	s.log.Trace("Start to dealwith GetBlock result", "logid", in.Header.Logid,
 		"blockid", out.Blockid, "height", out.GetBlock().GetHeight())
 	return out, nil
@@ -601,6 +618,32 @@ func (s *server) DposCheckResults(ctx context.Context, request *pb.DposCheckResu
 	return response, nil
 }
 
+// DposStatus get dpos current status
+func (s *server) DposStatus(ctx context.Context, request *pb.DposStatusRequest) (*pb.DposStatusResponse, error) {
+	bc := s.mg.Get(request.GetBcname())
+	if request.Header == nil {
+		request.Header = global.GHeader()
+	}
+	response := &pb.DposStatusResponse{Header: &pb.Header{Logid: request.Header.Logid}, Status: &pb.DposStatus{}}
+	if bc == nil {
+		response.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE
+		s.log.Warn("DposStatus failed  to get blockchain", "logid", request.Header.Logid)
+		return response, nil
+	}
+
+	if bc.GetConsType() != consensus.ConsensusTypeTdpos {
+		response.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE
+		s.log.Warn("DposStatus failed to check consensus type", "logid", request.Header.Logid)
+		return response, errors.New("The consensus is not tdpos")
+	}
+
+	status := bc.GetConsStatus()
+	response.Status.Term = status.Term
+	response.Status.BlockNum = status.BlockNum
+	response.Status.Proposer = status.Proposer
+	return response, nil
+}
+
 // PreExec smart contract preExec process
 func (s *server) PreExec(ctx context.Context, request *pb.InvokeRPCRequest) (*pb.InvokeRPCResponse, error) {
 	s.log.Trace("Got PreExec req", "req", request)
@@ -618,6 +661,12 @@ func (s *server) PreExec(ctx context.Context, request *pb.InvokeRPCRequest) (*pb
 	vmResponse, err := bc.PreExec(request, hd)
 	if err != nil {
 		return nil, err
+	}
+	txInputs := vmResponse.GetInputs()
+	for _, txInput := range txInputs {
+		if bc.QueryTxFromForbidden(txInput.GetRefTxid()) {
+			return rsps, nil
+		}
 	}
 	rsps.Response = vmResponse
 	s.log.Info("PreExec", "logid", request.Header.Logid, "cost", hd.Timer.Print())
@@ -637,6 +686,21 @@ func (s *server) GetBlockByHeight(ctx context.Context, in *pb.BlockHeight) (*pb.
 		return &out, nil
 	}
 	out := bc.GetBlockByHeight(in)
+
+	block := out.GetBlock()
+	transactions := block.GetTransactions()
+	transactionsFilter := []*pb.Transaction{}
+	for _, transaction := range transactions {
+		txid := transaction.GetTxid()
+		if bc.QueryTxFromForbidden(txid) {
+			continue
+		}
+		transactionsFilter = append(transactionsFilter, transaction)
+	}
+	if transactions != nil {
+		out.Block.Transactions = transactionsFilter
+	}
+
 	s.log.Trace("GetBlockByHeight result", "logid", in.Header.Logid, "bcname", in.Bcname, "height", in.Height,
 		"blockid", out.GetBlockid())
 	return out, nil

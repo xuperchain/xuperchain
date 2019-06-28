@@ -13,12 +13,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/syndtr/goleveldb/leveldb"
 	log "github.com/xuperchain/log15"
 
 	"encoding/hex"
 	"encoding/json"
 
+	"github.com/xuperchain/xuperunion/common"
 	"github.com/xuperchain/xuperunion/common/config"
 	cons_base "github.com/xuperchain/xuperunion/consensus/base"
 	"github.com/xuperchain/xuperunion/contract"
@@ -233,17 +233,26 @@ func (tp *TDpos) buildConfigs(xlog log.Logger, cfg *config.NodeConfig, consCfg m
 
 	for _, v := range initProposer1 {
 		canInfo := &CandidateInfo{}
-		proposer := v.(map[string]interface{})
-		if _, ok := proposer["address"]; !ok {
-			return errors.New("TDPos init failed, proposer should have address")
-		}
-		canInfo.Address = proposer["address"].(string)
-		if _, ok := proposer["neturl"]; !ok {
-			tp.log.Warn("TDPos config warning, no neturl set for peer", "address", proposer["address"])
-		} else {
-			canInfo.PeerAddr = proposer["neturl"].(string)
-		}
+		canInfo.Address = v.(string)
 		tp.config.initProposer[1] = append(tp.config.initProposer[1], canInfo)
+	}
+
+	// if have init_proposer_neturl, this info can be used for core peers connection
+	if _, ok := consCfg["init_proposer_neturl"]; ok {
+		proposerNeturls := consCfg["init_proposer_neturl"].(map[string]interface{})
+		if _, ok := proposerNeturls["1"]; !ok {
+			return errors.New("TDpos have init_proposer_neturl but don't have term 1")
+		}
+		proposerNeturls1 := proposerNeturls["1"].([]interface{})
+		if int64(len(proposerNeturls1)) != proposerNum {
+			return errors.New("TDpos init error, Proposer neturl number should be equal to proposerNum")
+		}
+		for idx, v := range proposerNeturls1 {
+			tp.config.initProposer[1][idx].PeerAddr = v.(string)
+			tp.log.Debug("TDpos proposer info", "index", idx, "proposer", tp.config.initProposer[1][idx])
+		}
+	} else {
+		tp.log.Warn("TDpos have no neturl info for core peers")
 	}
 
 	tp.log.Trace("TDpos after config", "TTDpos.config", tp.config)
@@ -511,7 +520,7 @@ func (tp *TDpos) GetVerifiableAutogenTx(blockHeight int64, maxCount int, timesta
 	key := GenTermCheckKey(tp.version, term+1)
 	val, err := tp.utxoVM.GetFromTable(nil, []byte(key))
 	txs := []*pb.Transaction{}
-	if val == nil && err == leveldb.ErrNotFound {
+	if val == nil && common.NormalizedKVError(err) == common.ErrKVNotFound {
 		desc := &contract.TxDesc{
 			Module: "tdpos",
 			Method: checkvValidaterMethod,
@@ -552,4 +561,21 @@ func (tp *TDpos) GetCoreMiners() []*cons_base.MinerInfo {
 		res = append(res, minerInfo)
 	}
 	return res
+}
+
+// GetStatus get the current status of consensus
+func (tp *TDpos) GetStatus() *cons_base.ConsensusStatus {
+	timestamp := time.Now().UnixNano()
+	term, pos, blockPos := tp.minerScheduling(timestamp)
+	proposers := tp.getTermProposer(term)
+	status := &cons_base.ConsensusStatus{
+		Term:     term,
+		BlockNum: blockPos,
+	}
+	if int(pos) < 0 || int(pos) >= len(proposers) {
+		tp.log.Warn("current pos illegal", "pos", pos)
+	} else {
+		status.Proposer = proposers[int(pos)].Address
+	}
+	return status
 }

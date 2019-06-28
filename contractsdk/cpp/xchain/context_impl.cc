@@ -9,17 +9,15 @@ ContextImpl::ContextImpl() {}
 
 ContextImpl::~ContextImpl() {}
 
-const std::string& ContextImpl::method() { return _method; }
+const std::string& ContextImpl::method() { return _call_args.method(); }
 
 bool ContextImpl::init() {
     pb::GetCallArgsRequest req;
-    pb::CallArgs rep;
-    bool ok = syscall("GetCallArgs", req, &rep);
+    bool ok = syscall("GetCallArgs", req, &_call_args);
     if (!ok) {
         return false;
     }
-    _method = rep.method();
-    _args.insert(rep.args().begin(), rep.args().end());
+    _args.insert(_call_args.args().begin(), _call_args.args().end());
     _resp.status = 200;
     return true;
 }
@@ -34,6 +32,19 @@ const std::string& ContextImpl::arg(const std::string& name) const {
         return it->second;
     }
     return std::move(std::string(""));
+}
+
+
+const std::string& ContextImpl::initiator() const {
+    return _call_args.initiator();
+}
+
+int ContextImpl::auth_require_size() const {
+    return _call_args.auth_require_size();
+}
+
+const std::string& ContextImpl::auth_require(int idx) const {
+    return _call_args.auth_require(idx);
 }
 
 bool ContextImpl::get_object(const std::string& key, std::string* value) {

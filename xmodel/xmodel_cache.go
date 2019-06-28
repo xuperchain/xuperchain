@@ -150,7 +150,7 @@ func (xc *XMCache) Put(bucket string, key []byte, value []byte) error {
 		return err
 	}
 	// put 前先强制get一下
-	_, _ = xc.Get(bucket, key)
+	xc.Get(bucket, key)
 	return xc.outputsCache.Put(buKey, valBuf)
 }
 

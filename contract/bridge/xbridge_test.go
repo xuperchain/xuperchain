@@ -47,8 +47,8 @@ func (c *codeInstance) Exec() error {
 	return nil
 }
 
-func (c *codeInstance) GasUsed() int64 {
-	return 0
+func (c *codeInstance) ResourceUsed() contract.Limits {
+	return contract.Limits{}
 }
 
 func (c *codeInstance) Release() {
@@ -86,11 +86,11 @@ func TestExecutorMethod(t *testing.T) {
 	vm := xbridge.RegisterExecutor("code", new(codeExecutor))
 	util.WithXModelContext(t, func(x *util.XModelContext) {
 		ctxCfg := &contract.ContextConfig{
-			XMCache:      x.Cache,
-			Initiator:    "",
-			AuthRequire:  []string{},
-			ContractName: "dummy",
-			GasLimit:     int64(0),
+			XMCache:        x.Cache,
+			Initiator:      "",
+			AuthRequire:    []string{},
+			ContractName:   "dummy",
+			ResourceLimits: contract.MaxLimits,
 		}
 
 		ctx, err := vm.NewContext(ctxCfg)
@@ -115,11 +115,11 @@ func TestExecutorArgs(t *testing.T) {
 	util.WithXModelContext(t, func(x *util.XModelContext) {
 
 		ctxCfg := &contract.ContextConfig{
-			XMCache:      x.Cache,
-			Initiator:    "",
-			AuthRequire:  []string{},
-			ContractName: "dummy",
-			GasLimit:     int64(0),
+			XMCache:        x.Cache,
+			Initiator:      "",
+			AuthRequire:    []string{},
+			ContractName:   "dummy",
+			ResourceLimits: contract.MaxLimits,
 		}
 
 		ctx, err := vm.NewContext(ctxCfg)
@@ -145,11 +145,11 @@ func TestExecutorSyscall(t *testing.T) {
 	vm := xbridge.RegisterExecutor("code", new(codeExecutor))
 	util.WithXModelContext(t, func(x *util.XModelContext) {
 		ctxCfg := &contract.ContextConfig{
-			XMCache:      x.Cache,
-			Initiator:    "",
-			AuthRequire:  []string{},
-			ContractName: "dummy",
-			GasLimit:     int64(0),
+			XMCache:        x.Cache,
+			Initiator:      "",
+			AuthRequire:    []string{},
+			ContractName:   "dummy",
+			ResourceLimits: contract.MaxLimits,
 		}
 
 		ctx, err := vm.NewContext(ctxCfg)

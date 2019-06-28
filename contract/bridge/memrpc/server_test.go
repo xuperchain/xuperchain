@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/xuperchain/xuperunion/contract"
 	"github.com/xuperchain/xuperunion/contract/bridge"
 	"github.com/xuperchain/xuperunion/contractsdk/go/pb"
 	"github.com/xuperchain/xuperunion/test/util"
@@ -19,6 +20,7 @@ type serverContext struct {
 func (s *serverContext) NewContext() int64 {
 	ctx := s.tm.MakeContext()
 	ctx.Cache = s.Cache
+	ctx.ResourceLimits = contract.MaxLimits
 	return ctx.ID
 }
 

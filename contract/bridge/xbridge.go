@@ -17,7 +17,9 @@ type Executor interface {
 type Instance interface {
 	// Exec根据ctx里面的参数执行合约代码
 	Exec() error
-	GasUsed() int64
+	// ResourceUsed returns the resource used by contract
+	ResourceUsed() contract.Limits
+	// Release releases contract instance
 	Release()
 }
 

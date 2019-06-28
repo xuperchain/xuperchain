@@ -95,7 +95,7 @@ func (p *P2PServerV2) Stop() {
 func (p *P2PServerV2) SendMessage(ctx context.Context, msg *p2pPb.XuperMessage,
 	opts ...MessageOption) error {
 	msgOpts := getMessageOption(opts)
-	filter := p.getFilter(msgOpts.filters)
+	filter := p.getFilter(msgOpts)
 	peers, _ := filter.Filter()
 	p.log.Trace("Server SendMessage", "logid", msg.GetHeader().GetLogid(), "msgType", msg.GetHeader().GetType(), "checksum", msg.GetHeader().GetDataCheckSum())
 	return p.node.SendMessage(ctx, msg, peers)
@@ -106,7 +106,7 @@ func (p *P2PServerV2) SendMessage(ctx context.Context, msg *p2pPb.XuperMessage,
 func (p *P2PServerV2) SendMessageWithResponse(ctx context.Context, msg *p2pPb.XuperMessage,
 	opts ...MessageOption) ([]*p2pPb.XuperMessage, error) {
 	msgOpts := getMessageOption(opts)
-	filter := p.getFilter(msgOpts.filters)
+	filter := p.getFilter(msgOpts)
 	peers, _ := filter.Filter()
 	percentage := msgOpts.percentage
 	p.log.Trace("Server SendMessage with response", "logid", msg.GetHeader().GetLogid(), "msgType", msg.GetHeader().GetType(), "checksum", msg.GetHeader().GetDataCheckSum())
@@ -129,7 +129,9 @@ func (p *P2PServerV2) GetNetURL() string {
 	return fmt.Sprintf("/ip4/127.0.0.1/tcp/%v/p2p/%s", p.config.Port, p.node.id.Pretty())
 }
 
-func (p *P2PServerV2) getFilter(fs []FilterStrategy) PeersFilter {
+func (p *P2PServerV2) getFilter(opts *msgOptions) PeersFilter {
+	fs := opts.filters
+	bcname := opts.bcname
 	if len(fs) == 0 {
 		return &BucketsFilter{node: p.node}
 	}
@@ -144,7 +146,7 @@ func (p *P2PServerV2) getFilter(fs []FilterStrategy) PeersFilter {
 		case BucketsWithFactorStrategy:
 			filter = &BucketsFilterWithFactor{node: p.node}
 		case CorePeersStrategy:
-			filter = &CorePeersFilter{node: p.node}
+			filter = &CorePeersFilter{node: p.node, name: bcname}
 		default:
 			filter = &BucketsFilter{node: p.node}
 		}

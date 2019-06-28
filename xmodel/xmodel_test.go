@@ -12,7 +12,7 @@ import (
 	"github.com/xuperchain/xuperunion/pb"
 )
 
-const DefaultKvEngine = "leveldb"
+const DefaultKvEngine = "default"
 
 var logger log.Logger
 

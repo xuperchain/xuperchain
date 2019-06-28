@@ -50,12 +50,18 @@ type TxOutputExt struct {
 	Value  string `json:"value"`
 }
 
+type ResourceLimit struct {
+	Type  string `json:"type"`
+	Limit int64  `json:"limit"`
+}
+
 // InvokeRequest proto.InvokeRequest
 type InvokeRequest struct {
-	ModuleName   string            `json:"moduleName"`
-	ContractName string            `json:"contractName"`
-	MethodName   string            `json:"methodName"`
-	Args         map[string]string `json:"args"`
+	ModuleName    string            `json:"moduleName"`
+	ContractName  string            `json:"contractName"`
+	MethodName    string            `json:"methodName"`
+	Args          map[string]string `json:"args"`
+	ResouceLimits []ResourceLimit   `json:"resource_limits"`
 }
 
 // SignatureInfo proto.SignatureInfo
@@ -157,6 +163,13 @@ func FromPBTx(tx *pb.Transaction) *Transaction {
 			for argKey, argV := range req.Args {
 				tmpReq.Args[argKey] = string(argV)
 			}
+			for _, rlimit := range req.ResourceLimits {
+				resource := ResourceLimit{
+					Type:  rlimit.Type.String(),
+					Limit: rlimit.Limit,
+				}
+				tmpReq.ResouceLimits = append(tmpReq.ResouceLimits, resource)
+			}
 			t.ContractRequests = append(t.ContractRequests, tmpReq)
 		}
 	}
@@ -251,6 +264,10 @@ type UtxoMeta struct {
 	LockKeyList []string `json:"lockKeyList"`
 	// UtxoTotal UtxoTotal
 	UtxoTotal string `json:"utxoTotal"`
+	// Average confirmed dealy (ms)
+	AvgDelay int64 `json:"avgDelay"`
+	// Current unconfirmed tx amount
+	UnconfirmTxAmount int64 `json:"unconfirmed"`
 }
 
 // ChainStatus proto.ChainStatus
@@ -282,9 +299,11 @@ func FromSystemStatusPB(statuspb *pb.SystemsStatus) *SystemStatus {
 				MaxBlockSize: ledgerMeta.GetMaxBlockSize(),
 			},
 			UtxoMeta: UtxoMeta{
-				LatestBlockid: utxoMeta.GetLatestBlockid(),
-				LockKeyList:   utxoMeta.GetLockKeyList(),
-				UtxoTotal:     utxoMeta.GetUtxoTotal(),
+				LatestBlockid:     utxoMeta.GetLatestBlockid(),
+				LockKeyList:       utxoMeta.GetLockKeyList(),
+				UtxoTotal:         utxoMeta.GetUtxoTotal(),
+				AvgDelay:          utxoMeta.GetAvgDelay(),
+				UnconfirmTxAmount: utxoMeta.GetUnconfirmTxAmount(),
 			},
 		})
 	}
