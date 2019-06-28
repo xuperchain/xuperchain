@@ -1,5 +1,6 @@
 # Contributing to XuperUnion
 
+[ English | [简体中文](https://github.com/xuperchain/xuperunion/blob/master/CONTRIBUTING_CN.md) ]
 
 Thank you for considering contributing to XuperUnion!
 

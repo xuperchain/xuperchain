@@ -94,6 +94,9 @@ type Logger interface {
 	// SetHandler updates the logger to write records to the specified handler.
 	SetHandler(h Handler)
 
+	// Set minimal level to print
+	SetLevelLimit(minLvl Lvl)
+
 	// Log a message at the given level with context key/value pairs
 	Debug(msg string, ctx ...interface{})
 	Trace(msg string, ctx ...interface{})
@@ -104,11 +107,18 @@ type Logger interface {
 }
 
 type logger struct {
-	ctx []interface{}
-	h   *swapHandler
+	ctx    []interface{}
+	h      *swapHandler
+	minLvl Lvl
 }
 
 func (l *logger) write(msg string, lvl Lvl, ctx []interface{}) {
+	// ignore messages with level lower than minLvl
+	// this could help improving performace since reduce initializing costs
+	if lvl > l.minLvl {
+		return
+	}
+
 	l.h.Log(&Record{
 		Time: time.Now(),
 		Lvl:  lvl,
@@ -124,9 +134,13 @@ func (l *logger) write(msg string, lvl Lvl, ctx []interface{}) {
 }
 
 func (l *logger) New(ctx ...interface{}) Logger {
-	child := &logger{newContext(l.ctx, ctx), new(swapHandler)}
+	child := &logger{newContext(l.ctx, ctx), new(swapHandler), LvlDebug}
 	child.SetHandler(l.h)
 	return child
+}
+
+func (l *logger) SetLevelLimit(minLvl Lvl) {
+	l.minLvl = minLvl
 }
 
 func newContext(prefix []interface{}, suffix []interface{}) []interface{} {

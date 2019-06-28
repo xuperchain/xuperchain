@@ -17,6 +17,7 @@ const (
 	BucketsStrategy                          = "BucketsStrategy"
 	NearestBucketStrategy                    = "NearestBucketStrategy"
 	BucketsWithFactorStrategy                = "BucketsWithFactorStrategy"
+	CorePeersStrategy                        = "CorePeersStrategy"
 )
 
 // PeersFilter the interface for filter peers
@@ -94,4 +95,75 @@ func (nf *BucketsFilterWithFactor) Filter() ([]peer.ID, error) {
 		}
 	}
 	return filterPeers, nil
+}
+
+// CorePeersFilter define filter for core peers
+type CorePeersFilter struct {
+	name string
+	node *Node
+}
+
+// SetRouteName set the core route name to filter
+// in XuperChain, the route name is the blockchain name
+func (cp *CorePeersFilter) SetRouteName(name string) {
+	cp.name = name
+}
+
+// Filter select MaxBroadCastCorePeers random peers from core peers,
+// half from current and half from next
+func (cp *CorePeersFilter) Filter() ([]peer.ID, error) {
+	peerids := make([]peer.ID, 0)
+	bcRoute, ok := cp.node.coreRoute[cp.name]
+	if !ok {
+		return peerids, nil
+	}
+	currSize := len(bcRoute.CurrentPeers)
+	nextSize := len(bcRoute.NextPeers)
+
+	currIdxs := GenerateUniqueRandList(MaxBroadCastCorePeers/2, currSize)
+	nextIdxs := GenerateUniqueRandList(MaxBroadCastCorePeers-MaxBroadCastCorePeers/2, nextSize)
+
+	for _, idx := range currIdxs {
+		peerids = append(peerids, bcRoute.CurrentPeers[idx].PeerInfo.ID)
+	}
+
+	for _, idx := range nextIdxs {
+		peerids = append(peerids, bcRoute.NextPeers[idx].PeerInfo.ID)
+	}
+
+	return peerids, nil
+}
+
+// MultiStrategy a peer filter that contains multiple filters
+type MultiStrategy struct {
+	node    *Node
+	filters []PeersFilter
+}
+
+// NewMultiStrategy create instance of MultiStrategy
+func NewMultiStrategy(node *Node, filters []PeersFilter) *MultiStrategy {
+	return &MultiStrategy{
+		node:    node,
+		filters: filters,
+	}
+}
+
+// Filter return peer IDs with multiple filters
+func (cp *MultiStrategy) Filter() ([]peer.ID, error) {
+	res := make([]peer.ID, 0)
+	dupCheck := make(map[string]bool)
+	for _, filter := range cp.filters {
+		peers, err := filter.Filter()
+		if err != nil {
+			return res, err
+		}
+		for _, peer := range peers {
+			if _, ok := dupCheck[peer.Pretty()]; !ok {
+				dupCheck[peer.Pretty()] = true
+				res = append(res, peer)
+			}
+		}
+	}
+
+	return res, nil
 }

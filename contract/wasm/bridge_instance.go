@@ -3,6 +3,7 @@ package wasm
 import (
 	"errors"
 
+	"github.com/xuperchain/xuperunion/contract"
 	"github.com/xuperchain/xuperunion/contract/bridge"
 	"github.com/xuperchain/xuperunion/contract/wasm/vm"
 	"github.com/xuperchain/xuperunion/pb"
@@ -37,8 +38,8 @@ func (v *bridgeInstance) Exec() error {
 	return v.vmInstance.Exec(entry)
 }
 
-func (v *bridgeInstance) GasUsed() int64 {
-	return v.vmInstance.GasUsed()
+func (v *bridgeInstance) ResourceUsed() contract.Limits {
+	return v.vmInstance.ResourceUsed()
 }
 
 func (v *bridgeInstance) Release() {

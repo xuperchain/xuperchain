@@ -31,11 +31,11 @@ func (dm *DeployMethod) Invoke(ctx *KContext, args map[string][]byte) ([]byte, e
 		return nil, fmt.Errorf("get account `%s` error: %s", accountName, err)
 	}
 
-	out, gasUsed, err := dm.vmm.DeployContract(ctx.ModelCache, args, ctx.GasLimit)
+	out, resourceUsed, err := dm.vmm.DeployContract(ctx.ContextConfig, args)
 	if err != nil {
 		return nil, err
 	}
-	ctx.AddGasUsed(gasUsed)
+	ctx.AddResourceUsed(resourceUsed)
 
 	// key: contract, value: account
 	err = ctx.ModelCache.Put(utils.GetContract2AccountBucket(), contractName, accountName)

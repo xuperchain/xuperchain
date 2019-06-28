@@ -29,7 +29,7 @@ you must vendor the library.
 ## Importing
 
 ```go
-import "github.com/yucaowang/log15"
+import "github.com/xuperchain/log15"
 ```
 
 ## Log Levels

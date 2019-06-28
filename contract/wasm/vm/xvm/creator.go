@@ -4,11 +4,13 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
 	osexec "os/exec"
 	"path/filepath"
 
 	"github.com/xuperchain/xuperunion/common/config"
+	"github.com/xuperchain/xuperunion/contract"
 	"github.com/xuperchain/xuperunion/contract/bridge"
 	"github.com/xuperchain/xuperunion/contract/wasm/vm"
 	"github.com/xuperchain/xuperunion/pb"
@@ -112,8 +114,9 @@ func (x *xvmCreator) CreateInstance(ctx *bridge.Context, cp vm.ContractCodeProvi
 		return nil, err
 	}
 
+	log.Printf("cpu limit:%d", ctx.ResourceLimits.Cpu)
 	execCtx, err := exec.NewContext(code.ExecCode, &exec.ContextConfig{
-		GasLimit: ctx.GasLimit,
+		GasLimit: ctx.ResourceLimits.Cpu,
 	})
 	if err != nil {
 		return nil, err
@@ -148,11 +151,21 @@ func (x *xvmInstance) Exec(function string) error {
 		return errors.New("bad contract, no memory")
 	}
 	_, err := x.execCtx.Exec(function, []uint32{uint32(0), uint32(0)})
+	if err != nil {
+		log.Printf("exec error:%s", err)
+	}
 	return err
 }
 
-func (x *xvmInstance) GasUsed() int64 {
-	return x.execCtx.GasUsed()
+func (x *xvmInstance) ResourceUsed() contract.Limits {
+	limits := contract.Limits{
+		Cpu: x.execCtx.GasUsed(),
+	}
+	mem := x.execCtx.Memory()
+	if mem != nil {
+		limits.Memory = int64(len(mem))
+	}
+	return limits
 }
 
 func (x *xvmInstance) Release() {

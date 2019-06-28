@@ -57,7 +57,7 @@ var Users = map[string]struct {
 var (
 	//workspace   = "/tmp/test_workspace"
 	//testspace   = "/tmp/testspace"
-	kvengine    = "leveldb"
+	kvengine    = "default"
 	tCryptoType = crypto_client.CryptoTypeDefault
 )
 
@@ -401,7 +401,7 @@ func TestRollbackConsensus(t *testing.T) {
 	pc := plugPrepare(t)
 	plgMgr, _ := pluginmgr.GetPluginMgr()
 	var ldb kvdb.Database
-	soInst, _ := plgMgr.PluginMgr.CreatePluginInstance("kv", "leveldb")
+	soInst, _ := plgMgr.PluginMgr.CreatePluginInstance("kv", "default")
 	ldb = soInst.(kvdb.Database)
 	err := ldb.Open(testspace, map[string]interface{}{
 		"cache":     512,
@@ -481,7 +481,18 @@ func TestUpdateConsensusOther(t *testing.T) {
 				"block_num":          "1",
 				"vote_unit_price":    "1",
 				"init_proposer": map[string]interface{}{
-					"1": []interface{}{"Y4TmpfV4pvhYT5W17J7TqHSLo6cqq23x3", "f3prTg9itaZY6m48wXXikXdcxiByW7zgk", "U9sKwFmgJVfzgWcfAG47dKn1kLQTqeZN3"},
+					"1": []interface{}{
+						"Y4TmpfV4pvhYT5W17J7TqHSLo6cqq23x3",
+						"f3prTg9itaZY6m48wXXikXdcxiByW7zgk",
+						"U9sKwFmgJVfzgWcfAG47dKn1kLQTqeZN3",
+					},
+				},
+				"init_proposer_neturl": map[string]interface{}{
+					"1": []interface{}{
+						"/ip4/127.0.0.1/tcp/47101/p2p/QmVxeNubpg1ZQY4TmpfV4pvhYT5W17J7TqHSLo6cqq23x3",
+						"/ip4/127.0.0.1/tcp/47102/p2p/QmVxeNubpg1ZQjQT8W5yZC9fD7ZB1ViArwvyGUB53sqf8e",
+						"/ip4/127.0.0.1/tcp/47103/p2p/U9sKwFmgJVfzgWcfAG47dKn1kLQTqeZN3ZB1ViArwvTmpa",
+					},
 				},
 			},
 		},

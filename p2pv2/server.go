@@ -92,8 +92,10 @@ func (p *P2PServerV2) Stop() {
 }
 
 // SendMessage send message to peers using given filter strategy
-func (p *P2PServerV2) SendMessage(ctx context.Context, msg *p2pPb.XuperMessage, fs FilterStrategy) error {
-	filter := p.getFilter(fs)
+func (p *P2PServerV2) SendMessage(ctx context.Context, msg *p2pPb.XuperMessage,
+	opts ...MessageOption) error {
+	msgOpts := getMessageOption(opts)
+	filter := p.getFilter(msgOpts)
 	peers, _ := filter.Filter()
 	p.log.Trace("Server SendMessage", "logid", msg.GetHeader().GetLogid(), "msgType", msg.GetHeader().GetType(), "checksum", msg.GetHeader().GetDataCheckSum())
 	return p.node.SendMessage(ctx, msg, peers)
@@ -101,12 +103,14 @@ func (p *P2PServerV2) SendMessage(ctx context.Context, msg *p2pPb.XuperMessage, 
 
 // SendMessageWithResponse send message to peers using given filter strategy, expect response from peers
 // 客户端再使用该方法请求带返回的消息时，最好带上log_id, 否则会导致收消息时收到不匹配的消息而影响后续的处理
-func (p *P2PServerV2) SendMessageWithResponse(ctx context.Context, msg *p2pPb.XuperMessage, fs FilterStrategy, withBreak bool) ([]*p2pPb.XuperMessage,
-	error) {
-	filter := p.getFilter(fs)
+func (p *P2PServerV2) SendMessageWithResponse(ctx context.Context, msg *p2pPb.XuperMessage,
+	opts ...MessageOption) ([]*p2pPb.XuperMessage, error) {
+	msgOpts := getMessageOption(opts)
+	filter := p.getFilter(msgOpts)
 	peers, _ := filter.Filter()
+	percentage := msgOpts.percentage
 	p.log.Trace("Server SendMessage with response", "logid", msg.GetHeader().GetLogid(), "msgType", msg.GetHeader().GetType(), "checksum", msg.GetHeader().GetDataCheckSum())
-	return p.node.SendMessageWithResponse(ctx, msg, peers, withBreak)
+	return p.node.SendMessageWithResponse(ctx, msg, peers, percentage)
 }
 
 // Register register message subscribers to handle messages
@@ -125,17 +129,33 @@ func (p *P2PServerV2) GetNetURL() string {
 	return fmt.Sprintf("/ip4/127.0.0.1/tcp/%v/p2p/%s", p.config.Port, p.node.id.Pretty())
 }
 
-func (p *P2PServerV2) getFilter(fs FilterStrategy) PeersFilter {
-	switch fs {
-	case NearestBucketStrategy:
-		return &NearestBucketFilter{node: p.node}
-	case BucketsStrategy:
-		return &BucketsFilter{node: p.node}
-	case BucketsWithFactorStrategy:
-		return &BucketsFilterWithFactor{node: p.node}
-	default:
+func (p *P2PServerV2) getFilter(opts *msgOptions) PeersFilter {
+	fs := opts.filters
+	bcname := opts.bcname
+	if len(fs) == 0 {
 		return &BucketsFilter{node: p.node}
 	}
+	pfs := make([]PeersFilter, 0)
+	for _, f := range fs {
+		var filter PeersFilter
+		switch f {
+		case NearestBucketStrategy:
+			filter = &NearestBucketFilter{node: p.node}
+		case BucketsStrategy:
+			filter = &BucketsFilter{node: p.node}
+		case BucketsWithFactorStrategy:
+			filter = &BucketsFilterWithFactor{node: p.node}
+		case CorePeersStrategy:
+			filter = &CorePeersFilter{node: p.node, name: bcname}
+		default:
+			filter = &BucketsFilter{node: p.node}
+		}
+		pfs = append(pfs, filter)
+	}
+	if len(pfs) > 1 {
+		return NewMultiStrategy(p.node, pfs)
+	}
+	return pfs[0]
 }
 
 // GetPeerUrls 查询所连接节点的信息
@@ -143,8 +163,9 @@ func (p *P2PServerV2) GetPeerUrls() []string {
 	urls := []string{}
 
 	// 获取路由表中节点的信息
-	rt := p.node.kdht.RoutingTable()
-	peers := rt.ListPeers()
+	//rt := p.node.kdht.RoutingTable()
+	//peers := rt.ListPeers()
+	peers := p.node.ListPeers()
 	for _, v := range peers {
 		if s, err := p.node.strPool.FindStream(v); err == nil {
 			if s.gp == "" {
@@ -159,6 +180,14 @@ func (p *P2PServerV2) GetPeerUrls() []string {
 		}
 	}
 	return urls
+}
+
+// SetCorePeers set core peers' info to P2P server
+func (p *P2PServerV2) SetCorePeers(cp *CorePeersInfo) error {
+	if cp == nil {
+		return ErrInvalidParams
+	}
+	return p.node.UpdateCorePeers(cp)
 }
 
 // SetXchainAddr Set xchain address info from core

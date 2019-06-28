@@ -26,23 +26,34 @@ func TestTDpos(t *testing.T) {
 	cfg.Miner.Keypath = "../../data/keys"
 	bcname := "xuper"
 	consConf := `{
-  "module": "consensus",
-  "method": "update_consensus",
-  "args" : {
-    "name": "tdpos",
-    "config": {
-      "proposer_num":"3",
-      "period":"3000",
-      "alternate_interval":"6000",
-      "term_interval":"9000",
-      "block_num":"10",
-      "vote_unit_price":"1",
-      "init_proposer": {
-        "1":["Y4TmpfV4pvhYT5W17J7TqHSLo6cqq23x3","f3prTg9itaZY6m48wXXikXdcxiByW7zgk","U9sKwFmgJVfzgWcfAG47dKn1kLQTqeZN3"]
-      }
-    }
-  }
-}`
+		"module": "consensus",
+		"method": "update_consensus",
+		"args": {
+			"name": "tdpos",
+			"config": {
+				"proposer_num": "3",
+				"period": "3000",
+				"alternate_interval": "6000",
+				"term_interval": "9000",
+				"block_num": "10",
+				"vote_unit_price": "1",
+				"init_proposer": {
+					"1": [
+						"Y4TmpfV4pvhYT5W17J7TqHSLo6cqq23x3",
+						"f3prTg9itaZY6m48wXXikXdcxiByW7zgk",
+						"U9sKwFmgJVfzgWcfAG47dKn1kLQTqeZN3"
+					]
+				},
+				"init_proposer_neturl": {
+					"1": [
+						"/ip4/127.0.0.1/tcp/47101/p2p/QmVxeNubpg1ZQY4TmpfV4pvhYT5W17J7TqHSLo6cqq23x3",
+						"/ip4/127.0.0.1/tcp/47102/p2p/QmVxeNubpg1ZQjQT8W5yZC9fD7ZB1ViArwvyGUB53sqf8e",
+						"/ip4/127.0.0.1/tcp/47103/p2p/U9sKwFmgJVfzgWcfAG47dKn1kLQTqeZN3ZB1ViArwvTmpa"
+					]
+				}
+			}
+		}
+	}`
 	desc, _ := contract.Parse(string([]byte(consConf)))
 	conf := desc.Args["config"].(map[string]interface{})
 	cryptoClient, err := crypto_client.CreateCryptoClient(crypto_client.CryptoTypeDefault)
@@ -51,8 +62,25 @@ func TestTDpos(t *testing.T) {
 	}
 	tdpos := &TDpos{}
 	tdpos.Init()
-	tdpos.config.initProposer = map[int64][]string{
-		1: []string{"dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN", "Y4TmpfV4pvhYT5W17J7TqHSLo6cqq23x3", "RUEMFGDEnLBpnYYggnXukpVfR9Skm59ph", "bob"},
+	tdpos.config.initProposer = map[int64][]*CandidateInfo{
+		1: []*CandidateInfo{
+			&CandidateInfo{
+				Address:  "dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN",
+				PeerAddr: "/ip4/127.0.0.1/tcp/47101/p2p/QmVxeNubpg1ZQY4TmpfV4pvhYT5W17J7TqHSLo6cqq23x3",
+			},
+			&CandidateInfo{
+				Address:  "Y4TmpfV4pvhYT5W17J7TqHSLo6cqq23x3",
+				PeerAddr: "/ip4/127.0.0.1/tcp/47102/p2p/QmVxeNubpg1ZQjQT8W5yZC9fD7ZB1ViArwvyGUB53sqf8e",
+			},
+			&CandidateInfo{
+				Address:  "RUEMFGDEnLBpnYYggnXukpVfR9Skm59ph",
+				PeerAddr: "/ip4/127.0.0.1/tcp/47103/p2p/U9sKwFmgJVfzgWcfAG47dKn1kLQTqeZN3ZB1ViArwvTmpa",
+			},
+			&CandidateInfo{
+				Address:  "bob",
+				PeerAddr: "peerid4",
+			},
+		},
 	}
 	extParams := make(map[string]interface{})
 	extParams["timestamp"] = time.Now().UnixNano()
