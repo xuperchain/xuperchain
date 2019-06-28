@@ -11,5 +11,5 @@ service Xcheck {
 
 message ComplianceCheckResponse {
     Header header = 1;
-	SignatureInfo signature = 2;
+    SignatureInfo signature = 2;
 }
