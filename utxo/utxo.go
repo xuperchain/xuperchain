@@ -38,6 +38,7 @@ import (
 	"github.com/xuperchain/xuperunion/utxo/txhash"
 	"github.com/xuperchain/xuperunion/vat"
 	"github.com/xuperchain/xuperunion/xmodel"
+	xmodel_pb "github.com/xuperchain/xuperunion/xmodel/pb"
 )
 
 // 常用VM执行错误码
@@ -1944,6 +1945,50 @@ func (uv *UtxoVM) queryContractMethodACLWithConfirmed(contractName string, metho
 	return uv.aclMgr.GetContractMethodACLWithConfirmed(contractName, methodName)
 }
 
+func (uv *UtxoVM) queryTxFromForbiddenWithConfirmed(txid []byte) (bool, bool, error) {
+	request := &pb.InvokeRequest{
+		ModuleName:   "wasm",
+		ContractName: "forbidden",
+		MethodName:   "get",
+		Args: map[string][]byte{
+			"txid": []byte(fmt.Sprintf("%x", txid)),
+		},
+	}
+	modelCache, err := xmodel.NewXModelCache(uv.GetXModel(), true)
+	if err != nil {
+		return false, false, err
+	}
+	contextConfig := &contract.ContextConfig{
+		XMCache:        modelCache,
+		ResourceLimits: contract.MaxLimits,
+	}
+	moduleName := request.GetModuleName()
+	vm, err := uv.vmMgr3.GetVM(moduleName)
+	if err != nil {
+		return false, false, err
+	}
+	contextConfig.ContractName = request.GetContractName()
+	ctx, err := vm.NewContext(contextConfig)
+	if err != nil {
+		return false, false, err
+	}
+	_, err = ctx.Invoke(request.GetMethodName(), request.GetArgs())
+	if err != nil {
+		ctx.Release()
+		return false, false, err
+	}
+	ctx.Release()
+	// inputs as []*xmodel_pb.VersionedData
+	inputs, _, _ := modelCache.GetRWSets()
+	versionData := &xmodel_pb.VersionedData{}
+	if len(inputs) != 2 {
+		return false, false, nil
+	}
+	versionData = inputs[1]
+	confirmed := versionData.GetConfirmed()
+	return true, confirmed, nil
+}
+
 func (uv *UtxoVM) queryAccountACL(accountName string) (*pb.Acl, error) {
 	if uv.aclMgr == nil {
 		return nil, errors.New("acl manager is nil")
@@ -2023,6 +2068,11 @@ func (uv *UtxoVM) QueryAccountACL(accountName string) (*pb.Acl, error) {
 // QueryContractMethodACL query contract method's ACL
 func (uv *UtxoVM) QueryContractMethodACL(contractName string, methodName string) (*pb.Acl, error) {
 	return uv.queryContractMethodACL(contractName, methodName)
+}
+
+// QueryTxFromForbiddenWithConfirmed query if the tx has been forbidden
+func (uv *UtxoVM) QueryTxFromForbiddenWithConfirmed(txid []byte) (bool, bool, error) {
+	return uv.queryTxFromForbiddenWithConfirmed(txid)
 }
 
 // GetBalance 查询Address的可用余额

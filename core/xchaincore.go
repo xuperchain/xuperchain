@@ -951,6 +951,19 @@ func (xc *XChainCore) QueryAccountACL(accountName string) (*pb.Acl, bool, error)
 	return acl, confirmed, nil
 }
 
+// QueryTxFromForbidden query if the tx has been forbidden
+func (xc *XChainCore) QueryTxFromForbidden(txid []byte) bool {
+	if xc.Status() != global.Normal {
+		return false
+	}
+	exist, confirmed, _ := xc.Utxovm.QueryTxFromForbiddenWithConfirmed(txid)
+	// only forbid exist && confirmed transaction
+	if exist && confirmed {
+		return true
+	}
+	return false
+}
+
 // GetBalance get balance from utxo
 func (xc *XChainCore) GetBalance(addr string) (string, error) {
 	if xc.Status() != global.Normal {
