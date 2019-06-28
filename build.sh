@@ -17,7 +17,7 @@ protoc -I pb pb/xchain.proto pb/xchain_spv.proto \
 
 protoc -I cmd/cli/pb cmd/cli/pb/xcheck.proto \
        -I pb/googleapis  \
-	   -I pb pb/xchain.proto \
+       -I pb pb/xchain.proto \
        --go_out=plugins=grpc:cmd/cli/pb
 
 protoc -I p2pv2/pb p2pv2/pb/message.proto  --go_out=p2pv2/pb
