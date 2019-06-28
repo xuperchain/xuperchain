@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/xuperchain/xuperunion/common"
 	"github.com/xuperchain/xuperunion/contract/wasm"
 	"github.com/xuperchain/xuperunion/permission/acl/utils"
 )
@@ -20,6 +21,10 @@ func (dm *DeployMethod) Invoke(ctx *KContext, args map[string][]byte) ([]byte, e
 	contractName := args["contract_name"]
 	if accountName == nil || contractName == nil {
 		return nil, errors.New("invoke DeployMethod error, account name or contract name is nil")
+	}
+	// check if contractName is ok
+	if contractErr := common.ValidContractName(string(contractName)); contractErr != nil {
+		return nil, fmt.Errorf("deploy failed, contract `%s` contains illegal character, error: %s", contractName, contractErr)
 	}
 	_, err := ctx.ModelCache.Get(utils.GetAccountBucket(), accountName)
 	if err != nil {

@@ -2,6 +2,8 @@ package utils
 
 const (
 	accountSize            = 16
+	contractNameMaxSize    = 16
+	contractNameMinSize    = 4
 	accountPrefix          = "XC"
 	accountBucket          = "XCAccount"
 	contractBucket         = "XCContract"
@@ -77,4 +79,14 @@ func GetAkLimit() int {
 // GetAccountContractValue return accountContractValue
 func GetAccountContractValue() string {
 	return accountContractValue
+}
+
+// GetContractNameMaxSize return the contract name max size
+func GetContractNameMaxSize() int {
+	return contractNameMaxSize
+}
+
+// GetContractNameMinSize return the contract name min size
+func GetContractNameMinSize() int {
+	return contractNameMinSize
 }
