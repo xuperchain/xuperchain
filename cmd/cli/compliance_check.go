@@ -2,12 +2,10 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
-	//"encoding/hex"
-	//"encoding/base64"
-	"encoding/json"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/spf13/cobra"
@@ -15,7 +13,6 @@ import (
 
 	"github.com/xuperchain/xuperunion/global"
 	"github.com/xuperchain/xuperunion/pb"
-	"github.com/xuperchain/xuperunion/utxo/txhash"
 )
 
 type GetSignCommand struct {
@@ -75,8 +72,6 @@ func (c *GetSignCommand) get(ctx context.Context) error {
 		return errors.New("Fail to Unmarshal proto")
 	}
 
-	tx.Txid, err = txhash.MakeTransactionID(tx)
-
 	txStatus := &pb.TxStatus{
 		Bcname: c.cli.RootOptions.Name,
 		Status: pb.TransactionStatus_UNCONFIRM,
@@ -93,7 +88,7 @@ func (c *GetSignCommand) get(ctx context.Context) error {
 		return err2
 	}
 	if reply.Header.Error != pb.XChainErrorEnum_SUCCESS {
-		return fmt.Errorf("Failed to post tx:%s, logid:%s", reply.Header.Error.String(), reply.Header.Logid)
+		return fmt.Errorf("Failed to get sign for tx:%s, logid:%s", reply.Header.Error.String(), reply.Header.Logid)
 	}
 	signInfo := reply.GetSignature()
 	signJSON, err3 := json.MarshalIndent(signInfo, "", "  ")
