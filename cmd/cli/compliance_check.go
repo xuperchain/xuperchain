@@ -11,8 +11,8 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 
-	"github.com/xuperchain/xuperunion/cmd/cli/pb"
 	"github.com/xuperchain/xuperunion/global"
+	"github.com/xuperchain/xuperunion/pb"
 )
 
 type GetSignCommand struct {
