@@ -1,5 +1,5 @@
 #!/bin/env python
-#coding=utf-8
+# coding=utf-8
 import sys
 import json
 
@@ -9,23 +9,23 @@ body1 = {
     "args": {
         "candidate": "提名address",
         "neturl": "提名neturl"
-         }
+    }
 }
 
 body2 = {
     "module": "tdpos",
     "method": "vote",
-    "args" : {
+    "args": {
         "candidates": ["提名过的address"]
-        }
+    }
 }
 
 body3 = {
-    "module":"proposal",
+    "module": "proposal",
     "method": "Thaw",
-    "args" : {
-        "txid":"提名或者投票addresss时返回的txid"
-        }
+    "args": {
+        "txid": "提名或者投票addresss时返回的txid"
+    }
 }
 
 body4 = {
@@ -63,24 +63,19 @@ body5 = {
             "block_num": "20",
             "vote_unit_price": "1",
             "init_proposer": {
-                "1": [
-                    {
-                        "address": "dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN",
-                        "neturl": "/ip4/127.0.0.1/tcp/47101/p2p/QmVxeNubpg1ZQjQT8W5yZC9fD7ZB1ViArwvyGUB53sqf8e"
-                    },
-                    {
-                        "address": "nodeaddress",
-                        "neturl": "nodeneturl"
-                    }
-                ]
+                "1": ["dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN", "nodeaddress"]
+            },
+            "init_proposer_neturl": {
+                "1": ["/ip4/127.0.0.1/tcp/47101/p2p/QmVxeNubpg1ZQjQT8W5yZC9fD7ZB1ViArwvyGUB53sqf8e", "nodeneturl"]
             }
         }
     }
 }
 
-body_dict = {'./relate_file/nominate.json':body1, './relate_file/vote.json':body2, './relate_file/revoke.json':body3, './relate_file/account.json':body4, './relate_file/xuper.json':body5}
+body_dict = {'./relate_file/nominate.json': body1, './relate_file/vote.json': body2,
+             './relate_file/revoke.json': body3, './relate_file/account.json': body4, './relate_file/xuper.json': body5}
 for key in body_dict:
     body_file = json.dumps(body_dict[key], indent=4)
-    f = open(key,'w')
+    f = open(key, 'w')
     f.writelines(body_file)
     f.close()

@@ -20,7 +20,7 @@ const AlicePubkey = `{"Curvname":"P-256","X":74695617477160058757747208220371236
 const AlicePrivateKey = `{"Curvname":"P-256","X":74695617477160058757747208220371236837474210247114418775262229497812962582435,"Y":51348715319124770392993866417088542497927816017012182211244120852620959209571,"D":29079635126530934056640915735344231956621504557963207107451663058887647996601}`
 const BobAddress = "WNWk3ekXeM5M2232dY2uCJmEqWhfQiDYT"
 
-const DefaultKvEngine = "leveldb"
+const DefaultKvEngine = "default"
 
 func TestOpenClose(t *testing.T) {
 	workSpace, dirErr := ioutil.TempDir("/tmp", "")
@@ -272,7 +272,7 @@ func TestSplitFunc(t *testing.T) {
 		t.Fatal("confirm block fail 4")
 	}
 	_, ibLookErr = ledger.GetPendingBlock(ib.Blockid)
-	if ibLookErr != ErrBlockNotExist {
+	if ibLookErr != nil && ibLookErr != ErrBlockNotExist {
 		t.Fatal("pending block is expected to be deleted", ibLookErr)
 	}
 	dumpLayer, dumpErr := ledger.Dump()
