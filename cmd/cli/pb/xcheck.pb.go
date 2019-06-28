@@ -36,7 +36,7 @@ func (m *ComplianceCheckResponse) Reset()         { *m = ComplianceCheckResponse
 func (m *ComplianceCheckResponse) String() string { return proto.CompactTextString(m) }
 func (*ComplianceCheckResponse) ProtoMessage()    {}
 func (*ComplianceCheckResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_xcheck_aa449e3ee1ee880d, []int{0}
+	return fileDescriptor_xcheck_4ac4d476a1273e76, []int{0}
 }
 func (m *ComplianceCheckResponse) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ComplianceCheckResponse.Unmarshal(m, b)
@@ -146,9 +146,9 @@ var _Xcheck_serviceDesc = grpc.ServiceDesc{
 	Metadata: "xcheck.proto",
 }
 
-func init() { proto.RegisterFile("xcheck.proto", fileDescriptor_xcheck_aa449e3ee1ee880d) }
+func init() { proto.RegisterFile("xcheck.proto", fileDescriptor_xcheck_4ac4d476a1273e76) }
 
-var fileDescriptor_xcheck_aa449e3ee1ee880d = []byte{
+var fileDescriptor_xcheck_4ac4d476a1273e76 = []byte{
 	// 196 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0xa9, 0x48, 0xce, 0x48,
 	0x4d, 0xce, 0xd6, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x2a, 0x48, 0x92, 0x92, 0x49, 0xcf,
