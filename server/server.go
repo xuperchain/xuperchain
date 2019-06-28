@@ -147,6 +147,9 @@ func (s *server) QueryTx(ctx context.Context, in *pb.TxStatus) (*pb.TxStatus, er
 		out.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
 		return out, nil
 	}
+	if bc.QueryTxFromForbidden(in.Txid) {
+		return out, errors.New("tx has been forbidden")
+	}
 	out = bc.QueryTx(in)
 	return out, nil
 }
@@ -215,6 +218,20 @@ func (s *server) GetBlock(ctx context.Context, in *pb.BlockID) (*pb.Block, error
 		return &out, nil
 	}
 	out := bc.GetBlock(in)
+
+	block := out.GetBlock()
+	transactions := block.GetTransactions()
+	transactionsFilter := []*pb.Transaction{}
+	for _, transaction := range transactions {
+		txid := transaction.GetTxid()
+		if bc.QueryTxFromForbidden(txid) {
+			continue
+		}
+		transactionsFilter = append(transactionsFilter, transaction)
+	}
+	if transactions != nil {
+		out.Block.Transactions = transactionsFilter
+	}
 	s.log.Trace("Start to dealwith GetBlock result", "logid", in.Header.Logid,
 		"blockid", out.Blockid, "height", out.GetBlock().GetHeight())
 	return out, nil
@@ -645,6 +662,12 @@ func (s *server) PreExec(ctx context.Context, request *pb.InvokeRPCRequest) (*pb
 	if err != nil {
 		return nil, err
 	}
+	txInputs := vmResponse.GetInputs()
+	for _, txInput := range txInputs {
+		if bc.QueryTxFromForbidden(txInput.GetRefTxid()) {
+			return rsps, nil
+		}
+	}
 	rsps.Response = vmResponse
 	s.log.Info("PreExec", "logid", request.Header.Logid, "cost", hd.Timer.Print())
 	return rsps, nil
@@ -663,6 +686,21 @@ func (s *server) GetBlockByHeight(ctx context.Context, in *pb.BlockHeight) (*pb.
 		return &out, nil
 	}
 	out := bc.GetBlockByHeight(in)
+
+	block := out.GetBlock()
+	transactions := block.GetTransactions()
+	transactionsFilter := []*pb.Transaction{}
+	for _, transaction := range transactions {
+		txid := transaction.GetTxid()
+		if bc.QueryTxFromForbidden(txid) {
+			continue
+		}
+		transactionsFilter = append(transactionsFilter, transaction)
+	}
+	if transactions != nil {
+		out.Block.Transactions = transactionsFilter
+	}
+
 	s.log.Trace("GetBlockByHeight result", "logid", in.Header.Logid, "bcname", in.Bcname, "height", in.Height,
 		"blockid", out.GetBlockid())
 	return out, nil
