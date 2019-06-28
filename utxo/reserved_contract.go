@@ -2,11 +2,26 @@ package utxo
 
 import (
 	"bytes"
-	"fmt"
-	"strings"
+	"html/template"
 
 	"github.com/xuperchain/xuperunion/pb"
 )
+
+// reservedArgs used to get contractnames from InvokeRPCRequest
+type reservedArgs struct {
+	ContractNames string
+}
+
+func genArgs(req []*pb.InvokeRequest) *reservedArgs {
+	ra := &reservedArgs{}
+	for i, v := range req {
+		ra.ContractNames += v.GetContractName()
+		if i < len(req)-1 {
+			ra.ContractNames += ","
+		}
+	}
+	return ra
+}
 
 func verifyReservedContractRequests(reservedReqs, txReqs []*pb.InvokeRequest) bool {
 	if len(reservedReqs) > len(txReqs) {
@@ -27,36 +42,28 @@ func verifyReservedContractRequests(reservedReqs, txReqs []*pb.InvokeRequest) bo
 }
 
 // geReservedContractRequest get reserved contract requests from system params, it doesn't consume gas.
-func (uv *UtxoVM) getReservedContractRequests(req *pb.InvokeRPCRequest, tx *pb.Transaction) ([]*pb.InvokeRequest, error) {
-	reservedContractCfgs, err := uv.ledger.GenesisBlock.GetConfig().GetReservedContract()
+func (uv *UtxoVM) getReservedContractRequests(req []*pb.InvokeRequest, isPreExec bool) ([]*pb.InvokeRequest, error) {
+	reservedContracts, err := uv.ledger.GenesisBlock.GetConfig().GetReservedContract()
 	if err != nil {
 		return nil, err
 	}
+	// if all reservedContracts have not been updated, return nil, nil
+	ra := &reservedArgs{}
+	if isPreExec || len(reservedContracts) == 0 {
+		ra = genArgs(req)
+	} else {
+		// TODO
+		ra = genArgs(req[len(reservedContracts):])
+	}
 
-	reservedContracts := []*pb.InvokeRequest{}
-	// FIXME zq: need to suport contract args
-	for _, v := range reservedContractCfgs {
-		req, err := parseReservedContractCfg(v)
-		if err != nil {
-			return nil, err
+	for _, rc := range reservedContracts {
+		for k, v := range rc.GetArgs() {
+			buf := new(bytes.Buffer)
+			tpl := template.Must(template.New("value").Parse(string(v)))
+			tpl.Execute(buf, ra)
+			rc.Args[k] = buf.Bytes()
 		}
-		reservedContracts = append(reservedContracts, req)
 	}
-	uv.xlog.Trace("geReservedContractRequest results", "results", reservedContracts)
+
 	return reservedContracts, nil
-}
-
-func parseReservedContractCfg(contract string) (*pb.InvokeRequest, error) {
-	subContract := strings.Split(contract, ".")
-	if len(subContract) != 2 {
-		return nil, fmt.Errorf("ParseReservedContractCfg error")
-	}
-
-	req := &pb.InvokeRequest{
-		ModuleName:   "wasm",
-		ContractName: subContract[0],
-		MethodName:   subContract[1],
-		Args:         map[string][]byte{},
-	}
-	return req, nil
 }
