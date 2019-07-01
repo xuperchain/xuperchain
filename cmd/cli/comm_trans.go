@@ -97,6 +97,9 @@ func (c *CommTrans) GenPreExeRes(ctx context.Context) (
 		if tmpReq != nil {
 			preExeReqs = append(preExeReqs, tmpReq)
 		}
+		if tmpReq == nil && err == nil {
+			return nil, nil, nil
+		}
 	}
 
 	preExeRPCReq := &pb.InvokeRPCRequest{
@@ -139,6 +142,10 @@ func (c *CommTrans) GetInvokeRequestFromDesc() (*pb.InvokeRequest, error) {
 	}
 
 	var preExeReq *pb.InvokeRequest
+	if bytes.Contains(desc, []byte("tdpos")) {
+		return nil, nil
+	}
+
 	if bytes.HasPrefix(desc, []byte("{")) {
 		preExeReq, err = c.ReadPreExeReq(desc)
 		if err != nil {
