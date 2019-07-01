@@ -708,6 +708,8 @@ message DposStatus
   int64 term = 1;
   int64 block_num = 2;
   string proposer = 3;
+  int64 proposer_num = 4;
+  repeated string proposers = 5;
 }
 
 

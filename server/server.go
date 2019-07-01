@@ -641,6 +641,14 @@ func (s *server) DposStatus(ctx context.Context, request *pb.DposStatusRequest) 
 	response.Status.Term = status.Term
 	response.Status.BlockNum = status.BlockNum
 	response.Status.Proposer = status.Proposer
+	checkResult, err := bc.GetCheckResults(status.Term)
+	if err != nil {
+		response.Header.Error = pb.XChainErrorEnum_DPOS_QUERY_ERROR
+		s.log.Warn("DposStatus error", "logid", request.Header.Logid, "error", err)
+		return response, err
+	}
+	response.Status.Proposers = checkResult
+	response.Status.ProposerNum = int64(len(checkResult))
 	return response, nil
 }
 
