@@ -46,6 +46,13 @@ func (t *AccountQueryCommand) addFlags() {
 
 func (t *AccountQueryCommand) queryAccount(ctx context.Context) error {
 	client := t.cli.XchainClient()
+	if t.address == "" {
+		address, err := readAddress(t.cli.RootOptions.Keys)
+		if err != nil {
+			return fmt.Errorf("not provide account but read address from file error:%s", err)
+		}
+		t.address = address
+	}
 	accountResponse := &pb.AK2AccountRequest{
 		Header: &pb.Header{
 			Logid: global.Glogid(),
