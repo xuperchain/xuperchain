@@ -1,6 +1,7 @@
 #include "xchain/context_impl.h"
 #include <stdio.h>
 #include "xchain/contract.pb.h"
+#include "xchain/xchain.pb.h"
 #include "xchain/syscall.h"
 
 namespace xchain {
@@ -79,6 +80,25 @@ bool ContextImpl::delete_object(const std::string& key) {
     if (!ok) {
         return false;
     }
+    return true;
+}
+
+bool ContextImpl::query_tx(const std::string &txid, Transaction* tx) {
+    pb::QueryTxRequest req;
+    pb::QueryTxResponse rep;
+    req.set_txid(txid);
+    bool ok = syscall("QueryTx", req, &rep);
+    if (!ok) {
+        return false;
+    }
+
+    pb::Transaction* pbtx = new pb::Transaction();
+    if (!pbtx->ParseFromString(rep.tx())) {
+        return  false;
+    }
+
+    tx->init(pbtx);
+
     return true;
 }
 

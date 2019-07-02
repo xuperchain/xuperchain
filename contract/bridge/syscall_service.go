@@ -8,6 +8,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/golang/protobuf/proto"
+
 	"github.com/xuperchain/xuperunion/contractsdk/go/pb"
 )
 
@@ -64,7 +66,7 @@ func (c *SyscallService) QueryTx(ctx context.Context, in *pb.QueryTxRequest) (*p
 		return nil, err
 	}
 
-	txbuf, err := json.Marshal(tx)
+	txbuf, err := proto.Marshal(tx)
 	if err != nil {
 		return nil, err
 	}

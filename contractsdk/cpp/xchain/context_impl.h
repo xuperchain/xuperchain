@@ -3,6 +3,7 @@
 
 #include "xchain/contract.pb.h"
 #include "xchain/xchain.h"
+#include "xchain/transaction.h"
 
 namespace xchain {
 
@@ -21,6 +22,7 @@ public:
     virtual bool get_object(const std::string& key, std::string* value);
     virtual bool put_object(const std::string& key, const std::string& value);
     virtual bool delete_object(const std::string& key);
+    virtual bool query_tx(const std::string &txid, Transaction* tx);
     virtual void ok(const std::string& body);
     virtual void error(const std::string& body);
     virtual Response* mutable_response();
