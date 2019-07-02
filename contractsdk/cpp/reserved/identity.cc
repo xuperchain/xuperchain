@@ -23,6 +23,12 @@ void split_str(const std::string& aks, std::vector<std::string>& ak_sets, const 
 
 DEFINE_METHOD(Identity, initialize) {
     xchain::Context* ctx = self.context();
+    const std::string& creator = ctx->arg("creator");
+    if (creator.empty()) {
+        ctx->error("missing creator");
+        return;
+    }
+    ctx->put_object(creator, "true");
     ctx->ok("initialize identity contract success");
 }
 
@@ -71,25 +77,24 @@ DEFINE_METHOD(Identity, verify) {
     xchain::Context* ctx = self.context();
     std::string value;
 
-    // FIXME zq: @icexin context need to support initiator and if initiator is an account, should check account's aks.
-    const std::string initiator;
+    const std::string initiator = ctx->initiator();
     ctx->get_object(initiator, &value);
     if (value != "true") {
         ctx->error("verify initiator error");
         return;
     }
 
-    // FIXME zq: @icexin context need to support auth_require
-    std::vector<std::string> auth_require;
+    int auth_require_size = ctx->auth_require_size();
     std::vector<std::string> accounts;
     std::string sub_str = std::string(1, delimiter_account);
-    for (auto iter = auth_require.begin(); iter != auth_require.end(); ++iter) {
+    for ( int iter = 0; iter < auth_require_size; ++iter) {
+        std::string auth_require = ctx->auth_require(iter);
         std::string ak;
-        std::size_t found = (*iter).rfind(sub_str);
+        std::size_t found = auth_require.rfind(sub_str);
         if (found != std::string::npos) {
-            ak = (*iter).substr(found + 1, std::string::npos);
+            ak = auth_require.substr(found + 1, std::string::npos);
         } else {
-            ak = *iter;
+            ak = auth_require;
         }
         ctx->get_object(ak, &value);
         if (value != "true") {
