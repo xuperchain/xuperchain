@@ -647,7 +647,7 @@ func (s *server) DposStatus(ctx context.Context, request *pb.DposStatusRequest) 
 		s.log.Warn("DposStatus error", "logid", request.Header.Logid, "error", err)
 		return response, err
 	}
-	response.Status.Proposers = checkResult
+	response.Status.CheckResult = checkResult
 	response.Status.ProposerNum = int64(len(checkResult))
 	return response, nil
 }
