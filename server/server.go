@@ -706,6 +706,24 @@ func (s *server) GetBlockByHeight(ctx context.Context, in *pb.BlockHeight) (*pb.
 	return out, nil
 }
 
+func (s *server) GetAccountByAK(ctx context.Context, request *pb.AK2AccountRequest) (*pb.AK2AccountResponse, error) {
+	if request.Header == nil {
+		request.Header = global.GHeader()
+	}
+	bc := s.mg.Get(request.Bcname)
+	if bc == nil {
+		out := pb.AK2AccountResponse{Header: &pb.Header{}}
+		out.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
+		return &out, nil
+	}
+	out, err := bc.QueryAccountContainAK(request.GetAddress())
+	if out.Header == nil {
+		out.Header = global.GHeader()
+	}
+
+	return out, err
+}
+
 func startTCPServer(xchainmg *xchaincore.XChainMG) error {
 	var (
 		cfg   = xchainmg.Cfg
