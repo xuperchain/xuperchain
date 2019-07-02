@@ -819,8 +819,8 @@ func (uv *UtxoVM) sortUnconfirmedTx() (map[string]*pb.Transaction, TxGraph, map[
 	txMapSize := int64(len(txMap))
 	if txMapSize > 0 {
 		avgDelay := totalDelay / txMapSize //平均unconfirm滞留时间
-		microSec := avgDelay/1e6
-		uv.xlog.Info("average unconfirm delay", "micro-senconds",microSec, "count", txMapSize)
+		microSec := avgDelay / 1e6
+		uv.xlog.Info("average unconfirm delay", "micro-senconds", microSec, "count", txMapSize)
 		uv.avgDelay = microSec
 	}
 	uv.unconfirmTxAmount = txMapSize
