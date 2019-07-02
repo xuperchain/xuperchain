@@ -141,11 +141,9 @@ func (c *CommTrans) GetInvokeRequestFromDesc() (*pb.InvokeRequest, error) {
 	}
 
 	var preExeReq *pb.InvokeRequest
-	if !bytes.Contains(desc, []byte("contract_name")) {
+	if !bytes.Contains(desc, []byte("module_name")) {
 		return nil, nil
-	}
-
-	if bytes.HasPrefix(desc, []byte("{")) {
+	} else {
 		preExeReq, err = c.ReadPreExeReq(desc)
 		if err != nil {
 			return nil, err
