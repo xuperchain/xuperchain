@@ -924,7 +924,7 @@ func (uv *UtxoVM) subBalance(addr []byte, delta *big.Int) {
 func (uv *UtxoVM) payFee(tx *pb.Transaction, batch kvdb.Batch, block *pb.InternalBlock) error {
 	for offset, txOutput := range tx.TxOutputs {
 		addr := txOutput.ToAddr
-		if !bytes.Equal(addr, []byte(FeePlaceholder)) { // 排除掉不是小费的 output
+		if !bytes.Equal(addr, []byte(FeePlaceholder)) {
 			continue
 		}
 		addr = block.Proposer // 占位符替换为矿工
@@ -990,7 +990,7 @@ func (uv *UtxoVM) doTxInternal(tx *pb.Transaction, batch kvdb.Batch) error {
 	}
 	for offset, txOutput := range tx.TxOutputs {
 		addr := txOutput.ToAddr
-		if bytes.Equal(addr, []byte(FeePlaceholder)) { // 小费类型的 output 不在这里处理
+		if bytes.Equal(addr, []byte(FeePlaceholder)) {
 			continue
 		}
 		utxoKey := GenUtxoKeyWithPrefix(addr, tx.Txid, int32(offset))
