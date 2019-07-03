@@ -1946,11 +1946,11 @@ func (uv *UtxoVM) queryContractMethodACLWithConfirmed(contractName string, metho
 	return uv.aclMgr.GetContractMethodACLWithConfirmed(contractName, methodName)
 }
 
-func (uv *UtxoVM) queryAccountContainAK(address string) (*pb.AK2AccountResponse, error) {
+func (uv *UtxoVM) queryAccountContainAK(address string) ([]string, error) {
+	accounts := []string{}
 	if acl.IsAccount(address) != 0 {
-		return nil, errors.New("address is not valid")
+		return accounts, errors.New("address is not valid")
 	}
-	response := &pb.AK2AccountResponse{Header: &pb.Header{}}
 	prefixKey := pb.ExtUtxoTablePrefix + utils.GetAK2AccountBucket() + "/" + address
 	it := uv.ldb.NewIteratorWithPrefix([]byte(prefixKey))
 	defer it.Release()
@@ -1959,13 +1959,13 @@ func (uv *UtxoVM) queryAccountContainAK(address string) (*pb.AK2AccountResponse,
 		ret := strings.Split(key, utils.GetAKAccountSeparator())
 		size := len(ret)
 		if size >= 1 {
-			response.Account = append(response.Account, ret[size-1])
+			accounts = append(accounts, ret[size-1])
 		}
 	}
 	if it.Error() != nil {
-		return nil, it.Error()
+		return []string{}, it.Error()
 	}
-	return response, nil
+	return accounts, nil
 }
 
 func (uv *UtxoVM) queryTxFromForbiddenWithConfirmed(txid []byte) (bool, bool, error) {
@@ -2094,7 +2094,7 @@ func (uv *UtxoVM) QueryContractMethodACL(contractName string, methodName string)
 }
 
 // QueryAccountContainAK query all accounts contain address
-func (uv *UtxoVM) QueryAccountContainAK(address string) (*pb.AK2AccountResponse, error) {
+func (uv *UtxoVM) QueryAccountContainAK(address string) ([]string, error) {
 	return uv.queryAccountContainAK(address)
 }
 

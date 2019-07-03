@@ -716,11 +716,15 @@ func (s *server) GetAccountByAK(ctx context.Context, request *pb.AK2AccountReque
 		out.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
 		return &out, nil
 	}
-	out, err := bc.QueryAccountContainAK(request.GetAddress())
-	if out.Header == nil {
-		out.Header = global.GHeader()
+	out := &pb.AK2AccountResponse{
+		Bcname: request.Bcname,
+		Header: global.GHeader(),
 	}
-
+	accounts, err := bc.QueryAccountContainAK(request.GetAddress())
+	if err != nil || accounts == nil {
+		return out, err
+	}
+	out.Account = accounts
 	return out, err
 }
 

@@ -952,7 +952,7 @@ func (xc *XChainCore) QueryAccountACL(accountName string) (*pb.Acl, bool, error)
 }
 
 // QueryAccountContainAK get all accounts contain a specific address
-func (xc *XChainCore) QueryAccountContainAK(address string) (*pb.AK2AccountResponse, error) {
+func (xc *XChainCore) QueryAccountContainAK(address string) ([]string, error) {
 	if xc == nil {
 		return nil, errors.New("xchain core is nil")
 	}
