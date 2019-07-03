@@ -121,7 +121,7 @@ func (pc *PowConsensus) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock)
 	}
 
 	//2 验证一下签名是否正确
-	valid, err := pc.cryptoClient.VerifyECDSA(k, in.Sign, in.Blockid)
+	valid, err := pc.cryptoClient.VerifyXuperSignature(k, in.Sign, in.Blockid)
 	if err != nil {
 		pc.log.Warn("VerifyECDSA error", "logid", header.Logid, "error", err)
 	}

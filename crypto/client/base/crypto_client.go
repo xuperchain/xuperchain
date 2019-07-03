@@ -22,6 +22,18 @@ type CryptoClient interface {
 	// 使用ECC公钥来验证签名
 	VerifyECDSA(k *ecdsa.PublicKey, signature, msg []byte) (valid bool, err error)
 
+	// schnorr签名算法 生成统一签名
+	SignSchnorr(k *ecdsa.PrivateKey, msg []byte) (signature []byte, err error)
+
+	// schnorr签名算法 验证签名
+	VerifySchnorr(k *ecdsa.PublicKey, signature, msg []byte) (valid bool, err error)
+
+	// 统一验签算法
+	VerifyXuperSignature(publicKeys *ecdsa.PublicKey, sig []byte, message []byte) (valid bool, err error)
+
+	// 统一验签算法
+	VerifyXuperAllSignature(publicKeys []*ecdsa.PublicKey, sig []byte, message []byte) (valid bool, err error)
+
 	// 创建新的账户，不需要助记词。生成如下几个文件：1.私钥，2.公钥，3.钱包地址 (不建议使用)
 	ExportNewAccount(path string) error
 

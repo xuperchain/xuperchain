@@ -359,7 +359,7 @@ func (tp *TDpos) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock) (bool,
 		return false, nil
 	}
 
-	valid, err := tp.cryptoClient.VerifyECDSA(k, in.Sign, in.Blockid)
+	valid, err := tp.cryptoClient.VerifyXuperSignature(k, in.Sign, in.Blockid)
 	if err != nil || !valid {
 		tp.log.Warn("CheckMinerMatch VerifyECDSA error", "logid", header.Logid, "error", err)
 		return false, nil

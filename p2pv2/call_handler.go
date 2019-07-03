@@ -79,7 +79,7 @@ func (p *P2PServerV2) handleGetAuthentication(ctx context.Context, msg *xuper_p2
 		}
 
 		data := hash.UsingSha256([]byte(v.PeerID + v.Addr + v.Timestamp))
-		if ok, _ := cryptoClient.VerifyECDSA(publicKey, v.Sign, data); !ok {
+		if ok, _ := cryptoClient.VerifyXuperSignature(publicKey, v.Sign, data); !ok {
 			p.log.Error("handleGetAuthentication verify sign error")
 			return errRes, errors.New("handleGetAuthentication verify sign error")
 		}

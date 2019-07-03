@@ -10,7 +10,9 @@ import (
 	"github.com/xuperchain/xuperunion/crypto/client/base"
 	"github.com/xuperchain/xuperunion/crypto/config"
 	"github.com/xuperchain/xuperunion/crypto/ecies"
+	"github.com/xuperchain/xuperunion/crypto/schnorr_sign"
 	"github.com/xuperchain/xuperunion/crypto/sign"
+	"github.com/xuperchain/xuperunion/crypto/signature"
 	"github.com/xuperchain/xuperunion/crypto/utils"
 	"github.com/xuperchain/xuperunion/hdwallet/key"
 	walletRand "github.com/xuperchain/xuperunion/hdwallet/rand"
@@ -145,4 +147,30 @@ func (xcc XchainCryptoClient) GetEcdsaPrivateKeyFromJSON(jsonBytes []byte) (*ecd
 // GetEcdsaPublicKeyFromJSON 从导出的公钥文件读取公钥
 func (xcc XchainCryptoClient) GetEcdsaPublicKeyFromJSON(jsonBytes []byte) (*ecdsa.PublicKey, error) {
 	return account.GetEcdsaPublicKeyFromJSON(jsonBytes)
+}
+
+// --- 	schnorr签名算法相关 start ---
+
+// schnorr签名算法 生成统一签名
+func (xcc XchainCryptoClient) SignSchnorr(privateKey *ecdsa.PrivateKey, message []byte) ([]byte, error) {
+	return schnorr_sign.Sign(privateKey, message)
+}
+
+// schnorr签名算法 验证签名
+func (xcc XchainCryptoClient) VerifySchnorr(publicKey *ecdsa.PublicKey, sig, message []byte) (bool, error) {
+	return schnorr_sign.Verify(publicKey, sig, message)
+}
+
+// --- 	schnorr签名算法相关 end ---
+
+// --- 统一验签算法,单独publicKey
+func (xcc XchainCryptoClient) VerifyXuperSignature(publicKey *ecdsa.PublicKey, sig []byte, message []byte) (valid bool, err error) {
+	publicKeys := []*ecdsa.PublicKey{}
+	publicKeys = append(publicKeys, publicKey)
+	return signature.XuperSigVerify(publicKeys, sig, message)
+}
+
+// --- 统一验签算法
+func (xcc XchainCryptoClient) VerifyXuperAllSignature(publicKeys []*ecdsa.PublicKey, sig []byte, message []byte) (valid bool, err error) {
+	return signature.XuperSigVerify(publicKeys, sig, message)
 }

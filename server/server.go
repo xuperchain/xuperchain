@@ -408,7 +408,7 @@ func (s *server) DeployNativeCode(ctx context.Context, request *pb.DeployNativeC
 
 	descbuf, _ := proto.Marshal(desc)
 	deschash := hash.DoubleSha256(descbuf)
-	ok, err = bc.CryptoClient.VerifyECDSA(pubkey, request.Sign, deschash)
+	ok, err = bc.CryptoClient.VerifyXuperSignature(pubkey, request.Sign, deschash)
 	if err != nil || !ok {
 		return nil, errors.New("verify sign error")
 	}

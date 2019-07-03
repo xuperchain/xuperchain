@@ -26,5 +26,5 @@ func VerifySign(ak string, si *pb.SignatureInfo, data []byte) (bool, error) {
 		return false, errors.New("address and public key not match")
 	}
 
-	return xcc.VerifyECDSA(ecdsaKey, si.Sign, data)
+	return xcc.VerifyXuperSignature(ecdsaKey, si.Sign, data)
 }
