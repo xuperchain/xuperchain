@@ -9,11 +9,14 @@ const (
 	contractBucket         = "XCContract"
 	contract2AccountBucket = "XCContract2Account"
 	account2ContractBucket = "XCAccount2Contract"
+	ak2AccountBucket       = "XCAK2Account"
 	akLimit                = 1024
 	aclSeparator           = "\x01"
 	accountBcnameSep       = "@"
+	addressAccountSep      = "\x01"
 	accountContractValue   = "true"
 	newAccountGasAmount    = 1000
+	ak2AccountValue        = "true"
 )
 
 // GetContract2AccountBucket get the bucket name of contract to account map
@@ -41,6 +44,11 @@ func MakeAccountKey(bcname string, accountName string) string {
 	return accountPrefix + accountName + accountBcnameSep + bcname
 }
 
+// MakeAK2AccountKey generate key mixed ak with account as prefix key
+func MakeAK2AccountKey(ak string, accountName string) string {
+	return ak + addressAccountSep + accountName
+}
+
 // GetAccountPrefix return the account prefix
 func GetAccountPrefix() string {
 	return accountPrefix
@@ -54,6 +62,11 @@ func GetAccountBucket() string {
 // GetACLSeparator return the acl separator string
 func GetACLSeparator() string {
 	return aclSeparator
+}
+
+// GetAKAccountSeparator return the separator between address and account
+func GetAKAccountSeparator() string {
+	return addressAccountSep
 }
 
 // GetAccountBcnameSep return the separator string for account and blockchain name
@@ -89,4 +102,9 @@ func GetContractNameMaxSize() int {
 // GetContractNameMinSize return the contract name min size
 func GetContractNameMinSize() int {
 	return contractNameMinSize
+}
+
+// GetAK2AccountBucket return the ak2Account bucket
+func GetAK2AccountBucket() string {
+	return ak2AccountBucket
 }
