@@ -6,7 +6,6 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"context"
 	"encoding/hex"
 	"encoding/json"
@@ -61,10 +60,7 @@ func (c *CommTrans) GenerateTx(ctx context.Context) (*pb.Transaction, error) {
 		return nil, err
 	}
 
-	desc := []byte("common transfer transaction")
-	if preExeReqs != nil {
-		desc = []byte{}
-	}
+	desc, _ := c.GetDesc()
 
 	tx, err := c.GenRawTx(ctx, desc, preExeRPCRes.GetResponse(), preExeReqs)
 	return tx, err
@@ -96,6 +92,8 @@ func (c *CommTrans) GenPreExeRes(ctx context.Context) (
 		}
 		if tmpReq != nil {
 			preExeReqs = append(preExeReqs, tmpReq)
+		} else if err == nil {
+			return nil, nil, nil
 		}
 	}
 
@@ -139,11 +137,9 @@ func (c *CommTrans) GetInvokeRequestFromDesc() (*pb.InvokeRequest, error) {
 	}
 
 	var preExeReq *pb.InvokeRequest
-	if bytes.HasPrefix(desc, []byte("{")) {
-		preExeReq, err = c.ReadPreExeReq(desc)
-		if err != nil {
-			return nil, err
-		}
+	preExeReq, err = c.ReadPreExeReq(desc)
+	if err != nil {
+		return nil, err
 	}
 
 	return preExeReq, nil
@@ -162,8 +158,13 @@ func (c *CommTrans) ReadPreExeReq(buf []byte) (*pb.InvokeRequest, error) {
 	params := new(invokeRequestWraper)
 	err := json.Unmarshal(buf, params)
 	if err != nil {
-		return nil, fmt.Errorf("unmarshal json error:%s", err)
+		return nil, nil
 	}
+
+	if params.InvokeRequest.ModuleName == "" {
+		return nil, nil
+	}
+
 	params.InvokeRequest.Args = make(map[string][]byte)
 	for k, v := range params.Args {
 		params.InvokeRequest.Args[k] = []byte(v)
