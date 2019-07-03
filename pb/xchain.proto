@@ -31,10 +31,12 @@ enum XChainErrorEnum {
 	UTXO_SIGN_ERROR = 28;
 	DPOS_QUERY_ERROR = 31;
 	RWSET_INVALID_ERROR = 33;
-    RWACL_INVALID_ERROR = 34;
-    GAS_NOT_ENOUGH_ERROR = 35;
-    TX_VERSION_INVALID_ERROR = 36;
-    COMPLIANCE_CHECK_NOT_APPROVED = 37;
+  RWACL_INVALID_ERROR = 34;
+  GAS_NOT_ENOUGH_ERROR = 35;
+  TX_VERSION_INVALID_ERROR = 36;
+  COMPLIANCE_CHECK_NOT_APPROVED = 37;
+
+  ACCOUNT_CONTRACT_STATUS_ERROR = 38;
 }
 
 // TransactionStatus is the status of transaction
@@ -69,6 +71,13 @@ service Xchain {
 		    body: "*"
 		};
 	}
+
+  rpc GetAccountContracts(GetAccountContractsRequest) returns (GetAccountContractsResponse) {
+    option (google.api.http) = {
+      post: "/v1/get_account_contracts"
+      body: "*"
+    };
+  }
 
 	// QueryTx query Transaction by TxStatus,
 	// Bcname and Txid are required for this
@@ -798,37 +807,61 @@ message Acl {
 
 // 查询Acl
 message AclStatus {
-    Header header = 1;
-    string bcname = 2;
-    string accountName = 3;
-    string contractName = 4;
-    string methodName = 5;
-    bool confirmed = 6;
-    Acl acl = 7;
+  Header header = 1;
+  string bcname = 2;
+  string accountName = 3;
+  string contractName = 4;
+  string methodName = 5;
+  bool confirmed = 6;
+  Acl acl = 7;
 }
 
 // Identity authentication request
 message IdentityAuth {
-    bytes  sign = 1;
-    bytes  pubkey = 2;
-    string addr = 3;
-    string peerID = 4;
-    string timestamp = 5;
+  bytes  sign = 1;
+  bytes  pubkey = 2;
+  string addr = 3;
+  string peerID = 4;
+  string timestamp = 5;
 }
 
 // Identity authentication requests
 message IdentityAuths {
-    repeated IdentityAuth auth = 1;
+  repeated IdentityAuth auth = 1;
 }
 
 enum ResourceType {
-    CPU = 0;
-    MEMORY = 1;
-    DISK = 2;
-    XFEE = 3; // the fee used in kernel contract
+  CPU = 0;
+  MEMORY = 1;
+  DISK = 2;
+  XFEE = 3; // the fee used in kernel contract
 }
 
 message ResourceLimit {
-    ResourceType type = 1;
-    int64 limit = 2;
+  ResourceType type = 1;
+  int64 limit = 2;
+}
+
+// Query account contracts request
+message GetAccountContractsRequest
+{
+  Header header = 1;
+  string bcname = 2;
+  string account = 3;
+}
+
+// Query account contracts response
+message GetAccountContractsResponse
+{
+  Header header = 1;
+  repeated ContractStatus contracts_status = 2;
+}
+
+// Status of a contract
+message ContractStatus
+{
+  string contract_name = 1;
+  string txid = 2;
+  bytes desc = 3;
+  bool is_banned = 4;
 }

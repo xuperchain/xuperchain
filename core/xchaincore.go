@@ -1159,3 +1159,21 @@ func (xc *XChainCore) GetBlockByHeight(in *pb.BlockHeight) *pb.Block {
 	}
 	return out
 }
+
+// GetAccountContractsStatus query account contracts
+func (xc *XChainCore) GetAccountContractsStatus(account string) ([]*pb.ContractStatus, error) {
+	res := []*pb.ContractStatus{}
+	contracts, err := xc.Utxovm.GetAccountContracts(account)
+	if err != nil {
+		xc.log.Warn("GetAccountContractsStatus error", "error", err.Error())
+		return nil, err
+	}
+	for _, v := range contracts {
+		contractStatus, err := xc.Utxovm.GetContractStatus(v)
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, contractStatus)
+	}
+	return res, nil
+}
