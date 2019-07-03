@@ -143,7 +143,6 @@ func (tp *TDpos) runRevokeVote(desc *contract.TxDesc, block *pb.InternalBlock) e
 func (tp *TDpos) runNominateCandidate(desc *contract.TxDesc, block *pb.InternalBlock) error {
 	tp.log.Trace("start to runNominateCandidate", "desc", desc)
 	canInfo, fromAddr, err := tp.validateNominateCandidate(desc)
-	//candidate := canInfo.Address
 	if err != nil {
 		tp.log.Warn("run to validate nominate error", "error", err.Error())
 		return err
