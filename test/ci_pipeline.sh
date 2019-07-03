@@ -17,6 +17,7 @@ function get_addrs()
 	addr1=$(cat $basepath/node1/data/keys/address)
 	addr2=$(cat $basepath/node2/data/keys/address)
 	addr3=$(cat $basepath/node3/data/keys/address)
+	addr=($addr1 $addr2 $addr3)
 	echo "--------> addr=[$addr1 $addr2 $addr3]"
 }
 function deploy_env()
@@ -105,7 +106,12 @@ function tdpos_nominate()
 		cd $basepath/node1
 		sed -i'' -e 's@\("neturl": "\).*@\1'"$nominate_url"'"\,@' $basepath/relate_file/nominate.json
 		sed -i'' -e 's/\("candidate": "\).*/\1'"$nominate_addr"'"/' $basepath/relate_file/nominate.json
-		./xchain-cli transfer --to=$(cat ./data/keys/address) --desc=$basepath/relate_file/nominate.json --amount=1100000000027440 --frozen=-1
+		echo $addr1 > $basepath/node1/addrs
+		echo ${addr[$i-1]} >> $basepath/node1/addrs
+		./xchain-cli multisig gen --to=$(cat ./data/keys/address) --desc=$basepath/relate_file/nominate.json --multiAddrs=$basepath/node1/addrs --amount=1100000000027440 --frozen=-1
+		./xchain-cli multisig sign --tx=./tx.out --keys=./data/keys --output=./key.sign
+		./xchain-cli multisig sign --tx=./tx.out --keys=$basepath/node$i/data/keys --output=./key$i.sign
+		./xchain-cli multisig send --tx=./tx.out ./key.sign ./key.sign,./key$i.sign
 		sleep 3
 	}
 	sleep 6
@@ -270,7 +276,6 @@ function deploy_invoke_contract()
 		exit 1
 	fi
 }
-
 echo "--------> start to gen relate file"
 gen_file
 sleep 2
@@ -278,6 +283,7 @@ echo "--------> start to deploy env"
 deploy_env
 sleep 3
 echo "--------> start to tdpos nominate"
+get_addrs
 tdpos_nominate
 sleep 2
 echo "--------> start to tdpos vote nominate"
@@ -287,6 +293,5 @@ echo "--------> start to tdpos revoke"
 tdpos_revoke
 sleep 2
 echo "--------> start to deploy_invoke_contract"
-get_addrs
 deploy_invoke_contract
 echo "test is end~~"
