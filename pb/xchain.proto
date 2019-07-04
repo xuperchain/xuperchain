@@ -113,6 +113,14 @@ service Xchain {
 		};
 	}
 
+	// GetAccountByAK get account sets contain a specific address
+	rpc GetAccountByAK(AK2AccountRequest) returns (AK2AccountResponse) {
+		option (google.api.http) = {
+			post: "/v1/get_account_by_ak"
+			body: "*"
+		};
+	}
+
 	rpc GetBlockChainStatus(BCStatus) returns (BCStatus) {
 		option (google.api.http) = {
 			post: "/v1/get_bcstatus"
@@ -831,4 +839,16 @@ enum ResourceType {
 message ResourceLimit {
     ResourceType type = 1;
     int64 limit = 2;
+}
+
+message AK2AccountRequest {
+	Header header = 1;
+	string bcname = 2;
+	string address = 3;
+}
+
+message AK2AccountResponse {
+	Header header = 1;
+	string bcname = 2;
+	repeated string account = 3;
 }
