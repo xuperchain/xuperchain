@@ -15,10 +15,8 @@ static bool syscall_raw(const std::string& method, const std::string& request,
     if (response_len <= 0) {
         return true;
     }
-    std::vector<char> buf(response_len);
-    uint32_t success = fetch_response(buf.data(), response_len);
-    response->resize(response_len);
-    response->assign(buf.begin(), buf.end());
+    response->resize(response_len + 1, 0);
+    uint32_t success = fetch_response(&(*response)[0u], response_len);
     return success == 1;
 }
 
