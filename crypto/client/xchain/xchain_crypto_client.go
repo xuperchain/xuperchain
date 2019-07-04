@@ -163,14 +163,7 @@ func (xcc XchainCryptoClient) VerifySchnorr(publicKey *ecdsa.PublicKey, sig, mes
 
 // --- 	schnorr签名算法相关 end ---
 
-// --- 统一验签算法,单独publicKey
-func (xcc XchainCryptoClient) VerifyXuperSignature(publicKey *ecdsa.PublicKey, sig []byte, message []byte) (valid bool, err error) {
-	publicKeys := []*ecdsa.PublicKey{}
-	publicKeys = append(publicKeys, publicKey)
-	return signature.XuperSigVerify(publicKeys, sig, message)
-}
-
 // --- 统一验签算法
-func (xcc XchainCryptoClient) VerifyXuperAllSignature(publicKeys []*ecdsa.PublicKey, sig []byte, message []byte) (valid bool, err error) {
+func (xcc XchainCryptoClient) VerifyXuperSignature(publicKeys []*ecdsa.PublicKey, sig []byte, message []byte) (valid bool, err error) {
 	return signature.XuperSigVerify(publicKeys, sig, message)
 }

@@ -6,6 +6,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/ecdsa"
 	"errors"
 	"io/ioutil"
 
@@ -121,7 +122,9 @@ func (pc *PowConsensus) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock)
 	}
 
 	//2 验证一下签名是否正确
-	valid, err := pc.cryptoClient.VerifyXuperSignature(k, in.Sign, in.Blockid)
+	ks := []*ecdsa.PublicKey{}
+	ks = append(ks, k)
+	valid, err := pc.cryptoClient.VerifyXuperSignature(ks, in.Sign, in.Blockid)
 	if err != nil {
 		pc.log.Warn("VerifyECDSA error", "logid", header.Logid, "error", err)
 	}

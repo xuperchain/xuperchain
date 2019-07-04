@@ -29,10 +29,7 @@ type CryptoClient interface {
 	VerifySchnorr(k *ecdsa.PublicKey, signature, msg []byte) (valid bool, err error)
 
 	// 统一验签算法
-	VerifyXuperSignature(publicKeys *ecdsa.PublicKey, sig []byte, message []byte) (valid bool, err error)
-
-	// 统一验签算法
-	VerifyXuperAllSignature(publicKeys []*ecdsa.PublicKey, sig []byte, message []byte) (valid bool, err error)
+	VerifyXuperSignature(publicKeys []*ecdsa.PublicKey, sig []byte, message []byte) (valid bool, err error)
 
 	// 创建新的账户，不需要助记词。生成如下几个文件：1.私钥，2.公钥，3.钱包地址 (不建议使用)
 	ExportNewAccount(path string) error

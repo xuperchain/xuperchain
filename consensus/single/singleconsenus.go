@@ -3,6 +3,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/ecdsa"
 	"errors"
 	"io/ioutil"
 	"strconv"
@@ -149,7 +150,9 @@ func (sc *SingleConsensus) CheckMinerMatch(header *pb.Header, in *pb.InternalBlo
 	}
 
 	//2 验证一下签名是否正确
-	valid, err := sc.cryptoClient.VerifyXuperSignature(k, in.Sign, in.Blockid)
+	ks := []*ecdsa.PublicKey{}
+	ks = append(ks, k)
+	valid, err := sc.cryptoClient.VerifyXuperSignature(ks, in.Sign, in.Blockid)
 	if err != nil {
 		sc.log.Warn("VerifyECDSA error", "logid", header.Logid, "error", err)
 	}
