@@ -116,11 +116,11 @@ func (tp *TDpos) rollbackRevokeVote(desc *contract.TxDesc, block *pb.InternalBlo
 func (tp *TDpos) rollbackNominateCandidate(desc *contract.TxDesc, block *pb.InternalBlock) error {
 	tp.log.Trace("Start to rollbackNominateCandidate", "desc", desc)
 	canInfo, fromAddr, err := tp.validateNominateCandidate(desc)
-	candidate := canInfo.Address
 	if err != nil {
 		tp.log.Warn("rollbackNominateCandidate to validate nominate error", "error", err.Error())
 		return nil
 	}
+	candidate := canInfo.Address
 	key := GenCandidateNominateKey(candidate)
 	keyBl := genCandidateBallotsKey(candidate)
 	keyCanInfo := genCandidateInfoKey(candidate)
