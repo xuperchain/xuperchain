@@ -377,3 +377,15 @@ func (tp *TDpos) validateCheckValidater(desc *contract.TxDesc) (int64, int64, er
 	}
 	return version, term, nil
 }
+
+func (tp *TDpos) isAuthAddress(candidate string, initiator string, authRequire []string) bool {
+	if strings.HasSuffix(initiator, candidate) {
+		return true
+	}
+	for _, value := range authRequire {
+		if strings.HasSuffix(value, candidate) {
+			return true
+		}
+	}
+	return false
+}
