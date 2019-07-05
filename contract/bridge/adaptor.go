@@ -1,7 +1,6 @@
 package bridge
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/xuperchain/xuperunion/contract"
@@ -35,7 +34,10 @@ func (v *vmContextImpl) Invoke(method string, args map[string][]byte) ([]byte, e
 	}
 
 	if v.ctx.Output == nil {
-		return nil, errors.New("exec failed, no reason")
+		return nil, &ContractError{
+			Status:  502,
+			Message: "unknown error",
+		}
 	}
 
 	if v.ctx.Output.GetStatus() > 400 {
