@@ -10,6 +10,8 @@ import (
 
 	"github.com/xuperchain/xuperunion/crypto/common"
 	"github.com/xuperchain/xuperunion/crypto/config"
+	"github.com/xuperchain/xuperunion/crypto/multisign"
+	"github.com/xuperchain/xuperunion/crypto/schnorr_ring_sign"
 	"github.com/xuperchain/xuperunion/crypto/schnorr_sign"
 	"github.com/xuperchain/xuperunion/crypto/sign"
 )
@@ -23,7 +25,6 @@ var (
 	InValidSignatureError  = errors.New("XuperSignature is invalid")
 )
 
-// XuperSigVerify common verify function
 func XuperSigVerify(keys []*ecdsa.PublicKey, signature, message []byte) (bool, error) {
 	//	xuperSig, err := unmarshalXuperSignature(signature)
 	xuperSig := new(common.XuperSignature)
@@ -70,6 +71,9 @@ func XuperSigVerify(keys []*ecdsa.PublicKey, signature, message []byte) (bool, e
 	// Schnorr环签名
 	case common.SchnorrRing:
 		switch keys[0].Params().Name {
+		case config.CurveNist: // NIST
+			verifyResult, err := schnorr_ring_sign.Verify(keys, xuperSig.SigContent, message)
+			return verifyResult, err
 		case config.CurveGm: // 国密
 			return false, fmt.Errorf("This cryptography[%v] has not been supported yet.", keys[0].Params().Name)
 		default: // 不支持的密码学类型
@@ -78,6 +82,9 @@ func XuperSigVerify(keys []*ecdsa.PublicKey, signature, message []byte) (bool, e
 	// 多重签名
 	case common.MultiSig:
 		switch keys[0].Params().Name {
+		case config.CurveNist: // NIST
+			verifyResult, err := multisign.VerifyMultiSig(keys, xuperSig.SigContent, message)
+			return verifyResult, err
 		case config.CurveGm: // 国密
 			return false, fmt.Errorf("This cryptography[%v] has not been supported yet.", keys[0].Params().Name)
 		default: // 不支持的密码学类型

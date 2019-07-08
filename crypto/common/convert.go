@@ -1,8 +1,6 @@
 package common
 
 import (
-	//	"bytes"
-	//	"baidu.com/xchain/crypto/config"
 	"encoding/asn1"
 	"errors"
 	"fmt"

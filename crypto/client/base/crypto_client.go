@@ -104,4 +104,60 @@ type CryptoClient interface {
 
 	// 验证钱包地址是否和指定的公钥match。如果成功，返回true和对应的版本号；如果失败，返回false和默认的版本号0
 	VerifyAddressUsingPublicKey(address string, pub *ecdsa.PublicKey) (bool, uint8)
+
+	// --- 多重签名相关 start ---
+
+	// 每个多重签名算法流程的参与节点生成32位长度的随机byte，返回值可以认为是k
+	GetRandom32Bytes() ([]byte, error)
+
+	// 每个多重签名算法流程的参与节点生成Ri = Ki*G
+	GetRiUsingRandomBytes(key *ecdsa.PublicKey, k []byte) []byte
+
+	// 负责计算多重签名的节点来收集所有节点的Ri，并计算R = k1*G + k2*G + ... + kn*G
+	GetRUsingAllRi(key *ecdsa.PublicKey, arrayOfRi [][]byte) []byte
+
+	// 负责计算多重签名的节点来收集所有节点的公钥Pi，并计算公共公钥：C = P1 + P2 + ... + Pn
+	GetSharedPublicKeyForPublicKeys(keys []*ecdsa.PublicKey) ([]byte, error)
+
+	// 负责计算多重签名的节点将计算出的R和C分别传递给各个参与节点后，由各个参与节点再次计算自己的Si
+	// 计算 Si = Ki + HASH(C,R,m) * Xi
+	// X代表大数D，也就是私钥的关键参数
+	GetSiUsingKCRM(key *ecdsa.PrivateKey, k []byte, c []byte, r []byte, message []byte) []byte
+
+	// 负责计算多重签名的节点来收集所有节点的Si，并计算出S = sum(si)
+	GetSUsingAllSi(arrayOfSi [][]byte) []byte
+
+	// 负责计算多重签名的节点，最终生成多重签名的统一签名格式
+	//func (xcc XchainCryptoClient) GenerateMultiSignSignature(s []byte, r []byte) (*multisign.MultiSignature, error) {
+	GenerateMultiSignSignature(s []byte, r []byte) ([]byte, error)
+
+	// 使用ECC公钥数组来进行多重签名的验证
+	//func (xcc XchainCryptoClient) VerifyMultiSig(keys []*ecdsa.PublicKey, signature *multisign.MultiSignature, message []byte) (bool, error) {
+	VerifyMultiSig(keys []*ecdsa.PublicKey, signature, message []byte) (bool, error)
+
+	// -- 多重签名的另一种用法，适用于完全中心化的流程
+	// 使用ECC私钥数组来进行多重签名，生成统一签名格式
+	//func (xcc XchainCryptoClient) MultiSign(keys []*ecdsa.PrivateKey, message []byte) (*multisign.MultiSignature, error) {
+	MultiSign(keys []*ecdsa.PrivateKey, message []byte) ([]byte, error)
+
+	// --- 多重签名相关 end ---
+
+	// --- 	schnorr 环签名算法相关 start ---
+
+	//func (xcc XchainCryptoClient) SignSchnorrRing(keys []*ecdsa.PublicKey, privateKey *ecdsa.PrivateKey, message []byte) (*schnorr_ring_sign.RingSignature, error) {
+	//	return schnorr_ring_sign.Sign(keys, privateKey, message)
+	//}
+	//
+	//func (xcc XchainCryptoClient) VerifySchnorrRing(sig *schnorr_ring_sign.RingSignature, message []byte) bool {
+	//	return schnorr_ring_sign.Verify(sig, message)
+	//}
+
+	// schnorr环签名算法 生成统一签名
+	SignSchnorrRing(keys []*ecdsa.PublicKey, privateKey *ecdsa.PrivateKey, message []byte) ([]byte, error)
+
+	// schnorr环签名算法 验证签名
+	VerifySchnorrRing(keys []*ecdsa.PublicKey, sig, message []byte) (bool, error)
+
+	// --- 	schnorr 环签名算法相关 end ---
+
 }
