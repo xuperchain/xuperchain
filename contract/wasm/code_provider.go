@@ -38,7 +38,7 @@ func (c *codeProvider) GetContractCode(name string) ([]byte, error) {
 }
 
 func (c *codeProvider) GetContractCodeDesc(name string) (*pb.WasmCodeDesc, error) {
-	value, err := c.xstore.Get("contract", contractCodeDescKey(name))
+	value, err := c.xstore.Get("contract", ContractCodeDescKey(name))
 	if err != nil {
 		return nil, fmt.Errorf("get contract desc for '%s' error:%s", name, err)
 	}
