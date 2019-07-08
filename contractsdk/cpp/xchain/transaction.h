@@ -3,7 +3,6 @@
 
 #include "xchain/contract.pb.h"
 #include "xchain/xchain.h"
-#include "xchain/xchain.pb.h"
 
 namespace xchain {
 
@@ -19,35 +18,21 @@ struct TxOutput {
     std::string to_addr;
 };
 
-struct TxInputExt {
-    std::string bucket;
-    std::string key;
-    std::string ref_txid;
-    int32_t ref_offset;
-};
-
-struct TxOutputExt {
-    std::string bucket;
-    std::string key;
-    std::string value;
-};
-
 class Transaction {
+
 public:
     Transaction();
     virtual ~Transaction();
     bool init(pb::Transaction* pbtx);
 
 public:
-    std::string _txid;
-    std::string _blockid;
-    std::string _desc;
-    std::string _initiator;
-    std::vector<std::string> _auth_require;
-    std::vector<TxInput> _tx_inputs;
-    std::vector<TxOutput> _tx_outputs;
-    std::vector<TxInputExt> _tx_inputs_ext;
-    std::vector<TxOutputExt> _tx_outputs_ext;
+    std::string txid;
+    std::string blockid;
+    std::string desc;
+    std::string initiator;
+    std::vector<std::string> auth_require;
+    std::vector<TxInput> tx_inputs;
+    std::vector<TxOutput> tx_outputs;
 };
 
 }  // namespace xchain

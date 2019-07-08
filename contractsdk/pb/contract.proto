@@ -156,3 +156,78 @@ message SetOutputResponse {
 message GetCallArgsRequest {
 	SyscallHeader header = 1;
 }
+
+// Transaction input
+message TxInput
+{
+    // The transaction id referenced to
+    bytes ref_txid = 1;
+    // The output offset of the transaction referenced to
+    int32 ref_offset = 2;
+    // The address of the launcher
+    bytes from_addr = 5;
+    // The amount of the transaction
+    bytes amount = 6;
+    // Frozen height
+    int64 frozen_height = 7;
+}
+
+// Transaction output
+message TxOutput
+{
+    // The amount of the transaction
+    bytes amount = 1;
+    // The address of the launcher
+    bytes to_addr = 2;
+    // Fronzen height
+    int64 frozen_height = 4;
+}
+
+// Transaction is the information of the transaction
+message Transaction
+{
+    // txid is the id of this transaction
+    bytes txid = 1;
+    // the blockid the transaction belong to
+    bytes blockid = 2;
+    // Transaction input list
+    repeated TxInput tx_inputs = 3;
+    // Transaction output list
+    repeated TxOutput tx_outputs = 4;
+    // Transaction description or system contract
+    bytes desc = 6;
+
+    // 权限系统新增字段
+    // 交易发起者, 可以是一个Address或者一个Account
+    string initiator = 26;
+    // 交易发起需要被收集签名的AddressURL集合信息，包括用于utxo转账和用于合约调用
+    repeated string auth_require = 27;
+}
+
+// The internal block struct
+message InternalBlock
+{
+    // blockid generate the hash sign of the block used by sha256
+    bytes blockid = 3;
+    // pre_hash is the parent blockid of the block
+    bytes pre_hash = 4;
+    // The miner id
+    bytes proposer = 5;
+    // The sign which miner signed: blockid + nonce + timestamp
+    bytes sign = 6;
+    // The pk of the miner
+    bytes pubkey =  7;
+    // The height of the blockchain
+    int64 height = 9;
+    // Transactions of the block, only txid stored on kv, the detail information stored in another table
+    repeated Transaction transactions = 11; 
+    // The transaction count of the block
+    int32 tx_count = 12;
+    //下面的属性会动态变化
+    // If the block is on the trunk
+    bool in_trunk = 14;
+    // Next next block which on trunk
+    bytes next_hash = 15;
+}
+
+

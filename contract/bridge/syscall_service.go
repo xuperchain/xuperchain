@@ -46,7 +46,20 @@ func (c *SyscallService) QueryBlock(ctx context.Context, in *pb.QueryBlockReques
 		return nil, err
 	}
 
-	blockbuf, err := json.Marshal(block)
+	blocksdk := pb.InternalBlock{
+		Blockid:     block.Blockid,
+		PreHash:     block.PreHash,
+		Proposer:    block.Proposer,
+		Sign:        block.Sign,
+		Pubkey:      block.Pubkey,
+		Height:      block.Height,
+		Transaction: block.Transactions,
+		TxCount:     block.TxCount,
+		InTrunk:     block.InTrunk,
+		NextHash:    block.NextHash,
+	}
+
+	blockbuf, err := json.Marshal(blocksdk)
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +79,17 @@ func (c *SyscallService) QueryTx(ctx context.Context, in *pb.QueryTxRequest) (*p
 		return nil, err
 	}
 
-	txbuf, err := proto.Marshal(tx)
+	txsdk := pb.Transaction{
+		Txid:        tx.Txid,
+		Blockid:     tx.Blockid,
+		TxInputs:    tx.TxInputs,
+		TxOutpus:    tx.TxOutputs,
+		Desc:        tx.Desc,
+		Initiator:   tx.Initiator,
+		AuthRequire: tx.AuthRequire,
+	}
+
+	txbuf, err := proto.Marshal(txsdk)
 	if err != nil {
 		return nil, err
 	}
