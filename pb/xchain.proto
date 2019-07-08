@@ -35,6 +35,7 @@ enum XChainErrorEnum {
   GAS_NOT_ENOUGH_ERROR = 35;
   TX_VERSION_INVALID_ERROR = 36;
   COMPLIANCE_CHECK_NOT_APPROVED = 37;
+  ACCOUNT_CONTRACT_STATUS_ERROR = 38;
 }
 
 // TransactionStatus is the status of transaction
@@ -53,20 +54,28 @@ enum TransactionStatus {
 
 // Xchain is the main interfaces
 service Xchain {
-  // PostTx post Transaction to a node
-  rpc PostTx(TxStatus) returns (CommonReply) {
-  option (google.api.http) = {
-    post: "/v1/post_tx"
-    body: "*"
-    };
-  }
+	
+	// PostTx post Transaction to a node
+	rpc PostTx(TxStatus) returns (CommonReply) {
+		option (google.api.http) = {
+			post: "/v1/post_tx"
+			body: "*"
+		};
+	}
 
 
-  rpc QueryACL(AclStatus) returns (AclStatus) {
-  option (google.api.http) = {
-    post: "/v1/query_acl"
-    body: "*"
-    };
+	rpc QueryACL(AclStatus) returns (AclStatus) {
+		option (google.api.http) = {
+		    post: "/v1/query_acl"
+		    body: "*"
+		};
+	}
+
+  rpc GetAccountContracts(GetAccountContractsRequest) returns (GetAccountContractsResponse) {
+    option (google.api.http) = {
+      post: "/v1/get_account_contracts"
+      body: "*"
+      };
   }
 
   // QueryTx query Transaction by TxStatus,
@@ -852,4 +861,28 @@ message AK2AccountResponse {
 	Header header = 1;
 	string bcname = 2;
 	repeated string account = 3;
+}
+
+// Query account contracts request
+message GetAccountContractsRequest
+{
+  Header header = 1;
+  string bcname = 2;
+  string account = 3;
+}
+
+// Query account contracts response
+message GetAccountContractsResponse
+{
+  Header header = 1;
+  repeated ContractStatus contracts_status = 2;
+}
+
+// Status of a contract
+message ContractStatus
+{
+  string contract_name = 1;
+  string txid = 2;
+  bytes desc = 3;
+  bool is_banned = 4;
 }
