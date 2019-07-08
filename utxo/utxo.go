@@ -1947,6 +1947,28 @@ func (uv *UtxoVM) queryContractMethodACLWithConfirmed(contractName string, metho
 	return uv.aclMgr.GetContractMethodACLWithConfirmed(contractName, methodName)
 }
 
+func (uv *UtxoVM) queryAccountContainAK(address string) ([]string, error) {
+	accounts := []string{}
+	if acl.IsAccount(address) != 0 {
+		return accounts, errors.New("address is not valid")
+	}
+	prefixKey := pb.ExtUtxoTablePrefix + utils.GetAK2AccountBucket() + "/" + address
+	it := uv.ldb.NewIteratorWithPrefix([]byte(prefixKey))
+	defer it.Release()
+	for it.Next() {
+		key := string(it.Key())
+		ret := strings.Split(key, utils.GetAKAccountSeparator())
+		size := len(ret)
+		if size >= 1 {
+			accounts = append(accounts, ret[size-1])
+		}
+	}
+	if it.Error() != nil {
+		return []string{}, it.Error()
+	}
+	return accounts, nil
+}
+
 func (uv *UtxoVM) queryTxFromForbiddenWithConfirmed(txid []byte) (bool, bool, error) {
 	request := &pb.InvokeRequest{
 		ModuleName:   "wasm",
@@ -2070,6 +2092,11 @@ func (uv *UtxoVM) QueryAccountACL(accountName string) (*pb.Acl, error) {
 // QueryContractMethodACL query contract method's ACL
 func (uv *UtxoVM) QueryContractMethodACL(contractName string, methodName string) (*pb.Acl, error) {
 	return uv.queryContractMethodACL(contractName, methodName)
+}
+
+// QueryAccountContainAK query all accounts contain address
+func (uv *UtxoVM) QueryAccountContainAK(address string) ([]string, error) {
+	return uv.queryAccountContainAK(address)
 }
 
 // QueryTxFromForbiddenWithConfirmed query if the tx has been forbidden

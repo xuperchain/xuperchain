@@ -216,13 +216,15 @@ func TestRunNominateCandidate(t *testing.T) {
 		},
 	}
 	nomCandErr := tdpos.runNominateCandidate(desc2, block)
-	if nomCandErr != nil {
-		t.Error("runNominateCandidate error ", nomCandErr.Error())
-	}
-	nomCandErr = tdpos.runNominateCandidate(desc2, block)
 	if nomCandErr == nil {
-		t.Error("runNominateCandidate error ")
+		//t.Error("runNominateCandidate error ", nomCandErr.Error())
+		t.Error("candiate not auth")
 	}
+	/*
+		nomCandErr = tdpos.runNominateCandidate(desc2, block)
+		if nomCandErr == nil {
+			t.Error("runNominateCandidate error ")
+		}*/
 }
 
 func TestRunRevokeCandidate(t *testing.T) {

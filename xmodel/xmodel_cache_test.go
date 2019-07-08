@@ -183,12 +183,12 @@ func TestXModelCacheGet(t *testing.T) {
 	t.Log(vd2, err)
 
 	err = mc.Put("bucket1", []byte("hello"), []byte("change"))
-	if err != ErrHasDel {
+	if err != nil {
 		t.Error(err)
 	}
 
 	err = mc.Del("bucket1", []byte("hello"))
-	if err != ErrHasDel {
+	if err != nil {
 		t.Error(err)
 	}
 

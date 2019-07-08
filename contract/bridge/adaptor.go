@@ -32,6 +32,14 @@ func (v *vmContextImpl) Invoke(method string, args map[string][]byte) ([]byte, e
 	if err != nil {
 		return nil, err
 	}
+
+	if v.ctx.Output == nil {
+		return nil, &ContractError{
+			Status:  500,
+			Message: "internal error",
+		}
+	}
+
 	if v.ctx.Output.GetStatus() > 400 {
 		return nil, &ContractError{
 			Status:  int(v.ctx.Output.GetStatus()),

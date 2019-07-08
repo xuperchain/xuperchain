@@ -143,11 +143,11 @@ func (tp *TDpos) runRevokeVote(desc *contract.TxDesc, block *pb.InternalBlock) e
 func (tp *TDpos) runNominateCandidate(desc *contract.TxDesc, block *pb.InternalBlock) error {
 	tp.log.Trace("start to runNominateCandidate", "desc", desc)
 	canInfo, fromAddr, err := tp.validateNominateCandidate(desc)
-	candidate := canInfo.Address
 	if err != nil {
 		tp.log.Warn("run to validate nominate error", "error", err.Error())
 		return err
 	}
+	candidate := canInfo.Address
 	key := GenCandidateNominateKey(candidate)
 	keyCanBal := genCandidateBallotsKey(candidate)
 	keyCanInfo := genCandidateInfoKey(candidate)
@@ -181,6 +181,13 @@ func (tp *TDpos) runNominateCandidate(desc *contract.TxDesc, block *pb.InternalB
 	// 从内存中load出该候选人的记录
 	_, ok = tp.candidateBallots.Load(keyCanBal)
 	if !ok {
+		// check if the address nominated exists in the initiator or slice of auth_require
+		initiator := desc.Tx.GetInitiator()
+		authRequire := desc.Tx.GetAuthRequire()
+		if ok := tp.isAuthAddress(candidate, initiator, authRequire); !ok {
+			tp.log.Warn("candidate has not been authenticated", "candidate:", candidate)
+			return errors.New("candidate has not been authenticated")
+		}
 		tp.log.Trace("runNominateCandidate candidate!", "key", keyCanBal)
 		// 如果内存中没有, 则说明该候选人可以被提名并进行提名
 		canBal := &candidateBallotsCacheValue{}

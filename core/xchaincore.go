@@ -951,6 +951,21 @@ func (xc *XChainCore) QueryAccountACL(accountName string) (*pb.Acl, bool, error)
 	return acl, confirmed, nil
 }
 
+// QueryAccountContainAK get all accounts contain a specific address
+func (xc *XChainCore) QueryAccountContainAK(address string) ([]string, error) {
+	if xc == nil {
+		return nil, errors.New("xchain core is nil")
+	}
+	if xc.Status() != global.Normal {
+		return nil, ErrNotReady
+	}
+	accounts, err := xc.Utxovm.QueryAccountContainAK(address)
+	if err != nil {
+		return nil, err
+	}
+	return accounts, nil
+}
+
 // QueryTxFromForbidden query if the tx has been forbidden
 func (xc *XChainCore) QueryTxFromForbidden(txid []byte) bool {
 	if xc.Status() != global.Normal {
