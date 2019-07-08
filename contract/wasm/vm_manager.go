@@ -85,7 +85,7 @@ func (v *VMManager) RegisterSyscallService(syscall *bridge.SyscallService) {
 	v.vmimpl = vmimpl
 }
 
-func contractCodeDescKey(contractName string) []byte {
+func ContractCodeDescKey(contractName string) []byte {
 	return []byte(contractName + "." + "desc")
 }
 
@@ -156,7 +156,7 @@ func (v *VMManager) DeployContract(contextConfig *contract.ContextConfig, args m
 	desc.Digest = hash.DoubleSha256(code)
 	descbuf, _ = proto.Marshal(&desc)
 
-	store.Put("contract", contractCodeDescKey(contractName), descbuf)
+	store.Put("contract", ContractCodeDescKey(contractName), descbuf)
 	store.Put("contract", contractCodeKey(contractName), code)
 	// 由于部署合约的时候代码还没有持久化，构造一个从ModelCache获取代码的对象
 	// 在执行init函数的时候，代码已经进入vm cache，因此使用VMManager的默认CodeProvider没有问题
