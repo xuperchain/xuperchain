@@ -3,13 +3,14 @@
 
 package pb
 
+import proto "github.com/golang/protobuf/proto"
+import fmt "fmt"
+import math "math"
+import _ "google.golang.org/genproto/googleapis/api/annotations"
+
 import (
-	context "context"
-	fmt "fmt"
-	proto "github.com/golang/protobuf/proto"
-	_ "google.golang.org/genproto/googleapis/api/annotations"
+	context "golang.org/x/net/context"
 	grpc "google.golang.org/grpc"
-	math "math"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -21,7 +22,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 type ComplianceCheckResponse struct {
 	Header               *Header        `protobuf:"bytes,1,opt,name=header,proto3" json:"header,omitempty"`
@@ -35,17 +36,16 @@ func (m *ComplianceCheckResponse) Reset()         { *m = ComplianceCheckResponse
 func (m *ComplianceCheckResponse) String() string { return proto.CompactTextString(m) }
 func (*ComplianceCheckResponse) ProtoMessage()    {}
 func (*ComplianceCheckResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_aefefab36e604b7f, []int{0}
+	return fileDescriptor_xcheck_d3cf1ad1c335e764, []int{0}
 }
-
 func (m *ComplianceCheckResponse) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ComplianceCheckResponse.Unmarshal(m, b)
 }
 func (m *ComplianceCheckResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ComplianceCheckResponse.Marshal(b, m, deterministic)
 }
-func (m *ComplianceCheckResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ComplianceCheckResponse.Merge(m, src)
+func (dst *ComplianceCheckResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ComplianceCheckResponse.Merge(dst, src)
 }
 func (m *ComplianceCheckResponse) XXX_Size() int {
 	return xxx_messageInfo_ComplianceCheckResponse.Size(m)
@@ -70,27 +70,55 @@ func (m *ComplianceCheckResponse) GetSignature() *SignatureInfo {
 	return nil
 }
 
-func init() {
-	proto.RegisterType((*ComplianceCheckResponse)(nil), "pb.ComplianceCheckResponse")
+type TransferCheckResponse struct {
+	Header               *Header        `protobuf:"bytes,1,opt,name=header,proto3" json:"header,omitempty"`
+	Signature            *SignatureInfo `protobuf:"bytes,2,opt,name=signature,proto3" json:"signature,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
+	XXX_unrecognized     []byte         `json:"-"`
+	XXX_sizecache        int32          `json:"-"`
 }
 
-func init() { proto.RegisterFile("xcheck.proto", fileDescriptor_aefefab36e604b7f) }
+func (m *TransferCheckResponse) Reset()         { *m = TransferCheckResponse{} }
+func (m *TransferCheckResponse) String() string { return proto.CompactTextString(m) }
+func (*TransferCheckResponse) ProtoMessage()    {}
+func (*TransferCheckResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_xcheck_d3cf1ad1c335e764, []int{1}
+}
+func (m *TransferCheckResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_TransferCheckResponse.Unmarshal(m, b)
+}
+func (m *TransferCheckResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_TransferCheckResponse.Marshal(b, m, deterministic)
+}
+func (dst *TransferCheckResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TransferCheckResponse.Merge(dst, src)
+}
+func (m *TransferCheckResponse) XXX_Size() int {
+	return xxx_messageInfo_TransferCheckResponse.Size(m)
+}
+func (m *TransferCheckResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_TransferCheckResponse.DiscardUnknown(m)
+}
 
-var fileDescriptor_aefefab36e604b7f = []byte{
-	// 196 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0xa9, 0x48, 0xce, 0x48,
-	0x4d, 0xce, 0xd6, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x2a, 0x48, 0x92, 0x92, 0x49, 0xcf,
-	0xcf, 0x4f, 0xcf, 0x49, 0xd5, 0x4f, 0x2c, 0xc8, 0xd4, 0x4f, 0xcc, 0xcb, 0xcb, 0x2f, 0x49, 0x2c,
-	0xc9, 0xcc, 0xcf, 0x2b, 0x86, 0xa8, 0x90, 0x02, 0xa9, 0x4f, 0xcc, 0xcc, 0x83, 0xf0, 0x94, 0xf2,
-	0xb8, 0xc4, 0x9d, 0xf3, 0x73, 0x0b, 0x72, 0x32, 0x13, 0xf3, 0x92, 0x53, 0x9d, 0x41, 0x06, 0x05,
-	0xa5, 0x16, 0x17, 0xe4, 0xe7, 0x15, 0xa7, 0x0a, 0x29, 0x71, 0xb1, 0x65, 0xa4, 0x26, 0xa6, 0xa4,
-	0x16, 0x49, 0x30, 0x2a, 0x30, 0x6a, 0x70, 0x1b, 0x71, 0xe9, 0x15, 0x24, 0xe9, 0x79, 0x80, 0x45,
-	0x82, 0xa0, 0x32, 0x42, 0xfa, 0x5c, 0x9c, 0xc5, 0x99, 0xe9, 0x79, 0x89, 0x25, 0xa5, 0x45, 0xa9,
-	0x12, 0x4c, 0x60, 0x65, 0x82, 0x20, 0x65, 0xc1, 0x30, 0x41, 0xcf, 0xbc, 0xb4, 0xfc, 0x20, 0x84,
-	0x1a, 0x23, 0x37, 0x2e, 0xb6, 0x08, 0xb0, 0x7b, 0x85, 0x6c, 0xb8, 0xf8, 0xd1, 0x6c, 0x16, 0xe2,
-	0x01, 0x69, 0x0d, 0xa9, 0x08, 0x2e, 0x49, 0x2c, 0x29, 0x2d, 0x96, 0x92, 0x06, 0xf1, 0x70, 0x38,
-	0x2e, 0x89, 0x0d, 0xec, 0x7c, 0x63, 0x40, 0x00, 0x00, 0x00, 0xff, 0xff, 0x18, 0xb8, 0x4e, 0x97,
-	0xfe, 0x00, 0x00, 0x00,
+var xxx_messageInfo_TransferCheckResponse proto.InternalMessageInfo
+
+func (m *TransferCheckResponse) GetHeader() *Header {
+	if m != nil {
+		return m.Header
+	}
+	return nil
+}
+
+func (m *TransferCheckResponse) GetSignature() *SignatureInfo {
+	if m != nil {
+		return m.Signature
+	}
+	return nil
+}
+
+func init() {
+	proto.RegisterType((*ComplianceCheckResponse)(nil), "pb.ComplianceCheckResponse")
+	proto.RegisterType((*TransferCheckResponse)(nil), "pb.TransferCheckResponse")
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -106,6 +134,7 @@ const _ = grpc.SupportPackageIsVersion4
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type XcheckClient interface {
 	ComplianceCheck(ctx context.Context, in *TxStatus, opts ...grpc.CallOption) (*ComplianceCheckResponse, error)
+	TransferCheck(ctx context.Context, in *TxStatus, opts ...grpc.CallOption) (*TransferCheckResponse, error)
 }
 
 type xcheckClient struct {
@@ -125,9 +154,19 @@ func (c *xcheckClient) ComplianceCheck(ctx context.Context, in *TxStatus, opts .
 	return out, nil
 }
 
+func (c *xcheckClient) TransferCheck(ctx context.Context, in *TxStatus, opts ...grpc.CallOption) (*TransferCheckResponse, error) {
+	out := new(TransferCheckResponse)
+	err := c.cc.Invoke(ctx, "/pb.Xcheck/TransferCheck", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // XcheckServer is the server API for Xcheck service.
 type XcheckServer interface {
 	ComplianceCheck(context.Context, *TxStatus) (*ComplianceCheckResponse, error)
+	TransferCheck(context.Context, *TxStatus) (*TransferCheckResponse, error)
 }
 
 func RegisterXcheckServer(s *grpc.Server, srv XcheckServer) {
@@ -152,6 +191,24 @@ func _Xcheck_ComplianceCheck_Handler(srv interface{}, ctx context.Context, dec f
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Xcheck_TransferCheck_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(TxStatus)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(XcheckServer).TransferCheck(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/pb.Xcheck/TransferCheck",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(XcheckServer).TransferCheck(ctx, req.(*TxStatus))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Xcheck_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "pb.Xcheck",
 	HandlerType: (*XcheckServer)(nil),
@@ -160,7 +217,31 @@ var _Xcheck_serviceDesc = grpc.ServiceDesc{
 			MethodName: "ComplianceCheck",
 			Handler:    _Xcheck_ComplianceCheck_Handler,
 		},
+		{
+			MethodName: "TransferCheck",
+			Handler:    _Xcheck_TransferCheck_Handler,
+		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "xcheck.proto",
+}
+
+func init() { proto.RegisterFile("xcheck.proto", fileDescriptor_xcheck_d3cf1ad1c335e764) }
+
+var fileDescriptor_xcheck_d3cf1ad1c335e764 = []byte{
+	// 224 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0xa9, 0x48, 0xce, 0x48,
+	0x4d, 0xce, 0xd6, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x62, 0x2a, 0x48, 0x92, 0x92, 0x49, 0xcf,
+	0xcf, 0x4f, 0xcf, 0x49, 0xd5, 0x4f, 0x2c, 0xc8, 0xd4, 0x4f, 0xcc, 0xcb, 0xcb, 0x2f, 0x49, 0x2c,
+	0xc9, 0xcc, 0xcf, 0x2b, 0x86, 0xa8, 0x90, 0x02, 0xa9, 0x4f, 0xcc, 0xcc, 0x83, 0xf0, 0x94, 0xf2,
+	0xb8, 0xc4, 0x9d, 0xf3, 0x73, 0x0b, 0x72, 0x32, 0x13, 0xf3, 0x92, 0x53, 0x9d, 0x41, 0x06, 0x05,
+	0xa5, 0x16, 0x17, 0xe4, 0xe7, 0x15, 0xa7, 0x0a, 0x29, 0x71, 0xb1, 0x65, 0xa4, 0x26, 0xa6, 0xa4,
+	0x16, 0x49, 0x30, 0x2a, 0x30, 0x6a, 0x70, 0x1b, 0x71, 0xe9, 0x15, 0x24, 0xe9, 0x79, 0x80, 0x45,
+	0x82, 0xa0, 0x32, 0x42, 0xfa, 0x5c, 0x9c, 0xc5, 0x99, 0xe9, 0x79, 0x89, 0x25, 0xa5, 0x45, 0xa9,
+	0x12, 0x4c, 0x60, 0x65, 0x82, 0x20, 0x65, 0xc1, 0x30, 0x41, 0xcf, 0xbc, 0xb4, 0xfc, 0x20, 0x84,
+	0x1a, 0xa5, 0x1c, 0x2e, 0xd1, 0x90, 0xa2, 0xc4, 0xbc, 0xe2, 0xb4, 0xd4, 0x22, 0xda, 0xdb, 0x66,
+	0xd4, 0xc0, 0xc8, 0xc5, 0x16, 0x01, 0x0e, 0x1e, 0x21, 0x1b, 0x2e, 0x7e, 0x34, 0x8f, 0x0a, 0xf1,
+	0x80, 0xf4, 0x86, 0x54, 0x04, 0x97, 0x24, 0x96, 0x94, 0x16, 0x4b, 0x49, 0x83, 0x78, 0xb8, 0xc2,
+	0xc2, 0x82, 0x8b, 0x17, 0xc5, 0xd9, 0x68, 0x7a, 0x25, 0xc1, 0x3c, 0x6c, 0xfe, 0x4a, 0x62, 0x03,
+	0x87, 0xb3, 0x31, 0x20, 0x00, 0x00, 0xff, 0xff, 0xc2, 0x8a, 0x44, 0xb4, 0xa7, 0x01, 0x00, 0x00,
 }
