@@ -56,11 +56,9 @@ func (uv *UtxoVM) getReservedContractRequests(req []*pb.InvokeRequest, isPreExec
 		if len(req) < len(reservedContracts) {
 			uv.xlog.Warn("req should contain reservedContracts")
 			return nil, ErrGetReservedContracts
-		} else if len(req) == len(reservedContracts) {
-			// req only contain reservedContracts
-			return reservedContracts, nil
+		} else if len(req) < len(reservedContracts) {
+			ra = genArgs(req[len(reservedContracts):])
 		}
-		ra = genArgs(req[len(reservedContracts):])
 	}
 
 	for _, rc := range reservedContracts {
