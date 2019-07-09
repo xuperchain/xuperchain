@@ -6,7 +6,7 @@ Block::Block() {}
 
 Block::~Block() {}
 
-bool Block::init(pb::InternalBlock* pbblock) {
+bool Block::init(pb::Block* pbblock) {
     blockid = pbblock->blockid();
     pre_hash = pbblock->pre_hash();
     proposer = pbblock->proposer();
@@ -18,7 +18,7 @@ bool Block::init(pb::InternalBlock* pbblock) {
     next_hash = pbblock->next_hash();
 
     for (int i = 0; i < pbblock->transactions_size(); i++) {
-        transactions.push_back(pbblock->transactions(i).txid());
+        transactions.emplace_back(pbblock->transactions(i).txid());
     }
     
     return true;

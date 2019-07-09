@@ -204,8 +204,8 @@ message Transaction
     repeated string auth_require = 27;
 }
 
-// The internal block struct
-message InternalBlock
+// The block struct
+message Block
 {
     // blockid generate the hash sign of the block used by sha256
     bytes blockid = 3;

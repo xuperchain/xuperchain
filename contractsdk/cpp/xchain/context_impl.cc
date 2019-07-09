@@ -97,7 +97,8 @@ bool ContextImpl::query_tx(const std::string &txid, Transaction* tx) {
     }
 
     tx->init(pbtx);
-
+    delete pbtx;
+    
     return true;
 }
 
@@ -110,12 +111,13 @@ bool ContextImpl::query_block(const std::string &blockid, Block* block) {
         return false;
     }
 
-    pb::InternalBlock* pbblock = new pb::InternalBlock();
+    pb::Block* pbblock = new pb::Block();
     if (!pbblock->ParseFromString(rep.block())) {
         return  false;
     }
 
     block->init(pbblock);
+    delete pbblock;
 
     return true;
 }

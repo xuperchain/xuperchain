@@ -10,7 +10,7 @@ class Block {
 public:
     Block();
     virtual ~Block();
-    bool init(pb::InternalBlock* pbblock);
+    bool init(pb::Block* pbblock);
 
 public:
     std::string blockid;
