@@ -7,9 +7,15 @@ import "xchain.proto";
 
 service Xcheck {
     rpc ComplianceCheck(TxStatus) returns (ComplianceCheckResponse);
+	rpc TransferCheck(TxStatus) returns (TransferCheckResponse);
 }
 
 message ComplianceCheckResponse {
     Header header = 1;
     SignatureInfo signature = 2;
+}
+
+message TransferCheckResponse {
+	Header header = 1;
+	SignatureInfo signature = 2;
 }
