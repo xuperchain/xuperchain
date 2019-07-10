@@ -73,6 +73,8 @@ var (
 	ErrVersionInvalid = errors.New("Invalid tx version")
 	ErrInvalidTxExt   = errors.New("Invalid tx ext")
 	ErrTxTooLarge     = errors.New("Tx size is too large")
+
+	ErrGetReservedContracts = errors.New("Get reserved contracts error")
 )
 
 // package constants
