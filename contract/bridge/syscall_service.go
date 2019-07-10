@@ -46,7 +46,7 @@ func (c *SyscallService) QueryBlock(ctx context.Context, in *pb.QueryBlockReques
 		return nil, err
 	}
 
-	blocksdk := pb.InternalBlock{
+	blocksdk := pb.Block{
 		Blockid:     block.Blockid,
 		PreHash:     block.PreHash,
 		Proposer:    block.Proposer,
