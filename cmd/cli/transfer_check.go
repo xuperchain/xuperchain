@@ -15,7 +15,8 @@ import (
 	"github.com/xuperchain/xuperunion/pb"
 )
 
-type GetComplianceCheckSignCommand struct {
+// GetTransferCheckSignCommand transfer check signature cmd structure
+type GetTransferCheckSignCommand struct {
 	cli          *Cli
 	cmd          *cobra.Command
 	xcheckclient pb.XcheckClient
@@ -25,13 +26,14 @@ type GetComplianceCheckSignCommand struct {
 	output string
 }
 
-func NewGetComplianceCheckSignCommand(cli *Cli) *cobra.Command {
-	c := new(GetComplianceCheckSignCommand)
+// NewGetTransferCheckSignCommand new an object of GetTransferCheckSignCommand
+func NewGetTransferCheckSignCommand(cli *Cli) *cobra.Command {
+	c := new(GetTransferCheckSignCommand)
 	c.cli = cli
 	c.cmd = &cobra.Command{
-		Use:   "get",
+		Use:   "get_transfer_sign",
 		Short: "get a sign from remote node.",
-		Long:  `./xchain-cli multisig get --tx ./tx.out`,
+		Long:  `./xchain-cli multisig get_transfer_sign --tx ./tx.out`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := context.TODO()
 			return c.get(ctx)
@@ -41,7 +43,7 @@ func NewGetComplianceCheckSignCommand(cli *Cli) *cobra.Command {
 	return c.cmd
 }
 
-func (c *GetComplianceCheckSignCommand) initXcheckClient() error {
+func (c *GetTransferCheckSignCommand) initXcheckClient() error {
 	conn, err := grpc.Dial(c.host, grpc.WithInsecure(), grpc.WithMaxMsgSize(64<<20-1))
 	if err != nil {
 		return err
@@ -50,18 +52,19 @@ func (c *GetComplianceCheckSignCommand) initXcheckClient() error {
 	return nil
 }
 
-func (c *GetComplianceCheckSignCommand) XcheckClient() pb.XcheckClient {
+// XcheckClient init XcheckClient
+func (c *GetTransferCheckSignCommand) XcheckClient() pb.XcheckClient {
 	c.initXcheckClient()
 	return c.xcheckclient
 }
 
-func (c *GetComplianceCheckSignCommand) addFlags() {
+func (c *GetTransferCheckSignCommand) addFlags() {
 	c.cmd.Flags().StringVar(&c.tx, "tx", "./tx.out", "Serialized transaction data file")
 	c.cmd.Flags().StringVar(&c.host, "host", "localhost:6718", "host to get signature from compliance check service")
-	c.cmd.Flags().StringVar(&c.output, "output", "./compliance_check_sign.out", "Generate signature file for a transaction.")
+	c.cmd.Flags().StringVar(&c.output, "output", "./transfer_check_sign.out", "Generate signature file for a transaction.")
 }
 
-func (c *GetComplianceCheckSignCommand) get(ctx context.Context) error {
+func (c *GetTransferCheckSignCommand) get(ctx context.Context) error {
 	data, err := ioutil.ReadFile(c.tx)
 	if err != nil {
 		return errors.New("Fail to open serialized transaction data file")
@@ -82,7 +85,7 @@ func (c *GetComplianceCheckSignCommand) get(ctx context.Context) error {
 		Txid: tx.Txid,
 	}
 	// XcheckClient
-	reply, err2 := c.XcheckClient().ComplianceCheck(ctx, txStatus)
+	reply, err2 := c.XcheckClient().TransferCheck(ctx, txStatus)
 	if err2 != nil {
 		fmt.Println("check here new XcheckClient error", err2)
 		return err2

@@ -1407,12 +1407,6 @@ func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
 	uv.xlog.Trace("get gas limit from tx", "gasLimit", gasLimit, "txid", hex.EncodeToString(tx.Txid))
 
 	for i, tmpReq := range tx.GetContractRequests() {
-		if gasLimit <= 0 {
-			uv.xlog.Error("virifyTxRWSets error:out of gas", "contractName", tmpReq.GetContractName(),
-				"txid", hex.EncodeToString(tx.Txid))
-			return false, errors.New("out of gas")
-		}
-
 		moduleName := tmpReq.GetModuleName()
 		vm, err := uv.vmMgr3.GetVM(moduleName)
 		if err != nil {
@@ -1422,6 +1416,11 @@ func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
 		limits := contract.FromPbLimits(tmpReq.GetResourceLimits())
 		if i >= len(reservedRequests) {
 			gasLimit -= limits.TotalGas()
+		}
+		if gasLimit < 0 {
+			uv.xlog.Error("virifyTxRWSets error:out of gas", "contractName", tmpReq.GetContractName(),
+				"txid", hex.EncodeToString(tx.Txid))
+			return false, errors.New("out of gas")
 		}
 		contextConfig.ResourceLimits = limits
 		contextConfig.ContractName = tmpReq.GetContractName()
