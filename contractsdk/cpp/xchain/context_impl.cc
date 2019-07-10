@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include "xchain/contract.pb.h"
 #include "xchain/syscall.h"
+#include "xchain/util.h"
 
 namespace xchain {
 
@@ -17,7 +18,10 @@ bool ContextImpl::init() {
     if (!ok) {
         return false;
     }
-    _args.insert(_call_args.args().begin(), _call_args.args().end());
+    for (int i=0; i<_call_args.args_size(); i++) {
+        auto arg_pair = _call_args.args(i);
+        _args.insert(std::make_pair(arg_pair.key(), arg_pair.value()));
+    }
     _resp.status = 200;
     return true;
 }
@@ -85,7 +89,9 @@ bool ContextImpl::delete_object(const std::string& key) {
 bool ContextImpl::query_tx(const std::string &txid, Transaction* tx) {
     pb::QueryTxRequest req;
     pb::QueryTxResponse rep;
-    req.set_txid(txid);
+    
+    std::string rawTxid = hex2string(txid);
+    req.set_txid(rawTxid);
     bool ok = syscall("QueryTx", req, &rep);
     if (!ok) {
         return false;
@@ -99,7 +105,9 @@ bool ContextImpl::query_tx(const std::string &txid, Transaction* tx) {
 bool ContextImpl::query_block(const std::string &blockid, Block* block) {
     pb::QueryBlockRequest req;
     pb::QueryBlockResponse rep;
-    req.set_blockid(blockid);
+    
+    std::string rawBlockid = hex2string(blockid);
+    req.set_blockid(rawBlockid);
     bool ok = syscall("QueryBlock", req, &rep);
     if (!ok) {
         return false;

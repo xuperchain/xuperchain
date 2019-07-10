@@ -32,6 +32,7 @@ private:
     std::map<std::string, std::string> _args;
     Response _resp;
 };
+
 }  // namespace xchain
 
 #endif

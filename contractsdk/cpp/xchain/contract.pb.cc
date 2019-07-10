@@ -13,8 +13,7 @@
 // @@protoc_insertion_point(includes)
 #include <google/protobuf/port_def.inc>
 
-extern PROTOBUF_INTERNAL_EXPORT_contract_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_CallArgs_ArgsEntry_DoNotUse_contract_2eproto;
-extern PROTOBUF_INTERNAL_EXPORT_contract_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_ContractCallRequest_ArgsEntry_DoNotUse_contract_2eproto;
+extern PROTOBUF_INTERNAL_EXPORT_contract_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_ArgPair_contract_2eproto;
 extern PROTOBUF_INTERNAL_EXPORT_contract_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_IteratorItem_contract_2eproto;
 extern PROTOBUF_INTERNAL_EXPORT_contract_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_Response_contract_2eproto;
 extern PROTOBUF_INTERNAL_EXPORT_contract_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_SyscallHeader_contract_2eproto;
@@ -39,10 +38,10 @@ class NativeCallResponseDefaultTypeInternal {
  public:
   ::google::protobuf::internal::ExplicitlyConstructed<NativeCallResponse> _instance;
 } _NativeCallResponse_default_instance_;
-class CallArgs_ArgsEntry_DoNotUseDefaultTypeInternal {
+class ArgPairDefaultTypeInternal {
  public:
-  ::google::protobuf::internal::ExplicitlyConstructed<CallArgs_ArgsEntry_DoNotUse> _instance;
-} _CallArgs_ArgsEntry_DoNotUse_default_instance_;
+  ::google::protobuf::internal::ExplicitlyConstructed<ArgPair> _instance;
+} _ArgPair_default_instance_;
 class CallArgsDefaultTypeInternal {
  public:
   ::google::protobuf::internal::ExplicitlyConstructed<CallArgs> _instance;
@@ -111,10 +110,6 @@ class TransferResponseDefaultTypeInternal {
  public:
   ::google::protobuf::internal::ExplicitlyConstructed<TransferResponse> _instance;
 } _TransferResponse_default_instance_;
-class ContractCallRequest_ArgsEntry_DoNotUseDefaultTypeInternal {
- public:
-  ::google::protobuf::internal::ExplicitlyConstructed<ContractCallRequest_ArgsEntry_DoNotUse> _instance;
-} _ContractCallRequest_ArgsEntry_DoNotUse_default_instance_;
 class ContractCallRequestDefaultTypeInternal {
  public:
   ::google::protobuf::internal::ExplicitlyConstructed<ContractCallRequest> _instance;
@@ -212,18 +207,19 @@ static void InitDefaultsNativeCallResponse_contract_2eproto() {
 ::google::protobuf::internal::SCCInfo<0> scc_info_NativeCallResponse_contract_2eproto =
     {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsNativeCallResponse_contract_2eproto}, {}};
 
-static void InitDefaultsCallArgs_ArgsEntry_DoNotUse_contract_2eproto() {
+static void InitDefaultsArgPair_contract_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   {
-    void* ptr = &::pb::_CallArgs_ArgsEntry_DoNotUse_default_instance_;
-    new (ptr) ::pb::CallArgs_ArgsEntry_DoNotUse();
+    void* ptr = &::pb::_ArgPair_default_instance_;
+    new (ptr) ::pb::ArgPair();
+    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
   }
-  ::pb::CallArgs_ArgsEntry_DoNotUse::InitAsDefaultInstance();
+  ::pb::ArgPair::InitAsDefaultInstance();
 }
 
-::google::protobuf::internal::SCCInfo<0> scc_info_CallArgs_ArgsEntry_DoNotUse_contract_2eproto =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsCallArgs_ArgsEntry_DoNotUse_contract_2eproto}, {}};
+::google::protobuf::internal::SCCInfo<0> scc_info_ArgPair_contract_2eproto =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsArgPair_contract_2eproto}, {}};
 
 static void InitDefaultsCallArgs_contract_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
@@ -238,7 +234,7 @@ static void InitDefaultsCallArgs_contract_2eproto() {
 
 ::google::protobuf::internal::SCCInfo<1> scc_info_CallArgs_contract_2eproto =
     {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 1, InitDefaultsCallArgs_contract_2eproto}, {
-      &scc_info_CallArgs_ArgsEntry_DoNotUse_contract_2eproto.base,}};
+      &scc_info_ArgPair_contract_2eproto.base,}};
 
 static void InitDefaultsSyscallHeader_contract_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
@@ -474,19 +470,6 @@ static void InitDefaultsTransferResponse_contract_2eproto() {
 ::google::protobuf::internal::SCCInfo<0> scc_info_TransferResponse_contract_2eproto =
     {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsTransferResponse_contract_2eproto}, {}};
 
-static void InitDefaultsContractCallRequest_ArgsEntry_DoNotUse_contract_2eproto() {
-  GOOGLE_PROTOBUF_VERIFY_VERSION;
-
-  {
-    void* ptr = &::pb::_ContractCallRequest_ArgsEntry_DoNotUse_default_instance_;
-    new (ptr) ::pb::ContractCallRequest_ArgsEntry_DoNotUse();
-  }
-  ::pb::ContractCallRequest_ArgsEntry_DoNotUse::InitAsDefaultInstance();
-}
-
-::google::protobuf::internal::SCCInfo<0> scc_info_ContractCallRequest_ArgsEntry_DoNotUse_contract_2eproto =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsContractCallRequest_ArgsEntry_DoNotUse_contract_2eproto}, {}};
-
 static void InitDefaultsContractCallRequest_contract_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
@@ -501,7 +484,7 @@ static void InitDefaultsContractCallRequest_contract_2eproto() {
 ::google::protobuf::internal::SCCInfo<2> scc_info_ContractCallRequest_contract_2eproto =
     {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 2, InitDefaultsContractCallRequest_contract_2eproto}, {
       &scc_info_SyscallHeader_contract_2eproto.base,
-      &scc_info_ContractCallRequest_ArgsEntry_DoNotUse_contract_2eproto.base,}};
+      &scc_info_ArgPair_contract_2eproto.base,}};
 
 static void InitDefaultsContractCallResponse_contract_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
@@ -1398,30 +1381,310 @@ void NativeCallResponse::InternalSwap(NativeCallResponse* other) {
 
 // ===================================================================
 
-CallArgs_ArgsEntry_DoNotUse::CallArgs_ArgsEntry_DoNotUse() {}
-CallArgs_ArgsEntry_DoNotUse::CallArgs_ArgsEntry_DoNotUse(::google::protobuf::Arena* arena)
-    : SuperType(arena) {}
-void CallArgs_ArgsEntry_DoNotUse::MergeFrom(const CallArgs_ArgsEntry_DoNotUse& other) {
-  MergeFromInternal(other);
+void ArgPair::InitAsDefaultInstance() {
 }
+class ArgPair::HasBitSetters {
+ public:
+};
+
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
+const int ArgPair::kKeyFieldNumber;
+const int ArgPair::kValueFieldNumber;
+#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+
+ArgPair::ArgPair()
+  : ::google::protobuf::MessageLite(), _internal_metadata_(nullptr) {
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:pb.ArgPair)
+}
+ArgPair::ArgPair(const ArgPair& from)
+  : ::google::protobuf::MessageLite(),
+      _internal_metadata_(nullptr) {
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  key_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.key().size() > 0) {
+    key_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.key_);
+  }
+  value_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.value().size() > 0) {
+    value_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.value_);
+  }
+  // @@protoc_insertion_point(copy_constructor:pb.ArgPair)
+}
+
+void ArgPair::SharedCtor() {
+  ::google::protobuf::internal::InitSCC(
+      &scc_info_ArgPair_contract_2eproto.base);
+  key_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  value_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+
+ArgPair::~ArgPair() {
+  // @@protoc_insertion_point(destructor:pb.ArgPair)
+  SharedDtor();
+}
+
+void ArgPair::SharedDtor() {
+  key_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  value_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+
+void ArgPair::SetCachedSize(int size) const {
+  _cached_size_.Set(size);
+}
+const ArgPair& ArgPair::default_instance() {
+  ::google::protobuf::internal::InitSCC(&::scc_info_ArgPair_contract_2eproto.base);
+  return *internal_default_instance();
+}
+
+
+void ArgPair::Clear() {
+// @@protoc_insertion_point(message_clear_start:pb.ArgPair)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  value_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  _internal_metadata_.Clear();
+}
+
 #if GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
-bool CallArgs_ArgsEntry_DoNotUse::_ParseMap(const char* begin, const char* end, void* object, ::google::protobuf::internal::ParseContext* ctx) {
-  using MF = ::google::protobuf::internal::MapFieldLite<
-      CallArgs_ArgsEntry_DoNotUse, EntryKeyType, EntryValueType,
-      kEntryKeyFieldType, kEntryValueFieldType,
-      kEntryDefaultEnumValue>;
-  auto mf = static_cast<MF*>(object);
-  Parser<MF, ::google::protobuf::Map<EntryKeyType, EntryValueType>> parser(mf);
-#define DO_(x) if (!(x)) return false
-  DO_(parser.ParseMap(begin, end));
-  DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-    parser.key().data(), static_cast<int>(parser.key().length()),
-    ::google::protobuf::internal::WireFormatLite::PARSE,
-    "pb.CallArgs.ArgsEntry.key"));
-#undef DO_
+const char* ArgPair::_InternalParse(const char* begin, const char* end, void* object,
+                  ::google::protobuf::internal::ParseContext* ctx) {
+  auto msg = static_cast<ArgPair*>(object);
+  ::google::protobuf::int32 size; (void)size;
+  int depth; (void)depth;
+  ::google::protobuf::uint32 tag;
+  ::google::protobuf::internal::ParseFunc parser_till_end; (void)parser_till_end;
+  auto ptr = begin;
+  while (ptr < end) {
+    ptr = ::google::protobuf::io::Parse32(ptr, &tag);
+    GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+    switch (tag >> 3) {
+      // string key = 1;
+      case 1: {
+        if (static_cast<::google::protobuf::uint8>(tag) != 10) goto handle_unusual;
+        ptr = ::google::protobuf::io::ReadSize(ptr, &size);
+        GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+        ctx->extra_parse_data().SetFieldName(nullptr);
+        object = msg->mutable_key();
+        if (size > end - ptr + ::google::protobuf::internal::ParseContext::kSlopBytes) {
+          parser_till_end = ::google::protobuf::internal::GreedyStringParserUTF8;
+          goto string_till_end;
+        }
+        GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheckUTF8(ptr, size, ctx));
+        ::google::protobuf::internal::InlineGreedyStringParser(object, ptr, size, ctx);
+        ptr += size;
+        break;
+      }
+      // bytes value = 2;
+      case 2: {
+        if (static_cast<::google::protobuf::uint8>(tag) != 18) goto handle_unusual;
+        ptr = ::google::protobuf::io::ReadSize(ptr, &size);
+        GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+        object = msg->mutable_value();
+        if (size > end - ptr + ::google::protobuf::internal::ParseContext::kSlopBytes) {
+          parser_till_end = ::google::protobuf::internal::GreedyStringParser;
+          goto string_till_end;
+        }
+        GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheck(ptr, size, ctx));
+        ::google::protobuf::internal::InlineGreedyStringParser(object, ptr, size, ctx);
+        ptr += size;
+        break;
+      }
+      default: {
+      handle_unusual:
+        if ((tag & 7) == 4 || tag == 0) {
+          ctx->EndGroup(tag);
+          return ptr;
+        }
+        auto res = UnknownFieldParse(tag, {_InternalParse, msg},
+          ptr, end, msg->_internal_metadata_.mutable_unknown_fields(), ctx);
+        ptr = res.first;
+        GOOGLE_PROTOBUF_PARSER_ASSERT(ptr != nullptr);
+        if (res.second) return ptr;
+      }
+    }  // switch
+  }  // while
+  return ptr;
+string_till_end:
+  static_cast<::std::string*>(object)->clear();
+  static_cast<::std::string*>(object)->reserve(size);
+  goto len_delim_till_end;
+len_delim_till_end:
+  return ctx->StoreAndTailCall(ptr, end, {_InternalParse, msg},
+                               {parser_till_end, object}, size);
+}
+#else  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+bool ArgPair::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!PROTOBUF_PREDICT_TRUE(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  ::google::protobuf::internal::LiteUnknownFieldSetter unknown_fields_setter(
+      &_internal_metadata_);
+  ::google::protobuf::io::StringOutputStream unknown_fields_output(
+      unknown_fields_setter.buffer());
+  ::google::protobuf::io::CodedOutputStream unknown_fields_stream(
+      &unknown_fields_output, false);
+  // @@protoc_insertion_point(parse_start:pb.ArgPair)
+  for (;;) {
+    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // string key = 1;
+      case 1: {
+        if (static_cast< ::google::protobuf::uint8>(tag) == (10 & 0xFF)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_key()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->key().data(), static_cast<int>(this->key().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "pb.ArgPair.key"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // bytes value = 2;
+      case 2: {
+        if (static_cast< ::google::protobuf::uint8>(tag) == (18 & 0xFF)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
+                input, this->mutable_value()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormatLite::SkipField(
+            input, tag, &unknown_fields_stream));
+        break;
+      }
+    }
+  }
+success:
+  // @@protoc_insertion_point(parse_success:pb.ArgPair)
   return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:pb.ArgPair)
+  return false;
+#undef DO_
 }
 #endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+
+void ArgPair::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:pb.ArgPair)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // string key = 1;
+  if (this->key().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->key().data(), static_cast<int>(this->key().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "pb.ArgPair.key");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      1, this->key(), output);
+  }
+
+  // bytes value = 2;
+  if (this->value().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
+      2, this->value(), output);
+  }
+
+  output->WriteRaw(_internal_metadata_.unknown_fields().data(),
+                   static_cast<int>(_internal_metadata_.unknown_fields().size()));
+  // @@protoc_insertion_point(serialize_end:pb.ArgPair)
+}
+
+size_t ArgPair::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:pb.ArgPair)
+  size_t total_size = 0;
+
+  total_size += _internal_metadata_.unknown_fields().size();
+
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  // string key = 1;
+  if (this->key().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::StringSize(
+        this->key());
+  }
+
+  // bytes value = 2;
+  if (this->value().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::BytesSize(
+        this->value());
+  }
+
+  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  SetCachedSize(cached_size);
+  return total_size;
+}
+
+void ArgPair::CheckTypeAndMergeFrom(
+    const ::google::protobuf::MessageLite& from) {
+  MergeFrom(*::google::protobuf::down_cast<const ArgPair*>(&from));
+}
+
+void ArgPair::MergeFrom(const ArgPair& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:pb.ArgPair)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from.key().size() > 0) {
+
+    key_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.key_);
+  }
+  if (from.value().size() > 0) {
+
+    value_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.value_);
+  }
+}
+
+void ArgPair::CopyFrom(const ArgPair& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:pb.ArgPair)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool ArgPair::IsInitialized() const {
+  return true;
+}
+
+void ArgPair::Swap(ArgPair* other) {
+  if (other == this) return;
+  InternalSwap(other);
+}
+void ArgPair::InternalSwap(ArgPair* other) {
+  using std::swap;
+  _internal_metadata_.Swap(&other->_internal_metadata_);
+  key_.Swap(&other->key_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+    GetArenaNoVirtual());
+  value_.Swap(&other->value_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+    GetArenaNoVirtual());
+}
+
+::std::string ArgPair::GetTypeName() const {
+  return "pb.ArgPair";
+}
 
 
 // ===================================================================
@@ -1447,9 +1710,9 @@ CallArgs::CallArgs()
 CallArgs::CallArgs(const CallArgs& from)
   : ::google::protobuf::MessageLite(),
       _internal_metadata_(nullptr),
+      args_(from.args_),
       auth_require_(from.auth_require_) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
-  args_.MergeFrom(from.args_);
   method_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (from.method().size() > 0) {
     method_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.method_);
@@ -1529,21 +1792,18 @@ const char* CallArgs::_InternalParse(const char* begin, const char* end, void* o
         ptr += size;
         break;
       }
-      // map<string, bytes> args = 2;
+      // repeated .pb.ArgPair args = 2;
       case 2: {
         if (static_cast<::google::protobuf::uint8>(tag) != 18) goto handle_unusual;
         do {
           ptr = ::google::protobuf::io::ReadSize(ptr, &size);
           GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
-          parser_till_end = ::google::protobuf::internal::SlowMapEntryParser;
-          auto parse_map = ::pb::CallArgs_ArgsEntry_DoNotUse::_ParseMap;
-          ctx->extra_parse_data().payload.clear();
-          ctx->extra_parse_data().parse_map = parse_map;
-          object = &msg->args_;
+          parser_till_end = ::pb::ArgPair::_InternalParse;
+          object = msg->add_args();
           if (size > end - ptr) goto len_delim_till_end;
-          auto newend = ptr + size;
-          GOOGLE_PROTOBUF_PARSER_ASSERT(parse_map(ptr, newend, object, ctx));
-          ptr = newend;
+          ptr += size;
+          GOOGLE_PROTOBUF_PARSER_ASSERT(ctx->ParseExactRange(
+              {parser_till_end, object}, ptr - size, ptr));
           if (ptr >= end) break;
         } while ((::google::protobuf::io::UnalignedLoad<::google::protobuf::uint64>(ptr) & 255) == 18 && (ptr += 1));
         break;
@@ -1638,22 +1898,11 @@ bool CallArgs::MergePartialFromCodedStream(
         break;
       }
 
-      // map<string, bytes> args = 2;
+      // repeated .pb.ArgPair args = 2;
       case 2: {
         if (static_cast< ::google::protobuf::uint8>(tag) == (18 & 0xFF)) {
-          CallArgs_ArgsEntry_DoNotUse::Parser< ::google::protobuf::internal::MapFieldLite<
-              CallArgs_ArgsEntry_DoNotUse,
-              ::std::string, ::std::string,
-              ::google::protobuf::internal::WireFormatLite::TYPE_STRING,
-              ::google::protobuf::internal::WireFormatLite::TYPE_BYTES,
-              0 >,
-            ::google::protobuf::Map< ::std::string, ::std::string > > parser(&args_);
-          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
-              input, &parser));
-          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-            parser.key().data(), static_cast<int>(parser.key().length()),
-            ::google::protobuf::internal::WireFormatLite::PARSE,
-            "pb.CallArgs.ArgsEntry.key"));
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
+                input, add_args()));
         } else {
           goto handle_unusual;
         }
@@ -1728,49 +1977,13 @@ void CallArgs::SerializeWithCachedSizes(
       1, this->method(), output);
   }
 
-  // map<string, bytes> args = 2;
-  if (!this->args().empty()) {
-    typedef ::google::protobuf::Map< ::std::string, ::std::string >::const_pointer
-        ConstPtr;
-    typedef ConstPtr SortItem;
-    typedef ::google::protobuf::internal::CompareByDerefFirst<SortItem> Less;
-    struct Utf8Check {
-      static void Check(ConstPtr p) {
-        ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-          p->first.data(), static_cast<int>(p->first.length()),
-          ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-          "pb.CallArgs.ArgsEntry.key");
-      }
-    };
-
-    if (output->IsSerializationDeterministic() &&
-        this->args().size() > 1) {
-      ::std::unique_ptr<SortItem[]> items(
-          new SortItem[this->args().size()]);
-      typedef ::google::protobuf::Map< ::std::string, ::std::string >::size_type size_type;
-      size_type n = 0;
-      for (::google::protobuf::Map< ::std::string, ::std::string >::const_iterator
-          it = this->args().begin();
-          it != this->args().end(); ++it, ++n) {
-        items[static_cast<ptrdiff_t>(n)] = SortItem(&*it);
-      }
-      ::std::sort(&items[0], &items[static_cast<ptrdiff_t>(n)], Less());
-      ::std::unique_ptr<CallArgs_ArgsEntry_DoNotUse> entry;
-      for (size_type i = 0; i < n; i++) {
-        entry.reset(args_.NewEntryWrapper(items[static_cast<ptrdiff_t>(i)]->first, items[static_cast<ptrdiff_t>(i)]->second));
-        ::google::protobuf::internal::WireFormatLite::WriteMessage(2, *entry, output);
-        Utf8Check::Check(&(*items[static_cast<ptrdiff_t>(i)]));
-      }
-    } else {
-      ::std::unique_ptr<CallArgs_ArgsEntry_DoNotUse> entry;
-      for (::google::protobuf::Map< ::std::string, ::std::string >::const_iterator
-          it = this->args().begin();
-          it != this->args().end(); ++it) {
-        entry.reset(args_.NewEntryWrapper(it->first, it->second));
-        ::google::protobuf::internal::WireFormatLite::WriteMessage(2, *entry, output);
-        Utf8Check::Check(&(*it));
-      }
-    }
+  // repeated .pb.ArgPair args = 2;
+  for (unsigned int i = 0,
+      n = static_cast<unsigned int>(this->args_size()); i < n; i++) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessage(
+      2,
+      this->args(static_cast<int>(i)),
+      output);
   }
 
   // string initiator = 3;
@@ -1808,17 +2021,14 @@ size_t CallArgs::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // map<string, bytes> args = 2;
-  total_size += 1 *
-      ::google::protobuf::internal::FromIntSize(this->args_size());
+  // repeated .pb.ArgPair args = 2;
   {
-    ::std::unique_ptr<CallArgs_ArgsEntry_DoNotUse> entry;
-    for (::google::protobuf::Map< ::std::string, ::std::string >::const_iterator
-        it = this->args().begin();
-        it != this->args().end(); ++it) {
-      entry.reset(args_.NewEntryWrapper(it->first, it->second));
-      total_size += ::google::protobuf::internal::WireFormatLite::
-          MessageSizeNoVirtual(*entry);
+    unsigned int count = static_cast<unsigned int>(this->args_size());
+    total_size += 1UL * count;
+    for (unsigned int i = 0; i < count; i++) {
+      total_size +=
+        ::google::protobuf::internal::WireFormatLite::MessageSize(
+          this->args(static_cast<int>(i)));
     }
   }
 
@@ -1891,7 +2101,7 @@ void CallArgs::Swap(CallArgs* other) {
 void CallArgs::InternalSwap(CallArgs* other) {
   using std::swap;
   _internal_metadata_.Swap(&other->_internal_metadata_);
-  args_.Swap(&other->args_);
+  CastToBase(&args_)->InternalSwap(CastToBase(&other->args_));
   auth_require_.InternalSwap(CastToBase(&other->auth_require_));
   method_.Swap(&other->method_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
     GetArenaNoVirtual());
@@ -6308,34 +6518,6 @@ void TransferResponse::InternalSwap(TransferResponse* other) {
 
 // ===================================================================
 
-ContractCallRequest_ArgsEntry_DoNotUse::ContractCallRequest_ArgsEntry_DoNotUse() {}
-ContractCallRequest_ArgsEntry_DoNotUse::ContractCallRequest_ArgsEntry_DoNotUse(::google::protobuf::Arena* arena)
-    : SuperType(arena) {}
-void ContractCallRequest_ArgsEntry_DoNotUse::MergeFrom(const ContractCallRequest_ArgsEntry_DoNotUse& other) {
-  MergeFromInternal(other);
-}
-#if GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
-bool ContractCallRequest_ArgsEntry_DoNotUse::_ParseMap(const char* begin, const char* end, void* object, ::google::protobuf::internal::ParseContext* ctx) {
-  using MF = ::google::protobuf::internal::MapFieldLite<
-      ContractCallRequest_ArgsEntry_DoNotUse, EntryKeyType, EntryValueType,
-      kEntryKeyFieldType, kEntryValueFieldType,
-      kEntryDefaultEnumValue>;
-  auto mf = static_cast<MF*>(object);
-  Parser<MF, ::google::protobuf::Map<EntryKeyType, EntryValueType>> parser(mf);
-#define DO_(x) if (!(x)) return false
-  DO_(parser.ParseMap(begin, end));
-  DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-    parser.key().data(), static_cast<int>(parser.key().length()),
-    ::google::protobuf::internal::WireFormatLite::PARSE,
-    "pb.ContractCallRequest.ArgsEntry.key"));
-#undef DO_
-  return true;
-}
-#endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
-
-
-// ===================================================================
-
 void ContractCallRequest::InitAsDefaultInstance() {
   ::pb::_ContractCallRequest_default_instance_._instance.get_mutable()->header_ = const_cast< ::pb::SyscallHeader*>(
       ::pb::SyscallHeader::internal_default_instance());
@@ -6364,9 +6546,9 @@ ContractCallRequest::ContractCallRequest()
 }
 ContractCallRequest::ContractCallRequest(const ContractCallRequest& from)
   : ::google::protobuf::MessageLite(),
-      _internal_metadata_(nullptr) {
+      _internal_metadata_(nullptr),
+      args_(from.args_) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
-  args_.MergeFrom(from.args_);
   module_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (from.module().size() > 0) {
     module_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.module_);
@@ -6508,21 +6690,18 @@ const char* ContractCallRequest::_InternalParse(const char* begin, const char* e
         ptr += size;
         break;
       }
-      // map<string, bytes> args = 5;
+      // repeated .pb.ArgPair args = 5;
       case 5: {
         if (static_cast<::google::protobuf::uint8>(tag) != 42) goto handle_unusual;
         do {
           ptr = ::google::protobuf::io::ReadSize(ptr, &size);
           GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
-          parser_till_end = ::google::protobuf::internal::SlowMapEntryParser;
-          auto parse_map = ::pb::ContractCallRequest_ArgsEntry_DoNotUse::_ParseMap;
-          ctx->extra_parse_data().payload.clear();
-          ctx->extra_parse_data().parse_map = parse_map;
-          object = &msg->args_;
+          parser_till_end = ::pb::ArgPair::_InternalParse;
+          object = msg->add_args();
           if (size > end - ptr) goto len_delim_till_end;
-          auto newend = ptr + size;
-          GOOGLE_PROTOBUF_PARSER_ASSERT(parse_map(ptr, newend, object, ctx));
-          ptr = newend;
+          ptr += size;
+          GOOGLE_PROTOBUF_PARSER_ASSERT(ctx->ParseExactRange(
+              {parser_till_end, object}, ptr - size, ptr));
           if (ptr >= end) break;
         } while ((::google::protobuf::io::UnalignedLoad<::google::protobuf::uint64>(ptr) & 255) == 42 && (ptr += 1));
         break;
@@ -6623,22 +6802,11 @@ bool ContractCallRequest::MergePartialFromCodedStream(
         break;
       }
 
-      // map<string, bytes> args = 5;
+      // repeated .pb.ArgPair args = 5;
       case 5: {
         if (static_cast< ::google::protobuf::uint8>(tag) == (42 & 0xFF)) {
-          ContractCallRequest_ArgsEntry_DoNotUse::Parser< ::google::protobuf::internal::MapFieldLite<
-              ContractCallRequest_ArgsEntry_DoNotUse,
-              ::std::string, ::std::string,
-              ::google::protobuf::internal::WireFormatLite::TYPE_STRING,
-              ::google::protobuf::internal::WireFormatLite::TYPE_BYTES,
-              0 >,
-            ::google::protobuf::Map< ::std::string, ::std::string > > parser(&args_);
-          DO_(::google::protobuf::internal::WireFormatLite::ReadMessageNoVirtual(
-              input, &parser));
-          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-            parser.key().data(), static_cast<int>(parser.key().length()),
-            ::google::protobuf::internal::WireFormatLite::PARSE,
-            "pb.ContractCallRequest.ArgsEntry.key"));
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
+                input, add_args()));
         } else {
           goto handle_unusual;
         }
@@ -6708,49 +6876,13 @@ void ContractCallRequest::SerializeWithCachedSizes(
       4, this->method(), output);
   }
 
-  // map<string, bytes> args = 5;
-  if (!this->args().empty()) {
-    typedef ::google::protobuf::Map< ::std::string, ::std::string >::const_pointer
-        ConstPtr;
-    typedef ConstPtr SortItem;
-    typedef ::google::protobuf::internal::CompareByDerefFirst<SortItem> Less;
-    struct Utf8Check {
-      static void Check(ConstPtr p) {
-        ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-          p->first.data(), static_cast<int>(p->first.length()),
-          ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-          "pb.ContractCallRequest.ArgsEntry.key");
-      }
-    };
-
-    if (output->IsSerializationDeterministic() &&
-        this->args().size() > 1) {
-      ::std::unique_ptr<SortItem[]> items(
-          new SortItem[this->args().size()]);
-      typedef ::google::protobuf::Map< ::std::string, ::std::string >::size_type size_type;
-      size_type n = 0;
-      for (::google::protobuf::Map< ::std::string, ::std::string >::const_iterator
-          it = this->args().begin();
-          it != this->args().end(); ++it, ++n) {
-        items[static_cast<ptrdiff_t>(n)] = SortItem(&*it);
-      }
-      ::std::sort(&items[0], &items[static_cast<ptrdiff_t>(n)], Less());
-      ::std::unique_ptr<ContractCallRequest_ArgsEntry_DoNotUse> entry;
-      for (size_type i = 0; i < n; i++) {
-        entry.reset(args_.NewEntryWrapper(items[static_cast<ptrdiff_t>(i)]->first, items[static_cast<ptrdiff_t>(i)]->second));
-        ::google::protobuf::internal::WireFormatLite::WriteMessage(5, *entry, output);
-        Utf8Check::Check(&(*items[static_cast<ptrdiff_t>(i)]));
-      }
-    } else {
-      ::std::unique_ptr<ContractCallRequest_ArgsEntry_DoNotUse> entry;
-      for (::google::protobuf::Map< ::std::string, ::std::string >::const_iterator
-          it = this->args().begin();
-          it != this->args().end(); ++it) {
-        entry.reset(args_.NewEntryWrapper(it->first, it->second));
-        ::google::protobuf::internal::WireFormatLite::WriteMessage(5, *entry, output);
-        Utf8Check::Check(&(*it));
-      }
-    }
+  // repeated .pb.ArgPair args = 5;
+  for (unsigned int i = 0,
+      n = static_cast<unsigned int>(this->args_size()); i < n; i++) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessage(
+      5,
+      this->args(static_cast<int>(i)),
+      output);
   }
 
   output->WriteRaw(_internal_metadata_.unknown_fields().data(),
@@ -6768,17 +6900,14 @@ size_t ContractCallRequest::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // map<string, bytes> args = 5;
-  total_size += 1 *
-      ::google::protobuf::internal::FromIntSize(this->args_size());
+  // repeated .pb.ArgPair args = 5;
   {
-    ::std::unique_ptr<ContractCallRequest_ArgsEntry_DoNotUse> entry;
-    for (::google::protobuf::Map< ::std::string, ::std::string >::const_iterator
-        it = this->args().begin();
-        it != this->args().end(); ++it) {
-      entry.reset(args_.NewEntryWrapper(it->first, it->second));
-      total_size += ::google::protobuf::internal::WireFormatLite::
-          MessageSizeNoVirtual(*entry);
+    unsigned int count = static_cast<unsigned int>(this->args_size());
+    total_size += 1UL * count;
+    for (unsigned int i = 0; i < count; i++) {
+      total_size +=
+        ::google::protobuf::internal::WireFormatLite::MessageSize(
+          this->args(static_cast<int>(i)));
     }
   }
 
@@ -6863,7 +6992,7 @@ void ContractCallRequest::Swap(ContractCallRequest* other) {
 void ContractCallRequest::InternalSwap(ContractCallRequest* other) {
   using std::swap;
   _internal_metadata_.Swap(&other->_internal_metadata_);
-  args_.Swap(&other->args_);
+  CastToBase(&args_)->InternalSwap(CastToBase(&other->args_));
   module_.Swap(&other->module_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
     GetArenaNoVirtual());
   contract_.Swap(&other->contract_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
@@ -10259,8 +10388,8 @@ template<> PROTOBUF_NOINLINE ::pb::NativeCallRequest* Arena::CreateMaybeMessage<
 template<> PROTOBUF_NOINLINE ::pb::NativeCallResponse* Arena::CreateMaybeMessage< ::pb::NativeCallResponse >(Arena* arena) {
   return Arena::CreateInternal< ::pb::NativeCallResponse >(arena);
 }
-template<> PROTOBUF_NOINLINE ::pb::CallArgs_ArgsEntry_DoNotUse* Arena::CreateMaybeMessage< ::pb::CallArgs_ArgsEntry_DoNotUse >(Arena* arena) {
-  return Arena::CreateInternal< ::pb::CallArgs_ArgsEntry_DoNotUse >(arena);
+template<> PROTOBUF_NOINLINE ::pb::ArgPair* Arena::CreateMaybeMessage< ::pb::ArgPair >(Arena* arena) {
+  return Arena::CreateInternal< ::pb::ArgPair >(arena);
 }
 template<> PROTOBUF_NOINLINE ::pb::CallArgs* Arena::CreateMaybeMessage< ::pb::CallArgs >(Arena* arena) {
   return Arena::CreateInternal< ::pb::CallArgs >(arena);
@@ -10312,9 +10441,6 @@ template<> PROTOBUF_NOINLINE ::pb::TransferRequest* Arena::CreateMaybeMessage< :
 }
 template<> PROTOBUF_NOINLINE ::pb::TransferResponse* Arena::CreateMaybeMessage< ::pb::TransferResponse >(Arena* arena) {
   return Arena::CreateInternal< ::pb::TransferResponse >(arena);
-}
-template<> PROTOBUF_NOINLINE ::pb::ContractCallRequest_ArgsEntry_DoNotUse* Arena::CreateMaybeMessage< ::pb::ContractCallRequest_ArgsEntry_DoNotUse >(Arena* arena) {
-  return Arena::CreateInternal< ::pb::ContractCallRequest_ArgsEntry_DoNotUse >(arena);
 }
 template<> PROTOBUF_NOINLINE ::pb::ContractCallRequest* Arena::CreateMaybeMessage< ::pb::ContractCallRequest >(Arena* arena) {
   return Arena::CreateInternal< ::pb::ContractCallRequest >(arena);
