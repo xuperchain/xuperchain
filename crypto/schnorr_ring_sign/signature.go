@@ -316,6 +316,7 @@ func Verify(keys []*ecdsa.PublicKey, signature, message []byte) (bool, error) {
 		return false, NotExactTheSameCurveInputError
 	}
 
+	// 判断传入的公钥数组是否精准的匹配了环签名中的公钥内容
 	keyMatchCheckResult := checkPublicKeysMatchSignature(keys, sig)
 	if keyMatchCheckResult == false {
 		return false, KeyParamNotMatchError

@@ -1,7 +1,6 @@
 package schnorr_sign
 
 import (
-	"bytes"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	//	"encoding/asn1"
@@ -200,5 +199,9 @@ func Verify(publicKey *ecdsa.PublicKey, sig []byte, message []byte) (valid bool,
 	e := hash.UsingSha256(append(message, elliptic.Marshal(curve, x, y)...))
 
 	// 2. check the equation
-	return bytes.Equal(e, signature.E.Bytes()), nil
+	intE := new(big.Int).SetBytes(e)
+	if intE.Cmp(signature.E) != 0 {
+		return false, nil
+	}
+	return true, nil
 }
