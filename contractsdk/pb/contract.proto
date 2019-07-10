@@ -23,9 +23,14 @@ message NativeCallRequest {
 message NativeCallResponse {
 }
 
+message ArgPair {
+  string key = 1;
+  bytes value = 2;
+}
+
 message CallArgs {
   string method = 1;
-  map<string, bytes> args = 2;
+  repeated ArgPair args = 2;
   string initiator = 3;
   repeated string auth_require = 4;
 }
@@ -133,7 +138,7 @@ message ContractCallRequest {
   string module = 2;
   string contract = 3;
   string method = 4;
-  map<string,bytes> args = 5;
+  repeated ArgPair args = 5;
 }
 
 message ContractCallResponse {

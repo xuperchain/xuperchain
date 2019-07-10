@@ -17,7 +17,10 @@ bool ContextImpl::init() {
     if (!ok) {
         return false;
     }
-    _args.insert(_call_args.args().begin(), _call_args.args().end());
+    for (int i=0; i<_call_args.args_size(); i++) {
+        auto arg_pair = _call_args.args(i);
+        _args.insert(std::make_pair(arg_pair.key(), arg_pair.value()));
+    }
     _resp.status = 200;
     return true;
 }
