@@ -25,12 +25,14 @@ var (
 
 type contractContext struct {
 	callArgs       pb.CallArgs
+	contractArgs   map[string][]byte
 	bridgeCallFunc BridgeCallFunc
 	header         pb.SyscallHeader
 }
 
 func newContractContext(ctxid int64, bridgeCallFunc BridgeCallFunc) *contractContext {
 	return &contractContext{
+		contractArgs:   make(map[string][]byte),
 		bridgeCallFunc: bridgeCallFunc,
 		header: pb.SyscallHeader{
 			Ctxid: ctxid,
@@ -41,7 +43,14 @@ func newContractContext(ctxid int64, bridgeCallFunc BridgeCallFunc) *contractCon
 func (c *contractContext) Init() error {
 	var request pb.GetCallArgsRequest
 	request.Header = &c.header
-	return c.bridgeCallFunc(methodGetCallArgs, &request, &c.callArgs)
+	err := c.bridgeCallFunc(methodGetCallArgs, &request, &c.callArgs)
+	if err != nil {
+		return err
+	}
+	for _, pair := range c.callArgs.GetArgs() {
+		c.contractArgs[pair.GetKey()] = pair.GetValue()
+	}
+	return nil
 }
 
 func (c *contractContext) Method() string {
@@ -49,7 +58,7 @@ func (c *contractContext) Method() string {
 }
 
 func (c *contractContext) Args() map[string][]byte {
-	return c.callArgs.GetArgs()
+	return c.contractArgs
 }
 
 func (c *contractContext) Caller() string {
@@ -119,12 +128,20 @@ func (c *contractContext) Transfer(to string, amount *big.Int) error {
 }
 
 func (c *contractContext) Call(module, contract, method string, args map[string][]byte) (*code.Response, error) {
+	var argPairs []*pb.ArgPair
+	// 在合约里面单次合约调用的map迭代随机因子是确定的，因此这里不需要排序
+	for key, value := range args {
+		argPairs = append(argPairs, &pb.ArgPair{
+			Key:   key,
+			Value: value,
+		})
+	}
 	req := &pb.ContractCallRequest{
 		Header:   &c.header,
 		Module:   module,
 		Contract: contract,
 		Method:   method,
-		Args:     args,
+		Args:     argPairs,
 	}
 	rep := new(pb.ContractCallResponse)
 	err := c.bridgeCallFunc(methodContractCall, req, rep)
