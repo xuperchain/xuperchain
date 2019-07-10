@@ -2,7 +2,6 @@
 #define XCHAIN_TRANSACTION_H
 
 #include "xchain/contract.pb.h"
-#include "xchain/xchain.h"
 
 namespace xchain {
 
@@ -23,7 +22,7 @@ class Transaction {
 public:
     Transaction();
     virtual ~Transaction();
-    bool init(pb::Transaction* pbtx);
+    bool init(pb::Transaction pbtx);
 
 public:
     std::string txid;

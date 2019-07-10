@@ -3,8 +3,6 @@
 
 #include "xchain/contract.pb.h"
 #include "xchain/xchain.h"
-#include "xchain/transaction.h"
-#include "xchain/block.h"
 
 namespace xchain {
 

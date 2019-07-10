@@ -2,7 +2,6 @@
 #define XCHAIN_BLOCK_H
 
 #include "xchain/contract.pb.h"
-#include "xchain/xchain.h"
 
 namespace xchain {
 
@@ -10,7 +9,7 @@ class Block {
 public:
     Block();
     virtual ~Block();
-    bool init(pb::Block* pbblock);
+    bool init(pb::Block pbblock);
 
 public:
     std::string blockid;
