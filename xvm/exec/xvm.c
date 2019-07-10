@@ -55,6 +55,15 @@ static bool func_types_are_equal(struct FuncType* a, struct FuncType* b) {
   return 1;
 }
 
+void free_func_type(struct FuncType* ftype) {
+  if (ftype->params != NULL) {
+    free(ftype->params);
+  }
+  if (ftype->results != NULL) {
+    free(ftype->results);
+  }
+}
+
 static uint32_t wasm_rt_register_func_type(void* context,
                                     uint32_t param_count,
                                     uint32_t result_count,
@@ -233,8 +242,16 @@ xvm_code_t* xvm_new_code(char* module_path, xvm_resolver_t resolver) {
 }
 
 void xvm_release_code(xvm_code_t* code) {
-  free(code->func_types);
-  dlclose(code->dlhandle);
+  if (code->func_types != NULL) {
+    int i = 0;
+    for (; i<code->func_type_count; i++) {
+      free_func_type(code->func_types + i);
+    }
+    free(code->func_types);
+  }
+  if (code->dlhandle != NULL) {
+    dlclose(code->dlhandle);
+  }
   free(code);
 }
 
