@@ -91,12 +91,7 @@ bool ContextImpl::query_tx(const std::string &txid, Transaction* tx) {
         return false;
     }
 
-    pb::Transaction pbtx;
-    if (!pbtx.ParseFromString(rep.tx())) {
-        return  false;
-    }
-
-    tx->init(pbtx);
+    tx->init(rep.tx());
     
     return true;
 }
@@ -110,12 +105,7 @@ bool ContextImpl::query_block(const std::string &blockid, Block* block) {
         return false;
     }
 
-    pb::Block pbblock;
-    if (!pbblock.ParseFromString(rep.block())) {
-        return  false;
-    }
-
-    block->init(pbblock);
+    block->init(rep.block());
 
     return true;
 }

@@ -20,6 +20,7 @@ extern PROTOBUF_INTERNAL_EXPORT_contract_2eproto ::google::protobuf::internal::S
 extern PROTOBUF_INTERNAL_EXPORT_contract_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_SyscallHeader_contract_2eproto;
 extern PROTOBUF_INTERNAL_EXPORT_contract_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_TxInput_contract_2eproto;
 extern PROTOBUF_INTERNAL_EXPORT_contract_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_TxOutput_contract_2eproto;
+extern PROTOBUF_INTERNAL_EXPORT_contract_2eproto ::google::protobuf::internal::SCCInfo<1> scc_info_Block_contract_2eproto;
 extern PROTOBUF_INTERNAL_EXPORT_contract_2eproto ::google::protobuf::internal::SCCInfo<2> scc_info_Transaction_contract_2eproto;
 namespace pb {
 class PingRequestDefaultTypeInternal {
@@ -410,8 +411,9 @@ static void InitDefaultsQueryTxResponse_contract_2eproto() {
   ::pb::QueryTxResponse::InitAsDefaultInstance();
 }
 
-::google::protobuf::internal::SCCInfo<0> scc_info_QueryTxResponse_contract_2eproto =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsQueryTxResponse_contract_2eproto}, {}};
+::google::protobuf::internal::SCCInfo<1> scc_info_QueryTxResponse_contract_2eproto =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 1, InitDefaultsQueryTxResponse_contract_2eproto}, {
+      &scc_info_Transaction_contract_2eproto.base,}};
 
 static void InitDefaultsQueryBlockRequest_contract_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
@@ -439,8 +441,9 @@ static void InitDefaultsQueryBlockResponse_contract_2eproto() {
   ::pb::QueryBlockResponse::InitAsDefaultInstance();
 }
 
-::google::protobuf::internal::SCCInfo<0> scc_info_QueryBlockResponse_contract_2eproto =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsQueryBlockResponse_contract_2eproto}, {}};
+::google::protobuf::internal::SCCInfo<1> scc_info_QueryBlockResponse_contract_2eproto =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 1, InitDefaultsQueryBlockResponse_contract_2eproto}, {
+      &scc_info_Block_contract_2eproto.base,}};
 
 static void InitDefaultsTransferRequest_contract_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
@@ -4947,11 +4950,18 @@ void QueryTxRequest::InternalSwap(QueryTxRequest* other) {
 // ===================================================================
 
 void QueryTxResponse::InitAsDefaultInstance() {
+  ::pb::_QueryTxResponse_default_instance_._instance.get_mutable()->tx_ = const_cast< ::pb::Transaction*>(
+      ::pb::Transaction::internal_default_instance());
 }
 class QueryTxResponse::HasBitSetters {
  public:
+  static const ::pb::Transaction& tx(const QueryTxResponse* msg);
 };
 
+const ::pb::Transaction&
+QueryTxResponse::HasBitSetters::tx(const QueryTxResponse* msg) {
+  return *msg->tx_;
+}
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
 const int QueryTxResponse::kTxFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
@@ -4965,9 +4975,10 @@ QueryTxResponse::QueryTxResponse(const QueryTxResponse& from)
   : ::google::protobuf::MessageLite(),
       _internal_metadata_(nullptr) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
-  tx_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.tx().size() > 0) {
-    tx_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.tx_);
+  if (from.has_tx()) {
+    tx_ = new ::pb::Transaction(*from.tx_);
+  } else {
+    tx_ = nullptr;
   }
   // @@protoc_insertion_point(copy_constructor:pb.QueryTxResponse)
 }
@@ -4975,7 +4986,7 @@ QueryTxResponse::QueryTxResponse(const QueryTxResponse& from)
 void QueryTxResponse::SharedCtor() {
   ::google::protobuf::internal::InitSCC(
       &scc_info_QueryTxResponse_contract_2eproto.base);
-  tx_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  tx_ = nullptr;
 }
 
 QueryTxResponse::~QueryTxResponse() {
@@ -4984,7 +4995,7 @@ QueryTxResponse::~QueryTxResponse() {
 }
 
 void QueryTxResponse::SharedDtor() {
-  tx_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (this != internal_default_instance()) delete tx_;
 }
 
 void QueryTxResponse::SetCachedSize(int size) const {
@@ -5002,7 +5013,10 @@ void QueryTxResponse::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  tx_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (GetArenaNoVirtual() == nullptr && tx_ != nullptr) {
+    delete tx_;
+  }
+  tx_ = nullptr;
   _internal_metadata_.Clear();
 }
 
@@ -5019,19 +5033,17 @@ const char* QueryTxResponse::_InternalParse(const char* begin, const char* end, 
     ptr = ::google::protobuf::io::Parse32(ptr, &tag);
     GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
     switch (tag >> 3) {
-      // bytes tx = 1;
+      // .pb.Transaction tx = 1;
       case 1: {
         if (static_cast<::google::protobuf::uint8>(tag) != 10) goto handle_unusual;
         ptr = ::google::protobuf::io::ReadSize(ptr, &size);
         GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+        parser_till_end = ::pb::Transaction::_InternalParse;
         object = msg->mutable_tx();
-        if (size > end - ptr + ::google::protobuf::internal::ParseContext::kSlopBytes) {
-          parser_till_end = ::google::protobuf::internal::GreedyStringParser;
-          goto string_till_end;
-        }
-        GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheck(ptr, size, ctx));
-        ::google::protobuf::internal::InlineGreedyStringParser(object, ptr, size, ctx);
+        if (size > end - ptr) goto len_delim_till_end;
         ptr += size;
+        GOOGLE_PROTOBUF_PARSER_ASSERT(ctx->ParseExactRange(
+            {parser_till_end, object}, ptr - size, ptr));
         break;
       }
       default: {
@@ -5049,10 +5061,6 @@ const char* QueryTxResponse::_InternalParse(const char* begin, const char* end, 
     }  // switch
   }  // while
   return ptr;
-string_till_end:
-  static_cast<::std::string*>(object)->clear();
-  static_cast<::std::string*>(object)->reserve(size);
-  goto len_delim_till_end;
 len_delim_till_end:
   return ctx->StoreAndTailCall(ptr, end, {_InternalParse, msg},
                                {parser_till_end, object}, size);
@@ -5074,11 +5082,11 @@ bool QueryTxResponse::MergePartialFromCodedStream(
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // bytes tx = 1;
+      // .pb.Transaction tx = 1;
       case 1: {
         if (static_cast< ::google::protobuf::uint8>(tag) == (10 & 0xFF)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
-                input, this->mutable_tx()));
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
+               input, mutable_tx()));
         } else {
           goto handle_unusual;
         }
@@ -5112,10 +5120,10 @@ void QueryTxResponse::SerializeWithCachedSizes(
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // bytes tx = 1;
-  if (this->tx().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      1, this->tx(), output);
+  // .pb.Transaction tx = 1;
+  if (this->has_tx()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessage(
+      1, HasBitSetters::tx(this), output);
   }
 
   output->WriteRaw(_internal_metadata_.unknown_fields().data(),
@@ -5133,11 +5141,11 @@ size_t QueryTxResponse::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // bytes tx = 1;
-  if (this->tx().size() > 0) {
+  // .pb.Transaction tx = 1;
+  if (this->has_tx()) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::BytesSize(
-        this->tx());
+      ::google::protobuf::internal::WireFormatLite::MessageSize(
+        *tx_);
   }
 
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
@@ -5157,9 +5165,8 @@ void QueryTxResponse::MergeFrom(const QueryTxResponse& from) {
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  if (from.tx().size() > 0) {
-
-    tx_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.tx_);
+  if (from.has_tx()) {
+    mutable_tx()->::pb::Transaction::MergeFrom(from.tx());
   }
 }
 
@@ -5181,8 +5188,7 @@ void QueryTxResponse::Swap(QueryTxResponse* other) {
 void QueryTxResponse::InternalSwap(QueryTxResponse* other) {
   using std::swap;
   _internal_metadata_.Swap(&other->_internal_metadata_);
-  tx_.Swap(&other->tx_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-    GetArenaNoVirtual());
+  swap(tx_, other->tx_);
 }
 
 ::std::string QueryTxResponse::GetTypeName() const {
@@ -5499,11 +5505,18 @@ void QueryBlockRequest::InternalSwap(QueryBlockRequest* other) {
 // ===================================================================
 
 void QueryBlockResponse::InitAsDefaultInstance() {
+  ::pb::_QueryBlockResponse_default_instance_._instance.get_mutable()->block_ = const_cast< ::pb::Block*>(
+      ::pb::Block::internal_default_instance());
 }
 class QueryBlockResponse::HasBitSetters {
  public:
+  static const ::pb::Block& block(const QueryBlockResponse* msg);
 };
 
+const ::pb::Block&
+QueryBlockResponse::HasBitSetters::block(const QueryBlockResponse* msg) {
+  return *msg->block_;
+}
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
 const int QueryBlockResponse::kBlockFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
@@ -5517,9 +5530,10 @@ QueryBlockResponse::QueryBlockResponse(const QueryBlockResponse& from)
   : ::google::protobuf::MessageLite(),
       _internal_metadata_(nullptr) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
-  block_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.block().size() > 0) {
-    block_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.block_);
+  if (from.has_block()) {
+    block_ = new ::pb::Block(*from.block_);
+  } else {
+    block_ = nullptr;
   }
   // @@protoc_insertion_point(copy_constructor:pb.QueryBlockResponse)
 }
@@ -5527,7 +5541,7 @@ QueryBlockResponse::QueryBlockResponse(const QueryBlockResponse& from)
 void QueryBlockResponse::SharedCtor() {
   ::google::protobuf::internal::InitSCC(
       &scc_info_QueryBlockResponse_contract_2eproto.base);
-  block_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  block_ = nullptr;
 }
 
 QueryBlockResponse::~QueryBlockResponse() {
@@ -5536,7 +5550,7 @@ QueryBlockResponse::~QueryBlockResponse() {
 }
 
 void QueryBlockResponse::SharedDtor() {
-  block_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (this != internal_default_instance()) delete block_;
 }
 
 void QueryBlockResponse::SetCachedSize(int size) const {
@@ -5554,7 +5568,10 @@ void QueryBlockResponse::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  block_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (GetArenaNoVirtual() == nullptr && block_ != nullptr) {
+    delete block_;
+  }
+  block_ = nullptr;
   _internal_metadata_.Clear();
 }
 
@@ -5571,19 +5588,17 @@ const char* QueryBlockResponse::_InternalParse(const char* begin, const char* en
     ptr = ::google::protobuf::io::Parse32(ptr, &tag);
     GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
     switch (tag >> 3) {
-      // bytes block = 1;
+      // .pb.Block block = 1;
       case 1: {
         if (static_cast<::google::protobuf::uint8>(tag) != 10) goto handle_unusual;
         ptr = ::google::protobuf::io::ReadSize(ptr, &size);
         GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+        parser_till_end = ::pb::Block::_InternalParse;
         object = msg->mutable_block();
-        if (size > end - ptr + ::google::protobuf::internal::ParseContext::kSlopBytes) {
-          parser_till_end = ::google::protobuf::internal::GreedyStringParser;
-          goto string_till_end;
-        }
-        GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheck(ptr, size, ctx));
-        ::google::protobuf::internal::InlineGreedyStringParser(object, ptr, size, ctx);
+        if (size > end - ptr) goto len_delim_till_end;
         ptr += size;
+        GOOGLE_PROTOBUF_PARSER_ASSERT(ctx->ParseExactRange(
+            {parser_till_end, object}, ptr - size, ptr));
         break;
       }
       default: {
@@ -5601,10 +5616,6 @@ const char* QueryBlockResponse::_InternalParse(const char* begin, const char* en
     }  // switch
   }  // while
   return ptr;
-string_till_end:
-  static_cast<::std::string*>(object)->clear();
-  static_cast<::std::string*>(object)->reserve(size);
-  goto len_delim_till_end;
 len_delim_till_end:
   return ctx->StoreAndTailCall(ptr, end, {_InternalParse, msg},
                                {parser_till_end, object}, size);
@@ -5626,11 +5637,11 @@ bool QueryBlockResponse::MergePartialFromCodedStream(
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // bytes block = 1;
+      // .pb.Block block = 1;
       case 1: {
         if (static_cast< ::google::protobuf::uint8>(tag) == (10 & 0xFF)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
-                input, this->mutable_block()));
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
+               input, mutable_block()));
         } else {
           goto handle_unusual;
         }
@@ -5664,10 +5675,10 @@ void QueryBlockResponse::SerializeWithCachedSizes(
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // bytes block = 1;
-  if (this->block().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      1, this->block(), output);
+  // .pb.Block block = 1;
+  if (this->has_block()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessage(
+      1, HasBitSetters::block(this), output);
   }
 
   output->WriteRaw(_internal_metadata_.unknown_fields().data(),
@@ -5685,11 +5696,11 @@ size_t QueryBlockResponse::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // bytes block = 1;
-  if (this->block().size() > 0) {
+  // .pb.Block block = 1;
+  if (this->has_block()) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::BytesSize(
-        this->block());
+      ::google::protobuf::internal::WireFormatLite::MessageSize(
+        *block_);
   }
 
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
@@ -5709,9 +5720,8 @@ void QueryBlockResponse::MergeFrom(const QueryBlockResponse& from) {
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  if (from.block().size() > 0) {
-
-    block_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.block_);
+  if (from.has_block()) {
+    mutable_block()->::pb::Block::MergeFrom(from.block());
   }
 }
 
@@ -5733,8 +5743,7 @@ void QueryBlockResponse::Swap(QueryBlockResponse* other) {
 void QueryBlockResponse::InternalSwap(QueryBlockResponse* other) {
   using std::swap;
   _internal_metadata_.Swap(&other->_internal_metadata_);
-  block_.Swap(&other->block_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-    GetArenaNoVirtual());
+  swap(block_, other->block_);
 }
 
 ::std::string QueryBlockResponse::GetTypeName() const {

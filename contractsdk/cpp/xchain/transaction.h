@@ -22,7 +22,7 @@ class Transaction {
 public:
     Transaction();
     virtual ~Transaction();
-    bool init(pb::Transaction pbtx);
+    void init(pb::Transaction pbtx);
 
 public:
     std::string txid;

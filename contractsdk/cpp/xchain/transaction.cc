@@ -6,7 +6,7 @@ Transaction::Transaction() {}
 
 Transaction::~Transaction() {}
 
-bool Transaction::init(pb::Transaction pbtx) {
+void Transaction::init(pb::Transaction pbtx) {
     txid = pbtx.txid();
     blockid = pbtx.blockid();
     desc = pbtx.desc();
@@ -32,8 +32,6 @@ bool Transaction::init(pb::Transaction pbtx) {
         
         tx_outputs.emplace_back(to); 
     }
-    
-    return true;
 }
 
 }  // namespace xchain

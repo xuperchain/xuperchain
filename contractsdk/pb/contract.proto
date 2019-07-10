@@ -106,7 +106,7 @@ message QueryTxRequest {
 
 message QueryTxResponse {
   // defined in user code
-  bytes tx = 1;
+  Transaction tx = 1;
 }
 
 message QueryBlockRequest {
@@ -116,7 +116,7 @@ message QueryBlockRequest {
 
 message QueryBlockResponse {
   // defined in user code
-  bytes block = 1;
+  Block block = 1;
 }
 
 message TransferRequest {

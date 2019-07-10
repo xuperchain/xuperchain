@@ -6,7 +6,7 @@ Block::Block() {}
 
 Block::~Block() {}
 
-bool Block::init(pb::Block pbblock) {
+void Block::init(pb::Block pbblock) {
     blockid = pbblock.blockid();
     pre_hash = pbblock.pre_hash();
     proposer = pbblock.proposer();
@@ -20,8 +20,7 @@ bool Block::init(pb::Block pbblock) {
     for (int i = 0; i < pbblock.transactions_size(); i++) {
         transactions.emplace_back(pbblock.transactions(i).txid());
     }
-    
-    return true;
 }
+
 }  // namespace xchain
 

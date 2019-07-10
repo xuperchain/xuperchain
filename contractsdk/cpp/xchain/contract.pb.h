@@ -2223,26 +2223,21 @@ class QueryTxResponse :
 
   // accessors -------------------------------------------------------
 
-  // bytes tx = 1;
+  // .pb.Transaction tx = 1;
+  bool has_tx() const;
   void clear_tx();
   static const int kTxFieldNumber = 1;
-  const ::std::string& tx() const;
-  void set_tx(const ::std::string& value);
-  #if LANG_CXX11
-  void set_tx(::std::string&& value);
-  #endif
-  void set_tx(const char* value);
-  void set_tx(const void* value, size_t size);
-  ::std::string* mutable_tx();
-  ::std::string* release_tx();
-  void set_allocated_tx(::std::string* tx);
+  const ::pb::Transaction& tx() const;
+  ::pb::Transaction* release_tx();
+  ::pb::Transaction* mutable_tx();
+  void set_allocated_tx(::pb::Transaction* tx);
 
   // @@protoc_insertion_point(class_scope:pb.QueryTxResponse)
  private:
   class HasBitSetters;
 
   ::google::protobuf::internal::InternalMetadataWithArenaLite _internal_metadata_;
-  ::google::protobuf::internal::ArenaStringPtr tx_;
+  ::pb::Transaction* tx_;
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_contract_2eproto;
 };
@@ -2465,26 +2460,21 @@ class QueryBlockResponse :
 
   // accessors -------------------------------------------------------
 
-  // bytes block = 1;
+  // .pb.Block block = 1;
+  bool has_block() const;
   void clear_block();
   static const int kBlockFieldNumber = 1;
-  const ::std::string& block() const;
-  void set_block(const ::std::string& value);
-  #if LANG_CXX11
-  void set_block(::std::string&& value);
-  #endif
-  void set_block(const char* value);
-  void set_block(const void* value, size_t size);
-  ::std::string* mutable_block();
-  ::std::string* release_block();
-  void set_allocated_block(::std::string* block);
+  const ::pb::Block& block() const;
+  ::pb::Block* release_block();
+  ::pb::Block* mutable_block();
+  void set_allocated_block(::pb::Block* block);
 
   // @@protoc_insertion_point(class_scope:pb.QueryBlockResponse)
  private:
   class HasBitSetters;
 
   ::google::protobuf::internal::InternalMetadataWithArenaLite _internal_metadata_;
-  ::google::protobuf::internal::ArenaStringPtr block_;
+  ::pb::Block* block_;
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_contract_2eproto;
 };
@@ -5366,56 +5356,54 @@ inline void QueryTxRequest::set_allocated_txid(::std::string* txid) {
 
 // QueryTxResponse
 
-// bytes tx = 1;
+// .pb.Transaction tx = 1;
+inline bool QueryTxResponse::has_tx() const {
+  return this != internal_default_instance() && tx_ != nullptr;
+}
 inline void QueryTxResponse::clear_tx() {
-  tx_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (GetArenaNoVirtual() == nullptr && tx_ != nullptr) {
+    delete tx_;
+  }
+  tx_ = nullptr;
 }
-inline const ::std::string& QueryTxResponse::tx() const {
+inline const ::pb::Transaction& QueryTxResponse::tx() const {
+  const ::pb::Transaction* p = tx_;
   // @@protoc_insertion_point(field_get:pb.QueryTxResponse.tx)
-  return tx_.GetNoArena();
+  return p != nullptr ? *p : *reinterpret_cast<const ::pb::Transaction*>(
+      &::pb::_Transaction_default_instance_);
 }
-inline void QueryTxResponse::set_tx(const ::std::string& value) {
-  
-  tx_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:pb.QueryTxResponse.tx)
-}
-#if LANG_CXX11
-inline void QueryTxResponse::set_tx(::std::string&& value) {
-  
-  tx_.SetNoArena(
-    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:pb.QueryTxResponse.tx)
-}
-#endif
-inline void QueryTxResponse::set_tx(const char* value) {
-  GOOGLE_DCHECK(value != nullptr);
-  
-  tx_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:pb.QueryTxResponse.tx)
-}
-inline void QueryTxResponse::set_tx(const void* value, size_t size) {
-  
-  tx_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:pb.QueryTxResponse.tx)
-}
-inline ::std::string* QueryTxResponse::mutable_tx() {
-  
-  // @@protoc_insertion_point(field_mutable:pb.QueryTxResponse.tx)
-  return tx_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline ::std::string* QueryTxResponse::release_tx() {
+inline ::pb::Transaction* QueryTxResponse::release_tx() {
   // @@protoc_insertion_point(field_release:pb.QueryTxResponse.tx)
   
-  return tx_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  ::pb::Transaction* temp = tx_;
+  tx_ = nullptr;
+  return temp;
 }
-inline void QueryTxResponse::set_allocated_tx(::std::string* tx) {
-  if (tx != nullptr) {
+inline ::pb::Transaction* QueryTxResponse::mutable_tx() {
+  
+  if (tx_ == nullptr) {
+    auto* p = CreateMaybeMessage<::pb::Transaction>(GetArenaNoVirtual());
+    tx_ = p;
+  }
+  // @@protoc_insertion_point(field_mutable:pb.QueryTxResponse.tx)
+  return tx_;
+}
+inline void QueryTxResponse::set_allocated_tx(::pb::Transaction* tx) {
+  ::google::protobuf::Arena* message_arena = GetArenaNoVirtual();
+  if (message_arena == nullptr) {
+    delete tx_;
+  }
+  if (tx) {
+    ::google::protobuf::Arena* submessage_arena = nullptr;
+    if (message_arena != submessage_arena) {
+      tx = ::google::protobuf::internal::GetOwnedMessage(
+          message_arena, tx, submessage_arena);
+    }
     
   } else {
     
   }
-  tx_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), tx);
+  tx_ = tx;
   // @@protoc_insertion_point(field_set_allocated:pb.QueryTxResponse.tx)
 }
 
@@ -5531,56 +5519,54 @@ inline void QueryBlockRequest::set_allocated_blockid(::std::string* blockid) {
 
 // QueryBlockResponse
 
-// bytes block = 1;
+// .pb.Block block = 1;
+inline bool QueryBlockResponse::has_block() const {
+  return this != internal_default_instance() && block_ != nullptr;
+}
 inline void QueryBlockResponse::clear_block() {
-  block_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (GetArenaNoVirtual() == nullptr && block_ != nullptr) {
+    delete block_;
+  }
+  block_ = nullptr;
 }
-inline const ::std::string& QueryBlockResponse::block() const {
+inline const ::pb::Block& QueryBlockResponse::block() const {
+  const ::pb::Block* p = block_;
   // @@protoc_insertion_point(field_get:pb.QueryBlockResponse.block)
-  return block_.GetNoArena();
+  return p != nullptr ? *p : *reinterpret_cast<const ::pb::Block*>(
+      &::pb::_Block_default_instance_);
 }
-inline void QueryBlockResponse::set_block(const ::std::string& value) {
-  
-  block_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:pb.QueryBlockResponse.block)
-}
-#if LANG_CXX11
-inline void QueryBlockResponse::set_block(::std::string&& value) {
-  
-  block_.SetNoArena(
-    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:pb.QueryBlockResponse.block)
-}
-#endif
-inline void QueryBlockResponse::set_block(const char* value) {
-  GOOGLE_DCHECK(value != nullptr);
-  
-  block_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:pb.QueryBlockResponse.block)
-}
-inline void QueryBlockResponse::set_block(const void* value, size_t size) {
-  
-  block_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:pb.QueryBlockResponse.block)
-}
-inline ::std::string* QueryBlockResponse::mutable_block() {
-  
-  // @@protoc_insertion_point(field_mutable:pb.QueryBlockResponse.block)
-  return block_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline ::std::string* QueryBlockResponse::release_block() {
+inline ::pb::Block* QueryBlockResponse::release_block() {
   // @@protoc_insertion_point(field_release:pb.QueryBlockResponse.block)
   
-  return block_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  ::pb::Block* temp = block_;
+  block_ = nullptr;
+  return temp;
 }
-inline void QueryBlockResponse::set_allocated_block(::std::string* block) {
-  if (block != nullptr) {
+inline ::pb::Block* QueryBlockResponse::mutable_block() {
+  
+  if (block_ == nullptr) {
+    auto* p = CreateMaybeMessage<::pb::Block>(GetArenaNoVirtual());
+    block_ = p;
+  }
+  // @@protoc_insertion_point(field_mutable:pb.QueryBlockResponse.block)
+  return block_;
+}
+inline void QueryBlockResponse::set_allocated_block(::pb::Block* block) {
+  ::google::protobuf::Arena* message_arena = GetArenaNoVirtual();
+  if (message_arena == nullptr) {
+    delete block_;
+  }
+  if (block) {
+    ::google::protobuf::Arena* submessage_arena = nullptr;
+    if (message_arena != submessage_arena) {
+      block = ::google::protobuf::internal::GetOwnedMessage(
+          message_arena, block, submessage_arena);
+    }
     
   } else {
     
   }
-  block_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), block);
+  block_ = block;
   // @@protoc_insertion_point(field_set_allocated:pb.QueryBlockResponse.block)
 }
 

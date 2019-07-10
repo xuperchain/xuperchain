@@ -9,7 +9,7 @@ class Block {
 public:
     Block();
     virtual ~Block();
-    bool init(pb::Block pbblock);
+    void init(pb::Block pbblock);
 
 public:
     std::string blockid;
