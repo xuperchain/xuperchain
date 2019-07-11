@@ -178,7 +178,7 @@ func (x *xvmInstance) Release() {
 }
 
 func (x *xvmInstance) InitDebugWriter() {
-	logger := log.DefaultLogger.New("type", "contract-debug", "contract", x.bridgeCtx.ContractName)
+	logger := log.DefaultLogger.New("type", "contract-debug", "contract", x.bridgeCtx.ContractName, "ctxid", x.bridgeCtx.ID)
 	w := newDebugWriter(logger)
 	debug.SetWriter(x.execCtx, w)
 }
