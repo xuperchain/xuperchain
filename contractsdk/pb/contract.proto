@@ -196,9 +196,9 @@ message Transaction
     // the blockid the transaction belong to
     bytes blockid = 2;
     // Transaction input list
-    repeated TxInput tx_inputs = 3;
+    repeated pb.TxInput tx_inputs = 3;
     // Transaction output list
-    repeated TxOutput tx_outputs = 4;
+    repeated pb.TxOutput tx_outputs = 4;
     // Transaction description or system contract
     bytes desc = 6;
 
