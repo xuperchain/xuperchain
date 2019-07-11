@@ -16,7 +16,7 @@ import (
 
 	"github.com/xuperchain/xuperunion/common/config"
 	"github.com/xuperchain/xuperunion/common/log"
-	"github.com/xuperchain/xuperunion/core"
+	xchaincore "github.com/xuperchain/xuperunion/core"
 	"github.com/xuperchain/xuperunion/p2pv2"
 	"github.com/xuperchain/xuperunion/server"
 )
@@ -29,7 +29,7 @@ var (
 
 // Start init and star chain node
 func Start(cfg *config.NodeConfig) error {
-	xlog, err := log.OpenLog(&cfg.Log)
+	xlog, err := log.OpenDefaultLog(&cfg.Log)
 	if err != nil {
 		err := errors.New("open log fail")
 		return err
