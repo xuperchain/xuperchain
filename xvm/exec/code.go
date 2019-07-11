@@ -22,27 +22,38 @@ type Code struct {
 
 // NewCode instances a Code object from file path of native shared library
 func NewCode(module string, resolver Resolver) (code *Code, err error) {
-	bridge := newResolverBridge(resolver)
-	bridgePointer := pointer.Save(bridge)
+	code = new(Code)
+	code.bridge = newResolverBridge(resolver)
+	code.bridgePointer = pointer.Save(code.bridge)
+	// xvm_new_code执行期间可能会抛出Trap，导致资源泄露
+	// 如果CaptureTrap捕获了Trap则释放所有已经初始化的资源
+	defer func() {
+		if err != nil {
+			code.Release()
+			code = nil
+		}
+	}()
 	defer CaptureTrap(&err)
 
 	cpath := C.CString(module)
 	defer C.free(unsafe.Pointer(cpath))
-	resolvert := C.make_resolver_t(unsafe.Pointer(bridgePointer))
-	ccode := C.xvm_new_code(cpath, resolvert)
+	resolvert := C.make_resolver_t(unsafe.Pointer(code.bridgePointer))
+	code.code = C.xvm_new_code(cpath, resolvert)
 
-	if ccode == nil {
-		return nil, fmt.Errorf("open module %s error", module)
+	if code.code == nil {
+		err = fmt.Errorf("open module %s error", module)
+		return
 	}
-	return &Code{
-		code:          ccode,
-		bridge:        bridge,
-		bridgePointer: bridgePointer,
-	}, nil
+	return
 }
 
 // Release releases resources hold by Code
 func (c *Code) Release() {
-	C.xvm_release_code(c.code)
-	pointer.Delete(c.bridgePointer)
+	if c.code != nil {
+		C.xvm_release_code(c.code)
+	}
+	if c.bridgePointer != 0 {
+		pointer.Delete(c.bridgePointer)
+	}
+	*c = Code{}
 }

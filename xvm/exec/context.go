@@ -41,6 +41,12 @@ func NewContext(code *Code, cfg *ContextConfig) (ctx *Context, err error) {
 		cfg:      *cfg,
 		userData: make(map[string]interface{}),
 	}
+	defer func() {
+		if err != nil {
+			ctx.Release()
+			ctx = nil
+		}
+	}()
 	defer CaptureTrap(&err)
 	ret := C.xvm_init_context(&ctx.context, code.code)
 	if ret == 0 {
