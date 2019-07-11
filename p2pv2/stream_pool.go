@@ -75,6 +75,7 @@ func (sp *StreamPool) Add(s net.Stream) *Stream {
 		stream.Close()
 		sp.DelStream(stream)
 		sp.no.kdht.RoutingTable().Remove(stream.p)
+		sp.log.Warn("New stream is deleted")
 		return nil
 	}
 	return stream
@@ -166,6 +167,7 @@ func (sp *StreamPool) streamForPeer(p peer.ID) (*Stream, error) {
 		s, _ := v.(*Stream)
 		if s.valid() {
 			if sp.no.srv.config.IsAuthentication && !s.auth() {
+				sp.log.Warn("stream failed to be authenticated")
 				return nil, ErrAuth
 			}
 			return s, nil
