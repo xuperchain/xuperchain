@@ -253,6 +253,7 @@ void xvm_release_code(xvm_code_t* code) {
     dlclose(code->dlhandle);
   }
   free(code);
+  memset((void*)code, 0, sizeof(xvm_code_t));
 }
 
 /*
@@ -293,6 +294,7 @@ void xvm_release_context(xvm_context_t* ctx) {
   if (ctx->module_handle != NULL) {
     free(ctx->module_handle);
   }
+  memset((void*)ctx, 0, sizeof(xvm_context_t));
 }
 
 uint32_t xvm_call(xvm_context_t* ctx, char* name, uint32_t* params, uint32_t param_len, wasm_rt_gas_t* gas, uint32_t* ret) {

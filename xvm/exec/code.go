@@ -55,4 +55,5 @@ func (c *Code) Release() {
 	if c.bridgePointer != 0 {
 		pointer.Delete(c.bridgePointer)
 	}
+	*c = Code{}
 }
