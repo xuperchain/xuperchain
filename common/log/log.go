@@ -4,8 +4,24 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/xuperchain/log15"
+	log "github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperunion/common/config"
+)
+
+var (
+	// DefaultLogger is the default logger used by Info, Warn ... methods
+	DefaultLogger = Logger{log.Root()}
+
+	// Trace print trace level log
+	Trace = DefaultLogger.Trace
+	// Debug print debug level log
+	Debug = DefaultLogger.Debug
+	// Info print info level log
+	Info = DefaultLogger.Info
+	// Warn print warn level log
+	Warn = DefaultLogger.Warn
+	// Error print error level log
+	Error = DefaultLogger.Error
 )
 
 // LogBufSize define log buffer channel size
@@ -77,4 +93,19 @@ func OpenLog(lc *config.LogConfig) (Logger, error) {
 	xlog.SetHandler(lhd)
 	l := Logger{xlog}
 	return l, err
+}
+
+// OpenDefaultLog create and open log stream using LogConfig and assign DefaultLogger
+func OpenDefaultLog(lc *config.LogConfig) (Logger, error) {
+	logger, err := OpenLog(lc)
+	if err != nil {
+		return logger, err
+	}
+	DefaultLogger = logger
+	Trace = DefaultLogger.Trace
+	Debug = DefaultLogger.Debug
+	Info = DefaultLogger.Info
+	Warn = DefaultLogger.Warn
+	Error = DefaultLogger.Error
+	return logger, nil
 }
