@@ -52,13 +52,8 @@ func (uv *UtxoVM) getReservedContractRequests(req []*pb.InvokeRequest, isPreExec
 	if isPreExec || len(reservedContracts) == 0 {
 		ra = genArgs(req)
 	} else {
-		// req should contrain reservedContracts, so the len of req should no less than reservedContracts
-		if len(req) < len(reservedContracts) {
-			uv.xlog.Warn("req should contain reservedContracts")
-			return nil, ErrGetReservedContracts
-		} else if len(req) > len(reservedContracts) {
-			ra = genArgs(req[len(reservedContracts):])
-		}
+		// TODO
+		ra = genArgs(req[len(reservedContracts):])
 	}
 
 	for _, rc := range reservedContracts {
@@ -69,5 +64,6 @@ func (uv *UtxoVM) getReservedContractRequests(req []*pb.InvokeRequest, isPreExec
 			rc.Args[k] = buf.Bytes()
 		}
 	}
+
 	return reservedContracts, nil
 }

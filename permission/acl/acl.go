@@ -9,8 +9,8 @@ import (
 
 // IsAccount check the type of name
 // return : -1 if name is invalid
-//           1 if name is account
-//           0 if name is AK
+//           0 if name is account
+//           1 if name is AK
 func IsAccount(name string) int {
 	if name == "" {
 		return -1

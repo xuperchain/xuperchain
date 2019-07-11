@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"sort"
 
 	"github.com/xuperchain/xuperunion/contractsdk/go/pb"
 )
@@ -168,19 +167,9 @@ func (c *SyscallService) GetCallArgs(ctx context.Context, in *pb.GetCallArgsRequ
 	if !ok {
 		return nil, fmt.Errorf("bad ctx id:%d", in.Header.Ctxid)
 	}
-	var args []*pb.ArgPair
-	for key, value := range nctx.Args {
-		args = append(args, &pb.ArgPair{
-			Key:   key,
-			Value: value,
-		})
-	}
-	sort.Slice(args, func(i, j int) bool {
-		return args[i].Key < args[j].Key
-	})
 	return &pb.CallArgs{
 		Method:      nctx.Method,
-		Args:        args,
+		Args:        nctx.Args,
 		Initiator:   nctx.Initiator,
 		AuthRequire: nctx.AuthRequire,
 	}, nil

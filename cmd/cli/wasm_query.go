@@ -7,7 +7,6 @@ package main
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 
 	"github.com/spf13/cobra"
 )
@@ -20,7 +19,6 @@ type WasmQueryCommand struct {
 	args       string
 	methodName string
 	isMulti    bool
-	verbose    bool
 }
 
 // NewWasmQueryCommand new wasm query cmd
@@ -45,7 +43,6 @@ func (c *WasmQueryCommand) addFlags() {
 	c.cmd.Flags().StringVarP(&c.args, "args", "a", "{}", "query method args")
 	c.cmd.Flags().StringVarP(&c.methodName, "method", "", "get", "contract method name")
 	c.cmd.Flags().BoolVarP(&c.isMulti, "isMulti", "m", false, "multisig scene")
-	c.cmd.Flags().BoolVarP(&c.verbose, "verbose", "v", false, "show query result verbosely")
 }
 
 func (c *WasmQueryCommand) example() string {
@@ -77,14 +74,7 @@ func (c *WasmQueryCommand) query(ctx context.Context, codeName string) error {
 		return err
 	}
 
-	response, _, err := ct.GenPreExeRes(ctx)
-	if c.verbose {
-		for _, req := range response.GetResponse().GetRequests() {
-			limits := req.GetResourceLimits()
-			for _, limit := range limits {
-				fmt.Println(limit.Type.String(), ": ", limit.Limit)
-			}
-		}
-	}
+	_, _, err = ct.GenPreExeRes(ctx)
+	//fmt.Println(preExeRPCRes.GetResponse().GetResponse())
 	return err
 }

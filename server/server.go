@@ -135,29 +135,6 @@ func (s *server) QueryACL(ctx context.Context, in *pb.AclStatus) (*pb.AclStatus,
 	return out, nil
 }
 
-// GetAccountContractsRequest get account request
-func (s *server) GetAccountContracts(ctx context.Context, in *pb.GetAccountContractsRequest) (*pb.GetAccountContractsResponse, error) {
-	if in.Header == nil {
-		in.Header = global.GHeader()
-	}
-	out := &pb.GetAccountContractsResponse{Header: &pb.Header{Logid: in.GetHeader().GetLogid()}}
-	bc := s.mg.Get(in.GetBcname())
-	if bc == nil {
-		// bc not found
-		out.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE
-		s.log.Trace("refused a connection while GetAccountContracts", "logid", in.Header.Logid)
-		return out, nil
-	}
-	contractsStatus, err := bc.GetAccountContractsStatus(in.GetAccount())
-	if err != nil {
-		out.Header.Error = pb.XChainErrorEnum_ACCOUNT_CONTRACT_STATUS_ERROR
-		s.log.Warn("GetAccountContracts error", "logid", in.Header.Logid, "error", err.Error())
-		return out, err
-	}
-	out.ContractsStatus = contractsStatus
-	return out, nil
-}
-
 // QueryTx Get transaction details
 func (s *server) QueryTx(ctx context.Context, in *pb.TxStatus) (*pb.TxStatus, error) {
 	s.mg.Speed.Add("QueryTx")

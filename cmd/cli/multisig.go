@@ -20,8 +20,7 @@ func NewMultisigCommand(cli *Cli) *cobra.Command {
 	cmd.AddCommand(NewMultisigCheckCommand(cli))
 	cmd.AddCommand(NewMultisigSignCommand(cli))
 	cmd.AddCommand(NewMultisigSendCommand(cli))
-	cmd.AddCommand(NewGetComplianceCheckSignCommand(cli))
-	cmd.AddCommand(NewGetTransferCheckSignCommand(cli))
+	cmd.AddCommand(NewGetSignCommand(cli))
 	return cmd
 }
 

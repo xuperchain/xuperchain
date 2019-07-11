@@ -30,6 +30,9 @@
 #include <google/protobuf/message_lite.h>
 #include <google/protobuf/repeated_field.h>  // IWYU pragma: export
 #include <google/protobuf/extension_set.h>  // IWYU pragma: export
+#include <google/protobuf/map.h>  // IWYU pragma: export
+#include <google/protobuf/map_entry_lite.h>
+#include <google/protobuf/map_field_lite.h>
 // @@protoc_insertion_point(includes)
 #include <google/protobuf/port_def.inc>
 #define PROTOBUF_INTERNAL_EXPORT_contract_2eproto
@@ -40,22 +43,25 @@ struct TableStruct_contract_2eproto {
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
   static const ::google::protobuf::internal::AuxillaryParseTableField aux[]
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
-  static const ::google::protobuf::internal::ParseTable schema[28]
+  static const ::google::protobuf::internal::ParseTable schema[29]
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
   static const ::google::protobuf::internal::FieldMetadata field_metadata[];
   static const ::google::protobuf::internal::SerializationTable serialization_table[];
   static const ::google::protobuf::uint32 offsets[];
 };
 namespace pb {
-class ArgPair;
-class ArgPairDefaultTypeInternal;
-extern ArgPairDefaultTypeInternal _ArgPair_default_instance_;
 class CallArgs;
 class CallArgsDefaultTypeInternal;
 extern CallArgsDefaultTypeInternal _CallArgs_default_instance_;
+class CallArgs_ArgsEntry_DoNotUse;
+class CallArgs_ArgsEntry_DoNotUseDefaultTypeInternal;
+extern CallArgs_ArgsEntry_DoNotUseDefaultTypeInternal _CallArgs_ArgsEntry_DoNotUse_default_instance_;
 class ContractCallRequest;
 class ContractCallRequestDefaultTypeInternal;
 extern ContractCallRequestDefaultTypeInternal _ContractCallRequest_default_instance_;
+class ContractCallRequest_ArgsEntry_DoNotUse;
+class ContractCallRequest_ArgsEntry_DoNotUseDefaultTypeInternal;
+extern ContractCallRequest_ArgsEntry_DoNotUseDefaultTypeInternal _ContractCallRequest_ArgsEntry_DoNotUse_default_instance_;
 class ContractCallResponse;
 class ContractCallResponseDefaultTypeInternal;
 extern ContractCallResponseDefaultTypeInternal _ContractCallResponse_default_instance_;
@@ -134,9 +140,10 @@ extern TransferResponseDefaultTypeInternal _TransferResponse_default_instance_;
 }  // namespace pb
 namespace google {
 namespace protobuf {
-template<> ::pb::ArgPair* Arena::CreateMaybeMessage<::pb::ArgPair>(Arena*);
 template<> ::pb::CallArgs* Arena::CreateMaybeMessage<::pb::CallArgs>(Arena*);
+template<> ::pb::CallArgs_ArgsEntry_DoNotUse* Arena::CreateMaybeMessage<::pb::CallArgs_ArgsEntry_DoNotUse>(Arena*);
 template<> ::pb::ContractCallRequest* Arena::CreateMaybeMessage<::pb::ContractCallRequest>(Arena*);
+template<> ::pb::ContractCallRequest_ArgsEntry_DoNotUse* Arena::CreateMaybeMessage<::pb::ContractCallRequest_ArgsEntry_DoNotUse>(Arena*);
 template<> ::pb::ContractCallResponse* Arena::CreateMaybeMessage<::pb::ContractCallResponse>(Arena*);
 template<> ::pb::DeleteRequest* Arena::CreateMaybeMessage<::pb::DeleteRequest>(Arena*);
 template<> ::pb::DeleteResponse* Arena::CreateMaybeMessage<::pb::DeleteResponse>(Arena*);
@@ -579,135 +586,26 @@ class NativeCallResponse :
 };
 // -------------------------------------------------------------------
 
-class ArgPair :
-    public ::google::protobuf::MessageLite /* @@protoc_insertion_point(class_definition:pb.ArgPair) */ {
- public:
-  ArgPair();
-  virtual ~ArgPair();
-
-  ArgPair(const ArgPair& from);
-
-  inline ArgPair& operator=(const ArgPair& from) {
-    CopyFrom(from);
-    return *this;
-  }
-  #if LANG_CXX11
-  ArgPair(ArgPair&& from) noexcept
-    : ArgPair() {
-    *this = ::std::move(from);
-  }
-
-  inline ArgPair& operator=(ArgPair&& from) noexcept {
-    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
-      if (this != &from) InternalSwap(&from);
-    } else {
-      CopyFrom(from);
-    }
-    return *this;
-  }
-  #endif
-  static const ArgPair& default_instance();
-
-  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
-  static inline const ArgPair* internal_default_instance() {
-    return reinterpret_cast<const ArgPair*>(
-               &_ArgPair_default_instance_);
-  }
-  static constexpr int kIndexInFileMessages =
-    4;
-
-  void Swap(ArgPair* other);
-  friend void swap(ArgPair& a, ArgPair& b) {
-    a.Swap(&b);
-  }
-
-  // implements Message ----------------------------------------------
-
-  inline ArgPair* New() const final {
-    return CreateMaybeMessage<ArgPair>(nullptr);
-  }
-
-  ArgPair* New(::google::protobuf::Arena* arena) const final {
-    return CreateMaybeMessage<ArgPair>(arena);
-  }
-  void CheckTypeAndMergeFrom(const ::google::protobuf::MessageLite& from)
-    final;
-  void CopyFrom(const ArgPair& from);
-  void MergeFrom(const ArgPair& from);
-  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
-  bool IsInitialized() const final;
-
-  size_t ByteSizeLong() const final;
-  #if GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
-  static const char* _InternalParse(const char* begin, const char* end, void* object, ::google::protobuf::internal::ParseContext* ctx);
-  ::google::protobuf::internal::ParseFunc _ParseFunc() const final { return _InternalParse; }
-  #else
-  bool MergePartialFromCodedStream(
-      ::google::protobuf::io::CodedInputStream* input) final;
-  #endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
-  void SerializeWithCachedSizes(
-      ::google::protobuf::io::CodedOutputStream* output) const final;
-  void DiscardUnknownFields();
-  int GetCachedSize() const final { return _cached_size_.Get(); }
-
-  private:
-  void SharedCtor();
-  void SharedDtor();
-  void SetCachedSize(int size) const;
-  void InternalSwap(ArgPair* other);
-  private:
-  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
-    return nullptr;
-  }
-  inline void* MaybeArenaPtr() const {
-    return nullptr;
-  }
-  public:
-
-  ::std::string GetTypeName() const final;
-
-  // nested types ----------------------------------------------------
-
-  // accessors -------------------------------------------------------
-
-  // string key = 1;
-  void clear_key();
-  static const int kKeyFieldNumber = 1;
-  const ::std::string& key() const;
-  void set_key(const ::std::string& value);
-  #if LANG_CXX11
-  void set_key(::std::string&& value);
-  #endif
-  void set_key(const char* value);
-  void set_key(const char* value, size_t size);
-  ::std::string* mutable_key();
-  ::std::string* release_key();
-  void set_allocated_key(::std::string* key);
-
-  // bytes value = 2;
-  void clear_value();
-  static const int kValueFieldNumber = 2;
-  const ::std::string& value() const;
-  void set_value(const ::std::string& value);
-  #if LANG_CXX11
-  void set_value(::std::string&& value);
-  #endif
-  void set_value(const char* value);
-  void set_value(const void* value, size_t size);
-  ::std::string* mutable_value();
-  ::std::string* release_value();
-  void set_allocated_value(::std::string* value);
-
-  // @@protoc_insertion_point(class_scope:pb.ArgPair)
- private:
-  class HasBitSetters;
-
-  ::google::protobuf::internal::InternalMetadataWithArenaLite _internal_metadata_;
-  ::google::protobuf::internal::ArenaStringPtr key_;
-  ::google::protobuf::internal::ArenaStringPtr value_;
-  mutable ::google::protobuf::internal::CachedSize _cached_size_;
-  friend struct ::TableStruct_contract_2eproto;
+class CallArgs_ArgsEntry_DoNotUse : public ::google::protobuf::internal::MapEntryLite<CallArgs_ArgsEntry_DoNotUse, 
+    ::std::string, ::std::string,
+    ::google::protobuf::internal::WireFormatLite::TYPE_STRING,
+    ::google::protobuf::internal::WireFormatLite::TYPE_BYTES,
+    0 > {
+public:
+#if GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+static bool _ParseMap(const char* begin, const char* end, void* object, ::google::protobuf::internal::ParseContext* ctx);
+#endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+  typedef ::google::protobuf::internal::MapEntryLite<CallArgs_ArgsEntry_DoNotUse, 
+    ::std::string, ::std::string,
+    ::google::protobuf::internal::WireFormatLite::TYPE_STRING,
+    ::google::protobuf::internal::WireFormatLite::TYPE_BYTES,
+    0 > SuperType;
+  CallArgs_ArgsEntry_DoNotUse();
+  CallArgs_ArgsEntry_DoNotUse(::google::protobuf::Arena* arena);
+  void MergeFrom(const CallArgs_ArgsEntry_DoNotUse& other);
+  static const CallArgs_ArgsEntry_DoNotUse* internal_default_instance() { return reinterpret_cast<const CallArgs_ArgsEntry_DoNotUse*>(&_CallArgs_ArgsEntry_DoNotUse_default_instance_); }
 };
+
 // -------------------------------------------------------------------
 
 class CallArgs :
@@ -799,19 +697,17 @@ class CallArgs :
 
   // nested types ----------------------------------------------------
 
+
   // accessors -------------------------------------------------------
 
-  // repeated .pb.ArgPair args = 2;
+  // map<string, bytes> args = 2;
   int args_size() const;
   void clear_args();
   static const int kArgsFieldNumber = 2;
-  ::pb::ArgPair* mutable_args(int index);
-  ::google::protobuf::RepeatedPtrField< ::pb::ArgPair >*
-      mutable_args();
-  const ::pb::ArgPair& args(int index) const;
-  ::pb::ArgPair* add_args();
-  const ::google::protobuf::RepeatedPtrField< ::pb::ArgPair >&
+  const ::google::protobuf::Map< ::std::string, ::std::string >&
       args() const;
+  ::google::protobuf::Map< ::std::string, ::std::string >*
+      mutable_args();
 
   // repeated string auth_require = 4;
   int auth_require_size() const;
@@ -868,7 +764,12 @@ class CallArgs :
   class HasBitSetters;
 
   ::google::protobuf::internal::InternalMetadataWithArenaLite _internal_metadata_;
-  ::google::protobuf::RepeatedPtrField< ::pb::ArgPair > args_;
+  ::google::protobuf::internal::MapFieldLite<
+      CallArgs_ArgsEntry_DoNotUse,
+      ::std::string, ::std::string,
+      ::google::protobuf::internal::WireFormatLite::TYPE_STRING,
+      ::google::protobuf::internal::WireFormatLite::TYPE_BYTES,
+      0 > args_;
   ::google::protobuf::RepeatedPtrField<::std::string> auth_require_;
   ::google::protobuf::internal::ArenaStringPtr method_;
   ::google::protobuf::internal::ArenaStringPtr initiator_;
@@ -2815,6 +2716,28 @@ class TransferResponse :
 };
 // -------------------------------------------------------------------
 
+class ContractCallRequest_ArgsEntry_DoNotUse : public ::google::protobuf::internal::MapEntryLite<ContractCallRequest_ArgsEntry_DoNotUse, 
+    ::std::string, ::std::string,
+    ::google::protobuf::internal::WireFormatLite::TYPE_STRING,
+    ::google::protobuf::internal::WireFormatLite::TYPE_BYTES,
+    0 > {
+public:
+#if GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+static bool _ParseMap(const char* begin, const char* end, void* object, ::google::protobuf::internal::ParseContext* ctx);
+#endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+  typedef ::google::protobuf::internal::MapEntryLite<ContractCallRequest_ArgsEntry_DoNotUse, 
+    ::std::string, ::std::string,
+    ::google::protobuf::internal::WireFormatLite::TYPE_STRING,
+    ::google::protobuf::internal::WireFormatLite::TYPE_BYTES,
+    0 > SuperType;
+  ContractCallRequest_ArgsEntry_DoNotUse();
+  ContractCallRequest_ArgsEntry_DoNotUse(::google::protobuf::Arena* arena);
+  void MergeFrom(const ContractCallRequest_ArgsEntry_DoNotUse& other);
+  static const ContractCallRequest_ArgsEntry_DoNotUse* internal_default_instance() { return reinterpret_cast<const ContractCallRequest_ArgsEntry_DoNotUse*>(&_ContractCallRequest_ArgsEntry_DoNotUse_default_instance_); }
+};
+
+// -------------------------------------------------------------------
+
 class ContractCallRequest :
     public ::google::protobuf::MessageLite /* @@protoc_insertion_point(class_definition:pb.ContractCallRequest) */ {
  public:
@@ -2850,7 +2773,7 @@ class ContractCallRequest :
                &_ContractCallRequest_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    22;
+    23;
 
   void Swap(ContractCallRequest* other);
   friend void swap(ContractCallRequest& a, ContractCallRequest& b) {
@@ -2904,19 +2827,17 @@ class ContractCallRequest :
 
   // nested types ----------------------------------------------------
 
+
   // accessors -------------------------------------------------------
 
-  // repeated .pb.ArgPair args = 5;
+  // map<string, bytes> args = 5;
   int args_size() const;
   void clear_args();
   static const int kArgsFieldNumber = 5;
-  ::pb::ArgPair* mutable_args(int index);
-  ::google::protobuf::RepeatedPtrField< ::pb::ArgPair >*
-      mutable_args();
-  const ::pb::ArgPair& args(int index) const;
-  ::pb::ArgPair* add_args();
-  const ::google::protobuf::RepeatedPtrField< ::pb::ArgPair >&
+  const ::google::protobuf::Map< ::std::string, ::std::string >&
       args() const;
+  ::google::protobuf::Map< ::std::string, ::std::string >*
+      mutable_args();
 
   // string module = 2;
   void clear_module();
@@ -2974,7 +2895,12 @@ class ContractCallRequest :
   class HasBitSetters;
 
   ::google::protobuf::internal::InternalMetadataWithArenaLite _internal_metadata_;
-  ::google::protobuf::RepeatedPtrField< ::pb::ArgPair > args_;
+  ::google::protobuf::internal::MapFieldLite<
+      ContractCallRequest_ArgsEntry_DoNotUse,
+      ::std::string, ::std::string,
+      ::google::protobuf::internal::WireFormatLite::TYPE_STRING,
+      ::google::protobuf::internal::WireFormatLite::TYPE_BYTES,
+      0 > args_;
   ::google::protobuf::internal::ArenaStringPtr module_;
   ::google::protobuf::internal::ArenaStringPtr contract_;
   ::google::protobuf::internal::ArenaStringPtr method_;
@@ -3019,7 +2945,7 @@ class ContractCallResponse :
                &_ContractCallResponse_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    23;
+    24;
 
   void Swap(ContractCallResponse* other);
   friend void swap(ContractCallResponse& a, ContractCallResponse& b) {
@@ -3130,7 +3056,7 @@ class Response :
                &_Response_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    24;
+    25;
 
   void Swap(Response* other);
   friend void swap(Response& a, Response& b) {
@@ -3268,7 +3194,7 @@ class SetOutputRequest :
                &_SetOutputRequest_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    25;
+    26;
 
   void Swap(SetOutputRequest* other);
   friend void swap(SetOutputRequest& a, SetOutputRequest& b) {
@@ -3389,7 +3315,7 @@ class SetOutputResponse :
                &_SetOutputResponse_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    26;
+    27;
 
   void Swap(SetOutputResponse* other);
   friend void swap(SetOutputResponse& a, SetOutputResponse& b) {
@@ -3490,7 +3416,7 @@ class GetCallArgsRequest :
                &_GetCallArgsRequest_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    27;
+    28;
 
   void Swap(GetCallArgsRequest* other);
   friend void swap(GetCallArgsRequest& a, GetCallArgsRequest& b) {
@@ -3603,114 +3529,6 @@ inline void NativeCallRequest::set_ctxid(::google::protobuf::int64 value) {
 
 // -------------------------------------------------------------------
 
-// ArgPair
-
-// string key = 1;
-inline void ArgPair::clear_key() {
-  key_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline const ::std::string& ArgPair::key() const {
-  // @@protoc_insertion_point(field_get:pb.ArgPair.key)
-  return key_.GetNoArena();
-}
-inline void ArgPair::set_key(const ::std::string& value) {
-  
-  key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:pb.ArgPair.key)
-}
-#if LANG_CXX11
-inline void ArgPair::set_key(::std::string&& value) {
-  
-  key_.SetNoArena(
-    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:pb.ArgPair.key)
-}
-#endif
-inline void ArgPair::set_key(const char* value) {
-  GOOGLE_DCHECK(value != nullptr);
-  
-  key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:pb.ArgPair.key)
-}
-inline void ArgPair::set_key(const char* value, size_t size) {
-  
-  key_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:pb.ArgPair.key)
-}
-inline ::std::string* ArgPair::mutable_key() {
-  
-  // @@protoc_insertion_point(field_mutable:pb.ArgPair.key)
-  return key_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline ::std::string* ArgPair::release_key() {
-  // @@protoc_insertion_point(field_release:pb.ArgPair.key)
-  
-  return key_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline void ArgPair::set_allocated_key(::std::string* key) {
-  if (key != nullptr) {
-    
-  } else {
-    
-  }
-  key_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), key);
-  // @@protoc_insertion_point(field_set_allocated:pb.ArgPair.key)
-}
-
-// bytes value = 2;
-inline void ArgPair::clear_value() {
-  value_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline const ::std::string& ArgPair::value() const {
-  // @@protoc_insertion_point(field_get:pb.ArgPair.value)
-  return value_.GetNoArena();
-}
-inline void ArgPair::set_value(const ::std::string& value) {
-  
-  value_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:pb.ArgPair.value)
-}
-#if LANG_CXX11
-inline void ArgPair::set_value(::std::string&& value) {
-  
-  value_.SetNoArena(
-    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:pb.ArgPair.value)
-}
-#endif
-inline void ArgPair::set_value(const char* value) {
-  GOOGLE_DCHECK(value != nullptr);
-  
-  value_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:pb.ArgPair.value)
-}
-inline void ArgPair::set_value(const void* value, size_t size) {
-  
-  value_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:pb.ArgPair.value)
-}
-inline ::std::string* ArgPair::mutable_value() {
-  
-  // @@protoc_insertion_point(field_mutable:pb.ArgPair.value)
-  return value_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline ::std::string* ArgPair::release_value() {
-  // @@protoc_insertion_point(field_release:pb.ArgPair.value)
-  
-  return value_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-}
-inline void ArgPair::set_allocated_value(::std::string* value) {
-  if (value != nullptr) {
-    
-  } else {
-    
-  }
-  value_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set_allocated:pb.ArgPair.value)
-}
-
 // -------------------------------------------------------------------
 
 // CallArgs
@@ -3768,34 +3586,22 @@ inline void CallArgs::set_allocated_method(::std::string* method) {
   // @@protoc_insertion_point(field_set_allocated:pb.CallArgs.method)
 }
 
-// repeated .pb.ArgPair args = 2;
+// map<string, bytes> args = 2;
 inline int CallArgs::args_size() const {
   return args_.size();
 }
 inline void CallArgs::clear_args() {
   args_.Clear();
 }
-inline ::pb::ArgPair* CallArgs::mutable_args(int index) {
-  // @@protoc_insertion_point(field_mutable:pb.CallArgs.args)
-  return args_.Mutable(index);
-}
-inline ::google::protobuf::RepeatedPtrField< ::pb::ArgPair >*
-CallArgs::mutable_args() {
-  // @@protoc_insertion_point(field_mutable_list:pb.CallArgs.args)
-  return &args_;
-}
-inline const ::pb::ArgPair& CallArgs::args(int index) const {
-  // @@protoc_insertion_point(field_get:pb.CallArgs.args)
-  return args_.Get(index);
-}
-inline ::pb::ArgPair* CallArgs::add_args() {
-  // @@protoc_insertion_point(field_add:pb.CallArgs.args)
-  return args_.Add();
-}
-inline const ::google::protobuf::RepeatedPtrField< ::pb::ArgPair >&
+inline const ::google::protobuf::Map< ::std::string, ::std::string >&
 CallArgs::args() const {
-  // @@protoc_insertion_point(field_list:pb.CallArgs.args)
-  return args_;
+  // @@protoc_insertion_point(field_map:pb.CallArgs.args)
+  return args_.GetMap();
+}
+inline ::google::protobuf::Map< ::std::string, ::std::string >*
+CallArgs::mutable_args() {
+  // @@protoc_insertion_point(field_mutable_map:pb.CallArgs.args)
+  return args_.MutableMap();
 }
 
 // string initiator = 3;
@@ -5196,6 +5002,8 @@ inline void TransferRequest::set_allocated_amount(::std::string* amount) {
 
 // -------------------------------------------------------------------
 
+// -------------------------------------------------------------------
+
 // ContractCallRequest
 
 // .pb.SyscallHeader header = 1;
@@ -5408,34 +5216,22 @@ inline void ContractCallRequest::set_allocated_method(::std::string* method) {
   // @@protoc_insertion_point(field_set_allocated:pb.ContractCallRequest.method)
 }
 
-// repeated .pb.ArgPair args = 5;
+// map<string, bytes> args = 5;
 inline int ContractCallRequest::args_size() const {
   return args_.size();
 }
 inline void ContractCallRequest::clear_args() {
   args_.Clear();
 }
-inline ::pb::ArgPair* ContractCallRequest::mutable_args(int index) {
-  // @@protoc_insertion_point(field_mutable:pb.ContractCallRequest.args)
-  return args_.Mutable(index);
-}
-inline ::google::protobuf::RepeatedPtrField< ::pb::ArgPair >*
-ContractCallRequest::mutable_args() {
-  // @@protoc_insertion_point(field_mutable_list:pb.ContractCallRequest.args)
-  return &args_;
-}
-inline const ::pb::ArgPair& ContractCallRequest::args(int index) const {
-  // @@protoc_insertion_point(field_get:pb.ContractCallRequest.args)
-  return args_.Get(index);
-}
-inline ::pb::ArgPair* ContractCallRequest::add_args() {
-  // @@protoc_insertion_point(field_add:pb.ContractCallRequest.args)
-  return args_.Add();
-}
-inline const ::google::protobuf::RepeatedPtrField< ::pb::ArgPair >&
+inline const ::google::protobuf::Map< ::std::string, ::std::string >&
 ContractCallRequest::args() const {
-  // @@protoc_insertion_point(field_list:pb.ContractCallRequest.args)
-  return args_;
+  // @@protoc_insertion_point(field_map:pb.ContractCallRequest.args)
+  return args_.GetMap();
+}
+inline ::google::protobuf::Map< ::std::string, ::std::string >*
+ContractCallRequest::mutable_args() {
+  // @@protoc_insertion_point(field_mutable_map:pb.ContractCallRequest.args)
+  return args_.MutableMap();
 }
 
 // -------------------------------------------------------------------
@@ -5785,6 +5581,8 @@ inline void GetCallArgsRequest::set_allocated_header(::pb::SyscallHeader* header
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------
