@@ -568,6 +568,7 @@ func (xc *XChainCore) doMiner() {
 	for _, ucTx := range txsUnconf {
 		accumulatedTxSize += proto.Size(ucTx)
 		if accumulatedTxSize > txSizeTotalLimit {
+			xc.log.Warn("already got enough tx to produce block", "acct", accumulatedTxSize, "limit", txSizeTotalLimit)
 			break
 		}
 		txs = append(txs, ucTx)
