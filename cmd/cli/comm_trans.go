@@ -92,8 +92,6 @@ func (c *CommTrans) GenPreExeRes(ctx context.Context) (
 		}
 		if tmpReq != nil {
 			preExeReqs = append(preExeReqs, tmpReq)
-		} else if err == nil {
-			return nil, nil, nil
 		}
 	}
 
