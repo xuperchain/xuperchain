@@ -111,7 +111,7 @@ message QueryTxRequest {
 
 message QueryTxResponse {
   // defined in user code
-  Transaction tx = 1;
+  TransactionSDK tx = 1;
 }
 
 message QueryBlockRequest {
@@ -121,7 +121,7 @@ message QueryBlockRequest {
 
 message QueryBlockResponse {
   // defined in user code
-  Block block = 1;
+  BlockSDK block = 1;
 }
 
 message TransferRequest {
@@ -163,7 +163,7 @@ message GetCallArgsRequest {
 }
 
 // Transaction input
-message TxInput
+message TxIn
 {
     // The transaction id referenced to
     bytes ref_txid = 1;
@@ -178,7 +178,7 @@ message TxInput
 }
 
 // Transaction output
-message TxOutput
+message TxOut
 {
     // The amount of the transaction
     bytes amount = 1;
@@ -189,16 +189,16 @@ message TxOutput
 }
 
 // Transaction is the information of the transaction
-message Transaction
+message TransactionSDK
 {
     // txid is the id of this transaction
     bytes txid = 1;
     // the blockid the transaction belong to
     bytes blockid = 2;
     // Transaction input list
-    repeated pb.TxInput tx_inputs = 3;
+    repeated TxIn tx_ins = 3;
     // Transaction output list
-    repeated pb.TxOutput tx_outputs = 4;
+    repeated TxOut tx_outs = 4;
     // Transaction description or system contract
     bytes desc = 6;
 
@@ -210,7 +210,7 @@ message Transaction
 }
 
 // The block struct
-message Block
+message BlockSDK
 {
     // blockid generate the hash sign of the block used by sha256
     bytes blockid = 3;

@@ -50,9 +50,9 @@ namespace pb {
 class ArgPair;
 class ArgPairDefaultTypeInternal;
 extern ArgPairDefaultTypeInternal _ArgPair_default_instance_;
-class Block;
-class BlockDefaultTypeInternal;
-extern BlockDefaultTypeInternal _Block_default_instance_;
+class BlockSDK;
+class BlockSDKDefaultTypeInternal;
+extern BlockSDKDefaultTypeInternal _BlockSDK_default_instance_;
 class CallArgs;
 class CallArgsDefaultTypeInternal;
 extern CallArgsDefaultTypeInternal _CallArgs_default_instance_;
@@ -128,26 +128,26 @@ extern SetOutputResponseDefaultTypeInternal _SetOutputResponse_default_instance_
 class SyscallHeader;
 class SyscallHeaderDefaultTypeInternal;
 extern SyscallHeaderDefaultTypeInternal _SyscallHeader_default_instance_;
-class Transaction;
-class TransactionDefaultTypeInternal;
-extern TransactionDefaultTypeInternal _Transaction_default_instance_;
+class TransactionSDK;
+class TransactionSDKDefaultTypeInternal;
+extern TransactionSDKDefaultTypeInternal _TransactionSDK_default_instance_;
 class TransferRequest;
 class TransferRequestDefaultTypeInternal;
 extern TransferRequestDefaultTypeInternal _TransferRequest_default_instance_;
 class TransferResponse;
 class TransferResponseDefaultTypeInternal;
 extern TransferResponseDefaultTypeInternal _TransferResponse_default_instance_;
-class TxInput;
-class TxInputDefaultTypeInternal;
-extern TxInputDefaultTypeInternal _TxInput_default_instance_;
-class TxOutput;
-class TxOutputDefaultTypeInternal;
-extern TxOutputDefaultTypeInternal _TxOutput_default_instance_;
+class TxIn;
+class TxInDefaultTypeInternal;
+extern TxInDefaultTypeInternal _TxIn_default_instance_;
+class TxOut;
+class TxOutDefaultTypeInternal;
+extern TxOutDefaultTypeInternal _TxOut_default_instance_;
 }  // namespace pb
 namespace google {
 namespace protobuf {
 template<> ::pb::ArgPair* Arena::CreateMaybeMessage<::pb::ArgPair>(Arena*);
-template<> ::pb::Block* Arena::CreateMaybeMessage<::pb::Block>(Arena*);
+template<> ::pb::BlockSDK* Arena::CreateMaybeMessage<::pb::BlockSDK>(Arena*);
 template<> ::pb::CallArgs* Arena::CreateMaybeMessage<::pb::CallArgs>(Arena*);
 template<> ::pb::ContractCallRequest* Arena::CreateMaybeMessage<::pb::ContractCallRequest>(Arena*);
 template<> ::pb::ContractCallResponse* Arena::CreateMaybeMessage<::pb::ContractCallResponse>(Arena*);
@@ -173,11 +173,11 @@ template<> ::pb::Response* Arena::CreateMaybeMessage<::pb::Response>(Arena*);
 template<> ::pb::SetOutputRequest* Arena::CreateMaybeMessage<::pb::SetOutputRequest>(Arena*);
 template<> ::pb::SetOutputResponse* Arena::CreateMaybeMessage<::pb::SetOutputResponse>(Arena*);
 template<> ::pb::SyscallHeader* Arena::CreateMaybeMessage<::pb::SyscallHeader>(Arena*);
-template<> ::pb::Transaction* Arena::CreateMaybeMessage<::pb::Transaction>(Arena*);
+template<> ::pb::TransactionSDK* Arena::CreateMaybeMessage<::pb::TransactionSDK>(Arena*);
 template<> ::pb::TransferRequest* Arena::CreateMaybeMessage<::pb::TransferRequest>(Arena*);
 template<> ::pb::TransferResponse* Arena::CreateMaybeMessage<::pb::TransferResponse>(Arena*);
-template<> ::pb::TxInput* Arena::CreateMaybeMessage<::pb::TxInput>(Arena*);
-template<> ::pb::TxOutput* Arena::CreateMaybeMessage<::pb::TxOutput>(Arena*);
+template<> ::pb::TxIn* Arena::CreateMaybeMessage<::pb::TxIn>(Arena*);
+template<> ::pb::TxOut* Arena::CreateMaybeMessage<::pb::TxOut>(Arena*);
 }  // namespace protobuf
 }  // namespace google
 namespace pb {
@@ -2322,21 +2322,21 @@ class QueryTxResponse :
 
   // accessors -------------------------------------------------------
 
-  // .pb.Transaction tx = 1;
+  // .pb.TransactionSDK tx = 1;
   bool has_tx() const;
   void clear_tx();
   static const int kTxFieldNumber = 1;
-  const ::pb::Transaction& tx() const;
-  ::pb::Transaction* release_tx();
-  ::pb::Transaction* mutable_tx();
-  void set_allocated_tx(::pb::Transaction* tx);
+  const ::pb::TransactionSDK& tx() const;
+  ::pb::TransactionSDK* release_tx();
+  ::pb::TransactionSDK* mutable_tx();
+  void set_allocated_tx(::pb::TransactionSDK* tx);
 
   // @@protoc_insertion_point(class_scope:pb.QueryTxResponse)
  private:
   class HasBitSetters;
 
   ::google::protobuf::internal::InternalMetadataWithArenaLite _internal_metadata_;
-  ::pb::Transaction* tx_;
+  ::pb::TransactionSDK* tx_;
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_contract_2eproto;
 };
@@ -2559,21 +2559,21 @@ class QueryBlockResponse :
 
   // accessors -------------------------------------------------------
 
-  // .pb.Block block = 1;
+  // .pb.BlockSDK block = 1;
   bool has_block() const;
   void clear_block();
   static const int kBlockFieldNumber = 1;
-  const ::pb::Block& block() const;
-  ::pb::Block* release_block();
-  ::pb::Block* mutable_block();
-  void set_allocated_block(::pb::Block* block);
+  const ::pb::BlockSDK& block() const;
+  ::pb::BlockSDK* release_block();
+  ::pb::BlockSDK* mutable_block();
+  void set_allocated_block(::pb::BlockSDK* block);
 
   // @@protoc_insertion_point(class_scope:pb.QueryBlockResponse)
  private:
   class HasBitSetters;
 
   ::google::protobuf::internal::InternalMetadataWithArenaLite _internal_metadata_;
-  ::pb::Block* block_;
+  ::pb::BlockSDK* block_;
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_contract_2eproto;
 };
@@ -3572,25 +3572,25 @@ class GetCallArgsRequest :
 };
 // -------------------------------------------------------------------
 
-class TxInput :
-    public ::google::protobuf::MessageLite /* @@protoc_insertion_point(class_definition:pb.TxInput) */ {
+class TxIn :
+    public ::google::protobuf::MessageLite /* @@protoc_insertion_point(class_definition:pb.TxIn) */ {
  public:
-  TxInput();
-  virtual ~TxInput();
+  TxIn();
+  virtual ~TxIn();
 
-  TxInput(const TxInput& from);
+  TxIn(const TxIn& from);
 
-  inline TxInput& operator=(const TxInput& from) {
+  inline TxIn& operator=(const TxIn& from) {
     CopyFrom(from);
     return *this;
   }
   #if LANG_CXX11
-  TxInput(TxInput&& from) noexcept
-    : TxInput() {
+  TxIn(TxIn&& from) noexcept
+    : TxIn() {
     *this = ::std::move(from);
   }
 
-  inline TxInput& operator=(TxInput&& from) noexcept {
+  inline TxIn& operator=(TxIn&& from) noexcept {
     if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
       if (this != &from) InternalSwap(&from);
     } else {
@@ -3599,34 +3599,34 @@ class TxInput :
     return *this;
   }
   #endif
-  static const TxInput& default_instance();
+  static const TxIn& default_instance();
 
   static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
-  static inline const TxInput* internal_default_instance() {
-    return reinterpret_cast<const TxInput*>(
-               &_TxInput_default_instance_);
+  static inline const TxIn* internal_default_instance() {
+    return reinterpret_cast<const TxIn*>(
+               &_TxIn_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
     28;
 
-  void Swap(TxInput* other);
-  friend void swap(TxInput& a, TxInput& b) {
+  void Swap(TxIn* other);
+  friend void swap(TxIn& a, TxIn& b) {
     a.Swap(&b);
   }
 
   // implements Message ----------------------------------------------
 
-  inline TxInput* New() const final {
-    return CreateMaybeMessage<TxInput>(nullptr);
+  inline TxIn* New() const final {
+    return CreateMaybeMessage<TxIn>(nullptr);
   }
 
-  TxInput* New(::google::protobuf::Arena* arena) const final {
-    return CreateMaybeMessage<TxInput>(arena);
+  TxIn* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<TxIn>(arena);
   }
   void CheckTypeAndMergeFrom(const ::google::protobuf::MessageLite& from)
     final;
-  void CopyFrom(const TxInput& from);
-  void MergeFrom(const TxInput& from);
+  void CopyFrom(const TxIn& from);
+  void MergeFrom(const TxIn& from);
   PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
   bool IsInitialized() const final;
 
@@ -3647,7 +3647,7 @@ class TxInput :
   void SharedCtor();
   void SharedDtor();
   void SetCachedSize(int size) const;
-  void InternalSwap(TxInput* other);
+  void InternalSwap(TxIn* other);
   private:
   inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
     return nullptr;
@@ -3717,7 +3717,7 @@ class TxInput :
   ::google::protobuf::int64 frozen_height() const;
   void set_frozen_height(::google::protobuf::int64 value);
 
-  // @@protoc_insertion_point(class_scope:pb.TxInput)
+  // @@protoc_insertion_point(class_scope:pb.TxIn)
  private:
   class HasBitSetters;
 
@@ -3732,25 +3732,25 @@ class TxInput :
 };
 // -------------------------------------------------------------------
 
-class TxOutput :
-    public ::google::protobuf::MessageLite /* @@protoc_insertion_point(class_definition:pb.TxOutput) */ {
+class TxOut :
+    public ::google::protobuf::MessageLite /* @@protoc_insertion_point(class_definition:pb.TxOut) */ {
  public:
-  TxOutput();
-  virtual ~TxOutput();
+  TxOut();
+  virtual ~TxOut();
 
-  TxOutput(const TxOutput& from);
+  TxOut(const TxOut& from);
 
-  inline TxOutput& operator=(const TxOutput& from) {
+  inline TxOut& operator=(const TxOut& from) {
     CopyFrom(from);
     return *this;
   }
   #if LANG_CXX11
-  TxOutput(TxOutput&& from) noexcept
-    : TxOutput() {
+  TxOut(TxOut&& from) noexcept
+    : TxOut() {
     *this = ::std::move(from);
   }
 
-  inline TxOutput& operator=(TxOutput&& from) noexcept {
+  inline TxOut& operator=(TxOut&& from) noexcept {
     if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
       if (this != &from) InternalSwap(&from);
     } else {
@@ -3759,34 +3759,34 @@ class TxOutput :
     return *this;
   }
   #endif
-  static const TxOutput& default_instance();
+  static const TxOut& default_instance();
 
   static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
-  static inline const TxOutput* internal_default_instance() {
-    return reinterpret_cast<const TxOutput*>(
-               &_TxOutput_default_instance_);
+  static inline const TxOut* internal_default_instance() {
+    return reinterpret_cast<const TxOut*>(
+               &_TxOut_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
     29;
 
-  void Swap(TxOutput* other);
-  friend void swap(TxOutput& a, TxOutput& b) {
+  void Swap(TxOut* other);
+  friend void swap(TxOut& a, TxOut& b) {
     a.Swap(&b);
   }
 
   // implements Message ----------------------------------------------
 
-  inline TxOutput* New() const final {
-    return CreateMaybeMessage<TxOutput>(nullptr);
+  inline TxOut* New() const final {
+    return CreateMaybeMessage<TxOut>(nullptr);
   }
 
-  TxOutput* New(::google::protobuf::Arena* arena) const final {
-    return CreateMaybeMessage<TxOutput>(arena);
+  TxOut* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<TxOut>(arena);
   }
   void CheckTypeAndMergeFrom(const ::google::protobuf::MessageLite& from)
     final;
-  void CopyFrom(const TxOutput& from);
-  void MergeFrom(const TxOutput& from);
+  void CopyFrom(const TxOut& from);
+  void MergeFrom(const TxOut& from);
   PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
   bool IsInitialized() const final;
 
@@ -3807,7 +3807,7 @@ class TxOutput :
   void SharedCtor();
   void SharedDtor();
   void SetCachedSize(int size) const;
-  void InternalSwap(TxOutput* other);
+  void InternalSwap(TxOut* other);
   private:
   inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
     return nullptr;
@@ -3857,7 +3857,7 @@ class TxOutput :
   ::google::protobuf::int64 frozen_height() const;
   void set_frozen_height(::google::protobuf::int64 value);
 
-  // @@protoc_insertion_point(class_scope:pb.TxOutput)
+  // @@protoc_insertion_point(class_scope:pb.TxOut)
  private:
   class HasBitSetters;
 
@@ -3870,25 +3870,25 @@ class TxOutput :
 };
 // -------------------------------------------------------------------
 
-class Transaction :
-    public ::google::protobuf::MessageLite /* @@protoc_insertion_point(class_definition:pb.Transaction) */ {
+class TransactionSDK :
+    public ::google::protobuf::MessageLite /* @@protoc_insertion_point(class_definition:pb.TransactionSDK) */ {
  public:
-  Transaction();
-  virtual ~Transaction();
+  TransactionSDK();
+  virtual ~TransactionSDK();
 
-  Transaction(const Transaction& from);
+  TransactionSDK(const TransactionSDK& from);
 
-  inline Transaction& operator=(const Transaction& from) {
+  inline TransactionSDK& operator=(const TransactionSDK& from) {
     CopyFrom(from);
     return *this;
   }
   #if LANG_CXX11
-  Transaction(Transaction&& from) noexcept
-    : Transaction() {
+  TransactionSDK(TransactionSDK&& from) noexcept
+    : TransactionSDK() {
     *this = ::std::move(from);
   }
 
-  inline Transaction& operator=(Transaction&& from) noexcept {
+  inline TransactionSDK& operator=(TransactionSDK&& from) noexcept {
     if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
       if (this != &from) InternalSwap(&from);
     } else {
@@ -3897,34 +3897,34 @@ class Transaction :
     return *this;
   }
   #endif
-  static const Transaction& default_instance();
+  static const TransactionSDK& default_instance();
 
   static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
-  static inline const Transaction* internal_default_instance() {
-    return reinterpret_cast<const Transaction*>(
-               &_Transaction_default_instance_);
+  static inline const TransactionSDK* internal_default_instance() {
+    return reinterpret_cast<const TransactionSDK*>(
+               &_TransactionSDK_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
     30;
 
-  void Swap(Transaction* other);
-  friend void swap(Transaction& a, Transaction& b) {
+  void Swap(TransactionSDK* other);
+  friend void swap(TransactionSDK& a, TransactionSDK& b) {
     a.Swap(&b);
   }
 
   // implements Message ----------------------------------------------
 
-  inline Transaction* New() const final {
-    return CreateMaybeMessage<Transaction>(nullptr);
+  inline TransactionSDK* New() const final {
+    return CreateMaybeMessage<TransactionSDK>(nullptr);
   }
 
-  Transaction* New(::google::protobuf::Arena* arena) const final {
-    return CreateMaybeMessage<Transaction>(arena);
+  TransactionSDK* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<TransactionSDK>(arena);
   }
   void CheckTypeAndMergeFrom(const ::google::protobuf::MessageLite& from)
     final;
-  void CopyFrom(const Transaction& from);
-  void MergeFrom(const Transaction& from);
+  void CopyFrom(const TransactionSDK& from);
+  void MergeFrom(const TransactionSDK& from);
   PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
   bool IsInitialized() const final;
 
@@ -3945,7 +3945,7 @@ class Transaction :
   void SharedCtor();
   void SharedDtor();
   void SetCachedSize(int size) const;
-  void InternalSwap(Transaction* other);
+  void InternalSwap(TransactionSDK* other);
   private:
   inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
     return nullptr;
@@ -3961,28 +3961,28 @@ class Transaction :
 
   // accessors -------------------------------------------------------
 
-  // repeated .pb.TxInput tx_inputs = 3;
+  // repeated .pb.TxIn tx_inputs = 3;
   int tx_inputs_size() const;
   void clear_tx_inputs();
   static const int kTxInputsFieldNumber = 3;
-  ::pb::TxInput* mutable_tx_inputs(int index);
-  ::google::protobuf::RepeatedPtrField< ::pb::TxInput >*
+  ::pb::TxIn* mutable_tx_inputs(int index);
+  ::google::protobuf::RepeatedPtrField< ::pb::TxIn >*
       mutable_tx_inputs();
-  const ::pb::TxInput& tx_inputs(int index) const;
-  ::pb::TxInput* add_tx_inputs();
-  const ::google::protobuf::RepeatedPtrField< ::pb::TxInput >&
+  const ::pb::TxIn& tx_inputs(int index) const;
+  ::pb::TxIn* add_tx_inputs();
+  const ::google::protobuf::RepeatedPtrField< ::pb::TxIn >&
       tx_inputs() const;
 
-  // repeated .pb.TxOutput tx_outputs = 4;
+  // repeated .pb.TxOut tx_outputs = 4;
   int tx_outputs_size() const;
   void clear_tx_outputs();
   static const int kTxOutputsFieldNumber = 4;
-  ::pb::TxOutput* mutable_tx_outputs(int index);
-  ::google::protobuf::RepeatedPtrField< ::pb::TxOutput >*
+  ::pb::TxOut* mutable_tx_outputs(int index);
+  ::google::protobuf::RepeatedPtrField< ::pb::TxOut >*
       mutable_tx_outputs();
-  const ::pb::TxOutput& tx_outputs(int index) const;
-  ::pb::TxOutput* add_tx_outputs();
-  const ::google::protobuf::RepeatedPtrField< ::pb::TxOutput >&
+  const ::pb::TxOut& tx_outputs(int index) const;
+  ::pb::TxOut* add_tx_outputs();
+  const ::google::protobuf::RepeatedPtrField< ::pb::TxOut >&
       tx_outputs() const;
 
   // repeated string auth_require = 27;
@@ -4063,13 +4063,13 @@ class Transaction :
   ::std::string* release_initiator();
   void set_allocated_initiator(::std::string* initiator);
 
-  // @@protoc_insertion_point(class_scope:pb.Transaction)
+  // @@protoc_insertion_point(class_scope:pb.TransactionSDK)
  private:
   class HasBitSetters;
 
   ::google::protobuf::internal::InternalMetadataWithArenaLite _internal_metadata_;
-  ::google::protobuf::RepeatedPtrField< ::pb::TxInput > tx_inputs_;
-  ::google::protobuf::RepeatedPtrField< ::pb::TxOutput > tx_outputs_;
+  ::google::protobuf::RepeatedPtrField< ::pb::TxIn > tx_inputs_;
+  ::google::protobuf::RepeatedPtrField< ::pb::TxOut > tx_outputs_;
   ::google::protobuf::RepeatedPtrField<::std::string> auth_require_;
   ::google::protobuf::internal::ArenaStringPtr txid_;
   ::google::protobuf::internal::ArenaStringPtr blockid_;
@@ -4080,25 +4080,25 @@ class Transaction :
 };
 // -------------------------------------------------------------------
 
-class Block :
-    public ::google::protobuf::MessageLite /* @@protoc_insertion_point(class_definition:pb.Block) */ {
+class BlockSDK :
+    public ::google::protobuf::MessageLite /* @@protoc_insertion_point(class_definition:pb.BlockSDK) */ {
  public:
-  Block();
-  virtual ~Block();
+  BlockSDK();
+  virtual ~BlockSDK();
 
-  Block(const Block& from);
+  BlockSDK(const BlockSDK& from);
 
-  inline Block& operator=(const Block& from) {
+  inline BlockSDK& operator=(const BlockSDK& from) {
     CopyFrom(from);
     return *this;
   }
   #if LANG_CXX11
-  Block(Block&& from) noexcept
-    : Block() {
+  BlockSDK(BlockSDK&& from) noexcept
+    : BlockSDK() {
     *this = ::std::move(from);
   }
 
-  inline Block& operator=(Block&& from) noexcept {
+  inline BlockSDK& operator=(BlockSDK&& from) noexcept {
     if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
       if (this != &from) InternalSwap(&from);
     } else {
@@ -4107,34 +4107,34 @@ class Block :
     return *this;
   }
   #endif
-  static const Block& default_instance();
+  static const BlockSDK& default_instance();
 
   static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
-  static inline const Block* internal_default_instance() {
-    return reinterpret_cast<const Block*>(
-               &_Block_default_instance_);
+  static inline const BlockSDK* internal_default_instance() {
+    return reinterpret_cast<const BlockSDK*>(
+               &_BlockSDK_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
     31;
 
-  void Swap(Block* other);
-  friend void swap(Block& a, Block& b) {
+  void Swap(BlockSDK* other);
+  friend void swap(BlockSDK& a, BlockSDK& b) {
     a.Swap(&b);
   }
 
   // implements Message ----------------------------------------------
 
-  inline Block* New() const final {
-    return CreateMaybeMessage<Block>(nullptr);
+  inline BlockSDK* New() const final {
+    return CreateMaybeMessage<BlockSDK>(nullptr);
   }
 
-  Block* New(::google::protobuf::Arena* arena) const final {
-    return CreateMaybeMessage<Block>(arena);
+  BlockSDK* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<BlockSDK>(arena);
   }
   void CheckTypeAndMergeFrom(const ::google::protobuf::MessageLite& from)
     final;
-  void CopyFrom(const Block& from);
-  void MergeFrom(const Block& from);
+  void CopyFrom(const BlockSDK& from);
+  void MergeFrom(const BlockSDK& from);
   PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
   bool IsInitialized() const final;
 
@@ -4155,7 +4155,7 @@ class Block :
   void SharedCtor();
   void SharedDtor();
   void SetCachedSize(int size) const;
-  void InternalSwap(Block* other);
+  void InternalSwap(BlockSDK* other);
   private:
   inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
     return nullptr;
@@ -4295,7 +4295,7 @@ class Block :
   bool in_trunk() const;
   void set_in_trunk(bool value);
 
-  // @@protoc_insertion_point(class_scope:pb.Block)
+  // @@protoc_insertion_point(class_scope:pb.BlockSDK)
  private:
   class HasBitSetters;
 
@@ -5560,7 +5560,7 @@ inline void QueryTxRequest::set_allocated_txid(::std::string* txid) {
 
 // QueryTxResponse
 
-// .pb.Transaction tx = 1;
+// .pb.TransactionSDK tx = 1;
 inline bool QueryTxResponse::has_tx() const {
   return this != internal_default_instance() && tx_ != nullptr;
 }
@@ -5570,29 +5570,29 @@ inline void QueryTxResponse::clear_tx() {
   }
   tx_ = nullptr;
 }
-inline const ::pb::Transaction& QueryTxResponse::tx() const {
-  const ::pb::Transaction* p = tx_;
+inline const ::pb::TransactionSDK& QueryTxResponse::tx() const {
+  const ::pb::TransactionSDK* p = tx_;
   // @@protoc_insertion_point(field_get:pb.QueryTxResponse.tx)
-  return p != nullptr ? *p : *reinterpret_cast<const ::pb::Transaction*>(
-      &::pb::_Transaction_default_instance_);
+  return p != nullptr ? *p : *reinterpret_cast<const ::pb::TransactionSDK*>(
+      &::pb::_TransactionSDK_default_instance_);
 }
-inline ::pb::Transaction* QueryTxResponse::release_tx() {
+inline ::pb::TransactionSDK* QueryTxResponse::release_tx() {
   // @@protoc_insertion_point(field_release:pb.QueryTxResponse.tx)
   
-  ::pb::Transaction* temp = tx_;
+  ::pb::TransactionSDK* temp = tx_;
   tx_ = nullptr;
   return temp;
 }
-inline ::pb::Transaction* QueryTxResponse::mutable_tx() {
+inline ::pb::TransactionSDK* QueryTxResponse::mutable_tx() {
   
   if (tx_ == nullptr) {
-    auto* p = CreateMaybeMessage<::pb::Transaction>(GetArenaNoVirtual());
+    auto* p = CreateMaybeMessage<::pb::TransactionSDK>(GetArenaNoVirtual());
     tx_ = p;
   }
   // @@protoc_insertion_point(field_mutable:pb.QueryTxResponse.tx)
   return tx_;
 }
-inline void QueryTxResponse::set_allocated_tx(::pb::Transaction* tx) {
+inline void QueryTxResponse::set_allocated_tx(::pb::TransactionSDK* tx) {
   ::google::protobuf::Arena* message_arena = GetArenaNoVirtual();
   if (message_arena == nullptr) {
     delete tx_;
@@ -5723,7 +5723,7 @@ inline void QueryBlockRequest::set_allocated_blockid(::std::string* blockid) {
 
 // QueryBlockResponse
 
-// .pb.Block block = 1;
+// .pb.BlockSDK block = 1;
 inline bool QueryBlockResponse::has_block() const {
   return this != internal_default_instance() && block_ != nullptr;
 }
@@ -5733,29 +5733,29 @@ inline void QueryBlockResponse::clear_block() {
   }
   block_ = nullptr;
 }
-inline const ::pb::Block& QueryBlockResponse::block() const {
-  const ::pb::Block* p = block_;
+inline const ::pb::BlockSDK& QueryBlockResponse::block() const {
+  const ::pb::BlockSDK* p = block_;
   // @@protoc_insertion_point(field_get:pb.QueryBlockResponse.block)
-  return p != nullptr ? *p : *reinterpret_cast<const ::pb::Block*>(
-      &::pb::_Block_default_instance_);
+  return p != nullptr ? *p : *reinterpret_cast<const ::pb::BlockSDK*>(
+      &::pb::_BlockSDK_default_instance_);
 }
-inline ::pb::Block* QueryBlockResponse::release_block() {
+inline ::pb::BlockSDK* QueryBlockResponse::release_block() {
   // @@protoc_insertion_point(field_release:pb.QueryBlockResponse.block)
   
-  ::pb::Block* temp = block_;
+  ::pb::BlockSDK* temp = block_;
   block_ = nullptr;
   return temp;
 }
-inline ::pb::Block* QueryBlockResponse::mutable_block() {
+inline ::pb::BlockSDK* QueryBlockResponse::mutable_block() {
   
   if (block_ == nullptr) {
-    auto* p = CreateMaybeMessage<::pb::Block>(GetArenaNoVirtual());
+    auto* p = CreateMaybeMessage<::pb::BlockSDK>(GetArenaNoVirtual());
     block_ = p;
   }
   // @@protoc_insertion_point(field_mutable:pb.QueryBlockResponse.block)
   return block_;
 }
-inline void QueryBlockResponse::set_allocated_block(::pb::Block* block) {
+inline void QueryBlockResponse::set_allocated_block(::pb::BlockSDK* block) {
   ::google::protobuf::Arena* message_arena = GetArenaNoVirtual();
   if (message_arena == nullptr) {
     delete block_;
@@ -6529,1095 +6529,1095 @@ inline void GetCallArgsRequest::set_allocated_header(::pb::SyscallHeader* header
 
 // -------------------------------------------------------------------
 
-// TxInput
+// TxIn
 
 // bytes ref_txid = 1;
-inline void TxInput::clear_ref_txid() {
+inline void TxIn::clear_ref_txid() {
   ref_txid_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline const ::std::string& TxInput::ref_txid() const {
-  // @@protoc_insertion_point(field_get:pb.TxInput.ref_txid)
+inline const ::std::string& TxIn::ref_txid() const {
+  // @@protoc_insertion_point(field_get:pb.TxIn.ref_txid)
   return ref_txid_.GetNoArena();
 }
-inline void TxInput::set_ref_txid(const ::std::string& value) {
+inline void TxIn::set_ref_txid(const ::std::string& value) {
   
   ref_txid_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:pb.TxInput.ref_txid)
+  // @@protoc_insertion_point(field_set:pb.TxIn.ref_txid)
 }
 #if LANG_CXX11
-inline void TxInput::set_ref_txid(::std::string&& value) {
+inline void TxIn::set_ref_txid(::std::string&& value) {
   
   ref_txid_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:pb.TxInput.ref_txid)
+  // @@protoc_insertion_point(field_set_rvalue:pb.TxIn.ref_txid)
 }
 #endif
-inline void TxInput::set_ref_txid(const char* value) {
+inline void TxIn::set_ref_txid(const char* value) {
   GOOGLE_DCHECK(value != nullptr);
   
   ref_txid_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:pb.TxInput.ref_txid)
+  // @@protoc_insertion_point(field_set_char:pb.TxIn.ref_txid)
 }
-inline void TxInput::set_ref_txid(const void* value, size_t size) {
+inline void TxIn::set_ref_txid(const void* value, size_t size) {
   
   ref_txid_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:pb.TxInput.ref_txid)
+  // @@protoc_insertion_point(field_set_pointer:pb.TxIn.ref_txid)
 }
-inline ::std::string* TxInput::mutable_ref_txid() {
+inline ::std::string* TxIn::mutable_ref_txid() {
   
-  // @@protoc_insertion_point(field_mutable:pb.TxInput.ref_txid)
+  // @@protoc_insertion_point(field_mutable:pb.TxIn.ref_txid)
   return ref_txid_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline ::std::string* TxInput::release_ref_txid() {
-  // @@protoc_insertion_point(field_release:pb.TxInput.ref_txid)
+inline ::std::string* TxIn::release_ref_txid() {
+  // @@protoc_insertion_point(field_release:pb.TxIn.ref_txid)
   
   return ref_txid_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline void TxInput::set_allocated_ref_txid(::std::string* ref_txid) {
+inline void TxIn::set_allocated_ref_txid(::std::string* ref_txid) {
   if (ref_txid != nullptr) {
     
   } else {
     
   }
   ref_txid_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ref_txid);
-  // @@protoc_insertion_point(field_set_allocated:pb.TxInput.ref_txid)
+  // @@protoc_insertion_point(field_set_allocated:pb.TxIn.ref_txid)
 }
 
 // int32 ref_offset = 2;
-inline void TxInput::clear_ref_offset() {
+inline void TxIn::clear_ref_offset() {
   ref_offset_ = 0;
 }
-inline ::google::protobuf::int32 TxInput::ref_offset() const {
-  // @@protoc_insertion_point(field_get:pb.TxInput.ref_offset)
+inline ::google::protobuf::int32 TxIn::ref_offset() const {
+  // @@protoc_insertion_point(field_get:pb.TxIn.ref_offset)
   return ref_offset_;
 }
-inline void TxInput::set_ref_offset(::google::protobuf::int32 value) {
+inline void TxIn::set_ref_offset(::google::protobuf::int32 value) {
   
   ref_offset_ = value;
-  // @@protoc_insertion_point(field_set:pb.TxInput.ref_offset)
+  // @@protoc_insertion_point(field_set:pb.TxIn.ref_offset)
 }
 
 // bytes from_addr = 5;
-inline void TxInput::clear_from_addr() {
+inline void TxIn::clear_from_addr() {
   from_addr_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline const ::std::string& TxInput::from_addr() const {
-  // @@protoc_insertion_point(field_get:pb.TxInput.from_addr)
+inline const ::std::string& TxIn::from_addr() const {
+  // @@protoc_insertion_point(field_get:pb.TxIn.from_addr)
   return from_addr_.GetNoArena();
 }
-inline void TxInput::set_from_addr(const ::std::string& value) {
+inline void TxIn::set_from_addr(const ::std::string& value) {
   
   from_addr_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:pb.TxInput.from_addr)
+  // @@protoc_insertion_point(field_set:pb.TxIn.from_addr)
 }
 #if LANG_CXX11
-inline void TxInput::set_from_addr(::std::string&& value) {
+inline void TxIn::set_from_addr(::std::string&& value) {
   
   from_addr_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:pb.TxInput.from_addr)
+  // @@protoc_insertion_point(field_set_rvalue:pb.TxIn.from_addr)
 }
 #endif
-inline void TxInput::set_from_addr(const char* value) {
+inline void TxIn::set_from_addr(const char* value) {
   GOOGLE_DCHECK(value != nullptr);
   
   from_addr_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:pb.TxInput.from_addr)
+  // @@protoc_insertion_point(field_set_char:pb.TxIn.from_addr)
 }
-inline void TxInput::set_from_addr(const void* value, size_t size) {
+inline void TxIn::set_from_addr(const void* value, size_t size) {
   
   from_addr_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:pb.TxInput.from_addr)
+  // @@protoc_insertion_point(field_set_pointer:pb.TxIn.from_addr)
 }
-inline ::std::string* TxInput::mutable_from_addr() {
+inline ::std::string* TxIn::mutable_from_addr() {
   
-  // @@protoc_insertion_point(field_mutable:pb.TxInput.from_addr)
+  // @@protoc_insertion_point(field_mutable:pb.TxIn.from_addr)
   return from_addr_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline ::std::string* TxInput::release_from_addr() {
-  // @@protoc_insertion_point(field_release:pb.TxInput.from_addr)
+inline ::std::string* TxIn::release_from_addr() {
+  // @@protoc_insertion_point(field_release:pb.TxIn.from_addr)
   
   return from_addr_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline void TxInput::set_allocated_from_addr(::std::string* from_addr) {
+inline void TxIn::set_allocated_from_addr(::std::string* from_addr) {
   if (from_addr != nullptr) {
     
   } else {
     
   }
   from_addr_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from_addr);
-  // @@protoc_insertion_point(field_set_allocated:pb.TxInput.from_addr)
+  // @@protoc_insertion_point(field_set_allocated:pb.TxIn.from_addr)
 }
 
 // bytes amount = 6;
-inline void TxInput::clear_amount() {
+inline void TxIn::clear_amount() {
   amount_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline const ::std::string& TxInput::amount() const {
-  // @@protoc_insertion_point(field_get:pb.TxInput.amount)
+inline const ::std::string& TxIn::amount() const {
+  // @@protoc_insertion_point(field_get:pb.TxIn.amount)
   return amount_.GetNoArena();
 }
-inline void TxInput::set_amount(const ::std::string& value) {
+inline void TxIn::set_amount(const ::std::string& value) {
   
   amount_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:pb.TxInput.amount)
+  // @@protoc_insertion_point(field_set:pb.TxIn.amount)
 }
 #if LANG_CXX11
-inline void TxInput::set_amount(::std::string&& value) {
+inline void TxIn::set_amount(::std::string&& value) {
   
   amount_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:pb.TxInput.amount)
+  // @@protoc_insertion_point(field_set_rvalue:pb.TxIn.amount)
 }
 #endif
-inline void TxInput::set_amount(const char* value) {
+inline void TxIn::set_amount(const char* value) {
   GOOGLE_DCHECK(value != nullptr);
   
   amount_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:pb.TxInput.amount)
+  // @@protoc_insertion_point(field_set_char:pb.TxIn.amount)
 }
-inline void TxInput::set_amount(const void* value, size_t size) {
+inline void TxIn::set_amount(const void* value, size_t size) {
   
   amount_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:pb.TxInput.amount)
+  // @@protoc_insertion_point(field_set_pointer:pb.TxIn.amount)
 }
-inline ::std::string* TxInput::mutable_amount() {
+inline ::std::string* TxIn::mutable_amount() {
   
-  // @@protoc_insertion_point(field_mutable:pb.TxInput.amount)
+  // @@protoc_insertion_point(field_mutable:pb.TxIn.amount)
   return amount_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline ::std::string* TxInput::release_amount() {
-  // @@protoc_insertion_point(field_release:pb.TxInput.amount)
+inline ::std::string* TxIn::release_amount() {
+  // @@protoc_insertion_point(field_release:pb.TxIn.amount)
   
   return amount_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline void TxInput::set_allocated_amount(::std::string* amount) {
+inline void TxIn::set_allocated_amount(::std::string* amount) {
   if (amount != nullptr) {
     
   } else {
     
   }
   amount_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), amount);
-  // @@protoc_insertion_point(field_set_allocated:pb.TxInput.amount)
+  // @@protoc_insertion_point(field_set_allocated:pb.TxIn.amount)
 }
 
 // int64 frozen_height = 7;
-inline void TxInput::clear_frozen_height() {
+inline void TxIn::clear_frozen_height() {
   frozen_height_ = PROTOBUF_LONGLONG(0);
 }
-inline ::google::protobuf::int64 TxInput::frozen_height() const {
-  // @@protoc_insertion_point(field_get:pb.TxInput.frozen_height)
+inline ::google::protobuf::int64 TxIn::frozen_height() const {
+  // @@protoc_insertion_point(field_get:pb.TxIn.frozen_height)
   return frozen_height_;
 }
-inline void TxInput::set_frozen_height(::google::protobuf::int64 value) {
+inline void TxIn::set_frozen_height(::google::protobuf::int64 value) {
   
   frozen_height_ = value;
-  // @@protoc_insertion_point(field_set:pb.TxInput.frozen_height)
+  // @@protoc_insertion_point(field_set:pb.TxIn.frozen_height)
 }
 
 // -------------------------------------------------------------------
 
-// TxOutput
+// TxOut
 
 // bytes amount = 1;
-inline void TxOutput::clear_amount() {
+inline void TxOut::clear_amount() {
   amount_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline const ::std::string& TxOutput::amount() const {
-  // @@protoc_insertion_point(field_get:pb.TxOutput.amount)
+inline const ::std::string& TxOut::amount() const {
+  // @@protoc_insertion_point(field_get:pb.TxOut.amount)
   return amount_.GetNoArena();
 }
-inline void TxOutput::set_amount(const ::std::string& value) {
+inline void TxOut::set_amount(const ::std::string& value) {
   
   amount_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:pb.TxOutput.amount)
+  // @@protoc_insertion_point(field_set:pb.TxOut.amount)
 }
 #if LANG_CXX11
-inline void TxOutput::set_amount(::std::string&& value) {
+inline void TxOut::set_amount(::std::string&& value) {
   
   amount_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:pb.TxOutput.amount)
+  // @@protoc_insertion_point(field_set_rvalue:pb.TxOut.amount)
 }
 #endif
-inline void TxOutput::set_amount(const char* value) {
+inline void TxOut::set_amount(const char* value) {
   GOOGLE_DCHECK(value != nullptr);
   
   amount_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:pb.TxOutput.amount)
+  // @@protoc_insertion_point(field_set_char:pb.TxOut.amount)
 }
-inline void TxOutput::set_amount(const void* value, size_t size) {
+inline void TxOut::set_amount(const void* value, size_t size) {
   
   amount_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:pb.TxOutput.amount)
+  // @@protoc_insertion_point(field_set_pointer:pb.TxOut.amount)
 }
-inline ::std::string* TxOutput::mutable_amount() {
+inline ::std::string* TxOut::mutable_amount() {
   
-  // @@protoc_insertion_point(field_mutable:pb.TxOutput.amount)
+  // @@protoc_insertion_point(field_mutable:pb.TxOut.amount)
   return amount_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline ::std::string* TxOutput::release_amount() {
-  // @@protoc_insertion_point(field_release:pb.TxOutput.amount)
+inline ::std::string* TxOut::release_amount() {
+  // @@protoc_insertion_point(field_release:pb.TxOut.amount)
   
   return amount_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline void TxOutput::set_allocated_amount(::std::string* amount) {
+inline void TxOut::set_allocated_amount(::std::string* amount) {
   if (amount != nullptr) {
     
   } else {
     
   }
   amount_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), amount);
-  // @@protoc_insertion_point(field_set_allocated:pb.TxOutput.amount)
+  // @@protoc_insertion_point(field_set_allocated:pb.TxOut.amount)
 }
 
 // bytes to_addr = 2;
-inline void TxOutput::clear_to_addr() {
+inline void TxOut::clear_to_addr() {
   to_addr_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline const ::std::string& TxOutput::to_addr() const {
-  // @@protoc_insertion_point(field_get:pb.TxOutput.to_addr)
+inline const ::std::string& TxOut::to_addr() const {
+  // @@protoc_insertion_point(field_get:pb.TxOut.to_addr)
   return to_addr_.GetNoArena();
 }
-inline void TxOutput::set_to_addr(const ::std::string& value) {
+inline void TxOut::set_to_addr(const ::std::string& value) {
   
   to_addr_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:pb.TxOutput.to_addr)
+  // @@protoc_insertion_point(field_set:pb.TxOut.to_addr)
 }
 #if LANG_CXX11
-inline void TxOutput::set_to_addr(::std::string&& value) {
+inline void TxOut::set_to_addr(::std::string&& value) {
   
   to_addr_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:pb.TxOutput.to_addr)
+  // @@protoc_insertion_point(field_set_rvalue:pb.TxOut.to_addr)
 }
 #endif
-inline void TxOutput::set_to_addr(const char* value) {
+inline void TxOut::set_to_addr(const char* value) {
   GOOGLE_DCHECK(value != nullptr);
   
   to_addr_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:pb.TxOutput.to_addr)
+  // @@protoc_insertion_point(field_set_char:pb.TxOut.to_addr)
 }
-inline void TxOutput::set_to_addr(const void* value, size_t size) {
+inline void TxOut::set_to_addr(const void* value, size_t size) {
   
   to_addr_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:pb.TxOutput.to_addr)
+  // @@protoc_insertion_point(field_set_pointer:pb.TxOut.to_addr)
 }
-inline ::std::string* TxOutput::mutable_to_addr() {
+inline ::std::string* TxOut::mutable_to_addr() {
   
-  // @@protoc_insertion_point(field_mutable:pb.TxOutput.to_addr)
+  // @@protoc_insertion_point(field_mutable:pb.TxOut.to_addr)
   return to_addr_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline ::std::string* TxOutput::release_to_addr() {
-  // @@protoc_insertion_point(field_release:pb.TxOutput.to_addr)
+inline ::std::string* TxOut::release_to_addr() {
+  // @@protoc_insertion_point(field_release:pb.TxOut.to_addr)
   
   return to_addr_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline void TxOutput::set_allocated_to_addr(::std::string* to_addr) {
+inline void TxOut::set_allocated_to_addr(::std::string* to_addr) {
   if (to_addr != nullptr) {
     
   } else {
     
   }
   to_addr_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), to_addr);
-  // @@protoc_insertion_point(field_set_allocated:pb.TxOutput.to_addr)
+  // @@protoc_insertion_point(field_set_allocated:pb.TxOut.to_addr)
 }
 
 // int64 frozen_height = 4;
-inline void TxOutput::clear_frozen_height() {
+inline void TxOut::clear_frozen_height() {
   frozen_height_ = PROTOBUF_LONGLONG(0);
 }
-inline ::google::protobuf::int64 TxOutput::frozen_height() const {
-  // @@protoc_insertion_point(field_get:pb.TxOutput.frozen_height)
+inline ::google::protobuf::int64 TxOut::frozen_height() const {
+  // @@protoc_insertion_point(field_get:pb.TxOut.frozen_height)
   return frozen_height_;
 }
-inline void TxOutput::set_frozen_height(::google::protobuf::int64 value) {
+inline void TxOut::set_frozen_height(::google::protobuf::int64 value) {
   
   frozen_height_ = value;
-  // @@protoc_insertion_point(field_set:pb.TxOutput.frozen_height)
+  // @@protoc_insertion_point(field_set:pb.TxOut.frozen_height)
 }
 
 // -------------------------------------------------------------------
 
-// Transaction
+// TransactionSDK
 
 // bytes txid = 1;
-inline void Transaction::clear_txid() {
+inline void TransactionSDK::clear_txid() {
   txid_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline const ::std::string& Transaction::txid() const {
-  // @@protoc_insertion_point(field_get:pb.Transaction.txid)
+inline const ::std::string& TransactionSDK::txid() const {
+  // @@protoc_insertion_point(field_get:pb.TransactionSDK.txid)
   return txid_.GetNoArena();
 }
-inline void Transaction::set_txid(const ::std::string& value) {
+inline void TransactionSDK::set_txid(const ::std::string& value) {
   
   txid_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:pb.Transaction.txid)
+  // @@protoc_insertion_point(field_set:pb.TransactionSDK.txid)
 }
 #if LANG_CXX11
-inline void Transaction::set_txid(::std::string&& value) {
+inline void TransactionSDK::set_txid(::std::string&& value) {
   
   txid_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:pb.Transaction.txid)
+  // @@protoc_insertion_point(field_set_rvalue:pb.TransactionSDK.txid)
 }
 #endif
-inline void Transaction::set_txid(const char* value) {
+inline void TransactionSDK::set_txid(const char* value) {
   GOOGLE_DCHECK(value != nullptr);
   
   txid_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:pb.Transaction.txid)
+  // @@protoc_insertion_point(field_set_char:pb.TransactionSDK.txid)
 }
-inline void Transaction::set_txid(const void* value, size_t size) {
+inline void TransactionSDK::set_txid(const void* value, size_t size) {
   
   txid_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:pb.Transaction.txid)
+  // @@protoc_insertion_point(field_set_pointer:pb.TransactionSDK.txid)
 }
-inline ::std::string* Transaction::mutable_txid() {
+inline ::std::string* TransactionSDK::mutable_txid() {
   
-  // @@protoc_insertion_point(field_mutable:pb.Transaction.txid)
+  // @@protoc_insertion_point(field_mutable:pb.TransactionSDK.txid)
   return txid_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline ::std::string* Transaction::release_txid() {
-  // @@protoc_insertion_point(field_release:pb.Transaction.txid)
+inline ::std::string* TransactionSDK::release_txid() {
+  // @@protoc_insertion_point(field_release:pb.TransactionSDK.txid)
   
   return txid_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline void Transaction::set_allocated_txid(::std::string* txid) {
+inline void TransactionSDK::set_allocated_txid(::std::string* txid) {
   if (txid != nullptr) {
     
   } else {
     
   }
   txid_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), txid);
-  // @@protoc_insertion_point(field_set_allocated:pb.Transaction.txid)
+  // @@protoc_insertion_point(field_set_allocated:pb.TransactionSDK.txid)
 }
 
 // bytes blockid = 2;
-inline void Transaction::clear_blockid() {
+inline void TransactionSDK::clear_blockid() {
   blockid_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline const ::std::string& Transaction::blockid() const {
-  // @@protoc_insertion_point(field_get:pb.Transaction.blockid)
+inline const ::std::string& TransactionSDK::blockid() const {
+  // @@protoc_insertion_point(field_get:pb.TransactionSDK.blockid)
   return blockid_.GetNoArena();
 }
-inline void Transaction::set_blockid(const ::std::string& value) {
+inline void TransactionSDK::set_blockid(const ::std::string& value) {
   
   blockid_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:pb.Transaction.blockid)
+  // @@protoc_insertion_point(field_set:pb.TransactionSDK.blockid)
 }
 #if LANG_CXX11
-inline void Transaction::set_blockid(::std::string&& value) {
+inline void TransactionSDK::set_blockid(::std::string&& value) {
   
   blockid_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:pb.Transaction.blockid)
+  // @@protoc_insertion_point(field_set_rvalue:pb.TransactionSDK.blockid)
 }
 #endif
-inline void Transaction::set_blockid(const char* value) {
+inline void TransactionSDK::set_blockid(const char* value) {
   GOOGLE_DCHECK(value != nullptr);
   
   blockid_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:pb.Transaction.blockid)
+  // @@protoc_insertion_point(field_set_char:pb.TransactionSDK.blockid)
 }
-inline void Transaction::set_blockid(const void* value, size_t size) {
+inline void TransactionSDK::set_blockid(const void* value, size_t size) {
   
   blockid_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:pb.Transaction.blockid)
+  // @@protoc_insertion_point(field_set_pointer:pb.TransactionSDK.blockid)
 }
-inline ::std::string* Transaction::mutable_blockid() {
+inline ::std::string* TransactionSDK::mutable_blockid() {
   
-  // @@protoc_insertion_point(field_mutable:pb.Transaction.blockid)
+  // @@protoc_insertion_point(field_mutable:pb.TransactionSDK.blockid)
   return blockid_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline ::std::string* Transaction::release_blockid() {
-  // @@protoc_insertion_point(field_release:pb.Transaction.blockid)
+inline ::std::string* TransactionSDK::release_blockid() {
+  // @@protoc_insertion_point(field_release:pb.TransactionSDK.blockid)
   
   return blockid_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline void Transaction::set_allocated_blockid(::std::string* blockid) {
+inline void TransactionSDK::set_allocated_blockid(::std::string* blockid) {
   if (blockid != nullptr) {
     
   } else {
     
   }
   blockid_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), blockid);
-  // @@protoc_insertion_point(field_set_allocated:pb.Transaction.blockid)
+  // @@protoc_insertion_point(field_set_allocated:pb.TransactionSDK.blockid)
 }
 
-// repeated .pb.TxInput tx_inputs = 3;
-inline int Transaction::tx_inputs_size() const {
+// repeated .pb.TxIn tx_inputs = 3;
+inline int TransactionSDK::tx_inputs_size() const {
   return tx_inputs_.size();
 }
-inline void Transaction::clear_tx_inputs() {
+inline void TransactionSDK::clear_tx_inputs() {
   tx_inputs_.Clear();
 }
-inline ::pb::TxInput* Transaction::mutable_tx_inputs(int index) {
-  // @@protoc_insertion_point(field_mutable:pb.Transaction.tx_inputs)
+inline ::pb::TxIn* TransactionSDK::mutable_tx_inputs(int index) {
+  // @@protoc_insertion_point(field_mutable:pb.TransactionSDK.tx_inputs)
   return tx_inputs_.Mutable(index);
 }
-inline ::google::protobuf::RepeatedPtrField< ::pb::TxInput >*
-Transaction::mutable_tx_inputs() {
-  // @@protoc_insertion_point(field_mutable_list:pb.Transaction.tx_inputs)
+inline ::google::protobuf::RepeatedPtrField< ::pb::TxIn >*
+TransactionSDK::mutable_tx_inputs() {
+  // @@protoc_insertion_point(field_mutable_list:pb.TransactionSDK.tx_inputs)
   return &tx_inputs_;
 }
-inline const ::pb::TxInput& Transaction::tx_inputs(int index) const {
-  // @@protoc_insertion_point(field_get:pb.Transaction.tx_inputs)
+inline const ::pb::TxIn& TransactionSDK::tx_inputs(int index) const {
+  // @@protoc_insertion_point(field_get:pb.TransactionSDK.tx_inputs)
   return tx_inputs_.Get(index);
 }
-inline ::pb::TxInput* Transaction::add_tx_inputs() {
-  // @@protoc_insertion_point(field_add:pb.Transaction.tx_inputs)
+inline ::pb::TxIn* TransactionSDK::add_tx_inputs() {
+  // @@protoc_insertion_point(field_add:pb.TransactionSDK.tx_inputs)
   return tx_inputs_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::pb::TxInput >&
-Transaction::tx_inputs() const {
-  // @@protoc_insertion_point(field_list:pb.Transaction.tx_inputs)
+inline const ::google::protobuf::RepeatedPtrField< ::pb::TxIn >&
+TransactionSDK::tx_inputs() const {
+  // @@protoc_insertion_point(field_list:pb.TransactionSDK.tx_inputs)
   return tx_inputs_;
 }
 
-// repeated .pb.TxOutput tx_outputs = 4;
-inline int Transaction::tx_outputs_size() const {
+// repeated .pb.TxOut tx_outputs = 4;
+inline int TransactionSDK::tx_outputs_size() const {
   return tx_outputs_.size();
 }
-inline void Transaction::clear_tx_outputs() {
+inline void TransactionSDK::clear_tx_outputs() {
   tx_outputs_.Clear();
 }
-inline ::pb::TxOutput* Transaction::mutable_tx_outputs(int index) {
-  // @@protoc_insertion_point(field_mutable:pb.Transaction.tx_outputs)
+inline ::pb::TxOut* TransactionSDK::mutable_tx_outputs(int index) {
+  // @@protoc_insertion_point(field_mutable:pb.TransactionSDK.tx_outputs)
   return tx_outputs_.Mutable(index);
 }
-inline ::google::protobuf::RepeatedPtrField< ::pb::TxOutput >*
-Transaction::mutable_tx_outputs() {
-  // @@protoc_insertion_point(field_mutable_list:pb.Transaction.tx_outputs)
+inline ::google::protobuf::RepeatedPtrField< ::pb::TxOut >*
+TransactionSDK::mutable_tx_outputs() {
+  // @@protoc_insertion_point(field_mutable_list:pb.TransactionSDK.tx_outputs)
   return &tx_outputs_;
 }
-inline const ::pb::TxOutput& Transaction::tx_outputs(int index) const {
-  // @@protoc_insertion_point(field_get:pb.Transaction.tx_outputs)
+inline const ::pb::TxOut& TransactionSDK::tx_outputs(int index) const {
+  // @@protoc_insertion_point(field_get:pb.TransactionSDK.tx_outputs)
   return tx_outputs_.Get(index);
 }
-inline ::pb::TxOutput* Transaction::add_tx_outputs() {
-  // @@protoc_insertion_point(field_add:pb.Transaction.tx_outputs)
+inline ::pb::TxOut* TransactionSDK::add_tx_outputs() {
+  // @@protoc_insertion_point(field_add:pb.TransactionSDK.tx_outputs)
   return tx_outputs_.Add();
 }
-inline const ::google::protobuf::RepeatedPtrField< ::pb::TxOutput >&
-Transaction::tx_outputs() const {
-  // @@protoc_insertion_point(field_list:pb.Transaction.tx_outputs)
+inline const ::google::protobuf::RepeatedPtrField< ::pb::TxOut >&
+TransactionSDK::tx_outputs() const {
+  // @@protoc_insertion_point(field_list:pb.TransactionSDK.tx_outputs)
   return tx_outputs_;
 }
 
 // bytes desc = 6;
-inline void Transaction::clear_desc() {
+inline void TransactionSDK::clear_desc() {
   desc_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline const ::std::string& Transaction::desc() const {
-  // @@protoc_insertion_point(field_get:pb.Transaction.desc)
+inline const ::std::string& TransactionSDK::desc() const {
+  // @@protoc_insertion_point(field_get:pb.TransactionSDK.desc)
   return desc_.GetNoArena();
 }
-inline void Transaction::set_desc(const ::std::string& value) {
+inline void TransactionSDK::set_desc(const ::std::string& value) {
   
   desc_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:pb.Transaction.desc)
+  // @@protoc_insertion_point(field_set:pb.TransactionSDK.desc)
 }
 #if LANG_CXX11
-inline void Transaction::set_desc(::std::string&& value) {
+inline void TransactionSDK::set_desc(::std::string&& value) {
   
   desc_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:pb.Transaction.desc)
+  // @@protoc_insertion_point(field_set_rvalue:pb.TransactionSDK.desc)
 }
 #endif
-inline void Transaction::set_desc(const char* value) {
+inline void TransactionSDK::set_desc(const char* value) {
   GOOGLE_DCHECK(value != nullptr);
   
   desc_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:pb.Transaction.desc)
+  // @@protoc_insertion_point(field_set_char:pb.TransactionSDK.desc)
 }
-inline void Transaction::set_desc(const void* value, size_t size) {
+inline void TransactionSDK::set_desc(const void* value, size_t size) {
   
   desc_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:pb.Transaction.desc)
+  // @@protoc_insertion_point(field_set_pointer:pb.TransactionSDK.desc)
 }
-inline ::std::string* Transaction::mutable_desc() {
+inline ::std::string* TransactionSDK::mutable_desc() {
   
-  // @@protoc_insertion_point(field_mutable:pb.Transaction.desc)
+  // @@protoc_insertion_point(field_mutable:pb.TransactionSDK.desc)
   return desc_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline ::std::string* Transaction::release_desc() {
-  // @@protoc_insertion_point(field_release:pb.Transaction.desc)
+inline ::std::string* TransactionSDK::release_desc() {
+  // @@protoc_insertion_point(field_release:pb.TransactionSDK.desc)
   
   return desc_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline void Transaction::set_allocated_desc(::std::string* desc) {
+inline void TransactionSDK::set_allocated_desc(::std::string* desc) {
   if (desc != nullptr) {
     
   } else {
     
   }
   desc_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), desc);
-  // @@protoc_insertion_point(field_set_allocated:pb.Transaction.desc)
+  // @@protoc_insertion_point(field_set_allocated:pb.TransactionSDK.desc)
 }
 
 // string initiator = 26;
-inline void Transaction::clear_initiator() {
+inline void TransactionSDK::clear_initiator() {
   initiator_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline const ::std::string& Transaction::initiator() const {
-  // @@protoc_insertion_point(field_get:pb.Transaction.initiator)
+inline const ::std::string& TransactionSDK::initiator() const {
+  // @@protoc_insertion_point(field_get:pb.TransactionSDK.initiator)
   return initiator_.GetNoArena();
 }
-inline void Transaction::set_initiator(const ::std::string& value) {
+inline void TransactionSDK::set_initiator(const ::std::string& value) {
   
   initiator_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:pb.Transaction.initiator)
+  // @@protoc_insertion_point(field_set:pb.TransactionSDK.initiator)
 }
 #if LANG_CXX11
-inline void Transaction::set_initiator(::std::string&& value) {
+inline void TransactionSDK::set_initiator(::std::string&& value) {
   
   initiator_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:pb.Transaction.initiator)
+  // @@protoc_insertion_point(field_set_rvalue:pb.TransactionSDK.initiator)
 }
 #endif
-inline void Transaction::set_initiator(const char* value) {
+inline void TransactionSDK::set_initiator(const char* value) {
   GOOGLE_DCHECK(value != nullptr);
   
   initiator_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:pb.Transaction.initiator)
+  // @@protoc_insertion_point(field_set_char:pb.TransactionSDK.initiator)
 }
-inline void Transaction::set_initiator(const char* value, size_t size) {
+inline void TransactionSDK::set_initiator(const char* value, size_t size) {
   
   initiator_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:pb.Transaction.initiator)
+  // @@protoc_insertion_point(field_set_pointer:pb.TransactionSDK.initiator)
 }
-inline ::std::string* Transaction::mutable_initiator() {
+inline ::std::string* TransactionSDK::mutable_initiator() {
   
-  // @@protoc_insertion_point(field_mutable:pb.Transaction.initiator)
+  // @@protoc_insertion_point(field_mutable:pb.TransactionSDK.initiator)
   return initiator_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline ::std::string* Transaction::release_initiator() {
-  // @@protoc_insertion_point(field_release:pb.Transaction.initiator)
+inline ::std::string* TransactionSDK::release_initiator() {
+  // @@protoc_insertion_point(field_release:pb.TransactionSDK.initiator)
   
   return initiator_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline void Transaction::set_allocated_initiator(::std::string* initiator) {
+inline void TransactionSDK::set_allocated_initiator(::std::string* initiator) {
   if (initiator != nullptr) {
     
   } else {
     
   }
   initiator_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), initiator);
-  // @@protoc_insertion_point(field_set_allocated:pb.Transaction.initiator)
+  // @@protoc_insertion_point(field_set_allocated:pb.TransactionSDK.initiator)
 }
 
 // repeated string auth_require = 27;
-inline int Transaction::auth_require_size() const {
+inline int TransactionSDK::auth_require_size() const {
   return auth_require_.size();
 }
-inline void Transaction::clear_auth_require() {
+inline void TransactionSDK::clear_auth_require() {
   auth_require_.Clear();
 }
-inline const ::std::string& Transaction::auth_require(int index) const {
-  // @@protoc_insertion_point(field_get:pb.Transaction.auth_require)
+inline const ::std::string& TransactionSDK::auth_require(int index) const {
+  // @@protoc_insertion_point(field_get:pb.TransactionSDK.auth_require)
   return auth_require_.Get(index);
 }
-inline ::std::string* Transaction::mutable_auth_require(int index) {
-  // @@protoc_insertion_point(field_mutable:pb.Transaction.auth_require)
+inline ::std::string* TransactionSDK::mutable_auth_require(int index) {
+  // @@protoc_insertion_point(field_mutable:pb.TransactionSDK.auth_require)
   return auth_require_.Mutable(index);
 }
-inline void Transaction::set_auth_require(int index, const ::std::string& value) {
-  // @@protoc_insertion_point(field_set:pb.Transaction.auth_require)
+inline void TransactionSDK::set_auth_require(int index, const ::std::string& value) {
+  // @@protoc_insertion_point(field_set:pb.TransactionSDK.auth_require)
   auth_require_.Mutable(index)->assign(value);
 }
 #if LANG_CXX11
-inline void Transaction::set_auth_require(int index, ::std::string&& value) {
-  // @@protoc_insertion_point(field_set:pb.Transaction.auth_require)
+inline void TransactionSDK::set_auth_require(int index, ::std::string&& value) {
+  // @@protoc_insertion_point(field_set:pb.TransactionSDK.auth_require)
   auth_require_.Mutable(index)->assign(std::move(value));
 }
 #endif
-inline void Transaction::set_auth_require(int index, const char* value) {
+inline void TransactionSDK::set_auth_require(int index, const char* value) {
   GOOGLE_DCHECK(value != nullptr);
   auth_require_.Mutable(index)->assign(value);
-  // @@protoc_insertion_point(field_set_char:pb.Transaction.auth_require)
+  // @@protoc_insertion_point(field_set_char:pb.TransactionSDK.auth_require)
 }
-inline void Transaction::set_auth_require(int index, const char* value, size_t size) {
+inline void TransactionSDK::set_auth_require(int index, const char* value, size_t size) {
   auth_require_.Mutable(index)->assign(
     reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_set_pointer:pb.Transaction.auth_require)
+  // @@protoc_insertion_point(field_set_pointer:pb.TransactionSDK.auth_require)
 }
-inline ::std::string* Transaction::add_auth_require() {
-  // @@protoc_insertion_point(field_add_mutable:pb.Transaction.auth_require)
+inline ::std::string* TransactionSDK::add_auth_require() {
+  // @@protoc_insertion_point(field_add_mutable:pb.TransactionSDK.auth_require)
   return auth_require_.Add();
 }
-inline void Transaction::add_auth_require(const ::std::string& value) {
+inline void TransactionSDK::add_auth_require(const ::std::string& value) {
   auth_require_.Add()->assign(value);
-  // @@protoc_insertion_point(field_add:pb.Transaction.auth_require)
+  // @@protoc_insertion_point(field_add:pb.TransactionSDK.auth_require)
 }
 #if LANG_CXX11
-inline void Transaction::add_auth_require(::std::string&& value) {
+inline void TransactionSDK::add_auth_require(::std::string&& value) {
   auth_require_.Add(std::move(value));
-  // @@protoc_insertion_point(field_add:pb.Transaction.auth_require)
+  // @@protoc_insertion_point(field_add:pb.TransactionSDK.auth_require)
 }
 #endif
-inline void Transaction::add_auth_require(const char* value) {
+inline void TransactionSDK::add_auth_require(const char* value) {
   GOOGLE_DCHECK(value != nullptr);
   auth_require_.Add()->assign(value);
-  // @@protoc_insertion_point(field_add_char:pb.Transaction.auth_require)
+  // @@protoc_insertion_point(field_add_char:pb.TransactionSDK.auth_require)
 }
-inline void Transaction::add_auth_require(const char* value, size_t size) {
+inline void TransactionSDK::add_auth_require(const char* value, size_t size) {
   auth_require_.Add()->assign(reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_add_pointer:pb.Transaction.auth_require)
+  // @@protoc_insertion_point(field_add_pointer:pb.TransactionSDK.auth_require)
 }
 inline const ::google::protobuf::RepeatedPtrField<::std::string>&
-Transaction::auth_require() const {
-  // @@protoc_insertion_point(field_list:pb.Transaction.auth_require)
+TransactionSDK::auth_require() const {
+  // @@protoc_insertion_point(field_list:pb.TransactionSDK.auth_require)
   return auth_require_;
 }
 inline ::google::protobuf::RepeatedPtrField<::std::string>*
-Transaction::mutable_auth_require() {
-  // @@protoc_insertion_point(field_mutable_list:pb.Transaction.auth_require)
+TransactionSDK::mutable_auth_require() {
+  // @@protoc_insertion_point(field_mutable_list:pb.TransactionSDK.auth_require)
   return &auth_require_;
 }
 
 // -------------------------------------------------------------------
 
-// Block
+// BlockSDK
 
 // bytes blockid = 3;
-inline void Block::clear_blockid() {
+inline void BlockSDK::clear_blockid() {
   blockid_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline const ::std::string& Block::blockid() const {
-  // @@protoc_insertion_point(field_get:pb.Block.blockid)
+inline const ::std::string& BlockSDK::blockid() const {
+  // @@protoc_insertion_point(field_get:pb.BlockSDK.blockid)
   return blockid_.GetNoArena();
 }
-inline void Block::set_blockid(const ::std::string& value) {
+inline void BlockSDK::set_blockid(const ::std::string& value) {
   
   blockid_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:pb.Block.blockid)
+  // @@protoc_insertion_point(field_set:pb.BlockSDK.blockid)
 }
 #if LANG_CXX11
-inline void Block::set_blockid(::std::string&& value) {
+inline void BlockSDK::set_blockid(::std::string&& value) {
   
   blockid_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:pb.Block.blockid)
+  // @@protoc_insertion_point(field_set_rvalue:pb.BlockSDK.blockid)
 }
 #endif
-inline void Block::set_blockid(const char* value) {
+inline void BlockSDK::set_blockid(const char* value) {
   GOOGLE_DCHECK(value != nullptr);
   
   blockid_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:pb.Block.blockid)
+  // @@protoc_insertion_point(field_set_char:pb.BlockSDK.blockid)
 }
-inline void Block::set_blockid(const void* value, size_t size) {
+inline void BlockSDK::set_blockid(const void* value, size_t size) {
   
   blockid_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:pb.Block.blockid)
+  // @@protoc_insertion_point(field_set_pointer:pb.BlockSDK.blockid)
 }
-inline ::std::string* Block::mutable_blockid() {
+inline ::std::string* BlockSDK::mutable_blockid() {
   
-  // @@protoc_insertion_point(field_mutable:pb.Block.blockid)
+  // @@protoc_insertion_point(field_mutable:pb.BlockSDK.blockid)
   return blockid_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline ::std::string* Block::release_blockid() {
-  // @@protoc_insertion_point(field_release:pb.Block.blockid)
+inline ::std::string* BlockSDK::release_blockid() {
+  // @@protoc_insertion_point(field_release:pb.BlockSDK.blockid)
   
   return blockid_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline void Block::set_allocated_blockid(::std::string* blockid) {
+inline void BlockSDK::set_allocated_blockid(::std::string* blockid) {
   if (blockid != nullptr) {
     
   } else {
     
   }
   blockid_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), blockid);
-  // @@protoc_insertion_point(field_set_allocated:pb.Block.blockid)
+  // @@protoc_insertion_point(field_set_allocated:pb.BlockSDK.blockid)
 }
 
 // bytes pre_hash = 4;
-inline void Block::clear_pre_hash() {
+inline void BlockSDK::clear_pre_hash() {
   pre_hash_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline const ::std::string& Block::pre_hash() const {
-  // @@protoc_insertion_point(field_get:pb.Block.pre_hash)
+inline const ::std::string& BlockSDK::pre_hash() const {
+  // @@protoc_insertion_point(field_get:pb.BlockSDK.pre_hash)
   return pre_hash_.GetNoArena();
 }
-inline void Block::set_pre_hash(const ::std::string& value) {
+inline void BlockSDK::set_pre_hash(const ::std::string& value) {
   
   pre_hash_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:pb.Block.pre_hash)
+  // @@protoc_insertion_point(field_set:pb.BlockSDK.pre_hash)
 }
 #if LANG_CXX11
-inline void Block::set_pre_hash(::std::string&& value) {
+inline void BlockSDK::set_pre_hash(::std::string&& value) {
   
   pre_hash_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:pb.Block.pre_hash)
+  // @@protoc_insertion_point(field_set_rvalue:pb.BlockSDK.pre_hash)
 }
 #endif
-inline void Block::set_pre_hash(const char* value) {
+inline void BlockSDK::set_pre_hash(const char* value) {
   GOOGLE_DCHECK(value != nullptr);
   
   pre_hash_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:pb.Block.pre_hash)
+  // @@protoc_insertion_point(field_set_char:pb.BlockSDK.pre_hash)
 }
-inline void Block::set_pre_hash(const void* value, size_t size) {
+inline void BlockSDK::set_pre_hash(const void* value, size_t size) {
   
   pre_hash_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:pb.Block.pre_hash)
+  // @@protoc_insertion_point(field_set_pointer:pb.BlockSDK.pre_hash)
 }
-inline ::std::string* Block::mutable_pre_hash() {
+inline ::std::string* BlockSDK::mutable_pre_hash() {
   
-  // @@protoc_insertion_point(field_mutable:pb.Block.pre_hash)
+  // @@protoc_insertion_point(field_mutable:pb.BlockSDK.pre_hash)
   return pre_hash_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline ::std::string* Block::release_pre_hash() {
-  // @@protoc_insertion_point(field_release:pb.Block.pre_hash)
+inline ::std::string* BlockSDK::release_pre_hash() {
+  // @@protoc_insertion_point(field_release:pb.BlockSDK.pre_hash)
   
   return pre_hash_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline void Block::set_allocated_pre_hash(::std::string* pre_hash) {
+inline void BlockSDK::set_allocated_pre_hash(::std::string* pre_hash) {
   if (pre_hash != nullptr) {
     
   } else {
     
   }
   pre_hash_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), pre_hash);
-  // @@protoc_insertion_point(field_set_allocated:pb.Block.pre_hash)
+  // @@protoc_insertion_point(field_set_allocated:pb.BlockSDK.pre_hash)
 }
 
 // bytes proposer = 5;
-inline void Block::clear_proposer() {
+inline void BlockSDK::clear_proposer() {
   proposer_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline const ::std::string& Block::proposer() const {
-  // @@protoc_insertion_point(field_get:pb.Block.proposer)
+inline const ::std::string& BlockSDK::proposer() const {
+  // @@protoc_insertion_point(field_get:pb.BlockSDK.proposer)
   return proposer_.GetNoArena();
 }
-inline void Block::set_proposer(const ::std::string& value) {
+inline void BlockSDK::set_proposer(const ::std::string& value) {
   
   proposer_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:pb.Block.proposer)
+  // @@protoc_insertion_point(field_set:pb.BlockSDK.proposer)
 }
 #if LANG_CXX11
-inline void Block::set_proposer(::std::string&& value) {
+inline void BlockSDK::set_proposer(::std::string&& value) {
   
   proposer_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:pb.Block.proposer)
+  // @@protoc_insertion_point(field_set_rvalue:pb.BlockSDK.proposer)
 }
 #endif
-inline void Block::set_proposer(const char* value) {
+inline void BlockSDK::set_proposer(const char* value) {
   GOOGLE_DCHECK(value != nullptr);
   
   proposer_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:pb.Block.proposer)
+  // @@protoc_insertion_point(field_set_char:pb.BlockSDK.proposer)
 }
-inline void Block::set_proposer(const void* value, size_t size) {
+inline void BlockSDK::set_proposer(const void* value, size_t size) {
   
   proposer_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:pb.Block.proposer)
+  // @@protoc_insertion_point(field_set_pointer:pb.BlockSDK.proposer)
 }
-inline ::std::string* Block::mutable_proposer() {
+inline ::std::string* BlockSDK::mutable_proposer() {
   
-  // @@protoc_insertion_point(field_mutable:pb.Block.proposer)
+  // @@protoc_insertion_point(field_mutable:pb.BlockSDK.proposer)
   return proposer_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline ::std::string* Block::release_proposer() {
-  // @@protoc_insertion_point(field_release:pb.Block.proposer)
+inline ::std::string* BlockSDK::release_proposer() {
+  // @@protoc_insertion_point(field_release:pb.BlockSDK.proposer)
   
   return proposer_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline void Block::set_allocated_proposer(::std::string* proposer) {
+inline void BlockSDK::set_allocated_proposer(::std::string* proposer) {
   if (proposer != nullptr) {
     
   } else {
     
   }
   proposer_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), proposer);
-  // @@protoc_insertion_point(field_set_allocated:pb.Block.proposer)
+  // @@protoc_insertion_point(field_set_allocated:pb.BlockSDK.proposer)
 }
 
 // bytes sign = 6;
-inline void Block::clear_sign() {
+inline void BlockSDK::clear_sign() {
   sign_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline const ::std::string& Block::sign() const {
-  // @@protoc_insertion_point(field_get:pb.Block.sign)
+inline const ::std::string& BlockSDK::sign() const {
+  // @@protoc_insertion_point(field_get:pb.BlockSDK.sign)
   return sign_.GetNoArena();
 }
-inline void Block::set_sign(const ::std::string& value) {
+inline void BlockSDK::set_sign(const ::std::string& value) {
   
   sign_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:pb.Block.sign)
+  // @@protoc_insertion_point(field_set:pb.BlockSDK.sign)
 }
 #if LANG_CXX11
-inline void Block::set_sign(::std::string&& value) {
+inline void BlockSDK::set_sign(::std::string&& value) {
   
   sign_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:pb.Block.sign)
+  // @@protoc_insertion_point(field_set_rvalue:pb.BlockSDK.sign)
 }
 #endif
-inline void Block::set_sign(const char* value) {
+inline void BlockSDK::set_sign(const char* value) {
   GOOGLE_DCHECK(value != nullptr);
   
   sign_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:pb.Block.sign)
+  // @@protoc_insertion_point(field_set_char:pb.BlockSDK.sign)
 }
-inline void Block::set_sign(const void* value, size_t size) {
+inline void BlockSDK::set_sign(const void* value, size_t size) {
   
   sign_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:pb.Block.sign)
+  // @@protoc_insertion_point(field_set_pointer:pb.BlockSDK.sign)
 }
-inline ::std::string* Block::mutable_sign() {
+inline ::std::string* BlockSDK::mutable_sign() {
   
-  // @@protoc_insertion_point(field_mutable:pb.Block.sign)
+  // @@protoc_insertion_point(field_mutable:pb.BlockSDK.sign)
   return sign_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline ::std::string* Block::release_sign() {
-  // @@protoc_insertion_point(field_release:pb.Block.sign)
+inline ::std::string* BlockSDK::release_sign() {
+  // @@protoc_insertion_point(field_release:pb.BlockSDK.sign)
   
   return sign_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline void Block::set_allocated_sign(::std::string* sign) {
+inline void BlockSDK::set_allocated_sign(::std::string* sign) {
   if (sign != nullptr) {
     
   } else {
     
   }
   sign_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), sign);
-  // @@protoc_insertion_point(field_set_allocated:pb.Block.sign)
+  // @@protoc_insertion_point(field_set_allocated:pb.BlockSDK.sign)
 }
 
 // bytes pubkey = 7;
-inline void Block::clear_pubkey() {
+inline void BlockSDK::clear_pubkey() {
   pubkey_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline const ::std::string& Block::pubkey() const {
-  // @@protoc_insertion_point(field_get:pb.Block.pubkey)
+inline const ::std::string& BlockSDK::pubkey() const {
+  // @@protoc_insertion_point(field_get:pb.BlockSDK.pubkey)
   return pubkey_.GetNoArena();
 }
-inline void Block::set_pubkey(const ::std::string& value) {
+inline void BlockSDK::set_pubkey(const ::std::string& value) {
   
   pubkey_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:pb.Block.pubkey)
+  // @@protoc_insertion_point(field_set:pb.BlockSDK.pubkey)
 }
 #if LANG_CXX11
-inline void Block::set_pubkey(::std::string&& value) {
+inline void BlockSDK::set_pubkey(::std::string&& value) {
   
   pubkey_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:pb.Block.pubkey)
+  // @@protoc_insertion_point(field_set_rvalue:pb.BlockSDK.pubkey)
 }
 #endif
-inline void Block::set_pubkey(const char* value) {
+inline void BlockSDK::set_pubkey(const char* value) {
   GOOGLE_DCHECK(value != nullptr);
   
   pubkey_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:pb.Block.pubkey)
+  // @@protoc_insertion_point(field_set_char:pb.BlockSDK.pubkey)
 }
-inline void Block::set_pubkey(const void* value, size_t size) {
+inline void BlockSDK::set_pubkey(const void* value, size_t size) {
   
   pubkey_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:pb.Block.pubkey)
+  // @@protoc_insertion_point(field_set_pointer:pb.BlockSDK.pubkey)
 }
-inline ::std::string* Block::mutable_pubkey() {
+inline ::std::string* BlockSDK::mutable_pubkey() {
   
-  // @@protoc_insertion_point(field_mutable:pb.Block.pubkey)
+  // @@protoc_insertion_point(field_mutable:pb.BlockSDK.pubkey)
   return pubkey_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline ::std::string* Block::release_pubkey() {
-  // @@protoc_insertion_point(field_release:pb.Block.pubkey)
+inline ::std::string* BlockSDK::release_pubkey() {
+  // @@protoc_insertion_point(field_release:pb.BlockSDK.pubkey)
   
   return pubkey_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline void Block::set_allocated_pubkey(::std::string* pubkey) {
+inline void BlockSDK::set_allocated_pubkey(::std::string* pubkey) {
   if (pubkey != nullptr) {
     
   } else {
     
   }
   pubkey_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), pubkey);
-  // @@protoc_insertion_point(field_set_allocated:pb.Block.pubkey)
+  // @@protoc_insertion_point(field_set_allocated:pb.BlockSDK.pubkey)
 }
 
 // int64 height = 9;
-inline void Block::clear_height() {
+inline void BlockSDK::clear_height() {
   height_ = PROTOBUF_LONGLONG(0);
 }
-inline ::google::protobuf::int64 Block::height() const {
-  // @@protoc_insertion_point(field_get:pb.Block.height)
+inline ::google::protobuf::int64 BlockSDK::height() const {
+  // @@protoc_insertion_point(field_get:pb.BlockSDK.height)
   return height_;
 }
-inline void Block::set_height(::google::protobuf::int64 value) {
+inline void BlockSDK::set_height(::google::protobuf::int64 value) {
   
   height_ = value;
-  // @@protoc_insertion_point(field_set:pb.Block.height)
+  // @@protoc_insertion_point(field_set:pb.BlockSDK.height)
 }
 
 // repeated string txids = 11;
-inline int Block::txids_size() const {
+inline int BlockSDK::txids_size() const {
   return txids_.size();
 }
-inline void Block::clear_txids() {
+inline void BlockSDK::clear_txids() {
   txids_.Clear();
 }
-inline const ::std::string& Block::txids(int index) const {
-  // @@protoc_insertion_point(field_get:pb.Block.txids)
+inline const ::std::string& BlockSDK::txids(int index) const {
+  // @@protoc_insertion_point(field_get:pb.BlockSDK.txids)
   return txids_.Get(index);
 }
-inline ::std::string* Block::mutable_txids(int index) {
-  // @@protoc_insertion_point(field_mutable:pb.Block.txids)
+inline ::std::string* BlockSDK::mutable_txids(int index) {
+  // @@protoc_insertion_point(field_mutable:pb.BlockSDK.txids)
   return txids_.Mutable(index);
 }
-inline void Block::set_txids(int index, const ::std::string& value) {
-  // @@protoc_insertion_point(field_set:pb.Block.txids)
+inline void BlockSDK::set_txids(int index, const ::std::string& value) {
+  // @@protoc_insertion_point(field_set:pb.BlockSDK.txids)
   txids_.Mutable(index)->assign(value);
 }
 #if LANG_CXX11
-inline void Block::set_txids(int index, ::std::string&& value) {
-  // @@protoc_insertion_point(field_set:pb.Block.txids)
+inline void BlockSDK::set_txids(int index, ::std::string&& value) {
+  // @@protoc_insertion_point(field_set:pb.BlockSDK.txids)
   txids_.Mutable(index)->assign(std::move(value));
 }
 #endif
-inline void Block::set_txids(int index, const char* value) {
+inline void BlockSDK::set_txids(int index, const char* value) {
   GOOGLE_DCHECK(value != nullptr);
   txids_.Mutable(index)->assign(value);
-  // @@protoc_insertion_point(field_set_char:pb.Block.txids)
+  // @@protoc_insertion_point(field_set_char:pb.BlockSDK.txids)
 }
-inline void Block::set_txids(int index, const char* value, size_t size) {
+inline void BlockSDK::set_txids(int index, const char* value, size_t size) {
   txids_.Mutable(index)->assign(
     reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_set_pointer:pb.Block.txids)
+  // @@protoc_insertion_point(field_set_pointer:pb.BlockSDK.txids)
 }
-inline ::std::string* Block::add_txids() {
-  // @@protoc_insertion_point(field_add_mutable:pb.Block.txids)
+inline ::std::string* BlockSDK::add_txids() {
+  // @@protoc_insertion_point(field_add_mutable:pb.BlockSDK.txids)
   return txids_.Add();
 }
-inline void Block::add_txids(const ::std::string& value) {
+inline void BlockSDK::add_txids(const ::std::string& value) {
   txids_.Add()->assign(value);
-  // @@protoc_insertion_point(field_add:pb.Block.txids)
+  // @@protoc_insertion_point(field_add:pb.BlockSDK.txids)
 }
 #if LANG_CXX11
-inline void Block::add_txids(::std::string&& value) {
+inline void BlockSDK::add_txids(::std::string&& value) {
   txids_.Add(std::move(value));
-  // @@protoc_insertion_point(field_add:pb.Block.txids)
+  // @@protoc_insertion_point(field_add:pb.BlockSDK.txids)
 }
 #endif
-inline void Block::add_txids(const char* value) {
+inline void BlockSDK::add_txids(const char* value) {
   GOOGLE_DCHECK(value != nullptr);
   txids_.Add()->assign(value);
-  // @@protoc_insertion_point(field_add_char:pb.Block.txids)
+  // @@protoc_insertion_point(field_add_char:pb.BlockSDK.txids)
 }
-inline void Block::add_txids(const char* value, size_t size) {
+inline void BlockSDK::add_txids(const char* value, size_t size) {
   txids_.Add()->assign(reinterpret_cast<const char*>(value), size);
-  // @@protoc_insertion_point(field_add_pointer:pb.Block.txids)
+  // @@protoc_insertion_point(field_add_pointer:pb.BlockSDK.txids)
 }
 inline const ::google::protobuf::RepeatedPtrField<::std::string>&
-Block::txids() const {
-  // @@protoc_insertion_point(field_list:pb.Block.txids)
+BlockSDK::txids() const {
+  // @@protoc_insertion_point(field_list:pb.BlockSDK.txids)
   return txids_;
 }
 inline ::google::protobuf::RepeatedPtrField<::std::string>*
-Block::mutable_txids() {
-  // @@protoc_insertion_point(field_mutable_list:pb.Block.txids)
+BlockSDK::mutable_txids() {
+  // @@protoc_insertion_point(field_mutable_list:pb.BlockSDK.txids)
   return &txids_;
 }
 
 // int32 tx_count = 12;
-inline void Block::clear_tx_count() {
+inline void BlockSDK::clear_tx_count() {
   tx_count_ = 0;
 }
-inline ::google::protobuf::int32 Block::tx_count() const {
-  // @@protoc_insertion_point(field_get:pb.Block.tx_count)
+inline ::google::protobuf::int32 BlockSDK::tx_count() const {
+  // @@protoc_insertion_point(field_get:pb.BlockSDK.tx_count)
   return tx_count_;
 }
-inline void Block::set_tx_count(::google::protobuf::int32 value) {
+inline void BlockSDK::set_tx_count(::google::protobuf::int32 value) {
   
   tx_count_ = value;
-  // @@protoc_insertion_point(field_set:pb.Block.tx_count)
+  // @@protoc_insertion_point(field_set:pb.BlockSDK.tx_count)
 }
 
 // bool in_trunk = 14;
-inline void Block::clear_in_trunk() {
+inline void BlockSDK::clear_in_trunk() {
   in_trunk_ = false;
 }
-inline bool Block::in_trunk() const {
-  // @@protoc_insertion_point(field_get:pb.Block.in_trunk)
+inline bool BlockSDK::in_trunk() const {
+  // @@protoc_insertion_point(field_get:pb.BlockSDK.in_trunk)
   return in_trunk_;
 }
-inline void Block::set_in_trunk(bool value) {
+inline void BlockSDK::set_in_trunk(bool value) {
   
   in_trunk_ = value;
-  // @@protoc_insertion_point(field_set:pb.Block.in_trunk)
+  // @@protoc_insertion_point(field_set:pb.BlockSDK.in_trunk)
 }
 
 // bytes next_hash = 15;
-inline void Block::clear_next_hash() {
+inline void BlockSDK::clear_next_hash() {
   next_hash_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline const ::std::string& Block::next_hash() const {
-  // @@protoc_insertion_point(field_get:pb.Block.next_hash)
+inline const ::std::string& BlockSDK::next_hash() const {
+  // @@protoc_insertion_point(field_get:pb.BlockSDK.next_hash)
   return next_hash_.GetNoArena();
 }
-inline void Block::set_next_hash(const ::std::string& value) {
+inline void BlockSDK::set_next_hash(const ::std::string& value) {
   
   next_hash_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:pb.Block.next_hash)
+  // @@protoc_insertion_point(field_set:pb.BlockSDK.next_hash)
 }
 #if LANG_CXX11
-inline void Block::set_next_hash(::std::string&& value) {
+inline void BlockSDK::set_next_hash(::std::string&& value) {
   
   next_hash_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:pb.Block.next_hash)
+  // @@protoc_insertion_point(field_set_rvalue:pb.BlockSDK.next_hash)
 }
 #endif
-inline void Block::set_next_hash(const char* value) {
+inline void BlockSDK::set_next_hash(const char* value) {
   GOOGLE_DCHECK(value != nullptr);
   
   next_hash_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:pb.Block.next_hash)
+  // @@protoc_insertion_point(field_set_char:pb.BlockSDK.next_hash)
 }
-inline void Block::set_next_hash(const void* value, size_t size) {
+inline void BlockSDK::set_next_hash(const void* value, size_t size) {
   
   next_hash_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:pb.Block.next_hash)
+  // @@protoc_insertion_point(field_set_pointer:pb.BlockSDK.next_hash)
 }
-inline ::std::string* Block::mutable_next_hash() {
+inline ::std::string* BlockSDK::mutable_next_hash() {
   
-  // @@protoc_insertion_point(field_mutable:pb.Block.next_hash)
+  // @@protoc_insertion_point(field_mutable:pb.BlockSDK.next_hash)
   return next_hash_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline ::std::string* Block::release_next_hash() {
-  // @@protoc_insertion_point(field_release:pb.Block.next_hash)
+inline ::std::string* BlockSDK::release_next_hash() {
+  // @@protoc_insertion_point(field_release:pb.BlockSDK.next_hash)
   
   return next_hash_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline void Block::set_allocated_next_hash(::std::string* next_hash) {
+inline void BlockSDK::set_allocated_next_hash(::std::string* next_hash) {
   if (next_hash != nullptr) {
     
   } else {
     
   }
   next_hash_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), next_hash);
-  // @@protoc_insertion_point(field_set_allocated:pb.Block.next_hash)
+  // @@protoc_insertion_point(field_set_allocated:pb.BlockSDK.next_hash)
 }
 
 #ifdef __GNUC__

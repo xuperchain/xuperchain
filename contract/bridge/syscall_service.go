@@ -56,7 +56,7 @@ func (c *SyscallService) QueryBlock(ctx context.Context, in *pb.QueryBlockReques
 		txids = append(txids, hex.EncodeToString(t.Txid))
 	}
 
-	blocksdk := &pb.Block{
+	blocksdk := &pb.BlockSDK{
 		Blockid:  block.Blockid,
 		PreHash:  block.PreHash,
 		Proposer: block.Proposer,
@@ -220,34 +220,34 @@ func (c *SyscallService) SetOutput(ctx context.Context, in *pb.SetOutputRequest)
 	return new(pb.SetOutputResponse), nil
 }
 
-func ConvertTxToSDKTx(tx *xchainpb.Transaction) *pb.Transaction {
-	txInputs := []*pb.TxInput{}
+func ConvertTxToSDKTx(tx *xchainpb.Transaction) *pb.TransactionSDK {
+	txIns := []*pb.TxIn{}
 	for _, in := range tx.TxInputs {
-		txInput := &pb.TxInput{
+		txIn := &pb.TxIn{
 			RefTxid:      in.RefTxid,
 			RefOffset:    in.RefOffset,
 			FromAddr:     in.FromAddr,
 			Amount:       in.Amount,
 			FrozenHeight: in.FrozenHeight,
 		}
-		txInputs = append(txInputs, txInput)
+		txIns = append(txIns, txIn)
 	}
 
-	txOutputs := []*pb.TxOutput{}
+	txOuts := []*pb.TxOut{}
 	for _, out := range tx.TxOutputs {
-		txOutput := &pb.TxOutput{
+		txOut := &pb.TxOut{
 			Amount:       out.Amount,
 			ToAddr:       out.ToAddr,
 			FrozenHeight: out.FrozenHeight,
 		}
-		txOutputs = append(txOutputs, txOutput)
+		txOuts = append(txOuts, txOut)
 	}
 
-	txsdk := &pb.Transaction{
+	txsdk := &pb.TransactionSDK{
 		Txid:        tx.Txid,
 		Blockid:     tx.Blockid,
-		TxInputs:    txInputs,
-		TxOutputs:   txOutputs,
+		TxIns:       txIns,
+		TxOuts:      txOuts,
 		Desc:        tx.Desc,
 		Initiator:   tx.Initiator,
 		AuthRequire: tx.AuthRequire,

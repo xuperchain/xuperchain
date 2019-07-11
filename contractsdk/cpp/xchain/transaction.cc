@@ -6,7 +6,7 @@ Transaction::Transaction() {}
 
 Transaction::~Transaction() {}
 
-void Transaction::init(pb::Transaction pbtx) {
+void Transaction::init(pb::TransactionSDK pbtx) {
     txid = pbtx.txid();
     blockid = pbtx.blockid();
     desc = pbtx.desc();

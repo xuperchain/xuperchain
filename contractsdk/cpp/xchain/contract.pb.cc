@@ -14,13 +14,13 @@
 #include <google/protobuf/port_def.inc>
 
 extern PROTOBUF_INTERNAL_EXPORT_contract_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_ArgPair_contract_2eproto;
-extern PROTOBUF_INTERNAL_EXPORT_contract_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_Block_contract_2eproto;
+extern PROTOBUF_INTERNAL_EXPORT_contract_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_BlockSDK_contract_2eproto;
 extern PROTOBUF_INTERNAL_EXPORT_contract_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_IteratorItem_contract_2eproto;
 extern PROTOBUF_INTERNAL_EXPORT_contract_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_Response_contract_2eproto;
 extern PROTOBUF_INTERNAL_EXPORT_contract_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_SyscallHeader_contract_2eproto;
-extern PROTOBUF_INTERNAL_EXPORT_contract_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_TxInput_contract_2eproto;
-extern PROTOBUF_INTERNAL_EXPORT_contract_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_TxOutput_contract_2eproto;
-extern PROTOBUF_INTERNAL_EXPORT_contract_2eproto ::google::protobuf::internal::SCCInfo<2> scc_info_Transaction_contract_2eproto;
+extern PROTOBUF_INTERNAL_EXPORT_contract_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_TxIn_contract_2eproto;
+extern PROTOBUF_INTERNAL_EXPORT_contract_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_TxOut_contract_2eproto;
+extern PROTOBUF_INTERNAL_EXPORT_contract_2eproto ::google::protobuf::internal::SCCInfo<2> scc_info_TransactionSDK_contract_2eproto;
 namespace pb {
 class PingRequestDefaultTypeInternal {
  public:
@@ -134,22 +134,22 @@ class GetCallArgsRequestDefaultTypeInternal {
  public:
   ::google::protobuf::internal::ExplicitlyConstructed<GetCallArgsRequest> _instance;
 } _GetCallArgsRequest_default_instance_;
-class TxInputDefaultTypeInternal {
+class TxInDefaultTypeInternal {
  public:
-  ::google::protobuf::internal::ExplicitlyConstructed<TxInput> _instance;
-} _TxInput_default_instance_;
-class TxOutputDefaultTypeInternal {
+  ::google::protobuf::internal::ExplicitlyConstructed<TxIn> _instance;
+} _TxIn_default_instance_;
+class TxOutDefaultTypeInternal {
  public:
-  ::google::protobuf::internal::ExplicitlyConstructed<TxOutput> _instance;
-} _TxOutput_default_instance_;
-class TransactionDefaultTypeInternal {
+  ::google::protobuf::internal::ExplicitlyConstructed<TxOut> _instance;
+} _TxOut_default_instance_;
+class TransactionSDKDefaultTypeInternal {
  public:
-  ::google::protobuf::internal::ExplicitlyConstructed<Transaction> _instance;
-} _Transaction_default_instance_;
-class BlockDefaultTypeInternal {
+  ::google::protobuf::internal::ExplicitlyConstructed<TransactionSDK> _instance;
+} _TransactionSDK_default_instance_;
+class BlockSDKDefaultTypeInternal {
  public:
-  ::google::protobuf::internal::ExplicitlyConstructed<Block> _instance;
-} _Block_default_instance_;
+  ::google::protobuf::internal::ExplicitlyConstructed<BlockSDK> _instance;
+} _BlockSDK_default_instance_;
 }  // namespace pb
 static void InitDefaultsPingRequest_contract_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
@@ -409,7 +409,7 @@ static void InitDefaultsQueryTxResponse_contract_2eproto() {
 
 ::google::protobuf::internal::SCCInfo<1> scc_info_QueryTxResponse_contract_2eproto =
     {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 1, InitDefaultsQueryTxResponse_contract_2eproto}, {
-      &scc_info_Transaction_contract_2eproto.base,}};
+      &scc_info_TransactionSDK_contract_2eproto.base,}};
 
 static void InitDefaultsQueryBlockRequest_contract_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
@@ -439,7 +439,7 @@ static void InitDefaultsQueryBlockResponse_contract_2eproto() {
 
 ::google::protobuf::internal::SCCInfo<1> scc_info_QueryBlockResponse_contract_2eproto =
     {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 1, InitDefaultsQueryBlockResponse_contract_2eproto}, {
-      &scc_info_Block_contract_2eproto.base,}};
+      &scc_info_BlockSDK_contract_2eproto.base,}};
 
 static void InitDefaultsTransferRequest_contract_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
@@ -560,63 +560,63 @@ static void InitDefaultsGetCallArgsRequest_contract_2eproto() {
     {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 1, InitDefaultsGetCallArgsRequest_contract_2eproto}, {
       &scc_info_SyscallHeader_contract_2eproto.base,}};
 
-static void InitDefaultsTxInput_contract_2eproto() {
+static void InitDefaultsTxIn_contract_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   {
-    void* ptr = &::pb::_TxInput_default_instance_;
-    new (ptr) ::pb::TxInput();
+    void* ptr = &::pb::_TxIn_default_instance_;
+    new (ptr) ::pb::TxIn();
     ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
   }
-  ::pb::TxInput::InitAsDefaultInstance();
+  ::pb::TxIn::InitAsDefaultInstance();
 }
 
-::google::protobuf::internal::SCCInfo<0> scc_info_TxInput_contract_2eproto =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsTxInput_contract_2eproto}, {}};
+::google::protobuf::internal::SCCInfo<0> scc_info_TxIn_contract_2eproto =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsTxIn_contract_2eproto}, {}};
 
-static void InitDefaultsTxOutput_contract_2eproto() {
+static void InitDefaultsTxOut_contract_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   {
-    void* ptr = &::pb::_TxOutput_default_instance_;
-    new (ptr) ::pb::TxOutput();
+    void* ptr = &::pb::_TxOut_default_instance_;
+    new (ptr) ::pb::TxOut();
     ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
   }
-  ::pb::TxOutput::InitAsDefaultInstance();
+  ::pb::TxOut::InitAsDefaultInstance();
 }
 
-::google::protobuf::internal::SCCInfo<0> scc_info_TxOutput_contract_2eproto =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsTxOutput_contract_2eproto}, {}};
+::google::protobuf::internal::SCCInfo<0> scc_info_TxOut_contract_2eproto =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsTxOut_contract_2eproto}, {}};
 
-static void InitDefaultsTransaction_contract_2eproto() {
+static void InitDefaultsTransactionSDK_contract_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   {
-    void* ptr = &::pb::_Transaction_default_instance_;
-    new (ptr) ::pb::Transaction();
+    void* ptr = &::pb::_TransactionSDK_default_instance_;
+    new (ptr) ::pb::TransactionSDK();
     ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
   }
-  ::pb::Transaction::InitAsDefaultInstance();
+  ::pb::TransactionSDK::InitAsDefaultInstance();
 }
 
-::google::protobuf::internal::SCCInfo<2> scc_info_Transaction_contract_2eproto =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 2, InitDefaultsTransaction_contract_2eproto}, {
-      &scc_info_TxInput_contract_2eproto.base,
-      &scc_info_TxOutput_contract_2eproto.base,}};
+::google::protobuf::internal::SCCInfo<2> scc_info_TransactionSDK_contract_2eproto =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 2, InitDefaultsTransactionSDK_contract_2eproto}, {
+      &scc_info_TxIn_contract_2eproto.base,
+      &scc_info_TxOut_contract_2eproto.base,}};
 
-static void InitDefaultsBlock_contract_2eproto() {
+static void InitDefaultsBlockSDK_contract_2eproto() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   {
-    void* ptr = &::pb::_Block_default_instance_;
-    new (ptr) ::pb::Block();
+    void* ptr = &::pb::_BlockSDK_default_instance_;
+    new (ptr) ::pb::BlockSDK();
     ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
   }
-  ::pb::Block::InitAsDefaultInstance();
+  ::pb::BlockSDK::InitAsDefaultInstance();
 }
 
-::google::protobuf::internal::SCCInfo<0> scc_info_Block_contract_2eproto =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsBlock_contract_2eproto}, {}};
+::google::protobuf::internal::SCCInfo<0> scc_info_BlockSDK_contract_2eproto =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsBlockSDK_contract_2eproto}, {}};
 
 namespace pb {
 
@@ -5168,15 +5168,15 @@ void QueryTxRequest::InternalSwap(QueryTxRequest* other) {
 // ===================================================================
 
 void QueryTxResponse::InitAsDefaultInstance() {
-  ::pb::_QueryTxResponse_default_instance_._instance.get_mutable()->tx_ = const_cast< ::pb::Transaction*>(
-      ::pb::Transaction::internal_default_instance());
+  ::pb::_QueryTxResponse_default_instance_._instance.get_mutable()->tx_ = const_cast< ::pb::TransactionSDK*>(
+      ::pb::TransactionSDK::internal_default_instance());
 }
 class QueryTxResponse::HasBitSetters {
  public:
-  static const ::pb::Transaction& tx(const QueryTxResponse* msg);
+  static const ::pb::TransactionSDK& tx(const QueryTxResponse* msg);
 };
 
-const ::pb::Transaction&
+const ::pb::TransactionSDK&
 QueryTxResponse::HasBitSetters::tx(const QueryTxResponse* msg) {
   return *msg->tx_;
 }
@@ -5194,7 +5194,7 @@ QueryTxResponse::QueryTxResponse(const QueryTxResponse& from)
       _internal_metadata_(nullptr) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   if (from.has_tx()) {
-    tx_ = new ::pb::Transaction(*from.tx_);
+    tx_ = new ::pb::TransactionSDK(*from.tx_);
   } else {
     tx_ = nullptr;
   }
@@ -5251,12 +5251,12 @@ const char* QueryTxResponse::_InternalParse(const char* begin, const char* end, 
     ptr = ::google::protobuf::io::Parse32(ptr, &tag);
     GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
     switch (tag >> 3) {
-      // .pb.Transaction tx = 1;
+      // .pb.TransactionSDK tx = 1;
       case 1: {
         if (static_cast<::google::protobuf::uint8>(tag) != 10) goto handle_unusual;
         ptr = ::google::protobuf::io::ReadSize(ptr, &size);
         GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
-        parser_till_end = ::pb::Transaction::_InternalParse;
+        parser_till_end = ::pb::TransactionSDK::_InternalParse;
         object = msg->mutable_tx();
         if (size > end - ptr) goto len_delim_till_end;
         ptr += size;
@@ -5300,7 +5300,7 @@ bool QueryTxResponse::MergePartialFromCodedStream(
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // .pb.Transaction tx = 1;
+      // .pb.TransactionSDK tx = 1;
       case 1: {
         if (static_cast< ::google::protobuf::uint8>(tag) == (10 & 0xFF)) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
@@ -5338,7 +5338,7 @@ void QueryTxResponse::SerializeWithCachedSizes(
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // .pb.Transaction tx = 1;
+  // .pb.TransactionSDK tx = 1;
   if (this->has_tx()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessage(
       1, HasBitSetters::tx(this), output);
@@ -5359,7 +5359,7 @@ size_t QueryTxResponse::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // .pb.Transaction tx = 1;
+  // .pb.TransactionSDK tx = 1;
   if (this->has_tx()) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::MessageSize(
@@ -5384,7 +5384,7 @@ void QueryTxResponse::MergeFrom(const QueryTxResponse& from) {
   (void) cached_has_bits;
 
   if (from.has_tx()) {
-    mutable_tx()->::pb::Transaction::MergeFrom(from.tx());
+    mutable_tx()->::pb::TransactionSDK::MergeFrom(from.tx());
   }
 }
 
@@ -5732,15 +5732,15 @@ void QueryBlockRequest::InternalSwap(QueryBlockRequest* other) {
 // ===================================================================
 
 void QueryBlockResponse::InitAsDefaultInstance() {
-  ::pb::_QueryBlockResponse_default_instance_._instance.get_mutable()->block_ = const_cast< ::pb::Block*>(
-      ::pb::Block::internal_default_instance());
+  ::pb::_QueryBlockResponse_default_instance_._instance.get_mutable()->block_ = const_cast< ::pb::BlockSDK*>(
+      ::pb::BlockSDK::internal_default_instance());
 }
 class QueryBlockResponse::HasBitSetters {
  public:
-  static const ::pb::Block& block(const QueryBlockResponse* msg);
+  static const ::pb::BlockSDK& block(const QueryBlockResponse* msg);
 };
 
-const ::pb::Block&
+const ::pb::BlockSDK&
 QueryBlockResponse::HasBitSetters::block(const QueryBlockResponse* msg) {
   return *msg->block_;
 }
@@ -5758,7 +5758,7 @@ QueryBlockResponse::QueryBlockResponse(const QueryBlockResponse& from)
       _internal_metadata_(nullptr) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   if (from.has_block()) {
-    block_ = new ::pb::Block(*from.block_);
+    block_ = new ::pb::BlockSDK(*from.block_);
   } else {
     block_ = nullptr;
   }
@@ -5815,12 +5815,12 @@ const char* QueryBlockResponse::_InternalParse(const char* begin, const char* en
     ptr = ::google::protobuf::io::Parse32(ptr, &tag);
     GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
     switch (tag >> 3) {
-      // .pb.Block block = 1;
+      // .pb.BlockSDK block = 1;
       case 1: {
         if (static_cast<::google::protobuf::uint8>(tag) != 10) goto handle_unusual;
         ptr = ::google::protobuf::io::ReadSize(ptr, &size);
         GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
-        parser_till_end = ::pb::Block::_InternalParse;
+        parser_till_end = ::pb::BlockSDK::_InternalParse;
         object = msg->mutable_block();
         if (size > end - ptr) goto len_delim_till_end;
         ptr += size;
@@ -5864,7 +5864,7 @@ bool QueryBlockResponse::MergePartialFromCodedStream(
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // .pb.Block block = 1;
+      // .pb.BlockSDK block = 1;
       case 1: {
         if (static_cast< ::google::protobuf::uint8>(tag) == (10 & 0xFF)) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
@@ -5902,7 +5902,7 @@ void QueryBlockResponse::SerializeWithCachedSizes(
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // .pb.Block block = 1;
+  // .pb.BlockSDK block = 1;
   if (this->has_block()) {
     ::google::protobuf::internal::WireFormatLite::WriteMessage(
       1, HasBitSetters::block(this), output);
@@ -5923,7 +5923,7 @@ size_t QueryBlockResponse::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // .pb.Block block = 1;
+  // .pb.BlockSDK block = 1;
   if (this->has_block()) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::MessageSize(
@@ -5948,7 +5948,7 @@ void QueryBlockResponse::MergeFrom(const QueryBlockResponse& from) {
   (void) cached_has_bits;
 
   if (from.has_block()) {
-    mutable_block()->::pb::Block::MergeFrom(from.block());
+    mutable_block()->::pb::BlockSDK::MergeFrom(from.block());
   }
 }
 
@@ -8360,26 +8360,26 @@ void GetCallArgsRequest::InternalSwap(GetCallArgsRequest* other) {
 
 // ===================================================================
 
-void TxInput::InitAsDefaultInstance() {
+void TxIn::InitAsDefaultInstance() {
 }
-class TxInput::HasBitSetters {
+class TxIn::HasBitSetters {
  public:
 };
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int TxInput::kRefTxidFieldNumber;
-const int TxInput::kRefOffsetFieldNumber;
-const int TxInput::kFromAddrFieldNumber;
-const int TxInput::kAmountFieldNumber;
-const int TxInput::kFrozenHeightFieldNumber;
+const int TxIn::kRefTxidFieldNumber;
+const int TxIn::kRefOffsetFieldNumber;
+const int TxIn::kFromAddrFieldNumber;
+const int TxIn::kAmountFieldNumber;
+const int TxIn::kFrozenHeightFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
-TxInput::TxInput()
+TxIn::TxIn()
   : ::google::protobuf::MessageLite(), _internal_metadata_(nullptr) {
   SharedCtor();
-  // @@protoc_insertion_point(constructor:pb.TxInput)
+  // @@protoc_insertion_point(constructor:pb.TxIn)
 }
-TxInput::TxInput(const TxInput& from)
+TxIn::TxIn(const TxIn& from)
   : ::google::protobuf::MessageLite(),
       _internal_metadata_(nullptr) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
@@ -8398,12 +8398,12 @@ TxInput::TxInput(const TxInput& from)
   ::memcpy(&ref_offset_, &from.ref_offset_,
     static_cast<size_t>(reinterpret_cast<char*>(&frozen_height_) -
     reinterpret_cast<char*>(&ref_offset_)) + sizeof(frozen_height_));
-  // @@protoc_insertion_point(copy_constructor:pb.TxInput)
+  // @@protoc_insertion_point(copy_constructor:pb.TxIn)
 }
 
-void TxInput::SharedCtor() {
+void TxIn::SharedCtor() {
   ::google::protobuf::internal::InitSCC(
-      &scc_info_TxInput_contract_2eproto.base);
+      &scc_info_TxIn_contract_2eproto.base);
   ref_txid_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   from_addr_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   amount_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
@@ -8412,28 +8412,28 @@ void TxInput::SharedCtor() {
       reinterpret_cast<char*>(&ref_offset_)) + sizeof(frozen_height_));
 }
 
-TxInput::~TxInput() {
-  // @@protoc_insertion_point(destructor:pb.TxInput)
+TxIn::~TxIn() {
+  // @@protoc_insertion_point(destructor:pb.TxIn)
   SharedDtor();
 }
 
-void TxInput::SharedDtor() {
+void TxIn::SharedDtor() {
   ref_txid_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   from_addr_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   amount_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 
-void TxInput::SetCachedSize(int size) const {
+void TxIn::SetCachedSize(int size) const {
   _cached_size_.Set(size);
 }
-const TxInput& TxInput::default_instance() {
-  ::google::protobuf::internal::InitSCC(&::scc_info_TxInput_contract_2eproto.base);
+const TxIn& TxIn::default_instance() {
+  ::google::protobuf::internal::InitSCC(&::scc_info_TxIn_contract_2eproto.base);
   return *internal_default_instance();
 }
 
 
-void TxInput::Clear() {
-// @@protoc_insertion_point(message_clear_start:pb.TxInput)
+void TxIn::Clear() {
+// @@protoc_insertion_point(message_clear_start:pb.TxIn)
   ::google::protobuf::uint32 cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
@@ -8448,9 +8448,9 @@ void TxInput::Clear() {
 }
 
 #if GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
-const char* TxInput::_InternalParse(const char* begin, const char* end, void* object,
+const char* TxIn::_InternalParse(const char* begin, const char* end, void* object,
                   ::google::protobuf::internal::ParseContext* ctx) {
-  auto msg = static_cast<TxInput*>(object);
+  auto msg = static_cast<TxIn*>(object);
   ::google::protobuf::int32 size; (void)size;
   int depth; (void)depth;
   ::google::protobuf::uint32 tag;
@@ -8543,7 +8543,7 @@ len_delim_till_end:
                                {parser_till_end, object}, size);
 }
 #else  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
-bool TxInput::MergePartialFromCodedStream(
+bool TxIn::MergePartialFromCodedStream(
     ::google::protobuf::io::CodedInputStream* input) {
 #define DO_(EXPRESSION) if (!PROTOBUF_PREDICT_TRUE(EXPRESSION)) goto failure
   ::google::protobuf::uint32 tag;
@@ -8553,7 +8553,7 @@ bool TxInput::MergePartialFromCodedStream(
       unknown_fields_setter.buffer());
   ::google::protobuf::io::CodedOutputStream unknown_fields_stream(
       &unknown_fields_output, false);
-  // @@protoc_insertion_point(parse_start:pb.TxInput)
+  // @@protoc_insertion_point(parse_start:pb.TxIn)
   for (;;) {
     ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
     tag = p.first;
@@ -8630,18 +8630,18 @@ bool TxInput::MergePartialFromCodedStream(
     }
   }
 success:
-  // @@protoc_insertion_point(parse_success:pb.TxInput)
+  // @@protoc_insertion_point(parse_success:pb.TxIn)
   return true;
 failure:
-  // @@protoc_insertion_point(parse_failure:pb.TxInput)
+  // @@protoc_insertion_point(parse_failure:pb.TxIn)
   return false;
 #undef DO_
 }
 #endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
 
-void TxInput::SerializeWithCachedSizes(
+void TxIn::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:pb.TxInput)
+  // @@protoc_insertion_point(serialize_start:pb.TxIn)
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
@@ -8675,11 +8675,11 @@ void TxInput::SerializeWithCachedSizes(
 
   output->WriteRaw(_internal_metadata_.unknown_fields().data(),
                    static_cast<int>(_internal_metadata_.unknown_fields().size()));
-  // @@protoc_insertion_point(serialize_end:pb.TxInput)
+  // @@protoc_insertion_point(serialize_end:pb.TxIn)
 }
 
-size_t TxInput::ByteSizeLong() const {
-// @@protoc_insertion_point(message_byte_size_start:pb.TxInput)
+size_t TxIn::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:pb.TxIn)
   size_t total_size = 0;
 
   total_size += _internal_metadata_.unknown_fields().size();
@@ -8728,13 +8728,13 @@ size_t TxInput::ByteSizeLong() const {
   return total_size;
 }
 
-void TxInput::CheckTypeAndMergeFrom(
+void TxIn::CheckTypeAndMergeFrom(
     const ::google::protobuf::MessageLite& from) {
-  MergeFrom(*::google::protobuf::down_cast<const TxInput*>(&from));
+  MergeFrom(*::google::protobuf::down_cast<const TxIn*>(&from));
 }
 
-void TxInput::MergeFrom(const TxInput& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:pb.TxInput)
+void TxIn::MergeFrom(const TxIn& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:pb.TxIn)
   GOOGLE_DCHECK_NE(&from, this);
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   ::google::protobuf::uint32 cached_has_bits = 0;
@@ -8760,22 +8760,22 @@ void TxInput::MergeFrom(const TxInput& from) {
   }
 }
 
-void TxInput::CopyFrom(const TxInput& from) {
-// @@protoc_insertion_point(class_specific_copy_from_start:pb.TxInput)
+void TxIn::CopyFrom(const TxIn& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:pb.TxIn)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
-bool TxInput::IsInitialized() const {
+bool TxIn::IsInitialized() const {
   return true;
 }
 
-void TxInput::Swap(TxInput* other) {
+void TxIn::Swap(TxIn* other) {
   if (other == this) return;
   InternalSwap(other);
 }
-void TxInput::InternalSwap(TxInput* other) {
+void TxIn::InternalSwap(TxIn* other) {
   using std::swap;
   _internal_metadata_.Swap(&other->_internal_metadata_);
   ref_txid_.Swap(&other->ref_txid_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
@@ -8788,31 +8788,31 @@ void TxInput::InternalSwap(TxInput* other) {
   swap(frozen_height_, other->frozen_height_);
 }
 
-::std::string TxInput::GetTypeName() const {
-  return "pb.TxInput";
+::std::string TxIn::GetTypeName() const {
+  return "pb.TxIn";
 }
 
 
 // ===================================================================
 
-void TxOutput::InitAsDefaultInstance() {
+void TxOut::InitAsDefaultInstance() {
 }
-class TxOutput::HasBitSetters {
+class TxOut::HasBitSetters {
  public:
 };
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int TxOutput::kAmountFieldNumber;
-const int TxOutput::kToAddrFieldNumber;
-const int TxOutput::kFrozenHeightFieldNumber;
+const int TxOut::kAmountFieldNumber;
+const int TxOut::kToAddrFieldNumber;
+const int TxOut::kFrozenHeightFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
-TxOutput::TxOutput()
+TxOut::TxOut()
   : ::google::protobuf::MessageLite(), _internal_metadata_(nullptr) {
   SharedCtor();
-  // @@protoc_insertion_point(constructor:pb.TxOutput)
+  // @@protoc_insertion_point(constructor:pb.TxOut)
 }
-TxOutput::TxOutput(const TxOutput& from)
+TxOut::TxOut(const TxOut& from)
   : ::google::protobuf::MessageLite(),
       _internal_metadata_(nullptr) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
@@ -8825,38 +8825,38 @@ TxOutput::TxOutput(const TxOutput& from)
     to_addr_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.to_addr_);
   }
   frozen_height_ = from.frozen_height_;
-  // @@protoc_insertion_point(copy_constructor:pb.TxOutput)
+  // @@protoc_insertion_point(copy_constructor:pb.TxOut)
 }
 
-void TxOutput::SharedCtor() {
+void TxOut::SharedCtor() {
   ::google::protobuf::internal::InitSCC(
-      &scc_info_TxOutput_contract_2eproto.base);
+      &scc_info_TxOut_contract_2eproto.base);
   amount_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   to_addr_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   frozen_height_ = PROTOBUF_LONGLONG(0);
 }
 
-TxOutput::~TxOutput() {
-  // @@protoc_insertion_point(destructor:pb.TxOutput)
+TxOut::~TxOut() {
+  // @@protoc_insertion_point(destructor:pb.TxOut)
   SharedDtor();
 }
 
-void TxOutput::SharedDtor() {
+void TxOut::SharedDtor() {
   amount_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   to_addr_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 
-void TxOutput::SetCachedSize(int size) const {
+void TxOut::SetCachedSize(int size) const {
   _cached_size_.Set(size);
 }
-const TxOutput& TxOutput::default_instance() {
-  ::google::protobuf::internal::InitSCC(&::scc_info_TxOutput_contract_2eproto.base);
+const TxOut& TxOut::default_instance() {
+  ::google::protobuf::internal::InitSCC(&::scc_info_TxOut_contract_2eproto.base);
   return *internal_default_instance();
 }
 
 
-void TxOutput::Clear() {
-// @@protoc_insertion_point(message_clear_start:pb.TxOutput)
+void TxOut::Clear() {
+// @@protoc_insertion_point(message_clear_start:pb.TxOut)
   ::google::protobuf::uint32 cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
@@ -8868,9 +8868,9 @@ void TxOutput::Clear() {
 }
 
 #if GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
-const char* TxOutput::_InternalParse(const char* begin, const char* end, void* object,
+const char* TxOut::_InternalParse(const char* begin, const char* end, void* object,
                   ::google::protobuf::internal::ParseContext* ctx) {
-  auto msg = static_cast<TxOutput*>(object);
+  auto msg = static_cast<TxOut*>(object);
   ::google::protobuf::int32 size; (void)size;
   int depth; (void)depth;
   ::google::protobuf::uint32 tag;
@@ -8941,7 +8941,7 @@ len_delim_till_end:
                                {parser_till_end, object}, size);
 }
 #else  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
-bool TxOutput::MergePartialFromCodedStream(
+bool TxOut::MergePartialFromCodedStream(
     ::google::protobuf::io::CodedInputStream* input) {
 #define DO_(EXPRESSION) if (!PROTOBUF_PREDICT_TRUE(EXPRESSION)) goto failure
   ::google::protobuf::uint32 tag;
@@ -8951,7 +8951,7 @@ bool TxOutput::MergePartialFromCodedStream(
       unknown_fields_setter.buffer());
   ::google::protobuf::io::CodedOutputStream unknown_fields_stream(
       &unknown_fields_output, false);
-  // @@protoc_insertion_point(parse_start:pb.TxOutput)
+  // @@protoc_insertion_point(parse_start:pb.TxOut)
   for (;;) {
     ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
     tag = p.first;
@@ -9004,18 +9004,18 @@ bool TxOutput::MergePartialFromCodedStream(
     }
   }
 success:
-  // @@protoc_insertion_point(parse_success:pb.TxOutput)
+  // @@protoc_insertion_point(parse_success:pb.TxOut)
   return true;
 failure:
-  // @@protoc_insertion_point(parse_failure:pb.TxOutput)
+  // @@protoc_insertion_point(parse_failure:pb.TxOut)
   return false;
 #undef DO_
 }
 #endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
 
-void TxOutput::SerializeWithCachedSizes(
+void TxOut::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:pb.TxOutput)
+  // @@protoc_insertion_point(serialize_start:pb.TxOut)
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
@@ -9038,11 +9038,11 @@ void TxOutput::SerializeWithCachedSizes(
 
   output->WriteRaw(_internal_metadata_.unknown_fields().data(),
                    static_cast<int>(_internal_metadata_.unknown_fields().size()));
-  // @@protoc_insertion_point(serialize_end:pb.TxOutput)
+  // @@protoc_insertion_point(serialize_end:pb.TxOut)
 }
 
-size_t TxOutput::ByteSizeLong() const {
-// @@protoc_insertion_point(message_byte_size_start:pb.TxOutput)
+size_t TxOut::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:pb.TxOut)
   size_t total_size = 0;
 
   total_size += _internal_metadata_.unknown_fields().size();
@@ -9077,13 +9077,13 @@ size_t TxOutput::ByteSizeLong() const {
   return total_size;
 }
 
-void TxOutput::CheckTypeAndMergeFrom(
+void TxOut::CheckTypeAndMergeFrom(
     const ::google::protobuf::MessageLite& from) {
-  MergeFrom(*::google::protobuf::down_cast<const TxOutput*>(&from));
+  MergeFrom(*::google::protobuf::down_cast<const TxOut*>(&from));
 }
 
-void TxOutput::MergeFrom(const TxOutput& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:pb.TxOutput)
+void TxOut::MergeFrom(const TxOut& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:pb.TxOut)
   GOOGLE_DCHECK_NE(&from, this);
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   ::google::protobuf::uint32 cached_has_bits = 0;
@@ -9102,22 +9102,22 @@ void TxOutput::MergeFrom(const TxOutput& from) {
   }
 }
 
-void TxOutput::CopyFrom(const TxOutput& from) {
-// @@protoc_insertion_point(class_specific_copy_from_start:pb.TxOutput)
+void TxOut::CopyFrom(const TxOut& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:pb.TxOut)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
-bool TxOutput::IsInitialized() const {
+bool TxOut::IsInitialized() const {
   return true;
 }
 
-void TxOutput::Swap(TxOutput* other) {
+void TxOut::Swap(TxOut* other) {
   if (other == this) return;
   InternalSwap(other);
 }
-void TxOutput::InternalSwap(TxOutput* other) {
+void TxOut::InternalSwap(TxOut* other) {
   using std::swap;
   _internal_metadata_.Swap(&other->_internal_metadata_);
   amount_.Swap(&other->amount_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
@@ -9127,35 +9127,35 @@ void TxOutput::InternalSwap(TxOutput* other) {
   swap(frozen_height_, other->frozen_height_);
 }
 
-::std::string TxOutput::GetTypeName() const {
-  return "pb.TxOutput";
+::std::string TxOut::GetTypeName() const {
+  return "pb.TxOut";
 }
 
 
 // ===================================================================
 
-void Transaction::InitAsDefaultInstance() {
+void TransactionSDK::InitAsDefaultInstance() {
 }
-class Transaction::HasBitSetters {
+class TransactionSDK::HasBitSetters {
  public:
 };
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int Transaction::kTxidFieldNumber;
-const int Transaction::kBlockidFieldNumber;
-const int Transaction::kTxInputsFieldNumber;
-const int Transaction::kTxOutputsFieldNumber;
-const int Transaction::kDescFieldNumber;
-const int Transaction::kInitiatorFieldNumber;
-const int Transaction::kAuthRequireFieldNumber;
+const int TransactionSDK::kTxidFieldNumber;
+const int TransactionSDK::kBlockidFieldNumber;
+const int TransactionSDK::kTxInputsFieldNumber;
+const int TransactionSDK::kTxOutputsFieldNumber;
+const int TransactionSDK::kDescFieldNumber;
+const int TransactionSDK::kInitiatorFieldNumber;
+const int TransactionSDK::kAuthRequireFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
-Transaction::Transaction()
+TransactionSDK::TransactionSDK()
   : ::google::protobuf::MessageLite(), _internal_metadata_(nullptr) {
   SharedCtor();
-  // @@protoc_insertion_point(constructor:pb.Transaction)
+  // @@protoc_insertion_point(constructor:pb.TransactionSDK)
 }
-Transaction::Transaction(const Transaction& from)
+TransactionSDK::TransactionSDK(const TransactionSDK& from)
   : ::google::protobuf::MessageLite(),
       _internal_metadata_(nullptr),
       tx_inputs_(from.tx_inputs_),
@@ -9178,41 +9178,41 @@ Transaction::Transaction(const Transaction& from)
   if (from.initiator().size() > 0) {
     initiator_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.initiator_);
   }
-  // @@protoc_insertion_point(copy_constructor:pb.Transaction)
+  // @@protoc_insertion_point(copy_constructor:pb.TransactionSDK)
 }
 
-void Transaction::SharedCtor() {
+void TransactionSDK::SharedCtor() {
   ::google::protobuf::internal::InitSCC(
-      &scc_info_Transaction_contract_2eproto.base);
+      &scc_info_TransactionSDK_contract_2eproto.base);
   txid_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   blockid_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   desc_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   initiator_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 
-Transaction::~Transaction() {
-  // @@protoc_insertion_point(destructor:pb.Transaction)
+TransactionSDK::~TransactionSDK() {
+  // @@protoc_insertion_point(destructor:pb.TransactionSDK)
   SharedDtor();
 }
 
-void Transaction::SharedDtor() {
+void TransactionSDK::SharedDtor() {
   txid_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   blockid_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   desc_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   initiator_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 
-void Transaction::SetCachedSize(int size) const {
+void TransactionSDK::SetCachedSize(int size) const {
   _cached_size_.Set(size);
 }
-const Transaction& Transaction::default_instance() {
-  ::google::protobuf::internal::InitSCC(&::scc_info_Transaction_contract_2eproto.base);
+const TransactionSDK& TransactionSDK::default_instance() {
+  ::google::protobuf::internal::InitSCC(&::scc_info_TransactionSDK_contract_2eproto.base);
   return *internal_default_instance();
 }
 
 
-void Transaction::Clear() {
-// @@protoc_insertion_point(message_clear_start:pb.Transaction)
+void TransactionSDK::Clear() {
+// @@protoc_insertion_point(message_clear_start:pb.TransactionSDK)
   ::google::protobuf::uint32 cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
@@ -9228,9 +9228,9 @@ void Transaction::Clear() {
 }
 
 #if GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
-const char* Transaction::_InternalParse(const char* begin, const char* end, void* object,
+const char* TransactionSDK::_InternalParse(const char* begin, const char* end, void* object,
                   ::google::protobuf::internal::ParseContext* ctx) {
-  auto msg = static_cast<Transaction*>(object);
+  auto msg = static_cast<TransactionSDK*>(object);
   ::google::protobuf::int32 size; (void)size;
   int depth; (void)depth;
   ::google::protobuf::uint32 tag;
@@ -9270,13 +9270,13 @@ const char* Transaction::_InternalParse(const char* begin, const char* end, void
         ptr += size;
         break;
       }
-      // repeated .pb.TxInput tx_inputs = 3;
+      // repeated .pb.TxIn tx_inputs = 3;
       case 3: {
         if (static_cast<::google::protobuf::uint8>(tag) != 26) goto handle_unusual;
         do {
           ptr = ::google::protobuf::io::ReadSize(ptr, &size);
           GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
-          parser_till_end = ::pb::TxInput::_InternalParse;
+          parser_till_end = ::pb::TxIn::_InternalParse;
           object = msg->add_tx_inputs();
           if (size > end - ptr) goto len_delim_till_end;
           ptr += size;
@@ -9286,13 +9286,13 @@ const char* Transaction::_InternalParse(const char* begin, const char* end, void
         } while ((::google::protobuf::io::UnalignedLoad<::google::protobuf::uint64>(ptr) & 255) == 26 && (ptr += 1));
         break;
       }
-      // repeated .pb.TxOutput tx_outputs = 4;
+      // repeated .pb.TxOut tx_outputs = 4;
       case 4: {
         if (static_cast<::google::protobuf::uint8>(tag) != 34) goto handle_unusual;
         do {
           ptr = ::google::protobuf::io::ReadSize(ptr, &size);
           GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
-          parser_till_end = ::pb::TxOutput::_InternalParse;
+          parser_till_end = ::pb::TxOut::_InternalParse;
           object = msg->add_tx_outputs();
           if (size > end - ptr) goto len_delim_till_end;
           ptr += size;
@@ -9376,7 +9376,7 @@ len_delim_till_end:
                                {parser_till_end, object}, size);
 }
 #else  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
-bool Transaction::MergePartialFromCodedStream(
+bool TransactionSDK::MergePartialFromCodedStream(
     ::google::protobuf::io::CodedInputStream* input) {
 #define DO_(EXPRESSION) if (!PROTOBUF_PREDICT_TRUE(EXPRESSION)) goto failure
   ::google::protobuf::uint32 tag;
@@ -9386,7 +9386,7 @@ bool Transaction::MergePartialFromCodedStream(
       unknown_fields_setter.buffer());
   ::google::protobuf::io::CodedOutputStream unknown_fields_stream(
       &unknown_fields_output, false);
-  // @@protoc_insertion_point(parse_start:pb.Transaction)
+  // @@protoc_insertion_point(parse_start:pb.TransactionSDK)
   for (;;) {
     ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(16383u);
     tag = p.first;
@@ -9414,7 +9414,7 @@ bool Transaction::MergePartialFromCodedStream(
         break;
       }
 
-      // repeated .pb.TxInput tx_inputs = 3;
+      // repeated .pb.TxIn tx_inputs = 3;
       case 3: {
         if (static_cast< ::google::protobuf::uint8>(tag) == (26 & 0xFF)) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
@@ -9425,7 +9425,7 @@ bool Transaction::MergePartialFromCodedStream(
         break;
       }
 
-      // repeated .pb.TxOutput tx_outputs = 4;
+      // repeated .pb.TxOut tx_outputs = 4;
       case 4: {
         if (static_cast< ::google::protobuf::uint8>(tag) == (34 & 0xFF)) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
@@ -9455,7 +9455,7 @@ bool Transaction::MergePartialFromCodedStream(
           DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
             this->initiator().data(), static_cast<int>(this->initiator().length()),
             ::google::protobuf::internal::WireFormatLite::PARSE,
-            "pb.Transaction.initiator"));
+            "pb.TransactionSDK.initiator"));
         } else {
           goto handle_unusual;
         }
@@ -9471,7 +9471,7 @@ bool Transaction::MergePartialFromCodedStream(
             this->auth_require(this->auth_require_size() - 1).data(),
             static_cast<int>(this->auth_require(this->auth_require_size() - 1).length()),
             ::google::protobuf::internal::WireFormatLite::PARSE,
-            "pb.Transaction.auth_require"));
+            "pb.TransactionSDK.auth_require"));
         } else {
           goto handle_unusual;
         }
@@ -9490,18 +9490,18 @@ bool Transaction::MergePartialFromCodedStream(
     }
   }
 success:
-  // @@protoc_insertion_point(parse_success:pb.Transaction)
+  // @@protoc_insertion_point(parse_success:pb.TransactionSDK)
   return true;
 failure:
-  // @@protoc_insertion_point(parse_failure:pb.Transaction)
+  // @@protoc_insertion_point(parse_failure:pb.TransactionSDK)
   return false;
 #undef DO_
 }
 #endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
 
-void Transaction::SerializeWithCachedSizes(
+void TransactionSDK::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:pb.Transaction)
+  // @@protoc_insertion_point(serialize_start:pb.TransactionSDK)
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
@@ -9517,7 +9517,7 @@ void Transaction::SerializeWithCachedSizes(
       2, this->blockid(), output);
   }
 
-  // repeated .pb.TxInput tx_inputs = 3;
+  // repeated .pb.TxIn tx_inputs = 3;
   for (unsigned int i = 0,
       n = static_cast<unsigned int>(this->tx_inputs_size()); i < n; i++) {
     ::google::protobuf::internal::WireFormatLite::WriteMessage(
@@ -9526,7 +9526,7 @@ void Transaction::SerializeWithCachedSizes(
       output);
   }
 
-  // repeated .pb.TxOutput tx_outputs = 4;
+  // repeated .pb.TxOut tx_outputs = 4;
   for (unsigned int i = 0,
       n = static_cast<unsigned int>(this->tx_outputs_size()); i < n; i++) {
     ::google::protobuf::internal::WireFormatLite::WriteMessage(
@@ -9546,7 +9546,7 @@ void Transaction::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->initiator().data(), static_cast<int>(this->initiator().length()),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "pb.Transaction.initiator");
+      "pb.TransactionSDK.initiator");
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
       26, this->initiator(), output);
   }
@@ -9556,18 +9556,18 @@ void Transaction::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->auth_require(i).data(), static_cast<int>(this->auth_require(i).length()),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "pb.Transaction.auth_require");
+      "pb.TransactionSDK.auth_require");
     ::google::protobuf::internal::WireFormatLite::WriteString(
       27, this->auth_require(i), output);
   }
 
   output->WriteRaw(_internal_metadata_.unknown_fields().data(),
                    static_cast<int>(_internal_metadata_.unknown_fields().size()));
-  // @@protoc_insertion_point(serialize_end:pb.Transaction)
+  // @@protoc_insertion_point(serialize_end:pb.TransactionSDK)
 }
 
-size_t Transaction::ByteSizeLong() const {
-// @@protoc_insertion_point(message_byte_size_start:pb.Transaction)
+size_t TransactionSDK::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:pb.TransactionSDK)
   size_t total_size = 0;
 
   total_size += _internal_metadata_.unknown_fields().size();
@@ -9576,7 +9576,7 @@ size_t Transaction::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // repeated .pb.TxInput tx_inputs = 3;
+  // repeated .pb.TxIn tx_inputs = 3;
   {
     unsigned int count = static_cast<unsigned int>(this->tx_inputs_size());
     total_size += 1UL * count;
@@ -9587,7 +9587,7 @@ size_t Transaction::ByteSizeLong() const {
     }
   }
 
-  // repeated .pb.TxOutput tx_outputs = 4;
+  // repeated .pb.TxOut tx_outputs = 4;
   {
     unsigned int count = static_cast<unsigned int>(this->tx_outputs_size());
     total_size += 1UL * count;
@@ -9639,13 +9639,13 @@ size_t Transaction::ByteSizeLong() const {
   return total_size;
 }
 
-void Transaction::CheckTypeAndMergeFrom(
+void TransactionSDK::CheckTypeAndMergeFrom(
     const ::google::protobuf::MessageLite& from) {
-  MergeFrom(*::google::protobuf::down_cast<const Transaction*>(&from));
+  MergeFrom(*::google::protobuf::down_cast<const TransactionSDK*>(&from));
 }
 
-void Transaction::MergeFrom(const Transaction& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:pb.Transaction)
+void TransactionSDK::MergeFrom(const TransactionSDK& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:pb.TransactionSDK)
   GOOGLE_DCHECK_NE(&from, this);
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   ::google::protobuf::uint32 cached_has_bits = 0;
@@ -9672,22 +9672,22 @@ void Transaction::MergeFrom(const Transaction& from) {
   }
 }
 
-void Transaction::CopyFrom(const Transaction& from) {
-// @@protoc_insertion_point(class_specific_copy_from_start:pb.Transaction)
+void TransactionSDK::CopyFrom(const TransactionSDK& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:pb.TransactionSDK)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
-bool Transaction::IsInitialized() const {
+bool TransactionSDK::IsInitialized() const {
   return true;
 }
 
-void Transaction::Swap(Transaction* other) {
+void TransactionSDK::Swap(TransactionSDK* other) {
   if (other == this) return;
   InternalSwap(other);
 }
-void Transaction::InternalSwap(Transaction* other) {
+void TransactionSDK::InternalSwap(TransactionSDK* other) {
   using std::swap;
   _internal_metadata_.Swap(&other->_internal_metadata_);
   CastToBase(&tx_inputs_)->InternalSwap(CastToBase(&other->tx_inputs_));
@@ -9703,38 +9703,38 @@ void Transaction::InternalSwap(Transaction* other) {
     GetArenaNoVirtual());
 }
 
-::std::string Transaction::GetTypeName() const {
-  return "pb.Transaction";
+::std::string TransactionSDK::GetTypeName() const {
+  return "pb.TransactionSDK";
 }
 
 
 // ===================================================================
 
-void Block::InitAsDefaultInstance() {
+void BlockSDK::InitAsDefaultInstance() {
 }
-class Block::HasBitSetters {
+class BlockSDK::HasBitSetters {
  public:
 };
 
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int Block::kBlockidFieldNumber;
-const int Block::kPreHashFieldNumber;
-const int Block::kProposerFieldNumber;
-const int Block::kSignFieldNumber;
-const int Block::kPubkeyFieldNumber;
-const int Block::kHeightFieldNumber;
-const int Block::kTxidsFieldNumber;
-const int Block::kTxCountFieldNumber;
-const int Block::kInTrunkFieldNumber;
-const int Block::kNextHashFieldNumber;
+const int BlockSDK::kBlockidFieldNumber;
+const int BlockSDK::kPreHashFieldNumber;
+const int BlockSDK::kProposerFieldNumber;
+const int BlockSDK::kSignFieldNumber;
+const int BlockSDK::kPubkeyFieldNumber;
+const int BlockSDK::kHeightFieldNumber;
+const int BlockSDK::kTxidsFieldNumber;
+const int BlockSDK::kTxCountFieldNumber;
+const int BlockSDK::kInTrunkFieldNumber;
+const int BlockSDK::kNextHashFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
-Block::Block()
+BlockSDK::BlockSDK()
   : ::google::protobuf::MessageLite(), _internal_metadata_(nullptr) {
   SharedCtor();
-  // @@protoc_insertion_point(constructor:pb.Block)
+  // @@protoc_insertion_point(constructor:pb.BlockSDK)
 }
-Block::Block(const Block& from)
+BlockSDK::BlockSDK(const BlockSDK& from)
   : ::google::protobuf::MessageLite(),
       _internal_metadata_(nullptr),
       txids_(from.txids_) {
@@ -9766,12 +9766,12 @@ Block::Block(const Block& from)
   ::memcpy(&height_, &from.height_,
     static_cast<size_t>(reinterpret_cast<char*>(&in_trunk_) -
     reinterpret_cast<char*>(&height_)) + sizeof(in_trunk_));
-  // @@protoc_insertion_point(copy_constructor:pb.Block)
+  // @@protoc_insertion_point(copy_constructor:pb.BlockSDK)
 }
 
-void Block::SharedCtor() {
+void BlockSDK::SharedCtor() {
   ::google::protobuf::internal::InitSCC(
-      &scc_info_Block_contract_2eproto.base);
+      &scc_info_BlockSDK_contract_2eproto.base);
   blockid_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   pre_hash_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   proposer_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
@@ -9783,12 +9783,12 @@ void Block::SharedCtor() {
       reinterpret_cast<char*>(&height_)) + sizeof(in_trunk_));
 }
 
-Block::~Block() {
-  // @@protoc_insertion_point(destructor:pb.Block)
+BlockSDK::~BlockSDK() {
+  // @@protoc_insertion_point(destructor:pb.BlockSDK)
   SharedDtor();
 }
 
-void Block::SharedDtor() {
+void BlockSDK::SharedDtor() {
   blockid_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   pre_hash_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   proposer_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
@@ -9797,17 +9797,17 @@ void Block::SharedDtor() {
   next_hash_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 
-void Block::SetCachedSize(int size) const {
+void BlockSDK::SetCachedSize(int size) const {
   _cached_size_.Set(size);
 }
-const Block& Block::default_instance() {
-  ::google::protobuf::internal::InitSCC(&::scc_info_Block_contract_2eproto.base);
+const BlockSDK& BlockSDK::default_instance() {
+  ::google::protobuf::internal::InitSCC(&::scc_info_BlockSDK_contract_2eproto.base);
   return *internal_default_instance();
 }
 
 
-void Block::Clear() {
-// @@protoc_insertion_point(message_clear_start:pb.Block)
+void BlockSDK::Clear() {
+// @@protoc_insertion_point(message_clear_start:pb.BlockSDK)
   ::google::protobuf::uint32 cached_has_bits = 0;
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
@@ -9826,9 +9826,9 @@ void Block::Clear() {
 }
 
 #if GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
-const char* Block::_InternalParse(const char* begin, const char* end, void* object,
+const char* BlockSDK::_InternalParse(const char* begin, const char* end, void* object,
                   ::google::protobuf::internal::ParseContext* ctx) {
-  auto msg = static_cast<Block*>(object);
+  auto msg = static_cast<BlockSDK*>(object);
   ::google::protobuf::int32 size; (void)size;
   int depth; (void)depth;
   ::google::protobuf::uint32 tag;
@@ -9992,7 +9992,7 @@ len_delim_till_end:
                                {parser_till_end, object}, size);
 }
 #else  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
-bool Block::MergePartialFromCodedStream(
+bool BlockSDK::MergePartialFromCodedStream(
     ::google::protobuf::io::CodedInputStream* input) {
 #define DO_(EXPRESSION) if (!PROTOBUF_PREDICT_TRUE(EXPRESSION)) goto failure
   ::google::protobuf::uint32 tag;
@@ -10002,7 +10002,7 @@ bool Block::MergePartialFromCodedStream(
       unknown_fields_setter.buffer());
   ::google::protobuf::io::CodedOutputStream unknown_fields_stream(
       &unknown_fields_output, false);
-  // @@protoc_insertion_point(parse_start:pb.Block)
+  // @@protoc_insertion_point(parse_start:pb.BlockSDK)
   for (;;) {
     ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
     tag = p.first;
@@ -10085,7 +10085,7 @@ bool Block::MergePartialFromCodedStream(
             this->txids(this->txids_size() - 1).data(),
             static_cast<int>(this->txids(this->txids_size() - 1).length()),
             ::google::protobuf::internal::WireFormatLite::PARSE,
-            "pb.Block.txids"));
+            "pb.BlockSDK.txids"));
         } else {
           goto handle_unusual;
         }
@@ -10141,18 +10141,18 @@ bool Block::MergePartialFromCodedStream(
     }
   }
 success:
-  // @@protoc_insertion_point(parse_success:pb.Block)
+  // @@protoc_insertion_point(parse_success:pb.BlockSDK)
   return true;
 failure:
-  // @@protoc_insertion_point(parse_failure:pb.Block)
+  // @@protoc_insertion_point(parse_failure:pb.BlockSDK)
   return false;
 #undef DO_
 }
 #endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
 
-void Block::SerializeWithCachedSizes(
+void BlockSDK::SerializeWithCachedSizes(
     ::google::protobuf::io::CodedOutputStream* output) const {
-  // @@protoc_insertion_point(serialize_start:pb.Block)
+  // @@protoc_insertion_point(serialize_start:pb.BlockSDK)
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
@@ -10196,7 +10196,7 @@ void Block::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->txids(i).data(), static_cast<int>(this->txids(i).length()),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "pb.Block.txids");
+      "pb.BlockSDK.txids");
     ::google::protobuf::internal::WireFormatLite::WriteString(
       11, this->txids(i), output);
   }
@@ -10219,11 +10219,11 @@ void Block::SerializeWithCachedSizes(
 
   output->WriteRaw(_internal_metadata_.unknown_fields().data(),
                    static_cast<int>(_internal_metadata_.unknown_fields().size()));
-  // @@protoc_insertion_point(serialize_end:pb.Block)
+  // @@protoc_insertion_point(serialize_end:pb.BlockSDK)
 }
 
-size_t Block::ByteSizeLong() const {
-// @@protoc_insertion_point(message_byte_size_start:pb.Block)
+size_t BlockSDK::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:pb.BlockSDK)
   size_t total_size = 0;
 
   total_size += _internal_metadata_.unknown_fields().size();
@@ -10306,13 +10306,13 @@ size_t Block::ByteSizeLong() const {
   return total_size;
 }
 
-void Block::CheckTypeAndMergeFrom(
+void BlockSDK::CheckTypeAndMergeFrom(
     const ::google::protobuf::MessageLite& from) {
-  MergeFrom(*::google::protobuf::down_cast<const Block*>(&from));
+  MergeFrom(*::google::protobuf::down_cast<const BlockSDK*>(&from));
 }
 
-void Block::MergeFrom(const Block& from) {
-// @@protoc_insertion_point(class_specific_merge_from_start:pb.Block)
+void BlockSDK::MergeFrom(const BlockSDK& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:pb.BlockSDK)
   GOOGLE_DCHECK_NE(&from, this);
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   ::google::protobuf::uint32 cached_has_bits = 0;
@@ -10354,22 +10354,22 @@ void Block::MergeFrom(const Block& from) {
   }
 }
 
-void Block::CopyFrom(const Block& from) {
-// @@protoc_insertion_point(class_specific_copy_from_start:pb.Block)
+void BlockSDK::CopyFrom(const BlockSDK& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:pb.BlockSDK)
   if (&from == this) return;
   Clear();
   MergeFrom(from);
 }
 
-bool Block::IsInitialized() const {
+bool BlockSDK::IsInitialized() const {
   return true;
 }
 
-void Block::Swap(Block* other) {
+void BlockSDK::Swap(BlockSDK* other) {
   if (other == this) return;
   InternalSwap(other);
 }
-void Block::InternalSwap(Block* other) {
+void BlockSDK::InternalSwap(BlockSDK* other) {
   using std::swap;
   _internal_metadata_.Swap(&other->_internal_metadata_);
   txids_.InternalSwap(CastToBase(&other->txids_));
@@ -10390,8 +10390,8 @@ void Block::InternalSwap(Block* other) {
   swap(in_trunk_, other->in_trunk_);
 }
 
-::std::string Block::GetTypeName() const {
-  return "pb.Block";
+::std::string BlockSDK::GetTypeName() const {
+  return "pb.BlockSDK";
 }
 
 
@@ -10483,17 +10483,17 @@ template<> PROTOBUF_NOINLINE ::pb::SetOutputResponse* Arena::CreateMaybeMessage<
 template<> PROTOBUF_NOINLINE ::pb::GetCallArgsRequest* Arena::CreateMaybeMessage< ::pb::GetCallArgsRequest >(Arena* arena) {
   return Arena::CreateInternal< ::pb::GetCallArgsRequest >(arena);
 }
-template<> PROTOBUF_NOINLINE ::pb::TxInput* Arena::CreateMaybeMessage< ::pb::TxInput >(Arena* arena) {
-  return Arena::CreateInternal< ::pb::TxInput >(arena);
+template<> PROTOBUF_NOINLINE ::pb::TxIn* Arena::CreateMaybeMessage< ::pb::TxIn >(Arena* arena) {
+  return Arena::CreateInternal< ::pb::TxIn >(arena);
 }
-template<> PROTOBUF_NOINLINE ::pb::TxOutput* Arena::CreateMaybeMessage< ::pb::TxOutput >(Arena* arena) {
-  return Arena::CreateInternal< ::pb::TxOutput >(arena);
+template<> PROTOBUF_NOINLINE ::pb::TxOut* Arena::CreateMaybeMessage< ::pb::TxOut >(Arena* arena) {
+  return Arena::CreateInternal< ::pb::TxOut >(arena);
 }
-template<> PROTOBUF_NOINLINE ::pb::Transaction* Arena::CreateMaybeMessage< ::pb::Transaction >(Arena* arena) {
-  return Arena::CreateInternal< ::pb::Transaction >(arena);
+template<> PROTOBUF_NOINLINE ::pb::TransactionSDK* Arena::CreateMaybeMessage< ::pb::TransactionSDK >(Arena* arena) {
+  return Arena::CreateInternal< ::pb::TransactionSDK >(arena);
 }
-template<> PROTOBUF_NOINLINE ::pb::Block* Arena::CreateMaybeMessage< ::pb::Block >(Arena* arena) {
-  return Arena::CreateInternal< ::pb::Block >(arena);
+template<> PROTOBUF_NOINLINE ::pb::BlockSDK* Arena::CreateMaybeMessage< ::pb::BlockSDK >(Arena* arena) {
+  return Arena::CreateInternal< ::pb::BlockSDK >(arena);
 }
 }  // namespace protobuf
 }  // namespace google

@@ -6,7 +6,7 @@ Block::Block() {}
 
 Block::~Block() {}
 
-void Block::init(pb::Block pbblock) {
+void Block::init(pb::BlockSDK pbblock) {
     blockid = pbblock.blockid();
     pre_hash = pbblock.pre_hash();
     proposer = pbblock.proposer();
