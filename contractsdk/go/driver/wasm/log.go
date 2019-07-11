@@ -12,5 +12,6 @@ func (w *debugWriter) Write(p []byte) (int, error) {
 	return len(p), nil
 }
 func setLogWriter() {
+	log.SetFlags(0)
 	log.SetOutput(new(debugWriter))
 }
