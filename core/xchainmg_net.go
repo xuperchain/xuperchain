@@ -113,7 +113,7 @@ func (xm *XChainMG) handlePostTx(msg *xuper_p2p.XuperMessage) {
 			p2pv2.WithFilters([]p2pv2.FilterStrategy{p2pv2.DefaultStrategy}),
 			p2pv2.WithBcName(msg.GetHeader().GetBcname()),
 		}
-		xm.P2pv2.SendMessage(context.Background(), msg, opts...)
+		go xm.P2pv2.SendMessage(context.Background(), msg, opts...)
 	}
 	return
 }
@@ -196,7 +196,7 @@ func (xm *XChainMG) HandleSendBlock(msg *xuper_p2p.XuperMessage) {
 		p2pv2.WithFilters(filters),
 		p2pv2.WithBcName(bcname),
 	}
-	xm.P2pv2.SendMessage(context.Background(), msg, opts...)
+	go xm.P2pv2.SendMessage(context.Background(), msg, opts...)
 	return
 }
 
@@ -252,7 +252,7 @@ func (xm *XChainMG) handleBatchPostTx(msg *xuper_p2p.XuperMessage) {
 			p2pv2.WithFilters([]p2pv2.FilterStrategy{p2pv2.DefaultStrategy}),
 			p2pv2.WithBcName(msg.GetHeader().GetBcname()),
 		}
-		xm.P2pv2.SendMessage(context.Background(), msg, opts...)
+		go xm.P2pv2.SendMessage(context.Background(), msg, opts...)
 	}
 	return
 }

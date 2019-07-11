@@ -55,7 +55,7 @@ func (s *server) PostTx(ctx context.Context, in *pb.TxStatus) (*pb.CommonReply, 
 			p2pv2.WithFilters([]p2pv2.FilterStrategy{p2pv2.DefaultStrategy}),
 			p2pv2.WithBcName(in.GetBcname()),
 		}
-		s.mg.P2pv2.SendMessage(context.Background(), msg, opts...)
+		go s.mg.P2pv2.SendMessage(context.Background(), msg, opts...)
 	}
 	return out, err
 }
@@ -90,7 +90,7 @@ func (s *server) BatchPostTx(ctx context.Context, in *pb.BatchTxs) (*pb.CommonRe
 			p2pv2.WithFilters([]p2pv2.FilterStrategy{p2pv2.DefaultStrategy}),
 			p2pv2.WithBcName(in.Txs[0].GetBcname()),
 		}
-		s.mg.P2pv2.SendMessage(context.Background(), msg, opts...)
+		go s.mg.P2pv2.SendMessage(context.Background(), msg, opts...)
 	}
 	return out, nil
 }
