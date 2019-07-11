@@ -4,12 +4,12 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	osexec "os/exec"
 	"path/filepath"
 
 	"github.com/xuperchain/xuperunion/common/config"
+	"github.com/xuperchain/xuperunion/common/log"
 	"github.com/xuperchain/xuperunion/contract"
 	"github.com/xuperchain/xuperunion/contract/bridge"
 	"github.com/xuperchain/xuperunion/contract/wasm/vm"
@@ -111,14 +111,16 @@ func (x *xvmCreator) MakeExecCode(libpath string) (*exec.Code, error) {
 func (x *xvmCreator) CreateInstance(ctx *bridge.Context, cp vm.ContractCodeProvider) (vm.Instance, error) {
 	code, err := x.getContractCodeCache(ctx.ContractName, cp)
 	if err != nil {
+		log.Error("get contract cache error", "error", err, "contract", ctx.ContractName)
 		return nil, err
 	}
 
-	log.Printf("cpu limit:%d", ctx.ResourceLimits.Cpu)
+	log.Info("instance resource limit", "limits", ctx.ResourceLimits)
 	execCtx, err := exec.NewContext(code.ExecCode, &exec.ContextConfig{
 		GasLimit: ctx.ResourceLimits.Cpu,
 	})
 	if err != nil {
+		log.Error("create contract context error", "error", err, "contract", ctx.ContractName)
 		return nil, err
 	}
 	switch code.Desc.GetRuntime() {
@@ -152,7 +154,7 @@ func (x *xvmInstance) Exec(function string) error {
 	}
 	_, err := x.execCtx.Exec(function, []uint32{uint32(0), uint32(0)})
 	if err != nil {
-		log.Printf("exec error:%s", err)
+		log.Error("exec contract error", "error", err, "contract", x.bridgeCtx.ContractName)
 	}
 	return err
 }
