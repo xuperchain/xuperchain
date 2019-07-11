@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"sync"
 
+	"github.com/xuperchain/xuperunion/common/log"
 	"github.com/xuperchain/xuperunion/contract/wasm/vm"
 	"github.com/xuperchain/xuperunion/pb"
 	"github.com/xuperchain/xuperunion/xvm/exec"
@@ -133,13 +133,13 @@ func (c *codeManager) GetExecCode(name string, cp vm.ContractCodeProvider) (*con
 	}
 	execCode, ok := c.lookupMemCache(name, desc)
 	if ok {
-		log.Printf("%s hit memory cache", name)
+		log.Debug("contract code hit memory cache", "contract", name)
 		return execCode, nil
 	}
 
 	libpath, ok := c.lookupDiskCache(name, desc)
 	if !ok {
-		log.Printf("%s need make disk cache", name)
+		log.Debug("contract code need make disk cache", "contract", name)
 		codebuf, err := cp.GetContractCode(name)
 		if err != nil {
 			return nil, err
@@ -149,7 +149,7 @@ func (c *codeManager) GetExecCode(name string, cp vm.ContractCodeProvider) (*con
 			return nil, err
 		}
 	} else {
-		log.Printf("%s hit disk cache", name)
+		log.Debug("contract code hit disk cache", "contract", name)
 	}
 	return c.makeMemCache(name, libpath, desc)
 }
