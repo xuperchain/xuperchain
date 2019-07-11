@@ -17,8 +17,8 @@ void Block::init(pb::Block pbblock) {
     in_trunk = pbblock.in_trunk();
     next_hash = pbblock.next_hash();
 
-    for (int i = 0; i < pbblock.transactions_size(); i++) {
-        transactions.emplace_back(pbblock.transactions(i).txid());
+    for (int i = 0; i < pbblock.txids_size(); i++) {
+        txids.emplace_back(pbblock.txids(i));
     }
 }
 

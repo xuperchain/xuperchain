@@ -18,7 +18,7 @@ public:
     std::string sign;
     std::string pubkey;
     int64_t height;
-    std::vector<std::string> transactions;
+    std::vector<std::string> txids;
     int32_t tx_count;
     bool in_trunk;
     std::string next_hash;

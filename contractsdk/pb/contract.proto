@@ -106,7 +106,7 @@ message IteratorResponse {
 
 message QueryTxRequest {
   SyscallHeader header = 1;
-  bytes txid = 2;
+  string txid = 2;
 }
 
 message QueryTxResponse {
@@ -116,7 +116,7 @@ message QueryTxResponse {
 
 message QueryBlockRequest {
   SyscallHeader header = 1;
-  bytes blockid = 2;
+  string blockid = 2;
 }
 
 message QueryBlockResponse {
@@ -225,7 +225,7 @@ message Block
     // The height of the blockchain
     int64 height = 9;
     // Transactions of the block, only txid stored on kv, the detail information stored in another table
-    repeated Transaction transactions = 11; 
+    repeated string txids = 11; 
     // The transaction count of the block
     int32 tx_count = 12;
     //下面的属性会动态变化

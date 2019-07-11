@@ -4,6 +4,7 @@ package bridge
 
 import (
 	"context"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"sort"
@@ -40,28 +41,28 @@ func (c *SyscallService) QueryBlock(ctx context.Context, in *pb.QueryBlockReques
 		return nil, fmt.Errorf("bad ctx id:%d", in.Header.Ctxid)
 	}
 
-	block, err := nctx.Cache.QueryBlock(in.Blockid)
+	rawBlockid, err := hex.DecodeString(in.Blockid)
+	block, err := nctx.Cache.QueryBlock(rawBlockid)
 	if err != nil {
 		return nil, err
 	}
 
-	transactions := []*pb.Transaction{}
+	txids := []string{}
 	for _, t := range block.Transactions {
-		transaction := ConvertTxToSDKTx(t)
-		transactions = append(transactions, transaction)
+		txids = append(txids, hex.EncodeToString(t.Txid))
 	}
 
 	blocksdk := &pb.Block{
-		Blockid:      block.Blockid,
-		PreHash:      block.PreHash,
-		Proposer:     block.Proposer,
-		Sign:         block.Sign,
-		Pubkey:       block.Pubkey,
-		Height:       block.Height,
-		Transactions: transactions,
-		TxCount:      block.TxCount,
-		InTrunk:      block.InTrunk,
-		NextHash:     block.NextHash,
+		Blockid:  block.Blockid,
+		PreHash:  block.PreHash,
+		Proposer: block.Proposer,
+		Sign:     block.Sign,
+		Pubkey:   block.Pubkey,
+		Height:   block.Height,
+		Txids:    txids,
+		TxCount:  block.TxCount,
+		InTrunk:  block.InTrunk,
+		NextHash: block.NextHash,
 	}
 
 	return &pb.QueryBlockResponse{
@@ -75,7 +76,9 @@ func (c *SyscallService) QueryTx(ctx context.Context, in *pb.QueryTxRequest) (*p
 	if !ok {
 		return nil, fmt.Errorf("bad ctx id:%d", in.Header.Ctxid)
 	}
-	tx, err := nctx.Cache.QueryTx(in.Txid)
+
+	rawTxid, err := hex.DecodeString(in.Txid)
+	tx, err := nctx.Cache.QueryTx(rawTxid)
 	if err != nil {
 		return nil, err
 	}

@@ -14,12 +14,12 @@
 #include <google/protobuf/port_def.inc>
 
 extern PROTOBUF_INTERNAL_EXPORT_contract_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_ArgPair_contract_2eproto;
+extern PROTOBUF_INTERNAL_EXPORT_contract_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_Block_contract_2eproto;
 extern PROTOBUF_INTERNAL_EXPORT_contract_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_IteratorItem_contract_2eproto;
 extern PROTOBUF_INTERNAL_EXPORT_contract_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_Response_contract_2eproto;
 extern PROTOBUF_INTERNAL_EXPORT_contract_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_SyscallHeader_contract_2eproto;
 extern PROTOBUF_INTERNAL_EXPORT_contract_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_TxInput_contract_2eproto;
 extern PROTOBUF_INTERNAL_EXPORT_contract_2eproto ::google::protobuf::internal::SCCInfo<0> scc_info_TxOutput_contract_2eproto;
-extern PROTOBUF_INTERNAL_EXPORT_contract_2eproto ::google::protobuf::internal::SCCInfo<1> scc_info_Block_contract_2eproto;
 extern PROTOBUF_INTERNAL_EXPORT_contract_2eproto ::google::protobuf::internal::SCCInfo<2> scc_info_Transaction_contract_2eproto;
 namespace pb {
 class PingRequestDefaultTypeInternal {
@@ -615,9 +615,8 @@ static void InitDefaultsBlock_contract_2eproto() {
   ::pb::Block::InitAsDefaultInstance();
 }
 
-::google::protobuf::internal::SCCInfo<1> scc_info_Block_contract_2eproto =
-    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 1, InitDefaultsBlock_contract_2eproto}, {
-      &scc_info_Transaction_contract_2eproto.base,}};
+::google::protobuf::internal::SCCInfo<0> scc_info_Block_contract_2eproto =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsBlock_contract_2eproto}, {}};
 
 namespace pb {
 
@@ -4958,17 +4957,18 @@ const char* QueryTxRequest::_InternalParse(const char* begin, const char* end, v
             {parser_till_end, object}, ptr - size, ptr));
         break;
       }
-      // bytes txid = 2;
+      // string txid = 2;
       case 2: {
         if (static_cast<::google::protobuf::uint8>(tag) != 18) goto handle_unusual;
         ptr = ::google::protobuf::io::ReadSize(ptr, &size);
         GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+        ctx->extra_parse_data().SetFieldName(nullptr);
         object = msg->mutable_txid();
         if (size > end - ptr + ::google::protobuf::internal::ParseContext::kSlopBytes) {
-          parser_till_end = ::google::protobuf::internal::GreedyStringParser;
+          parser_till_end = ::google::protobuf::internal::GreedyStringParserUTF8;
           goto string_till_end;
         }
-        GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheck(ptr, size, ctx));
+        GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheckUTF8(ptr, size, ctx));
         ::google::protobuf::internal::InlineGreedyStringParser(object, ptr, size, ctx);
         ptr += size;
         break;
@@ -5024,11 +5024,15 @@ bool QueryTxRequest::MergePartialFromCodedStream(
         break;
       }
 
-      // bytes txid = 2;
+      // string txid = 2;
       case 2: {
         if (static_cast< ::google::protobuf::uint8>(tag) == (18 & 0xFF)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
                 input, this->mutable_txid()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->txid().data(), static_cast<int>(this->txid().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "pb.QueryTxRequest.txid"));
         } else {
           goto handle_unusual;
         }
@@ -5068,9 +5072,13 @@ void QueryTxRequest::SerializeWithCachedSizes(
       1, HasBitSetters::header(this), output);
   }
 
-  // bytes txid = 2;
+  // string txid = 2;
   if (this->txid().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->txid().data(), static_cast<int>(this->txid().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "pb.QueryTxRequest.txid");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
       2, this->txid(), output);
   }
 
@@ -5089,10 +5097,10 @@ size_t QueryTxRequest::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // bytes txid = 2;
+  // string txid = 2;
   if (this->txid().size() > 0) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::BytesSize(
+      ::google::protobuf::internal::WireFormatLite::StringSize(
         this->txid());
   }
 
@@ -5513,17 +5521,18 @@ const char* QueryBlockRequest::_InternalParse(const char* begin, const char* end
             {parser_till_end, object}, ptr - size, ptr));
         break;
       }
-      // bytes blockid = 2;
+      // string blockid = 2;
       case 2: {
         if (static_cast<::google::protobuf::uint8>(tag) != 18) goto handle_unusual;
         ptr = ::google::protobuf::io::ReadSize(ptr, &size);
         GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+        ctx->extra_parse_data().SetFieldName(nullptr);
         object = msg->mutable_blockid();
         if (size > end - ptr + ::google::protobuf::internal::ParseContext::kSlopBytes) {
-          parser_till_end = ::google::protobuf::internal::GreedyStringParser;
+          parser_till_end = ::google::protobuf::internal::GreedyStringParserUTF8;
           goto string_till_end;
         }
-        GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheck(ptr, size, ctx));
+        GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheckUTF8(ptr, size, ctx));
         ::google::protobuf::internal::InlineGreedyStringParser(object, ptr, size, ctx);
         ptr += size;
         break;
@@ -5579,11 +5588,15 @@ bool QueryBlockRequest::MergePartialFromCodedStream(
         break;
       }
 
-      // bytes blockid = 2;
+      // string blockid = 2;
       case 2: {
         if (static_cast< ::google::protobuf::uint8>(tag) == (18 & 0xFF)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
                 input, this->mutable_blockid()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->blockid().data(), static_cast<int>(this->blockid().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "pb.QueryBlockRequest.blockid"));
         } else {
           goto handle_unusual;
         }
@@ -5623,9 +5636,13 @@ void QueryBlockRequest::SerializeWithCachedSizes(
       1, HasBitSetters::header(this), output);
   }
 
-  // bytes blockid = 2;
+  // string blockid = 2;
   if (this->blockid().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->blockid().data(), static_cast<int>(this->blockid().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "pb.QueryBlockRequest.blockid");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
       2, this->blockid(), output);
   }
 
@@ -5644,10 +5661,10 @@ size_t QueryBlockRequest::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // bytes blockid = 2;
+  // string blockid = 2;
   if (this->blockid().size() > 0) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::BytesSize(
+      ::google::protobuf::internal::WireFormatLite::StringSize(
         this->blockid());
   }
 
@@ -9706,7 +9723,7 @@ const int Block::kProposerFieldNumber;
 const int Block::kSignFieldNumber;
 const int Block::kPubkeyFieldNumber;
 const int Block::kHeightFieldNumber;
-const int Block::kTransactionsFieldNumber;
+const int Block::kTxidsFieldNumber;
 const int Block::kTxCountFieldNumber;
 const int Block::kInTrunkFieldNumber;
 const int Block::kNextHashFieldNumber;
@@ -9720,7 +9737,7 @@ Block::Block()
 Block::Block(const Block& from)
   : ::google::protobuf::MessageLite(),
       _internal_metadata_(nullptr),
-      transactions_(from.transactions_) {
+      txids_(from.txids_) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   blockid_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (from.blockid().size() > 0) {
@@ -9795,7 +9812,7 @@ void Block::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  transactions_.Clear();
+  txids_.Clear();
   blockid_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   pre_hash_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   proposer_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
@@ -9903,18 +9920,21 @@ const char* Block::_InternalParse(const char* begin, const char* end, void* obje
         GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
         break;
       }
-      // repeated .pb.Transaction transactions = 11;
+      // repeated string txids = 11;
       case 11: {
         if (static_cast<::google::protobuf::uint8>(tag) != 90) goto handle_unusual;
         do {
           ptr = ::google::protobuf::io::ReadSize(ptr, &size);
           GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
-          parser_till_end = ::pb::Transaction::_InternalParse;
-          object = msg->add_transactions();
-          if (size > end - ptr) goto len_delim_till_end;
+          ctx->extra_parse_data().SetFieldName(nullptr);
+          object = msg->add_txids();
+          if (size > end - ptr + ::google::protobuf::internal::ParseContext::kSlopBytes) {
+            parser_till_end = ::google::protobuf::internal::GreedyStringParserUTF8;
+            goto string_till_end;
+          }
+          GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheckUTF8(ptr, size, ctx));
+          ::google::protobuf::internal::InlineGreedyStringParser(object, ptr, size, ctx);
           ptr += size;
-          GOOGLE_PROTOBUF_PARSER_ASSERT(ctx->ParseExactRange(
-              {parser_till_end, object}, ptr - size, ptr));
           if (ptr >= end) break;
         } while ((::google::protobuf::io::UnalignedLoad<::google::protobuf::uint64>(ptr) & 255) == 90 && (ptr += 1));
         break;
@@ -10056,11 +10076,16 @@ bool Block::MergePartialFromCodedStream(
         break;
       }
 
-      // repeated .pb.Transaction transactions = 11;
+      // repeated string txids = 11;
       case 11: {
         if (static_cast< ::google::protobuf::uint8>(tag) == (90 & 0xFF)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
-                input, add_transactions()));
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->add_txids()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->txids(this->txids_size() - 1).data(),
+            static_cast<int>(this->txids(this->txids_size() - 1).length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "pb.Block.txids"));
         } else {
           goto handle_unusual;
         }
@@ -10166,13 +10191,14 @@ void Block::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteInt64(9, this->height(), output);
   }
 
-  // repeated .pb.Transaction transactions = 11;
-  for (unsigned int i = 0,
-      n = static_cast<unsigned int>(this->transactions_size()); i < n; i++) {
-    ::google::protobuf::internal::WireFormatLite::WriteMessage(
-      11,
-      this->transactions(static_cast<int>(i)),
-      output);
+  // repeated string txids = 11;
+  for (int i = 0, n = this->txids_size(); i < n; i++) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->txids(i).data(), static_cast<int>(this->txids(i).length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "pb.Block.txids");
+    ::google::protobuf::internal::WireFormatLite::WriteString(
+      11, this->txids(i), output);
   }
 
   // int32 tx_count = 12;
@@ -10206,15 +10232,12 @@ size_t Block::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // repeated .pb.Transaction transactions = 11;
-  {
-    unsigned int count = static_cast<unsigned int>(this->transactions_size());
-    total_size += 1UL * count;
-    for (unsigned int i = 0; i < count; i++) {
-      total_size +=
-        ::google::protobuf::internal::WireFormatLite::MessageSize(
-          this->transactions(static_cast<int>(i)));
-    }
+  // repeated string txids = 11;
+  total_size += 1 *
+      ::google::protobuf::internal::FromIntSize(this->txids_size());
+  for (int i = 0, n = this->txids_size(); i < n; i++) {
+    total_size += ::google::protobuf::internal::WireFormatLite::StringSize(
+      this->txids(i));
   }
 
   // bytes blockid = 3;
@@ -10295,7 +10318,7 @@ void Block::MergeFrom(const Block& from) {
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  transactions_.MergeFrom(from.transactions_);
+  txids_.MergeFrom(from.txids_);
   if (from.blockid().size() > 0) {
 
     blockid_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.blockid_);
@@ -10349,7 +10372,7 @@ void Block::Swap(Block* other) {
 void Block::InternalSwap(Block* other) {
   using std::swap;
   _internal_metadata_.Swap(&other->_internal_metadata_);
-  CastToBase(&transactions_)->InternalSwap(CastToBase(&other->transactions_));
+  txids_.InternalSwap(CastToBase(&other->txids_));
   blockid_.Swap(&other->blockid_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
     GetArenaNoVirtual());
   pre_hash_.Swap(&other->pre_hash_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),

@@ -2196,7 +2196,7 @@ class QueryTxRequest :
 
   // accessors -------------------------------------------------------
 
-  // bytes txid = 2;
+  // string txid = 2;
   void clear_txid();
   static const int kTxidFieldNumber = 2;
   const ::std::string& txid() const;
@@ -2205,7 +2205,7 @@ class QueryTxRequest :
   void set_txid(::std::string&& value);
   #endif
   void set_txid(const char* value);
-  void set_txid(const void* value, size_t size);
+  void set_txid(const char* value, size_t size);
   ::std::string* mutable_txid();
   ::std::string* release_txid();
   void set_allocated_txid(::std::string* txid);
@@ -2433,7 +2433,7 @@ class QueryBlockRequest :
 
   // accessors -------------------------------------------------------
 
-  // bytes blockid = 2;
+  // string blockid = 2;
   void clear_blockid();
   static const int kBlockidFieldNumber = 2;
   const ::std::string& blockid() const;
@@ -2442,7 +2442,7 @@ class QueryBlockRequest :
   void set_blockid(::std::string&& value);
   #endif
   void set_blockid(const char* value);
-  void set_blockid(const void* value, size_t size);
+  void set_blockid(const char* value, size_t size);
   ::std::string* mutable_blockid();
   ::std::string* release_blockid();
   void set_allocated_blockid(::std::string* blockid);
@@ -4171,17 +4171,27 @@ class Block :
 
   // accessors -------------------------------------------------------
 
-  // repeated .pb.Transaction transactions = 11;
-  int transactions_size() const;
-  void clear_transactions();
-  static const int kTransactionsFieldNumber = 11;
-  ::pb::Transaction* mutable_transactions(int index);
-  ::google::protobuf::RepeatedPtrField< ::pb::Transaction >*
-      mutable_transactions();
-  const ::pb::Transaction& transactions(int index) const;
-  ::pb::Transaction* add_transactions();
-  const ::google::protobuf::RepeatedPtrField< ::pb::Transaction >&
-      transactions() const;
+  // repeated string txids = 11;
+  int txids_size() const;
+  void clear_txids();
+  static const int kTxidsFieldNumber = 11;
+  const ::std::string& txids(int index) const;
+  ::std::string* mutable_txids(int index);
+  void set_txids(int index, const ::std::string& value);
+  #if LANG_CXX11
+  void set_txids(int index, ::std::string&& value);
+  #endif
+  void set_txids(int index, const char* value);
+  void set_txids(int index, const char* value, size_t size);
+  ::std::string* add_txids();
+  void add_txids(const ::std::string& value);
+  #if LANG_CXX11
+  void add_txids(::std::string&& value);
+  #endif
+  void add_txids(const char* value);
+  void add_txids(const char* value, size_t size);
+  const ::google::protobuf::RepeatedPtrField<::std::string>& txids() const;
+  ::google::protobuf::RepeatedPtrField<::std::string>* mutable_txids();
 
   // bytes blockid = 3;
   void clear_blockid();
@@ -4290,7 +4300,7 @@ class Block :
   class HasBitSetters;
 
   ::google::protobuf::internal::InternalMetadataWithArenaLite _internal_metadata_;
-  ::google::protobuf::RepeatedPtrField< ::pb::Transaction > transactions_;
+  ::google::protobuf::RepeatedPtrField<::std::string> txids_;
   ::google::protobuf::internal::ArenaStringPtr blockid_;
   ::google::protobuf::internal::ArenaStringPtr pre_hash_;
   ::google::protobuf::internal::ArenaStringPtr proposer_;
@@ -5493,7 +5503,7 @@ inline void QueryTxRequest::set_allocated_header(::pb::SyscallHeader* header) {
   // @@protoc_insertion_point(field_set_allocated:pb.QueryTxRequest.header)
 }
 
-// bytes txid = 2;
+// string txid = 2;
 inline void QueryTxRequest::clear_txid() {
   txid_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -5520,7 +5530,7 @@ inline void QueryTxRequest::set_txid(const char* value) {
   txid_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
   // @@protoc_insertion_point(field_set_char:pb.QueryTxRequest.txid)
 }
-inline void QueryTxRequest::set_txid(const void* value, size_t size) {
+inline void QueryTxRequest::set_txid(const char* value, size_t size) {
   
   txid_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
@@ -5656,7 +5666,7 @@ inline void QueryBlockRequest::set_allocated_header(::pb::SyscallHeader* header)
   // @@protoc_insertion_point(field_set_allocated:pb.QueryBlockRequest.header)
 }
 
-// bytes blockid = 2;
+// string blockid = 2;
 inline void QueryBlockRequest::clear_blockid() {
   blockid_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -5683,7 +5693,7 @@ inline void QueryBlockRequest::set_blockid(const char* value) {
   blockid_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
   // @@protoc_insertion_point(field_set_char:pb.QueryBlockRequest.blockid)
 }
-inline void QueryBlockRequest::set_blockid(const void* value, size_t size) {
+inline void QueryBlockRequest::set_blockid(const char* value, size_t size) {
   
   blockid_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
@@ -7460,34 +7470,73 @@ inline void Block::set_height(::google::protobuf::int64 value) {
   // @@protoc_insertion_point(field_set:pb.Block.height)
 }
 
-// repeated .pb.Transaction transactions = 11;
-inline int Block::transactions_size() const {
-  return transactions_.size();
+// repeated string txids = 11;
+inline int Block::txids_size() const {
+  return txids_.size();
 }
-inline void Block::clear_transactions() {
-  transactions_.Clear();
+inline void Block::clear_txids() {
+  txids_.Clear();
 }
-inline ::pb::Transaction* Block::mutable_transactions(int index) {
-  // @@protoc_insertion_point(field_mutable:pb.Block.transactions)
-  return transactions_.Mutable(index);
+inline const ::std::string& Block::txids(int index) const {
+  // @@protoc_insertion_point(field_get:pb.Block.txids)
+  return txids_.Get(index);
 }
-inline ::google::protobuf::RepeatedPtrField< ::pb::Transaction >*
-Block::mutable_transactions() {
-  // @@protoc_insertion_point(field_mutable_list:pb.Block.transactions)
-  return &transactions_;
+inline ::std::string* Block::mutable_txids(int index) {
+  // @@protoc_insertion_point(field_mutable:pb.Block.txids)
+  return txids_.Mutable(index);
 }
-inline const ::pb::Transaction& Block::transactions(int index) const {
-  // @@protoc_insertion_point(field_get:pb.Block.transactions)
-  return transactions_.Get(index);
+inline void Block::set_txids(int index, const ::std::string& value) {
+  // @@protoc_insertion_point(field_set:pb.Block.txids)
+  txids_.Mutable(index)->assign(value);
 }
-inline ::pb::Transaction* Block::add_transactions() {
-  // @@protoc_insertion_point(field_add:pb.Block.transactions)
-  return transactions_.Add();
+#if LANG_CXX11
+inline void Block::set_txids(int index, ::std::string&& value) {
+  // @@protoc_insertion_point(field_set:pb.Block.txids)
+  txids_.Mutable(index)->assign(std::move(value));
 }
-inline const ::google::protobuf::RepeatedPtrField< ::pb::Transaction >&
-Block::transactions() const {
-  // @@protoc_insertion_point(field_list:pb.Block.transactions)
-  return transactions_;
+#endif
+inline void Block::set_txids(int index, const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  txids_.Mutable(index)->assign(value);
+  // @@protoc_insertion_point(field_set_char:pb.Block.txids)
+}
+inline void Block::set_txids(int index, const char* value, size_t size) {
+  txids_.Mutable(index)->assign(
+    reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_set_pointer:pb.Block.txids)
+}
+inline ::std::string* Block::add_txids() {
+  // @@protoc_insertion_point(field_add_mutable:pb.Block.txids)
+  return txids_.Add();
+}
+inline void Block::add_txids(const ::std::string& value) {
+  txids_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add:pb.Block.txids)
+}
+#if LANG_CXX11
+inline void Block::add_txids(::std::string&& value) {
+  txids_.Add(std::move(value));
+  // @@protoc_insertion_point(field_add:pb.Block.txids)
+}
+#endif
+inline void Block::add_txids(const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  txids_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add_char:pb.Block.txids)
+}
+inline void Block::add_txids(const char* value, size_t size) {
+  txids_.Add()->assign(reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_add_pointer:pb.Block.txids)
+}
+inline const ::google::protobuf::RepeatedPtrField<::std::string>&
+Block::txids() const {
+  // @@protoc_insertion_point(field_list:pb.Block.txids)
+  return txids_;
+}
+inline ::google::protobuf::RepeatedPtrField<::std::string>*
+Block::mutable_txids() {
+  // @@protoc_insertion_point(field_mutable_list:pb.Block.txids)
+  return &txids_;
 }
 
 // int32 tx_count = 12;

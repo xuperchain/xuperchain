@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include "xchain/contract.pb.h"
 #include "xchain/syscall.h"
-#include "xchain/util.h"
 
 namespace xchain {
 
@@ -90,8 +89,7 @@ bool ContextImpl::query_tx(const std::string &txid, Transaction* tx) {
     pb::QueryTxRequest req;
     pb::QueryTxResponse rep;
     
-    std::string rawTxid = hex2string(txid);
-    req.set_txid(rawTxid);
+    req.set_txid(txid);
     bool ok = syscall("QueryTx", req, &rep);
     if (!ok) {
         return false;
@@ -106,8 +104,7 @@ bool ContextImpl::query_block(const std::string &blockid, Block* block) {
     pb::QueryBlockRequest req;
     pb::QueryBlockResponse rep;
     
-    std::string rawBlockid = hex2string(blockid);
-    req.set_blockid(rawBlockid);
+    req.set_blockid(blockid);
     bool ok = syscall("QueryBlock", req, &rep);
     if (!ok) {
         return false;
