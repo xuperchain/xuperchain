@@ -15,6 +15,7 @@ import (
 	"github.com/xuperchain/xuperunion/contract/wasm/vm"
 	"github.com/xuperchain/xuperunion/pb"
 	"github.com/xuperchain/xuperunion/xvm/compile"
+	"github.com/xuperchain/xuperunion/xvm/debug"
 	"github.com/xuperchain/xuperunion/xvm/exec"
 	"github.com/xuperchain/xuperunion/xvm/runtime/emscripten"
 	gowasm "github.com/xuperchain/xuperunion/xvm/runtime/go"
@@ -130,11 +131,13 @@ func (x *xvmCreator) CreateInstance(ctx *bridge.Context, cp vm.ContractCodeProvi
 		emscripten.Init(execCtx)
 	}
 	execCtx.SetUserData(contextIDKey, ctx.ID)
-	return &xvmInstance{
+	instance := &xvmInstance{
 		bridgeCtx: ctx,
 		execCtx:   execCtx,
 		desc:      code.Desc,
-	}, nil
+	}
+	instance.InitDebugWriter()
+	return instance, nil
 }
 
 func (x *xvmCreator) RemoveCache(contractName string) {
@@ -172,6 +175,12 @@ func (x *xvmInstance) ResourceUsed() contract.Limits {
 
 func (x *xvmInstance) Release() {
 	x.execCtx.Release()
+}
+
+func (x *xvmInstance) InitDebugWriter() {
+	logger := log.DefaultLogger.New("type", "contract-debug", "contract", x.bridgeCtx.ContractName)
+	w := newDebugWriter(logger)
+	debug.SetWriter(x.execCtx, w)
 }
 
 func init() {
