@@ -102,6 +102,7 @@ func (uv *UtxoVM) verifyContractValid(tx *pb.Transaction) (bool, error) {
 		ok, contractErr := pm.CheckContractMethodPerm(tx.AuthRequire, tx.AuthRequireSigns, digestHash, contractName, methodName, uv.aclMgr)
 		if !ok {
 			uv.xlog.Warn("tx info ", "AuthRequire ", tx.AuthRequire, "AuthRequireSigns ", tx.AuthRequireSigns)
+			return ok, contractErr
 		}
 		if contractErr != nil {
 			return ok, ErrRWAclNotEnough
