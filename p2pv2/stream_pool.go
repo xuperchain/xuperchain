@@ -161,6 +161,9 @@ func (sp *StreamPool) sendMessage(ctx context.Context, msg *p2pPb.XuperMessage, 
 func (sp *StreamPool) streamForPeer(p peer.ID) (*Stream, error) {
 	if v, ok := sp.streams.Get(p.Pretty()); ok {
 		s, _ := v.(*Stream)
+		if sp.no.srv.config.IsAuthentication && s.auth() {
+			return s, nil
+		}
 		if s.valid() {
 			return s, nil
 		}
