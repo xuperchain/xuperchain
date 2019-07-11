@@ -11,6 +11,7 @@ import (
 	"github.com/golang/protobuf/proto"
 
 	"github.com/xuperchain/xuperunion/common/config"
+	"github.com/xuperchain/xuperunion/common/log"
 	"github.com/xuperchain/xuperunion/contract"
 	"github.com/xuperchain/xuperunion/contract/wasm/vm"
 	"github.com/xuperchain/xuperunion/crypto/hash"
@@ -168,6 +169,7 @@ func (v *VMManager) DeployContract(contextConfig *contract.ContextConfig, args m
 	}, cp)
 	if err != nil {
 		v.vmimpl.RemoveCache(contractName)
+		log.Error("create contract instance error when deploy contract", "error", err, "contract", contractName)
 		return nil, contract.Limits{}, err
 	}
 	instance.Release()
@@ -179,6 +181,7 @@ func (v *VMManager) DeployContract(contextConfig *contract.ContextConfig, args m
 		if _, ok := err.(*bridge.ContractError); !ok {
 			v.vmimpl.RemoveCache(contractName)
 		}
+		log.Error("call contract initialize method error", "error", err, "contract", contractName)
 		return nil, contract.Limits{}, err
 	}
 	return out, resourceUsed, nil
