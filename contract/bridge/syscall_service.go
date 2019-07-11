@@ -42,6 +42,10 @@ func (c *SyscallService) QueryBlock(ctx context.Context, in *pb.QueryBlockReques
 	}
 
 	rawBlockid, err := hex.DecodeString(in.Blockid)
+	if err != nil {
+		return nil, err
+	}
+
 	block, err := nctx.Cache.QueryBlock(rawBlockid)
 	if err != nil {
 		return nil, err
@@ -78,6 +82,10 @@ func (c *SyscallService) QueryTx(ctx context.Context, in *pb.QueryTxRequest) (*p
 	}
 
 	rawTxid, err := hex.DecodeString(in.Txid)
+	if err != nil {
+		return nil, err
+	}
+
 	tx, err := nctx.Cache.QueryTx(rawTxid)
 	if err != nil {
 		return nil, err
