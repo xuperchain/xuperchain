@@ -272,8 +272,12 @@ func (c *CommTrans) GenTxOutputs(gasUsed int64) ([]*pb.TxOutput, *big.Int, error
 		if !ok {
 			return nil, nil, ErrInvalidAmount
 		}
-		if amount.Cmp(bigZero) < 0 {
+		cmpRes := amount.Cmp(bigZero)
+		if cmpRes < 0 {
 			return nil, nil, ErrNegativeAmount
+		} else if cmpRes == 0 {
+			// trim 0 output
+			continue
 		}
 		// 得到总的转账金额
 		totalNeed.Add(totalNeed, amount)
