@@ -13,7 +13,7 @@ import (
 
 	"github.com/docker/go-connections/sockets"
 	"github.com/xuperchain/xuperunion/contractsdk/go/code"
-	"github.com/xuperchain/xuperunion/contractsdk/go/pb"
+	pb "github.com/xuperchain/xuperunion/contractsdk/go/pb"
 	"google.golang.org/grpc"
 )
 
