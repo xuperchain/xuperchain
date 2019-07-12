@@ -104,7 +104,7 @@ require (
 	github.com/whyrusleeping/multiaddr-filter v0.0.0-20160516205228-e903e4adabd7 // indirect
 	github.com/whyrusleeping/yamux v1.1.2 // indirect
 	github.com/xuperchain/go-libp2p-kad-dht v4.4.13-0.20190219145403-6d02cbb41795+incompatible
-	github.com/xuperchain/log15 v0.0.0-20190523125943-b2239a7cda1a
+	github.com/xuperchain/log15 v0.0.0-20190620081506-bc88a9198230
 	golang.org/x/crypto v0.0.0-20190103213133-ff983b9c42bc
 	golang.org/x/net v0.0.0-20190110200230-915654e7eabc
 	golang.org/x/time v0.0.0-20181108054448-85acf8d2951c // indirect

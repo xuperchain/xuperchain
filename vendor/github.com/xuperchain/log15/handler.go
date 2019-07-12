@@ -76,7 +76,7 @@ func FileHandler(path string, fmtr Format) (Handler, error) {
 // RotateFileHandler will create the file with mode 0644.
 //	`interval`: the log rotation interval in minutes.
 //	`backupCount`: keep at most `backupCount` old log files.
-func RotateFileHandler(path string, fmtr Format, interval int, backupCount int) (Handler, error){
+func RotateFileHandler(path string, fmtr Format, interval int, backupCount int) (Handler, error) {
 	f, err := NewTimeRotateWriter(path, interval, backupCount)
 	if err != nil {
 		return nil, err
