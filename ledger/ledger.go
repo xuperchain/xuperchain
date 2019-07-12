@@ -42,6 +42,8 @@ var (
 	FileHandlersCacheSize = 1024 //how many opened files-handlers cached
 	// DisableTxDedup ...
 	DisableTxDedup = false //whether disable dedup tx beform confirm
+	// TxSizePercent max percent of txs' size in one block
+	TxSizePercent = 0.8
 )
 
 const (
@@ -988,4 +990,10 @@ func (l *Ledger) QueryBlockByHeight(height int64) (*pb.InternalBlock, error) {
 		return nil, kvErr
 	}
 	return l.QueryBlock(blockID)
+}
+
+// MaxTxSizePerBlock max total size of all txs in one block
+func (l *Ledger) MaxTxSizePerBlock() int {
+	maxBlkSize := float64(l.GetMaxBlockSize())
+	return int(maxBlkSize * TxSizePercent)
 }
