@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/xuperchain/xuperunion/contract"
-	"github.com/xuperchain/xuperunion/contractsdk/go/pb"
+	pb "github.com/xuperchain/xuperunion/contractsdk/go/pb"
 	"github.com/xuperchain/xuperunion/test/util"
 )
 
