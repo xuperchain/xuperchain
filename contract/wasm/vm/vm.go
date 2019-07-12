@@ -1,6 +1,7 @@
 package vm
 
 import (
+	"github.com/xuperchain/xuperunion/common/log"
 	"github.com/xuperchain/xuperunion/contract"
 	"github.com/xuperchain/xuperunion/contract/bridge"
 	"github.com/xuperchain/xuperunion/pb"
@@ -11,7 +12,8 @@ type InstanceCreatorConfig struct {
 	Basedir        string
 	SyscallService *bridge.SyscallService
 	// VMConfig is the config of vm driver
-	VMConfig interface{}
+	VMConfig    interface{}
+	DebugLogger *log.Logger
 }
 
 // NewInstanceCreatorFunc instances a new InstanceCreator from InstanceCreatorConfig

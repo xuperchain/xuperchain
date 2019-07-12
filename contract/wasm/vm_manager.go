@@ -34,6 +34,7 @@ type VMManager struct {
 	vmimpl       vm.InstanceCreator
 	xbridge      *bridge.XBridge
 	codeProvider vm.ContractCodeProvider
+	debugLogger  *log.Logger
 }
 
 // New instances a new VMManager
@@ -55,6 +56,14 @@ func New(cfg *config.WasmConfig, basedir string, xbridge *bridge.XBridge, xmodel
 		if _, err = pluginMgr.PluginMgr.CreatePluginInstance("wasm", cfg.Driver); err != nil {
 			return nil, err
 		}
+	}
+
+	if cfg.EnableDebugLog {
+		debugLogger, err := log.OpenLog(&cfg.DebugLog)
+		if err != nil {
+			return nil, err
+		}
+		vmm.debugLogger = &debugLogger
 	}
 
 	return vmm, nil
@@ -79,6 +88,7 @@ func (v *VMManager) RegisterSyscallService(syscall *bridge.SyscallService) {
 		Basedir:        filepath.Join(v.basedir, v.config.Driver),
 		SyscallService: syscall,
 		VMConfig:       vmconfig,
+		DebugLogger:    v.debugLogger,
 	})
 	if err != nil {
 		panic(err)
