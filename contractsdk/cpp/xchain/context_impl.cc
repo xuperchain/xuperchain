@@ -85,6 +85,36 @@ bool ContextImpl::delete_object(const std::string& key) {
     return true;
 }
 
+bool ContextImpl::query_tx(const std::string &txid, Transaction* tx) {
+    pb::QueryTxRequest req;
+    pb::QueryTxResponse rep;
+    
+    req.set_txid(txid);
+    bool ok = syscall("QueryTx", req, &rep);
+    if (!ok) {
+        return false;
+    }
+
+    tx->init(rep.tx());
+    
+    return true;
+}
+
+bool ContextImpl::query_block(const std::string &blockid, Block* block) {
+    pb::QueryBlockRequest req;
+    pb::QueryBlockResponse rep;
+    
+    req.set_blockid(blockid);
+    bool ok = syscall("QueryBlock", req, &rep);
+    if (!ok) {
+        return false;
+    }
+
+    block->init(rep.block());
+
+    return true;
+}
+
 void ContextImpl::ok(const std::string& body) {
     _resp.status = 200;
     _resp.body = body;

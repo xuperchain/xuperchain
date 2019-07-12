@@ -7,7 +7,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/xuperchain/xuperunion/contractsdk/go/code"
 	"github.com/xuperchain/xuperunion/contractsdk/go/exec"
-	"github.com/xuperchain/xuperunion/contractsdk/go/pb"
+	pb "github.com/xuperchain/xuperunion/contractsdk/go/pb"
 	"google.golang.org/grpc"
 )
 

@@ -21,6 +21,8 @@ public:
     virtual bool get_object(const std::string& key, std::string* value);
     virtual bool put_object(const std::string& key, const std::string& value);
     virtual bool delete_object(const std::string& key);
+    virtual bool query_tx(const std::string &txid, Transaction* tx);
+    virtual bool query_block(const std::string &blockid, Block* block);
     virtual void ok(const std::string& body);
     virtual void error(const std::string& body);
     virtual Response* mutable_response();
@@ -30,6 +32,7 @@ private:
     std::map<std::string, std::string> _args;
     Response _resp;
 };
+
 }  // namespace xchain
 
 #endif

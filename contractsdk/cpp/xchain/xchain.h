@@ -3,6 +3,9 @@
 
 #include <map>
 #include <string>
+#include "xchain/transaction.h"
+#include "xchain/block.h" 
+
 namespace xchain {
 
 struct Response {
@@ -23,6 +26,8 @@ public:
     virtual bool put_object(const std::string& key,
                             const std::string& value) = 0;
     virtual bool delete_object(const std::string& key) = 0;
+    virtual bool query_tx(const std::string &txid, Transaction* tx) = 0;
+    virtual bool query_block(const std::string &blockid, Block* block) = 0;
     virtual void ok(const std::string& body) = 0;
     virtual void error(const std::string& body) = 0;
     virtual Response* mutable_response() = 0;

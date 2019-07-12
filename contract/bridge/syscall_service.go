@@ -4,12 +4,13 @@ package bridge
 
 import (
 	"context"
-	"encoding/json"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"sort"
 
-	"github.com/xuperchain/xuperunion/contractsdk/go/pb"
+	pb "github.com/xuperchain/xuperunion/contractsdk/go/pb"
+	xchainpb "github.com/xuperchain/xuperunion/pb"
 )
 
 var (
@@ -40,17 +41,36 @@ func (c *SyscallService) QueryBlock(ctx context.Context, in *pb.QueryBlockReques
 		return nil, fmt.Errorf("bad ctx id:%d", in.Header.Ctxid)
 	}
 
-	block, err := nctx.Cache.QueryBlock(in.Blockid)
+	rawBlockid, err := hex.DecodeString(in.Blockid)
 	if err != nil {
 		return nil, err
 	}
 
-	blockbuf, err := json.Marshal(block)
+	block, err := nctx.Cache.QueryBlock(rawBlockid)
 	if err != nil {
 		return nil, err
 	}
+
+	txids := []string{}
+	for _, t := range block.Transactions {
+		txids = append(txids, hex.EncodeToString(t.Txid))
+	}
+
+	blocksdk := &pb.Block{
+		Blockid:  hex.EncodeToString(block.Blockid),
+		PreHash:  block.PreHash,
+		Proposer: block.Proposer,
+		Sign:     block.Sign,
+		Pubkey:   block.Pubkey,
+		Height:   block.Height,
+		Txids:    txids,
+		TxCount:  block.TxCount,
+		InTrunk:  block.InTrunk,
+		NextHash: block.NextHash,
+	}
+
 	return &pb.QueryBlockResponse{
-		Block: blockbuf,
+		Block: blocksdk,
 	}, nil
 }
 
@@ -60,17 +80,21 @@ func (c *SyscallService) QueryTx(ctx context.Context, in *pb.QueryTxRequest) (*p
 	if !ok {
 		return nil, fmt.Errorf("bad ctx id:%d", in.Header.Ctxid)
 	}
-	tx, err := nctx.Cache.QueryTx(in.Txid)
+
+	rawTxid, err := hex.DecodeString(in.Txid)
 	if err != nil {
 		return nil, err
 	}
 
-	txbuf, err := json.Marshal(tx)
+	tx, err := nctx.Cache.QueryTx(rawTxid)
 	if err != nil {
 		return nil, err
 	}
+
+	txsdk := ConvertTxToSDKTx(tx)
+
 	return &pb.QueryTxResponse{
-		Tx: txbuf,
+		Tx: txsdk,
 	}, nil
 }
 
@@ -194,4 +218,40 @@ func (c *SyscallService) SetOutput(ctx context.Context, in *pb.SetOutputRequest)
 	}
 	nctx.Output = in.GetResponse()
 	return new(pb.SetOutputResponse), nil
+}
+
+func ConvertTxToSDKTx(tx *xchainpb.Transaction) *pb.Transaction {
+	txIns := []*pb.TxInput{}
+	for _, in := range tx.TxInputs {
+		txIn := &pb.TxInput{
+			RefTxid:      in.RefTxid,
+			RefOffset:    in.RefOffset,
+			FromAddr:     in.FromAddr,
+			Amount:       in.Amount,
+			FrozenHeight: in.FrozenHeight,
+		}
+		txIns = append(txIns, txIn)
+	}
+
+	txOuts := []*pb.TxOutput{}
+	for _, out := range tx.TxOutputs {
+		txOut := &pb.TxOutput{
+			Amount:       out.Amount,
+			ToAddr:       out.ToAddr,
+			FrozenHeight: out.FrozenHeight,
+		}
+		txOuts = append(txOuts, txOut)
+	}
+
+	txsdk := &pb.Transaction{
+		Txid:        hex.EncodeToString(tx.Txid),
+		Blockid:     hex.EncodeToString(tx.Blockid),
+		TxInputs:    txIns,
+		TxOutputs:   txOuts,
+		Desc:        tx.Desc,
+		Initiator:   tx.Initiator,
+		AuthRequire: tx.AuthRequire,
+	}
+
+	return txsdk
 }
