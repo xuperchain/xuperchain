@@ -106,6 +106,12 @@ func (na *NewAccountMethod) Invoke(ctx *KContext, args map[string][]byte) ([]byt
 		return nil, err
 	}
 
+	// add ak -> account reflection
+	err = updateAK2AccountReflection(ctx, nil, aclJSON, accountStr)
+	if err != nil {
+		return nil, err
+	}
+
 	ctx.AddXFeeUsed(newAccountGasAmount)
 
 	return aclJSON, nil
@@ -125,10 +131,19 @@ func (saa *SetAccountACLMethod) Invoke(ctx *KContext, args map[string][]byte) ([
 		return nil, validErr
 	}
 
-	_, err := ctx.ModelCache.Get(utils.GetAccountBucket(), accountName)
+	//aclOldJSON, err := ctx.ModelCache.Get(utils.GetAccountBucket(), accountName)
+	versionData, err := ctx.ModelCache.Get(utils.GetAccountBucket(), accountName)
 	if err != nil {
 		return nil, err
 	}
+	// delete ak -> account reflection
+	// add ak -> account reflection
+	aclOldJSON := versionData.GetPureData().GetValue()
+	err = updateAK2AccountReflection(ctx, aclOldJSON, aclJSON, string(accountName))
+	if err != nil {
+		return nil, err
+	}
+
 	err = ctx.ModelCache.Put(utils.GetAccountBucket(), accountName, aclJSON)
 	if err != nil {
 		return nil, err

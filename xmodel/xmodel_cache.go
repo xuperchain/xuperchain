@@ -134,7 +134,7 @@ func (xc *XMCache) setInputCache(rawKey []byte) error {
 func (xc *XMCache) Put(bucket string, key []byte, value []byte) error {
 	buKey := makeRawKey(bucket, key)
 	_, err := xc.getFromOuputsCache(bucket, key)
-	if err != nil && err != memdb.ErrNotFound {
+	if err != nil && err != memdb.ErrNotFound && err != ErrHasDel {
 		return err
 	}
 

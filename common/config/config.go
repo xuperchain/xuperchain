@@ -146,9 +146,11 @@ type XVMConfig struct {
 
 // WasmConfig wasm config
 type WasmConfig struct {
-	Driver   string
-	External bool
-	XVM      XVMConfig
+	Driver         string
+	External       bool
+	XVM            XVMConfig
+	EnableDebugLog bool
+	DebugLog       LogConfig
 }
 
 // ConsoleConfig is the command config user input
@@ -268,6 +270,18 @@ func (nc *NodeConfig) defaultNodeConfig() {
 		Driver: "xvm",
 		XVM: XVMConfig{
 			OptLevel: 0,
+		},
+		EnableDebugLog: true,
+		DebugLog: LogConfig{
+			Module:         "contract",
+			Filepath:       "logs",
+			Filename:       "contract",
+			Fmt:            "logfmt",
+			Console:        false,
+			Level:          "debug",
+			Async:          false,
+			RotateInterval: 60 * 24, // rotate every 1 day
+			RotateBackups:  14,      // keep old log files for two weeks
 		},
 	}
 	nc.CoreConnection = false

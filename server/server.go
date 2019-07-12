@@ -56,7 +56,7 @@ func (s *server) PostTx(ctx context.Context, in *pb.TxStatus) (*pb.CommonReply, 
 			p2pv2.WithFilters([]p2pv2.FilterStrategy{p2pv2.DefaultStrategy}),
 			p2pv2.WithBcName(in.GetBcname()),
 		}
-		s.mg.P2pv2.SendMessage(context.Background(), msg, opts...)
+		go s.mg.P2pv2.SendMessage(context.Background(), msg, opts...)
 	}
 	return out, err
 }
@@ -91,7 +91,7 @@ func (s *server) BatchPostTx(ctx context.Context, in *pb.BatchTxs) (*pb.CommonRe
 			p2pv2.WithFilters([]p2pv2.FilterStrategy{p2pv2.DefaultStrategy}),
 			p2pv2.WithBcName(in.Txs[0].GetBcname()),
 		}
-		s.mg.P2pv2.SendMessage(context.Background(), msg, opts...)
+		go s.mg.P2pv2.SendMessage(context.Background(), msg, opts...)
 	}
 	return out, nil
 }
@@ -133,6 +133,29 @@ func (s *server) QueryACL(ctx context.Context, in *pb.AclStatus) (*pb.AclStatus,
 			return out, nil
 		}
 	}
+	return out, nil
+}
+
+// GetAccountContractsRequest get account request
+func (s *server) GetAccountContracts(ctx context.Context, in *pb.GetAccountContractsRequest) (*pb.GetAccountContractsResponse, error) {
+	if in.Header == nil {
+		in.Header = global.GHeader()
+	}
+	out := &pb.GetAccountContractsResponse{Header: &pb.Header{Logid: in.GetHeader().GetLogid()}}
+	bc := s.mg.Get(in.GetBcname())
+	if bc == nil {
+		// bc not found
+		out.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE
+		s.log.Trace("refused a connection while GetAccountContracts", "logid", in.Header.Logid)
+		return out, nil
+	}
+	contractsStatus, err := bc.GetAccountContractsStatus(in.GetAccount())
+	if err != nil {
+		out.Header.Error = pb.XChainErrorEnum_ACCOUNT_CONTRACT_STATUS_ERROR
+		s.log.Warn("GetAccountContracts error", "logid", in.Header.Logid, "error", err.Error())
+		return out, err
+	}
+	out.ContractsStatus = contractsStatus
 	return out, nil
 }
 
@@ -644,6 +667,14 @@ func (s *server) DposStatus(ctx context.Context, request *pb.DposStatusRequest) 
 	response.Status.Term = status.Term
 	response.Status.BlockNum = status.BlockNum
 	response.Status.Proposer = status.Proposer
+	checkResult, err := bc.GetCheckResults(status.Term)
+	if err != nil {
+		response.Header.Error = pb.XChainErrorEnum_DPOS_QUERY_ERROR
+		s.log.Warn("DposStatus error", "logid", request.Header.Logid, "error", err)
+		return response, err
+	}
+	response.Status.CheckResult = checkResult
+	response.Status.ProposerNum = int64(len(checkResult))
 	return response, nil
 }
 
@@ -707,6 +738,28 @@ func (s *server) GetBlockByHeight(ctx context.Context, in *pb.BlockHeight) (*pb.
 	s.log.Trace("GetBlockByHeight result", "logid", in.Header.Logid, "bcname", in.Bcname, "height", in.Height,
 		"blockid", out.GetBlockid())
 	return out, nil
+}
+
+func (s *server) GetAccountByAK(ctx context.Context, request *pb.AK2AccountRequest) (*pb.AK2AccountResponse, error) {
+	if request.Header == nil {
+		request.Header = global.GHeader()
+	}
+	bc := s.mg.Get(request.Bcname)
+	if bc == nil {
+		out := pb.AK2AccountResponse{Header: &pb.Header{}}
+		out.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
+		return &out, nil
+	}
+	out := &pb.AK2AccountResponse{
+		Bcname: request.Bcname,
+		Header: global.GHeader(),
+	}
+	accounts, err := bc.QueryAccountContainAK(request.GetAddress())
+	if err != nil || accounts == nil {
+		return out, err
+	}
+	out.Account = accounts
+	return out, err
 }
 
 func startTCPServer(xchainmg *xchaincore.XChainMG) error {

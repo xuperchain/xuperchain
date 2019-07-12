@@ -4,17 +4,18 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	osexec "os/exec"
 	"path/filepath"
 
 	"github.com/xuperchain/xuperunion/common/config"
+	"github.com/xuperchain/xuperunion/common/log"
 	"github.com/xuperchain/xuperunion/contract"
 	"github.com/xuperchain/xuperunion/contract/bridge"
 	"github.com/xuperchain/xuperunion/contract/wasm/vm"
 	"github.com/xuperchain/xuperunion/pb"
 	"github.com/xuperchain/xuperunion/xvm/compile"
+	"github.com/xuperchain/xuperunion/xvm/debug"
 	"github.com/xuperchain/xuperunion/xvm/exec"
 	"github.com/xuperchain/xuperunion/xvm/runtime/emscripten"
 	gowasm "github.com/xuperchain/xuperunion/xvm/runtime/go"
@@ -111,14 +112,16 @@ func (x *xvmCreator) MakeExecCode(libpath string) (*exec.Code, error) {
 func (x *xvmCreator) CreateInstance(ctx *bridge.Context, cp vm.ContractCodeProvider) (vm.Instance, error) {
 	code, err := x.getContractCodeCache(ctx.ContractName, cp)
 	if err != nil {
+		log.Error("get contract cache error", "error", err, "contract", ctx.ContractName)
 		return nil, err
 	}
 
-	log.Printf("cpu limit:%d", ctx.ResourceLimits.Cpu)
+	log.Info("instance resource limit", "limits", ctx.ResourceLimits)
 	execCtx, err := exec.NewContext(code.ExecCode, &exec.ContextConfig{
 		GasLimit: ctx.ResourceLimits.Cpu,
 	})
 	if err != nil {
+		log.Error("create contract context error", "error", err, "contract", ctx.ContractName)
 		return nil, err
 	}
 	switch code.Desc.GetRuntime() {
@@ -128,11 +131,13 @@ func (x *xvmCreator) CreateInstance(ctx *bridge.Context, cp vm.ContractCodeProvi
 		emscripten.Init(execCtx)
 	}
 	execCtx.SetUserData(contextIDKey, ctx.ID)
-	return &xvmInstance{
+	instance := &xvmInstance{
 		bridgeCtx: ctx,
 		execCtx:   execCtx,
 		desc:      code.Desc,
-	}, nil
+	}
+	instance.InitDebugWriter(x.config.DebugLogger)
+	return instance, nil
 }
 
 func (x *xvmCreator) RemoveCache(contractName string) {
@@ -152,7 +157,7 @@ func (x *xvmInstance) Exec(function string) error {
 	}
 	_, err := x.execCtx.Exec(function, []uint32{uint32(0), uint32(0)})
 	if err != nil {
-		log.Printf("exec error:%s", err)
+		log.Error("exec contract error", "error", err, "contract", x.bridgeCtx.ContractName)
 	}
 	return err
 }
@@ -170,6 +175,15 @@ func (x *xvmInstance) ResourceUsed() contract.Limits {
 
 func (x *xvmInstance) Release() {
 	x.execCtx.Release()
+}
+
+func (x *xvmInstance) InitDebugWriter(logger *log.Logger) {
+	if logger == nil {
+		return
+	}
+	instanceLogger := logger.New("contract", x.bridgeCtx.ContractName, "ctxid", x.bridgeCtx.ID)
+	instanceLogWriter := newDebugWriter(instanceLogger)
+	debug.SetWriter(x.execCtx, instanceLogWriter)
 }
 
 func init() {
