@@ -3,6 +3,8 @@
 
 #include "xchain/contract.pb.h"
 
+namespace pb = xchain::contract::sdk;
+
 namespace xchain {
 
 struct TxInput {
@@ -60,7 +62,7 @@ class Transaction {
 public:
     Transaction();
     virtual ~Transaction();
-    void init(pb::TransactionSDK pbtx);
+    void init(pb::Transaction pbtx);
 
 public:
     std::string txid;

@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/xuperchain/xuperunion/contractsdk/go/pb"
+	pb "github.com/xuperchain/xuperunion/contractsdk/go/pb"
 	xchainpb "github.com/xuperchain/xuperunion/pb"
 )
 
@@ -56,7 +56,7 @@ func (c *SyscallService) QueryBlock(ctx context.Context, in *pb.QueryBlockReques
 		txids = append(txids, hex.EncodeToString(t.Txid))
 	}
 
-	blocksdk := &pb.BlockSDK{
+	blocksdk := &pb.Block{
 		Blockid:  hex.EncodeToString(block.Blockid),
 		PreHash:  block.PreHash,
 		Proposer: block.Proposer,
@@ -220,10 +220,10 @@ func (c *SyscallService) SetOutput(ctx context.Context, in *pb.SetOutputRequest)
 	return new(pb.SetOutputResponse), nil
 }
 
-func ConvertTxToSDKTx(tx *xchainpb.Transaction) *pb.TransactionSDK {
-	txIns := []*pb.TxIn{}
+func ConvertTxToSDKTx(tx *xchainpb.Transaction) *pb.Transaction {
+	txIns := []*pb.TxInput{}
 	for _, in := range tx.TxInputs {
-		txIn := &pb.TxIn{
+		txIn := &pb.TxInput{
 			RefTxid:      in.RefTxid,
 			RefOffset:    in.RefOffset,
 			FromAddr:     in.FromAddr,
@@ -233,9 +233,9 @@ func ConvertTxToSDKTx(tx *xchainpb.Transaction) *pb.TransactionSDK {
 		txIns = append(txIns, txIn)
 	}
 
-	txOuts := []*pb.TxOut{}
+	txOuts := []*pb.TxOutput{}
 	for _, out := range tx.TxOutputs {
-		txOut := &pb.TxOut{
+		txOut := &pb.TxOutput{
 			Amount:       out.Amount,
 			ToAddr:       out.ToAddr,
 			FrozenHeight: out.FrozenHeight,
@@ -243,7 +243,7 @@ func ConvertTxToSDKTx(tx *xchainpb.Transaction) *pb.TransactionSDK {
 		txOuts = append(txOuts, txOut)
 	}
 
-	txsdk := &pb.TransactionSDK{
+	txsdk := &pb.Transaction{
 		Txid:        hex.EncodeToString(tx.Txid),
 		Blockid:     hex.EncodeToString(tx.Blockid),
 		TxInputs:    txIns,

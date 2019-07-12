@@ -13,7 +13,7 @@ import (
 	log "github.com/xuperchain/log15"
 	"google.golang.org/grpc"
 
-	"github.com/xuperchain/xuperunion/contractsdk/go/pb"
+	pb "github.com/xuperchain/xuperunion/contractsdk/go/pb"
 	"github.com/xuperchain/xuperunion/crypto/hash"
 	xpb "github.com/xuperchain/xuperunion/pb"
 )
