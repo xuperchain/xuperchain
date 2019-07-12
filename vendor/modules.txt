@@ -66,13 +66,13 @@ github.com/gogo/protobuf/proto
 github.com/golang/protobuf/jsonpb
 github.com/golang/protobuf/proto
 github.com/golang/protobuf/ptypes/struct
-github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/protoc-gen-go/generator
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
 github.com/golang/protobuf/ptypes/wrappers
 github.com/golang/protobuf/protoc-gen-go/descriptor
+github.com/golang/protobuf/ptypes
 github.com/golang/protobuf/protoc-gen-go/generator/internal/remap
 github.com/golang/protobuf/protoc-gen-go/plugin
 # github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db
@@ -346,7 +346,7 @@ github.com/whyrusleeping/multiaddr-filter
 github.com/whyrusleeping/yamux
 # github.com/xuperchain/go-libp2p-kad-dht v4.4.13-0.20190219145403-6d02cbb41795+incompatible
 github.com/xuperchain/go-libp2p-kad-dht
-# github.com/xuperchain/log15 v0.0.0-20190523125943-b2239a7cda1a
+# github.com/xuperchain/log15 v0.0.0-20190620081506-bc88a9198230
 github.com/xuperchain/log15
 # golang.org/x/crypto v0.0.0-20190103213133-ff983b9c42bc
 golang.org/x/crypto/ripemd160
@@ -392,15 +392,15 @@ golang.org/x/text/runes
 golang.org/x/text/internal/tag
 # google.golang.org/genproto v0.0.0-20181202183823-bd91e49a0898
 google.golang.org/genproto/googleapis/api/annotations
-google.golang.org/genproto/googleapis/rpc/status
 google.golang.org/genproto/googleapis/api/httpbody
 google.golang.org/genproto/protobuf/field_mask
+google.golang.org/genproto/googleapis/rpc/status
 # google.golang.org/grpc v1.19.0
 google.golang.org/grpc
 google.golang.org/grpc/credentials
 google.golang.org/grpc/codes
-google.golang.org/grpc/status
 google.golang.org/grpc/grpclog
+google.golang.org/grpc/status
 google.golang.org/grpc/reflection
 google.golang.org/grpc/balancer
 google.golang.org/grpc/balancer/roundrobin
