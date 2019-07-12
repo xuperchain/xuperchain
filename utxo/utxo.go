@@ -22,9 +22,10 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/xuperchain/log15"
+	log "github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperunion/common"
 	"github.com/xuperchain/xuperunion/contract"
+	"github.com/xuperchain/xuperunion/contract/wasm"
 	crypto_client "github.com/xuperchain/xuperunion/crypto/client"
 	crypto_base "github.com/xuperchain/xuperunion/crypto/client/base"
 	"github.com/xuperchain/xuperunion/global"
@@ -34,6 +35,7 @@ import (
 	pm "github.com/xuperchain/xuperunion/permission"
 	"github.com/xuperchain/xuperunion/permission/acl"
 	acli "github.com/xuperchain/xuperunion/permission/acl/impl"
+	"github.com/xuperchain/xuperunion/permission/acl/utils"
 	"github.com/xuperchain/xuperunion/pluginmgr"
 	"github.com/xuperchain/xuperunion/utxo/txhash"
 	"github.com/xuperchain/xuperunion/vat"
@@ -71,6 +73,8 @@ var (
 	ErrVersionInvalid = errors.New("Invalid tx version")
 	ErrInvalidTxExt   = errors.New("Invalid tx ext")
 	ErrTxTooLarge     = errors.New("Tx size is too large")
+
+	ErrGetReservedContracts = errors.New("Get reserved contracts error")
 )
 
 // package constants
@@ -1113,10 +1117,6 @@ func (uv *UtxoVM) doTxSync(tx *pb.Transaction) error {
 		uv.xlog.Warn("    fail to marshal tx", "pbErr", pbErr)
 		return pbErr
 	}
-	if int64(len(pbTxBuf)) > uv.ledger.GetMaxBlockSize()/2 {
-		uv.xlog.Warn("tx too large, should not be greater than half of max blocksize", "size", len(pbTxBuf))
-		return ErrTxTooLarge
-	}
 	recvTime := time.Now().Unix()
 	uv.mutex.Lock()
 	defer uv.mutex.Unlock() //lock guard
@@ -1183,6 +1183,10 @@ func (uv *UtxoVM) ImmediateVerifyTx(tx *pb.Transaction, isRootTx bool) (bool, er
 	// autogen tx should not run ImmediateVerifyTx, this could be a fake tx
 	if tx.Autogen {
 		return false, ErrInvalidAutogenTx
+	}
+	if proto.Size(tx) > uv.ledger.MaxTxSizePerBlock() {
+		uv.xlog.Warn("tx too large, should not be greater than half of max blocksize", "size", proto.Size(tx))
+		return false, ErrTxTooLarge
 	}
 	if tx.Version >= TxVersion {
 		// verify rwset
@@ -1403,12 +1407,6 @@ func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
 	uv.xlog.Trace("get gas limit from tx", "gasLimit", gasLimit, "txid", hex.EncodeToString(tx.Txid))
 
 	for i, tmpReq := range tx.GetContractRequests() {
-		if gasLimit <= 0 {
-			uv.xlog.Error("virifyTxRWSets error:out of gas", "contractName", tmpReq.GetContractName(),
-				"txid", hex.EncodeToString(tx.Txid))
-			return false, errors.New("out of gas")
-		}
-
 		moduleName := tmpReq.GetModuleName()
 		vm, err := uv.vmMgr3.GetVM(moduleName)
 		if err != nil {
@@ -1418,6 +1416,11 @@ func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
 		limits := contract.FromPbLimits(tmpReq.GetResourceLimits())
 		if i >= len(reservedRequests) {
 			gasLimit -= limits.TotalGas()
+		}
+		if gasLimit < 0 {
+			uv.xlog.Error("virifyTxRWSets error:out of gas", "contractName", tmpReq.GetContractName(),
+				"txid", hex.EncodeToString(tx.Txid))
+			return false, errors.New("out of gas")
 		}
 		contextConfig.ResourceLimits = limits
 		contextConfig.ContractName = tmpReq.GetContractName()
@@ -1945,6 +1948,28 @@ func (uv *UtxoVM) queryContractMethodACLWithConfirmed(contractName string, metho
 	return uv.aclMgr.GetContractMethodACLWithConfirmed(contractName, methodName)
 }
 
+func (uv *UtxoVM) queryAccountContainAK(address string) ([]string, error) {
+	accounts := []string{}
+	if acl.IsAccount(address) != 0 {
+		return accounts, errors.New("address is not valid")
+	}
+	prefixKey := pb.ExtUtxoTablePrefix + utils.GetAK2AccountBucket() + "/" + address
+	it := uv.ldb.NewIteratorWithPrefix([]byte(prefixKey))
+	defer it.Release()
+	for it.Next() {
+		key := string(it.Key())
+		ret := strings.Split(key, utils.GetAKAccountSeparator())
+		size := len(ret)
+		if size >= 1 {
+			accounts = append(accounts, ret[size-1])
+		}
+	}
+	if it.Error() != nil {
+		return []string{}, it.Error()
+	}
+	return accounts, nil
+}
+
 func (uv *UtxoVM) queryTxFromForbiddenWithConfirmed(txid []byte) (bool, bool, error) {
 	request := &pb.InvokeRequest{
 		ModuleName:   "wasm",
@@ -2068,6 +2093,11 @@ func (uv *UtxoVM) QueryAccountACL(accountName string) (*pb.Acl, error) {
 // QueryContractMethodACL query contract method's ACL
 func (uv *UtxoVM) QueryContractMethodACL(contractName string, methodName string) (*pb.Acl, error) {
 	return uv.queryContractMethodACL(contractName, methodName)
+}
+
+// QueryAccountContainAK query all accounts contain address
+func (uv *UtxoVM) QueryAccountContainAK(address string) ([]string, error) {
+	return uv.queryAccountContainAK(address)
 }
 
 // QueryTxFromForbiddenWithConfirmed query if the tx has been forbidden
@@ -2194,4 +2224,94 @@ func (uv *UtxoVM) GetACLManager() *acli.Manager {
 func (uv *UtxoVM) SetMaxConfirmedDelay(seconds uint32) {
 	uv.maxConfirmedDelay = seconds
 	uv.xlog.Info("set max confirmed delay of tx", "seconds", seconds)
+}
+
+// GetAccountContracts get account contracts, return a slice of contract names
+func (uv *UtxoVM) GetAccountContracts(account string) ([]string, error) {
+	contracts := []string{}
+	if acl.IsAccount(account) != 1 {
+		uv.xlog.Warn("GetAccountContracts valid account name error", "error", "account name is not valid")
+		return nil, errors.New("account name is not valid")
+	}
+	prefKey := pb.ExtUtxoTablePrefix + string(xmodel.MakeRawKey(utils.GetAccount2ContractBucket(), []byte(account)))
+	it := uv.ldb.NewIteratorWithPrefix([]byte(prefKey))
+	defer it.Release()
+	for it.Next() {
+		key := string(it.Key())
+		ret := strings.Split(key, utils.GetACLSeparator())
+		size := len(ret)
+		if size >= 1 {
+			contracts = append(contracts, ret[size-1])
+		}
+	}
+	if it.Error() != nil {
+		return nil, it.Error()
+	}
+	return contracts, nil
+}
+
+// GetContractStatus get contract status of a contract
+func (uv *UtxoVM) GetContractStatus(contractName string) (*pb.ContractStatus, error) {
+	res := &pb.ContractStatus{}
+	res.ContractName = contractName
+	verdata, err := uv.model3.Get("contract", wasm.ContractCodeDescKey(contractName))
+	if err != nil {
+		uv.xlog.Warn("GetContractStatus get version data error", "error", err.Error())
+		return nil, err
+	}
+	txid := verdata.GetRefTxid()
+	res.Txid = fmt.Sprintf("%x", txid)
+	tx, err := uv.model3.QueryTx(txid)
+	if err != nil {
+		uv.xlog.Warn("GetContractStatus query tx error", "error", err.Error())
+		return nil, err
+	}
+	res.Desc = tx.GetDesc()
+	// query if contract is bannded
+	res.IsBanned, err = uv.queryContractBannedStatus(contractName)
+	return res, nil
+}
+
+// queryContractBannedStatus query where the contract is bannded
+// FIXME zq: need to use a grace manner to get the bannded contract name
+func (uv *UtxoVM) queryContractBannedStatus(contractName string) (bool, error) {
+	request := &pb.InvokeRequest{
+		ModuleName:   "wasm",
+		ContractName: "banned",
+		MethodName:   "verify",
+		Args: map[string][]byte{
+			"contract": []byte(contractName),
+		},
+	}
+
+	modelCache, err := xmodel.NewXModelCache(uv.GetXModel(), true)
+	if err != nil {
+		uv.xlog.Warn("queryContractBannedStatus new model cache error", "error", err)
+		return false, err
+	}
+	moduleName := request.GetModuleName()
+	vm, err := uv.vmMgr3.GetVM(moduleName)
+	if err != nil {
+		uv.xlog.Warn("queryContractBannedStatus get VM error", "error", err)
+		return false, err
+	}
+
+	contextConfig := &contract.ContextConfig{
+		XMCache:        modelCache,
+		ResourceLimits: contract.MaxLimits,
+		ContractName:   request.GetContractName(),
+	}
+	ctx, err := vm.NewContext(contextConfig)
+	if err != nil {
+		uv.xlog.Warn("queryContractBannedStatus new context error", "error", err)
+		return false, err
+	}
+	_, err = ctx.Invoke(request.GetMethodName(), request.GetArgs())
+	if err != nil && err.Error() == "contract has been banned" {
+		ctx.Release()
+		uv.xlog.Warn("queryContractBannedStatus error", "error", err)
+		return true, err
+	}
+	ctx.Release()
+	return false, nil
 }

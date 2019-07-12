@@ -325,7 +325,7 @@ func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
 		xc.log.Debug("refused a connection at function call GenerateTx", "logid", in.Header.Logid, "cost", hd.Timer.Print())
 		return ErrServiceRefused
 	}
-	blockSize, _ := common.GetIntBlkSerializedSize(in.Block)
+	blockSize := int64(proto.Size(in.Block))
 	if blockSize > xc.Ledger.GetMaxBlockSize() {
 		xc.log.Debug("refused a connection because block is too large", "logid", in.Header.Logid, "cost", hd.Timer.Print(), "size", blockSize)
 		return ErrServiceRefused
@@ -390,7 +390,7 @@ func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
 					xc.log.Warn("Save Pending Block error, after got it from network! ", "logid", in.Header.Logid, "blockid", in.Block.Blockid)
 					return ErrCannotSyncBlock
 				}
-				ibSize, _ := common.GetIntBlkSerializedSize(ib.Block)
+				ibSize := int64(proto.Size(ib.Block))
 				if ibSize > xc.Ledger.GetMaxBlockSize() {
 					xc.log.Warn("too large block", "size", ibSize, "blockid", global.F(ib.Block.Blockid))
 					return ErrBlockTooLarge
@@ -543,65 +543,63 @@ func (xc *XChainCore) doMiner() {
 		return
 	}
 	meta := xc.Ledger.GetMeta()
-	maxBlockSize := xc.Ledger.GetMaxBlockSize()
-	realBlockSize := int64(0)
-	factor := 2
+	accumulatedTxSize := 0
+	txSizeTotalLimit := xc.Ledger.MaxTxSizePerBlock()
 	var freshBlock *pb.InternalBlock
 	var freshBatch kvdb.Batch
-	for realBlockSize == 0 || realBlockSize > maxBlockSize {
-		txs := []*pb.Transaction{}
-		//1. 查询自动生成的交易
-		vatList, err := xc.Utxovm.GetVATList(xc.Ledger.GetMeta().TrunkHeight+1, -1, t.UnixNano())
-		minerTimer.Mark("GetAutogenTxs")
-		if err != nil {
-			xc.log.Warn("[Minning] fail to get triggered tx list", "logid", header.Logid)
-			return
-		}
-		xc.log.Trace("[Minning] get vatList success", "vatList", vatList)
-		txs = append(txs, vatList...)
-		txsUnconf, err := xc.Utxovm.GetUnconfirmedTx(false)
-		if err != nil {
-			xc.log.Warn("[Minning] fail to get unconfirmedtx")
-			return
-		}
-		if realBlockSize > maxBlockSize {
-			txsUnconf = txsUnconf[0 : len(txsUnconf)/factor]
-			xc.log.Warn("pick less unconfirmed tx to fit the max blocksize", "len", len(txsUnconf))
-			factor *= 2
-		}
-		txs = append(txs, txsUnconf...)
-		fakeBlock, err := xc.Ledger.FormatFakeBlock(txs, xc.address, xc.privateKey,
-			t.UnixNano(), curTerm, curBlockNum, meta.TipBlockid, xc.Utxovm.GetTotal())
-		if err != nil {
-			xc.log.Warn("[Minning] format fake block error", "logid")
-			return
-		}
-		//2. pre-execute the contract
-		freshBatch = xc.Utxovm.NewBatch()
-		if txs, _, err = xc.Utxovm.TxOfRunningContractGenerate(txs, fakeBlock, freshBatch, true); err != nil {
-			if err.Error() != common.ErrContractExecutionTimeout.Error() {
-				xc.log.Warn("PrePlay fake block failed", "error", err) //unexpected error
-				return
-			}
-		}
-		minerTimer.Mark("PrePlay")
-		//3. 统一在最后插入矿工奖励
-		blockAward := xc.Ledger.GenesisBlock.CalcAward(xc.Ledger.GetMeta().TrunkHeight + 1)
-		awardtx, err := xc.Utxovm.GenerateAwardTx(xc.address, blockAward.String(), []byte{'1'})
-		minerTimer.Mark("GenAwardTx")
-		txs = append(txs, awardtx)
-		freshBlock, err = xc.Ledger.FormatPOWBlock(txs, xc.address, xc.privateKey,
-			t.UnixNano(), curTerm, curBlockNum, meta.TipBlockid, targetBits, xc.Utxovm.GetTotal(), fakeBlock.FailedTxs)
-		if err != nil {
-			xc.log.Warn("[Minning] format block error", "logid", header.Logid, "err", err)
-			return
-		}
-		minerTimer.Mark("Formatblock2")
-		realBlockSize, _ = common.GetIntBlkSerializedSize(freshBlock)
-		if len(txsUnconf) == 0 {
+	txs := []*pb.Transaction{}
+	//1. 查询自动生成的交易
+	vatList, err := xc.Utxovm.GetVATList(xc.Ledger.GetMeta().TrunkHeight+1, -1, t.UnixNano())
+	minerTimer.Mark("GetAutogenTxs")
+	if err != nil {
+		xc.log.Warn("[Minning] fail to get triggered tx list", "logid", header.Logid)
+		return
+	}
+	xc.log.Trace("[Minning] get vatList success", "vatList", vatList)
+	txs = append(txs, vatList...)
+	for _, vatTx := range txs {
+		accumulatedTxSize += proto.Size(vatTx)
+	}
+	txsUnconf, err := xc.Utxovm.GetUnconfirmedTx(false)
+	if err != nil {
+		xc.log.Warn("[Minning] fail to get unconfirmedtx")
+		return
+	}
+	for _, ucTx := range txsUnconf {
+		accumulatedTxSize += proto.Size(ucTx)
+		if accumulatedTxSize > txSizeTotalLimit {
+			xc.log.Warn("already got enough tx to produce block", "acct", accumulatedTxSize, "limit", txSizeTotalLimit)
 			break
 		}
+		txs = append(txs, ucTx)
 	}
+	fakeBlock, err := xc.Ledger.FormatFakeBlock(txs, xc.address, xc.privateKey,
+		t.UnixNano(), curTerm, curBlockNum, meta.TipBlockid, xc.Utxovm.GetTotal())
+	if err != nil {
+		xc.log.Warn("[Minning] format fake block error", "logid")
+		return
+	}
+	//2. pre-execute the contract
+	freshBatch = xc.Utxovm.NewBatch()
+	if txs, _, err = xc.Utxovm.TxOfRunningContractGenerate(txs, fakeBlock, freshBatch, true); err != nil {
+		if err.Error() != common.ErrContractExecutionTimeout.Error() {
+			xc.log.Warn("PrePlay fake block failed", "error", err) //unexpected error
+			return
+		}
+	}
+	minerTimer.Mark("PrePlay")
+	//3. 统一在最后插入矿工奖励
+	blockAward := xc.Ledger.GenesisBlock.CalcAward(xc.Ledger.GetMeta().TrunkHeight + 1)
+	awardtx, err := xc.Utxovm.GenerateAwardTx(xc.address, blockAward.String(), []byte{'1'})
+	minerTimer.Mark("GenAwardTx")
+	txs = append(txs, awardtx)
+	freshBlock, err = xc.Ledger.FormatPOWBlock(txs, xc.address, xc.privateKey,
+		t.UnixNano(), curTerm, curBlockNum, meta.TipBlockid, targetBits, xc.Utxovm.GetTotal(), fakeBlock.FailedTxs)
+	if err != nil {
+		xc.log.Warn("[Minning] format block error", "logid", header.Logid, "err", err)
+		return
+	}
+	minerTimer.Mark("Formatblock2")
 	xc.log.Debug("[Minning] Start to ConfirmBlock", "logid", header.Logid)
 	confirmStatus := xc.Ledger.ConfirmBlock(freshBlock, false)
 	minerTimer.Mark("ConfirmBlock")
@@ -619,7 +617,7 @@ func (xc *XChainCore) doMiner() {
 	lockHold = false
 	xc.Utxovm.SetBlockGenEvent()
 	defer xc.Utxovm.NotifyFinishBlockGen()
-	err := xc.Utxovm.PlayForMiner(freshBlock.Blockid, freshBatch)
+	err = xc.Utxovm.PlayForMiner(freshBlock.Blockid, freshBatch)
 	if err != nil {
 		xc.log.Warn("[Minning] utxo play error ", "logid", header.Logid, "error", err, "blockid", fmt.Sprintf("%x", freshBlock.Blockid))
 		return
@@ -951,6 +949,21 @@ func (xc *XChainCore) QueryAccountACL(accountName string) (*pb.Acl, bool, error)
 	return acl, confirmed, nil
 }
 
+// QueryAccountContainAK get all accounts contain a specific address
+func (xc *XChainCore) QueryAccountContainAK(address string) ([]string, error) {
+	if xc == nil {
+		return nil, errors.New("xchain core is nil")
+	}
+	if xc.Status() != global.Normal {
+		return nil, ErrNotReady
+	}
+	accounts, err := xc.Utxovm.QueryAccountContainAK(address)
+	if err != nil {
+		return nil, err
+	}
+	return accounts, nil
+}
+
 // QueryTxFromForbidden query if the tx has been forbidden
 func (xc *XChainCore) QueryTxFromForbidden(txid []byte) bool {
 	if xc.Status() != global.Normal {
@@ -1158,4 +1171,22 @@ func (xc *XChainCore) GetBlockByHeight(in *pb.BlockHeight) *pb.Block {
 		}
 	}
 	return out
+}
+
+// GetAccountContractsStatus query account contracts
+func (xc *XChainCore) GetAccountContractsStatus(account string) ([]*pb.ContractStatus, error) {
+	res := []*pb.ContractStatus{}
+	contracts, err := xc.Utxovm.GetAccountContracts(account)
+	if err != nil {
+		xc.log.Warn("GetAccountContractsStatus error", "error", err.Error())
+		return nil, err
+	}
+	for _, v := range contracts {
+		contractStatus, err := xc.Utxovm.GetContractStatus(v)
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, contractStatus)
+	}
+	return res, nil
 }
