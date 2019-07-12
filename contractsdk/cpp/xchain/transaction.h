@@ -13,7 +13,8 @@ struct TxInput {
     std::string from_addr;
     std::string amount;
 
-    TxInput(std::string reftxid, int32_t refoffset, std::string fromaddr, std::string amou)  
+    TxInput(const std::string& reftxid, int32_t refoffset, 
+            const std::string& fromaddr, const std::string& amou)  
         : ref_txid(reftxid), ref_offset(refoffset), 
           from_addr(fromaddr), amount(amou)
     {    
@@ -24,7 +25,7 @@ struct TxOutput {
     std::string amount;
     std::string to_addr;
 
-    TxOutput(std::string amou, std::string toaddr)  
+    TxOutput(const std::string& amou, const std::string& toaddr)  
         : amount(amou), to_addr(toaddr) 
     {    
     }
@@ -35,7 +36,7 @@ class Transaction {
 public:
     Transaction();
     virtual ~Transaction();
-    void init(pb::Transaction pbtx);
+    void init(const xchain::contract::sdk::Transaction& pbtx);
 
 public:
     std::string txid;

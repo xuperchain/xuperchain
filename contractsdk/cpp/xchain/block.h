@@ -3,15 +3,13 @@
 
 #include "xchain/contract.pb.h"
 
-namespace pb = xchain::contract::sdk;
-
 namespace xchain {
 
 class Block {
 public:
     Block();
     virtual ~Block();
-    void init(pb::Block pbblock);
+    void init(const xchain::contract::sdk::Block& pbblock);
 
 public:
     std::string blockid;

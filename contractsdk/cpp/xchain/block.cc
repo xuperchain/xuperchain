@@ -1,12 +1,14 @@
 #include "xchain/block.h"
 
+namespace pb = xchain::contract::sdk;
+
 namespace xchain {
 
 Block::Block() {}
 
 Block::~Block() {}
 
-void Block::init(pb::Block pbblock) {
+void Block::init(const pb::Block& pbblock) {
     blockid = pbblock.blockid();
     pre_hash = pbblock.pre_hash();
     proposer = pbblock.proposer();

@@ -1,12 +1,14 @@
 #include "xchain/transaction.h"
 
+namespace pb = xchain::contract::sdk;
+
 namespace xchain {
 
 Transaction::Transaction() {}
 
 Transaction::~Transaction() {}
 
-void Transaction::init(pb::Transaction pbtx) {
+void Transaction::init(const pb::Transaction& pbtx) {
     txid = pbtx.txid();
     blockid = pbtx.blockid();
     desc = pbtx.desc();

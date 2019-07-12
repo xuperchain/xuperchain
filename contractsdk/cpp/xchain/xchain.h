@@ -6,8 +6,6 @@
 #include "xchain/transaction.h"
 #include "xchain/block.h" 
 
-namespace pb = xchain::contract::sdk;
-
 namespace xchain {
 
 struct Response {
