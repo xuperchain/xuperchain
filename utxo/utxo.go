@@ -1117,10 +1117,6 @@ func (uv *UtxoVM) doTxSync(tx *pb.Transaction) error {
 		uv.xlog.Warn("    fail to marshal tx", "pbErr", pbErr)
 		return pbErr
 	}
-	if int64(len(pbTxBuf)) > uv.ledger.GetMaxBlockSize()/2 {
-		uv.xlog.Warn("tx too large, should not be greater than half of max blocksize", "size", len(pbTxBuf))
-		return ErrTxTooLarge
-	}
 	recvTime := time.Now().Unix()
 	uv.mutex.Lock()
 	defer uv.mutex.Unlock() //lock guard
@@ -1187,6 +1183,10 @@ func (uv *UtxoVM) ImmediateVerifyTx(tx *pb.Transaction, isRootTx bool) (bool, er
 	// autogen tx should not run ImmediateVerifyTx, this could be a fake tx
 	if tx.Autogen {
 		return false, ErrInvalidAutogenTx
+	}
+	if proto.Size(tx) > uv.ledger.MaxTxSizePerBlock() {
+		uv.xlog.Warn("tx too large, should not be greater than half of max blocksize", "size", proto.Size(tx))
+		return false, ErrTxTooLarge
 	}
 	if tx.Version >= TxVersion {
 		// verify rwset
