@@ -10,11 +10,49 @@ struct TxInput {
     int32_t ref_offset;
     std::string from_addr;
     std::string amount;
+
+    TxInput(std::string reftxid, int32_t refoffset, std::string fromaddr, std::string amou)  
+        : ref_txid(std::move(reftxid)), ref_offset(refoffset), 
+          from_addr(std::move(fromaddr)), amount(std::move(amou))
+    {    
+    }
+
+    TxInput(const TxInput& other)
+        : ref_txid(std::move(other.ref_txid)), ref_offset(other.ref_offset), 
+          from_addr(std::move(other.from_addr)), amount(std::move(other.amount))
+    {
+    }
+
+    TxInput(TxInput&& other)
+        : ref_txid(std::move(other.ref_txid)), ref_offset(other.ref_offset), 
+          from_addr(std::move(other.from_addr)), amount(std::move(other.amount))
+    {
+    } 
+
+    TxInput& operator=(const TxInput& other);  
 };
 
 struct TxOutput {
     std::string amount;
     std::string to_addr;
+
+    TxOutput(std::string amou, std::string toaddr)  
+        : amount(std::move(amou)), to_addr(std::move(toaddr)) 
+    {    
+    }
+
+    TxOutput(const TxOutput& other)
+        : amount(std::move(other.amount)), to_addr(std::move(other.to_addr))
+    {
+    }
+
+    TxOutput(TxOutput&& other)
+        : amount(std::move(other.amount)), to_addr(std::move(other.to_addr))
+    {
+    } 
+
+    TxOutput& operator=(const TxOutput& other);  
+
 };
 
 class Transaction {

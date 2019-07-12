@@ -57,7 +57,7 @@ func (c *SyscallService) QueryBlock(ctx context.Context, in *pb.QueryBlockReques
 	}
 
 	blocksdk := &pb.BlockSDK{
-		Blockid:  block.Blockid,
+		Blockid:  hex.EncodeToString(block.Blockid),
 		PreHash:  block.PreHash,
 		Proposer: block.Proposer,
 		Sign:     block.Sign,
@@ -244,10 +244,10 @@ func ConvertTxToSDKTx(tx *xchainpb.Transaction) *pb.TransactionSDK {
 	}
 
 	txsdk := &pb.TransactionSDK{
-		Txid:        tx.Txid,
-		Blockid:     tx.Blockid,
-		TxIns:       txIns,
-		TxOuts:      txOuts,
+		Txid:        hex.EncodeToString(tx.Txid),
+		Blockid:     hex.EncodeToString(tx.Blockid),
+		TxInputs:    txIns,
+		TxOutputs:   txOuts,
 		Desc:        tx.Desc,
 		Initiator:   tx.Initiator,
 		AuthRequire: tx.AuthRequire,

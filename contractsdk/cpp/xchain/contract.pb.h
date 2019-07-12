@@ -4007,7 +4007,7 @@ class TransactionSDK :
   const ::google::protobuf::RepeatedPtrField<::std::string>& auth_require() const;
   ::google::protobuf::RepeatedPtrField<::std::string>* mutable_auth_require();
 
-  // bytes txid = 1;
+  // string txid = 1;
   void clear_txid();
   static const int kTxidFieldNumber = 1;
   const ::std::string& txid() const;
@@ -4016,12 +4016,12 @@ class TransactionSDK :
   void set_txid(::std::string&& value);
   #endif
   void set_txid(const char* value);
-  void set_txid(const void* value, size_t size);
+  void set_txid(const char* value, size_t size);
   ::std::string* mutable_txid();
   ::std::string* release_txid();
   void set_allocated_txid(::std::string* txid);
 
-  // bytes blockid = 2;
+  // string blockid = 2;
   void clear_blockid();
   static const int kBlockidFieldNumber = 2;
   const ::std::string& blockid() const;
@@ -4030,7 +4030,7 @@ class TransactionSDK :
   void set_blockid(::std::string&& value);
   #endif
   void set_blockid(const char* value);
-  void set_blockid(const void* value, size_t size);
+  void set_blockid(const char* value, size_t size);
   ::std::string* mutable_blockid();
   ::std::string* release_blockid();
   void set_allocated_blockid(::std::string* blockid);
@@ -4193,7 +4193,7 @@ class BlockSDK :
   const ::google::protobuf::RepeatedPtrField<::std::string>& txids() const;
   ::google::protobuf::RepeatedPtrField<::std::string>* mutable_txids();
 
-  // bytes blockid = 3;
+  // string blockid = 3;
   void clear_blockid();
   static const int kBlockidFieldNumber = 3;
   const ::std::string& blockid() const;
@@ -4202,7 +4202,7 @@ class BlockSDK :
   void set_blockid(::std::string&& value);
   #endif
   void set_blockid(const char* value);
-  void set_blockid(const void* value, size_t size);
+  void set_blockid(const char* value, size_t size);
   ::std::string* mutable_blockid();
   ::std::string* release_blockid();
   void set_allocated_blockid(::std::string* blockid);
@@ -6846,7 +6846,7 @@ inline void TxOut::set_frozen_height(::google::protobuf::int64 value) {
 
 // TransactionSDK
 
-// bytes txid = 1;
+// string txid = 1;
 inline void TransactionSDK::clear_txid() {
   txid_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -6873,7 +6873,7 @@ inline void TransactionSDK::set_txid(const char* value) {
   txid_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
   // @@protoc_insertion_point(field_set_char:pb.TransactionSDK.txid)
 }
-inline void TransactionSDK::set_txid(const void* value, size_t size) {
+inline void TransactionSDK::set_txid(const char* value, size_t size) {
   
   txid_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
@@ -6899,7 +6899,7 @@ inline void TransactionSDK::set_allocated_txid(::std::string* txid) {
   // @@protoc_insertion_point(field_set_allocated:pb.TransactionSDK.txid)
 }
 
-// bytes blockid = 2;
+// string blockid = 2;
 inline void TransactionSDK::clear_blockid() {
   blockid_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -6926,7 +6926,7 @@ inline void TransactionSDK::set_blockid(const char* value) {
   blockid_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
   // @@protoc_insertion_point(field_set_char:pb.TransactionSDK.blockid)
 }
-inline void TransactionSDK::set_blockid(const void* value, size_t size) {
+inline void TransactionSDK::set_blockid(const char* value, size_t size) {
   
   blockid_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
@@ -7191,7 +7191,7 @@ TransactionSDK::mutable_auth_require() {
 
 // BlockSDK
 
-// bytes blockid = 3;
+// string blockid = 3;
 inline void BlockSDK::clear_blockid() {
   blockid_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -7218,7 +7218,7 @@ inline void BlockSDK::set_blockid(const char* value) {
   blockid_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
   // @@protoc_insertion_point(field_set_char:pb.BlockSDK.blockid)
 }
-inline void BlockSDK::set_blockid(const void* value, size_t size) {
+inline void BlockSDK::set_blockid(const char* value, size_t size) {
   
   blockid_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));

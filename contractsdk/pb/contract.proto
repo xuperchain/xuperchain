@@ -192,13 +192,13 @@ message TxOut
 message TransactionSDK
 {
     // txid is the id of this transaction
-    bytes txid = 1;
+    string txid = 1;
     // the blockid the transaction belong to
-    bytes blockid = 2;
+    string blockid = 2;
     // Transaction input list
-    repeated TxIn tx_ins = 3;
+    repeated TxIn tx_inputs = 3;
     // Transaction output list
-    repeated TxOut tx_outs = 4;
+    repeated TxOut tx_outputs = 4;
     // Transaction description or system contract
     bytes desc = 6;
 
@@ -213,7 +213,7 @@ message TransactionSDK
 message BlockSDK
 {
     // blockid generate the hash sign of the block used by sha256
-    bytes blockid = 3;
+    string blockid = 3;
     // pre_hash is the parent blockid of the block
     bytes pre_hash = 4;
     // The miner id

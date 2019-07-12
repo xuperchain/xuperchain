@@ -9240,32 +9240,34 @@ const char* TransactionSDK::_InternalParse(const char* begin, const char* end, v
     ptr = ::google::protobuf::io::Parse32(ptr, &tag);
     GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
     switch (tag >> 3) {
-      // bytes txid = 1;
+      // string txid = 1;
       case 1: {
         if (static_cast<::google::protobuf::uint8>(tag) != 10) goto handle_unusual;
         ptr = ::google::protobuf::io::ReadSize(ptr, &size);
         GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+        ctx->extra_parse_data().SetFieldName(nullptr);
         object = msg->mutable_txid();
         if (size > end - ptr + ::google::protobuf::internal::ParseContext::kSlopBytes) {
-          parser_till_end = ::google::protobuf::internal::GreedyStringParser;
+          parser_till_end = ::google::protobuf::internal::GreedyStringParserUTF8;
           goto string_till_end;
         }
-        GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheck(ptr, size, ctx));
+        GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheckUTF8(ptr, size, ctx));
         ::google::protobuf::internal::InlineGreedyStringParser(object, ptr, size, ctx);
         ptr += size;
         break;
       }
-      // bytes blockid = 2;
+      // string blockid = 2;
       case 2: {
         if (static_cast<::google::protobuf::uint8>(tag) != 18) goto handle_unusual;
         ptr = ::google::protobuf::io::ReadSize(ptr, &size);
         GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+        ctx->extra_parse_data().SetFieldName(nullptr);
         object = msg->mutable_blockid();
         if (size > end - ptr + ::google::protobuf::internal::ParseContext::kSlopBytes) {
-          parser_till_end = ::google::protobuf::internal::GreedyStringParser;
+          parser_till_end = ::google::protobuf::internal::GreedyStringParserUTF8;
           goto string_till_end;
         }
-        GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheck(ptr, size, ctx));
+        GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheckUTF8(ptr, size, ctx));
         ::google::protobuf::internal::InlineGreedyStringParser(object, ptr, size, ctx);
         ptr += size;
         break;
@@ -9392,22 +9394,30 @@ bool TransactionSDK::MergePartialFromCodedStream(
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // bytes txid = 1;
+      // string txid = 1;
       case 1: {
         if (static_cast< ::google::protobuf::uint8>(tag) == (10 & 0xFF)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
                 input, this->mutable_txid()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->txid().data(), static_cast<int>(this->txid().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "pb.TransactionSDK.txid"));
         } else {
           goto handle_unusual;
         }
         break;
       }
 
-      // bytes blockid = 2;
+      // string blockid = 2;
       case 2: {
         if (static_cast< ::google::protobuf::uint8>(tag) == (18 & 0xFF)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
                 input, this->mutable_blockid()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->blockid().data(), static_cast<int>(this->blockid().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "pb.TransactionSDK.blockid"));
         } else {
           goto handle_unusual;
         }
@@ -9505,15 +9515,23 @@ void TransactionSDK::SerializeWithCachedSizes(
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // bytes txid = 1;
+  // string txid = 1;
   if (this->txid().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->txid().data(), static_cast<int>(this->txid().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "pb.TransactionSDK.txid");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
       1, this->txid(), output);
   }
 
-  // bytes blockid = 2;
+  // string blockid = 2;
   if (this->blockid().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->blockid().data(), static_cast<int>(this->blockid().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "pb.TransactionSDK.blockid");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
       2, this->blockid(), output);
   }
 
@@ -9606,17 +9624,17 @@ size_t TransactionSDK::ByteSizeLong() const {
       this->auth_require(i));
   }
 
-  // bytes txid = 1;
+  // string txid = 1;
   if (this->txid().size() > 0) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::BytesSize(
+      ::google::protobuf::internal::WireFormatLite::StringSize(
         this->txid());
   }
 
-  // bytes blockid = 2;
+  // string blockid = 2;
   if (this->blockid().size() > 0) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::BytesSize(
+      ::google::protobuf::internal::WireFormatLite::StringSize(
         this->blockid());
   }
 
@@ -9838,17 +9856,18 @@ const char* BlockSDK::_InternalParse(const char* begin, const char* end, void* o
     ptr = ::google::protobuf::io::Parse32(ptr, &tag);
     GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
     switch (tag >> 3) {
-      // bytes blockid = 3;
+      // string blockid = 3;
       case 3: {
         if (static_cast<::google::protobuf::uint8>(tag) != 26) goto handle_unusual;
         ptr = ::google::protobuf::io::ReadSize(ptr, &size);
         GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+        ctx->extra_parse_data().SetFieldName(nullptr);
         object = msg->mutable_blockid();
         if (size > end - ptr + ::google::protobuf::internal::ParseContext::kSlopBytes) {
-          parser_till_end = ::google::protobuf::internal::GreedyStringParser;
+          parser_till_end = ::google::protobuf::internal::GreedyStringParserUTF8;
           goto string_till_end;
         }
-        GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheck(ptr, size, ctx));
+        GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheckUTF8(ptr, size, ctx));
         ::google::protobuf::internal::InlineGreedyStringParser(object, ptr, size, ctx);
         ptr += size;
         break;
@@ -10008,11 +10027,15 @@ bool BlockSDK::MergePartialFromCodedStream(
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // bytes blockid = 3;
+      // string blockid = 3;
       case 3: {
         if (static_cast< ::google::protobuf::uint8>(tag) == (26 & 0xFF)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
                 input, this->mutable_blockid()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->blockid().data(), static_cast<int>(this->blockid().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "pb.BlockSDK.blockid"));
         } else {
           goto handle_unusual;
         }
@@ -10156,9 +10179,13 @@ void BlockSDK::SerializeWithCachedSizes(
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // bytes blockid = 3;
+  // string blockid = 3;
   if (this->blockid().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->blockid().data(), static_cast<int>(this->blockid().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "pb.BlockSDK.blockid");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
       3, this->blockid(), output);
   }
 
@@ -10240,10 +10267,10 @@ size_t BlockSDK::ByteSizeLong() const {
       this->txids(i));
   }
 
-  // bytes blockid = 3;
+  // string blockid = 3;
   if (this->blockid().size() > 0) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::BytesSize(
+      ::google::protobuf::internal::WireFormatLite::StringSize(
         this->blockid());
   }
 

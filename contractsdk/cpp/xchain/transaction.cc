@@ -16,21 +16,12 @@ void Transaction::init(pb::TransactionSDK pbtx) {
     }
     
     for (int i = 0; i < pbtx.tx_inputs_size(); i++) {
-        TxInput ti;
-        ti.ref_txid = pbtx.tx_inputs(i).ref_txid();
-        ti.ref_offset = pbtx.tx_inputs(i).ref_offset();
-        ti.from_addr = pbtx.tx_inputs(i).from_addr();
-        ti.amount = pbtx.tx_inputs(i).amount();
-        
-        tx_inputs.emplace_back(ti); 
+        tx_inputs.emplace_back(pbtx.tx_inputs(i).ref_txid(), pbtx.tx_inputs(i).ref_offset(),
+            pbtx.tx_inputs(i).from_addr(), pbtx.tx_inputs(i).amount()); 
     }
 
     for (int i = 0; i < pbtx.tx_outputs_size(); i++) {
-        TxOutput to;
-        to.amount = pbtx.tx_outputs(i).amount();
-        to.to_addr = pbtx.tx_outputs(i).to_addr();
-        
-        tx_outputs.emplace_back(to); 
+        tx_outputs.emplace_back(pbtx.tx_outputs(i).amount(), pbtx.tx_outputs(i).to_addr()); 
     }
 }
 
