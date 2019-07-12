@@ -320,6 +320,8 @@ github.com/xuperchain/go-libp2p-kad-dht v4.4.13-0.20190219145403-6d02cbb41795+in
 github.com/xuperchain/go-libp2p-kad-dht v4.4.13-0.20190219145403-6d02cbb41795+incompatible/go.mod h1:sQAB/OgPNjmOQJT9VZSFv0PL6nDfQmOjoLU5/3bu/IA=
 github.com/xuperchain/log15 v0.0.0-20190523125943-b2239a7cda1a h1:LvKPZc0/AmGys642f3DbEAXRdvjBDQKAqdpBbGaJMEI=
 github.com/xuperchain/log15 v0.0.0-20190523125943-b2239a7cda1a/go.mod h1:90Da9GDXy9Yle79ZHSJY1c7X+1meBKsoX0vkRy09xis=
+github.com/xuperchain/log15 v0.0.0-20190620081506-bc88a9198230 h1:AWFZFbmLhY6VG6IIHD+9ZCgTCuvVRKoK+PRNaxqahl0=
+github.com/xuperchain/log15 v0.0.0-20190620081506-bc88a9198230/go.mod h1:90Da9GDXy9Yle79ZHSJY1c7X+1meBKsoX0vkRy09xis=
 golang.org/x/crypto v0.0.0-20180904163835-0709b304e793/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=
 golang.org/x/crypto v0.0.0-20181203042331-505ab145d0a9/go.mod h1:6SG95UA2DQfeDnfUPMdvaQW0Q7yPrPDi9nlGo2tz2b4=
 golang.org/x/crypto v0.0.0-20190103213133-ff983b9c42bc h1:F5tKCVGp+MUAHhKp5MZtGqAlGX3+oCsiL1Q629FL90M=
