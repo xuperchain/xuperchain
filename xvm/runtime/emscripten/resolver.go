@@ -3,9 +3,9 @@ package emscripten
 import (
 	"fmt"
 	"math"
-	"os"
 	"unsafe"
 
+	"github.com/xuperchain/xuperunion/xvm/debug"
 	"github.com/xuperchain/xuperunion/xvm/exec"
 )
 
@@ -107,8 +107,12 @@ var resolver = exec.MapResolver(map[string]interface{}{
 		unimplemented("syscall140")
 		return 0
 	},
-	"env.___syscall146": func(ctx *exec.Context, fd, argsPtr uint32) uint32 {
+	"env.___syscall146": func(ctx *exec.Context, no, argsPtr uint32) uint32 {
 		codec := exec.NewCodec(ctx)
+		fd := codec.Uint32(argsPtr)
+		if fd != 1 && fd != 2 {
+			return errno(-9)
+		}
 		iov := codec.Uint32(argsPtr + 4)
 		iovcnt := codec.Uint32(argsPtr + 8)
 		total := uint32(0)
@@ -117,7 +121,7 @@ var resolver = exec.MapResolver(map[string]interface{}{
 			length := codec.Uint32(iov + i*8 + 4)
 			buf := codec.Bytes(base, length)
 			total += length
-			os.Stderr.Write(buf)
+			debug.Write(ctx, buf)
 		}
 		return total
 	},
@@ -153,3 +157,7 @@ var resolver = exec.MapResolver(map[string]interface{}{
 	"global.NaN":         math.NaN(),
 	"global.Infinity":    math.Inf(0),
 })
+
+func errno(n int32) uint32 {
+	return *(*uint32)(unsafe.Pointer(&n))
+}
