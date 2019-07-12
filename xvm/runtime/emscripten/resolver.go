@@ -110,6 +110,9 @@ var resolver = exec.MapResolver(map[string]interface{}{
 	"env.___syscall146": func(ctx *exec.Context, no, argsPtr uint32) uint32 {
 		codec := exec.NewCodec(ctx)
 		fd := codec.Uint32(argsPtr)
+		if fd != 1 && fd != 2 {
+			return errno(-9)
+		}
 		iov := codec.Uint32(argsPtr + 4)
 		iovcnt := codec.Uint32(argsPtr + 8)
 		total := uint32(0)
@@ -118,9 +121,7 @@ var resolver = exec.MapResolver(map[string]interface{}{
 			length := codec.Uint32(iov + i*8 + 4)
 			buf := codec.Bytes(base, length)
 			total += length
-			if fd == 1 || fd == 2 {
-				debug.Write(ctx, buf)
-			}
+			debug.Write(ctx, buf)
 		}
 		return total
 	},
@@ -156,3 +157,7 @@ var resolver = exec.MapResolver(map[string]interface{}{
 	"global.NaN":         math.NaN(),
 	"global.Infinity":    math.Inf(0),
 })
+
+func errno(n int32) uint32 {
+	return *(*uint32)(unsafe.Pointer(&n))
+}
