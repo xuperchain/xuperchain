@@ -16,6 +16,6 @@ func New() code.Driver {
 }
 
 func (d *driver) Serve(contract code.Contract) {
-	setLogWriter()
+	initDebugLog()
 	exec.RunContract(0, contract, syscall)
 }

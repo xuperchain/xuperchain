@@ -136,7 +136,7 @@ func (x *xvmCreator) CreateInstance(ctx *bridge.Context, cp vm.ContractCodeProvi
 		execCtx:   execCtx,
 		desc:      code.Desc,
 	}
-	instance.InitDebugWriter()
+	instance.InitDebugWriter(x.config.DebugLogger)
 	return instance, nil
 }
 
@@ -177,10 +177,13 @@ func (x *xvmInstance) Release() {
 	x.execCtx.Release()
 }
 
-func (x *xvmInstance) InitDebugWriter() {
-	logger := log.DefaultLogger.New("type", "contract-debug", "contract", x.bridgeCtx.ContractName, "ctxid", x.bridgeCtx.ID)
-	w := newDebugWriter(logger)
-	debug.SetWriter(x.execCtx, w)
+func (x *xvmInstance) InitDebugWriter(logger *log.Logger) {
+	if logger == nil {
+		return
+	}
+	instanceLogger := logger.New("contract", x.bridgeCtx.ContractName, "ctxid", x.bridgeCtx.ID)
+	instanceLogWriter := newDebugWriter(instanceLogger)
+	debug.SetWriter(x.execCtx, instanceLogWriter)
 }
 
 func init() {
