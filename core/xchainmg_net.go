@@ -84,11 +84,7 @@ func (xm *XChainMG) handleReceivedMsg(msg *xuper_p2p.XuperMessage) {
 	case xuper_p2p.XuperMessage_POSTTX:
 		xm.handlePostTx(msg)
 	case xuper_p2p.XuperMessage_SENDBLOCK:
-		if xm.sendBlockMsgDisp.NearFull() == false {
-			xm.sendBlockMsgDisp.msgDispChan <- msg
-		} else {
-			xm.Log.Warn("XuperMessage_SENDBLOCK message will be full, drop this message")
-		}
+		xm.HandleSendBlock(msg)
 	case xuper_p2p.XuperMessage_BATCHPOSTTX:
 		xm.handleBatchPostTx(msg)
 	}
