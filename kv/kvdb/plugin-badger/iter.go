@@ -131,7 +131,7 @@ func (iter *BadgerIterator) Prev() bool {
 
 // Last skip to the last iterator
 func (iter *BadgerIterator) Last() bool {
-	key := iter.first
+	key := iter.Key()
 	for iter.Next() {
 		key = iter.Key()
 	}
@@ -154,11 +154,12 @@ func (iter *BadgerIterator) Last() bool {
 
 // First skip to the first iterator
 func (iter *BadgerIterator) First() bool {
-	key := iter.first
+	key := iter.Key()
 	for iter.Prev() {
 		key = iter.Key()
 	}
 	iter.badgerIter.Seek(key)
+
 	return true
 }
 
