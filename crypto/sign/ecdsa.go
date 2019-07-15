@@ -41,7 +41,7 @@ func SignECDSA(k *ecdsa.PrivateKey, msg []byte) (signature []byte, err error) {
 		SigContent: sigContent,
 	}
 
-	//	log.Printf("xuperSig before marshal: %s", xuperSig)
+	//log.Printf("xuperSig before marshal: %s", xuperSig)
 
 	sig, err := json.Marshal(xuperSig)
 	if err != nil {

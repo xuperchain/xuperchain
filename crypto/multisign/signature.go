@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"math/big"
 
 	"github.com/xuperchain/xuperunion/crypto/common"
@@ -110,7 +109,7 @@ func MultiSign(keys []*ecdsa.PrivateKey, message []byte) ([]byte, error) {
 		SigContent: sigContent,
 	}
 
-	log.Printf("xuperSig before marshal: %s", xuperSig)
+	// log.Printf("xuperSig before marshal: %s", xuperSig)
 
 	//	sig, err := common.MarshalXuperSignature(xuperSig)
 	sig, err := json.Marshal(xuperSig)

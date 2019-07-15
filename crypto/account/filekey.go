@@ -445,7 +445,7 @@ func GetCryptoByteFromMnemonic(mnemonic string, language int) (uint8, error) {
 
 	tagByte := entropy[len(entropy)-1:]
 	tagInt := new(big.Int).SetBytes(tagByte)
-	log.Printf("tagInt is %b\n", tagInt)
+	// log.Printf("tagInt is %b\n", tagInt)
 
 	// 将熵右移4个比特
 	tagInt.Div(tagInt, Shift4BitsFactor)

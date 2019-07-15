@@ -101,7 +101,7 @@ func Sign(keys []*ecdsa.PublicKey, privateKey *ecdsa.PrivateKey, message []byte)
 
 	r := mathRand.New(mathRand.NewSource(int64(binary.BigEndian.Uint64(seed))))
 	signerIndex := r.Intn(lenOfRing)
-	log.Printf("signerIndex: %d", signerIndex)
+	// log.Printf("signerIndex: %d", signerIndex)
 	temp := append([]*ecdsa.PublicKey{}, keys[signerIndex:]...)
 	keys = append(keys[:signerIndex], &privateKey.PublicKey)
 	keys = append(keys, temp...)
@@ -289,7 +289,7 @@ func Verify(keys []*ecdsa.PublicKey, signature, message []byte) (bool, error) {
 		return false, fmt.Errorf("Failed unmashalling schnorr ring signature [%s]", err)
 	}
 
-	log.Printf("ring sig: %v", sig)
+	// log.Printf("ring sig: %v", sig)
 
 	// len check
 	if len(sig.S) != len(sig.Members) {
@@ -336,8 +336,8 @@ func Verify(keys []*ecdsa.PublicKey, signature, message []byte) (bool, error) {
 		e = new(big.Int).SetBytes(hash.UsingSha256(append(message, elliptic.Marshal(curve, x, y)...)))
 	}
 
-	log.Printf("ring sig.E: %d", sig.E)
-	log.Printf("ring sig E should be: %d", e)
+	// log.Printf("ring sig.E: %d", sig.E)
+	// log.Printf("ring sig E should be: %d", e)
 
 	if e.Cmp(sig.E) != 0 {
 		return false, nil
