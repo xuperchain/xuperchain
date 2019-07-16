@@ -19,15 +19,14 @@ type XChainMG struct {
 	Cfg   *config.NodeConfig
 	P2pv2 p2pv2.P2PServer
 	// msgChan is the message subscribe from net
-	msgChan          chan *xuper_p2p.XuperMessage
-	sendBlockMsgDisp *MessageDispatcher
-	chains           *sync.Map
-	rootKernel       *kernel.Kernel
-	datapath         string
-	Ukeys            *sync.Map //address -> scrkey
-	Speed            *probe.SpeedCalc
-	Quit             chan struct{}
-	nodeMode         string
+	msgChan    chan *xuper_p2p.XuperMessage
+	chains     *sync.Map
+	rootKernel *kernel.Kernel
+	datapath   string
+	Ukeys      *sync.Map //address -> scrkey
+	Speed      *probe.SpeedCalc
+	Quit       chan struct{}
+	nodeMode   string
 }
 
 // Init init instance of XChainMG
@@ -39,10 +38,6 @@ func (xm *XChainMG) Init(log log.Logger, cfg *config.NodeConfig,
 	xm.Cfg = cfg
 	xm.P2pv2 = p2pV2
 	xm.msgChan = make(chan *xuper_p2p.XuperMessage, p2pv2.MsgChanSize)
-
-	xm.sendBlockMsgDisp = &MessageDispatcher{}
-	xm.sendBlockMsgDisp.Init(10)
-	xm.sendBlockMsgDisp.Register(xm.HandleSendBlock)
 
 	xm.Speed = probe.NewSpeedCalc("sum")
 	xm.Quit = make(chan struct{})
@@ -114,7 +109,6 @@ func (xm *XChainMG) GetAll() []string {
 
 // Start start all blockchain instances
 func (xm *XChainMG) Start() {
-	go xm.sendBlockMsgDisp.Start()
 	xm.chains.Range(func(k, v interface{}) bool {
 		xc := v.(*XChainCore)
 		xm.Log.Trace("start chain " + k.(string))
