@@ -44,7 +44,7 @@ func (sub *Subscriber) handleMessage(s *Stream, msg *xuperp2p.XuperMessage) {
 		if s.node.srv.config.IsAuthentication && !s.auth() {
 			s.node.log.Trace("Stream not authenticated")
 			resType := xuperp2p.GetResMsgType(msg.GetHeader().GetType())
-			res, _ := xuperp2p.NewXuperMessage(xuperp2p.XuperMsgVersion2, "", "",
+			res, _ := xuperp2p.NewXuperMessage(xuperp2p.XuperMsgVersion2, "", msg.GetHeader().GetLogid(),
 				resType, []byte(""), xuperp2p.XuperMessage_GET_AUTHENTICATION_NOT_PASS)
 			if err := s.writeData(res); err != nil {
 				fmt.Println("Stream not authenticated to write msg error", "err", err)
