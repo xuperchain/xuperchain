@@ -16,7 +16,19 @@ type TxGraph map[string][]string
 //
 // 实现参考： https://rosettacode.org/wiki/Topological_sort#Go
 func TopSortDFS(g TxGraph) (order, cyclic []string) {
-	for _, outputs := range g {
+	// 先将孤立的点给分离出来(孤立的点就是它不依赖别的节点,也不被其他节点依赖)
+	tmpSlice := []string{}
+	tmpVisit := map[string]bool{}
+	for k, outputs := range g {
+		if len(outputs) == 0 {
+			tmpSlice = append(tmpSlice, k)
+			tmpVisit[k] = true
+		}
+	}
+	for k, outputs := range g {
+		if tmpVisit[k] == true {
+			continue
+		}
 		for _, m := range outputs {
 			if g[m] == nil {
 				g[m] = []string{} //预处理一下，coinbase交易可能没有依赖
@@ -58,13 +70,17 @@ func TopSortDFS(g TxGraph) (order, cyclic []string) {
 		L[i] = n
 	}
 	for n := range g {
-		if perm[n] {
+		if perm[n] || len(g[n]) <= 0 {
 			continue
 		}
 		visit(n)
 		if cycleFound {
 			return nil, cyclic
 		}
+	}
+	// 将之前孤立的点整合到最终的返回结果中
+	for k, v := range tmpSlice {
+		L[k] = v
 	}
 	return L, nil
 }
