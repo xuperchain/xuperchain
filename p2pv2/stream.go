@@ -259,7 +259,7 @@ func (s *Stream) Authenticate() error {
 	msg, err := p2pPb.NewXuperMessage(p2pPb.XuperMsgVersion2, "", "",
 		p2pPb.XuperMessage_GET_AUTHENTICATION, msgbuf, p2pPb.XuperMessage_NONE)
 
-	go func(s *Stream, msg p2pPb.XuperMessage) {
+	go func(s *Stream, msg *p2pPb.XuperMessage) {
 		res, _ := s.SendMessageWithResponse(context.Background(), msg)
 		if err != nil {
 			s.node.log.Warn("Stream Authenticate", "err", err)
