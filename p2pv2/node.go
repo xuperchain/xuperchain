@@ -107,7 +107,6 @@ func NewNode(cfg config.P2PConfig, log log.Logger) (*Node, error) {
 	// set broadcast peers limitation
 	MaxBroadCastPeers = cfg.MaxBroadcastPeers
 	MaxBroadCastCorePeers = cfg.MaxBroadcastCorePeers
-	log.Warn("++++test", "peers", MaxBroadCastPeers, "corepeers", MaxBroadCastCorePeers)
 
 	// initialize StreamLimit, set limit size
 	no.streamLimit.Init(cfg.StreamIPLimitSize, log)
