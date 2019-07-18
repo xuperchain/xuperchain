@@ -17,6 +17,10 @@ var (
 	ErrOutOfDiskLimit = errors.New("out of disk limit")
 )
 
+const (
+	DefaultCap = 1000
+)
+
 // SyscallService is the handler of contract syscalls
 type SyscallService struct {
 	ctxmgr *ContextManager
@@ -168,16 +172,21 @@ func (c *SyscallService) NewIterator(ctx context.Context, in *pb.IteratorRequest
 		return nil, fmt.Errorf("bad ctx id:%d", in.Header.Ctxid)
 	}
 
+	limit := in.Cap
+	if limit == 0 {
+		limit = DefaultCap
+	}
 	iter, err := nctx.Cache.Select(nctx.ContractName, in.Start, in.Limit)
 	if err != nil {
 		return nil, err
 	}
 	out := new(pb.IteratorResponse)
-	for iter.Next() {
+	for iter.Next() && limit > 0 {
 		out.Items = append(out.Items, &pb.IteratorItem{
 			Key:   iter.Key(),
 			Value: iter.Data().GetPureData().GetValue(),
 		})
+		limit -= 1
 	}
 	if iter.Error() != nil {
 		return nil, err

@@ -26,6 +26,8 @@ public:
     virtual void ok(const std::string& body);
     virtual void error(const std::string& body);
     virtual Response* mutable_response();
+    virtual bool range_query(const std::string& s, const std::string& e,
+            const size_t limit, std::vector<std::pair<std::string, std::string>>* res);
 
 private:
     pb::CallArgs _call_args;

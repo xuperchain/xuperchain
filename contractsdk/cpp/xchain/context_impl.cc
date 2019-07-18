@@ -88,7 +88,7 @@ bool ContextImpl::delete_object(const std::string& key) {
 bool ContextImpl::query_tx(const std::string &txid, Transaction* tx) {
     pb::QueryTxRequest req;
     pb::QueryTxResponse rep;
-    
+
     req.set_txid(txid);
     bool ok = syscall("QueryTx", req, &rep);
     if (!ok) {
@@ -96,14 +96,14 @@ bool ContextImpl::query_tx(const std::string &txid, Transaction* tx) {
     }
 
     tx->init(rep.tx());
-    
+
     return true;
 }
 
 bool ContextImpl::query_block(const std::string &blockid, Block* block) {
     pb::QueryBlockRequest req;
     pb::QueryBlockResponse rep;
-    
+
     req.set_blockid(blockid);
     bool ok = syscall("QueryBlock", req, &rep);
     if (!ok) {
@@ -128,4 +128,21 @@ void ContextImpl::error(const std::string& body) {
 Response* ContextImpl::mutable_response() { return &_resp; }
 
 const Response& ContextImpl::get_response() { return _resp; }
+
+bool ContextImpl::range_query(const std::string& s, const std::string& e,
+        const size_t limit, std::vector<std::pair<std::string, std::string>>* res) {
+    pb::IteratorRequest req;
+    pb::IteratorResponse resp;
+    req.set_limit(e);
+    req.set_start(s);
+    req.set_cap(limit);
+    bool ok = syscall("NewIterator", req, &resp);
+    if (!ok) {
+        return false;
+    }
+    for (auto item : resp.items()) {
+        res->emplace_back(item.key(), item.value());
+    }
+    return true;
+}
 }  // namespace xchain
