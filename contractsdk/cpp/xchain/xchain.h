@@ -5,6 +5,7 @@
 #include <string>
 #include "xchain/transaction.h"
 #include "xchain/block.h"
+#include "xchain/basic_iterator.h"
 
 namespace xchain {
 
@@ -31,8 +32,8 @@ public:
     virtual void ok(const std::string& body) = 0;
     virtual void error(const std::string& body) = 0;
     virtual Response* mutable_response() = 0;
-    virtual bool range_query(const std::string& s, const std::string& e,
-            const size_t limit, std::vector<std::pair<std::string, std::string>>* res) = 0;
+    virtual Iterator new_iterator(const std::string& start, const std::string& limit,
+            size_t cap) = 0;
 };
 
 class Contract {

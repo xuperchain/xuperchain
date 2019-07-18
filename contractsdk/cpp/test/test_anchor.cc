@@ -53,11 +53,8 @@ TEST_F(AnchorTest, MethodSet) {
 }
 
 TEST_F(AnchorTest, MethodScan) {
-    Anchor::entity ent;
-    ent.set_id(2);
-    ent.set_name("Bob");
-    ent.set_desc("Bob's game");
-    init_args["index"] = ent.index(0);
+    init_args["id"] = "1";
+    init_args["name"] = "Bob";
     xchain::cdt::ctx_init(init_rwset, "alice", {"ak1", "ak2"}, "scan", init_args);
     {
         Anchor anchor;
@@ -67,11 +64,27 @@ TEST_F(AnchorTest, MethodScan) {
     ASSERT_EQ(xchain::cdt::ctx_assert(200, "", "1"), true);
 }
 
+
+TEST_F(AnchorTest, MethodScanNull) {
+    Anchor::entity ent;
+    ent.set_id(2);
+    ent.set_name("Bob");
+    ent.set_desc("Bob's game");
+    init_args["name"] = "David";
+    xchain::cdt::ctx_init(init_rwset, "alice", {"ak1", "ak2"}, "scan", init_args);
+    {
+        Anchor anchor;
+        cxx_scan(anchor);
+    }
+    ASSERT_EQ(xchain::cdt::ctx_assert(200), true);
+    ASSERT_EQ(xchain::cdt::ctx_assert(200, "", "0"), true);
+}
+
 TEST_F(AnchorTest, MethodBatchSetAndScan) {
-    for (int i=0; i < 100; i ++) {
+    for (int i=0; i < 501; i ++) {
         std::string id = std::to_string(i);
         init_args = {
-            {"id"   , id},
+            {"id"   , "1"},
             {"name" , "Tom" + id},
             {"desc" , "Tom's game"},
         };
@@ -83,14 +96,41 @@ TEST_F(AnchorTest, MethodBatchSetAndScan) {
         ASSERT_EQ(xchain::cdt::ctx_assert(200), true);
     }
 
-    init_args["index"] = "Tom";
+    init_args["id"] = "1";
+    init_args["name"] = "Tom";
     xchain::cdt::ctx_init(init_rwset, "alice", {"xxxx", "ak2"}, "scan", init_args);
     {
         Anchor anchor;
         cxx_scan(anchor);
     }
     ASSERT_EQ(xchain::cdt::ctx_assert(200), true);
-    ASSERT_EQ(xchain::cdt::ctx_assert(200, "", "100"), true);
+    ASSERT_EQ(xchain::cdt::ctx_assert(200, "", "501"), true);
+}
+
+TEST_F(AnchorTest, MethodDel) {
+    init_args.clear();
+    init_args["id"] = "1";
+    init_args["name"] = "Bob";
+    init_args["desc"] = "xx";
+    xchain::cdt::ctx_init(init_rwset, "alice", {"xxxx", "ak2"}, "scan", init_args);
+    {
+        Anchor anchor;
+        cxx_del(anchor);
+    }
+    ASSERT_EQ(xchain::cdt::ctx_assert(200), true);
+
+    {
+    init_args.clear();
+    init_args["id"] = "1";
+    init_args["name"] = "Bob";
+    xchain::cdt::ctx_init(init_rwset, "alice", {"xxxx", "ak2"}, "scan", init_args);
+    {
+        Anchor anchor;
+        cxx_scan(anchor);
+    }
+    ASSERT_EQ(xchain::cdt::ctx_assert(200), true);
+    ASSERT_EQ(xchain::cdt::ctx_assert(200, "", "0"), true);
+    }
 }
 
 int main(int argc, char** argv) {

@@ -129,20 +129,11 @@ Response* ContextImpl::mutable_response() { return &_resp; }
 
 const Response& ContextImpl::get_response() { return _resp; }
 
-bool ContextImpl::range_query(const std::string& s, const std::string& e,
-        const size_t limit, std::vector<std::pair<std::string, std::string>>* res) {
-    pb::IteratorRequest req;
-    pb::IteratorResponse resp;
-    req.set_limit(e);
-    req.set_start(s);
-    req.set_cap(limit);
-    bool ok = syscall("NewIterator", req, &resp);
-    if (!ok) {
-        return false;
+Iterator ContextImpl::new_iterator(const std::string& start, const std::string& limit, size_t cap) {
+    if (cap <= 0) {
+        cap = ITERATOR_BATCH_SIZE;
     }
-    for (auto item : resp.items()) {
-        res->emplace_back(item.key(), item.value());
-    }
-    return true;
+    return Iterator(start, limit, cap);
 }
+
 }  // namespace xchain

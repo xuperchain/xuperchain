@@ -1,9 +1,9 @@
 #include <inttypes.h>
+#include <iterator>
+#include <regex>
 #include "table/table.h"
 
 namespace xchain { namespace cdt {
-
-const size_t ITERATOR_BATCH_SIZE = 100;
 
 template <typename T>
 Table<T>::Table(xchain::Context* ctx, const std::string& name)
@@ -20,9 +20,18 @@ Table<T>::~Table(){
 }
 
 template <typename T>
-bool Table<T>::find(std::string key, T* t) {
+std::string Table<T>::make_key(const std::string& prefix, const std::string& value) {
+    return _table_name + prefix + value;
+}
+
+template <typename T>
+bool Table<T>::find(std::initializer_list<PairType> input, T* t) {
+    T tmp;
+    const std::string& key = make_index(input, false, split(tmp.rowkey_str(), ","));
+
     std::string value;
-    if (_ctx->get_object(PREFIX_ROWKEY + key, &value)) {
+    std::string rk = make_key(PREFIX_ROWKEY, key);
+    if (_ctx->get_object(rk, &value)) {
         return t->ParseFromString(value);
     }
     return false;
@@ -47,15 +56,16 @@ bool Table<T>::inc_index_no(int64_t no) {
 
 template <typename T>
 bool Table<T>::write_index(const std::string& rowkey, const std::string& index_str, int idx_no) {
+    const std::string& all_key = make_key(PREFIX_ROWKEY,rowkey);
     auto no = get_index_no();
     if (no < 0) {
         return false;
     }
-    std::string idx = index_str + std::to_string(no);
-    if (!_ctx->put_object(idx, rowkey)) {
+    std::string idx = make_key(PREFIX_INDEX, index_str + std::to_string(no));
+    if (!_ctx->put_object(idx, all_key)) {
         return false;
     }
-    std::string idx_key = PREFIX_INDEX + rowkey + std::to_string(idx_no);
+    std::string idx_key = make_key(PREFIX_INDEX_DEL, rowkey + std::to_string(idx_no));
     if (!_ctx->put_object(idx_key, idx)) {
         return false;
     }
@@ -65,7 +75,7 @@ bool Table<T>::write_index(const std::string& rowkey, const std::string& index_s
 
 template <typename T>
 bool Table<T>::delete_index(const std::string &rowkey, const std::string& index_str, int idx_no) {
-    std::string idx = PREFIX_INDEX + rowkey + std::to_string(idx_no);
+    std::string idx = make_key(PREFIX_INDEX_DEL, rowkey + std::to_string(idx_no));
     std::string value;
     if (_ctx->get_object(idx, &value)) {
         // 删除
@@ -83,19 +93,67 @@ const char KEY_0XFF[2] = {static_cast<char>(0xff), 0};
 const std::string KEY_END(KEY_0XFF);
 
 template <typename T>
-TableIterator<T> Table<T>::scan(std::string idx) {
+std::vector<std::string> Table<T>::split(const std::string& input, const std::string& regex) {
+    std::regex re(regex);
+    std::sregex_token_iterator
+        first{input.begin(), input.end(), re, -1},
+        last;
+    return {first, last};
+}
+
+template <typename T>
+std::string Table<T>::make_index(std::initializer_list<PairType> input, bool key,
+        const std::vector<std::string>& filter) {
+
+    auto find = [&filter](std::string in) -> bool {
+        for (auto &v : filter) {
+            if (v == in) {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    std::ostringstream oss;
+    for (auto p = input.begin(); p != input.end(); p ++) {
+        //默认传进来的是空的话，就不过滤了
+        if (filter.size() > 0) {
+            if (!find((*p).first)) {
+                continue;
+            }
+        }
+        if (key) {
+            oss << (*p).first << ",";
+        } else {
+            oss << (*p).second << ",";
+        }
+    }
+    auto raw = oss.str();
+    return raw.substr(0, raw.size() - 1);
+}
+
+template <typename T>
+TableIterator<T> Table<T>::scan(std::initializer_list<PairType> input){
+    auto idx = make_index(input, true);
+    T t;
+    if (!t.has(idx)) {
+        auto it = TableIterator<T>(_ctx, "");
+        it.error = Error(ErrorType::kErrTableIndexInvalid);
+        return it;
+    }
+    idx = make_key(PREFIX_INDEX, make_index(input, false));
     return TableIterator<T>(_ctx, idx);
 }
 
 template <typename T>
 bool Table<T>::del(T t) {
-    const std::string& key = t->rowkey();
-
-    if (!_ctx->delete_object(PREFIX_ROWKEY + key)) {
+    auto key = t.rowkey();
+    if (!_ctx->delete_object(make_key(PREFIX_ROWKEY, key))) {
         return false;
     }
-    for (int i = 0; i < t->index_size(); i ++) {
-        if(!delete_index(key, t->index(i), i)) {
+    for (int i = 0; i < t.index_size(); i ++) {
+        std::string idx;
+        if(!delete_index(key, t.index(i), i)) {
             return false;
         }
     }
@@ -105,8 +163,9 @@ bool Table<T>::del(T t) {
 template <typename T>
 bool Table<T>::put(T t) {
     const std::string& key = t.rowkey();
+    const std::string& all_key = make_key(PREFIX_ROWKEY,key);
     std::string value;
-    if (_ctx->get_object(PREFIX_ROWKEY + key, &value)) {
+    if (_ctx->get_object(all_key, &value)) {
         //重复插入 TODO 改成错误码
         std::cout << "duplicated put: " << key << std::endl;
         return false;
@@ -115,7 +174,7 @@ bool Table<T>::put(T t) {
     if (!t.SerializeToString(&value)) {
         return false;
     }
-    if (!_ctx->put_object(PREFIX_ROWKEY + key, value)) {
+    if (!_ctx->put_object(all_key, value)) {
         return false;
     }
     for (int i = 0; i < t.index_size(); i ++) {
@@ -128,7 +187,7 @@ bool Table<T>::put(T t) {
 
 template <typename T>
 TableIterator<T>::TableIterator(xchain::Context* ctx, std::string idx)
-    :Iterator(ctx, idx, idx + KEY_END, ITERATOR_BATCH_SIZE),  _ctx(ctx), _index(idx) {
+    :Iterator(idx, idx + KEY_END, ITERATOR_BATCH_SIZE),  _ctx(ctx), _index(idx) {
 }
 
 }};

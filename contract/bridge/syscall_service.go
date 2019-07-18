@@ -173,7 +173,7 @@ func (c *SyscallService) NewIterator(ctx context.Context, in *pb.IteratorRequest
 	}
 
 	limit := in.Cap
-	if limit == 0 {
+	if limit <= 0 {
 		limit = DefaultCap
 	}
 	iter, err := nctx.Cache.Select(nctx.ContractName, in.Start, in.Limit)
