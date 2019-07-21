@@ -1,6 +1,5 @@
 #pragma once
 
-#include <atomic>
 #include "xchain/xchain.h"
 #include "table/types.h"
 #include "xchain/basic_iterator.h"

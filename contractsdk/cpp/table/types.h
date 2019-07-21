@@ -3,8 +3,6 @@
 #include <inttypes.h>
 #include <sstream>
 #include <string>
-#include <cxxabi.h>
-#include <typeinfo>
 
 template <typename T, size_t N>
 constexpr size_t xchain_sizeof(T (&arr)[N]) { return N; }

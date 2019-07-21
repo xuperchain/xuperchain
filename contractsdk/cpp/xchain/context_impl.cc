@@ -34,7 +34,7 @@ const std::string& ContextImpl::arg(const std::string& name) const {
     if (it != _args.end()) {
         return it->second;
     }
-    return std::move(std::string(""));
+    return kUnknownKey;
 }
 
 

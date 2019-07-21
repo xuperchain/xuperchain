@@ -15,6 +15,8 @@ struct Response {
     std::string body;
 };
 
+const std::string kUnknownKey = "";
+
 class Context {
 public:
     virtual ~Context() {}

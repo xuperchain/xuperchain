@@ -1,6 +1,4 @@
 #include <inttypes.h>
-#include <iterator>
-#include <regex>
 #include "table/table.h"
 
 namespace xchain { namespace cdt {
@@ -93,12 +91,17 @@ const char KEY_0XFF[2] = {static_cast<char>(0xff), 0};
 const std::string KEY_END(KEY_0XFF);
 
 template <typename T>
-std::vector<std::string> Table<T>::split(const std::string& input, const std::string& regex) {
-    std::regex re(regex);
-    std::sregex_token_iterator
-        first{input.begin(), input.end(), re, -1},
-        last;
-    return {first, last};
+std::vector<std::string> Table<T>::split(const std::string& input, const std::string& delims) {
+    std::vector<std::string> v;
+    std::size_t current, previous = 0;
+    current = input.find_first_of(delims);
+    while (current != std::string::npos) {
+        v.push_back(input.substr(previous, current - previous));
+        previous = current + 1;
+        current = input.find_first_of(delims, previous);
+    }
+    v.push_back(input.substr(previous, current - previous));
+    return v;
 }
 
 template <typename T>
