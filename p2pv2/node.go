@@ -26,9 +26,14 @@ import (
 
 // define the common config
 const (
-	XuperProtocolID       = "/xuper/2.0.0" // protocol version
-	MaxBroadCastPeers     = 20             // the maximum peers to broadcast messages
-	MaxBroadCastCorePeers = 10             // the maximum core peers to broadcast messages
+	XuperProtocolID = "/xuper/2.0.0" // protocol version
+)
+
+var (
+	// MaxBroadCastPeers define the maximum number of common peers to broadcast messages
+	MaxBroadCastPeers = 20
+	// MaxBroadCastCorePeers define the maximum number of core peers to broadcast messages
+	MaxBroadCastCorePeers = 10
 )
 
 // define errors
@@ -98,6 +103,11 @@ func NewNode(cfg config.P2PConfig, log log.Logger) (*Node, error) {
 		// new StreamLimit
 		streamLimit: &StreamLimit{},
 	}
+
+	// set broadcast peers limitation
+	MaxBroadCastPeers = cfg.MaxBroadcastPeers
+	MaxBroadCastCorePeers = cfg.MaxBroadcastCorePeers
+
 	// initialize StreamLimit, set limit size
 	no.streamLimit.Init(cfg.StreamIPLimitSize, log)
 	ho.SetStreamHandler(XuperProtocolID, no.handlerNewStream)
