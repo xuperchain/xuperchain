@@ -19,6 +19,8 @@ public:
             const std::string& e, size_t l);
 
 private:
+    Iterator(const Iterator&);
+    Iterator &operator=(const Iterator&);
     bool load();
     bool end();
     bool range_query(const std::string& s, const std::string& e,

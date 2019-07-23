@@ -136,16 +136,16 @@ std::string Table<T>::make_index(std::initializer_list<PairType> input, bool key
 }
 
 template <typename T>
-TableIterator<T> Table<T>::scan(std::initializer_list<PairType> input){
+std::unique_ptr<TableIterator<T>> Table<T>::scan(std::initializer_list<PairType> input){
     auto idx = make_index(input, true);
     T t;
     if (!t.has(idx)) {
-        auto it = TableIterator<T>(_ctx, "");
-        it.error = Error(ErrorType::kErrTableIndexInvalid);
-        return it;
+        auto it = std::unique_ptr<TableIterator<T>>(new TableIterator<T>(_ctx, ""));
+        it->error = Error(ErrorType::kErrTableIndexInvalid);
+        return std::move(it);
     }
     idx = make_key(PREFIX_INDEX, make_index(input, false));
-    return TableIterator<T>(_ctx, idx);
+    return std::unique_ptr<TableIterator<T>>(new TableIterator<T>(_ctx, idx));
 }
 
 template <typename T>

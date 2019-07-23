@@ -129,11 +129,8 @@ Response* ContextImpl::mutable_response() { return &_resp; }
 
 const Response& ContextImpl::get_response() { return _resp; }
 
-Iterator ContextImpl::new_iterator(const std::string& start, const std::string& limit, size_t cap) {
-    if (cap <= 0) {
-        cap = ITERATOR_BATCH_SIZE;
-    }
-    return Iterator(start, limit, cap);
+std::unique_ptr<Iterator> ContextImpl::new_iterator(const std::string& start, const std::string& limit) {
+    return std::unique_ptr<Iterator>(new Iterator(start, limit, ITERATOR_BATCH_SIZE));
 }
 
 }  // namespace xchain

@@ -89,8 +89,8 @@ DEFINE_METHOD(Anchor, scan) {
     Anchor::entity ent;
     int i = 0;
     std::map<std::string, bool> kv;
-    while(it.next()) {
-        if (it.get(&ent)) {
+    while(it->next()) {
+        if (it->get(&ent)) {
             /*
             std::cout << "id: " << ent.id()<< std::endl;
             std::cout << "name: " << ent.name()<< std::endl;
@@ -107,8 +107,8 @@ DEFINE_METHOD(Anchor, scan) {
         }
     }
     std::cout << i << std::endl;
-    if (it.error()) {
-        std::cout << it.error(true) << std::endl;
+    if (it->error()) {
+        std::cout << it->error(true) << std::endl;
     }
     ctx->ok(std::to_string(i));
 }

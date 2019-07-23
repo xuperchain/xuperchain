@@ -51,7 +51,6 @@ $(BUILD_DIR)/%.cc.o: %.cc
 	$(MKDIR_P) $(dir $@)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
-
 -include $(XCHAIN_DEPS)
 
 MKDIR_P ?= mkdir -p

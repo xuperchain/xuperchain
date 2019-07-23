@@ -26,7 +26,7 @@ public:
     virtual void ok(const std::string& body);
     virtual void error(const std::string& body);
     virtual Response* mutable_response();
-    virtual Iterator new_iterator(const std::string& start, const std::string& limit, size_t);
+    virtual std::unique_ptr<Iterator> new_iterator(const std::string& start, const std::string& limit);
 
 private:
     pb::CallArgs _call_args;

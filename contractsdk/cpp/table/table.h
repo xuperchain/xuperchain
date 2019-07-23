@@ -36,7 +36,7 @@ public:
     // find a row by key, which is rowkey, if return true, t will bring back the deserialized object.
     bool find(std::initializer_list<PairType>, T* t);
     // scan a index, return a iterator
-    TableIterator<T> scan(std::initializer_list<PairType>);
+    std::unique_ptr<TableIterator<T>> scan(std::initializer_list<PairType>);
     // del a record by key
     bool del(T t);
     // put insert a new row.

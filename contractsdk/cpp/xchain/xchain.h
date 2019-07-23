@@ -34,8 +34,7 @@ public:
     virtual void ok(const std::string& body) = 0;
     virtual void error(const std::string& body) = 0;
     virtual Response* mutable_response() = 0;
-    virtual Iterator new_iterator(const std::string& start, const std::string& limit,
-            size_t cap) = 0;
+    virtual std::unique_ptr<Iterator> new_iterator(const std::string& start, const std::string& limit) = 0;
 };
 
 class Contract {
