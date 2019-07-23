@@ -23,7 +23,12 @@ TEST_BIN := $(TEST_SRCS:./test/%.cc=$(BUILD_DIR)/test/%.out)
 INC_DIRS := . /usr/local/include
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
-CPPFLAGS ?= $(INC_FLAGS) -MMD -MP -std=c++11 -g
+OPT_LEVEL := -Oz
+ifeq ($(CXX),g++)
+	OPT_LEVEL := -Os
+endif
+
+CPPFLAGS ?= $(INC_FLAGS) -MMD -MP $(OPT_LEVEL) -std=c++11
 
 .PHONY: clean all
 
