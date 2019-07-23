@@ -93,6 +93,17 @@ func (s *Stream) reset() {
 	s.node.strPool.DelStream(s)
 }
 
+func (s *Stream) resetLockFree() {
+	if s.valid() {
+		if s.s != nil {
+			s.s.Reset()
+		}
+		s.s = nil
+		s.isvalid = false
+	}
+	s.node.strPool.DelStream(s)
+}
+
 // readData loop to read data from stream
 func (s *Stream) readData() {
 	for {
@@ -161,7 +172,7 @@ func (s *Stream) writeData(msg *p2pPb.XuperMessage) error {
 	defer s.lk.Unlock()
 	msg.Header.From = s.node.NodeID().Pretty()
 	if err := s.wc.WriteMsg(msg); err != nil {
-		s.reset()
+		s.resetLockFree()
 		return err
 	}
 	return s.w.Flush()
