@@ -16,7 +16,7 @@ func NewAKSetsValidator() *AKSetsValidator {
 }
 
 // Validate implements the interface of ACLValidator
-func (asv *AKSetsValidator) Validate(pnode *ptree.PermNode, msg []byte) (bool, error) {
+func (asv *AKSetsValidator) Validate(pnode *ptree.PermNode) (bool, error) {
 	expResult := false
 	if pnode == nil {
 		return false, errors.New("Validate: Invalid Param")
