@@ -91,7 +91,7 @@ func (uv *UtxoVM) ImmediateVerifyTx(tx *pb.Transaction, isRootTx bool) (bool, er
 		}
 
 		// verify the permission of RWSet using ACL
-		ok, err = uv.verifyRWSetPermission(tx)
+		ok, err = uv.verifyRWSetPermission(tx, verifiedID)
 		if !ok {
 			uv.xlog.Warn("ImmediateVerifyTx: verifyRWSetPermission failed", "error", err)
 			return ok, ErrAclNotEnough
@@ -231,7 +231,8 @@ func (uv *UtxoVM) verifyUTXOPermission(tx *pb.Transaction, verifiedID map[string
 
 // verifyContractOwnerPermission check if the transaction has the permission of a contract owner.
 // this usually happens in account management operations.
-func (uv *UtxoVM) verifyContractOwnerPermission(contractName string, tx *pb.Transaction) (bool, error) {
+func (uv *UtxoVM) verifyContractOwnerPermission(contractName string, tx *pb.Transaction,
+	verifiedID map[string]bool) (bool, error) {
 	versionData, err := uv.model3.Get(aclu.GetContract2AccountBucket(), []byte(contractName))
 	if err != nil || versionData == nil {
 		return false, err
@@ -241,12 +242,19 @@ func (uv *UtxoVM) verifyContractOwnerPermission(contractName string, tx *pb.Tran
 	if pureData == nil || confirmed == false {
 		return false, errors.New("pure data is nil or unconfirmed")
 	}
-	accountName := pureData.GetValue()
-	return pm.IdentifyAccount(string(accountName), tx.AuthRequire, uv.aclMgr)
+	accountName := string(pureData.GetValue())
+	if verifiedID[accountName] {
+		return true, nil
+	}
+	ok, err := pm.IdentifyAccount(accountName, tx.AuthRequire, uv.aclMgr)
+	if err == nil && ok {
+		verifiedID[accountName] = true
+	}
+	return ok, err
 }
 
 // verifyRWSetPermission verify the permission of RWSet using ACL
-func (uv *UtxoVM) verifyRWSetPermission(tx *pb.Transaction) (bool, error) {
+func (uv *UtxoVM) verifyRWSetPermission(tx *pb.Transaction, verifiedID map[string]bool) (bool, error) {
 	req := tx.GetContractRequests()
 	// if not contract, pass directly
 	if req == nil {
@@ -264,12 +272,16 @@ func (uv *UtxoVM) verifyRWSetPermission(tx *pb.Transaction) (bool, error) {
 		case aclu.GetAccountBucket():
 			// modified account data, need to check if the tx has the permission of account
 			accountName := string(key)
+			if verifiedID[accountName] {
+				continue
+			}
 			ok, err := pm.IdentifyAccount(accountName, tx.AuthRequire, uv.aclMgr)
 			if !ok {
 				uv.xlog.Warn("verifyRWSetPermission check account bucket failed",
 					"account", accountName, "AuthRequire ", tx.AuthRequire, "error", err)
 				return ok, err
 			}
+			verifiedID[accountName] = true
 		case aclu.GetContractBucket():
 			// modified contact data, need to check if the tx has the permission of contract owner
 			separator := aclu.GetACLSeparator()
@@ -278,7 +290,7 @@ func (uv *UtxoVM) verifyRWSetPermission(tx *pb.Transaction) (bool, error) {
 				return false, errors.New("invalid raw key")
 			}
 			contractName := string(key[:idx])
-			ok, contractErr := uv.verifyContractOwnerPermission(contractName, tx)
+			ok, contractErr := uv.verifyContractOwnerPermission(contractName, tx, verifiedID)
 			if !ok {
 				uv.xlog.Warn("verifyRWSetPermission check contract bucket failed",
 					"contract", contractName, "AuthRequire ", tx.AuthRequire, "error", err)
@@ -287,16 +299,21 @@ func (uv *UtxoVM) verifyRWSetPermission(tx *pb.Transaction) (bool, error) {
 		case aclu.GetContract2AccountBucket():
 			// modified contract/account mapping
 			// need to check if the tx has the permission of target account
-			accountName := ele.GetValue()
-			if accountName == nil {
+			accountValue := ele.GetValue()
+			if accountValue == nil {
 				return false, errors.New("account name is empty")
 			}
-			ok, accountErr := pm.IdentifyAccount(string(accountName), tx.AuthRequire, uv.aclMgr)
+			accountName := string(accountValue)
+			if verifiedID[accountName] {
+				continue
+			}
+			ok, accountErr := pm.IdentifyAccount(accountName, tx.AuthRequire, uv.aclMgr)
 			if !ok {
 				uv.xlog.Warn("verifyRWSetPermission check contract2account bucket failed",
 					"account", accountName, "AuthRequire ", tx.AuthRequire, "error", err)
 				return ok, accountErr
 			}
+			verifiedID[accountName] = true
 		}
 	}
 	return true, nil
