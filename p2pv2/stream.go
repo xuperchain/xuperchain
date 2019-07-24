@@ -81,16 +81,9 @@ func (s *Stream) valid() bool {
 }
 
 func (s *Stream) reset() {
-	if s.valid() {
-		s.lk.Lock()
-		defer s.lk.Unlock()
-		if s.s != nil {
-			s.s.Reset()
-		}
-		s.s = nil
-		s.isvalid = false
-	}
-	s.node.strPool.DelStream(s)
+	s.lk.Lock()
+	defer s.lk.Unlock()
+	s.resetLockFree()
 }
 
 func (s *Stream) resetLockFree() {
