@@ -11,6 +11,9 @@ DEFINE_METHOD(Forbidden, forbid) {
     xchain::Context* ctx = self.context();
     // txid to be forbidden
     const std::string key = ctx->arg("txid");
+    if ("" == key) {
+        ctx->error("forbid failed");
+    }
     // the reason to be forbidden
     const std::string value = ctx->arg("value");
     bool ret = ctx->put_object(key, value);
@@ -25,6 +28,9 @@ DEFINE_METHOD(Forbidden, unforbid) {
     xchain::Context* ctx = self.context();
     // txid to be unforbidden
     const std::string key = ctx->arg("txid");
+    if ("" == key) {
+        ctx->error("unforbid failed");
+    }
     bool ret = ctx->delete_object(key);
     if (!ret) {
         ctx->error("unforbid failed");
