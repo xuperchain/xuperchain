@@ -1,0 +1,11 @@
+syntax = "proto3";
+option optimize_for = LITE_RUNTIME;
+
+package anchor;
+
+message Entity {
+    int64 id = 1;
+    string name = 2;
+    bytes desc = 3;
+}
+

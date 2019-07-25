@@ -81,9 +81,13 @@ func (s *Stream) valid() bool {
 }
 
 func (s *Stream) reset() {
+	s.lk.Lock()
+	defer s.lk.Unlock()
+	s.resetLockFree()
+}
+
+func (s *Stream) resetLockFree() {
 	if s.valid() {
-		s.lk.Lock()
-		defer s.lk.Unlock()
 		if s.s != nil {
 			s.s.Reset()
 		}
@@ -161,7 +165,7 @@ func (s *Stream) writeData(msg *p2pPb.XuperMessage) error {
 	defer s.lk.Unlock()
 	msg.Header.From = s.node.NodeID().Pretty()
 	if err := s.wc.WriteMsg(msg); err != nil {
-		s.reset()
+		s.resetLockFree()
 		return err
 	}
 	return s.w.Flush()
