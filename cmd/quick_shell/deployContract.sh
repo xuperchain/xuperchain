@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 # check input parameter
 if [ $# -lt 4 ]; then
 	echo "usage: sh -x deployContract.sh accountName contractName contractNamePath fee"
