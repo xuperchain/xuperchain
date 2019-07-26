@@ -37,7 +37,7 @@ func (uv *UtxoVM) ImmediateVerifyTx(tx *pb.Transaction, isRootTx bool) (bool, er
 	if !isRootTx && tx.Version == RootTxVersion {
 		return false, ErrVersionInvalid
 	}
-	if tx.Version > BetaTxVersion {
+	if tx.Version > BetaTxVersion || tx.Version < RootTxVersion {
 		return false, ErrVersionInvalid
 	}
 	// autogen tx should not run ImmediateVerifyTx, this could be a fake tx
@@ -50,8 +50,8 @@ func (uv *UtxoVM) ImmediateVerifyTx(tx *pb.Transaction, isRootTx bool) (bool, er
 	}
 
 	// Start transaction verification workflow
-	if tx.Version >= TxVersion {
-		//verify txid
+	if tx.Version > RootTxVersion {
+		// verify txid
 		txid, err := txhash.MakeTransactionID(tx)
 		if err != nil {
 			uv.xlog.Warn("ImmediateVerifyTx: call MakeTransactionID failed", "error", err)
