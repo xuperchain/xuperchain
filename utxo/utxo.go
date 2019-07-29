@@ -1177,7 +1177,7 @@ func (uv *UtxoVM) ImmediateVerifyTx(tx *pb.Transaction, isRootTx bool) (bool, er
 	if !isRootTx && tx.Version == RootTxVersion {
 		return false, ErrVersionInvalid
 	}
-	if tx.Version > BetaTxVersion {
+	if tx.Version > BetaTxVersion || tx.Version < RootTxVersion {
 		return false, ErrVersionInvalid
 	}
 	// autogen tx should not run ImmediateVerifyTx, this could be a fake tx
@@ -1188,7 +1188,7 @@ func (uv *UtxoVM) ImmediateVerifyTx(tx *pb.Transaction, isRootTx bool) (bool, er
 		uv.xlog.Warn("tx too large, should not be greater than half of max blocksize", "size", proto.Size(tx))
 		return false, ErrTxTooLarge
 	}
-	if tx.Version >= TxVersion {
+	if tx.Version > RootTxVersion {
 		// verify rwset
 		ok, err := uv.verifyTxRWSets(tx)
 		if err != nil && strings.HasPrefix(err.Error(), "Gas not enough") {
