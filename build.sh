@@ -65,4 +65,5 @@ mv dump_chain ${output_dir}
 cp -rf  plugins ${output_dir}
 cp -rf data ${output_dir}
 cp -rf conf ${output_dir}
+cp -rf cmd/quick_shell/* ${output_dir}
 mkdir -p ${output_dir}/data/blockchain
