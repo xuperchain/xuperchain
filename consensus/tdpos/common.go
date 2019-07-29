@@ -317,6 +317,10 @@ func (tp *TDpos) validateNominateCandidate(desc *contract.TxDesc) (*CandidateInf
 	if desc.Args["neturl"] == nil {
 		tp.log.Warn("validateNominateCandidate candidate have no neturl info",
 			"address", canInfo.Address)
+		// neturl could not be empty when core peers' connection is enabled
+		if tp.enableCoreConnection {
+			return nil, "", errors.New("validateNominateCandidate neturl could not be empty")
+		}
 	} else {
 		switch desc.Args["neturl"].(type) {
 		case string:

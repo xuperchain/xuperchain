@@ -69,6 +69,8 @@ type TDpos struct {
 	// 执行智能合约获取合约上下文
 	context *contract.TxContext
 	mutex   *sync.RWMutex
+	// is core proposers connection directly
+	enableCoreConnection bool
 }
 
 // tdpos 共识机制的配置
