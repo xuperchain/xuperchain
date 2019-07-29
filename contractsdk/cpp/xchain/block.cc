@@ -24,5 +24,21 @@ void Block::init(const pb::Block& pbblock) {
     }
 }
 
+void Block::print() {
+    printf("[Block]:\n");
+    printf("blockid: %s\n", blockid.c_str());    
+    printf("pre_hash: %s\n", pre_hash.c_str());    
+    printf("proposer: %s\n", proposer.c_str());    
+    printf("sign: %s\n", sign.c_str());    
+    printf("pubkey: %s\n", pubkey.c_str());    
+    printf("height: %ld\n", height);    
+    for (auto v : txids) {
+        printf("txid: %s\n", v.c_str());
+    }
+    printf("tx_count: %d\n", tx_count);    
+    printf("in_trunk: %d\n", in_trunk);    
+    printf("next_hash: %s\n", next_hash.c_str());    
+}
+
 }  // namespace xchain
 

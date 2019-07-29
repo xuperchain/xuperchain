@@ -10,6 +10,7 @@ public:
     Block();
     virtual ~Block();
     void init(const xchain::contract::sdk::Block& pbblock);
+    void print();
 
 public:
     std::string blockid;
