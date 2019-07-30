@@ -34,7 +34,7 @@ const std::string& ContextImpl::arg(const std::string& name) const {
     if (it != _args.end()) {
         return it->second;
     }
-    return std::move(std::string(""));
+    return kUnknownKey;
 }
 
 
@@ -88,7 +88,7 @@ bool ContextImpl::delete_object(const std::string& key) {
 bool ContextImpl::query_tx(const std::string &txid, Transaction* tx) {
     pb::QueryTxRequest req;
     pb::QueryTxResponse rep;
-    
+
     req.set_txid(txid);
     bool ok = syscall("QueryTx", req, &rep);
     if (!ok) {
@@ -96,14 +96,14 @@ bool ContextImpl::query_tx(const std::string &txid, Transaction* tx) {
     }
 
     tx->init(rep.tx());
-    
+
     return true;
 }
 
 bool ContextImpl::query_block(const std::string &blockid, Block* block) {
     pb::QueryBlockRequest req;
     pb::QueryBlockResponse rep;
-    
+
     req.set_blockid(blockid);
     bool ok = syscall("QueryBlock", req, &rep);
     if (!ok) {
@@ -128,4 +128,9 @@ void ContextImpl::error(const std::string& body) {
 Response* ContextImpl::mutable_response() { return &_resp; }
 
 const Response& ContextImpl::get_response() { return _resp; }
+
+std::unique_ptr<Iterator> ContextImpl::new_iterator(const std::string& start, const std::string& limit) {
+    return std::unique_ptr<Iterator>(new Iterator(start, limit, ITERATOR_BATCH_SIZE));
+}
+
 }  // namespace xchain
