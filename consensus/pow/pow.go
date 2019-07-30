@@ -163,3 +163,9 @@ func (pc *PowConsensus) GetCoreMiners() []*cons_base.MinerInfo {
 func (pc *PowConsensus) GetStatus() *cons_base.ConsensusStatus {
 	return &cons_base.ConsensusStatus{}
 }
+
+// GetHeaviestChain return heaviest chain while dealing with fork
+// TODO zq
+func (pc *PowConsensus) GetHeaviestChain(tipBlocks []*pb.InternalBlock) (*pb.InternalBlock, error) {
+	return nil, nil
+}

@@ -28,4 +28,8 @@ type ConsensusInterface interface {
 
 	// Get consensus status
 	GetStatus() *ConsensusStatus
+
+	// GetHeaviestChain return heaviest chain while dealing with fork
+	// Different consensus may have different
+	GetHeaviestChain(tipBlocks []*pb.InternalBlock) (*pb.InternalBlock, error)
 }

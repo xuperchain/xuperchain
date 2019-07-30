@@ -492,3 +492,9 @@ func (pc *PluggableConsensus) GetStatus() *cons_base.ConsensusStatus {
 	currentConsIndex := len(pc.cons) - 1
 	return pc.cons[currentConsIndex].Conn.GetStatus()
 }
+
+// GetHeaviestChain return heaviest chain while dealing with fork
+func (pc *PluggableConsensus) GetHeaviestChain(tipBlocks []*pb.InternalBlock) (*pb.InternalBlock, error) {
+	currentConsIndex := len(pc.cons) - 1
+	return pc.cons[currentConsIndex].Conn.GetHeaviestChain(tipBlocks)
+}

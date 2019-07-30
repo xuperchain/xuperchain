@@ -189,3 +189,9 @@ func (sc *SingleConsensus) GetStatus() *cons_base.ConsensusStatus {
 		Proposer: string(sc.masterAddr),
 	}
 }
+
+// GetHeaviestChain return heaviest chain while dealing with fork
+// TODO zq
+func (sc *SingleConsensus) GetHeaviestChain(tipBlocks []*pb.InternalBlock) (*pb.InternalBlock, error) {
+	return nil, nil
+}

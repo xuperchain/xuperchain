@@ -579,3 +579,9 @@ func (tp *TDpos) GetStatus() *cons_base.ConsensusStatus {
 	}
 	return status
 }
+
+// GetHeaviestChain return heaviest chain while dealing with fork
+// TODO zq
+func (tp *TDpos) GetHeaviestChain(tipBlocks []*pb.InternalBlock) (*pb.InternalBlock, error) {
+	return nil, nil
+}
