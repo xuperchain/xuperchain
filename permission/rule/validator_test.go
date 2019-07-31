@@ -36,14 +36,12 @@ func Test_NullValidator(t *testing.T) {
 		return
 	}
 
-	msg := "this is a test msg"
-
 	// build perm tree
 	rootNode := ptree.NewPermNode("Alice", nil)
 	ak1Node := ptree.NewPermNode("ak1", nil)
 	ak1Node.Status = ptree.Success
 	rootNode.Children = append(rootNode.Children, ak1Node)
-	result, err := tv.Validate(rootNode, []byte(msg))
+	result, err := tv.Validate(rootNode)
 
 	// should success
 	if err != nil || !result {
@@ -72,14 +70,12 @@ func Test_ThresholdValidator(t *testing.T) {
 	aclObj.AksWeight["ak2"] = 1
 	aclObj.AksWeight["ak3"] = 1
 
-	msg := "this is a message"
-
 	// build perm tree
 	rootNode := ptree.NewPermNode("Alice", aclObj)
 	ak1Node := ptree.NewPermNode("ak1", nil)
 	ak1Node.Status = ptree.Success
 	rootNode.Children = append(rootNode.Children, ak1Node)
-	result, err := tv.Validate(rootNode, []byte(msg))
+	result, err := tv.Validate(rootNode)
 
 	// should failed
 	if err != nil || result {
@@ -90,7 +86,7 @@ func Test_ThresholdValidator(t *testing.T) {
 	ak3Node := ptree.NewPermNode("ak3", nil)
 	ak3Node.Status = ptree.Success
 	rootNode.Children = append(rootNode.Children, ak3Node)
-	result, err = tv.Validate(rootNode, []byte(msg))
+	result, err = tv.Validate(rootNode)
 	// should success
 	if err != nil || !result {
 		t.Error("validate failed, should have no error and result is true. result=", result)
@@ -128,8 +124,6 @@ func Test_AkSetsValidator(t *testing.T) {
 	aclObj.AkSets.Sets["1"] = set1
 	aclObj.AkSets.Sets["2"] = set2
 
-	msg := "this is a message"
-
 	// build perm tree
 	rootNode := ptree.NewPermNode("Alice", aclObj)
 	ak1Node := ptree.NewPermNode("ak1", nil)
@@ -137,7 +131,7 @@ func Test_AkSetsValidator(t *testing.T) {
 	//ak2Node := ptree.NewPermNode("ak2", nil)
 	rootNode.Children = append(rootNode.Children, ak1Node)
 	//rootNode.Children = append(rootNode.Children, ak2Node)
-	result, err := akv.Validate(rootNode, []byte(msg))
+	result, err := akv.Validate(rootNode)
 
 	// should failed
 	if err != nil || result {
@@ -148,7 +142,7 @@ func Test_AkSetsValidator(t *testing.T) {
 	ak3Node := ptree.NewPermNode("ak3", nil)
 	ak3Node.Status = ptree.Success
 	rootNode.Children = append(rootNode.Children, ak3Node)
-	result, err = akv.Validate(rootNode, []byte(msg))
+	result, err = akv.Validate(rootNode)
 	// should success
 	if err != nil || !result {
 		t.Error("validate failed, should have no error and result is true")
