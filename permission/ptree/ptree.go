@@ -21,11 +21,10 @@ const (
 
 // PermNode defines the node of perm tree
 type PermNode struct {
-	Name     string            // the name(id) of account/ak/method
-	ACL      *pb.Acl           // the ACL definition of this account/method
-	Status   ValidateStatus    // the ACL validation status of this node
-	SignInfo *pb.SignatureInfo // the signature info of this node, only AK have this field
-	Children []*PermNode       // the children of this node, usually are ACL members of account/method
+	Name     string         // the name(id) of account/ak/method
+	ACL      *pb.Acl        // the ACL definition of this account/method
+	Status   ValidateStatus // the ACL validation status of this node
+	Children []*PermNode    // the children of this node, usually are ACL members of account/method
 }
 
 // NewPermNode return a default PermNode
@@ -34,7 +33,6 @@ func NewPermNode(akName string, acl *pb.Acl) *PermNode {
 		Name:     akName,
 		ACL:      acl,
 		Status:   NotVerified,
-		SignInfo: nil,
 		Children: make([]*PermNode, 0),
 	}
 }
@@ -55,14 +53,14 @@ func (pn *PermNode) FindChild(name string) *PermNode {
 }
 
 // BuildAccountPermTree build PermTree for account
-func BuildAccountPermTree(aclMgr acl.ManagerInterface, account string, aksuri []string, sign []*pb.SignatureInfo) (*PermNode, error) {
+func BuildAccountPermTree(aclMgr acl.ManagerInterface, account string, aksuri []string) (*PermNode, error) {
 	accountACL, err := utils.GetAccountACL(aclMgr, account)
 	if err != nil {
 		return nil, err
 	}
 
 	root := NewPermNode(account, accountACL)
-	root, err = buildPermTree(root, aksuri, sign, aclMgr, true)
+	root, err = buildPermTree(root, aksuri, aclMgr, true)
 	if err != nil {
 		return nil, err
 	}
@@ -70,14 +68,14 @@ func BuildAccountPermTree(aclMgr acl.ManagerInterface, account string, aksuri []
 }
 
 // BuildMethodPermTree build PermTree for contract method
-func BuildMethodPermTree(aclMgr acl.ManagerInterface, contractName string, methodName string, aksuri []string, sign []*pb.SignatureInfo) (*PermNode, error) {
+func BuildMethodPermTree(aclMgr acl.ManagerInterface, contractName string, methodName string, aksuri []string) (*PermNode, error) {
 	methodACL, err := utils.GetContractMethodACL(aclMgr, contractName, methodName)
 	if err != nil {
 		return nil, err
 	}
 
 	root := NewPermNode(methodName, methodACL)
-	root, err = buildPermTree(root, aksuri, sign, aclMgr, false)
+	root, err = buildPermTree(root, aksuri, aclMgr, false)
 	if err != nil {
 		return nil, err
 	}
@@ -85,11 +83,10 @@ func BuildMethodPermTree(aclMgr acl.ManagerInterface, contractName string, metho
 }
 
 // build perm tree, not test
-func buildPermTree(root *PermNode, aksuri []string, sign []*pb.SignatureInfo, aclMgr acl.ManagerInterface, rootIsAccount bool) (*PermNode, error) {
+func buildPermTree(root *PermNode, aksuri []string, aclMgr acl.ManagerInterface, rootIsAccount bool) (*PermNode, error) {
 	akslen := len(aksuri)
 	for i := 0; i < akslen; i++ {
 		akuri := aksuri[i]
-		signinfo := sign[i]
 
 		// split account uri into account/ak list
 		aklist := utils.SplitAccountURI(akuri)
@@ -120,8 +117,6 @@ func buildPermTree(root *PermNode, aksuri []string, sign []*pb.SignatureInfo, ac
 			pnode.Children = append(pnode.Children, newNode)
 			pnode = newNode
 		}
-		// signinfo belongs to the leaf node
-		pnode.SignInfo = signinfo
 	}
 	return root, nil
 }

@@ -36,6 +36,7 @@ enum XChainErrorEnum {
   TX_VERSION_INVALID_ERROR = 36;
   COMPLIANCE_CHECK_NOT_APPROVED = 37;
   ACCOUNT_CONTRACT_STATUS_ERROR = 38;
+  TX_VERIFICATION_ERROR = 40;
 }
 
 // TransactionStatus is the status of transaction
