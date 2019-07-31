@@ -16,7 +16,7 @@ func NewThresholdValidator() *ThresholdValidator {
 }
 
 // Validate implements the interface of ACLValidator
-func (tv *ThresholdValidator) Validate(pnode *ptree.PermNode, msg []byte) (bool, error) {
+func (tv *ThresholdValidator) Validate(pnode *ptree.PermNode) (bool, error) {
 	var weightSum float64
 
 	if pnode == nil {
