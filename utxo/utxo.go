@@ -1391,21 +1391,20 @@ func (uv *UtxoVM) PlayAndRepost(blockid []byte, needRepost bool, isRootTx bool) 
 	}
 	// 进入正题，开始执行block里面的交易，预期不会有冲突了
 	uv.xlog.Debug("autogen tx list size, before play block", "len", len(autoGenTxList))
+	// 开始串行执行本地未执行过的交易
 	idx, length := 0, len(block.Transactions)
+
+	// parallel verify
+	verifyErr := uv.verifyBlockTxs(block, isRootTx, unconfirmToConfirm)
+	if verifyErr != nil {
+		uv.xlog.Warn("verifyBlockTx error ", "err", verifyErr)
+		return verifyErr
+	}
+
 	for idx < length {
 		tx := block.Transactions[idx]
 		txid := string(tx.Txid)
 		if unconfirmToConfirm[txid] == false { // 本地没预执行过的Tx, 从block中收到的，需要Play执行
-			if !uv.verifyAutogenTx(tx) {
-				uv.xlog.Warn("PlayAndRepost found invalid autogen tx", "txid", fmt.Sprintf("%x", tx.Txid))
-				return ErrInvalidAutogenTx
-			}
-			if !tx.Autogen && !tx.Coinbase {
-				if ok, err := uv.ImmediateVerifyTx(tx, isRootTx); !ok {
-					uv.xlog.Warn("dotx failed to ImmediateVerifyTx", "txid", fmt.Sprintf("%x", tx.Txid), "err", err)
-					return errors.New("dotx failed to ImmediateVerifyTx error")
-				}
-			}
 			err := uv.doTxInternal(tx, batch)
 			if err != nil {
 				uv.xlog.Warn("dotx failed when Play", "txid", fmt.Sprintf("%x", tx.Txid), "err", err)
