@@ -754,12 +754,14 @@ func (xc *XChainCore) PostTx(in *pb.TxStatus, hd *global.XContext) (*pb.CommonRe
 			out.Header.Error = pb.XChainErrorEnum_GAS_NOT_ENOUGH_ERROR
 		case utxo.ErrRWSetInvalid, utxo.ErrInvalidTxExt:
 			out.Header.Error = pb.XChainErrorEnum_RWSET_INVALID_ERROR
-		case utxo.ErrRWAclNotEnough:
+		case utxo.ErrAclNotEnough:
 			out.Header.Error = pb.XChainErrorEnum_RWACL_INVALID_ERROR
 		case utxo.ErrVersionInvalid:
 			out.Header.Error = pb.XChainErrorEnum_TX_VERSION_INVALID_ERROR
-		default:
+		case utxo.ErrInvalidSignature:
 			out.Header.Error = pb.XChainErrorEnum_TX_SIGN_ERROR
+		default:
+			out.Header.Error = pb.XChainErrorEnum_TX_VERIFICATION_ERROR
 		}
 		xc.log.Warn("post tx verify tx error", "txid", global.F(in.Tx.Txid),
 			"valid_err", validErr, "logid", in.Header.Logid)
