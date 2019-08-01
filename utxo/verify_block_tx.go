@@ -10,6 +10,7 @@ import (
 
 func (uv *UtxoVM) verifyBlockTxs(block *pb.InternalBlock, isRootTx bool, unconfirmToConfirm map[string]bool) error {
 	var err error
+	var once sync.Once
 	txs := block.Transactions
 	wg := sync.WaitGroup{}
 	for _, tx := range txs {
@@ -17,19 +18,23 @@ func (uv *UtxoVM) verifyBlockTxs(block *pb.InternalBlock, isRootTx bool, unconfi
 			break
 		}
 		wg.Add(1)
-		go func(tx *pb.Transaction, isRootTx bool, unconfirmToConfirm map[string]bool) {
+		go func(tx *pb.Transaction) {
 			defer wg.Done()
-			verifyErr := uv.verifyTx(tx, isRootTx, unconfirmToConfirm)
-			if verifyErr != nil {
+			verifyErr := uv.verifyBlockTx(tx, isRootTx, unconfirmToConfirm)
+			onceBody := func() {
 				err = verifyErr
 			}
-		}(tx, isRootTx, unconfirmToConfirm)
+			// err 只被赋值一次
+			if verifyErr != nil {
+				once.Do(onceBody)
+			}
+		}(tx)
 	}
 	wg.Wait()
 	return err
 }
 
-func (uv *UtxoVM) verifyTx(tx *pb.Transaction, isRootTx bool, unconfirmToConfirm map[string]bool) error {
+func (uv *UtxoVM) verifyBlockTx(tx *pb.Transaction, isRootTx bool, unconfirmToConfirm map[string]bool) error {
 	if tx == nil {
 		return errors.New("verifyTx error, tx is nil")
 	}
