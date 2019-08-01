@@ -67,7 +67,6 @@ func (c *WasmInvokeCommand) invoke(ctx context.Context, codeName string) error {
 		Fee:          c.fee,
 		FrozenHeight: 0,
 		Version:      utxo.TxVersion,
-		From:         c.account,
 		ModuleName:   "wasm",
 		ContractName: codeName,
 		MethodName:   c.methodName,

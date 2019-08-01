@@ -65,7 +65,6 @@ func (c *WasmDeployCommand) deploy(ctx context.Context, codepath string) error {
 		Fee:          c.fee,
 		FrozenHeight: 0,
 		Version:      utxo.TxVersion,
-		From:         c.account,
 		ModuleName:   "xkernel",
 		ContractName: c.contractName,
 		MethodName:   "Deploy",
