@@ -1719,8 +1719,6 @@ func (uv *UtxoVM) queryTxFromForbiddenWithConfirmed(txid []byte) (bool, bool, er
 	contractNameForForbidden := forbiddenContract[0].ContractName
 	methodNameForForbidden := forbiddenContract[0].MethodName
 
-	uv.xlog.Warn("xxxxxxxxxxxx forbiddenContract->", forbiddenContract)
-
 	request := &pb.InvokeRequest{
 		ModuleName:   moduleNameForForbidden,
 		ContractName: contractNameForForbidden,
