@@ -36,6 +36,7 @@ type RootConfig struct {
 	Decimals          string                 `json:"decimals"`
 	GenesisConsensus  map[string]interface{} `json:"genesis_consensus"`
 	ReservedContracts []InvokeRequest        `json:"reserved_contracts"`
+	ForbiddenContract []InvokeRequest        `json:"forbidden_contract"`
 }
 
 // InvokeRequest define genesis reserved_contracts configure
