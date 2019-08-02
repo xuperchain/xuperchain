@@ -1710,6 +1710,10 @@ func (uv *UtxoVM) queryAccountContainAK(address string) ([]string, error) {
 }
 
 func (uv *UtxoVM) queryTxFromForbiddenWithConfirmed(txid []byte) (bool, bool, error) {
+	// 如果配置文件配置了监管合约，那么继续下面的执行。否则，直接返回.
+	if len(uv.ledger.GenesisBlock.GetConfig().ReservedContracts) <= 0 {
+		return false, false, errors.New("no need to forbidden any transaction because of a common blockchain system")
+	}
 	request := &pb.InvokeRequest{
 		ModuleName:   "wasm",
 		ContractName: "forbidden",
