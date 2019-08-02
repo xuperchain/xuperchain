@@ -70,6 +70,7 @@ func (c *WasmDeployCommand) deploy(ctx context.Context, codepath string) error {
 		MethodName:   "Deploy",
 		Args:         make(map[string][]byte),
 		MultiAddrs:   c.multiAddrs,
+		From:         c.account,
 		Output:       c.output,
 		IsQuick:      c.isMulti,
 		ChainName:    c.cli.RootOptions.Name,

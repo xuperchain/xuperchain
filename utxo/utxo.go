@@ -70,7 +70,6 @@ var (
 	ErrInvalidSignature        = errors.New("the signature is invalid or not match the address")
 	ErrInitiatorType           = errors.New("the initiator type is invalid, need AK")
 
-
 	ErrGasNotEnough   = errors.New("Gas not enough")
 	ErrInvalidAccount = errors.New("Invalid account")
 	ErrVersionInvalid = errors.New("Invalid tx version")

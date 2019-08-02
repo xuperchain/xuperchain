@@ -67,6 +67,7 @@ func (c *WasmInvokeCommand) invoke(ctx context.Context, codeName string) error {
 		Fee:          c.fee,
 		FrozenHeight: 0,
 		Version:      utxo.TxVersion,
+		From:         c.account,
 		ModuleName:   "wasm",
 		ContractName: codeName,
 		MethodName:   c.methodName,
@@ -74,7 +75,6 @@ func (c *WasmInvokeCommand) invoke(ctx context.Context, codeName string) error {
 		MultiAddrs:   c.multiAddrs,
 		IsQuick:      c.isMulti,
 		Output:       c.output,
-
 		ChainName:    c.cli.RootOptions.Name,
 		Keys:         c.cli.RootOptions.Keys,
 		XchainClient: c.cli.XchainClient(),
