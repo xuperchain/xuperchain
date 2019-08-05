@@ -90,14 +90,15 @@ DEFINE_METHOD(Identity, verify) {
     for ( int iter = 0; iter < auth_require_size; ++iter) {
         std::string auth_require = ctx->auth_require(iter);
         std::string ak;
+        std::string auth_value;
         std::size_t found = auth_require.rfind(sub_str);
         if (found != std::string::npos) {
             ak = auth_require.substr(found + 1, std::string::npos);
         } else {
             ak = auth_require;
         }
-        ctx->get_object(ak, &value);
-        if (value != "true") {
+        ctx->get_object(ak, &auth_value);
+        if (auth_value != "true") {
             ctx->error("verify auth_require error");
             return;
         }
