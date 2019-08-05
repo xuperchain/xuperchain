@@ -317,7 +317,6 @@ func (tp *TDpos) validateNominateCandidate(desc *contract.TxDesc) (*CandidateInf
 			return nil, "", errors.New("validateNominateCandidate neturl should be string")
 		}
 	}
-
 	return canInfo, fromAddr, nil
 }
 
