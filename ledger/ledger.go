@@ -197,8 +197,8 @@ func (l *Ledger) loadGenesisBlock() error {
 	if l.meta.MaxBlockSize == 0 {
 		l.meta.MaxBlockSize = l.GenesisBlock.GetConfig().GetMaxBlockSizeInByte()
 	}
-	if l.meta.ReserveredContracts == nil {
-		l.meta.ReserveredContracts, _ = l.GenesisBlock.GetConfig().GetReservedContract()
+	if l.meta.ReservedContracts == nil {
+		l.meta.ReservedContracts, _ = l.GenesisBlock.GetConfig().GetReservedContract()
 	}
 	return nil
 }
@@ -484,7 +484,7 @@ func (l *Ledger) UpdateMaxBlockSize(maxBlockSize int64) error {
 }
 
 // UpdateReserveredContract update reservered contract
-func (l *Ledger) UpdateReserveredContract(params []*pb.InvokeRequest) error {
+func (l *Ledger) UpdateReservedContract(params []*pb.InvokeRequest) error {
 	if params == nil {
 		return fmt.Errorf("invalid reservered contract requests")
 	}
@@ -493,7 +493,7 @@ func (l *Ledger) UpdateReserveredContract(params []*pb.InvokeRequest) error {
 	defer l.mutex.Unlock()
 
 	newMeta := proto.Clone(l.meta).(*pb.LedgerMeta)
-	newMeta.ReserveredContracts = params
+	newMeta.ReservedContracts = params
 
 	metaBuf, pbErr := proto.Marshal(newMeta)
 	if pbErr != nil {
