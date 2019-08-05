@@ -91,7 +91,6 @@ func (uv *UtxoVM) verifyReservedWhitelist(tx *pb.Transaction) bool {
 			return false
 		}
 	}
-	uv.xlog.Info("verifyReservedWhitelist true")
 	return true
 }
 

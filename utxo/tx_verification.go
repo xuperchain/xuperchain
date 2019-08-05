@@ -371,8 +371,6 @@ func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
 		return false, err
 	}
 
-	uv.xlog.Trace("verifyReservedWhitelist false")
-
 	if !uv.verifyReservedContractRequests(reservedRequests, req) {
 		uv.xlog.Error("verifyReservedContractRequests error", "reservedRequests", reservedRequests, "req", req)
 		return false, fmt.Errorf("verify reservedContracts error")
