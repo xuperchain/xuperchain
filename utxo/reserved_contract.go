@@ -23,7 +23,79 @@ func genArgs(req []*pb.InvokeRequest) *reservedArgs {
 	return ra
 }
 
-func verifyReservedContractRequests(reservedReqs, txReqs []*pb.InvokeRequest) bool {
+// It will check whether the transaction in reserved whitelist
+// if the config of chain contains reserved contracts
+// but the transaction does not contains reserved requests.
+func (uv *UtxoVM) verifyReservedWhitelist(tx *pb.Transaction) bool {
+	// verify reservedContracts len
+	reservedContracts, err := uv.ledger.GenesisBlock.GetConfig().GetReservedContract()
+	if len(reservedContracts) == 0 {
+		uv.xlog.Info("verifyReservedWhitelist false reservedReqs is nil")
+		return false
+	}
+
+	// get white list account
+	accountName := uv.ledger.GetGenesisBlock().GetConfig().GetReservedWhitelistAccount()
+	uv.xlog.Trace("verifyReservedWhitelist", "accountName", accountName)
+	if accountName == "" {
+		uv.xlog.Info("verifyReservedWhitelist false, the chain does not have reserved whitelist", "accountName", accountName)
+		return false
+	}
+	acl, isConfirmed, err := uv.aclMgr.GetAccountACLWithConfirmed(accountName)
+	if err != nil || acl == nil || !isConfirmed {
+		uv.xlog.Info("verifyReservedWhitelist false, get reserved whitelist acl failed",
+			"err", err, "acl", acl, "isConfirmed", isConfirmed)
+		return false
+	}
+
+	// verify storage
+	if tx.GetDesc() != nil ||
+		tx.GetContractRequests() != nil ||
+		tx.GetTxInputsExt() != nil ||
+		tx.GetTxOutputsExt() != nil {
+		uv.xlog.Info("verifyReservedWhitelist false the storage info should be nil")
+		return false
+	}
+
+	// verify utxo input
+	if len(tx.GetTxInputs()) == 0 && len(tx.GetTxOutputs()) == 0 {
+		uv.xlog.Info("verifyReservedWhitelist true the utxo list is nil")
+		return true
+	}
+	fromAddr := string(tx.GetTxInputs()[0].GetFromAddr())
+	for _, v := range tx.GetTxInputs() {
+		if string(v.GetFromAddr()) != fromAddr {
+			uv.xlog.Info("verifyReservedWhitelist false fromAddr should no more than one")
+			return false
+		}
+		fromAddr = string(v.GetFromAddr())
+	}
+
+	// verify utxo output
+	toAddrs := make(map[string]bool)
+	for _, v := range tx.GetTxOutputs() {
+		if bytes.Equal(v.GetToAddr(), []byte(FeePlaceholder)) {
+			continue
+		}
+		toAddrs[string(v.GetToAddr())] = true
+		if len(toAddrs) > 2 {
+			uv.xlog.Info("verifyReservedWhitelist false toAddrs should no more than two")
+			return false
+		}
+	}
+
+	// verify utxo output whitelist
+	for k := range toAddrs {
+		if acl.GetAksWeight()[k] <= 0 {
+			uv.xlog.Info("verifyReservedWhitelist false the weight of toAddr should be more than 0")
+			return false
+		}
+	}
+	uv.xlog.Info("verifyReservedWhitelist true")
+	return true
+}
+
+func (uv *UtxoVM) verifyReservedContractRequests(reservedReqs, txReqs []*pb.InvokeRequest) bool {
 	if len(reservedReqs) > len(txReqs) {
 		return false
 	}

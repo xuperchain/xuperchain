@@ -359,6 +359,11 @@ func getGasLimitFromTx(tx *pb.Transaction) (int64, error) {
 
 // verifyTxRWSets verify tx read sets and write sets
 func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
+	if uv.verifyReservedWhitelist(tx) {
+		uv.xlog.Info("verifyReservedWhitelist true", "txid", fmt.Sprintf("%x", tx.GetTxid()))
+		return true, nil
+	}
+
 	req := tx.GetContractRequests()
 	reservedRequests, err := uv.getReservedContractRequests(tx.GetContractRequests(), false)
 	if err != nil {
@@ -366,7 +371,9 @@ func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
 		return false, err
 	}
 
-	if !verifyReservedContractRequests(reservedRequests, req) {
+	uv.xlog.Trace("verifyReservedWhitelist false")
+
+	if !uv.verifyReservedContractRequests(reservedRequests, req) {
 		uv.xlog.Error("verifyReservedContractRequests error", "reservedRequests", reservedRequests, "req", req)
 		return false, fmt.Errorf("verify reservedContracts error")
 	}
