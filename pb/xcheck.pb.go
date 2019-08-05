@@ -9,6 +9,8 @@ import (
 	proto "github.com/golang/protobuf/proto"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
 	math "math"
 )
 
@@ -188,6 +190,17 @@ func (c *xcheckClient) TransferCheck(ctx context.Context, in *TxStatus, opts ...
 type XcheckServer interface {
 	ComplianceCheck(context.Context, *TxStatus) (*ComplianceCheckResponse, error)
 	TransferCheck(context.Context, *TxStatus) (*TransferCheckResponse, error)
+}
+
+// UnimplementedXcheckServer can be embedded to have forward compatible implementations.
+type UnimplementedXcheckServer struct {
+}
+
+func (*UnimplementedXcheckServer) ComplianceCheck(ctx context.Context, req *TxStatus) (*ComplianceCheckResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ComplianceCheck not implemented")
+}
+func (*UnimplementedXcheckServer) TransferCheck(ctx context.Context, req *TxStatus) (*TransferCheckResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method TransferCheck not implemented")
 }
 
 func RegisterXcheckServer(s *grpc.Server, srv XcheckServer) {
