@@ -380,6 +380,8 @@ message LedgerMeta
   int64 trunk_height = 3;
   // max block size
   int64 max_block_size = 4;
+  // preset contracts
+  repeated InvokeRequest reservered_contracts = 5;
 }
 
 // Utxo metadata
