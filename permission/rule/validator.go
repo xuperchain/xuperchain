@@ -10,7 +10,7 @@ import (
 // ACLValidator interface defines common interface for ACL Validator
 // Validator only validate account/ak with 1~2 level height
 type ACLValidator interface {
-	Validate(pnode *ptree.PermNode, msg []byte) (bool, error)
+	Validate(pnode *ptree.PermNode) (bool, error)
 }
 
 // ACLValidatorFactory create ACLValidator for specified permission model

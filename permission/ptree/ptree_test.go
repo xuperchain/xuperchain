@@ -4,13 +4,11 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/xuperchain/xuperunion/pb"
 	acl_mock "github.com/xuperchain/xuperunion/permission/acl/mock"
 )
 
 func Test_AccountPTree(t *testing.T) {
 	aksuri := make([]string, 7)
-	signs := make([]*pb.SignatureInfo, 7)
 	accountName := "Alice"
 
 	aclMgr, err := acl_mock.NewFakeACLManager()
@@ -26,16 +24,9 @@ func Test_AccountPTree(t *testing.T) {
 	aksuri[4] = "Bob/ak5"
 	aksuri[5] = "Alice/Kevin/Terry/ak6"
 	aksuri[6] = "Alice/Kevin/ak7"
-	signs[0] = nil
-	signs[1] = nil
-	signs[2] = nil
-	signs[3] = nil
-	signs[4] = nil
-	signs[5] = nil
-	signs[6] = nil
 
 	// build account perm tree
-	root, err := BuildAccountPermTree(aclMgr, accountName, aksuri, signs)
+	root, err := BuildAccountPermTree(aclMgr, accountName, aksuri)
 	if err != nil {
 		t.Error("build account perm tree failed, err=", err)
 		return
@@ -58,7 +49,6 @@ func Test_AccountPTree(t *testing.T) {
 
 func Test_ContractMethodPTree(t *testing.T) {
 	aksuri := make([]string, 7)
-	signs := make([]*pb.SignatureInfo, 7)
 	contractName := "TestContract"
 	methodName := "TestMethod"
 
@@ -75,16 +65,9 @@ func Test_ContractMethodPTree(t *testing.T) {
 	aksuri[4] = "Bob/ak5"
 	aksuri[5] = "Alice/Kevin/Terry/ak6"
 	aksuri[6] = "Alice/Kevin/ak7"
-	signs[0] = nil
-	signs[1] = nil
-	signs[2] = nil
-	signs[3] = nil
-	signs[4] = nil
-	signs[5] = nil
-	signs[6] = nil
 
 	// build account perm tree
-	root, err := BuildMethodPermTree(aclMgr, contractName, methodName, aksuri, signs)
+	root, err := BuildMethodPermTree(aclMgr, contractName, methodName, aksuri)
 	if err != nil {
 		t.Error("build account perm tree failed, err=", err)
 		return

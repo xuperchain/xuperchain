@@ -25,7 +25,9 @@ const (
 	DefaultIsAuthentication = false
 	DefautltAuthTimeout     = 30
 	// limitation size for same ip
-	DefaultStreamIPLimitSize = 10
+	DefaultStreamIPLimitSize     = 10
+	DefaultMaxBroadcastPeers     = 20
+	DefaultMaxBroadcastCorePeers = 10
 )
 
 // LogConfig is the log config of node
@@ -84,6 +86,13 @@ type P2PConfig struct {
 	IsAuthentication bool `yaml:"isauthentication,omitempty"`
 	// StreamIPLimitSize set the limitation size for same ip
 	StreamIPLimitSize int64 `yaml:"streamIPLimitSize,omitempty"`
+	// MaxBroadcastPeers limit the number of common peers in a broadcast,
+	// this number do not include MaxBroadcastCorePeers.
+	MaxBroadcastPeers int `yaml:"maxBroadcastPeers,omitempty"`
+	// MaxBroadcastCorePeers limit the number of core peers in a broadcast,
+	// this only works when NodeConfig.CoreConnection is true. Note that the number
+	// of core peers is included in MaxBroadcastPeers.
+	MaxBroadcastCorePeers int `yaml:"maxBroadcastCorePeers,omitempty"`
 }
 
 // MinerConfig is the config of miner
@@ -307,7 +316,9 @@ func newP2pConfigWithDefault() P2PConfig {
 		Timeout:          DefaultTimeout,
 		IsAuthentication: DefaultIsAuthentication,
 		// default stream ip limit size
-		StreamIPLimitSize: DefaultStreamIPLimitSize,
+		StreamIPLimitSize:     DefaultStreamIPLimitSize,
+		MaxBroadcastPeers:     DefaultMaxBroadcastPeers,
+		MaxBroadcastCorePeers: DefaultMaxBroadcastCorePeers,
 	}
 }
 

@@ -13,6 +13,6 @@ func NewNullValidator() *NullValidator {
 }
 
 // Validate always return true for NullValidator
-func (nv *NullValidator) Validate(pnode *ptree.PermNode, msg []byte) (bool, error) {
+func (nv *NullValidator) Validate(pnode *ptree.PermNode) (bool, error) {
 	return true, nil
 }

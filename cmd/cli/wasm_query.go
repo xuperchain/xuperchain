@@ -21,6 +21,7 @@ type WasmQueryCommand struct {
 	methodName string
 	isMulti    bool
 	verbose    bool
+	multiAddrs string
 }
 
 // NewWasmQueryCommand new wasm query cmd
@@ -46,6 +47,7 @@ func (c *WasmQueryCommand) addFlags() {
 	c.cmd.Flags().StringVarP(&c.methodName, "method", "", "get", "contract method name")
 	c.cmd.Flags().BoolVarP(&c.isMulti, "isMulti", "m", false, "multisig scene")
 	c.cmd.Flags().BoolVarP(&c.verbose, "verbose", "v", false, "show query result verbosely")
+	c.cmd.Flags().StringVarP(&c.multiAddrs, "multiAddrs", "A", "data/acl/addrs", "multiAddrs if multisig scene")
 }
 
 func (c *WasmQueryCommand) example() string {
@@ -62,6 +64,7 @@ func (c *WasmQueryCommand) query(ctx context.Context, codeName string) error {
 		Args:         make(map[string][]byte),
 		IsQuick:      c.isMulti,
 		Keys:         c.cli.RootOptions.Keys,
+		MultiAddrs:   c.multiAddrs,
 
 		ChainName:    c.cli.RootOptions.Name,
 		XchainClient: c.cli.XchainClient(),
