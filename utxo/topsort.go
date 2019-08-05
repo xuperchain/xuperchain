@@ -16,24 +16,16 @@ type TxGraph map[string][]string
 //
 // 实现参考： https://rosettacode.org/wiki/Topological_sort#Go
 func TopSortDFS(g TxGraph) (order, cyclic []string) {
-	// 先将孤立的点给分离出来(孤立的点就是它不依赖别的节点,也不被其他节点依赖)
-	tmpSlice := map[string]bool{}
-	// 赋值一份完整的tx, 最终剩下tx的就是不依赖别人, 也不被别人依赖
-	for k, _ := range g {
-		tmpSlice[k] = true
-	}
+	// 统计每个tx的次数(包括被引用以及引用次数)
+	tmpSlice := map[string]int{}
 	for k, outputs := range g {
-		// 被依赖的tx需要删掉
-		if len(outputs) > 0 {
-			delete(tmpSlice, k)
-		}
+		tmpSlice[k]++
 		for _, m := range outputs {
-			// m已经需要引用父亲tx了，这种tx不是完全独立的
 			if g[m] == nil {
 				g[m] = []string{} //预处理一下，coinbase交易可能没有依赖
+				tmpSlice[m]++
 			}
-			// 依赖别人的tx需要被删掉
-			delete(tmpSlice, m)
+			tmpSlice[m]++
 		}
 	}
 	L := make([]string, len(g))
@@ -71,9 +63,6 @@ func TopSortDFS(g TxGraph) (order, cyclic []string) {
 		L[i] = n
 	}
 	for n := range g {
-		// 不处理不被别人依赖的tx
-		// 对于依赖别人的tx，会在处理被依赖的tx时遍历到这些tx
-		// 对于孤立tx，会在后面统一处理
 		if perm[n] || len(g[n]) <= 0 {
 			continue
 		}
@@ -82,11 +71,13 @@ func TopSortDFS(g TxGraph) (order, cyclic []string) {
 			return nil, cyclic
 		}
 	}
-	// 将之前孤立的点整合到最终的返回结果中
 	leftIdx := 0
 	for k, _ := range tmpSlice {
-		L[leftIdx] = k
-		leftIdx++
+		// 将孤立点拆出来
+		if tmpSlice[k] == 1 && len(g[k]) <= 0 {
+			L[leftIdx] = k
+			leftIdx++
+		}
 	}
 	return L, nil
 }
