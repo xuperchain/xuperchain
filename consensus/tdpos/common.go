@@ -223,11 +223,8 @@ func (tp *TDpos) validRevoke(desc *contract.TxDesc) (*contract.TxDesc, error) {
 	if desc.Args["txid"] == nil {
 		return nil, errors.New("revoke candidate txid can not be null")
 	}
-	txid := ""
-	switch desc.Args["txid"].(type) {
-	case string:
-		txid = desc.Args["txid"].(string)
-	default:
+	txid, ok := desc.Args["txid"].(string)
+	if !ok{
 		return nil, errors.New("candidates should be string")
 	}
 	hexTxid, err := hex.DecodeString(txid)
@@ -302,27 +299,21 @@ func (tp *TDpos) validateNominateCandidate(desc *contract.TxDesc) (*CandidateInf
 	if desc.Args["candidate"] == nil {
 		return nil, "", errors.New("validateNominateCandidate candidate can not be null")
 	}
-	switch desc.Args["candidate"].(type) {
-	case string:
-		candidate := desc.Args["candidate"].(string)
+	if candidate, ok := desc.Args["candidate"].(string); ok{
 		if checkCandidateName(candidate) {
 			return nil, "", errors.New("validateNominateCandidate candidate name invalid")
 		}
-		canInfo.Address = candidate
-	default:
+	}else{
 		return nil, "", errors.New("validateNominateCandidate candidates should be string")
 	}
-
 	// process candidate peerid
 	if desc.Args["neturl"] == nil {
 		tp.log.Warn("validateNominateCandidate candidate have no neturl info",
 			"address", canInfo.Address)
 	} else {
-		switch desc.Args["neturl"].(type) {
-		case string:
-			peerid := desc.Args["neturl"].(string)
+		if peerid, ok := desc.Args["neturl"].(string); ok{
 			canInfo.PeerAddr = peerid
-		default:
+		}else{
 			return nil, "", errors.New("validateNominateCandidate neturl should be string")
 		}
 	}
@@ -342,14 +333,12 @@ func (tp *TDpos) validateRevokeCandidate(desc *contract.TxDesc) (string, string,
 		return "", "", "", errors.New("validateRevokeCandidate error descNom not match")
 	}
 
-	candidate := ""
+	//candidate := ""
 	if descNom.Args["candidate"] == nil {
 		return "", "", "", errors.New("Vote candidate can not be null")
 	}
-	switch descNom.Args["candidate"].(type) {
-	case string:
-		candidate = descNom.Args["candidate"].(string)
-	default:
+	candidate, ok := descNom.Args["candidate"].(string)
+	if !ok{
 		return "", "", "", errors.New("candidates should be string")
 	}
 	fromAddr := string(descNom.Tx.TxInputs[0].FromAddr)
