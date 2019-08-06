@@ -7,7 +7,6 @@
         }
     ]
     , "maxblocksize" : "128"
-    , "period" : "3000"
     , "award" : "1000000"
     , "decimals" : "8"
     , "award_decay": {
@@ -16,6 +15,10 @@
     }, "genesis_consensus":{
        "name": "pow",
        "config": {
+			"defaultTarget": "16",
+			"adjustHeightGap": "10",
+			"expectedPeriod": "15",
+			"maxTarget": "22"
        }
     }
 }

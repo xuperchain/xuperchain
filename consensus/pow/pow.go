@@ -7,8 +7,6 @@ package main
 import (
 	"bytes"
 	"errors"
-	"io/ioutil"
-
 	log "github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperunion/common/config"
 	cons_base "github.com/xuperchain/xuperunion/consensus/base"
@@ -16,14 +14,12 @@ import (
 	"github.com/xuperchain/xuperunion/global"
 	"github.com/xuperchain/xuperunion/ledger"
 	"github.com/xuperchain/xuperunion/pb"
+	"io/ioutil"
+	"strconv"
 )
 
 // TYPE is the type of the pow consensus
 const TYPE = "pow"
-
-//TargetBits is the targetBits of pow difficulty
-// todo: 后续修改为弹性调整
-const TargetBits = 16
 
 // PowConsensus is struct of pow consensus
 type PowConsensus struct {
@@ -31,11 +27,15 @@ type PowConsensus struct {
 	address      []byte
 	config       powConfig
 	cryptoClient crypto_base.CryptoClient
+	ledger       *ledger.Ledger
 }
 
 // pow 共识机制的配置
 type powConfig struct {
-	targetBits int32
+	defaultTarget   int32
+	adjustHeightGap int32
+	expectedPeriod  int32
+	maxTarget       int32
 }
 
 // GetInstance implement plugin framework
@@ -68,6 +68,11 @@ func (pc *PowConsensus) Configure(xlog log.Logger, cfg *config.NodeConfig, consC
 		xlog.Warn(errMsg)
 		return errors.New(errMsg)
 	}
+	if extParams["ledger"] == nil {
+		errMsg := "ledger not found in extParams"
+		xlog.Warn(errMsg)
+		return errors.New(errMsg)
+	}
 
 	switch extParams["crypto_client"].(type) {
 	case crypto_base.CryptoClient:
@@ -77,9 +82,53 @@ func (pc *PowConsensus) Configure(xlog log.Logger, cfg *config.NodeConfig, consC
 		xlog.Warn(errMsg)
 		return errors.New(errMsg)
 	}
+	switch extParams["ledger"].(type) {
+	case *ledger.Ledger:
+		pc.ledger = extParams["ledger"].(*ledger.Ledger)
+	default:
+		errMsg := "invalid type of ledger"
+		xlog.Warn(errMsg)
+		return errors.New(errMsg)
+	}
 
 	pc.address = address
-	pc.config.targetBits = TargetBits
+	err = pc.buildConsConfig(xlog, consCfg)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (pc *PowConsensus) buildConsConfig(xlog log.Logger, consCfg map[string]interface{}) error {
+	for _, paraName := range []string{"expectedPeriod", "defaultTarget", "adjustHeightGap", "maxTarget"} {
+		switch consCfg[paraName].(type) {
+		case string:
+			xlog.Trace("load pow parameter", paraName, consCfg[paraName])
+		default:
+			xlog.Warn("miss parameter", "paraName", paraName)
+			return errors.New("miss:" + paraName)
+		}
+	}
+	expectedPeriod, intErr := strconv.ParseInt(consCfg["expectedPeriod"].(string), 10, 64)
+	if intErr != nil {
+		return intErr
+	}
+	defaultTarget, intErr := strconv.ParseInt(consCfg["defaultTarget"].(string), 10, 64)
+	if intErr != nil {
+		return intErr
+	}
+	adjustHeightGap, intErr := strconv.ParseInt(consCfg["adjustHeightGap"].(string), 10, 64)
+	if intErr != nil {
+		return intErr
+	}
+	maxTarget, intErr := strconv.ParseInt(consCfg["maxTarget"].(string), 10, 64)
+	if intErr != nil {
+		return intErr
+	}
+	pc.config.expectedPeriod = int32(expectedPeriod)
+	pc.config.defaultTarget = int32(defaultTarget)
+	pc.config.adjustHeightGap = int32(adjustHeightGap)
+	pc.config.maxTarget = int32(maxTarget)
 	return nil
 }
 
@@ -101,7 +150,7 @@ func (pc *PowConsensus) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock)
 	}
 
 	// 验证前导0
-	if !ledger.IsProofed(in.Blockid, pc.config.targetBits) {
+	if !ledger.IsProofed(in.Blockid, pc.calDifficulty(in.Height)) {
 		pc.log.Warn(" blockid IsProofed error")
 		return false, nil
 	}
@@ -138,7 +187,8 @@ func (pc *PowConsensus) InitCurrent(block *pb.InternalBlock) error {
 func (pc *PowConsensus) ProcessBeforeMiner(timestamp int64) (map[string]interface{}, bool) {
 	res := make(map[string]interface{})
 	res["type"] = TYPE
-	res["targetBits"] = pc.calDifficulty()
+	height := pc.ledger.GetMeta().TrunkHeight + 1
+	res["targetBits"] = pc.calDifficulty(height)
 	return res, true
 }
 
@@ -147,9 +197,39 @@ func (pc *PowConsensus) ProcessConfirmBlock(block *pb.InternalBlock) error {
 	return nil
 }
 
+func (pc *PowConsensus) getTargetBitsFromBlock(block *pb.InternalBlock) int32 {
+	return block.TargetBits
+}
+
 // todo: 后续增加难度系数动态调整
-func (pc *PowConsensus) calDifficulty() int32 {
-	return pc.config.targetBits
+func (pc *PowConsensus) calDifficulty(height int64) int32 {
+	if height <= int64(pc.config.adjustHeightGap) {
+		return pc.config.defaultTarget
+	}
+	preBlock, err := pc.ledger.QueryBlockByHeight(height - 1)
+	if err != nil {
+		pc.log.Warn("query prev block failed", "err", err, "height", height-1)
+		return pc.config.defaultTarget
+	}
+	prevTargetBits := pc.getTargetBitsFromBlock(preBlock)
+	if height%int64(pc.config.adjustHeightGap) == 0 {
+		farBlock, err := pc.ledger.QueryBlockByHeight(height - int64(pc.config.adjustHeightGap))
+		if err != nil {
+			pc.log.Warn("query far block failed", "err", err, "height", height-int64(pc.config.adjustHeightGap))
+			return pc.config.defaultTarget
+		}
+		expectedTimeSpan := pc.config.expectedPeriod * (pc.config.adjustHeightGap - 1)
+		actualTimeSpan := (preBlock.Timestamp - farBlock.Timestamp) / 1e9
+		thisTargetBits := prevTargetBits * int32(expectedTimeSpan) / int32(actualTimeSpan)
+		if thisTargetBits > pc.config.maxTarget {
+			thisTargetBits = pc.config.maxTarget
+		}
+		pc.log.Info("adjust targetBits", "height", height, "targetBits", thisTargetBits, "prevTargetBits", prevTargetBits)
+		return thisTargetBits
+	} else {
+		pc.log.Info("prev targetBits", "prevTargetBits", prevTargetBits)
+		return prevTargetBits
+	}
 }
 
 // GetCoreMiners get the information of core miners
