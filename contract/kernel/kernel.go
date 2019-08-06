@@ -298,12 +298,24 @@ func (k *Kernel) validateUpdateReservedContract(desc *contract.TxDesc) ([]*pb.In
 	}
 
 	params := []ledger.InvokeRequest{}
-	err := json.Unmarshal(desc.Args[argName].([]byte), &params)
-	if err != nil {
-		return nil, fmt.Errorf("Arguments donot follow requests format")
+	for _, arg := range desc.Args[argName].([]interface{}) {
+		param := ledger.InvokeRequest{}
+		argtype := arg.(map[string]interface{})
+		param.ModuleName = argtype["module_name"].(string)
+		param.ContractName = argtype["contract_name"].(string)
+		param.MethodName = argtype["method_name"].(string)
+		param.Args = make(map[string]string)
+		for k, v := range argtype["args"].(map[string]interface{}) {
+			fmt.Printf("miao every args: %v=%v\n", k, v.(string))
+			param.Args[k] = v.(string)
+		}
+
+		params = append(params, param)
 	}
+
 	reservedContractParams, _ := ledger.InvokeRequestFromJSON2Pb(params)
 
+	k.log.Warn("Kernel validateUpdateReservedContract success", "parms", reservedContractParams)
 	return reservedContractParams, nil
 }
 
