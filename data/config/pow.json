@@ -11,14 +11,14 @@
     , "decimals" : "8"
     , "award_decay": {
         "height_gap": 31536000,
-        "ratio": 1
+        "ratio": 0.5
     }, "genesis_consensus":{
        "name": "pow",
        "config": {
-			"defaultTarget": "16",
+			"defaultTarget": "19",
 			"adjustHeightGap": "10",
 			"expectedPeriod": "15",
-			"maxTarget": "32"
+			"maxTarget": "22"
        }
     }
 }
