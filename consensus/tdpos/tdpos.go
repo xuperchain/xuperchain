@@ -66,7 +66,6 @@ func (tp *TDpos) Configure(xlog log.Logger, cfg *config.NodeConfig, consCfg map[
 	}
 	tp.log = xlog
 	tp.address = address
-	tp.enableCoreConnection = cfg.CoreConnection
 
 	switch extParams["crypto_client"].(type) {
 	case crypto_base.CryptoClient:
@@ -215,6 +214,13 @@ func (tp *TDpos) buildConfigs(xlog log.Logger, cfg *config.NodeConfig, consCfg m
 	}
 	tp.config.blockNum = blockNum
 
+	// read config of need_neturl
+	needNetURL := false
+	if needNetURLVal, ok := consCfg["need_neturl"]; ok {
+		needNetURL = needNetURLVal.(bool)
+	}
+	tp.config.needNetURL = needNetURL
+
 	initProposer := consCfg["init_proposer"].(map[string]interface{})
 	xlog.Trace("initProposer", "initProposer", initProposer)
 
@@ -253,9 +259,9 @@ func (tp *TDpos) buildConfigs(xlog log.Logger, cfg *config.NodeConfig, consCfg m
 			tp.log.Debug("TDpos proposer info", "index", idx, "proposer", tp.config.initProposer[1][idx])
 		}
 	} else {
-		tp.log.Warn("TDpos have no neturl info for core peers",
-			"CoreConnection", tp.enableCoreConnection)
-		if tp.enableCoreConnection {
+		tp.log.Warn("TDpos have no neturl info for proposers",
+			"neet_neturl", needNetURL)
+		if needNetURL {
 			return errors.New("config error, init_proposer_neturl could not be empty")
 		}
 	}
