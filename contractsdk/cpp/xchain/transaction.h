@@ -35,7 +35,6 @@ public:
     Transaction();
     virtual ~Transaction();
     void init(const xchain::contract::sdk::Transaction& pbtx);
-    void print();
 
 public:
     std::string txid;
