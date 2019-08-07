@@ -220,11 +220,13 @@ func (pc *PowConsensus) calDifficulty(height int64) int32 {
 		}
 		expectedTimeSpan := pc.config.expectedPeriod * (pc.config.adjustHeightGap - 1)
 		actualTimeSpan := int32((preBlock.Timestamp - farBlock.Timestamp) / 1e9)
-		if actualTimeSpan < expectedTimeSpan/4 {
-			actualTimeSpan = expectedTimeSpan / 4
+		pc.log.Info("timespan diff", "expectedTimeSpan", expectedTimeSpan, "actualTimeSpan", actualTimeSpan)
+		//at most adjust two bits, left or right direction
+		if actualTimeSpan < expectedTimeSpan/2 {
+			actualTimeSpan = expectedTimeSpan / 2
 		}
-		if actualTimeSpan > expectedTimeSpan*4 {
-			actualTimeSpan = expectedTimeSpan * 4
+		if actualTimeSpan > expectedTimeSpan*2 {
+			actualTimeSpan = expectedTimeSpan * 2
 		}
 		thisTargetBits := prevTargetBits * expectedTimeSpan / actualTimeSpan
 		if thisTargetBits > pc.config.maxTarget {
