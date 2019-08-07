@@ -696,7 +696,7 @@ func (s *server) PreExec(ctx context.Context, request *pb.InvokeRPCRequest) (*pb
 	txInputs := vmResponse.GetInputs()
 	for _, txInput := range txInputs {
 		if bc.QueryTxFromForbidden(txInput.GetRefTxid()) {
-			return rsps, nil
+			return rsps, errors.New("RefTxid has been forbidden")
 		}
 	}
 	rsps.Response = vmResponse
