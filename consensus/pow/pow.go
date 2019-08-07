@@ -201,7 +201,7 @@ func (pc *PowConsensus) getTargetBitsFromBlock(block *pb.InternalBlock) int32 {
 	return block.TargetBits
 }
 
-// todo: 后续增加难度系数动态调整
+// reference of bitcoin's pow: https://github.com/bitcoin/bitcoin/blob/master/src/pow.cpp#L49
 func (pc *PowConsensus) calDifficulty(height int64) int32 {
 	if height <= int64(pc.config.adjustHeightGap) {
 		return pc.config.defaultTarget
@@ -220,6 +220,12 @@ func (pc *PowConsensus) calDifficulty(height int64) int32 {
 		}
 		expectedTimeSpan := pc.config.expectedPeriod * (pc.config.adjustHeightGap - 1)
 		actualTimeSpan := (preBlock.Timestamp - farBlock.Timestamp) / 1e9
+		if actualTimeSpan < expectedTimeSpan/4 {
+			actualTimeSpan = expectedTimeSpan / 4
+		}
+		if actualTimeSpan > expectedTimeSpan*4 {
+			actualTimeSpan = expectedTimeSpan * 4
+		}
 		thisTargetBits := prevTargetBits * int32(expectedTimeSpan) / int32(actualTimeSpan)
 		if thisTargetBits > pc.config.maxTarget {
 			thisTargetBits = pc.config.maxTarget

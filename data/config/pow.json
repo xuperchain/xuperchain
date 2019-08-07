@@ -18,7 +18,7 @@
 			"defaultTarget": "16",
 			"adjustHeightGap": "10",
 			"expectedPeriod": "15",
-			"maxTarget": "22"
+			"maxTarget": "32"
        }
     }
 }
