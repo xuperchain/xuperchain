@@ -68,7 +68,6 @@ func (uv *UtxoVM) verifyReservedWhitelist(tx *pb.Transaction) bool {
 			uv.xlog.Info("verifyReservedWhitelist false fromAddr should no more than one")
 			return false
 		}
-		fromAddr = string(v.GetFromAddr())
 	}
 
 	// verify utxo output
@@ -86,8 +85,11 @@ func (uv *UtxoVM) verifyReservedWhitelist(tx *pb.Transaction) bool {
 
 	// verify utxo output whitelist
 	for k := range toAddrs {
-		if acl.GetAksWeight()[k] <= 0 {
-			uv.xlog.Info("verifyReservedWhitelist false the weight of toAddr should be more than 0")
+		if k == fromAddr {
+			continue
+		}
+		if _, ok := acl.GetAksWeight()[k]; !ok {
+			uv.xlog.Info("verifyReservedWhitelist false the toAddr should in whitelist acl")
 			return false
 		}
 	}
