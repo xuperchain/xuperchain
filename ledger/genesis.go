@@ -39,6 +39,7 @@ type RootConfig struct {
 	ReservedWhitelist struct {
 		Account string `json:"account"`
 	} `json:"reserved_whitelist"`
+	ForbiddenContract InvokeRequest `json:"forbidden_contract"`
 }
 
 // InvokeRequest define genesis reserved_contracts configure
