@@ -66,7 +66,8 @@ var (
 	ErrInvalidWithdrawAmount   = errors.New("withdraw amount is invalid")
 	ErrServiceRefused          = errors.New("Service refused")
 	ErrRWSetInvalid            = errors.New("RWSet of transaction invalid")
-	ErrRWAclNotEnough          = errors.New("ACL not enough")
+	ErrAclNotEnough            = errors.New("ACL not enough")
+	ErrInvalidSignature        = errors.New("the signature is invalid or not match the address")
 
 	ErrGasNotEnough   = errors.New("Gas not enough")
 	ErrInvalidAccount = errors.New("Invalid account")
@@ -1172,64 +1173,6 @@ func (uv *UtxoVM) VerifyTx(tx *pb.Transaction) (bool, error) {
 	return isValid, err
 }
 
-// ImmediateVerifyTx verify tx Immediately
-func (uv *UtxoVM) ImmediateVerifyTx(tx *pb.Transaction, isRootTx bool) (bool, error) {
-	if !isRootTx && tx.Version == RootTxVersion {
-		return false, ErrVersionInvalid
-	}
-	if tx.Version > BetaTxVersion {
-		return false, ErrVersionInvalid
-	}
-	// autogen tx should not run ImmediateVerifyTx, this could be a fake tx
-	if tx.Autogen {
-		return false, ErrInvalidAutogenTx
-	}
-	if proto.Size(tx) > uv.ledger.MaxTxSizePerBlock() {
-		uv.xlog.Warn("tx too large, should not be greater than half of max blocksize", "size", proto.Size(tx))
-		return false, ErrTxTooLarge
-	}
-	if tx.Version >= TxVersion {
-		// verify rwset
-		ok, err := uv.verifyTxRWSets(tx)
-		if err != nil && strings.HasPrefix(err.Error(), "Gas not enough") {
-			err = ErrGasNotEnough
-		} else {
-			err = ErrRWSetInvalid
-		}
-		if !ok {
-			return ok, err
-		}
-
-		//verify txid (由于老版本txid生成不稳定，因此只对新版本校验txid)
-		txid, err := txhash.MakeTransactionID(tx)
-		if err != nil {
-			uv.xlog.Warn("ImmediateVerifyTx: call MakeTransactionID failed", "error", err)
-			return false, err
-		}
-		if bytes.Compare(tx.Txid, txid) != 0 {
-			uv.xlog.Warn("ImmediateVerifyTx: txid not match", "tx.Txid", tx.Txid, "txid", txid)
-			return false, fmt.Errorf("Txid verify failed")
-		}
-
-		// verify contract method acl permission
-		ok, err = uv.verifyContractValid(tx)
-		if !ok {
-			return ok, err
-		}
-
-		// verify RWSet acl permission
-		ok, err = uv.verifyRWACLValid(tx)
-		if !ok {
-			err = ErrRWAclNotEnough
-			return ok, err
-		}
-
-		// veify initiator and tx input signatures
-		return uv.verifyTxUtxo(tx)
-	}
-	return true, nil
-}
-
 // verifyTxSign 纯密码学验证
 func (uv *UtxoVM) verifyTxSign(tx *pb.Transaction) (bool, error) {
 	if len(tx.GetAuthRequire()) != len(tx.GetAuthRequireSigns()) {
@@ -1248,210 +1191,6 @@ func (uv *UtxoVM) verifyTxSign(tx *pb.Transaction) (bool, error) {
 			return false, errors.New("utxo.verifyTxSign error")
 		}
 		verifiedAddrs[ak] = true
-	}
-	return true, nil
-}
-
-func (uv *UtxoVM) verifyAkURIPermission(name string, aksuri []string, signs []*pb.SignatureInfo, data []byte) (bool, error) {
-	akType := acl.IsAccount(name)
-	if akType == 1 {
-		// Identify account
-		acl, err := uv.queryAccountACL(name)
-		if err != nil || acl == nil {
-			// valid account should have ACL info, so this account might not exsit
-			uv.xlog.Warn("verifyAkURIPermission error, account might not exist", "account", name, "error", err)
-			return false, ErrInvalidAccount
-		}
-		if ok, err := pm.IdentifyAccount(string(name), aksuri, signs, data, uv.aclMgr); !ok {
-			uv.xlog.Warn("verifyAkURIPermission error, failed to IdentifyAccount", "error", err)
-			return false, errors.New("verifyTxUtxo veify account error")
-		}
-	} else if akType == 0 {
-		// Identify address
-		index, err := getAkIndex(name, aksuri)
-		if err != nil {
-			return false, errors.New("verifyTxUtxo veify address signinfo error")
-		}
-		if ok, err := pm.IdentifyAK(name, signs[index], data); !ok {
-			uv.xlog.Warn("verifyAkURIPermission error, failed to IdentifyAK", "error", err)
-			return false, errors.New("verifyTxUtxo veify address utxo error")
-		}
-	} else {
-		uv.xlog.Warn("verifyAkURIPermission error, Invalid account/address name", "name", name)
-		return false, ErrInvalidAccount
-	}
-	return true, nil
-}
-
-func (uv *UtxoVM) verifyInitiator(tx *pb.Transaction, digestHash []byte) (bool, error) {
-	aksuri := make([]string, 0)
-	name := tx.Initiator
-	nameType := acl.IsAccount(name)
-	if nameType < 0 {
-		return false, fmt.Errorf("Invalid account/address name, name=%s", string(name))
-	}
-	for _, signInfo := range tx.InitiatorSigns {
-		pk, err := uv.cryptoClient.GetEcdsaPublicKeyFromJSON([]byte(signInfo.PublicKey))
-		if err != nil {
-			return false, err
-		}
-		address, err := uv.cryptoClient.GetAddressFromPublicKey(pk)
-		if err != nil {
-			return false, err
-		}
-		if nameType == 1 {
-			address = name + "/" + address
-		}
-		aksuri = append(aksuri, address)
-	}
-	result, err := uv.verifyAkURIPermission(name, aksuri, tx.InitiatorSigns, digestHash)
-	if err != nil || !result {
-		uv.xlog.Warn("verifyAkURIPermission failed", "addr", name,
-			"InitiatorUri", aksuri, "InitiatorSigns", tx.InitiatorSigns, "error", err)
-	}
-	return result, err
-}
-
-func (uv *UtxoVM) verifyTxUtxo(tx *pb.Transaction) (bool, error) {
-	if len(tx.GetAuthRequire()) != len(tx.GetAuthRequireSigns()) {
-		return false, fmt.Errorf("tx.AuthRequire length not equal to tx.AuthRequireSigns")
-	}
-	digestHash, dhErr := txhash.MakeTxDigestHash(tx)
-	if dhErr != nil {
-		return false, dhErr
-	}
-	verifiedAddrs := map[string]bool{}
-	// verify initiator signatures
-	isValid, err := uv.verifyInitiator(tx, digestHash)
-	if err != nil || !isValid {
-		return false, err
-	}
-	verifiedAddrs[string(tx.Initiator)] = true
-	// verify tx input signatures
-	for _, txInput := range tx.TxInputs {
-		if verifiedAddrs[string(txInput.FromAddr)] {
-			continue
-		}
-		ok, err := uv.verifyAkURIPermission(string(txInput.FromAddr), tx.AuthRequire, tx.AuthRequireSigns, digestHash)
-		if err != nil || !ok {
-			uv.xlog.Warn("verifyAkURIPermission failed", "addr", txInput.FromAddr,
-				"AuthRequied", tx.AuthRequire, "AuthSigns", tx.AuthRequireSigns)
-			return false, err
-		}
-		verifiedAddrs[string(txInput.FromAddr)] = true
-	}
-	return true, nil
-}
-
-func getAkIndex(ak string, aksuri []string) (int, error) {
-	for i, v := range aksuri {
-		if ak == v {
-			return i, nil
-		}
-	}
-	return 0, fmt.Errorf("getAkIndex error not found")
-}
-
-func getGasLimitFromTx(tx *pb.Transaction) (int64, error) {
-	for _, output := range tx.GetTxOutputs() {
-		if string(output.GetToAddr()) != "$" {
-			continue
-		}
-		gasLimit := big.NewInt(0).SetBytes(output.GetAmount()).Int64()
-		// FIXME: gasLimit从大数过来的，处理溢出问题
-		if gasLimit <= 0 {
-			return 0, fmt.Errorf("bad gas limit %d", gasLimit)
-		}
-		return gasLimit, nil
-	}
-	// FIXME: 没有小费的tx如何得到gas limit?
-	return 0, nil
-}
-
-// verifyTxRWSets verify tx read sets and write sets
-func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
-	req := tx.GetContractRequests()
-	reservedRequests, err := uv.getReservedContractRequests(tx.GetContractRequests(), false)
-	if err != nil {
-		uv.xlog.Error("getReservedContractRequests error", "error", err.Error())
-		return false, err
-	}
-
-	if !verifyReservedContractRequests(reservedRequests, req) {
-		uv.xlog.Error("verifyReservedContractRequests error", "reservedRequests", reservedRequests, "req", req)
-		return false, fmt.Errorf("verify reservedContracts error")
-	}
-
-	if req == nil {
-		if tx.GetTxInputsExt() != nil || tx.GetTxOutputsExt() != nil {
-			uv.xlog.Error("verifyTxRWSets error", "error", ErrInvalidTxExt.Error())
-			return false, ErrInvalidTxExt
-		}
-		return true, nil
-	}
-
-	env, err := uv.model3.PrepareEnv(tx)
-	if err != nil {
-		return false, err
-	}
-	contextConfig := &contract.ContextConfig{
-		XMCache:      env.GetModelCache(),
-		Initiator:    tx.GetInitiator(),
-		AuthRequire:  tx.GetAuthRequire(),
-		ContractName: "",
-	}
-	gasLimit, err := getGasLimitFromTx(tx)
-	if err != nil {
-		return false, err
-	}
-	uv.xlog.Trace("get gas limit from tx", "gasLimit", gasLimit, "txid", hex.EncodeToString(tx.Txid))
-
-	for i, tmpReq := range tx.GetContractRequests() {
-		moduleName := tmpReq.GetModuleName()
-		vm, err := uv.vmMgr3.GetVM(moduleName)
-		if err != nil {
-			return false, err
-		}
-
-		limits := contract.FromPbLimits(tmpReq.GetResourceLimits())
-		if i >= len(reservedRequests) {
-			gasLimit -= limits.TotalGas()
-		}
-		if gasLimit < 0 {
-			uv.xlog.Error("virifyTxRWSets error:out of gas", "contractName", tmpReq.GetContractName(),
-				"txid", hex.EncodeToString(tx.Txid))
-			return false, errors.New("out of gas")
-		}
-		contextConfig.ResourceLimits = limits
-		contextConfig.ContractName = tmpReq.GetContractName()
-		ctx, err := vm.NewContext(contextConfig)
-		if err != nil {
-			// FIXME zq @icexin: need to return contract not found
-			uv.xlog.Error("verifyTxRWSets NewContext error", "err", err, "contractName", tmpReq.GetContractName())
-			if i < len(reservedRequests) && (err.Error() == "leveldb: not found" || strings.HasSuffix(err.Error(), "not found")) {
-				continue
-			}
-			return false, err
-		}
-
-		_, err = ctx.Invoke(tmpReq.MethodName, tmpReq.Args)
-		if err != nil {
-			ctx.Release()
-			uv.xlog.Error("verifyTxRWSets Invoke error", "error", err, "contractName", tmpReq.GetContractName())
-			return false, err
-		}
-
-		ctx.Release()
-	}
-
-	_, writeSet, err := env.GetModelCache().GetRWSets()
-	if err != nil {
-		return false, err
-	}
-	uv.xlog.Trace("verifyTxRWSets", "env.output", env.GetOutputs(), "writeSet", writeSet)
-	ok := xmodel.Equal(env.GetOutputs(), writeSet)
-	if !ok {
-		return false, fmt.Errorf("Verify error")
 	}
 	return true, nil
 }
@@ -1971,10 +1710,18 @@ func (uv *UtxoVM) queryAccountContainAK(address string) ([]string, error) {
 }
 
 func (uv *UtxoVM) queryTxFromForbiddenWithConfirmed(txid []byte) (bool, bool, error) {
+	// 如果配置文件配置了封禁tx监管合约，那么继续下面的执行。否则，直接返回.
+	forbiddenContract := uv.ledger.GenesisBlock.GetConfig().ForbiddenContract
+
+	// 这里不针对ModuleName/ContractName/MethodName做特殊化处理
+	moduleNameForForbidden := forbiddenContract.ModuleName
+	contractNameForForbidden := forbiddenContract.ContractName
+	methodNameForForbidden := forbiddenContract.MethodName
+
 	request := &pb.InvokeRequest{
-		ModuleName:   "wasm",
-		ContractName: "forbidden",
-		MethodName:   "get",
+		ModuleName:   moduleNameForForbidden,
+		ContractName: contractNameForForbidden,
+		MethodName:   methodNameForForbidden,
 		Args: map[string][]byte{
 			"txid": []byte(fmt.Sprintf("%x", txid)),
 		},
