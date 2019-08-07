@@ -15,6 +15,7 @@ import (
 	"github.com/xuperchain/xuperunion/ledger"
 	"github.com/xuperchain/xuperunion/pb"
 	"io/ioutil"
+	"math/big"
 	"strconv"
 )
 
@@ -222,18 +223,23 @@ func (pc *PowConsensus) calDifficulty(height int64) int32 {
 		actualTimeSpan := int32((preBlock.Timestamp - farBlock.Timestamp) / 1e9)
 		pc.log.Info("timespan diff", "expectedTimeSpan", expectedTimeSpan, "actualTimeSpan", actualTimeSpan)
 		//at most adjust two bits, left or right direction
-		if actualTimeSpan < expectedTimeSpan/2 {
-			actualTimeSpan = expectedTimeSpan / 2
+		if actualTimeSpan < expectedTimeSpan/4 {
+			actualTimeSpan = expectedTimeSpan / 4
 		}
-		if actualTimeSpan > expectedTimeSpan*2 {
-			actualTimeSpan = expectedTimeSpan * 2
+		if actualTimeSpan > expectedTimeSpan*4 {
+			actualTimeSpan = expectedTimeSpan * 4
 		}
-		thisTargetBits := prevTargetBits * expectedTimeSpan / actualTimeSpan
-		if thisTargetBits > pc.config.maxTarget {
-			thisTargetBits = pc.config.maxTarget
+		difficulty := big.NewInt(1)
+		difficulty.Lsh(difficulty, uint(prevTargetBits))
+		difficulty.Mul(difficulty, big.NewInt(int64(expectedTimeSpan)))
+		difficulty.Div(difficulty, big.NewInt(int64(actualTimeSpan)))
+		newTargetBits := int32(difficulty.BitLen() - 1)
+		if newTargetBits > pc.config.maxTarget {
+			pc.log.Info("retarget", "newTargetBits", newTargetBits)
+			newTargetBits = pc.config.maxTarget
 		}
-		pc.log.Info("adjust targetBits", "height", height, "targetBits", thisTargetBits, "prevTargetBits", prevTargetBits)
-		return thisTargetBits
+		pc.log.Info("adjust targetBits", "height", height, "targetBits", newTargetBits, "prevTargetBits", prevTargetBits)
+		return newTargetBits
 	} else {
 		pc.log.Info("prev targetBits", "prevTargetBits", prevTargetBits)
 		return prevTargetBits
