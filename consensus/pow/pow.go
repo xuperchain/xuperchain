@@ -150,8 +150,22 @@ func (pc *PowConsensus) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock)
 		return false, nil
 	}
 
+	targetBits := pc.calDifficulty(in.Height)
+	if targetBits != in.TargetBits {
+		pc.log.Warn("unexpected target bits", "expect", targetBits, "got", in.TargetBits)
+		return false, nil
+	}
+	preBlock, err := pc.ledger.QueryBlock(in.PreHash)
+	if err != nil {
+		pc.log.Warn("CheckMinerMatch failed, get preblock error")
+		return false, nil
+	}
+	if in.Timestamp < preBlock.Timestamp {
+		pc.log.Warn("unexpected block timestamp", "pre", preBlock.Timestamp, "next", in.Timestamp)
+		return false, nil
+	}
 	// 验证前导0
-	if !ledger.IsProofed(in.Blockid, pc.calDifficulty(in.Height)) {
+	if !ledger.IsProofed(in.Blockid, targetBits) {
 		pc.log.Warn(" blockid IsProofed error")
 		return false, nil
 	}
