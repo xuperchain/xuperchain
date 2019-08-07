@@ -106,23 +106,23 @@ func (pc *PowConsensus) buildConsConfig(xlog log.Logger, consCfg map[string]inte
 		case string:
 			xlog.Trace("load pow parameter", paraName, consCfg[paraName])
 		default:
-			xlog.Warn("miss parameter", "paraName", paraName)
+			xlog.Warn("miss parameter or type is not string formated int", "paraName", paraName)
 			return errors.New("miss:" + paraName)
 		}
 	}
-	expectedPeriod, intErr := strconv.ParseInt(consCfg["expectedPeriod"].(string), 10, 64)
+	expectedPeriod, intErr := strconv.ParseUint(consCfg["expectedPeriod"].(string), 10, 64)
 	if intErr != nil {
 		return intErr
 	}
-	defaultTarget, intErr := strconv.ParseInt(consCfg["defaultTarget"].(string), 10, 64)
+	defaultTarget, intErr := strconv.ParseUint(consCfg["defaultTarget"].(string), 10, 64)
 	if intErr != nil {
 		return intErr
 	}
-	adjustHeightGap, intErr := strconv.ParseInt(consCfg["adjustHeightGap"].(string), 10, 64)
+	adjustHeightGap, intErr := strconv.ParseUint(consCfg["adjustHeightGap"].(string), 10, 64)
 	if intErr != nil {
 		return intErr
 	}
-	maxTarget, intErr := strconv.ParseInt(consCfg["maxTarget"].(string), 10, 64)
+	maxTarget, intErr := strconv.ParseUint(consCfg["maxTarget"].(string), 10, 64)
 	if intErr != nil {
 		return intErr
 	}
