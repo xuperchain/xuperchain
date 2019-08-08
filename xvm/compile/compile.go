@@ -82,7 +82,6 @@ func CompileNativeLibrary(cfg *Config, target, source string) error {
 
 	stderr := new(bytes.Buffer)
 	cmd := exec.Command("cc", "-shared", "-fPIC",
-		"-g",
 		"-std=c99",
 		"-O"+strconv.Itoa(cfg.OptLevel),
 		"-o"+target,
