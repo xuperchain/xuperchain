@@ -426,6 +426,7 @@ message InternalBlock
   int64 curTerm = 16;
   int64 curBlockNum = 17;
   map<string, string> failed_txs = 18;  //txid -> failed reason
+  int32 targetBits = 19;
   
   //下面的属性会动态变化
   // If the block is on the trunk

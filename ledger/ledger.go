@@ -273,6 +273,7 @@ func (l *Ledger) formatBlock(txList []*pb.Transaction,
 	block.Proposer = proposer
 	block.CurTerm = curTerm
 	block.CurBlockNum = curBlockNum
+	block.TargetBits = targetBits
 	jsPk, pkErr := l.cryptoClient.GetEcdsaPublicKeyJSONFormat(ecdsaPk)
 	if pkErr != nil {
 		return nil, pkErr
@@ -307,7 +308,7 @@ func (l *Ledger) formatBlock(txList []*pb.Transaction,
 			gussNonce++
 			block.Nonce = gussNonce
 			block.Blockid, err = MakeBlockID(block)
-			l.xlog.Trace("Try to MakeBlockID", "blockid", fmt.Sprintf("%x", block.Blockid))
+			//l.xlog.Trace("Try to MakeBlockID", "blockid", fmt.Sprintf("%x", block.Blockid))
 			if err != nil {
 				return nil, err
 			}
