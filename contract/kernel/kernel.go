@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"math/big"
 	"os"
+	"reflect"
 	"sync"
 
 	log "github.com/xuperchain/log15"
@@ -291,26 +292,27 @@ func (k *Kernel) validateUpdateMaxBlockSize(desc *contract.TxDesc) error {
 	return nil
 }
 
-func (k *Kernel) validateUpdateReservedContract(desc *contract.TxDesc) ([]*pb.InvokeRequest, error) {
-	argName := "reserved_contracts"
-	if desc.Args[argName] == nil {
-		return nil, fmt.Errorf("miss argument in contact: %s", argName)
-	}
-
+func (k *Kernel) validateUpdateReservedContract(desc *contract.TxDesc, name string) ([]*pb.InvokeRequest, error) {
 	params := []ledger.InvokeRequest{}
-	for _, arg := range desc.Args[argName].([]interface{}) {
-		param := ledger.InvokeRequest{}
-		argtype := arg.(map[string]interface{})
-		param.ModuleName = argtype["module_name"].(string)
-		param.ContractName = argtype["contract_name"].(string)
-		param.MethodName = argtype["method_name"].(string)
-		param.Args = make(map[string]string)
-		for k, v := range argtype["args"].(map[string]interface{}) {
-			fmt.Printf("miao every args: %v=%v\n", k, v.(string))
-			param.Args[k] = v.(string)
+	for _, argName := range []string{"old_reserved_contracts", "reserved_contracts"} {
+		if desc.Args[argName] == nil {
+			return nil, fmt.Errorf("miss argument in contact: %s", argName)
 		}
 
-		params = append(params, param)
+		for _, arg := range desc.Args[name].([]interface{}) {
+			param := ledger.InvokeRequest{}
+			argtype := arg.(map[string]interface{})
+			param.ModuleName = argtype["module_name"].(string)
+			param.ContractName = argtype["contract_name"].(string)
+			param.MethodName = argtype["method_name"].(string)
+			param.Args = make(map[string]string)
+			for k, v := range argtype["args"].(map[string]interface{}) {
+				fmt.Printf("miao every args: %v=%v\n", k, v.(string))
+				param.Args[k] = v.(string)
+			}
+
+			params = append(params, param)
+		}
 	}
 
 	reservedContractParams, _ := ledger.InvokeRequestFromJSON2Pb(params)
@@ -434,12 +436,27 @@ func (k *Kernel) runUpdateReservedContract(desc *contract.TxDesc) error {
 	if k.context == nil || k.context.LedgerObj == nil {
 		return fmt.Errorf("failed to update reservered contract, because no ledger object in context")
 	}
-	params, vErr := k.validateUpdateReservedContract(desc)
+
+	oldParams, vErr := k.validateUpdateReservedContract(desc, "old_reserved_contracts")
+	if vErr != nil {
+		return vErr
+	}
+
+	originalReservedContracts, err := k.context.LedgerObj.GenesisBlock.GetConfig().GetReservedContract()
+	if err != nil {
+		return err
+	}
+
+	if !reflect.DeepEqual(oldParams, originalReservedContracts) {
+		return fmt.Errorf("old_reserved_contracts values are not equal to the current node")
+	}
+
+	params, vErr := k.validateUpdateReservedContract(desc, "reserved_contracts")
 	if vErr != nil {
 		return vErr
 	}
 	k.log.Info("update reservered contract")
-	err := k.context.LedgerObj.UpdateReservedContract(params)
+	err = k.context.LedgerObj.UpdateReservedContract(params)
 	return err
 }
 
@@ -447,7 +464,7 @@ func (k *Kernel) rollbackUpdateReservedContract(desc *contract.TxDesc) error {
 	if k.context == nil || k.context.LedgerObj == nil {
 		return fmt.Errorf("failed to update reservered contract, because no ledger object in context")
 	}
-	params, vErr := k.validateUpdateReservedContract(desc)
+	params, vErr := k.validateUpdateReservedContract(desc, "old_reserved_contracts")
 	if vErr != nil {
 		return vErr
 	}
