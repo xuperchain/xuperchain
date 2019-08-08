@@ -299,19 +299,20 @@ func (k *Kernel) validateUpdateReservedContract(desc *contract.TxDesc, name stri
 			return nil, fmt.Errorf("miss argument in contact: %s", argName)
 		}
 
-		for _, arg := range desc.Args[name].([]interface{}) {
-			param := ledger.InvokeRequest{}
-			argtype := arg.(map[string]interface{})
-			param.ModuleName = argtype["module_name"].(string)
-			param.ContractName = argtype["contract_name"].(string)
-			param.MethodName = argtype["method_name"].(string)
-			param.Args = make(map[string]string)
-			for k, v := range argtype["args"].(map[string]interface{}) {
-				fmt.Printf("miao every args: %v=%v\n", k, v.(string))
-				param.Args[k] = v.(string)
-			}
+		if name == argName {
+			for _, arg := range desc.Args[name].([]interface{}) {
+				param := ledger.InvokeRequest{}
+				argtype := arg.(map[string]interface{})
+				param.ModuleName = argtype["module_name"].(string)
+				param.ContractName = argtype["contract_name"].(string)
+				param.MethodName = argtype["method_name"].(string)
+				param.Args = make(map[string]string)
+				for k, v := range argtype["args"].(map[string]interface{}) {
+					param.Args[k] = v.(string)
+				}
 
-			params = append(params, param)
+				params = append(params, param)
+			}
 		}
 	}
 
@@ -444,8 +445,18 @@ func (k *Kernel) runUpdateReservedContract(desc *contract.TxDesc) error {
 
 	originalReservedContracts := k.context.LedgerObj.GetMeta().ReservedContracts
 
-	if !reflect.DeepEqual(oldParams, originalReservedContracts) {
-		return fmt.Errorf("old_reserved_contracts values are not equal to the current node")
+	for _, vold := range oldParams {
+		for _, vorig := range originalReservedContracts {
+			if vold.ModuleName != vorig.ModuleName || vold.ContractName != vorig.ContractName ||
+				vold.MethodName != vorig.MethodName || len(vold.Args) != len(vorig.Args) {
+				return fmt.Errorf("old_reserved_contracts values are not equal to the current node")
+			}
+			for k, vp := range vold.Args {
+				if vo, ok := vorig.Args[k]; !ok || !reflect.DeepEqual(vp, vo) {
+					return fmt.Errorf("old_reserved_contracts values are not equal to the current node")
+				}
+			}
+		}
 	}
 
 	params, vErr := k.validateUpdateReservedContract(desc, "reserved_contracts")

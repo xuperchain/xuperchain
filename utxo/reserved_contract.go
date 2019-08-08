@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"html/template"
 
+	"github.com/xuperchain/xuperunion/common"
 	"github.com/xuperchain/xuperunion/pb"
 )
 
@@ -28,7 +29,8 @@ func genArgs(req []*pb.InvokeRequest) *reservedArgs {
 // but the transaction does not contains reserved requests.
 func (uv *UtxoVM) verifyReservedWhitelist(tx *pb.Transaction) bool {
 	// verify reservedContracts len
-	reservedContracts, err := uv.ledger.GenesisBlock.GetConfig().GetReservedContract()
+	reservedContracts := uv.ledger.GetMeta().ReservedContracts
+	uv.xlog.Warn("meta in verifyReservedWhitelist", "meta in", uv.ledger.GetMeta().ReservedContracts)
 	if len(reservedContracts) == 0 {
 		uv.xlog.Info("verifyReservedWhitelist false reservedReqs is nil")
 		return false
@@ -118,17 +120,21 @@ func (uv *UtxoVM) verifyReservedContractRequests(reservedReqs, txReqs []*pb.Invo
 func (uv *UtxoVM) getReservedContractRequests(req []*pb.InvokeRequest, isPreExec bool) ([]*pb.InvokeRequest, error) {
 	reservedContracts := []*pb.InvokeRequest{}
 	originalReservedContracts, err := uv.ledger.GenesisBlock.GetConfig().GetReservedContract()
-	uv.xlog.Warn("originalReservedContracts", "originalReservedContracts", originalReservedContracts)
 	if err != nil {
 		return nil, err
 	}
-	MetaReservedContracts := uv.ledger.GetMeta().ReservedContracts
-	uv.xlog.Warn("MetaReservedContracts", "MetaReservedContracts", MetaReservedContracts)
+	MetaReservedContracts := []*pb.InvokeRequest{}
+	for _, v := range uv.ledger.GetMeta().ReservedContracts {
+		vnew := new(pb.InvokeRequest)
+		common.DeepCopy(vnew, v)
+		MetaReservedContracts = append(MetaReservedContracts, vnew)
+	}
 	if MetaReservedContracts != nil {
 		reservedContracts = MetaReservedContracts
 	} else {
 		reservedContracts = originalReservedContracts
 	}
+	uv.xlog.Warn("MetaReservedContracts", "reservedContracts", reservedContracts)
 
 	// if all reservedContracts have not been updated, return nil, nil
 	ra := &reservedArgs{}

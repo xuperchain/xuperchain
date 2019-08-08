@@ -509,7 +509,7 @@ func (l *Ledger) UpdateReservedContract(params []*pb.InvokeRequest) error {
 	}
 
 	l.meta = newMeta
-	l.xlog.Info("Update reservered contract: %v", params)
+	l.xlog.Info("Update reservered contract", "reservedContracts", l.meta.ReservedContracts)
 	return nil
 }
 
