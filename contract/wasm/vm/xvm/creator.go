@@ -155,7 +155,7 @@ func (x *xvmInstance) Exec(function string) error {
 	if mem == nil {
 		return errors.New("bad contract, no memory")
 	}
-	_, err := x.execCtx.Exec(function, []uint32{uint32(0), uint32(0)})
+	_, err := x.execCtx.Exec(function, []int64{})
 	if err != nil {
 		log.Error("exec contract error", "error", err, "contract", x.bridgeCtx.ContractName)
 	}

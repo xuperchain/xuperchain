@@ -11,6 +11,8 @@ import (
 	"strconv"
 )
 
+const Version = "1.0"
+
 // Config configures the compiler
 type Config struct {
 	Wasm2cPath   string
@@ -80,6 +82,7 @@ func CompileNativeLibrary(cfg *Config, target, source string) error {
 
 	stderr := new(bytes.Buffer)
 	cmd := exec.Command("cc", "-shared", "-fPIC",
+		"-g",
 		"-std=c99",
 		"-O"+strconv.Itoa(cfg.OptLevel),
 		"-o"+target,

@@ -549,6 +549,7 @@ message WasmCodeDesc
   string runtime = 1;
   string compiler = 2;
   bytes digest = 3;
+  string vm_compiler = 4;
 }
 
 message DeployNativeCodeRequest

@@ -241,6 +241,7 @@ class CWriter {
   void WriteDataInitializers();
   void WriteElemInitializers();
   void WriteInitExports();
+  void WriteFuncExport(const Func& func, const std::string& name);
   void WriteExports(WriteExportsKind);
   void WriteInit();
   void WriteFuncs();
@@ -1167,6 +1168,41 @@ void CWriter::WriteInitExports() {
   Write(CloseBrace(), Newline());
 }
 
+void CWriter::WriteFuncExport(const Func& func, const std::string& name) {
+  // Write function signature
+  Write("extern int64_t ", name, "(");
+  Write("wasm_rt_handle_t* h, ");
+  Write("int64_t* params", ", ", "int64_t param_len");
+  Write(") ", OpenBrace());
+
+  // Write params length guard
+  Writef("if (param_len != %d)", func.GetNumParams());
+  Write("{g_rt_ops.wasm_rt_trap(WASM_RT_TRAP_INVALID_ARGUMENT);}", Newline());
+
+  if (func.GetNumResults() > 0) {
+    auto returnType = ResultType(func.decl.sig.result_types);
+    Write(returnType, " result = ");
+  }
+
+  Write(ExternalRef(func.name), "(", "h");
+  for (Index i = 0; i<func.GetNumParams(); i++) {
+    auto paramType = func.GetParamType(i);
+    Write(", ", "*(", paramType, "*)", "(params+", i, ")");
+  }
+  Write(");", Newline());
+
+  if (func.GetNumResults() > 0) {
+    Write("int64_t ret = 0;", Newline());
+    Write("memcpy(&ret, &result, sizeof(result));", Newline());
+    Write("return ret;", Newline());
+  } else {
+    Write("return 0;", Newline());
+  }
+
+  Write(CloseBrace());
+  Write(Newline());
+}
+
 void CWriter::WriteExports(WriteExportsKind kind) {
   if (module_->exports.empty())
     return;
@@ -1177,25 +1213,14 @@ void CWriter::WriteExports(WriteExportsKind kind) {
 
   for (const Export* export_ : module_->exports) {
     Write("/* export: '", export_->name, "' */", Newline());
-    if (kind == WriteExportsKind::Declarations) {
-      Write("extern ");
-    }
 
     std::string mangled_name;
-    std::string internal_name;
 
     switch (export_->kind) {
       case ExternalKind::Func: {
         const Func* func = module_->GetFunc(export_->var);
         mangled_name = "export_" + LegalizeName(export_->name);
-        internal_name = func->name;
-        if (kind != WriteExportsKind::Initializers) {
-          WriteFuncDeclaration(func->decl, Deref(mangled_name));
-          Write(";");
-        }
-        if (kind == WriteExportsKind::Initializers) {
-          Write(mangled_name, " = ", ExternalPtr(internal_name), ";");
-        }
+        WriteFuncExport(*func, mangled_name);
         break;
       }
 
@@ -1246,7 +1271,6 @@ void CWriter::WriteInit() {
   Write("init_globals(h);", Newline());
   Write("init_memory(h);", Newline());
   Write("init_table(h);", Newline());
-  Write("init_exports(h);", Newline());
   for (Var* var : module_->starts) {
     Write(ExternalRef(module_->GetFunc(*var)->name), "(h);", Newline());
   }
@@ -1282,14 +1306,14 @@ void CWriter::WriteFuncImport(const Func& func, Index idx) {
                                 &index_to_name);
   WriteParams(index_to_name);
 
-  Write("uint32_t params[", func_->GetNumParams(), "] = {");
+  Write("uint32_t params[", func_->GetNumParams(), "] = {0};", Newline());
   for (Index i = 0; i < func_->GetNumParams(); ++i) {
-    if (i != 0) {
-      Write(", ");
-    }
-    Write("(uint32_t)", LocalName(index_to_name[i]));
+    Write("memcpy(");
+    Write("params + ", i, ", ");
+    Write("&", LocalName(index_to_name[i]), ", ");
+    Write("sizeof(", LocalName(index_to_name[i]), ")");
+    Write(");", Newline());
   }
-  Write("};", Newline());
 
   if (func_->GetNumResults() > 0) {
     Write("return ");
@@ -2321,7 +2345,6 @@ void CWriter::WriteCSource() {
   WriteDataInitializers();
   WriteElemInitializers();
   WriteExports(WriteExportsKind::Definitions);
-  WriteInitExports();
   WriteInit();
 }
 

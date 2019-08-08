@@ -23,6 +23,9 @@ func WithTestContext(t *testing.T, driver string, callback func(tctx *FakeWASMCo
 		xbridge := bridge.New()
 		vmm, err := New(&config.WasmConfig{
 			Driver: driver,
+			XVM: config.XVMConfig{
+				OptLevel: 0,
+			},
 		}, basedir, xbridge, x.Model)
 		if err != nil {
 			t.Fatal(err)
