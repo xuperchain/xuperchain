@@ -6,7 +6,7 @@ import (
 	"github.com/xuperchain/xuperunion/pb"
 )
 
-func (uv *UtxoVM) sortTx(txs []*pb.Transaction) (map[string]*pb.Transaction, TxGraph, error) {
+func (uv *UtxoVM) buildTxDeps(txs []*pb.Transaction) (map[string]*pb.Transaction, TxGraph, error) {
 	txMap := map[string]*pb.Transaction{}
 	txGraph := TxGraph{}
 	for _, tx := range txs {
@@ -38,6 +38,7 @@ func (uv *UtxoVM) sortTx(txs []*pb.Transaction) (map[string]*pb.Transaction, TxG
 	return txMap, txGraph, nil
 }
 
+// SplitChildDAGs split child dags
 func SplitChildDAGs(txGraph TxGraph, outputTxList []string) []int {
 	step := 0
 	idx := 0

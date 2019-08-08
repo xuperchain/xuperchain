@@ -13,9 +13,9 @@ func (uv *UtxoVM) verifyBlockTxs(block *pb.InternalBlock, isRootTx bool, unconfi
 	var once sync.Once
 	txs := block.Transactions
 
-	_, txGraph, sortTxErr := uv.sortTx(txs)
-	if sortTxErr != nil {
-		return sortTxErr
+	_, txGraph, buildTxDepsErr := uv.buildTxDeps(txs)
+	if buildTxDepsErr != nil {
+		return buildTxDepsErr
 	}
 	order, cyclic := TopSortDFS(txGraph)
 	if cyclic != nil {
