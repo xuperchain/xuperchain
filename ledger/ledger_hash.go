@@ -115,5 +115,11 @@ func MakeBlockID(block *pb.InternalBlock) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+	if block.TargetBits > 0 {
+		err = binary.Write(buf, binary.LittleEndian, block.TargetBits)
+		if err != nil {
+			return nil, err
+		}
+	}
 	return hash.DoubleSha256(buf.Bytes()), nil
 }
