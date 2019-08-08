@@ -26,7 +26,7 @@
                         "1":["dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN"]
                 },
                 "init_proposer_neturl": {
-                     "1": ["/ip4/10.26.29.40/tcp/47101/p2p/QmUqM5tGMZCuHEBcGYbxUHr2yzLdXSBGc5ziPHm68CuqzC"]
+                     "1": ["/ip4/127.0.0.1/tcp/47101/p2p/QmUqM5tGMZCuHEBcGYbxUHr2yzLdXSBGc5ziPHm68CuqzC"]
                 }
            }
         }
@@ -52,6 +52,9 @@
                 "args":{}
             }
         ]
+        ,"reserved_whitelist": {
+            "account": "XC9999999999999999@xuper"
+        } 
         , "forbidden_contract": {
                 "module_name": "wasm",
                 "contract_name": "forbidden",

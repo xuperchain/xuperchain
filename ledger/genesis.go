@@ -36,7 +36,10 @@ type RootConfig struct {
 	Decimals          string                 `json:"decimals"`
 	GenesisConsensus  map[string]interface{} `json:"genesis_consensus"`
 	ReservedContracts []InvokeRequest        `json:"reserved_contracts"`
-	ForbiddenContract InvokeRequest          `json:"forbidden_contract"`
+	ReservedWhitelist struct {
+		Account string `json:"account"`
+	} `json:"reserved_whitelist"`
+	ForbiddenContract InvokeRequest `json:"forbidden_contract"`
 }
 
 // InvokeRequest define genesis reserved_contracts configure
@@ -88,6 +91,11 @@ func (rc *RootConfig) GetGenesisConsensus() (map[string]interface{}, error) {
 // GetReservedContract get default contract config of genesis block
 func (rc *RootConfig) GetReservedContract() ([]*pb.InvokeRequest, error) {
 	return InvokeRequestFromJSON2Pb(rc.ReservedContracts)
+}
+
+// GetReservedWhitelistAccount return reserved whitelist account
+func (rc *RootConfig) GetReservedWhitelistAccount() string {
+	return rc.ReservedWhitelist.Account
 }
 
 // GenesisBlock genesis block data structure
