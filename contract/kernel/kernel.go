@@ -442,10 +442,7 @@ func (k *Kernel) runUpdateReservedContract(desc *contract.TxDesc) error {
 		return vErr
 	}
 
-	originalReservedContracts, err := k.context.LedgerObj.GetMeta().ReservedContracts
-	if err != nil {
-		return err
-	}
+	originalReservedContracts := k.context.LedgerObj.GetMeta().ReservedContracts
 
 	if !reflect.DeepEqual(oldParams, originalReservedContracts) {
 		return fmt.Errorf("old_reserved_contracts values are not equal to the current node")
@@ -456,7 +453,7 @@ func (k *Kernel) runUpdateReservedContract(desc *contract.TxDesc) error {
 		return vErr
 	}
 	k.log.Info("update reservered contract")
-	err = k.context.LedgerObj.UpdateReservedContract(params)
+	err := k.context.LedgerObj.UpdateReservedContract(params)
 	return err
 }
 
