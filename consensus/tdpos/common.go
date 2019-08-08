@@ -342,8 +342,8 @@ func (tp *TDpos) validateRevokeCandidate(desc *contract.TxDesc) (string, string,
 	if descNom.Args["candidate"] == nil {
 		return "", "", "", errors.New("Vote candidate can not be null")
 	}
-	candidate,ok := descNom.Args["candidate"].(string)
-	if !ok{
+	candidate, ok := descNom.Args["candidate"].(string)
+	if !ok {
 		return "", "", "", errors.New("candidates should be string")
 	}
 	fromAddr := string(descNom.Tx.TxInputs[0].FromAddr)
