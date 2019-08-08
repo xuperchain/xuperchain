@@ -442,7 +442,7 @@ func (k *Kernel) runUpdateReservedContract(desc *contract.TxDesc) error {
 		return vErr
 	}
 
-	originalReservedContracts, err := k.context.LedgerObj.GenesisBlock.GetConfig().GetReservedContract()
+	originalReservedContracts, err := k.context.LedgerObj.GetMeta().ReservedContracts
 	if err != nil {
 		return err
 	}

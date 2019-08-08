@@ -45,10 +45,12 @@ func verifyReservedContractRequests(reservedReqs, txReqs []*pb.InvokeRequest) bo
 func (uv *UtxoVM) getReservedContractRequests(req []*pb.InvokeRequest, isPreExec bool) ([]*pb.InvokeRequest, error) {
 	reservedContracts := []*pb.InvokeRequest{}
 	originalReservedContracts, err := uv.ledger.GenesisBlock.GetConfig().GetReservedContract()
+	uv.xlog.Warn("originalReservedContracts", "originalReservedContracts", originalReservedContracts)
 	if err != nil {
 		return nil, err
 	}
 	MetaReservedContracts := uv.ledger.GetMeta().ReservedContracts
+	uv.xlog.Warn("MetaReservedContracts", "MetaReservedContracts", MetaReservedContracts)
 	if MetaReservedContracts != nil {
 		reservedContracts = MetaReservedContracts
 	} else {
