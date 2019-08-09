@@ -405,7 +405,7 @@ func (t *testRunner) RunTest(wastFile string) {
 }
 
 func (t *testRunner) RunTestDir(dir string) {
-	freg := regexp.MustCompile(`^name|^linking`)
+	freg := regexp.MustCompile(`^name|^linking|^skip-stack`)
 	testFiles, err := filepath.Glob(filepath.Join(dir, "*.wast"))
 	if err != nil {
 		panic(err)
