@@ -3,10 +3,12 @@
 
 package pb
 
-import proto "github.com/golang/protobuf/proto"
-import fmt "fmt"
-import math "math"
-import _ "google.golang.org/genproto/googleapis/api/annotations"
+import (
+	fmt "fmt"
+	proto "github.com/golang/protobuf/proto"
+	_ "google.golang.org/genproto/googleapis/api/annotations"
+	math "math"
+)
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
@@ -17,7 +19,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 // ReturnCode is the code for client
 type ReturnCode int32
@@ -74,6 +76,7 @@ var ReturnCode_name = map[int32]string{
 	102011: "BLOCKCHAINNOTEXIST",
 	102012: "SERVERERR",
 }
+
 var ReturnCode_value = map[string]int32{
 	"RETURNSUCCESS":      0,
 	"INTERNALERR":        101000,
@@ -102,8 +105,9 @@ var ReturnCode_value = map[string]int32{
 func (x ReturnCode) String() string {
 	return proto.EnumName(ReturnCode_name, int32(x))
 }
+
 func (ReturnCode) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_xchain_spv_924945290f4e2ffe, []int{0}
+	return fileDescriptor_85c5cd9f6993900d, []int{0}
 }
 
 // 助记词、私钥的json、公钥的json、钱包地址
@@ -122,16 +126,17 @@ func (m *ECDSAAccount) Reset()         { *m = ECDSAAccount{} }
 func (m *ECDSAAccount) String() string { return proto.CompactTextString(m) }
 func (*ECDSAAccount) ProtoMessage()    {}
 func (*ECDSAAccount) Descriptor() ([]byte, []int) {
-	return fileDescriptor_xchain_spv_924945290f4e2ffe, []int{0}
+	return fileDescriptor_85c5cd9f6993900d, []int{0}
 }
+
 func (m *ECDSAAccount) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ECDSAAccount.Unmarshal(m, b)
 }
 func (m *ECDSAAccount) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ECDSAAccount.Marshal(b, m, deterministic)
 }
-func (dst *ECDSAAccount) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ECDSAAccount.Merge(dst, src)
+func (m *ECDSAAccount) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ECDSAAccount.Merge(m, src)
 }
 func (m *ECDSAAccount) XXX_Size() int {
 	return xxx_messageInfo_ECDSAAccount.Size(m)
@@ -191,16 +196,17 @@ func (m *ECDSAInfo) Reset()         { *m = ECDSAInfo{} }
 func (m *ECDSAInfo) String() string { return proto.CompactTextString(m) }
 func (*ECDSAInfo) ProtoMessage()    {}
 func (*ECDSAInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_xchain_spv_924945290f4e2ffe, []int{1}
+	return fileDescriptor_85c5cd9f6993900d, []int{1}
 }
+
 func (m *ECDSAInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ECDSAInfo.Unmarshal(m, b)
 }
 func (m *ECDSAInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ECDSAInfo.Marshal(b, m, deterministic)
 }
-func (dst *ECDSAInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ECDSAInfo.Merge(dst, src)
+func (m *ECDSAInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ECDSAInfo.Merge(m, src)
 }
 func (m *ECDSAInfo) XXX_Size() int {
 	return xxx_messageInfo_ECDSAInfo.Size(m)
@@ -246,16 +252,17 @@ func (m *ECDSAAccountFromCloud) Reset()         { *m = ECDSAAccountFromCloud{} }
 func (m *ECDSAAccountFromCloud) String() string { return proto.CompactTextString(m) }
 func (*ECDSAAccountFromCloud) ProtoMessage()    {}
 func (*ECDSAAccountFromCloud) Descriptor() ([]byte, []int) {
-	return fileDescriptor_xchain_spv_924945290f4e2ffe, []int{2}
+	return fileDescriptor_85c5cd9f6993900d, []int{2}
 }
+
 func (m *ECDSAAccountFromCloud) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ECDSAAccountFromCloud.Unmarshal(m, b)
 }
 func (m *ECDSAAccountFromCloud) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ECDSAAccountFromCloud.Marshal(b, m, deterministic)
 }
-func (dst *ECDSAAccountFromCloud) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ECDSAAccountFromCloud.Merge(dst, src)
+func (m *ECDSAAccountFromCloud) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ECDSAAccountFromCloud.Merge(m, src)
 }
 func (m *ECDSAAccountFromCloud) XXX_Size() int {
 	return xxx_messageInfo_ECDSAAccountFromCloud.Size(m)
@@ -302,16 +309,17 @@ func (m *ECDSAAccountToCloud) Reset()         { *m = ECDSAAccountToCloud{} }
 func (m *ECDSAAccountToCloud) String() string { return proto.CompactTextString(m) }
 func (*ECDSAAccountToCloud) ProtoMessage()    {}
 func (*ECDSAAccountToCloud) Descriptor() ([]byte, []int) {
-	return fileDescriptor_xchain_spv_924945290f4e2ffe, []int{3}
+	return fileDescriptor_85c5cd9f6993900d, []int{3}
 }
+
 func (m *ECDSAAccountToCloud) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ECDSAAccountToCloud.Unmarshal(m, b)
 }
 func (m *ECDSAAccountToCloud) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ECDSAAccountToCloud.Marshal(b, m, deterministic)
 }
-func (dst *ECDSAAccountToCloud) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ECDSAAccountToCloud.Merge(dst, src)
+func (m *ECDSAAccountToCloud) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ECDSAAccountToCloud.Merge(m, src)
 }
 func (m *ECDSAAccountToCloud) XXX_Size() int {
 	return xxx_messageInfo_ECDSAAccountToCloud.Size(m)
@@ -365,16 +373,17 @@ func (m *Node) Reset()         { *m = Node{} }
 func (m *Node) String() string { return proto.CompactTextString(m) }
 func (*Node) ProtoMessage()    {}
 func (*Node) Descriptor() ([]byte, []int) {
-	return fileDescriptor_xchain_spv_924945290f4e2ffe, []int{4}
+	return fileDescriptor_85c5cd9f6993900d, []int{4}
 }
+
 func (m *Node) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_Node.Unmarshal(m, b)
 }
 func (m *Node) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_Node.Marshal(b, m, deterministic)
 }
-func (dst *Node) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Node.Merge(dst, src)
+func (m *Node) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Node.Merge(m, src)
 }
 func (m *Node) XXX_Size() int {
 	return xxx_messageInfo_Node.Size(m)
@@ -425,16 +434,17 @@ func (m *TxInputs) Reset()         { *m = TxInputs{} }
 func (m *TxInputs) String() string { return proto.CompactTextString(m) }
 func (*TxInputs) ProtoMessage()    {}
 func (*TxInputs) Descriptor() ([]byte, []int) {
-	return fileDescriptor_xchain_spv_924945290f4e2ffe, []int{5}
+	return fileDescriptor_85c5cd9f6993900d, []int{5}
 }
+
 func (m *TxInputs) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TxInputs.Unmarshal(m, b)
 }
 func (m *TxInputs) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_TxInputs.Marshal(b, m, deterministic)
 }
-func (dst *TxInputs) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TxInputs.Merge(dst, src)
+func (m *TxInputs) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TxInputs.Merge(m, src)
 }
 func (m *TxInputs) XXX_Size() int {
 	return xxx_messageInfo_TxInputs.Size(m)
@@ -464,16 +474,17 @@ func (m *TxOutputs) Reset()         { *m = TxOutputs{} }
 func (m *TxOutputs) String() string { return proto.CompactTextString(m) }
 func (*TxOutputs) ProtoMessage()    {}
 func (*TxOutputs) Descriptor() ([]byte, []int) {
-	return fileDescriptor_xchain_spv_924945290f4e2ffe, []int{6}
+	return fileDescriptor_85c5cd9f6993900d, []int{6}
 }
+
 func (m *TxOutputs) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TxOutputs.Unmarshal(m, b)
 }
 func (m *TxOutputs) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_TxOutputs.Marshal(b, m, deterministic)
 }
-func (dst *TxOutputs) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_TxOutputs.Merge(dst, src)
+func (m *TxOutputs) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TxOutputs.Merge(m, src)
 }
 func (m *TxOutputs) XXX_Size() int {
 	return xxx_messageInfo_TxOutputs.Size(m)
@@ -503,16 +514,17 @@ func (m *UTXOs) Reset()         { *m = UTXOs{} }
 func (m *UTXOs) String() string { return proto.CompactTextString(m) }
 func (*UTXOs) ProtoMessage()    {}
 func (*UTXOs) Descriptor() ([]byte, []int) {
-	return fileDescriptor_xchain_spv_924945290f4e2ffe, []int{7}
+	return fileDescriptor_85c5cd9f6993900d, []int{7}
 }
+
 func (m *UTXOs) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_UTXOs.Unmarshal(m, b)
 }
 func (m *UTXOs) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_UTXOs.Marshal(b, m, deterministic)
 }
-func (dst *UTXOs) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_UTXOs.Merge(dst, src)
+func (m *UTXOs) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UTXOs.Merge(m, src)
 }
 func (m *UTXOs) XXX_Size() int {
 	return xxx_messageInfo_UTXOs.Size(m)
@@ -546,16 +558,17 @@ func (m *UTXO) Reset()         { *m = UTXO{} }
 func (m *UTXO) String() string { return proto.CompactTextString(m) }
 func (*UTXO) ProtoMessage()    {}
 func (*UTXO) Descriptor() ([]byte, []int) {
-	return fileDescriptor_xchain_spv_924945290f4e2ffe, []int{8}
+	return fileDescriptor_85c5cd9f6993900d, []int{8}
 }
+
 func (m *UTXO) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_UTXO.Unmarshal(m, b)
 }
 func (m *UTXO) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_UTXO.Marshal(b, m, deterministic)
 }
-func (dst *UTXO) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_UTXO.Merge(dst, src)
+func (m *UTXO) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UTXO.Merge(m, src)
 }
 func (m *UTXO) XXX_Size() int {
 	return xxx_messageInfo_UTXO.Size(m)
@@ -602,6 +615,7 @@ func (m *UTXO) GetRefOffset() int32 {
 }
 
 func init() {
+	proto.RegisterEnum("pb.ReturnCode", ReturnCode_name, ReturnCode_value)
 	proto.RegisterType((*ECDSAAccount)(nil), "pb.ECDSAAccount")
 	proto.RegisterType((*ECDSAInfo)(nil), "pb.ECDSAInfo")
 	proto.RegisterType((*ECDSAAccountFromCloud)(nil), "pb.ECDSAAccountFromCloud")
@@ -611,12 +625,11 @@ func init() {
 	proto.RegisterType((*TxOutputs)(nil), "pb.TxOutputs")
 	proto.RegisterType((*UTXOs)(nil), "pb.UTXOs")
 	proto.RegisterType((*UTXO)(nil), "pb.UTXO")
-	proto.RegisterEnum("pb.ReturnCode", ReturnCode_name, ReturnCode_value)
 }
 
-func init() { proto.RegisterFile("xchain_spv.proto", fileDescriptor_xchain_spv_924945290f4e2ffe) }
+func init() { proto.RegisterFile("xchain_spv.proto", fileDescriptor_85c5cd9f6993900d) }
 
-var fileDescriptor_xchain_spv_924945290f4e2ffe = []byte{
+var fileDescriptor_85c5cd9f6993900d = []byte{
 	// 819 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xcc, 0x54, 0x4f, 0x8f, 0xdb, 0xd4,
 	0x17, 0xfd, 0xa5, 0xc9, 0xb8, 0xc9, 0x8d, 0x67, 0xc6, 0xf3, 0xfa, 0x6b, 0x89, 0x46, 0x5d, 0x8c,

@@ -25,6 +25,8 @@ var (
 	TrapCallStackExhaustion = NewTrap("call stack exhausted")
 	// TrapGasExhaustion is raised when runnning out of gas limit
 	TrapGasExhaustion = NewTrap("run out of gas limit")
+	// TrapInvalidArgument is raised when running function with invalid argument
+	TrapInvalidArgument = NewTrap("invalid function argument")
 )
 
 // Trap 用于表示虚拟机运行过程中的错误，中断虚拟机的运行
@@ -118,6 +120,10 @@ func go_xvm_trap(code C.wasm_rt_trap_t) {
 		panic(TrapCallStackExhaustion)
 	case C.WASM_RT_TRAP_GAS_EXHAUSTION:
 		panic(TrapGasExhaustion)
+	case C.WASM_RT_TRAP_INVALID_ARGUMENT:
+		panic(TrapInvalidArgument)
+	default:
+		panic(NewTrap(fmt.Sprintf("trap with code:%d", code)))
 	}
 }
 

@@ -11,6 +11,8 @@ import (
 	"strconv"
 )
 
+const Version = "1.0"
+
 // Config configures the compiler
 type Config struct {
 	Wasm2cPath   string
