@@ -1,6 +1,7 @@
 #include <cstdio>
-#include <inttypes.h>
+#include <cinttypes>
 #include "xchain/xchain.h"
+
 
 struct BuiltinTypes : public xchain::Contract {};
 
