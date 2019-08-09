@@ -416,7 +416,7 @@ func (k *Kernel) runUpdateMaxBlockSize(desc *contract.TxDesc) error {
 	if oldBlockSize != curMaxBlockSize {
 		return fmt.Errorf("unexpected old block size, got %v, expected: %v", oldBlockSize, curMaxBlockSize)
 	}
-	err := k.context.LedgerObj.UpdateMaxBlockSize(newBlockSize)
+	err := k.context.LedgerObj.UpdateMaxBlockSize(newBlockSize, k.context.UtxoBatch)
 	return err
 }
 
@@ -429,7 +429,7 @@ func (k *Kernel) rollbackUpdateMaxBlockSize(desc *contract.TxDesc) error {
 		return vErr
 	}
 	oldBlockSize := int64(desc.Args["old_block_size"].(float64))
-	err := k.context.LedgerObj.UpdateMaxBlockSize(oldBlockSize)
+	err := k.context.LedgerObj.UpdateMaxBlockSize(oldBlockSize, k.context.UtxoBatch)
 	return err
 }
 
@@ -464,7 +464,7 @@ func (k *Kernel) runUpdateReservedContract(desc *contract.TxDesc) error {
 		return vErr
 	}
 	k.log.Info("update reservered contract")
-	err := k.context.LedgerObj.UpdateReservedContract(params)
+	err := k.context.LedgerObj.UpdateReservedContract(params, k.context.UtxoBatch)
 	return err
 }
 
@@ -477,7 +477,7 @@ func (k *Kernel) rollbackUpdateReservedContract(desc *contract.TxDesc) error {
 		return vErr
 	}
 	k.log.Info("rollback reservered contract")
-	err := k.context.LedgerObj.UpdateReservedContract(params)
+	err := k.context.LedgerObj.UpdateReservedContract(params, k.context.UtxoBatch)
 	return err
 }
 

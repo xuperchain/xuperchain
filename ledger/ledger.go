@@ -462,7 +462,7 @@ func (l *Ledger) IsValidTx(idx int, tx *pb.Transaction, block *pb.InternalBlock)
 }
 
 // UpdateMaxBlockSize update block max size
-func (l *Ledger) UpdateMaxBlockSize(maxBlockSize int64) error {
+func (l *Ledger) UpdateMaxBlockSize(maxBlockSize int64, batch kvdb.Batch) error {
 	if maxBlockSize <= 0 {
 		return fmt.Errorf("invalid block size: %d", maxBlockSize)
 	}
@@ -475,17 +475,14 @@ func (l *Ledger) UpdateMaxBlockSize(maxBlockSize int64) error {
 		l.xlog.Warn("failed to marshal pb meta")
 		return pbErr
 	}
-	putErr := l.metaTable.Put([]byte(""), metaBuf)
-	if putErr != nil {
-		l.xlog.Warn("write new block size to meta failed", "err", putErr)
-		return putErr
-	}
+	batch.Put([]byte(pb.MetaTablePrefix), metaBuf)
 	l.meta = newMeta
+	l.xlog.Info("update max block size succeed")
 	return nil
 }
 
 // UpdateReserveredContract update reservered contract
-func (l *Ledger) UpdateReservedContract(params []*pb.InvokeRequest) error {
+func (l *Ledger) UpdateReservedContract(params []*pb.InvokeRequest, batch kvdb.Batch) error {
 	if params == nil {
 		return fmt.Errorf("invalid reservered contract requests")
 	}
@@ -502,11 +499,7 @@ func (l *Ledger) UpdateReservedContract(params []*pb.InvokeRequest) error {
 		return pbErr
 	}
 
-	putErr := l.metaTable.Put([]byte(""), metaBuf)
-	if putErr != nil {
-		l.xlog.Warn("write new ReservedContracts to meta failed", "err", putErr)
-		return putErr
-	}
+	batch.Put([]byte(pb.MetaTablePrefix), metaBuf)
 
 	l.meta = newMeta
 	l.xlog.Info("Update reservered contract", "reservedContracts", l.meta.ReservedContracts)
@@ -1029,4 +1022,8 @@ func (l *Ledger) QueryBlockByHeight(height int64) (*pb.InternalBlock, error) {
 func (l *Ledger) MaxTxSizePerBlock() int {
 	maxBlkSize := float64(l.GetMaxBlockSize())
 	return int(maxBlkSize * TxSizePercent)
+}
+
+func (l *Ledger) GetBaseDB() kvdb.Database {
+	return l.baseDB
 }

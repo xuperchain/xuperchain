@@ -323,6 +323,7 @@ func TestRunUpdateMaxBlockSize(t *testing.T) {
 	t.Log("L.GetMaxBlockSize:", L.GetMaxBlockSize())
 	context := &contract.TxContext{
 		LedgerObj: L,
+		UtxoBatch: L.GetBaseDB().NewBatch(),
 	}
 	kl := &Kernel{}
 	kLogger := log.New("module", "kernel")
@@ -412,6 +413,7 @@ func TestRunUpdateReservedContracts(t *testing.T) {
 	t.Log("reservedContracts: ", reservedContracts)
 	context := &contract.TxContext{
 		LedgerObj: L,
+		UtxoBatch: L.GetBaseDB().NewBatch(),
 	}
 	kl := &Kernel{}
 	kLogger := log.New("module", "kernel")
