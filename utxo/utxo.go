@@ -712,7 +712,7 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 	}
 	// contract request with reservedRequests
 	req.Requests = append(reservedRequests, req.Requests...)
-	uv.xlog.Error("PreExec requests after merge", "requests", req.Requests)
+	uv.xlog.Trace("PreExec requests after merge", "requests", req.Requests)
 	// init modelCache
 	modelCache, err := xmodel.NewXModelCache(uv.GetXModel(), true)
 	if err != nil {
