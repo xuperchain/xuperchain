@@ -41,7 +41,8 @@ message XuperMessage {
         GET_BLOCK_ERROR = 8;
         CONFIRM_BLOCKCHAINSTATUS_ERROR = 9;
         GET_AUTHENTICATION_ERROR = 10;
-    }
+        GET_AUTHENTICATION_NOT_PASS = 11; 
+   }
 
     // MessageHeader is the message header of Xuper p2p server
     message MessageHeader {

@@ -16,11 +16,16 @@ type TxGraph map[string][]string
 //
 // 实现参考： https://rosettacode.org/wiki/Topological_sort#Go
 func TopSortDFS(g TxGraph) (order, cyclic []string) {
-	for _, outputs := range g {
+	// 统计每个tx的次数(包括被引用以及引用次数)
+	degreeForTx := map[string]int{}
+	for k, outputs := range g {
+		degreeForTx[k]++
 		for _, m := range outputs {
 			if g[m] == nil {
 				g[m] = []string{} //预处理一下，coinbase交易可能没有依赖
+				degreeForTx[m]++
 			}
+			degreeForTx[m]++
 		}
 	}
 	L := make([]string, len(g))
@@ -58,12 +63,22 @@ func TopSortDFS(g TxGraph) (order, cyclic []string) {
 		L[i] = n
 	}
 	for n := range g {
-		if perm[n] {
+		if perm[n] || len(g[n]) <= 0 {
 			continue
 		}
 		visit(n)
 		if cycleFound {
 			return nil, cyclic
+		}
+	}
+	leftIdx := 0
+	for k, _ := range degreeForTx {
+		// 将入度和出度为0的tx分离出来
+		// degreeForTx[k] == 1表示tx入度为0
+		// len(g[k])表示tx的出度为0
+		if degreeForTx[k] == 1 && len(g[k]) <= 0 {
+			L[leftIdx] = k
+			leftIdx++
 		}
 	}
 	return L, nil

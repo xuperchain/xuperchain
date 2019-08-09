@@ -26,56 +26,52 @@ func IdentifyAK(akuri string, sign *pb.SignatureInfo, msg []byte) (bool, error) 
 	return utils.VerifySign(ak, sign, msg)
 }
 
-// IdentifyAccount checks whether the aks and signs are match,
-// and these aks could represent the given account via account's ACL strategy.
+// IdentifyAccount checks whether the aks could represent the given account via account's ACL strategy.
 // Return true if the signatures match aks and aks could represent the account.
-func IdentifyAccount(account string, aksuri []string, signs []*pb.SignatureInfo,
-	msg []byte, aclMgr acl.ManagerInterface) (bool, error) {
-	akslen := len(aksuri)
-	signslen := len(signs)
+func IdentifyAccount(account string, aksuri []string, aclMgr acl.ManagerInterface) (bool, error) {
 	// aks and signs could have zero length for permission rule Null
-	if akslen != signslen || aclMgr == nil {
-		return false, fmt.Errorf("Invalid Param, akslen=%d,signslen=%d,aclMgr=%v", akslen, signslen, aclMgr)
+	if aclMgr == nil {
+		return false, fmt.Errorf("Invalid Param, aclMgr=%v", aclMgr)
 	}
 
 	// build perm tree
-	pnode, err := ptree.BuildAccountPermTree(aclMgr, account, aksuri, signs)
+	pnode, err := ptree.BuildAccountPermTree(aclMgr, account, aksuri)
 	if err != nil {
 		return false, err
 	}
 
-	return validatePermTree(pnode, msg, true)
+	return validatePermTree(pnode, true)
 }
 
-// CheckContractMethodPerm checks whether the aks and signs are match,
-// and those aks satisfy the ACL of a contract method <contractName, methodName>.
+// CheckContractMethodPerm checks whether the aks satisfy the ACL of a contract method <contractName, methodName>.
 // Return true if the signatures match aks and satisfy the ACL.
-func CheckContractMethodPerm(aksuri []string, signs []*pb.SignatureInfo, msg []byte,
-	contractName string, methodName string, aclMgr acl.ManagerInterface) (bool, error) {
-	akslen := len(aksuri)
-	signslen := len(signs)
+func CheckContractMethodPerm(aksuri []string, contractName string, methodName string,
+	aclMgr acl.ManagerInterface) (bool, error) {
 	// aks and signs could have zero length for permission rule Null
-	if akslen != signslen || aclMgr == nil {
-		return false, fmt.Errorf("Invalid Param, akslen=%d,signslen=%d,aclMgr=%v", akslen, signslen, aclMgr)
+	if aclMgr == nil {
+		return false, fmt.Errorf("Invalid Param, aclMgr=%v", aclMgr)
 	}
 
 	// build perm tree
-	pnode, err := ptree.BuildMethodPermTree(aclMgr, contractName, methodName, aksuri, signs)
+	pnode, err := ptree.BuildMethodPermTree(aclMgr, contractName, methodName, aksuri)
 	if err != nil {
 		return false, err
 	}
 
 	// validate perm tree
-	return validatePermTree(pnode, msg, false)
+	return validatePermTree(pnode, false)
 }
 
-func validatePermTree(root *ptree.PermNode, msg []byte, isAccount bool) (bool, error) {
+func validatePermTree(root *ptree.PermNode, isAccount bool) (bool, error) {
 	if root == nil {
 		return false, errors.New("Root is null")
 	}
 
 	// get BFS list of perm tree
 	plist, err := ptree.GetPermTreeList(root)
+	if err != nil {
+		return false, err
+	}
 	listlen := len(plist)
 	vf := &rule.ACLValidatorFactory{}
 
@@ -95,12 +91,8 @@ func validatePermTree(root *ptree.PermNode, msg []byte, isAccount bool) (bool, e
 
 		checkResult := false
 		if nameCheck == 0 {
-			// current node is AK, so validation using IdentifyAK
-			checkResult, err = IdentifyAK(pnode.Name, pnode.SignInfo, msg)
-			if err != nil {
-				return false, fmt.Errorf("AK validate failed, ak:%s, err:%s", pnode.Name, err.Error())
-			}
-
+			// current node is AK, signature should be validated before
+			checkResult = true
 		} else if nameCheck == 1 {
 			// current node is Account, so validation using ACLValidator
 			if pnode.ACL == nil {
@@ -116,7 +108,7 @@ func validatePermTree(root *ptree.PermNode, msg []byte, isAccount bool) (bool, e
 				if err != nil {
 					return false, err
 				}
-				checkResult, err = validator.Validate(pnode, msg)
+				checkResult, err = validator.Validate(pnode)
 				if err != nil {
 					return false, err
 				}
