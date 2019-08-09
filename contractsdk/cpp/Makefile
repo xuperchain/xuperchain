@@ -28,7 +28,7 @@ ifeq ($(CXX),g++)
 	OPT_LEVEL := -Os
 endif
 
-CPPFLAGS ?= $(INC_FLAGS) -MMD -MP $(OPT_LEVEL) -std=c++11
+CPPFLAGS ?= $(INC_FLAGS) -MMD -MP $(OPT_LEVEL) -D__STDC_FORMAT_MACROS -std=c++11
 
 .PHONY: clean all
 

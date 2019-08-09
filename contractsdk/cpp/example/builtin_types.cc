@@ -1,4 +1,5 @@
 #include <cstdio>
+#include <inttypes.h>
 #include "xchain/xchain.h"
 
 struct BuiltinTypes : public xchain::Contract {};
@@ -44,7 +45,7 @@ void print_block(xchain::Block b) {
     printf("proposer: %s\n", b.proposer.c_str());    
     printf("sign: %s\n", b.sign.c_str());    
     printf("pubkey: %s\n", b.pubkey.c_str());    
-    printf("height: %lld\n", b.height);    
+    printf("height: %" PRId64"\n", b.height);    
     for (auto v : b.txids) {
         printf("txid: %s\n", v.c_str());
     }
