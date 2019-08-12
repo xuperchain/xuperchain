@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"html/template"
 
-	"github.com/xuperchain/xuperunion/common"
 	"github.com/xuperchain/xuperunion/pb"
 )
 
@@ -118,45 +117,44 @@ func (uv *UtxoVM) verifyReservedContractRequests(reservedReqs, txReqs []*pb.Invo
 
 // geReservedContractRequest get reserved contract requests from system params, it doesn't consume gas.
 func (uv *UtxoVM) getReservedContractRequests(req []*pb.InvokeRequest, isPreExec bool) ([]*pb.InvokeRequest, error) {
-	reservedContracts := []*pb.InvokeRequest{}
+	reservedContractstpl := []*pb.InvokeRequest{}
 	originalReservedContracts, err := uv.ledger.GenesisBlock.GetConfig().GetReservedContract()
 	if err != nil {
 		return nil, err
 	}
-	MetaReservedContracts := []*pb.InvokeRequest{}
-	for _, v := range uv.ledger.GetMeta().ReservedContracts {
-		vnew := new(pb.InvokeRequest)
-		common.DeepCopy(vnew, v)
-		MetaReservedContracts = append(MetaReservedContracts, vnew)
-	}
+	MetaReservedContracts := uv.ledger.GetMeta().ReservedContracts
 	if MetaReservedContracts != nil {
-		reservedContracts = MetaReservedContracts
+		reservedContractstpl = MetaReservedContracts
 	} else {
-		reservedContracts = originalReservedContracts
+		reservedContractstpl = originalReservedContracts
 	}
-	uv.xlog.Warn("MetaReservedContracts", "reservedContracts", reservedContracts)
+	uv.xlog.Info("MetaReservedContracts", "reservedContracts", reservedContractstpl)
 
 	// if all reservedContracts have not been updated, return nil, nil
 	ra := &reservedArgs{}
-	if isPreExec || len(reservedContracts) == 0 {
+	if isPreExec || len(reservedContractstpl) == 0 {
 		ra = genArgs(req)
 	} else {
 		// req should contrain reservedContracts, so the len of req should no less than reservedContracts
-		if len(req) < len(reservedContracts) {
+		if len(req) < len(reservedContractstpl) {
 			uv.xlog.Warn("req should contain reservedContracts")
 			return nil, ErrGetReservedContracts
-		} else if len(req) > len(reservedContracts) {
-			ra = genArgs(req[len(reservedContracts):])
+		} else if len(req) > len(reservedContractstpl) {
+			ra = genArgs(req[len(reservedContractstpl):])
 		}
 	}
 
-	for _, rc := range reservedContracts {
+	reservedContracts := []*pb.InvokeRequest{}
+	for _, rc := range reservedContractstpl {
+		rctmp := *rc
+		rctmp.Args = make(map[string][]byte)
 		for k, v := range rc.GetArgs() {
 			buf := new(bytes.Buffer)
 			tpl := template.Must(template.New("value").Parse(string(v)))
 			tpl.Execute(buf, ra)
-			rc.Args[k] = buf.Bytes()
+			rctmp.Args[k] = buf.Bytes()
 		}
+		reservedContracts = append(reservedContracts, &rctmp)
 	}
 	return reservedContracts, nil
 }

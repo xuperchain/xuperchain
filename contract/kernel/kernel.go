@@ -292,33 +292,73 @@ func (k *Kernel) validateUpdateMaxBlockSize(desc *contract.TxDesc) error {
 	return nil
 }
 
-func (k *Kernel) validateUpdateReservedContract(desc *contract.TxDesc, name string) ([]*pb.InvokeRequest, error) {
-	params := []ledger.InvokeRequest{}
+func (k *Kernel) validateUpdateReservedContract(desc *contract.TxDesc) error {
 	for _, argName := range []string{"old_reserved_contracts", "reserved_contracts"} {
 		if desc.Args[argName] == nil {
-			return nil, fmt.Errorf("miss argument in contact: %s", argName)
+			return fmt.Errorf("miss argument in contact: %s", argName)
 		}
 
-		if name == argName {
-			for _, arg := range desc.Args[name].([]interface{}) {
-				param := ledger.InvokeRequest{}
-				argtype := arg.(map[string]interface{})
-				param.ModuleName = argtype["module_name"].(string)
-				param.ContractName = argtype["contract_name"].(string)
-				param.MethodName = argtype["method_name"].(string)
-				param.Args = make(map[string]string)
-				for k, v := range argtype["args"].(map[string]interface{}) {
-					param.Args[k] = v.(string)
-				}
+		switch tp := desc.Args[argName].(type) {
+		case []interface{}:
+			fmt.Println("first")
+			for _, arg := range desc.Args[argName].([]interface{}) {
+				switch arg.(type) {
+				case map[string]interface{}:
+					argtype := arg.(map[string]interface{})
 
-				params = append(params, param)
+					switch argtype["module_name"].(type) {
+					case string:
+					default:
+						return fmt.Errorf("invalid contract params moudule_name type")
+					}
+
+					switch argtype["contract_name"].(type) {
+					case string:
+					default:
+						return fmt.Errorf("invalid contract params contract_name type")
+					}
+
+					switch argtype["method_name"].(type) {
+					case string:
+					default:
+						return fmt.Errorf("invalid contract params method_name type")
+					}
+
+				default:
+					return fmt.Errorf("invalid reserved_contract list type")
+				}
 			}
+		default:
+			return fmt.Errorf("invalid arg type: %s, %v", argName, tp)
 		}
 	}
 
-	reservedContractParams, _ := ledger.InvokeRequestFromJSON2Pb(params)
+	k.log.Info("Kernel validateUpdateReservedContract success")
+	return nil
+}
 
-	k.log.Warn("Kernel validateUpdateReservedContract success", "parms", reservedContractParams)
+func (k *Kernel) GetReservedContractParams(desc *contract.TxDesc, name string) ([]*pb.InvokeRequest, error) {
+	params := []ledger.InvokeRequest{}
+	for _, arg := range desc.Args[name].([]interface{}) {
+		param := ledger.InvokeRequest{}
+		argtype := arg.(map[string]interface{})
+		param.ModuleName = argtype["module_name"].(string)
+		param.ContractName = argtype["contract_name"].(string)
+		param.MethodName = argtype["method_name"].(string)
+		param.Args = make(map[string]string)
+		for k, v := range argtype["args"].(map[string]interface{}) {
+			param.Args[k] = v.(string)
+		}
+
+		params = append(params, param)
+	}
+
+	reservedContractParams, err := ledger.InvokeRequestFromJSON2Pb(params)
+	if err != nil {
+		return nil, fmt.Errorf("Json error")
+	}
+
+	k.log.Info("Kernel GetReservedContractParams success", "parms", params)
 	return reservedContractParams, nil
 }
 
@@ -438,9 +478,15 @@ func (k *Kernel) runUpdateReservedContract(desc *contract.TxDesc) error {
 		return fmt.Errorf("failed to update reservered contract, because no ledger object in context")
 	}
 
-	oldParams, vErr := k.validateUpdateReservedContract(desc, "old_reserved_contracts")
-	if vErr != nil {
-		return vErr
+	err := k.validateUpdateReservedContract(desc)
+	if err != nil {
+		return err
+	}
+
+	oldParams, err := k.GetReservedContractParams(desc, "old_reserved_contracts")
+	k.log.Info("run update reservered contract, params", "oldParams", oldParams)
+	if err != nil {
+		return err
 	}
 
 	originalReservedContracts := k.context.LedgerObj.GetMeta().ReservedContracts
@@ -459,12 +505,9 @@ func (k *Kernel) runUpdateReservedContract(desc *contract.TxDesc) error {
 		}
 	}
 
-	params, vErr := k.validateUpdateReservedContract(desc, "reserved_contracts")
-	if vErr != nil {
-		return vErr
-	}
-	k.log.Info("update reservered contract")
-	err := k.context.LedgerObj.UpdateReservedContract(params, k.context.UtxoBatch)
+	params, err := k.GetReservedContractParams(desc, "reserved_contracts")
+	k.log.Info("update reservered contract", "params", params)
+	err = k.context.LedgerObj.UpdateReservedContract(params, k.context.UtxoBatch)
 	return err
 }
 
@@ -472,12 +515,17 @@ func (k *Kernel) rollbackUpdateReservedContract(desc *contract.TxDesc) error {
 	if k.context == nil || k.context.LedgerObj == nil {
 		return fmt.Errorf("failed to update reservered contract, because no ledger object in context")
 	}
-	params, vErr := k.validateUpdateReservedContract(desc, "old_reserved_contracts")
-	if vErr != nil {
-		return vErr
+	err := k.validateUpdateReservedContract(desc)
+	if err != nil {
+		return err
+	}
+	params, err := k.GetReservedContractParams(desc, "old_reserved_contracts")
+	k.log.Info("rollback reservered contract, params", "params", params)
+	if err != nil {
+		return err
 	}
 	k.log.Info("rollback reservered contract")
-	err := k.context.LedgerObj.UpdateReservedContract(params, k.context.UtxoBatch)
+	err = k.context.LedgerObj.UpdateReservedContract(params, k.context.UtxoBatch)
 	return err
 }
 
