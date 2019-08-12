@@ -300,7 +300,6 @@ func (k *Kernel) validateUpdateReservedContract(desc *contract.TxDesc) error {
 
 		switch tp := desc.Args[argName].(type) {
 		case []interface{}:
-			fmt.Println("first")
 			for _, arg := range desc.Args[argName].([]interface{}) {
 				switch arg.(type) {
 				case map[string]interface{}:
