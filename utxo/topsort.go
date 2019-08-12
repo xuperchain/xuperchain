@@ -51,7 +51,6 @@ func TopSortDFS(g TxGraph) (order []string, cycle bool, childDAG []int) {
 		temp[n] = true
 		for _, m := range g[n] {
 			visit(m)
-
 			if cycleFound {
 				if cycleStart > "" {
 					cyclic = append(cyclic, n)
@@ -78,7 +77,6 @@ func TopSortDFS(g TxGraph) (order []string, cycle bool, childDAG []int) {
 		childDAG = append([]int{len(L) - i}, childDAG...)
 
 		if cycleFound {
-			//return nil, cyclic
 			return nil, true, childDAG
 		}
 	}
