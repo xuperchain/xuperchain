@@ -2,7 +2,6 @@ package p2pv2
 
 import (
 	"context"
-	"crypto/ecdsa"
 	"encoding/json"
 	"errors"
 	"math"
@@ -80,9 +79,7 @@ func (p *P2PServerV2) handleGetAuthentication(ctx context.Context, msg *xuper_p2
 		}
 
 		data := hash.UsingSha256([]byte(v.PeerID + v.Addr + v.Timestamp))
-		ks := []*ecdsa.PublicKey{}
-		ks = append(ks, publicKey)
-		if ok, _ := cryptoClient.VerifyXuperSignature(ks, v.Sign, data); !ok {
+		if ok, _ := cryptoClient.VerifyECDSA(publicKey, v.Sign, data); !ok {
 			p.log.Error("handleGetAuthentication verify sign error")
 			return errRes, errors.New("handleGetAuthentication verify sign error")
 		}

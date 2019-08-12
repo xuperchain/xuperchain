@@ -7,12 +7,12 @@ import (
 )
 
 var (
-	InvalidInputParamsError        = errors.New("Invalid input params")
-	NotExactTheSameCurveInputError = errors.New("The private keys of all the keys are not using the the same curve")
+	ErrInvalidInputParams        = errors.New("Invalid input params")
+	ErrNotExactTheSameCurveInput = errors.New("The private keys of all the keys are not using the the same curve")
 
-	TooSmallNumOfkeysError = errors.New("The total num of keys should be greater than one")
-	EmptyMessageError      = errors.New("Message to be sign should not be nil")
-	InValidSignatureError  = errors.New("XuperSignature is invalid")
+	ErrTooSmallNumOfkeys = errors.New("The total num of keys should be greater than one")
+	ErrEmptyMessage      = errors.New("Message to be sign should not be nil")
+	ErrInvalidSignature  = errors.New("XuperSignature is invalid")
 )
 
 func MarshalXuperSignature(sig *XuperSignature) ([]byte, error) {
@@ -28,7 +28,7 @@ func unmarshalXuperSignature(rawSig []byte) (*XuperSignature, error) {
 
 	// validate xuper sig format
 	if sig.SigContent == nil {
-		return nil, InValidSignatureError
+		return nil, ErrInvalidSignature
 	}
 
 	switch sig.SigType {

@@ -20,11 +20,11 @@ import (
 //}
 
 var (
-	InvalidInputParamsError        = errors.New("Invalid input params")
-	NotExactTheSameCurveInputError = errors.New("The private keys of all the keys are not using the the same curve")
+	ErrInvalidInputParams        = errors.New("Invalid input params")
+	ErrNotExactTheSameCurveInput = errors.New("The private keys of all the keys are not using the the same curve")
 
-	TooSmallNumOfkeysError = errors.New("The total num of keys should be greater than one")
-	EmptyMessageError      = errors.New("Message to be sign should not be nil")
+	ErrTooSmallNumOfkeys = errors.New("The total num of keys should be greater than one")
+	ErrEmptyMessage      = errors.New("Message to be sign should not be nil")
 	NotValidSignatureError = errors.New("Signature is invalid")
 )
 
@@ -53,11 +53,11 @@ func BytesCombine(pBytes ...[]byte) []byte {
 //func MultiSign(keys []*ecdsa.PrivateKey, message []byte) (*MultiSignature, error) {
 func MultiSign(keys []*ecdsa.PrivateKey, message []byte) ([]byte, error) {
 	if len(keys) < MinimumParticipant {
-		return nil, TooSmallNumOfkeysError
+		return nil, ErrTooSmallNumOfkeys
 	}
 
 	if len(message) == 0 {
-		return nil, EmptyMessageError
+		return nil, ErrEmptyMessage
 	}
 
 	// 1. 检验传入的私钥参数(x1, P1), (x2, P2), ..., (xn, Pn) 是否合法
@@ -65,7 +65,7 @@ func MultiSign(keys []*ecdsa.PrivateKey, message []byte) ([]byte, error) {
 	// 所有参与者需要使用同一条椭圆曲线
 	curveCheckResult := checkCurveForPrivateKeys(keys)
 	if curveCheckResult == false {
-		return nil, NotExactTheSameCurveInputError
+		return nil, ErrNotExactTheSameCurveInput
 	}
 
 	// 2. 生成临时随机数的数组(k1, k2, ..., kn)
@@ -204,7 +204,7 @@ func getSharedPublicKeyForPrivateKeys(keys []*ecdsa.PrivateKey) ([]byte, error) 
 	x, y := big.NewInt(0), big.NewInt(0)
 	for i := 0; i < num; i++ {
 		if keys[i] == nil {
-			return nil, InvalidInputParamsError
+			return nil, ErrInvalidInputParams
 		}
 		// 计算P1 + P2 + ...
 		x, y = curve.Add(keys[i].PublicKey.X, keys[i].PublicKey.Y, x, y)
@@ -221,7 +221,7 @@ func GetSharedPublicKeyForPublicKeys(keys []*ecdsa.PublicKey) ([]byte, error) {
 	// 所有参与者需要使用同一条椭圆曲线
 	curveCheckResult := checkCurveForPublicKeys(keys)
 	if curveCheckResult == false {
-		return nil, NotExactTheSameCurveInputError
+		return nil, ErrNotExactTheSameCurveInput
 	}
 
 	num := len(keys)
@@ -229,7 +229,7 @@ func GetSharedPublicKeyForPublicKeys(keys []*ecdsa.PublicKey) ([]byte, error) {
 	x, y := big.NewInt(0), big.NewInt(0)
 	for i := 0; i < num; i++ {
 		if keys[i] == nil {
-			return nil, InvalidInputParamsError
+			return nil, ErrInvalidInputParams
 		}
 
 		x, y = curve.Add(keys[i].X, keys[i].Y, x, y)
@@ -280,7 +280,7 @@ func checkCurveForPublicKeys(keys []*ecdsa.PublicKey) bool {
 //func VerifyMultiSig(keys []*ecdsa.PublicKey, signature *MultiSignature, message []byte) (bool, error) {
 func VerifyMultiSig(keys []*ecdsa.PublicKey, signature []byte, message []byte) (bool, error) {
 	if len(keys) < MinimumParticipant {
-		return false, TooSmallNumOfkeysError
+		return false, ErrTooSmallNumOfkeys
 	}
 
 	//	sig, err := unmarshalMultiSignature(signature)
@@ -297,13 +297,13 @@ func VerifyMultiSig(keys []*ecdsa.PublicKey, signature []byte, message []byte) (
 
 	// empty message
 	if len(message) == 0 {
-		return false, EmptyMessageError
+		return false, ErrEmptyMessage
 	}
 
 	// 所有参与者需要使用同一条椭圆曲线
 	curveCheckResult := checkCurveForPublicKeys(keys)
 	if curveCheckResult == false {
-		return false, NotExactTheSameCurveInputError
+		return false, ErrNotExactTheSameCurveInput
 	}
 
 	curve := keys[0].Curve

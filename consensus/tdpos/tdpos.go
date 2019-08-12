@@ -4,7 +4,6 @@ package tdpos
 
 import (
 	"bytes"
-	"crypto/ecdsa"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -371,9 +370,7 @@ func (tp *TDpos) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock) (bool,
 		return false, nil
 	}
 
-	ks := []*ecdsa.PublicKey{}
-	ks = append(ks, k)
-	valid, err := tp.cryptoClient.VerifyXuperSignature(ks, in.Sign, in.Blockid)
+	valid, err := tp.cryptoClient.VerifyECDSA(k, in.Sign, in.Blockid)
 	if err != nil || !valid {
 		tp.log.Warn("CheckMinerMatch VerifyECDSA error", "logid", header.Logid, "error", err)
 		return false, nil

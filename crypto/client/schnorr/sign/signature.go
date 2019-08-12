@@ -1,4 +1,4 @@
-package schnorr_sign
+package sign
 
 import (
 	"crypto/ecdsa"
@@ -13,16 +13,13 @@ import (
 	"github.com/xuperchain/xuperunion/crypto/hash"
 )
 
+// define errors
 var (
-	GenerateSignatureError = errors.New("Failed to generate the schnorr signature")
-	EmptyMessageError      = errors.New("The message to be signed should not be empty")
+	ErrGenerateSignature = errors.New("Failed to generate the schnorr signature")
+	ErrEmptyMessage      = errors.New("The message to be signed should not be empty")
 )
 
-//type SchnorrSignature struct {
-//	E, S *big.Int
-//}
-
-// Schnorr signatures use a particular function, defined as:
+// Sign : Schnorr signatures use a particular function, defined as:
 // H'(m, s, e) = H(m || s * G + e * P)
 //
 // H is a hash function, for instance SHA256 or SM3.
@@ -73,7 +70,7 @@ var (
 //func Sign(privateKey *ecdsa.PrivateKey, message []byte) (*SchnorrSignature, error) {
 func Sign(privateKey *ecdsa.PrivateKey, message []byte) (schnorrSignature []byte, err error) {
 	if privateKey == nil {
-		return nil, fmt.Errorf("Invalid privateKey. PrivateKey must not be nil.")
+		return nil, fmt.Errorf("Invalid privateKey. PrivateKey must not be nil")
 	}
 
 	// 1. Compute k = H(m || x)
@@ -92,7 +89,7 @@ func Sign(privateKey *ecdsa.PrivateKey, message []byte) (schnorrSignature []byte
 
 	intS, err := ComputeSByKEX(curve, intK, intE, privateKey.D)
 	if err != nil {
-		return nil, GenerateSignatureError
+		return nil, ErrGenerateSignature
 	}
 
 	//	return marshalSchnorrSignature(intE, intS)
@@ -108,21 +105,23 @@ func Sign(privateKey *ecdsa.PrivateKey, message []byte) (schnorrSignature []byte
 		return nil, err
 	}
 
-	// 组装超级签名
-	xuperSig := &common.XuperSignature{
-		SigType:    common.Schnorr,
-		SigContent: sigContent,
-	}
+	return sigContent, nil
 
-	sig, err := json.Marshal(xuperSig)
-	if err != nil {
-		return nil, err
-	}
+	// // 组装超级签名
+	// xuperSig := &common.XuperSignature{
+	// 	SigType:    common.Schnorr,
+	// 	SigContent: sigContent,
+	// }
 
-	return sig, nil
+	// sig, err := json.Marshal(xuperSig)
+	// if err != nil {
+	// 	return nil, err
+	// }
+
+	// return sig, nil
 }
 
-// Compute s = k - e*x
+// ComputeSByKEX Compute s = k - e*x
 func ComputeSByKEX(curve elliptic.Curve, k, e, x *big.Int) (*big.Int, error) {
 	intS := new(big.Int).Sub(k, new(big.Int).Mul(e, x))
 
@@ -138,43 +137,14 @@ func ComputeSByKEX(curve elliptic.Curve, k, e, x *big.Int) (*big.Int, error) {
 
 		// if intS == 0 happened after DivMod...
 		if intS.Sign() != 1 {
-			return nil, GenerateSignatureError
+			return nil, ErrGenerateSignature
 		}
 	}
 
 	return intS, nil
 }
 
-//func marshalSchnorrSignature(e, s *big.Int) ([]byte, error) {
-//	return asn1.Marshal(SchnorrSignature{e, s})
-//}
-
-//func unmarshalSchnorrSignature(rawSig []byte) (*SchnorrSignature, error) {
-//	sig := new(SchnorrSignature)
-//	_, err := asn1.Unmarshal(rawSig, sig)
-//	if err != nil {
-//		return nil, fmt.Errorf("Failed unmashalling schnorr signature [%s]", err)
-//	}
-//
-//	// Validate sig format
-//	if sig.E == nil {
-//		return nil, fmt.Errorf("Invalid Schnorr signature. E must not be nil.")
-//	}
-//	if sig.S == nil {
-//		return nil, fmt.Errorf("Invalid Schnorr signature. S must not be nil.")
-//	}
-//
-//	if sig.E.Sign() != 1 {
-//		return nil, errors.New("Invalid Schnorr signature. E must be larger than zero")
-//	}
-//	if sig.S.Sign() != 1 {
-//		return nil, errors.New("Invalid Schnorr signature. S must be larger than zero")
-//	}
-//
-//	return sig, nil
-//}
-
-// In order to verify the signature, only need to check the equation:
+// Verify : In order to verify the signature, only need to check the equation:
 // H'(m, s, e) = H(m || s * G + e * P) = e
 // i.e. whether e is equal to H(m || s * G + e * P)
 func Verify(publicKey *ecdsa.PublicKey, sig []byte, message []byte) (valid bool, err error) {

@@ -5,17 +5,12 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
-	"fmt"
 
 	"github.com/xuperchain/xuperunion/crypto/account"
 	"github.com/xuperchain/xuperunion/crypto/client/base"
 	"github.com/xuperchain/xuperunion/crypto/config"
 	"github.com/xuperchain/xuperunion/crypto/ecies"
-	"github.com/xuperchain/xuperunion/crypto/multisign"
-	"github.com/xuperchain/xuperunion/crypto/schnorr_ring_sign"
-	"github.com/xuperchain/xuperunion/crypto/schnorr_sign"
 	"github.com/xuperchain/xuperunion/crypto/sign"
-	"github.com/xuperchain/xuperunion/crypto/signature"
 	"github.com/xuperchain/xuperunion/crypto/utils"
 	"github.com/xuperchain/xuperunion/hdwallet/key"
 	walletRand "github.com/xuperchain/xuperunion/hdwallet/rand"
@@ -150,118 +145,4 @@ func (xcc XchainCryptoClient) GetEcdsaPrivateKeyFromJSON(jsonBytes []byte) (*ecd
 // GetEcdsaPublicKeyFromJSON 从导出的公钥文件读取公钥
 func (xcc XchainCryptoClient) GetEcdsaPublicKeyFromJSON(jsonBytes []byte) (*ecdsa.PublicKey, error) {
 	return account.GetEcdsaPublicKeyFromJSON(jsonBytes)
-}
-
-// --- 多重签名相关 start ---
-
-// 每个多重签名算法流程的参与节点生成32位长度的随机byte，返回值可以认为是k
-func (xcc XchainCryptoClient) GetRandom32Bytes() ([]byte, error) {
-	return multisign.GetRandom32Bytes()
-}
-
-// 每个多重签名算法流程的参与节点生成Ri = Ki*G
-func (xcc XchainCryptoClient) GetRiUsingRandomBytes(key *ecdsa.PublicKey, k []byte) []byte {
-	return multisign.GetRiUsingRandomBytes(key, k)
-}
-
-// 负责计算多重签名的节点来收集所有节点的Ri，并计算R = k1*G + k2*G + ... + kn*G
-func (xcc XchainCryptoClient) GetRUsingAllRi(key *ecdsa.PublicKey, arrayOfRi [][]byte) []byte {
-	return multisign.GetRUsingAllRi(key, arrayOfRi)
-}
-
-// 负责计算多重签名的节点来收集所有节点的公钥Pi，并计算公共公钥：C = P1 + P2 + ... + Pn
-func (xcc XchainCryptoClient) GetSharedPublicKeyForPublicKeys(keys []*ecdsa.PublicKey) ([]byte, error) {
-	return multisign.GetSharedPublicKeyForPublicKeys(keys)
-}
-
-// 负责计算多重签名的节点将计算出的R和C分别传递给各个参与节点后，由各个参与节点再次计算自己的Si
-// 计算 Si = Ki + HASH(C,R,m) * Xi
-// X代表大数D，也就是私钥的关键参数
-func (xcc XchainCryptoClient) GetSiUsingKCRM(key *ecdsa.PrivateKey, k []byte, c []byte, r []byte, message []byte) []byte {
-	return multisign.GetSiUsingKCRM(key, k, c, r, message)
-}
-
-// 负责计算多重签名的节点来收集所有节点的Si，并计算出S = sum(si)
-func (xcc XchainCryptoClient) GetSUsingAllSi(arrayOfSi [][]byte) []byte {
-	return multisign.GetSUsingAllSi(arrayOfSi)
-}
-
-// 负责计算多重签名的节点，最终生成多重签名的统一签名格式
-//func (xcc XchainCryptoClient) GenerateMultiSignSignature(s []byte, r []byte) (*multisign.MultiSignature, error) {
-func (xcc XchainCryptoClient) GenerateMultiSignSignature(s []byte, r []byte) ([]byte, error) {
-	return multisign.GenerateMultiSignSignature(s, r)
-}
-
-// 使用ECC公钥数组来进行多重签名的验证
-//func (xcc XchainCryptoClient) VerifyMultiSig(keys []*ecdsa.PublicKey, signature *multisign.MultiSignature, message []byte) (bool, error) {
-func (xcc XchainCryptoClient) VerifyMultiSig(keys []*ecdsa.PublicKey, signature, message []byte) (bool, error) {
-	// 判断是否是nist标准的私钥
-	if len(keys) < 2 {
-		return false, fmt.Errorf("The total num of keys should be greater than two.")
-	}
-
-	switch keys[0].Params().Name {
-	case config.CurveNist: // NIST
-		signature, err := multisign.VerifyMultiSig(keys, signature, message)
-		return signature, err
-	case config.CurveGm: // 国密
-		return false, fmt.Errorf("This cryptography has not been supported yet.")
-	default: // 不支持的密码学类型
-		return false, fmt.Errorf("This cryptography has not been supported yet.")
-	}
-}
-
-// -- 多重签名的另一种用法，适用于完全中心化的流程
-// 使用ECC私钥数组来进行多重签名，生成统一签名格式
-//func (xcc XchainCryptoClient) MultiSign(keys []*ecdsa.PrivateKey, message []byte) (*multisign.MultiSignature, error) {
-func (xcc XchainCryptoClient) MultiSign(keys []*ecdsa.PrivateKey, message []byte) ([]byte, error) {
-	// 判断是否是nist标准的私钥
-	if len(keys) < 2 {
-		return nil, fmt.Errorf("The total num of keys should be greater than two.")
-	}
-
-	switch keys[0].Params().Name {
-	case config.CurveNist: // NIST
-		signature, err := multisign.MultiSign(keys, message)
-		return signature, err
-	case config.CurveGm: // 国密
-		return nil, fmt.Errorf("This cryptography has not been supported yet.")
-	default: // 不支持的密码学类型
-		return nil, fmt.Errorf("This cryptography has not been supported yet.")
-	}
-}
-
-// --- 多重签名相关 end ---
-
-// --- 	schnorr签名算法相关 start ---
-
-// schnorr签名算法 生成统一签名
-func (xcc XchainCryptoClient) SignSchnorr(privateKey *ecdsa.PrivateKey, message []byte) ([]byte, error) {
-	return schnorr_sign.Sign(privateKey, message)
-}
-
-// schnorr签名算法 验证签名
-func (xcc XchainCryptoClient) VerifySchnorr(publicKey *ecdsa.PublicKey, sig, message []byte) (bool, error) {
-	return schnorr_sign.Verify(publicKey, sig, message)
-}
-
-// --- 	schnorr签名算法相关 end ---
-
-// --- 	schnorr 环签名算法相关 start ---
-
-// schnorr环签名算法 生成统一签名
-func (xcc XchainCryptoClient) SignSchnorrRing(keys []*ecdsa.PublicKey, privateKey *ecdsa.PrivateKey, message []byte) (ringSignature []byte, err error) {
-	return schnorr_ring_sign.Sign(keys, privateKey, message)
-}
-
-// schnorr环签名算法 验证签名
-func (xcc XchainCryptoClient) VerifySchnorrRing(keys []*ecdsa.PublicKey, sig, message []byte) (bool, error) {
-	return schnorr_ring_sign.Verify(keys, sig, message)
-}
-
-// --- 	schnorr 环签名算法相关 end ---
-
-// --- 统一验签算法
-func (xcc XchainCryptoClient) VerifyXuperSignature(publicKeys []*ecdsa.PublicKey, sig []byte, message []byte) (valid bool, err error) {
-	return signature.XuperSigVerify(publicKeys, sig, message)
 }

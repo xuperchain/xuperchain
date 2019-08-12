@@ -1,4 +1,4 @@
-package signature
+package verify
 
 import (
 	//	"bytes"
@@ -8,23 +8,24 @@ import (
 	"errors"
 	"fmt"
 
+	schnorr_ring_sign "github.com/xuperchain/xuperunion/crypto/client/schnorr/ringsign"
+	schnorr_sign "github.com/xuperchain/xuperunion/crypto/client/schnorr/sign"
 	"github.com/xuperchain/xuperunion/crypto/common"
 	"github.com/xuperchain/xuperunion/crypto/config"
 	"github.com/xuperchain/xuperunion/crypto/multisign"
-	"github.com/xuperchain/xuperunion/crypto/schnorr_ring_sign"
-	"github.com/xuperchain/xuperunion/crypto/schnorr_sign"
 	"github.com/xuperchain/xuperunion/crypto/sign"
 )
 
+// define errors
 var (
-	InvalidInputParamsError        = errors.New("Invalid input params")
-	NotExactTheSameCurveInputError = errors.New("The private keys of all the keys are not using the the same curve")
-
-	TooSmallNumOfkeysError = errors.New("The total num of keys should be greater than one")
-	EmptyMessageError      = errors.New("Message to be sign should not be nil")
-	InValidSignatureError  = errors.New("XuperSignature is invalid")
+	ErrInvalidInputParams        = errors.New("Invalid input params")
+	ErrNotExactTheSameCurveInput = errors.New("The private keys of all the keys are not using the the same curve")
+	ErrTooSmallNumOfkeys         = errors.New("The total num of keys should be greater than one")
+	ErrEmptyMessage              = errors.New("Message to be sign should not be nil")
+	ErrInvalidSignature          = errors.New("XuperSignature is invalid")
 )
 
+// XuperSigVerify support to verify multiple kinds of signatures
 func XuperSigVerify(keys []*ecdsa.PublicKey, signature, message []byte) (bool, error) {
 	//	xuperSig, err := unmarshalXuperSignature(signature)
 	xuperSig := new(common.XuperSignature)
@@ -34,15 +35,13 @@ func XuperSigVerify(keys []*ecdsa.PublicKey, signature, message []byte) (bool, e
 	if err != nil {
 		switch keys[0].Params().Name {
 		case config.CurveNist: // NIST
-			verifyResult, err := sign.VerifyOldECDSA(keys[0], signature, message)
+			verifyResult, err := sign.VerifyECDSA(keys[0], signature, message)
 			return verifyResult, err
 		case config.CurveGm: // 国密
-			return false, fmt.Errorf("This cryptography[%v] has not been supported yet.", keys[0].Params().Name)
+			return false, fmt.Errorf("This cryptography[%v] has not been supported yet", keys[0].Params().Name)
 		default: // 不支持的密码学类型
-			return false, fmt.Errorf("This cryptography[%v] has not been supported yet.", keys[0].Params().Name)
+			return false, fmt.Errorf("This cryptography[%v] has not been supported yet", keys[0].Params().Name)
 		}
-
-		return false, err
 	}
 
 	switch xuperSig.SigType {
@@ -50,12 +49,12 @@ func XuperSigVerify(keys []*ecdsa.PublicKey, signature, message []byte) (bool, e
 	case common.ECDSA:
 		switch keys[0].Params().Name {
 		case config.CurveNist: // NIST
-			verifyResult, err := sign.VerifyECDSA(keys[0], xuperSig.SigContent, message)
+			verifyResult, err := sign.XuperVerify(keys[0], xuperSig.SigContent, message)
 			return verifyResult, err
 		case config.CurveGm: // 国密
-			return false, fmt.Errorf("This cryptography[%v] has not been supported yet.", keys[0].Params().Name)
+			return false, fmt.Errorf("This cryptography[%v] has not been supported yet", keys[0].Params().Name)
 		default: // 不支持的密码学类型
-			return false, fmt.Errorf("This cryptography[%v] has not been supported yet.", keys[0].Params().Name)
+			return false, fmt.Errorf("This cryptography[%v] has not been supported yet", keys[0].Params().Name)
 		}
 	// Schnorr签名
 	case common.Schnorr:
@@ -64,9 +63,9 @@ func XuperSigVerify(keys []*ecdsa.PublicKey, signature, message []byte) (bool, e
 			verifyResult, err := schnorr_sign.Verify(keys[0], xuperSig.SigContent, message)
 			return verifyResult, err
 		case config.CurveGm: // 国密
-			return false, fmt.Errorf("This cryptography[%v] has not been supported yet.", keys[0].Params().Name)
+			return false, fmt.Errorf("This cryptography[%v] has not been supported yet", keys[0].Params().Name)
 		default: // 不支持的密码学类型
-			return false, fmt.Errorf("This cryptography[%v] has not been supported yet.", keys[0].Params().Name)
+			return false, fmt.Errorf("This cryptography[%v] has not been supported yet", keys[0].Params().Name)
 		}
 	// Schnorr环签名
 	case common.SchnorrRing:
@@ -75,9 +74,9 @@ func XuperSigVerify(keys []*ecdsa.PublicKey, signature, message []byte) (bool, e
 			verifyResult, err := schnorr_ring_sign.Verify(keys, xuperSig.SigContent, message)
 			return verifyResult, err
 		case config.CurveGm: // 国密
-			return false, fmt.Errorf("This cryptography[%v] has not been supported yet.", keys[0].Params().Name)
+			return false, fmt.Errorf("This cryptography[%v] has not been supported yet", keys[0].Params().Name)
 		default: // 不支持的密码学类型
-			return false, fmt.Errorf("This cryptography[%v] has not been supported yet.", keys[0].Params().Name)
+			return false, fmt.Errorf("This cryptography[%v] has not been supported yet", keys[0].Params().Name)
 		}
 	// 多重签名
 	case common.MultiSig:
@@ -86,17 +85,15 @@ func XuperSigVerify(keys []*ecdsa.PublicKey, signature, message []byte) (bool, e
 			verifyResult, err := multisign.VerifyMultiSig(keys, xuperSig.SigContent, message)
 			return verifyResult, err
 		case config.CurveGm: // 国密
-			return false, fmt.Errorf("This cryptography[%v] has not been supported yet.", keys[0].Params().Name)
+			return false, fmt.Errorf("This cryptography[%v] has not been supported yet", keys[0].Params().Name)
 		default: // 不支持的密码学类型
-			return false, fmt.Errorf("This cryptography[%v] has not been supported yet.", keys[0].Params().Name)
+			return false, fmt.Errorf("This cryptography[%v] has not been supported yet", keys[0].Params().Name)
 		}
 	// 不支持的签名类型
 	default:
-		err = fmt.Errorf("This XuperSignature type[%v] is not supported in this version.", xuperSig.SigType)
+		err = fmt.Errorf("This XuperSignature type[%v] is not supported in this version", xuperSig.SigType)
 		return false, err
 	}
-
-	return false, nil
 }
 
 func unmarshalXuperSignature(rawSig []byte) (*common.XuperSignature, error) {
@@ -108,7 +105,7 @@ func unmarshalXuperSignature(rawSig []byte) (*common.XuperSignature, error) {
 
 	// validate xuper sig format
 	if sig.SigContent == nil {
-		return nil, InValidSignatureError
+		return nil, ErrInvalidSignature
 	}
 
 	return sig, nil

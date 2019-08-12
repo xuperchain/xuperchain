@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"crypto/ecdsa"
 	"errors"
 
 	crypto_client "github.com/xuperchain/xuperunion/crypto/client"
@@ -27,7 +26,5 @@ func VerifySign(ak string, si *pb.SignatureInfo, data []byte) (bool, error) {
 		return false, errors.New("address and public key not match")
 	}
 
-	ks := []*ecdsa.PublicKey{}
-	ks = append(ks, ecdsaKey)
-	return xcc.VerifyXuperSignature(ks, si.Sign, data)
+	return xcc.VerifyECDSA(ecdsaKey, si.Sign, data)
 }

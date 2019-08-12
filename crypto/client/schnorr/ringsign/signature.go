@@ -1,4 +1,4 @@
-package schnorr_ring_sign
+package ringsign
 
 import (
 	"crypto/ecdsa"
@@ -12,18 +12,18 @@ import (
 
 	mathRand "math/rand"
 
+	schnorr_sign "github.com/xuperchain/xuperunion/crypto/client/schnorr/sign"
 	"github.com/xuperchain/xuperunion/crypto/common"
 	"github.com/xuperchain/xuperunion/crypto/hash"
-	"github.com/xuperchain/xuperunion/crypto/schnorr_sign"
 	"github.com/xuperchain/xuperunion/hdwallet/rand"
 )
 
 var (
 	GenerateRingSignatureError     = errors.New("failed to generate ring signature")
-	TooSmallNumOfkeysError         = errors.New("The total num of keys should be greater than one")
+	ErrTooSmallNumOfkeys         = errors.New("The total num of keys should be greater than one")
 	CurveParamNilError             = errors.New("curve input param is nil")
-	NotExactTheSameCurveInputError = errors.New("the curve is not same as curve of members")
-	InvalidInputParamsError        = errors.New("invalid input")
+	ErrNotExactTheSameCurveInput = errors.New("the curve is not same as curve of members")
+	ErrInvalidInputParams        = errors.New("invalid input")
 	KeyParamNotMatchError          = errors.New("key param not match")
 )
 
@@ -205,20 +205,20 @@ func checkRingSignParams(keys []*ecdsa.PublicKey, privateKey *ecdsa.PrivateKey, 
 
 	// members of ring should be no less than two
 	if len(keys) < MinimumParticipant {
-		return TooSmallNumOfkeysError
+		return ErrTooSmallNumOfkeys
 	}
 
 	// all the public keys need to use the same curve
 	// 所有参与者需要使用同一条椭圆曲线
 	curveCheckResult := checkCurveForPublicKeys(keys)
 	if curveCheckResult == false {
-		return NotExactTheSameCurveInputError
+		return ErrNotExactTheSameCurveInput
 	}
 
 	curve := keys[0].Curve
 
 	if curve != privateKey.Curve {
-		return NotExactTheSameCurveInputError
+		return ErrNotExactTheSameCurveInput
 	}
 
 	return nil
@@ -267,7 +267,7 @@ func checkPublicKeysMatchSignature(keys []*ecdsa.PublicKey, signature *common.Ri
 //func Verify(sig *RingSignature, message []byte) bool {
 func Verify(keys []*ecdsa.PublicKey, signature, message []byte) (bool, error) {
 	if len(keys) < MinimumParticipant {
-		return false, TooSmallNumOfkeysError
+		return false, ErrTooSmallNumOfkeys
 	}
 
 	// Sanity check begins
@@ -305,7 +305,7 @@ func Verify(keys []*ecdsa.PublicKey, signature, message []byte) (bool, error) {
 
 	// 参与者和验签公钥需要使用同一条椭圆曲线
 	if keys[0].Curve.Params().Name != sig.CurveName {
-		return false, NotExactTheSameCurveInputError
+		return false, ErrNotExactTheSameCurveInput
 	}
 
 	curve := keys[0].Curve
@@ -313,7 +313,7 @@ func Verify(keys []*ecdsa.PublicKey, signature, message []byte) (bool, error) {
 	// 所有参与者需要使用同一条椭圆曲线
 	curveCheckResult := checkCurveForPublicKeys(keys)
 	if curveCheckResult == false {
-		return false, NotExactTheSameCurveInputError
+		return false, ErrNotExactTheSameCurveInput
 	}
 
 	// 判断传入的公钥数组是否精准的匹配了环签名中的公钥内容

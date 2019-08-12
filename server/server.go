@@ -6,7 +6,6 @@ package server
 
 import (
 	"bytes"
-	"crypto/ecdsa"
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
@@ -432,9 +431,7 @@ func (s *server) DeployNativeCode(ctx context.Context, request *pb.DeployNativeC
 
 	descbuf, _ := proto.Marshal(desc)
 	deschash := hash.DoubleSha256(descbuf)
-	ks := []*ecdsa.PublicKey{}
-	ks = append(ks, pubkey)
-	ok, err = bc.CryptoClient.VerifyXuperSignature(ks, request.Sign, deschash)
+	ok, err = bc.CryptoClient.VerifyECDSA(pubkey, request.Sign, deschash)
 	if err != nil || !ok {
 		return nil, errors.New("verify sign error")
 	}

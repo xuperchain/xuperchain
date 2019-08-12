@@ -10,7 +10,7 @@ import (
 
 // Encrypt message using public key
 func Encrypt(publicKey *ecdsa.PublicKey, msg []byte) (cypherText []byte, err error) {
-	if publicKey.Curve.Params().Name != "P-256" {
+	if publicKey.Curve.Params().Name != "P-256" && publicKey.Curve.Params().Name != "P-256-SN" {
 		err = fmt.Errorf("curve [%v] is not supported yet", publicKey.Curve.Params().Name)
 		return nil, err
 	}
@@ -27,7 +27,7 @@ func Encrypt(publicKey *ecdsa.PublicKey, msg []byte) (cypherText []byte, err err
 
 // Decrypt message using private key
 func Decrypt(privateKey *ecdsa.PrivateKey, cypherText []byte) (msg []byte, err error) {
-	if privateKey.PublicKey.Curve.Params().Name != "P-256" {
+	if privateKey.PublicKey.Curve.Params().Name != "P-256" && privateKey.PublicKey.Curve.Params().Name != "P-256-SN" {
 		err = fmt.Errorf("curve [%v] is not supported yet", privateKey.PublicKey.Curve.Params().Name)
 		return nil, err
 	}
