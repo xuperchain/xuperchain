@@ -66,6 +66,7 @@ func TopSortDFS(g TxGraph) (order []string, cycle bool, childDAG []int) {
 		i--
 		L[i] = n
 	}
+	lastDag := 0
 	for n := range g {
 		if perm[n] || len(g[n]) <= 0 {
 			continue
@@ -74,7 +75,9 @@ func TopSortDFS(g TxGraph) (order []string, cycle bool, childDAG []int) {
 			continue
 		}
 		visit(n)
-		childDAG = append([]int{len(L) - i}, childDAG...)
+
+		childDAG = append([]int{len(L) - i - lastDag}, childDAG...)
+		lastDag = i
 
 		if cycleFound {
 			return nil, true, childDAG
