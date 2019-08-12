@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	//"github.com/xuperchain/xuperunion/global"
+	"github.com/xuperchain/xuperunion/global"
 	"github.com/xuperchain/xuperunion/ledger"
 	"github.com/xuperchain/xuperunion/pb"
 )
@@ -33,8 +33,7 @@ func (uv *UtxoVM) verifyTxWorker(itxlist []*InboundTx) error {
 	uv.xlog.Debug("async tx list size", "size", len(itxlist))
 	//校验tx合法性
 	for _, itx := range itxlist {
-		//ok, xerr := uv.ImmediateVerifyTx(itx.tx, false)
-		ok, _ := uv.ImmediateVerifyTx(itx.tx, false)
+		ok, xerr := uv.ImmediateVerifyTx(itx.tx, false)
 		if !ok {
 			uv.xlog.Warn("invalid transaction found", "txid", global.F(itx.tx.Txid), "err", xerr)
 		} else {
