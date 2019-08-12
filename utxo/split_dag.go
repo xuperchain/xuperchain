@@ -37,31 +37,3 @@ func (uv *UtxoVM) buildTxDeps(txs []*pb.Transaction) (map[string]*pb.Transaction
 	}
 	return txMap, txGraph, nil
 }
-
-// SplitChildDAGs split child dags
-func SplitChildDAGs(txGraph TxGraph, outputTxList []string) []int {
-	step := 0
-	idx := 0
-	// 存放每个子DAG的大小,作为拆分子DAG的索引
-	res := []int{}
-	size := len(outputTxList)
-	for idx < size {
-		step = 0
-		// 不被别人依赖
-		if len(txGraph[outputTxList[idx]]) <= 0 {
-			step = 1
-		} else if len(txGraph[outputTxList[idx]]) > 0 {
-			// 被别人依赖
-			tmp := SplitChildDAGs(txGraph, txGraph[outputTxList[idx]])
-			// 该子DAG的元素个数
-			for _, v := range tmp {
-				step += v
-			}
-		}
-		// 当前子DAG的元素个数
-		res = append(res, step)
-		// 跳过已经经过拣选的元素
-		idx += step
-	}
-	return res
-}

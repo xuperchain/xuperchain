@@ -15,12 +15,16 @@ type TxGraph map[string][]string
 //       cyclic: 如果发现有环形依赖关系则输出这个数组
 //
 // 实现参考： https://rosettacode.org/wiki/Topological_sort#Go
-func TopSortDFS(g TxGraph) (order, cyclic []string) {
+func TopSortDFS(g TxGraph) (order []string, cycle bool, childDAG []int) {
 	// 统计每个tx的次数(包括被引用以及引用次数)
 	degreeForTx := map[string]int{}
+	headTx := map[string]int{}
+	cyclic := []string{}
 	for k, outputs := range g {
 		degreeForTx[k]++
+		headTx[k]++
 		for _, m := range outputs {
+			headTx[m]--
 			if g[m] == nil {
 				g[m] = []string{} //预处理一下，coinbase交易可能没有依赖
 				degreeForTx[m]++
@@ -47,6 +51,7 @@ func TopSortDFS(g TxGraph) (order, cyclic []string) {
 		temp[n] = true
 		for _, m := range g[n] {
 			visit(m)
+
 			if cycleFound {
 				if cycleStart > "" {
 					cyclic = append(cyclic, n)
@@ -66,9 +71,15 @@ func TopSortDFS(g TxGraph) (order, cyclic []string) {
 		if perm[n] || len(g[n]) <= 0 {
 			continue
 		}
+		if v, ok := headTx[n]; ok && v != 1 {
+			continue
+		}
 		visit(n)
+		childDAG = append([]int{len(L) - i}, childDAG...)
+
 		if cycleFound {
-			return nil, cyclic
+			//return nil, cyclic
+			return nil, true, childDAG
 		}
 	}
 	leftIdx := 0
@@ -81,5 +92,9 @@ func TopSortDFS(g TxGraph) (order, cyclic []string) {
 			leftIdx++
 		}
 	}
-	return L, nil
+	// 存在环
+	if leftIdx != i {
+		return nil, true, nil
+	}
+	return L, false, childDAG
 }

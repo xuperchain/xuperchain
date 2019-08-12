@@ -17,11 +17,12 @@ func (uv *UtxoVM) verifyBlockTxs(block *pb.InternalBlock, isRootTx bool, unconfi
 	if buildTxDepsErr != nil {
 		return buildTxDepsErr
 	}
-	order, cyclic := TopSortDFS(txGraph)
-	if cyclic != nil {
+	//order, cyclic, childDAGSizeArr := TopSortDFS(txGraph)
+	_, cyclic, childDAGSizeArr := TopSortDFS(txGraph)
+	//if cyclic != nil {
+	if cyclic {
 		return errors.New("there is a cycle in block's transactions")
 	}
-	childDAGSizeArr := SplitChildDAGs(txGraph, order)
 	wg := sync.WaitGroup{}
 	count, length := 0, len(childDAGSizeArr)
 	start, end := 0, 0

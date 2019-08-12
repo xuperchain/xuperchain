@@ -9,8 +9,8 @@ func TestTopSortWithCircle(t *testing.T) {
 	graph["tx3"] = []string{"tx1", "tx2"}
 	graph["tx4"] = []string{"tx5", "tx6"}
 	graph["tx2"] = []string{"tx3"}
-	_, circle := TopSortDFS(graph)
-	if circle == nil {
+	_, circle, _ := TopSortDFS(graph)
+	if circle == false {
 		t.Error("expect circle, but no circle")
 	}
 }
@@ -23,8 +23,8 @@ func TestTopSortWithoutCircle(t *testing.T) {
 	graph := map[string][]string{}
 	graph["tx3"] = []string{"tx1", "tx2"}
 	graph["tx4"] = []string{"tx5", "tx6"}
-	order, circle := TopSortDFS(graph)
-	if circle != nil || len(order) != 6 {
+	order, circle, _ := TopSortDFS(graph)
+	if circle || len(order) != 6 {
 		t.Error("TestTopSortWithoutCircle error")
 	}
 	// tx3 tx1 tx2 | tx2 tx1

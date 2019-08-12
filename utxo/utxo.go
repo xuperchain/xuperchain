@@ -864,8 +864,8 @@ func (uv *UtxoVM) GetUnconfirmedTx(dedup bool) ([]*pb.Transaction, error) {
 		return nil, loadErr
 	}
 	// 拓扑排序，输出的顺序是被依赖的在前，依赖方在后
-	outputTxList, unexpectedCyclic := TopSortDFS(txGraph)
-	if len(unexpectedCyclic) > 0 { // 交易之间检测出了环形的依赖关系
+	outputTxList, unexpectedCyclic, _ := TopSortDFS(txGraph)
+	if unexpectedCyclic { // 交易之间检测出了环形的依赖关系
 		uv.xlog.Warn("transaction conflicted", "unexpectedCyclic", unexpectedCyclic)
 		return nil, ErrUnexpected
 	}
@@ -1344,8 +1344,8 @@ func (uv *UtxoVM) processUnconfirmTxs(block *pb.InternalBlock, batch kvdb.Batch,
 	}
 	if needRepost {
 		go func() {
-			sortTxList, unexpectedCyclic := TopSortDFS(unconfirmTxGraph)
-			if len(unexpectedCyclic) > 0 {
+			sortTxList, unexpectedCyclic, _ := TopSortDFS(unconfirmTxGraph)
+			if unexpectedCyclic {
 				uv.xlog.Warn("transaction conflicted", "unexpectedCyclic", unexpectedCyclic)
 				return
 			}
