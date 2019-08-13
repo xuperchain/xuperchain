@@ -18,15 +18,17 @@ import (
 	"github.com/xuperchain/xuperunion/hdwallet/rand"
 )
 
+// define errors
 var (
-	GenerateRingSignatureError     = errors.New("failed to generate ring signature")
+	ErrGenerateRingSignature     = errors.New("failed to generate ring signature")
 	ErrTooSmallNumOfkeys         = errors.New("The total num of keys should be greater than one")
-	CurveParamNilError             = errors.New("curve input param is nil")
+	ErrCurveParamNil             = errors.New("curve input param is nil")
 	ErrNotExactTheSameCurveInput = errors.New("the curve is not same as curve of members")
 	ErrInvalidInputParams        = errors.New("invalid input")
-	KeyParamNotMatchError          = errors.New("key param not match")
+	ErrKeyParamNotMatch          = errors.New("key param not match")
 )
 
+// ring sign consts
 const (
 	MinimumParticipant = 2
 )
@@ -48,7 +50,7 @@ const (
 //	S       []*big.Int
 //}
 
-// Schnorr Ring Signature use a particular function, the same as Schnorr signatures, defined as:
+// Sign : Schnorr Ring Signature use a particular function, the same as Schnorr signatures, defined as:
 // H'(m, s(i), e(i)) = H(m || s(i)*G + e(i)*P(i))
 //
 // To verify the ring signature, check that the result of H'(m, s(i), e(i)) is equal to e((i+1) % R).
@@ -147,7 +149,7 @@ func Sign(keys []*ecdsa.PublicKey, privateKey *ecdsa.PrivateKey, message []byte)
 
 	selfS, err := schnorr_sign.ComputeSByKEX(curve, selfK, selfE, privateKey.D)
 	if err != nil {
-		return nil, GenerateRingSignatureError
+		return nil, ErrGenerateRingSignature
 	}
 
 	allOfS[signerIndex] = selfS
@@ -200,7 +202,7 @@ func Sign(keys []*ecdsa.PublicKey, privateKey *ecdsa.PrivateKey, message []byte)
 
 func checkRingSignParams(keys []*ecdsa.PublicKey, privateKey *ecdsa.PrivateKey, message []byte) error {
 	if privateKey == nil {
-		return fmt.Errorf("Invalid privateKey. PrivateKey must not be nil.")
+		return fmt.Errorf("Invalid privateKey. PrivateKey must not be nil")
 	}
 
 	// members of ring should be no less than two
@@ -263,8 +265,7 @@ func checkPublicKeysMatchSignature(keys []*ecdsa.PublicKey, signature *common.Ri
 	return true
 }
 
-// check the ring signature
-//func Verify(sig *RingSignature, message []byte) bool {
+// Verify check the ring signature
 func Verify(keys []*ecdsa.PublicKey, signature, message []byte) (bool, error) {
 	if len(keys) < MinimumParticipant {
 		return false, ErrTooSmallNumOfkeys
@@ -319,7 +320,7 @@ func Verify(keys []*ecdsa.PublicKey, signature, message []byte) (bool, error) {
 	// 判断传入的公钥数组是否精准的匹配了环签名中的公钥内容
 	keyMatchCheckResult := checkPublicKeysMatchSignature(keys, sig)
 	if keyMatchCheckResult == false {
-		return false, KeyParamNotMatchError
+		return false, ErrKeyParamNotMatch
 	}
 
 	e := sig.E

@@ -1,8 +1,6 @@
 package common
 
 import (
-	//	"encoding/json"
-	//	"crypto/elliptic"
 	"math/big"
 )
 
@@ -20,29 +18,30 @@ const (
 
 // --- 签名数据结构相关 start ---
 
-// 统一的签名结构
+// XuperSignature 统一的签名结构
 type XuperSignature struct {
 	SigType    string
 	SigContent []byte
 }
 
-// ECDSA签名
+// ECDSASignature ECDSA签名
 type ECDSASignature struct {
 	R, S *big.Int
 }
 
-// Schnorr签名，EDDSA的前身
+// SchnorrSignature Schnorr签名，EDDSA的前身
 type SchnorrSignature struct {
 	E, S *big.Int
 }
 
 // --- Schnorr环签名的数据结构定义 start ---
 
+// PublicKeyFactor 公钥元素
 type PublicKeyFactor struct {
 	X, Y *big.Int
 }
 
-// Schnorr环签名
+// RingSignature Schnorr环签名
 type RingSignature struct {
 	//	elliptic.Curve
 	CurveName string
@@ -53,7 +52,7 @@ type RingSignature struct {
 
 // --- Schnorr环签名的数据结构定义 end ---
 
-// 多重签名
+// MultiSignature 多重签名
 type MultiSignature struct {
 	S []byte
 	R []byte

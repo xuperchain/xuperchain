@@ -19,15 +19,16 @@ import (
 //	R []byte
 //}
 
+// define errors
 var (
 	ErrInvalidInputParams        = errors.New("Invalid input params")
 	ErrNotExactTheSameCurveInput = errors.New("The private keys of all the keys are not using the the same curve")
-
-	ErrTooSmallNumOfkeys = errors.New("The total num of keys should be greater than one")
-	ErrEmptyMessage      = errors.New("Message to be sign should not be nil")
-	NotValidSignatureError = errors.New("Signature is invalid")
+	ErrTooSmallNumOfkeys         = errors.New("The total num of keys should be greater than one")
+	ErrEmptyMessage              = errors.New("Message to be sign should not be nil")
+	ErrNotValidSignature         = errors.New("Signature is invalid")
 )
 
+// multisig consts
 const (
 	MinimumParticipant = 2
 )
@@ -42,15 +43,14 @@ func BytesCombine(pBytes ...[]byte) []byte {
 	return buffer.Bytes()
 }
 
-//生成多重签名的算法如下：
-//1. 生成公私钥对(x1, P1), (x2, P2), ..., (xn, Pn)， x代表私钥中的参数大数D，P代表公钥
-//2. 生成临时随机数(k1, k2, ..., kn)
-//3. 计算：R = k1*G + k2*G + ... + kn*G，G代表基点
-//4. 计算公共公钥：C = P1 + P2 + ... + Pn
-//5. 各方计算：si = ki + HASH(C,R,m) * xi
-//6. 生成多重签名：(s1 + s2 + ... + sn, R)
+// MultiSign 生成多重签名的算法如下：
+// 1. 生成公私钥对(x1, P1), (x2, P2), ..., (xn, Pn)， x代表私钥中的参数大数D，P代表公钥
+// 2. 生成临时随机数(k1, k2, ..., kn)
+// 3. 计算：R = k1*G + k2*G + ... + kn*G，G代表基点
+// 4. 计算公共公钥：C = P1 + P2 + ... + Pn
+// 5. 各方计算：si = ki + HASH(C,R,m) * xi
+// 6. 生成多重签名：(s1 + s2 + ... + sn, R)
 // MultiSign生成对特定消息的多重签名，所有参与签名的私钥必须使用同一条椭圆曲线
-//func MultiSign(keys []*ecdsa.PrivateKey, message []byte) (*MultiSignature, error) {
 func MultiSign(keys []*ecdsa.PrivateKey, message []byte) ([]byte, error) {
 	if len(keys) < MinimumParticipant {
 		return nil, ErrTooSmallNumOfkeys
@@ -154,10 +154,10 @@ func getS(keys []*ecdsa.PrivateKey, arrayOfK [][]byte, c []byte, r []byte, messa
 		hashBytes := hash.UsingSha256(BytesCombine(c, r, message))
 
 		// 计算HASH(P,R,m) * xi
-		tempRhs := new(big.Int).Mul(new(big.Int).SetBytes(hashBytes), keys[i].D)
+		tempRHS := new(big.Int).Mul(new(big.Int).SetBytes(hashBytes), keys[i].D)
 
 		// 计算ki + HASH(P,R,m) * xi
-		res := new(big.Int).Add(new(big.Int).SetBytes(arrayOfK[i]), tempRhs)
+		res := new(big.Int).Add(new(big.Int).SetBytes(arrayOfK[i]), tempRHS)
 		// 6.1 计算s1 + s2 + ... + sn
 		s = s.Add(s, res)
 	}
@@ -216,7 +216,7 @@ func getSharedPublicKeyForPrivateKeys(keys []*ecdsa.PrivateKey) ([]byte, error) 
 	return c, nil
 }
 
-// 计算公共公钥：C = P1 + P2 + ... + Pn
+// GetSharedPublicKeyForPublicKeys 计算公共公钥：C = P1 + P2 + ... + Pn
 func GetSharedPublicKeyForPublicKeys(keys []*ecdsa.PublicKey) ([]byte, error) {
 	// 所有参与者需要使用同一条椭圆曲线
 	curveCheckResult := checkCurveForPublicKeys(keys)
@@ -273,11 +273,10 @@ func checkCurveForPublicKeys(keys []*ecdsa.PublicKey) bool {
 	return true
 }
 
-//验签算法如下：
-//1. 计算：e = sm3(C,R,m)
-//2. 计算：Rv = sG - eC
-//3. 如果Rv == R则返回true，否则返回false
-//func VerifyMultiSig(keys []*ecdsa.PublicKey, signature *MultiSignature, message []byte) (bool, error) {
+// VerifyMultiSig 验签算法如下：
+// 1. 计算：e = sm3(C,R,m)
+// 2. 计算：Rv = sG - eC
+// 3. 如果Rv == R则返回true，否则返回false
 func VerifyMultiSig(keys []*ecdsa.PublicKey, signature []byte, message []byte) (bool, error) {
 	if len(keys) < MinimumParticipant {
 		return false, ErrTooSmallNumOfkeys
@@ -292,7 +291,7 @@ func VerifyMultiSig(keys []*ecdsa.PublicKey, signature []byte, message []byte) (
 
 	// sig nil check and sig format check
 	if sig == nil || len(sig.R) == 0 || len(sig.S) == 0 {
-		return false, NotValidSignatureError
+		return false, ErrNotValidSignature
 	}
 
 	// empty message

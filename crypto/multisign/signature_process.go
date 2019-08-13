@@ -11,7 +11,7 @@ import (
 	"github.com/xuperchain/xuperunion/hdwallet/rand"
 )
 
-// 生成默认随机数Ki
+// GetRandom32Bytes 生成默认随机数Ki
 func GetRandom32Bytes() ([]byte, error) {
 	randomBytes, err := rand.GenerateSeedWithStrengthAndKeyLen(rand.KeyStrengthHard, rand.KeyLengthInt32)
 	if err != nil {
@@ -21,7 +21,7 @@ func GetRandom32Bytes() ([]byte, error) {
 	return randomBytes, nil
 }
 
-// 计算：Ri = Ki*G
+// GetRiUsingRandomBytes 计算：Ri = Ki*G
 func GetRiUsingRandomBytes(key *ecdsa.PublicKey, k []byte) []byte {
 	curve := key.Curve
 
@@ -34,7 +34,7 @@ func GetRiUsingRandomBytes(key *ecdsa.PublicKey, k []byte) []byte {
 	return r
 }
 
-// 计算：R = k1*G + k2*G + ... + kn*G
+// GetRUsingAllRi 计算：R = k1*G + k2*G + ... + kn*G
 func GetRUsingAllRi(key *ecdsa.PublicKey, arrayOfRi [][]byte) []byte {
 	num := len(arrayOfRi)
 	curve := key.Curve
@@ -54,7 +54,7 @@ func GetRUsingAllRi(key *ecdsa.PublicKey, arrayOfRi [][]byte) []byte {
 	return r
 }
 
-// 计算 si = ki + HASH(C,R,m) * xi
+// GetSiUsingKCRM 计算 si = ki + HASH(C,R,m) * xi
 // x代表大数D，也就是私钥的关键参数
 func GetSiUsingKCRM(key *ecdsa.PrivateKey, k []byte, c []byte, r []byte, message []byte) []byte {
 	// 计算HASH(P,R,m)，这里的hash算法选择NIST算法
@@ -69,7 +69,7 @@ func GetSiUsingKCRM(key *ecdsa.PrivateKey, k []byte, c []byte, r []byte, message
 	return s.Bytes()
 }
 
-// 计算：S = sum(si)
+// GetSUsingAllSi 计算：S = sum(si)
 func GetSUsingAllSi(arrayOfSi [][]byte) []byte {
 	num := len(arrayOfSi)
 	s := big.NewInt(0)
@@ -81,7 +81,7 @@ func GetSUsingAllSi(arrayOfSi [][]byte) []byte {
 	return s.Bytes()
 }
 
-//生成多重签名的流程如下：
+// GenerateMultiSignSignature 生成多重签名的流程如下：
 //1. 各方分别生成自己的随机数Ki(K1, K2, ..., Kn) --- func getRandomBytes() ([]byte, error)
 //2. 各方计算自己的 Ri = Ki*G，G代表基点 --- func getRiUsingRandomBytes(key *ecdsa.PublicKey, k []byte) []byte
 //3. 发起者收集Ri，计算：R = sum(Ri) --- func getRUsingAllRi(key *ecdsa.PublicKey, arrayOfRi [][]byte) []byte
