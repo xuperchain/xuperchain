@@ -105,7 +105,7 @@ type XChainCore struct {
 	// enable core peer connection or not
 	coreConnection bool
 	// the loop does not exit until edgerLastID and utxovmLastID are equal
-	walkLoop bool
+	failover bool
 }
 
 // Status return the status of the chain
@@ -134,7 +134,7 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	xc.nodeMode = nodeMode
 	xc.stopFlag = false
 	xc.coreConnection = cfg.CoreConnection
-	xc.walkLoop = cfg.WalkLoop
+	xc.failover = cfg.Failover
 	ledger.MemCacheSize = cfg.DBCache.MemCacheSize
 	ledger.FileHandlersCacheSize = cfg.DBCache.FdCacheSize
 	datapath := cfg.Datapath + "/" + bcname
@@ -492,6 +492,23 @@ func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
 	return nil
 }
 
+func (xc *XChainCore) Walk(ledgerLastID []byte, utxovmLastID []byte) (
+	[]byte, []byte, error) {
+	if !bytes.Equal(ledgerLastID, utxovmLastID) {
+		xc.log.Warn("ledger last blockid is not equal utxovm last id")
+		err := xc.Utxovm.Walk(ledgerLastID)
+		if err != nil {
+			xc.log.Error("Walk error at", "ledger blockid", global.F(ledgerLastID),
+				"utxo blockid", global.F(utxovmLastID))
+			return ledgerLastID, utxovmLastID, err
+		}
+		ledgerLastID = xc.Ledger.GetMeta().TipBlockid
+		utxovmLastID = xc.Utxovm.GetLatestBlockid()
+	}
+
+	return ledgerLastID, utxovmLastID, nil
+}
+
 func (xc *XChainCore) doMiner() {
 	minerTimer := global.NewXTimer()
 	xc.mutex.Lock()
@@ -505,18 +522,18 @@ func (xc *XChainCore) doMiner() {
 	ledgerLastID := xc.Ledger.GetMeta().TipBlockid
 	utxovmLastID := xc.Utxovm.GetLatestBlockid()
 
+	ledgerLastID, utxovmLastID, err := xc.Walk(ledgerLastID, utxovmLastID)
+	if err != nil {
+		return
+	}
+
 	// 如果Walk一直失败，建议不要挖矿了，而是报警处理
-	if xc.walkLoop {
+	if !xc.failover {
 		for !bytes.Equal(ledgerLastID, utxovmLastID) {
-			xc.log.Warn("ledger last blockid is not equal utxovm last id")
-			err := xc.Utxovm.Walk(ledgerLastID)
+			ledgerLastID, utxovmLastID, err = xc.Walk(ledgerLastID, utxovmLastID)
 			if err != nil {
-				xc.log.Error("Walk error ", "ledger blockid", global.F(ledgerLastID),
-					"utxo blockid", global.F(utxovmLastID))
 				return
 			}
-			ledgerLastID = xc.Ledger.GetMeta().TipBlockid
-			utxovmLastID = xc.Utxovm.GetLatestBlockid()
 		}
 	}
 

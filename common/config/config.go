@@ -203,7 +203,7 @@ type NodeConfig struct {
 	GatewaySwitch   bool       `yaml:"gatewaySwitch,omitempty"`
 	Wasm            WasmConfig `yaml:"wasm,omitempty"`
 	CoreConnection  bool       `yaml:"coreConnection,omitempty"`
-	WalkLoop        bool       `yaml:"walkLoop,omitempty"`
+	Failover        bool       `yaml:"failover,omitempty"`
 }
 
 // KernelConfig kernel config
@@ -295,7 +295,7 @@ func (nc *NodeConfig) defaultNodeConfig() {
 		},
 	}
 	nc.CoreConnection = false
-	nc.WalkLoop = true
+	nc.Failover = false
 }
 
 // NewNodeConfig returns a config of a node
@@ -405,7 +405,7 @@ func (nc *NodeConfig) ApplyFlags(flags *pflag.FlagSet) {
 
 	flags.StringVar(&nc.PluginConfPath, "pluginConfPath", nc.PluginConfPath, "used for config overwrite --pluginConfPath <plugin conf path>")
 
-	flags.BoolVar(&nc.WalkLoop, "walkLoop", nc.WalkLoop, "used for config overwrite --walkLoop <>")
+	flags.BoolVar(&nc.Failover, "failover", nc.Failover, "used for config overwrite --failover <>")
 }
 
 // VisitAll print all config of node
