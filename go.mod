@@ -79,6 +79,7 @@ require (
 	github.com/libp2p/go-tcp-transport v2.0.16+incompatible // indirect
 	github.com/libp2p/go-testutil v1.2.10 // indirect
 	github.com/libp2p/go-ws-transport v2.0.15+incompatible // indirect
+	github.com/mitchellh/mapstructure v1.1.2
 	github.com/multiformats/go-multiaddr v1.4.0
 	github.com/multiformats/go-multibase v0.3.0 // indirect
 	github.com/multiformats/go-multistream v0.3.9 // indirect
