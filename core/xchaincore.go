@@ -104,6 +104,8 @@ type XChainCore struct {
 	isCoreMiner bool
 	// enable core peer connection or not
 	coreConnection bool
+	// the loop does not exit until edgerLastID and utxovmLastID are equal
+	walkLoop bool
 }
 
 // Status return the status of the chain
@@ -132,6 +134,7 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	xc.nodeMode = nodeMode
 	xc.stopFlag = false
 	xc.coreConnection = cfg.CoreConnection
+	xc.walkLoop = cfg.WalkLoop
 	ledger.MemCacheSize = cfg.DBCache.MemCacheSize
 	ledger.FileHandlersCacheSize = cfg.DBCache.FdCacheSize
 	datapath := cfg.Datapath + "/" + bcname
@@ -503,16 +506,18 @@ func (xc *XChainCore) doMiner() {
 	utxovmLastID := xc.Utxovm.GetLatestBlockid()
 
 	// 如果Walk一直失败，建议不要挖矿了，而是报警处理
-	for !bytes.Equal(ledgerLastID, utxovmLastID) {
-		xc.log.Warn("ledger last blockid is not equal utxovm last id")
-		err := xc.Utxovm.Walk(ledgerLastID)
-		if err != nil {
-			xc.log.Error("Walk error ", "ledger blockid", global.F(ledgerLastID),
-				"utxo blockid", global.F(utxovmLastID))
-			return
+	if xc.walkLoop {
+		for !bytes.Equal(ledgerLastID, utxovmLastID) {
+			xc.log.Warn("ledger last blockid is not equal utxovm last id")
+			err := xc.Utxovm.Walk(ledgerLastID)
+			if err != nil {
+				xc.log.Error("Walk error ", "ledger blockid", global.F(ledgerLastID),
+					"utxo blockid", global.F(utxovmLastID))
+				return
+			}
+			ledgerLastID = xc.Ledger.GetMeta().TipBlockid
+			utxovmLastID = xc.Utxovm.GetLatestBlockid()
 		}
-		ledgerLastID = xc.Ledger.GetMeta().TipBlockid
-		utxovmLastID = xc.Utxovm.GetLatestBlockid()
 	}
 
 	header := &pb.Header{Logid: global.Glogid()}
@@ -574,7 +579,7 @@ func (xc *XChainCore) doMiner() {
 		txs = append(txs, ucTx)
 	}
 	fakeBlock, err := xc.Ledger.FormatFakeBlock(txs, xc.address, xc.privateKey,
-		t.UnixNano(), curTerm, curBlockNum, meta.TipBlockid, xc.Utxovm.GetTotal())
+		t.UnixNano(), curTerm, curBlockNum, xc.Utxovm.GetLatestBlockid(), xc.Utxovm.GetTotal())
 	if err != nil {
 		xc.log.Warn("[Minning] format fake block error", "logid")
 		return
@@ -594,7 +599,7 @@ func (xc *XChainCore) doMiner() {
 	minerTimer.Mark("GenAwardTx")
 	txs = append(txs, awardtx)
 	freshBlock, err = xc.Ledger.FormatPOWBlock(txs, xc.address, xc.privateKey,
-		t.UnixNano(), curTerm, curBlockNum, meta.TipBlockid, targetBits, xc.Utxovm.GetTotal(), fakeBlock.FailedTxs)
+		t.UnixNano(), curTerm, curBlockNum, xc.Utxovm.GetLatestBlockid(), targetBits, xc.Utxovm.GetTotal(), fakeBlock.FailedTxs)
 	if err != nil {
 		xc.log.Warn("[Minning] format block error", "logid", header.Logid, "err", err)
 		return
