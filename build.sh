@@ -52,6 +52,7 @@ go build --buildmode=plugin --tags multi -o plugins/kv/kv-ldb-multi.so.1.0.0 git
 go build --buildmode=plugin --tags single -o plugins/kv/kv-ldb-single.so.1.0.0 github.com/xuperchain/xuperunion/kv/kvdb/plugin-ldb
 go build --buildmode=plugin -o plugins/kv/kv-badger.so.1.0.0 github.com/xuperchain/xuperunion/kv/kvdb/plugin-badger
 go build --buildmode=plugin -o plugins/crypto/crypto-default.so.1.0.0 github.com/xuperchain/xuperunion/crypto/client/xchain
+go build --buildmode=plugin -o plugins/crypto/crypto-schnorr.so.1.0.0 github.com/xuperchain/xuperunion/crypto/client/schnorr
 go build --buildmode=plugin -o plugins/consensus/consensus-pow.so.1.0.0 github.com/xuperchain/xuperunion/consensus/pow
 go build --buildmode=plugin -o plugins/consensus/consensus-single.so.1.0.0 github.com/xuperchain/xuperunion/consensus/single
 go build --buildmode=plugin -o plugins/consensus/consensus-tdpos.so.1.0.0 github.com/xuperchain/xuperunion/consensus/tdpos/main
