@@ -47,7 +47,7 @@ func updateAkSetWithPut(ctx *KContext, sets map[string]*pb.AkSet, accountName st
 	for _, akSets := range sets {
 		for _, ak := range akSets.GetAks() {
 			key := utils.MakeAK2AccountKey(ak, accountName)
-			err := ctx.ModelCache.Del(utils.GetAK2AccountBucket(), []byte(key))
+			err := ctx.ModelCache.Put(utils.GetAK2AccountBucket(), []byte(key), []byte("true"))
 			if err != nil {
 				return err
 			}

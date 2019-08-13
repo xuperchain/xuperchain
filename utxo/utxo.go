@@ -720,7 +720,7 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 	}
 	// contract request with reservedRequests
 	req.Requests = append(reservedRequests, req.Requests...)
-	uv.xlog.Error("PreExec requests after merge", "requests", req.Requests)
+	uv.xlog.Trace("PreExec requests after merge", "requests", req.Requests)
 	// init modelCache
 	modelCache, err := xmodel.NewXModelCache(uv.GetXModel(), true)
 	if err != nil {
@@ -1717,10 +1717,18 @@ func (uv *UtxoVM) queryAccountContainAK(address string) ([]string, error) {
 }
 
 func (uv *UtxoVM) queryTxFromForbiddenWithConfirmed(txid []byte) (bool, bool, error) {
+	// 如果配置文件配置了封禁tx监管合约，那么继续下面的执行。否则，直接返回.
+	forbiddenContract := uv.ledger.GenesisBlock.GetConfig().ForbiddenContract
+
+	// 这里不针对ModuleName/ContractName/MethodName做特殊化处理
+	moduleNameForForbidden := forbiddenContract.ModuleName
+	contractNameForForbidden := forbiddenContract.ContractName
+	methodNameForForbidden := forbiddenContract.MethodName
+
 	request := &pb.InvokeRequest{
-		ModuleName:   "wasm",
-		ContractName: "forbidden",
-		MethodName:   "get",
+		ModuleName:   moduleNameForForbidden,
+		ContractName: contractNameForForbidden,
+		MethodName:   methodNameForForbidden,
 		Args: map[string][]byte{
 			"txid": []byte(fmt.Sprintf("%x", txid)),
 		},

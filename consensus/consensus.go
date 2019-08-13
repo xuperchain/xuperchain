@@ -297,8 +297,9 @@ func (pc *PluggableConsensus) newUpdateConsensus(name string, height int64, time
 		extParams["ledger"] = pc.ledger
 		extParams["utxovm"] = pc.utxoVM
 		extParams["timestamp"] = timestamp
+	} else if name == ConsensusTypePow {
+		extParams["ledger"] = pc.ledger
 	}
-
 	// create and config consensus instance
 	cons, err := pc.updateConsensusByName(name, height, consConf, extParams)
 	if err != nil {

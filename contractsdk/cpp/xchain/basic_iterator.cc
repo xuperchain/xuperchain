@@ -2,6 +2,8 @@
 #include "xchain/basic_iterator.h"
 #include "xchain/syscall.h"
 
+namespace pb = xchain::contract::sdk;
+
 namespace xchain {
 
 Iterator::Iterator(const std::string& start, const std::string& limit, size_t cap) {

@@ -3,8 +3,6 @@
 
 #include "xchain/contract.pb.h"
 
-namespace pb = xchain::contract::sdk;
-
 namespace xchain {
 
 struct TxInput {

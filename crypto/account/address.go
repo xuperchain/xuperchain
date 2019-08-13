@@ -30,6 +30,8 @@ func GetAddressFromPublicKey(pub *ecdsa.PublicKey) (string, error) {
 	case config.CurveNist: // NIST
 	case config.CurveGm: // 国密
 		nVersion = config.Gm
+	case config.CurveNistSN: // NIST+Schnorr
+		nVersion = config.NistSN
 	default: // 不支持的密码学类型
 		return "", fmt.Errorf("This cryptography[%v] has not been supported yet", pub.Params().Name)
 	}

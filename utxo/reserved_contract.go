@@ -23,7 +23,81 @@ func genArgs(req []*pb.InvokeRequest) *reservedArgs {
 	return ra
 }
 
-func verifyReservedContractRequests(reservedReqs, txReqs []*pb.InvokeRequest) bool {
+// It will check whether the transaction in reserved whitelist
+// if the config of chain contains reserved contracts
+// but the transaction does not contains reserved requests.
+func (uv *UtxoVM) verifyReservedWhitelist(tx *pb.Transaction) bool {
+	// verify reservedContracts len
+	reservedContracts := uv.ledger.GetMeta().ReservedContracts
+	uv.xlog.Warn("meta in verifyReservedWhitelist", "meta in", uv.ledger.GetMeta().ReservedContracts)
+	if len(reservedContracts) == 0 {
+		uv.xlog.Info("verifyReservedWhitelist false reservedReqs is nil")
+		return false
+	}
+
+	// get white list account
+	accountName := uv.ledger.GetGenesisBlock().GetConfig().GetReservedWhitelistAccount()
+	uv.xlog.Trace("verifyReservedWhitelist", "accountName", accountName)
+	if accountName == "" {
+		uv.xlog.Info("verifyReservedWhitelist false, the chain does not have reserved whitelist", "accountName", accountName)
+		return false
+	}
+	acl, isConfirmed, err := uv.aclMgr.GetAccountACLWithConfirmed(accountName)
+	if err != nil || acl == nil || !isConfirmed {
+		uv.xlog.Info("verifyReservedWhitelist false, get reserved whitelist acl failed",
+			"err", err, "acl", acl, "isConfirmed", isConfirmed)
+		return false
+	}
+
+	// verify storage
+	if tx.GetDesc() != nil ||
+		tx.GetContractRequests() != nil ||
+		tx.GetTxInputsExt() != nil ||
+		tx.GetTxOutputsExt() != nil {
+		uv.xlog.Info("verifyReservedWhitelist false the storage info should be nil")
+		return false
+	}
+
+	// verify utxo input
+	if len(tx.GetTxInputs()) == 0 && len(tx.GetTxOutputs()) == 0 {
+		uv.xlog.Info("verifyReservedWhitelist true the utxo list is nil")
+		return true
+	}
+	fromAddr := string(tx.GetTxInputs()[0].GetFromAddr())
+	for _, v := range tx.GetTxInputs() {
+		if string(v.GetFromAddr()) != fromAddr {
+			uv.xlog.Info("verifyReservedWhitelist false fromAddr should no more than one")
+			return false
+		}
+	}
+
+	// verify utxo output
+	toAddrs := make(map[string]bool)
+	for _, v := range tx.GetTxOutputs() {
+		if bytes.Equal(v.GetToAddr(), []byte(FeePlaceholder)) {
+			continue
+		}
+		toAddrs[string(v.GetToAddr())] = true
+		if len(toAddrs) > 2 {
+			uv.xlog.Info("verifyReservedWhitelist false toAddrs should no more than two")
+			return false
+		}
+	}
+
+	// verify utxo output whitelist
+	for k := range toAddrs {
+		if k == fromAddr {
+			continue
+		}
+		if _, ok := acl.GetAksWeight()[k]; !ok {
+			uv.xlog.Info("verifyReservedWhitelist false the toAddr should in whitelist acl")
+			return false
+		}
+	}
+	return true
+}
+
+func (uv *UtxoVM) verifyReservedContractRequests(reservedReqs, txReqs []*pb.InvokeRequest) bool {
 	if len(reservedReqs) > len(txReqs) {
 		return false
 	}
@@ -43,31 +117,44 @@ func verifyReservedContractRequests(reservedReqs, txReqs []*pb.InvokeRequest) bo
 
 // geReservedContractRequest get reserved contract requests from system params, it doesn't consume gas.
 func (uv *UtxoVM) getReservedContractRequests(req []*pb.InvokeRequest, isPreExec bool) ([]*pb.InvokeRequest, error) {
-	reservedContracts, err := uv.ledger.GenesisBlock.GetConfig().GetReservedContract()
+	reservedContractstpl := []*pb.InvokeRequest{}
+	originalReservedContracts, err := uv.ledger.GenesisBlock.GetConfig().GetReservedContract()
 	if err != nil {
 		return nil, err
 	}
+	MetaReservedContracts := uv.ledger.GetMeta().ReservedContracts
+	if MetaReservedContracts != nil {
+		reservedContractstpl = MetaReservedContracts
+	} else {
+		reservedContractstpl = originalReservedContracts
+	}
+	uv.xlog.Info("MetaReservedContracts", "reservedContracts", reservedContractstpl)
+
 	// if all reservedContracts have not been updated, return nil, nil
 	ra := &reservedArgs{}
-	if isPreExec || len(reservedContracts) == 0 {
+	if isPreExec || len(reservedContractstpl) == 0 {
 		ra = genArgs(req)
 	} else {
 		// req should contrain reservedContracts, so the len of req should no less than reservedContracts
-		if len(req) < len(reservedContracts) {
+		if len(req) < len(reservedContractstpl) {
 			uv.xlog.Warn("req should contain reservedContracts")
 			return nil, ErrGetReservedContracts
-		} else if len(req) > len(reservedContracts) {
-			ra = genArgs(req[len(reservedContracts):])
+		} else if len(req) > len(reservedContractstpl) {
+			ra = genArgs(req[len(reservedContractstpl):])
 		}
 	}
 
-	for _, rc := range reservedContracts {
+	reservedContracts := []*pb.InvokeRequest{}
+	for _, rc := range reservedContractstpl {
+		rctmp := *rc
+		rctmp.Args = make(map[string][]byte)
 		for k, v := range rc.GetArgs() {
 			buf := new(bytes.Buffer)
 			tpl := template.Must(template.New("value").Parse(string(v)))
 			tpl.Execute(buf, ra)
-			rc.Args[k] = buf.Bytes()
+			rctmp.Args[k] = buf.Bytes()
 		}
+		reservedContracts = append(reservedContracts, &rctmp)
 	}
 	return reservedContracts, nil
 }

@@ -104,10 +104,15 @@ static void wasm_rt_allocate_memory(void* context,
                              wasm_rt_memory_t* memory,
                              uint32_t initial_pages,
                              uint32_t max_pages) {
+  if (initial_pages == 0) {
+    initial_pages = 1;
+  }
   memory->pages = initial_pages;
   memory->max_pages = max_pages;
   memory->size = initial_pages * PAGE_SIZE;
-  memory->data = calloc(memory->size, 1);
+  if (memory->size != 0) {
+    memory->data = calloc(memory->size, 1);
+  }
   /* memory->data = mmap(0, memory->size, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0); */
   if (memory->data == MAP_FAILED) {
     wasm_rt_trap(0);
@@ -134,9 +139,14 @@ static void wasm_rt_allocate_table(void* context,
                             wasm_rt_table_t* table,
                             uint32_t elements,
                             uint32_t max_elements) {
+  if (elements == 0) {
+    elements = 10;
+  }
   table->size = elements;
   table->max_size = max_elements;
-  table->data = calloc(table->size, sizeof(wasm_rt_elem_t));
+  if (table->size != 0) {
+    table->data = calloc(table->size, sizeof(wasm_rt_elem_t));
+  }
   xvm_context_t* ctx = context;
   ctx->table = table;
 }
@@ -148,27 +158,6 @@ static void* wasm_rt_malloc(void* context, uint32_t size) {
 static wasm_rt_func_handle_t wasm_rt_resolve_func(void* context, char* module, char* name) {
   xvm_code_t* code = context;
   return code->resolver.resolve_func(code->resolver.env, module, name);
-}
-
-static uint32_t _xvm_apply_func(void* user, void* func, uint32_t* params, uint32_t param_len) {
-  switch (param_len) {
-    case 0:
-      return (*(uint32_t(*)(void*))func)(user);
-      break;
-    case 1:
-      return (*(uint32_t(*)(void*, uint32_t))func)(user, params[0]);
-      break;
-    case 2:
-      return (*(uint32_t(*)(void*, uint32_t, uint32_t))func)(user, params[0],
-                                                            params[1]);
-      break;
-    case 3:
-      return (*(uint32_t(*)(void*, uint32_t, uint32_t, uint32_t))func)(
-          user, params[0], params[1], params[2]);
-      break;
-    default:
-      return 0;
-  }
 }
 
 static uint32_t wasm_rt_call_func(void* context, wasm_rt_func_handle_t hfunc, uint32_t* params, uint32_t param_len) {
@@ -297,8 +286,8 @@ void xvm_release_context(xvm_context_t* ctx) {
   memset((void*)ctx, 0, sizeof(xvm_context_t));
 }
 
-uint32_t xvm_call(xvm_context_t* ctx, char* name, uint32_t* params, uint32_t param_len, wasm_rt_gas_t* gas, uint32_t* ret) {
-  void** func = dlsym(ctx->code->dlhandle, name);
+uint32_t xvm_call(xvm_context_t* ctx, char* name, int64_t* params, int64_t param_len, wasm_rt_gas_t* gas, int64_t* ret) {
+  void* func = dlsym(ctx->code->dlhandle, name);
   if (func == NULL) {
     return 0;
   }
@@ -306,7 +295,8 @@ uint32_t xvm_call(xvm_context_t* ctx, char* name, uint32_t* params, uint32_t par
   if (gas != NULL) {
     _handle->gas.limit = gas->limit;
   }
-  *ret = _xvm_apply_func(ctx->module_handle, *func, params, param_len);
+  int64_t (*real_func)(void*, int64_t*, int64_t) = func;
+  *ret = real_func(ctx->module_handle, params, param_len);
   if (gas != NULL) {
     gas->used = _handle->gas.used;
   }

@@ -11,6 +11,7 @@ import (
 	"github.com/xuperchain/xuperunion/common/log"
 	"github.com/xuperchain/xuperunion/contract/wasm/vm"
 	"github.com/xuperchain/xuperunion/pb"
+	"github.com/xuperchain/xuperunion/xvm/compile"
 	"github.com/xuperchain/xuperunion/xvm/exec"
 )
 
@@ -42,7 +43,6 @@ func newCodeManager(basedir string, compile compileFunc, makeExec makeExecCodeFu
 }
 
 func codeDescEqual(a, b *pb.WasmCodeDesc) bool {
-	// TODO: 比对VM的编译器变化
 	return bytes.Equal(a.GetDigest(), b.GetDigest())
 }
 
@@ -95,7 +95,8 @@ func (c *codeManager) lookupDiskCache(name string, desc *pb.WasmCodeDesc) (strin
 	if err != nil {
 		return "", false
 	}
-	if !codeDescEqual(&localDesc, desc) {
+	if !codeDescEqual(&localDesc, desc) ||
+		localDesc.GetVmCompiler() != compile.Version {
 		return "", false
 	}
 	return libpath, true
@@ -115,7 +116,9 @@ func (c *codeManager) makeDiskCache(name string, desc *pb.WasmCodeDesc, codebuf 
 	if err != nil {
 		return "", err
 	}
-	descbuf, _ := json.Marshal(desc)
+	localDesc := *desc
+	localDesc.VmCompiler = compile.Version
+	descbuf, _ := json.Marshal(&localDesc)
 	err = ioutil.WriteFile(descpath, descbuf, 0600)
 	if err != nil {
 		os.RemoveAll(basedir)
