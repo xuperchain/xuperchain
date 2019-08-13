@@ -5,6 +5,8 @@
 #include "xchain/contract.pb.h"
 #include "xchain/xchain.h"
 
+namespace pb = xchain::contract::sdk;
+
 namespace xchain { namespace cdt {
 
 extern "C" {

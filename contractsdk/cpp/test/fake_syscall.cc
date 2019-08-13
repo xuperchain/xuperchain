@@ -154,6 +154,30 @@ FakeContract::FakeContract() {
             store_rwset(kFileName, _rwset);
             return value;
         }},
+        {"QueryTx", [this](std::string args) -> std::string {
+            pb::QueryTxRequest req;
+            assert(req.ParseFromString(args));
+            pb::QueryTxResponse resp;
+            pb::Transaction *tx = new pb::Transaction();
+            tx->set_txid("c9d3390118c509b094c6e2cf4b369d849ce2dd50f2254a54e9a9b5626d7d9422");
+            tx->set_blockid("5a9266b17608dce11f84bddd9a3eae37cf36d3a4f33fd95b53e25077e6e16757");
+            resp.set_allocated_tx(tx);
+            std::string value;
+            resp.SerializeToString(&value);
+            return value;        
+        }},
+        {"QueryBlock", [this](std::string args) -> std::string {
+            pb::QueryBlockRequest req;
+            assert(req.ParseFromString(args));
+            pb::QueryBlockResponse resp;
+            pb::Block *block = new pb::Block();
+            block->set_blockid("5a9266b17608dce11f84bddd9a3eae37cf36d3a4f33fd95b53e25077e6e16757");
+            block->set_proposer("alice");
+            resp.set_allocated_block(block);
+            std::string value;
+            resp.SerializeToString(&value);
+            return value;        
+        }},
     };
 }
 
