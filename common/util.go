@@ -5,6 +5,8 @@
 package common
 
 import (
+	"bytes"
+	"encoding/gob"
 	"fmt"
 	"regexp"
 
@@ -47,4 +49,13 @@ func validContractName(contractName string) error {
 // ValidContractName check if contract name is ok
 func ValidContractName(contractName string) error {
 	return validContractName(contractName)
+}
+
+// DeepCopy copy tool
+func DeepCopy(dst, src interface{}) error {
+	var buf bytes.Buffer
+	if err := gob.NewEncoder(&buf).Encode(src); err != nil {
+		return err
+	}
+	return gob.NewDecoder(bytes.NewBuffer(buf.Bytes())).Decode(dst)
 }
