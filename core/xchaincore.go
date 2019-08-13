@@ -104,8 +104,8 @@ type XChainCore struct {
 	isCoreMiner bool
 	// enable core peer connection or not
 	coreConnection bool
-	// the loop does not exit until edgerLastID and utxovmLastID are equal
-	failover bool
+	// if failSkip is false, you will execute loop of walk, or just only once walk
+	failSkip bool
 }
 
 // Status return the status of the chain
@@ -134,7 +134,7 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	xc.nodeMode = nodeMode
 	xc.stopFlag = false
 	xc.coreConnection = cfg.CoreConnection
-	xc.failover = cfg.Failover
+	xc.failSkip = cfg.FailSkip
 	ledger.MemCacheSize = cfg.DBCache.MemCacheSize
 	ledger.FileHandlersCacheSize = cfg.DBCache.FdCacheSize
 	datapath := cfg.Datapath + "/" + bcname
@@ -492,23 +492,6 @@ func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
 	return nil
 }
 
-func (xc *XChainCore) Walk(ledgerLastID []byte, utxovmLastID []byte) (
-	[]byte, []byte, error) {
-	if !bytes.Equal(ledgerLastID, utxovmLastID) {
-		xc.log.Warn("ledger last blockid is not equal utxovm last id")
-		err := xc.Utxovm.Walk(ledgerLastID)
-		if err != nil {
-			xc.log.Error("Walk error at", "ledger blockid", global.F(ledgerLastID),
-				"utxo blockid", global.F(utxovmLastID))
-			return ledgerLastID, utxovmLastID, err
-		}
-		ledgerLastID = xc.Ledger.GetMeta().TipBlockid
-		utxovmLastID = xc.Utxovm.GetLatestBlockid()
-	}
-
-	return ledgerLastID, utxovmLastID, nil
-}
-
 func (xc *XChainCore) doMiner() {
 	minerTimer := global.NewXTimer()
 	xc.mutex.Lock()
@@ -522,19 +505,17 @@ func (xc *XChainCore) doMiner() {
 	ledgerLastID := xc.Ledger.GetMeta().TipBlockid
 	utxovmLastID := xc.Utxovm.GetLatestBlockid()
 
-	ledgerLastID, utxovmLastID, err := xc.Walk(ledgerLastID, utxovmLastID)
-	if err != nil {
-		return
-	}
-
-	// 如果Walk一直失败，建议不要挖矿了，而是报警处理
-	if !xc.failover {
-		for !bytes.Equal(ledgerLastID, utxovmLastID) {
-			ledgerLastID, utxovmLastID, err = xc.Walk(ledgerLastID, utxovmLastID)
-			if err != nil {
-				return
-			}
+	if !bytes.Equal(ledgerLastID, utxovmLastID) {
+		xc.log.Warn("ledger last blockid is not equal utxovm last id")
+		err := xc.Utxovm.Walk(ledgerLastID)
+		// if failSkip = false, then keep logic, if not equal, retry
+		if err != nil && !failSkip {
+			xc.log.Error("Walk error at", "ledger blockid", global.F(ledgerLastID),
+				"utxo blockid", global.F(utxovmLastID))
+			return
 		}
+		ledgerLastID = xc.Ledger.GetMeta().TipBlockid
+		utxovmLastID = xc.Utxovm.GetLatestBlockid()
 	}
 
 	header := &pb.Header{Logid: global.Glogid()}
