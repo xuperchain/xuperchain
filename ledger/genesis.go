@@ -44,10 +44,10 @@ type RootConfig struct {
 
 // InvokeRequest define genesis reserved_contracts configure
 type InvokeRequest struct {
-	ModuleName   string            `json:"module_name"`
-	ContractName string            `json:"contract_name"`
-	MethodName   string            `json:"method_name"`
-	Args         map[string]string `json:"args"`
+	ModuleName   string            `json:"module_name" mapstructure:"module_name"`
+	ContractName string            `json:"contract_name" mapstructure:"contract_name"`
+	MethodName   string            `json:"method_name" mapstructure:"method_name"`
+	Args         map[string]string `json:"args" mapstructure:"args"`
 }
 
 func InvokeRequestFromJSON2Pb(jsonRequest []InvokeRequest) ([]*pb.InvokeRequest, error) {
