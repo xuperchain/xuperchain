@@ -508,8 +508,8 @@ func (xc *XChainCore) doMiner() {
 	if !bytes.Equal(ledgerLastID, utxovmLastID) {
 		xc.log.Warn("ledger last blockid is not equal utxovm last id")
 		err := xc.Utxovm.Walk(ledgerLastID)
-		// if failSkip = false, then keep logic, if not equal, retry
-		if err != nil && !failSkip {
+		// if xc.failSkip = false, then keep logic, if not equal, retry
+		if err != nil && !xc.failSkip {
 			xc.log.Error("Walk error at", "ledger blockid", global.F(ledgerLastID),
 				"utxo blockid", global.F(utxovmLastID))
 			return
