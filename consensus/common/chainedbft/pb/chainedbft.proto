@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package chainedbft_pb;
+
+// QCState is the phase of hotstuff
+enum QCState {
+    NEW_VIEW = 0; 
+    PREPARE = 1;
+    PRE_COMMIT = 2;
+    COMMIT = 3;
+    DECIDE = 4;
+}
+
+// QuorumCert is a data type that combines a collection of signatures from replicas.
+message QuorumCert {
+    // The id of Proposal this QC certified.
+    bytes ProposalId = 1;
+    // The msg of Proposal this QC certified. 
+    bytes ProposalMsg = 2;
+    // The current type of this QC certified.
+    // the type contains `NEW_VIEW`, `PREPARE`
+	QCState Type = 3;
+	// The view number of this QC certified.
+	int64 ViewNumber = 4;
+	// SignInfos is the signs of the leader gathered from replicas
+    // of a specifically certType.
+    QCSignInfos SignInfos  = 5;
+}
+
+// QCSignInfos is the signs of the leader gathered from replicas of a specifically certType.
+// A slice of signs is used at present.
+// TODO @qizheng09: It will be change to Threshold-Signatures after 
+// Crypto lib support Threshold-Signatures.
+message QCSignInfos {
+    // QCSignInfos 
+    map<string, SignInfo> QCSignInfos = 1;   
+}
+
+// SignInfo is the signature information of the 
+message SignInfo {
+  string Address = 1;
+  string PublicKey = 2;
+  bytes  Sign = 3;
+}
+
+// ChainedBftMessage is the message of the protocal
+// In Hotstuff, there are two kinds of messages, "NEW_VIEW_Message" and "QC_Message". A stable leader can skip this.
+// In XuperChain, there is only one kind of message, "NEW_VIEW". The "QC_Message" is resuded with "BroadcastBlock" message.
+message ChainedBftMessage {
+    // Message Type
+    QCState Type = 1;
+    // Justify is the QC of the leader gathered, send to next leader.
+    QuorumCert Justify = 2;
+}
+
+// ChainedBftMessage is the vote message of 
+message ChainedBftVoteMessage {
+    // The id of this message votes for.
+    bytes ProposalId = 1;
+    // Replica will sign the QCMessage if the QuorumCert if valid.
+    SignInfo signature = 2;
+}

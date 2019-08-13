@@ -17,6 +17,8 @@ protoc -I pb pb/xchain.proto pb/xchain_spv.proto pb/xcheck.proto \
 
 protoc -I p2pv2/pb p2pv2/pb/message.proto  --go_out=p2pv2/pb
 
+protoc -I consensus/base/chainedbft/pb consensus/base/chainedbft/pb/chainedbft.proto --go_out=consensus/base/chainedbft/pb 
+
 protoc -I xmodel/pb xmodel/pb/versioned_data.proto --go_out=xmodel/pb 
 
 protoc -I contractsdk/pb contractsdk/pb/contract.proto \
