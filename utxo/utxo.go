@@ -1621,6 +1621,12 @@ func (uv *UtxoVM) Walk(blockid []byte) error {
 		idx, length := 0, len(todoBlk.Transactions)
 		for idx < length {
 			tx := todoBlk.Transactions[idx]
+			if !tx.Autogen && !tx.Coinbase {
+				if ok, err := uv.ImmediateVerifyTx(tx, false); !ok {
+					uv.xlog.Warn("dotx failed to ImmediateVerifyTx", "txid", fmt.Sprintf("%x", tx.Txid), "err", err)
+					return errors.New("dotx failed to ImmediateVerifyTx error")
+				}
+			}
 			txErr := uv.doTxInternal(tx, batch)
 			if txErr != nil {
 				uv.xlog.Warn("failed to do tx when Walk", "txErr", txErr, "txid", fmt.Sprintf("%x", tx.Txid))
