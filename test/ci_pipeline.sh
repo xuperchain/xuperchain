@@ -121,11 +121,11 @@ function tdpos_nominate()
 function check_nominate()
 {
     cd $basepath/node1
-    check_base=$(./xchain-cli tdpos query-candidates -H=:37101)
+    check_base=$(./xchain-cli tdpos query-candidates -H=127.0.0.1:37101)
     echo "nominate result of node1 is:"$check_base
     for ((i=1;i<=3;i++))
     {
-        result=$(./xchain-cli tdpos query-candidates -H=:3710$i)
+        result=$(./xchain-cli tdpos query-candidates -H=127.0.0.1:3710$i)
         if [ "$check_base" = "$result" ];then
             echo -e "\033[42;30m node$i is the same as node1 \033[0m \n"
         else

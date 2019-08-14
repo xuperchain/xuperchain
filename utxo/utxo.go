@@ -68,6 +68,7 @@ var (
 	ErrRWSetInvalid            = errors.New("RWSet of transaction invalid")
 	ErrAclNotEnough            = errors.New("ACL not enough")
 	ErrInvalidSignature        = errors.New("the signature is invalid or not match the address")
+	ErrInitiatorType           = errors.New("the initiator type is invalid, need AK")
 
 	ErrGasNotEnough   = errors.New("Gas not enough")
 	ErrInvalidAccount = errors.New("Invalid account")
@@ -706,6 +707,12 @@ func (uv *UtxoVM) SelectUtxos(fromAddr string, fromPubKey string, totalNeed *big
 
 // PreExec the Xuper3 contract model uses previous execution to generate RWSets
 func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.InvokeResponse, error) {
+	// verify initiator type
+	if akType := acl.IsAccount(req.GetInitiator()); akType != 0 {
+		return nil, ErrInitiatorType
+	}
+
+	// get reserved contracts from chain config
 	reservedRequests, err := uv.getReservedContractRequests(req.GetRequests(), true)
 	if err != nil {
 		uv.xlog.Error("PreExec getReservedContractRequests error", "error", err)

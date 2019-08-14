@@ -75,7 +75,6 @@ func (c *WasmInvokeCommand) invoke(ctx context.Context, codeName string) error {
 		MultiAddrs:   c.multiAddrs,
 		IsQuick:      c.isMulti,
 		Output:       c.output,
-
 		ChainName:    c.cli.RootOptions.Name,
 		Keys:         c.cli.RootOptions.Keys,
 		XchainClient: c.cli.XchainClient(),
