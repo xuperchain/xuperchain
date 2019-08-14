@@ -34,7 +34,6 @@ func (bc *BatchChan) loopMakeBatch() {
 	timer := time.Tick(time.Millisecond * time.Duration(bc.waitms))
 	buffer := []*pb.Transaction{}
 	timeFlag := false
-	//lastTimestamp = time.Now().UnixNano()
 	for {
 		select {
 		case item := <-bc.itemChan:
