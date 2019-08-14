@@ -43,20 +43,26 @@ message SignInfo {
   bytes  Sign = 3;
 }
 
-// ChainedBftMessage is the message of the protocal
-// In Hotstuff, there are two kinds of messages, "NEW_VIEW_Message" and "QC_Message". A stable leader can skip this.
-// In XuperChain, there is only one kind of message, "NEW_VIEW". The "QC_Message" is resuded with "BroadcastBlock" message.
-message ChainedBftMessage {
-    // Message Type
+// ChainedBftPhaseMessage is the proposal message of the protocal.
+// In Hotstuff, there are two kinds of messages, "NEW_VIEW_MESSAGE" and "QC_Message".
+// A stable leader can skip this "NEW_VIEW_MESSAGE".
+message ChainedBftPhaseMessage {
+    // Message Type: NEW_VIEW_MESSAGE or QC_MESSAGE
     QCState Type = 1;
-    // Justify is the QC of the leader gathered, send to next leader.
-    QuorumCert Justify = 2;
+    // ViewNumber the current view number 
+    int64 ViewNumber = 2;
+    // The new proposal send to other replicas while the 
+	QuorumCert ProposalQC = 3;
+    // JustifyQC is the QC of the leader gathered, send to next leader, while the message type is "NEW_VIEW_MESSAGE"
+    QuorumCert JustifyQC = 4;
+    // Signature for this msg
+    SignInfo Signature = 5;
 }
 
-// ChainedBftMessage is the vote message of 
+// ChainedBftVoteMessage is the vote message of the protocal.
 message ChainedBftVoteMessage {
     // The id of this message votes for.
     bytes ProposalId = 1;
     // Replica will sign the QCMessage if the QuorumCert if valid.
-    SignInfo signature = 2;
+    SignInfo Signature = 2;
 }

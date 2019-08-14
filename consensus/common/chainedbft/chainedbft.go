@@ -5,6 +5,8 @@ import (
 	"os"
 
 	log "github.com/xuperchain/log15"
+	chainedbft_pb "github.com/xuperchain/xuperunion/consensus/common/chainedbft/pb"
+	"github.com/xuperchain/xuperunion/p2pv2"
 )
 
 // ChainedBft is the implements of hotstuff
@@ -16,18 +18,17 @@ type ChainedBft struct {
 }
 
 // NewChainedBft create and start the chained-bft instance
-func NewChainedBft(cfg Config) (*ChainedBft, error) {
+func NewChainedBft(cfg Config, bcname string, p2p *p2pv2.P2PServerV2, proposalQC, generateQC, lockedQC *chainedbft_pb.QuorumCert) (*ChainedBft, error) {
 	// set up log
 	xlog := log.New("module", "chainedbft")
 	xlog.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
 
 	// set up smr
-	smr, err := NewSmr(cfg)
+	smr, err := NewSmr(cfg, bcname, p2p, proposalQC, generateQC, lockedQC)
 	if err != nil {
-		xlog.Error("NewSmr error", "error", err)
+		xlog.Error("NewChainedBft instance error")
 		return nil, err
 	}
-
 	chainedBft := &ChainedBft{
 		clog:   xlog,
 		smr:    smr,
@@ -64,6 +65,6 @@ func (cb *ChainedBft) ProcessNewView() error {
 }
 
 // ProcessPropose used to generate new QuorumCert and broadcast to other replicas
-func (cb *ChainedBft) ProcessPropose() error {
+func (cb *ChainedBft) ProcessPropose() (*chainedbft_pb.QuorumCert, error) {
 	return cb.smr.processPropose()
 }
