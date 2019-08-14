@@ -5,7 +5,10 @@ import (
 	"os"
 
 	log "github.com/xuperchain/log15"
+	"github.com/xuperchain/xuperunion/consensus/common/chainedbft/config"
 	chainedbft_pb "github.com/xuperchain/xuperunion/consensus/common/chainedbft/pb"
+	"github.com/xuperchain/xuperunion/consensus/common/chainedbft/smr"
+
 	"github.com/xuperchain/xuperunion/p2pv2"
 )
 
@@ -13,18 +16,18 @@ import (
 type ChainedBft struct {
 	clog log.Logger
 	// smr is the Smr instance of hotstuff
-	smr    *Smr
+	smr    *smr.Smr
 	quitCh chan bool
 }
 
 // NewChainedBft create and start the chained-bft instance
-func NewChainedBft(cfg Config, bcname string, p2p *p2pv2.P2PServerV2, proposalQC, generateQC, lockedQC *chainedbft_pb.QuorumCert) (*ChainedBft, error) {
+func NewChainedBft(cfg config.Config, bcname string, p2p *p2pv2.P2PServerV2, proposalQC, generateQC, lockedQC *chainedbft_pb.QuorumCert) (*ChainedBft, error) {
 	// set up log
 	xlog := log.New("module", "chainedbft")
 	xlog.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
 
 	// set up smr
-	smr, err := NewSmr(cfg, bcname, p2p, proposalQC, generateQC, lockedQC)
+	smr, err := smr.NewSmr(cfg, bcname, p2p, proposalQC, generateQC, lockedQC)
 	if err != nil {
 		xlog.Error("NewChainedBft instance error")
 		return nil, err
@@ -44,7 +47,7 @@ func (cb *ChainedBft) Start() error {
 		select {
 		case <-cb.quitCh:
 			cb.clog.Info("Quit chainedbft")
-			cb.smr.quitCh <- true
+			cb.smr.QuitCh <- true
 			cb.Stop()
 			return nil
 		}
@@ -60,11 +63,16 @@ func (cb *ChainedBft) Stop() error {
 // 1 As the new leader, it will wait for (m-f) replica's new view msg and then create an new Proposers;
 // 2 As a normal replica, it will send new view msg to leader;
 // 3 As the previous leader, it will send new view msg to new leader with votes of its QuorumCert;
-func (cb *ChainedBft) ProcessNewView() error {
-	return cb.smr.processNewView()
+func (cb *ChainedBft) ProcessNewView(viewNumber int64, leader, preLeader string) error {
+	return cb.smr.ProcessNewView(viewNumber, leader, preLeader)
 }
 
 // ProcessPropose used to generate new QuorumCert and broadcast to other replicas
 func (cb *ChainedBft) ProcessPropose() (*chainedbft_pb.QuorumCert, error) {
-	return cb.smr.processPropose()
+	return cb.smr.ProcessPropose()
+}
+
+// UpdateValidateSets will update the validates while
+func (cb *ChainedBft) UpdateValidateSets() error {
+	return nil
 }

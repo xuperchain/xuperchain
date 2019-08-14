@@ -32,7 +32,7 @@ import (
 // Init init tdpos
 func (tp *TDpos) Init() {
 	tp.config = tDposConfig{
-		initProposer: make(map[int64][]*CandidateInfo),
+		initProposer: make(map[int64][]*cons_base.CandidateInfo),
 	}
 	tp.isProduce = make(map[int64]bool)
 	tp.candidateBallots = new(sync.Map)
@@ -232,7 +232,7 @@ func (tp *TDpos) buildConfigs(xlog log.Logger, cfg *config.NodeConfig, consCfg m
 	}
 
 	for _, v := range initProposer1 {
-		canInfo := &CandidateInfo{}
+		canInfo := &cons_base.CandidateInfo{}
 		canInfo.Address = v.(string)
 		tp.config.initProposer[1] = append(tp.config.initProposer[1], canInfo)
 	}

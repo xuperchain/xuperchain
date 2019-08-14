@@ -1,4 +1,4 @@
-package chainedbft
+package config
 
 const (
 	// DefaultNetMsgChanSize is the default size of network msg channel

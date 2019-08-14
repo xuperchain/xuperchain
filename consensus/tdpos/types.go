@@ -6,6 +6,7 @@ import (
 	"sync"
 
 	log "github.com/xuperchain/log15"
+	cons_base "github.com/xuperchain/xuperunion/consensus/base"
 	"github.com/xuperchain/xuperunion/contract"
 	crypto_base "github.com/xuperchain/xuperunion/crypto/client/base"
 	"github.com/xuperchain/xuperunion/ledger"
@@ -86,7 +87,7 @@ type tDposConfig struct {
 	// 投票单价
 	voteUnitPrice *big.Int
 	// 系统指定的前两轮的候选人名单
-	initProposer map[int64][]*CandidateInfo
+	initProposer map[int64][]*cons_base.CandidateInfo
 }
 
 // 每个选票的详情, 支持一票多投
@@ -127,10 +128,4 @@ type candidateBallotsCacheValue struct {
 	ballots int64
 	// 是否被标记为删除
 	isDel bool
-}
-
-// CandidateInfo define the candidate info
-type CandidateInfo struct {
-	Address  string
-	PeerAddr string
 }

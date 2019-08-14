@@ -1097,7 +1097,7 @@ func (xc *XChainCore) GetDposVotedRecords(addr string) ([]*pb.VotedRecord, error
 // GetCheckResults get all proposers for specific term
 func (xc *XChainCore) GetCheckResults(term int64) ([]string, error) {
 	res := []string{}
-	proposers := []*tdpos.CandidateInfo{}
+	proposers := []*cons_base.CandidateInfo{}
 	version := xc.con.Version(xc.Ledger.GetMeta().TrunkHeight + 1)
 	key := tdpos.GenTermCheckKey(version, term)
 	val, err := xc.Utxovm.GetFromTable(nil, []byte(key))
