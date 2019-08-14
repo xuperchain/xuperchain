@@ -221,9 +221,6 @@ func (c *CommTrans) GenRawTx(ctx context.Context, desc []byte, preExeRes *pb.Inv
 
 // genInitiator generate initiator of transaction
 func (c *CommTrans) genInitiator() (string, error) {
-	if c.From != "" {
-		return c.From, nil
-	}
 	fromAddr, err := readAddress(c.Keys)
 	if err != nil {
 		return "", err
@@ -388,7 +385,6 @@ func (c *CommTrans) SendTx(ctx context.Context, tx *pb.Transaction) error {
 	if err != nil {
 		return errors.New("MakeTxDigesthash txid error")
 	}
-
 	txid, err := c.postTx(ctx, tx)
 	if err != nil {
 		return err
