@@ -120,7 +120,7 @@ func GetEcdsaPublicKeyFromJSON(jsonContent []byte) (*ecdsa.PublicKey, error) {
 	if err != nil {
 		return nil, err //json有问题
 	}
-	if publicKey.Curvname != "P-256" {
+	if publicKey.Curvname != "P-256" && publicKey.Curvname != "P-256-SN" {
 		log.Printf("curve [%v] is not supported yet\n", publicKey.Curvname)
 		err = fmt.Errorf("curve [%v] is not supported yet", publicKey.Curvname)
 		return nil, err

@@ -20,6 +20,8 @@ const (
 	CryptoTypeDefault = "default"
 	// CryptoTypeGM : support for GM
 	CryptoTypeGM = "gm"
+	// CryptoTypeSchnorr : support for Nist + Schnorr
+	CryptoTypeSchnorr = "schnorr"
 )
 
 // cryptoClientFactory is the factory to hold all kinds of crypto clients' instance
@@ -153,6 +155,8 @@ func getTypeByCurveName(name string) (string, error) {
 		return CryptoTypeDefault, nil
 	case "SM2-P-256":
 		return CryptoTypeGM, nil
+	case "P-256-SN":
+		return CryptoTypeSchnorr, nil
 	default:
 		return "", errors.New("Unknown curve name")
 	}
@@ -164,6 +168,8 @@ func getTypeByCryptoByte(cb uint8) (string, error) {
 		return CryptoTypeDefault, nil
 	case config.Gm:
 		return CryptoTypeGM, nil
+	case config.NistSN:
+		return CryptoTypeSchnorr, nil
 	default:
 		return "", errors.New("Unknown crypto byte")
 	}

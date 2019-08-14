@@ -110,8 +110,9 @@ func GenerateAccountByMnemonic(mnemonic string, language int) (*ECDSAAccount, er
 		return nil, err
 	}
 
-	if cryptography != config.Nist {
-		err = fmt.Errorf("Only cryptoGraphy NIST[%d] is supported in this version, this cryptoGraphy is [%v]", config.Nist, cryptography)
+	if cryptography != config.Nist && cryptography != config.NistSN {
+		err = fmt.Errorf("Only cryptoGraphy NIST[%d or %d] is supported in this version, this cryptoGraphy is [%v]",
+			config.Nist, config.NistSN, cryptography)
 		return nil, err
 	}
 	curve := elliptic.P256()
@@ -192,6 +193,8 @@ func CreateNewAccountWithMnemonic(language int, strength uint8, cryptography uin
 
 	switch cryptography {
 	case config.Nist: // NIST
+		cryptographyBit = []byte{config.Nist}
+	case config.NistSN: // NIST+Schnorr
 		cryptographyBit = []byte{config.Nist}
 	case config.Gm: // 国密
 		//		cryptographyBit = []byte{config.Gm}
@@ -364,13 +367,14 @@ func GetEcdsaPrivateKeyFromJSON(jsonContent []byte) (*ecdsa.PrivateKey, error) {
 	if err != nil {
 		return nil, err
 	}
-	if privateKey.Curvname != "P-256" {
+	if privateKey.Curvname != "P-256" && privateKey.Curvname != "P-256-SN" {
 		log.Printf("curve [%v] is not supported yet.\n", privateKey.Curvname)
 		err = fmt.Errorf("curve [%v] is not supported yet", privateKey.Curvname)
 		return nil, err
 	}
 	newPrivateKey := &ecdsa.PrivateKey{}
 	newPrivateKey.PublicKey.Curve = elliptic.P256()
+	newPrivateKey.PublicKey.Curve.Params().Name = privateKey.Curvname
 	newPrivateKey.X = privateKey.X
 	newPrivateKey.Y = privateKey.Y
 	newPrivateKey.D = privateKey.D
@@ -394,13 +398,14 @@ func GetEcdsaPublicKeyFromJSON(jsonContent []byte) (*ecdsa.PublicKey, error) {
 	if err != nil {
 		return nil, err //json有问题
 	}
-	if publicKey.Curvname != "P-256" {
+	if publicKey.Curvname != "P-256" && publicKey.Curvname != "P-256-SN" {
 		log.Printf("curve [%v] is not supported yet.\n", publicKey.Curvname)
 		err = fmt.Errorf("curve [%v] is not supported yet", publicKey.Curvname)
 		return nil, err
 	}
 	newPublicKey := &ecdsa.PublicKey{}
 	newPublicKey.Curve = elliptic.P256()
+	newPublicKey.Curve.Params().Name = publicKey.Curvname
 	newPublicKey.X = publicKey.X
 	newPublicKey.Y = publicKey.Y
 	return newPublicKey, nil
@@ -445,7 +450,7 @@ func GetCryptoByteFromMnemonic(mnemonic string, language int) (uint8, error) {
 
 	tagByte := entropy[len(entropy)-1:]
 	tagInt := new(big.Int).SetBytes(tagByte)
-	log.Printf("tagInt is %b\n", tagInt)
+	// log.Printf("tagInt is %b\n", tagInt)
 
 	// 将熵右移4个比特
 	tagInt.Div(tagInt, Shift4BitsFactor)
