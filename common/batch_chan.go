@@ -42,9 +42,9 @@ func (bc *BatchChan) loopMakeBatch() {
 			timeFlag = true
 		}
 
-		// 容量控制 + 时间控制
+		// 数量控制 + 时间控制
 		// case1: 当buffer中积攒的unconfirm transactions数量超过bc.window
-		// case2: 当经过bc.waitms事件后
+		// case2: 当经过bc.waitms时间窗口后
 		// case1以及case2都需要转发本地buffer中的unconfirm transactions
 		if len(buffer) >= bc.window || (len(buffer) > 0 && timeFlag == true) {
 			bc.queue <- buffer
