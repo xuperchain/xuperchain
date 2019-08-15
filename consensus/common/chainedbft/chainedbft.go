@@ -75,5 +75,5 @@ func (cb *ChainedBft) ProcessProposal(viewNumber int64, proposalID, proposalMsg 
 
 // UpdateValidateSets will update the validates while
 func (cb *ChainedBft) UpdateValidateSets(validates []*cons_base.CandidateInfo) error {
-	return nil
+	return cb.smr.UpdateValidateSets(validates)
 }

@@ -1,6 +1,7 @@
 package smr
 
 import (
+	"bytes"
 	"context"
 	"errors"
 
@@ -16,6 +17,8 @@ import (
 var (
 	// ErrNewViewNum used to return error new view number
 	ErrNewViewNum = errors.New("new view number error")
+	// ErrSafeProposal check new proposal error
+	ErrSafeProposal = errors.New("check new proposal error")
 )
 
 // NewSmr return smr instance
@@ -49,15 +52,18 @@ func NewSmr(cfg config.Config, bcname string, p2p *p2pv2.P2PServerV2, proposalQC
 
 // registerToNetwork register msg handler to p2p network
 func (s *Smr) registerToNetwork() error {
-	if _, err := s.p2p.Register(p2pv2.NewSubscriber(s.p2pMsgChan, p2p_pb.XuperMessage_CHAINED_BFT_NEW_VIEW_MSG, nil, "")); err != nil {
+	if _, err := s.p2p.Register(p2pv2.NewSubscriber(s.p2pMsgChan,
+		p2p_pb.XuperMessage_CHAINED_BFT_NEW_VIEW_MSG, nil, "")); err != nil {
 		return err
 	}
 
-	if _, err := s.p2p.Register(p2pv2.NewSubscriber(s.p2pMsgChan, p2p_pb.XuperMessage_CHAINED_BFT_NEW_PROPOSAL_MSG, nil, "")); err != nil {
+	if _, err := s.p2p.Register(p2pv2.NewSubscriber(s.p2pMsgChan,
+		p2p_pb.XuperMessage_CHAINED_BFT_NEW_PROPOSAL_MSG, nil, "")); err != nil {
 		return err
 	}
 
-	if _, err := s.p2p.Register(p2pv2.NewSubscriber(s.p2pMsgChan, p2p_pb.XuperMessage_CHAINED_BFT_VOTE_MSG, nil, "")); err != nil {
+	if _, err := s.p2p.Register(p2pv2.NewSubscriber(s.p2pMsgChan,
+		p2p_pb.XuperMessage_CHAINED_BFT_VOTE_MSG, nil, "")); err != nil {
 		return err
 	}
 	return nil
@@ -113,8 +119,8 @@ func (s *Smr) ProcessNewView(viewNumber int64, leader, preLeader string) error {
 	if leader == s.address {
 		// TODO: zq register call back function to extenal consensus
 		s.slog.Trace("ProcessNewView as a new leader, wait for (n - f) new view messags")
-		s.addViewMsgs(newViewMsg)
-		return s.addViewMsgs(newViewMsg)
+		s.addViewMsg(newViewMsg)
+		return s.addViewMsg(newViewMsg)
 	}
 
 	// send to next leader
@@ -135,7 +141,9 @@ func (s *Smr) ProcessNewView(viewNumber int64, leader, preLeader string) error {
 }
 
 // ProcessProposal used to generate new QuorumCert and broadcast to other replicas
-func (s *Smr) ProcessProposal(viewNumber int64, proposalID, proposalMsg []byte) (*chainedbft_pb.QuorumCert, error) {
+func (s *Smr) ProcessProposal(viewNumber int64, proposalID,
+	proposalMsg []byte) (*chainedbft_pb.QuorumCert, error) {
+
 	qc := &chainedbft_pb.QuorumCert{
 		ProposalId:  proposalID,
 		ProposalMsg: proposalMsg,
@@ -171,6 +179,21 @@ func (s *Smr) ProcessProposal(viewNumber int64, proposalID, proposalMsg []byte) 
 func (s *Smr) handleReceivedMsg(msg *p2p_pb.XuperMessage) {
 	s.slog.Info("handleReceivedMsg receive msg", "logid",
 		msg.GetHeader().GetLogid(), "type", msg.GetHeader().GetType())
+
+	// verify msg
+	if !p2p_pb.VerifyDataCheckSum(msg) {
+		s.slog.Warn("handleReceivedMsg verify msg data error!", "logid", msg.GetHeader().GetLogid())
+		return
+	}
+
+	// filter msg from other chain
+	if msg.GetHeader().GetBcname() != s.bcname {
+		s.slog.Info("handleReceivedMsg msg doesn't from this chain!",
+			"logid", msg.GetHeader().GetLogid(), "bcname_from", msg.GetHeader().GetBcname(), "bcname", s.bcname)
+		return
+	}
+
+	// dispach msg handler
 	switch msg.GetHeader().GetType() {
 	case p2p_pb.XuperMessage_CHAINED_BFT_NEW_VIEW_MSG:
 		go s.handleReceivedNewView(msg)
@@ -186,31 +209,104 @@ func (s *Smr) handleReceivedMsg(msg *p2p_pb.XuperMessage) {
 
 // handleReceivedVoteMsg used to process while receiving vote msg from network
 func (s *Smr) handleReceivedVoteMsg(msg *p2p_pb.XuperMessage) error {
+	voteMsg := &chainedbft_pb.ChainedBftVoteMessage{}
+	if err := proto.Unmarshal(msg.GetData().GetMsgInfo(), voteMsg); err != nil {
+		s.slog.Error("handleReceivedVoteMsg Unmarshal msg error",
+			"logid", msg.GetHeader().GetLogid(), "error", err)
+		return err
+	}
+
+	if err := s.addVoteMsg(voteMsg); err != nil {
+		s.slog.Error("handleReceivedVoteMsg add vote msg error",
+			"logid", msg.GetHeader().GetLogid(), "error", err)
+		return err
+	}
+
+	// as a leader, if the num of votes about proposalQC more than (n -f), need to update local status
+	if s.checkVoteNum(voteMsg) {
+		s.votedView = s.proposalQC.GetViewNumber()
+		s.lockedQC = s.generateQC
+		s.generateQC = s.proposalQC
+	}
 	return nil
 }
 
 // handleReceivedNewView used to handle new view msg from other replicas
 func (s *Smr) handleReceivedNewView(msg *p2p_pb.XuperMessage) error {
+	newViewMsg := &chainedbft_pb.ChainedBftPhaseMessage{}
+	if err := proto.Unmarshal(msg.GetData().GetMsgInfo(), newViewMsg); err != nil {
+		s.slog.Error("handleReceivedNewView Unmarshal msg error",
+			"logid", msg.GetHeader().GetLogid(), "error", err)
+		return err
+	}
+
+	if err := s.addViewMsg(newViewMsg); err != nil {
+		s.slog.Error("handleReceivedNewView add vote msg error",
+			"logid", msg.GetHeader().GetLogid(), "error", err)
+		return err
+	}
 	return nil
 }
 
 // handleReceivedProposal is the core function of hotstuff. It uesd to change QuorumCerts's phase.
 // It will change three previous QuorumCerts's state because hotstuff is a three chained bft.
 func (s *Smr) handleReceivedProposal(msg *p2p_pb.XuperMessage) error {
-	return nil
-}
+	propMsg := &chainedbft_pb.ChainedBftPhaseMessage{}
+	if err := proto.Unmarshal(msg.GetData().GetMsgInfo(), propMsg); err != nil {
+		s.slog.Error("handleReceivedProposal Unmarshal msg error",
+			"logid", msg.GetHeader().GetLogid(), "error", err)
+		return err
+	}
+	propsQC := propMsg.GetProposalQC()
+	// Step1: TODO: call back extenal consensus for chained proposals
+	// prePropsQC is the propsQC's ProposalMsg's JustifyQC
+	// prePrePropsQC is the prePropsQC's ProposalMsg's JustifyQC
+	// prePrePropsQC <- prePropsQC <- propsQC
+	prePropsQC := &chainedbft_pb.QuorumCert{}
+	prePrePropsQC := &chainedbft_pb.QuorumCert{}
 
-// handleOnReceiveProposal used to process while receiving Proposal
-func (s *Smr) handleStateChangeOnReceiveProposal() error {
-	return nil
-}
+	// preProposalMsg is the propsQC.ProposalMsg's parent block
+	// prePreProposalMsg is the propsQC.ProposalMsg's grandparent block
+	preProposalMsg := []byte{}
+	prePreProposalMsg := []byte{}
 
-// handleStateChangeOnPreCommit used to process while
-func (s *Smr) handleStateChangeOnPreCommit() error {
-	return nil
-}
+	// Step2: judge safety
+	ok, err := s.safeProposal(propsQC, prePropsQC)
+	if !ok || err != nil {
+		s.slog.Error("handleReceivedProposal safeProposal error!", "ok", ok, "error", err)
+		return ErrSafeProposal
+	}
+	// Step3: vote for this proposal
+	// TODO: zq sign for this msg
+	voteMsg := &chainedbft_pb.ChainedBftVoteMessage{
+		ProposalId: propsQC.GetProposalId(),
+	}
+	// send to leader
+	msgBuf, err := proto.Marshal(voteMsg)
+	if err != nil {
+		s.slog.Error("handleReceivedProposal marshal msg error", "error", err)
+		return err
+	}
 
-// handleOnCommit
-func (s *Smr) handleStateChangeOnCommit() error {
+	netMsg, _ := p2p_pb.NewXuperMessage(p2p_pb.XuperMsgVersion3, s.bcname, "",
+		p2p_pb.XuperMessage_CHAINED_BFT_VOTE_MSG, msgBuf, p2p_pb.XuperMessage_NONE)
+
+	opts := []p2pv2.MessageOption{
+		p2pv2.WithBcName(s.bcname),
+		p2pv2.WithTargetPeerAddrs([]string{propMsg.GetSignature().GetAddress()}),
+	}
+	go s.p2p.SendMessage(context.Background(), netMsg, opts...)
+
+	// Step4: update state
+	s.proposalQC = propsQC
+	if bytes.Equal(preProposalMsg, prePropsQC.GetProposalMsg()) {
+		s.votedView = prePropsQC.GetViewNumber()
+		s.generateQC = prePropsQC
+	}
+
+	if bytes.Equal(preProposalMsg, prePropsQC.GetProposalMsg()) &&
+		bytes.Equal(prePreProposalMsg, prePrePropsQC.GetProposalMsg()) {
+		s.lockedQC = prePrePropsQC
+	}
 	return nil
 }
