@@ -380,6 +380,8 @@ message LedgerMeta
   int64 trunk_height = 3;
   // max block size
   int64 max_block_size = 4;
+  // preset contracts
+  repeated InvokeRequest reserved_contracts = 5;
 }
 
 // Utxo metadata
@@ -549,6 +551,7 @@ message WasmCodeDesc
   string runtime = 1;
   string compiler = 2;
   bytes digest = 3;
+  string vm_compiler = 4;
 }
 
 message DeployNativeCodeRequest

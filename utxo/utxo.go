@@ -68,6 +68,7 @@ var (
 	ErrRWSetInvalid            = errors.New("RWSet of transaction invalid")
 	ErrAclNotEnough            = errors.New("ACL not enough")
 	ErrInvalidSignature        = errors.New("the signature is invalid or not match the address")
+	ErrInitiatorType           = errors.New("the initiator type is invalid, need AK")
 
 	ErrGasNotEnough   = errors.New("Gas not enough")
 	ErrInvalidAccount = errors.New("Invalid account")
@@ -706,6 +707,12 @@ func (uv *UtxoVM) SelectUtxos(fromAddr string, fromPubKey string, totalNeed *big
 
 // PreExec the Xuper3 contract model uses previous execution to generate RWSets
 func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.InvokeResponse, error) {
+	// verify initiator type
+	if akType := acl.IsAccount(req.GetInitiator()); akType != 0 {
+		return nil, ErrInitiatorType
+	}
+
+	// get reserved contracts from chain config
 	reservedRequests, err := uv.getReservedContractRequests(req.GetRequests(), true)
 	if err != nil {
 		uv.xlog.Error("PreExec getReservedContractRequests error", "error", err)
@@ -713,7 +720,7 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 	}
 	// contract request with reservedRequests
 	req.Requests = append(reservedRequests, req.Requests...)
-	uv.xlog.Error("PreExec requests after merge", "requests", req.Requests)
+	uv.xlog.Trace("PreExec requests after merge", "requests", req.Requests)
 	// init modelCache
 	modelCache, err := xmodel.NewXModelCache(uv.GetXModel(), true)
 	if err != nil {
@@ -1612,6 +1619,12 @@ func (uv *UtxoVM) Walk(blockid []byte) error {
 		idx, length := 0, len(todoBlk.Transactions)
 		for idx < length {
 			tx := todoBlk.Transactions[idx]
+			if !tx.Autogen && !tx.Coinbase {
+				if ok, err := uv.ImmediateVerifyTx(tx, false); !ok {
+					uv.xlog.Warn("dotx failed to ImmediateVerifyTx", "txid", fmt.Sprintf("%x", tx.Txid), "err", err)
+					return errors.New("dotx failed to ImmediateVerifyTx error")
+				}
+			}
 			txErr := uv.doTxInternal(tx, batch)
 			if txErr != nil {
 				uv.xlog.Warn("failed to do tx when Walk", "txErr", txErr, "txid", fmt.Sprintf("%x", tx.Txid))

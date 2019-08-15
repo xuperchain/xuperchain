@@ -90,25 +90,25 @@ func legalizeName(name string) string {
 }
 
 // Exec executes a wasm function by given name and param
-func (c *Context) Exec(name string, param []uint32) (ret uint32, err error) {
+func (c *Context) Exec(name string, param []int64) (ret int64, err error) {
 	defer CaptureTrap(&err)
 
 	exportName := "export_" + legalizeName(name)
 	cname := C.CString(exportName)
 	defer C.free(unsafe.Pointer(cname))
 
-	var args *C.uint32_t
+	var args *C.int64_t
 	if len(param) != 0 {
-		args = (*C.uint32_t)(unsafe.Pointer(&param[0]))
+		args = (*C.int64_t)(unsafe.Pointer(&param[0]))
 	}
 	var cgas C.wasm_rt_gas_t
 	cgas.limit = C.int64_t(c.cfg.GasLimit)
-	var cret C.uint32_t
-	ok := C.xvm_call(&c.context, cname, args, C.uint32_t(len(param)), &cgas, &cret)
+	var cret C.int64_t
+	ok := C.xvm_call(&c.context, cname, args, C.int64_t(len(param)), &cgas, &cret)
 	if ok == 0 {
 		return 0, fmt.Errorf("%s not found", name)
 	}
-	ret = uint32(cret)
+	ret = int64(cret)
 	c.gasUsed = int64(cgas.used)
 	return
 }
