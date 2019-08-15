@@ -27,10 +27,12 @@ message XuperMessage {
         GET_AUTHENTICATION = 13;
         GET_AUTHENTICATION_RES = 14;
 
-        // chained-bft phase change message
-        CHAINED_BFT_PHASE_MSG = 15;
+        // chained-bft NEW_VIEW message
+        CHAINED_BFT_NEW_VIEW_MSG = 15;
+        // chained-bft NEW_PROPOSAL message
+        CHAINED_BFT_NEW_PROPOSAL_MSG = 16;
         // chained-bft vote message
-        CHAINED_BFT_VOTE_MSG = 16;
+        CHAINED_BFT_VOTE_MSG = 17;
     }
     enum ErrorType {
         // success 

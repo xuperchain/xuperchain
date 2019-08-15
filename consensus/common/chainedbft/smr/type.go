@@ -49,3 +49,8 @@ type Smr struct {
 func (s *Smr) addViewMsgs(msg *chainedbft_pb.ChainedBftPhaseMessage) error {
 	return nil
 }
+
+// UpdateValidateSets update current ValidateSets
+func (s *Smr) UpdateValidateSets(validates []*cons_base.CandidateInfo) error {
+	return nil
+}

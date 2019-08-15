@@ -5,10 +5,10 @@ import (
 	"os"
 
 	log "github.com/xuperchain/log15"
+	cons_base "github.com/xuperchain/xuperunion/consensus/base"
 	"github.com/xuperchain/xuperunion/consensus/common/chainedbft/config"
 	chainedbft_pb "github.com/xuperchain/xuperunion/consensus/common/chainedbft/pb"
 	"github.com/xuperchain/xuperunion/consensus/common/chainedbft/smr"
-
 	"github.com/xuperchain/xuperunion/p2pv2"
 )
 
@@ -43,6 +43,7 @@ func NewChainedBft(cfg config.Config, bcname string, p2p *p2pv2.P2PServerV2, pro
 
 // Start will start ChainedBft instance, smr instance instance
 func (cb *ChainedBft) Start() error {
+	go cb.smr.Start()
 	for {
 		select {
 		case <-cb.quitCh:
@@ -67,12 +68,12 @@ func (cb *ChainedBft) ProcessNewView(viewNumber int64, leader, preLeader string)
 	return cb.smr.ProcessNewView(viewNumber, leader, preLeader)
 }
 
-// ProcessPropose used to generate new QuorumCert and broadcast to other replicas
-func (cb *ChainedBft) ProcessPropose() (*chainedbft_pb.QuorumCert, error) {
-	return cb.smr.ProcessPropose()
+// ProcessProposal used to generate new QuorumCert and broadcast to other replicas
+func (cb *ChainedBft) ProcessProposal(viewNumber int64, proposalID, proposalMsg []byte) (*chainedbft_pb.QuorumCert, error) {
+	return cb.smr.ProcessProposal(viewNumber, proposalID, proposalMsg)
 }
 
 // UpdateValidateSets will update the validates while
-func (cb *ChainedBft) UpdateValidateSets() error {
+func (cb *ChainedBft) UpdateValidateSets(validates []*cons_base.CandidateInfo) error {
 	return nil
 }
