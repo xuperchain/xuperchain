@@ -2238,7 +2238,7 @@ func (uv *UtxoVM) GetAccountContracts(account string) ([]string, error) {
 		uv.xlog.Warn("GetAccountContracts valid account name error", "error", "account name is not valid")
 		return nil, errors.New("account name is not valid")
 	}
-	prefKey := pb.ExtUtxoTablePrefix + string(xmodel.MakeRawKey(utils.GetAccount2ContractBucket(), []byte(account)))
+	prefKey := pb.ExtUtxoTablePrefix + string(xmodel.MakeRawKey(utils.GetAccount2ContractBucket(), []byte(account+utils.GetACLSeparator())))
 	it := uv.ldb.NewIteratorWithPrefix([]byte(prefKey))
 	defer it.Release()
 	for it.Next() {
