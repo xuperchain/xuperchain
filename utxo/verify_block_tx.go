@@ -30,7 +30,7 @@ func (uv *UtxoVM) verifyBlockTxs(block *pb.InternalBlock, isRootTx bool, unconfi
 		if err != nil {
 			break
 		}
-		end = childDAGSizeArr[count]
+		end += childDAGSizeArr[count]
 		wg.Add(1)
 		go func(start int, end int, txs []*pb.Transaction) {
 			defer wg.Done()

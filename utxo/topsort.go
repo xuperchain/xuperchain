@@ -67,7 +67,7 @@ func TopSortDFS(g TxGraph) (order []string, cycle bool, childDAGsSize []int) {
 		L[i] = n
 	}
 	// 上一个子DAG对应的起始数组索引
-	lastDAGIdx := 0
+	lastDAGIdx := len(L)
 	// 当前子DAG对应的tx个数
 	currChildDAGSize := 0
 	for n := range g {
@@ -79,7 +79,7 @@ func TopSortDFS(g TxGraph) (order []string, cycle bool, childDAGsSize []int) {
 		}
 		visit(n)
 
-		currChildDAGSize = len(L) - i - lastDAGIdx
+		currChildDAGSize = lastDAGIdx - i
 		childDAGsSize = append([]int{currChildDAGSize}, childDAGsSize...)
 		lastDAGIdx = i
 
@@ -95,6 +95,7 @@ func TopSortDFS(g TxGraph) (order []string, cycle bool, childDAGsSize []int) {
 		if degreeForTx[k] == 1 && len(g[k]) <= 0 {
 			L[leftIdx] = k
 			leftIdx++
+			childDAGsSize = append([]int{1}, childDAGsSize...)
 		}
 	}
 	// 存在环
