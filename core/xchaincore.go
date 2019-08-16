@@ -509,11 +509,19 @@ func (xc *XChainCore) doMiner() {
 		xc.log.Warn("ledger last blockid is not equal utxovm last id")
 		err := xc.Utxovm.Walk(ledgerLastID)
 		// if xc.failSkip = false, then keep logic, if not equal, retry
-		if err != nil && !xc.failSkip {
-			xc.log.Error("Walk error at", "ledger blockid", global.F(ledgerLastID),
-				"utxo blockid", global.F(utxovmLastID))
-			return
+		if err != nil {
+			if !xc.failSkip {
+				xc.log.Error("Walk error at", "ledger blockid", global.F(ledgerLastID),
+					"utxo blockid", global.F(utxovmLastID))
+				return
+			} else {
+				err := xc.Ledger.Truncate(ledgerLastID, utxovmLastID)
+				if err != nil {
+					return
+				}
+			}
 		}
+
 		ledgerLastID = xc.Ledger.GetMeta().TipBlockid
 		utxovmLastID = xc.Utxovm.GetLatestBlockid()
 	}
