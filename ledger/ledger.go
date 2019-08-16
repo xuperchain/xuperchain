@@ -1048,6 +1048,11 @@ func (l *Ledger) Truncate(ledgerLastID []byte, utxovmLastID []byte) error {
 		return pbErr
 	}
 	batchWrite.Put([]byte(pb.MetaTablePrefix), metaBuf)
+	kvErr := batchWrite.Write()
+	if kvErr != nil {
+		l.xlog.Warn("batch write failed when Truncate", "kvErr", kvErr)
+		return kvErr
+	}
 
 	l.meta = newMeta
 	l.xlog.Info("truncate blockid succeed")
