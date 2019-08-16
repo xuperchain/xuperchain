@@ -483,10 +483,6 @@ func (k *Kernel) rollbackUpdateReservedContract(desc *contract.TxDesc) error {
 		return err
 	}
 	k.log.Info("rollback reservered contract: params", "params", params)
-	if err != nil {
-		return err
-	}
-	k.log.Info("rollback reservered contract")
 	err = k.context.LedgerObj.UpdateReservedContract(params, k.context.UtxoBatch)
 	return err
 }
