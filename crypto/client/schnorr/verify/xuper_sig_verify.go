@@ -27,68 +27,63 @@ var (
 
 // XuperSigVerify support to verify multiple kinds of signatures
 func XuperSigVerify(keys []*ecdsa.PublicKey, signature, message []byte) (bool, error) {
-	//	xuperSig, err := unmarshalXuperSignature(signature)
+	if len(keys) < 1 {
+		return false, fmt.Errorf("no public key found")
+	}
+	curveName := keys[0].Params().Name
 	xuperSig := new(common.XuperSignature)
 	err := json.Unmarshal(signature, xuperSig)
+	if err != nil {
+		return false, err
+	}
 
 	// 说明不是统一超级签名的格式
 	if err != nil {
-		switch keys[0].Params().Name {
+		switch curveName {
 		case config.CurveNist: // NIST
 			verifyResult, err := sign.VerifyECDSA(keys[0], signature, message)
 			return verifyResult, err
-		case config.CurveGm: // 国密
-			return false, fmt.Errorf("This cryptography[%v] has not been supported yet", keys[0].Params().Name)
+		case config.CurveNistSN: // NIST + Schnorr
+			verifyResult, err := schnorr_sign.Verify(keys[0], signature, message)
+			return verifyResult, err
 		default: // 不支持的密码学类型
-			return false, fmt.Errorf("This cryptography[%v] has not been supported yet", keys[0].Params().Name)
+			return false, fmt.Errorf("This cryptography[%v] has not been supported yet", curveName)
 		}
 	}
 
 	switch xuperSig.SigType {
 	// ECDSA签名
 	case common.ECDSA:
-		switch keys[0].Params().Name {
-		case config.CurveNist: // NIST
-			verifyResult, err := sign.XuperVerify(keys[0], xuperSig.SigContent, message)
+		if curveName == config.CurveNist {
+			verifyResult, err := sign.VerifyECDSA(keys[0], xuperSig.SigContent, message)
 			return verifyResult, err
-		case config.CurveGm: // 国密
-			return false, fmt.Errorf("This cryptography[%v] has not been supported yet", keys[0].Params().Name)
-		default: // 不支持的密码学类型
-			return false, fmt.Errorf("This cryptography[%v] has not been supported yet", keys[0].Params().Name)
 		}
+		return false, fmt.Errorf("This cryptography[%v] has not been supported yet", curveName)
+
 	// Schnorr签名
 	case common.Schnorr:
-		switch keys[0].Params().Name {
-		case config.CurveNist: // NIST
+		if curveName == config.CurveNistSN {
 			verifyResult, err := schnorr_sign.Verify(keys[0], xuperSig.SigContent, message)
 			return verifyResult, err
-		case config.CurveGm: // 国密
-			return false, fmt.Errorf("This cryptography[%v] has not been supported yet", keys[0].Params().Name)
-		default: // 不支持的密码学类型
-			return false, fmt.Errorf("This cryptography[%v] has not been supported yet", keys[0].Params().Name)
 		}
+		return false, fmt.Errorf("This cryptography[%v] has not been supported yet", curveName)
+
 	// Schnorr环签名
 	case common.SchnorrRing:
-		switch keys[0].Params().Name {
-		case config.CurveNist: // NIST
+		if curveName == config.CurveNistSN {
 			verifyResult, err := schnorr_ring_sign.Verify(keys, xuperSig.SigContent, message)
 			return verifyResult, err
-		case config.CurveGm: // 国密
-			return false, fmt.Errorf("This cryptography[%v] has not been supported yet", keys[0].Params().Name)
-		default: // 不支持的密码学类型
-			return false, fmt.Errorf("This cryptography[%v] has not been supported yet", keys[0].Params().Name)
 		}
+		return false, fmt.Errorf("This cryptography[%v] has not been supported yet", curveName)
+
 	// 多重签名
 	case common.MultiSig:
-		switch keys[0].Params().Name {
-		case config.CurveNist: // NIST
+		if curveName == config.CurveNist || curveName == config.CurveNistSN {
 			verifyResult, err := multisign.VerifyMultiSig(keys, xuperSig.SigContent, message)
 			return verifyResult, err
-		case config.CurveGm: // 国密
-			return false, fmt.Errorf("This cryptography[%v] has not been supported yet", keys[0].Params().Name)
-		default: // 不支持的密码学类型
-			return false, fmt.Errorf("This cryptography[%v] has not been supported yet", keys[0].Params().Name)
 		}
+		return false, fmt.Errorf("This cryptography[%v] has not been supported yet", curveName)
+
 	// 不支持的签名类型
 	default:
 		err = fmt.Errorf("This XuperSignature type[%v] is not supported in this version", xuperSig.SigType)

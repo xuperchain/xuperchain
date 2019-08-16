@@ -1,5 +1,5 @@
 syntax = "proto3";
- 
+
 package pb;
 
 import "google/api/annotations.proto";
@@ -41,107 +41,108 @@ enum XChainErrorEnum {
 
 // TransactionStatus is the status of transaction
 enum TransactionStatus {
-// Undefined status
+  // Undefined status
   UNDEFINE = 0;
-// Transaction not exist
+  // Transaction not exist
   NOEXIST = 1;
-// Transaction have been confirmed
+  // Transaction have been confirmed
   CONFIRM = 2;
-// Transaction is on the furcation
+  // Transaction is on the furcation
   FURCATION = 3;
-// Transaction have not been confirmed
+  // Transaction have not been confirmed
   UNCONFIRM = 4;
 }
 
 // Xchain is the main interfaces
 service Xchain {
-	
-	// PostTx post Transaction to a node
-	rpc PostTx(TxStatus) returns (CommonReply) {
-		option (google.api.http) = {
-			post: "/v1/post_tx"
-			body: "*"
-		};
-	}
 
-
-	rpc QueryACL(AclStatus) returns (AclStatus) {
-		option (google.api.http) = {
-		    post: "/v1/query_acl"
-		    body: "*"
-		};
-	}
-
-  rpc GetAccountContracts(GetAccountContractsRequest) returns (GetAccountContractsResponse) {
+  // PostTx post Transaction to a node
+  rpc PostTx(TxStatus) returns (CommonReply) {
     option (google.api.http) = {
-      post: "/v1/get_account_contracts"
-      body: "*"
-      };
+      post : "/v1/post_tx"
+      body : "*"
+    };
+  }
+
+  rpc QueryACL(AclStatus) returns (AclStatus) {
+    option (google.api.http) = {
+      post : "/v1/query_acl"
+      body : "*"
+    };
+  }
+
+  rpc GetAccountContracts(GetAccountContractsRequest)
+      returns (GetAccountContractsResponse) {
+    option (google.api.http) = {
+      post : "/v1/get_account_contracts"
+      body : "*"
+    };
   }
 
   // QueryTx query Transaction by TxStatus,
   // Bcname and Txid are required for this
   rpc QueryTx(TxStatus) returns (TxStatus) {
-  option (google.api.http) = {
-    post: "/v1/query_tx"
-    body: "*"
+    option (google.api.http) = {
+      post : "/v1/query_tx"
+      body : "*"
     };
   }
 
   // GetBalance get balance of an address,
   // Address is required for this
   rpc GetBalance(AddressStatus) returns (AddressStatus) {
-  option (google.api.http) = {
-    post: "/v1/get_balance"
-    body: "*"
+    option (google.api.http) = {
+      post : "/v1/get_balance"
+      body : "*"
     };
   }
 
   // GetFrozenBalance get balance that still be frozen of an address,
   // Address is required for this
   rpc GetFrozenBalance(AddressStatus) returns (AddressStatus) {
-  option (google.api.http) = {
-    post: "/v1/get_frozen_balance"
-    body: "*"
+    option (google.api.http) = {
+      post : "/v1/get_frozen_balance"
+      body : "*"
     };
   }
 
   // GetBlock get block by blockid and return if the block in trunk or in branch
   rpc GetBlock(BlockID) returns (Block) {
-  option (google.api.http) = {
-    post: "/v1/get_block"
-    body: "*"
+    option (google.api.http) = {
+      post : "/v1/get_block"
+      body : "*"
     };
   }
 
-  // GetBlockByHeight get block by height and return if the block in trunk or in branch
+  // GetBlockByHeight get block by height and return if the block in trunk or in
+  // branch
   rpc GetBlockByHeight(BlockHeight) returns (Block) {
-  option (google.api.http) = {
-    post: "/v1/get_block_by_height"
-    body: "*"
+    option (google.api.http) = {
+      post : "/v1/get_block_by_height"
+      body : "*"
     };
   }
 
   rpc GetBlockChainStatus(BCStatus) returns (BCStatus) {
-  option (google.api.http) = {
-    post: "/v1/get_bcstatus"
-    body: "*"
+    option (google.api.http) = {
+      post : "/v1/get_bcstatus"
+      body : "*"
     };
   }
 
   // Get blockchains query blockchains
   rpc GetBlockChains(CommonIn) returns (BlockChains) {
-  option (google.api.http) = {
-    get: "/v1/get_bcchains"
-    //body: "*"
+    option (google.api.http) = {
+      get : "/v1/get_bcchains"
+      // body: "*"
     };
   }
 
   // GetSystemStatus query system status
   rpc GetSystemStatus(CommonIn) returns (SystemsStatusReply) {
-  option (google.api.http) = {
-    post: "/v1/get_sysstatus"
-      body: "*"
+    option (google.api.http) = {
+      post : "/v1/get_sysstatus"
+      body : "*"
     };
   }
 
@@ -149,60 +150,65 @@ service Xchain {
   rpc GetNetURL(CommonIn) returns (RawUrl) {}
 
   // 新的Select utxos接口, 不需要签名，可以支持选择账户的utxo
-  rpc SelectUTXO (UtxoInput) returns(UtxoOutput) {
-    option(google.api.http) = {
-    post: "/v1/select_utxos_v2"
-    body: "*"
+  rpc SelectUTXO(UtxoInput) returns (UtxoOutput) {
+    option (google.api.http) = {
+      post : "/v1/select_utxos_v2"
+      body : "*"
     };
   }
 
   // Native code deploy interface
-  rpc DeployNativeCode(DeployNativeCodeRequest) returns (DeployNativeCodeResponse);
+  rpc DeployNativeCode(DeployNativeCodeRequest)
+      returns (DeployNativeCodeResponse);
   // Native code status
-  rpc NativeCodeStatus(NativeCodeStatusRequest) returns (NativeCodeStatusResponse);
+  rpc NativeCodeStatus(NativeCodeStatusRequest)
+      returns (NativeCodeStatusResponse);
 
   /*
-  * DPoS query interface
-  */
+   * DPoS query interface
+   */
   //  DposCandidates get all candidates of the tdpos consensus
   rpc DposCandidates(DposCandidatesRequest) returns (DposCandidatesResponse);
   //  DposNominateRecords get all records nominated by an user
-  rpc DposNominateRecords(DposNominateRecordsRequest) returns (DposNominateRecordsResponse);
+  rpc DposNominateRecords(DposNominateRecordsRequest)
+      returns (DposNominateRecordsResponse);
   //  DposNomineeRecords get nominated record of a candidate
-  rpc DposNomineeRecords(DposNomineeRecordsRequest) returns (DposNomineeRecordsResponse);
+  rpc DposNomineeRecords(DposNomineeRecordsRequest)
+      returns (DposNomineeRecordsResponse);
   //  DposVoteRecords get all vote records voted by an user
   rpc DposVoteRecords(DposVoteRecordsRequest) returns (DposVoteRecordsResponse);
   //  DposVotedRecords get all vote records of a candidate
-  rpc DposVotedRecords(DposVotedRecordsRequest) returns (DposVotedRecordsResponse);
+  rpc DposVotedRecords(DposVotedRecordsRequest)
+      returns (DposVotedRecordsResponse);
   //  DposCheckResults get check results of a specific term
-  rpc DposCheckResults(DposCheckResultsRequest) returns (DposCheckResultsResponse);
+  rpc DposCheckResults(DposCheckResultsRequest)
+      returns (DposCheckResultsResponse);
 
-  // DposStatus get dpos status 
+  // DposStatus get dpos status
   rpc DposStatus(DposStatusRequest) returns (DposStatusResponse);
 
-	// GetAccountByAK get account sets contain a specific address
-	rpc GetAccountByAK(AK2AccountRequest) returns (AK2AccountResponse) {
-		option (google.api.http) = {
-			post: "/v1/get_account_by_ak"
-			body: "*"
-		};
-	}
-  
+  // GetAccountByAK get account sets contain a specific address
+  rpc GetAccountByAK(AK2AccountRequest) returns (AK2AccountResponse) {
+    option (google.api.http) = {
+      post : "/v1/get_account_by_ak"
+      body : "*"
+    };
+  }
+
   //预执行合约
   rpc PreExec(InvokeRPCRequest) returns (InvokeRPCResponse);
 }
 
-message Header
-{
-  string logid = 1;  //如果logid没填写，生成一个
-  string from_node = 2;  //call rpc client address，客户端可以为空，节点一定要写自己的address
+message Header {
+  string logid = 1; //如果logid没填写，生成一个
+  string from_node =
+      2; // call rpc client address，客户端可以为空，节点一定要写自己的address
   XChainErrorEnum error = 3;
 }
 
-message TxDataAccount
-{
-  string address = 1;  //地址
-  string amount = 2;  //金额
+message TxDataAccount {
+  string address = 1;      //地址
+  string amount = 2;       //金额
   int64 frozen_height = 3; //冻结高度
 }
 
@@ -218,7 +224,8 @@ message TxData {
   string from_pubkey = 4;
   // The sk of the account which start the transaction
   string from_scrkey = 5;
-  // if user don't want to provide scrkey, he should sign the txdata into user_sign
+  // if user don't want to provide scrkey, he should sign the txdata into
+  // user_sign
   bytes user_sign = 14;
   // The account list accept tx
   repeated TxDataAccount account = 6;
@@ -231,80 +238,66 @@ message TxData {
   int32 version = 15;
 }
 
-message TxStatus
-{
+message TxStatus {
   Header header = 1;
   string bcname = 2;
   bytes txid = 3;
-  TransactionStatus status = 4;  //当前状态
-  int64 distance = 5;  //离主干末端的距离（如果在主干上)
+  TransactionStatus status = 4; //当前状态
+  int64 distance = 5;           //离主干末端的距离（如果在主干上)
   Transaction tx = 7;
 }
 
-message BatchTxs
-{
+message BatchTxs {
   Header header = 1;
   repeated TxStatus Txs = 2;
 }
 
-message Block 
-{
+message Block {
   Header header = 1;
   string bcname = 2;
   bytes blockid = 3;
   enum EBlockStatus {
-  ERROR = 0;
-  TRUNK = 1;
-  BRANCH = 2;
-  NOEXIST = 3;
+    ERROR = 0;
+    TRUNK = 1;
+    BRANCH = 2;
+    NOEXIST = 3;
   }
-  EBlockStatus status = 4;  
+  EBlockStatus status = 4;
   InternalBlock block = 5;
 }
 
-message BlockID
-{
+message BlockID {
   Header header = 4;
   string bcname = 1;
   bytes blockid = 2;
   // if need content
-  bool need_content = 3;  //是否需要内容
+  bool need_content = 3; //是否需要内容
 }
 
-message BlockHeight
-{
+message BlockHeight {
   Header header = 3;
   string bcname = 1;
-  int64  height = 2;
+  int64 height = 2;
 }
 
-message CommonReply
-{
-  Header header = 1;
-}
+message CommonReply { Header header = 1; }
 
-message CommonIn
-{
-  Header header = 1;
-}
+message CommonIn { Header header = 1; }
 
-message TokenDetail
-{
+message TokenDetail {
   string bcname = 1;
   string balance = 2;
-  XChainErrorEnum error  = 3;
+  XChainErrorEnum error = 3;
 }
 
-message AddressStatus
-{
+message AddressStatus {
   Header header = 1;
   string address = 2;
   repeated TokenDetail bcs = 3;
 }
 
 // Transaction input
-message TxInput
-{
+message TxInput {
   // The transaction id referenced to
   bytes ref_txid = 1;
   // The output offset of the transaction referenced to
@@ -318,8 +311,7 @@ message TxInput
 }
 
 // Transaction output
-message TxOutput
-{
+message TxOutput {
   // The amount of the transaction
   bytes amount = 1;
   // The address of the launcher
@@ -328,9 +320,14 @@ message TxOutput
   int64 frozen_height = 4;
 }
 
+// Unified Xuper Signature
+message XuperSignature {
+  repeated bytes public_keys = 1;
+  bytes signature = 2;
+}
+
 // Transaction is the information of the transaction
-message Transaction
-{
+message Transaction {
   // txid is the id of this transaction
   bytes txid = 1;
   // the blockid the transaction belong to
@@ -348,7 +345,7 @@ message Transaction
   // Timestamp to launch the transaction
   int64 timestamp = 9;
   // tx format version; tx格式版本号
-  int32  version = 10;
+  int32 version = 10;
   // auto generated tx
   bool autogen = 11;
 
@@ -367,11 +364,12 @@ message Transaction
   repeated SignatureInfo auth_require_signs = 29;
   // 节点收到tx的时间戳，不参与签名
   int64 received_timestamp = 30;
+  // 统一签名(支持多重签名/环签名等，与initiator_signs/auth_require_signs不同时使用)
+  XuperSignature xuper_sign = 31;
 }
 
 // Ledger metadata
-message LedgerMeta
-{
+message LedgerMeta {
   // root block id
   bytes root_blockid = 1;
   // tip block id
@@ -385,18 +383,16 @@ message LedgerMeta
 }
 
 // Utxo metadata
-message UtxoMeta
-{
+message UtxoMeta {
   bytes latest_blockid = 1; // utxo vm目前执行到的blockid
   repeated string lock_key_list = 2;
-  string utxo_total = 3; //当前utxo vm上的总资产
-  int64 avgDelay = 4; //平均上链延时
+  string utxo_total = 3;       //当前utxo vm上的总资产
+  int64 avgDelay = 4;          //平均上链延时
   int64 unconfirmTxAmount = 5; //待确认交易量
 }
 
 // The internal block struct
-message InternalBlock
-{
+message InternalBlock {
   // block version
   int32 version = 1;
   // Random number used to avoid replay attacks
@@ -410,24 +406,25 @@ message InternalBlock
   // The sign which miner signed: blockid + nonce + timestamp
   bytes sign = 6;
   // The pk of the miner
-  bytes pubkey =  7;
+  bytes pubkey = 7;
   // The Merkle Tree root
   bytes merkle_root = 8;
   // The height of the blockchain
   int64 height = 9;
   // Timestamp of the block
   int64 timestamp = 10;
-  // Transactions of the block, only txid stored on kv, the detail information stored in another table
-  repeated Transaction transactions = 11; 
+  // Transactions of the block, only txid stored on kv, the detail information
+  // stored in another table
+  repeated Transaction transactions = 11;
   // The transaction count of the block
   int32 tx_count = 12;
   //所有交易hash的merkle tree
   repeated bytes merkle_tree = 13;
   int64 curTerm = 16;
   int64 curBlockNum = 17;
-  map<string, string> failed_txs = 18;  //txid -> failed reason
+  map<string, string> failed_txs = 18; // txid -> failed reason
   int32 targetBits = 19;
-  
+
   //下面的属性会动态变化
   // If the block is on the trunk
   bool in_trunk = 14;
@@ -435,9 +432,8 @@ message InternalBlock
   bytes next_hash = 15;
 }
 
-//BlockChain status
-message BCStatus
-{
+// BlockChain status
+message BCStatus {
   Header header = 1;
   // block name
   string bcname = 2;
@@ -449,52 +445,42 @@ message BCStatus
   UtxoMeta utxoMeta = 5;
 }
 
-message BCTipStatus
-{
+message BCTipStatus {
   Header header = 1;
   bool is_trunk_tip = 2;
 }
 
-message BlockChains
-{
+message BlockChains {
   Header header = 1;
   repeated string blockchains = 2;
 }
 
-message Speeds
-{
+message Speeds {
   map<string, double> SumSpeeds = 1;
   map<string, BCSpeeds> BcSpeeds = 2;
 }
 
-message BCSpeeds
-{
-  map<string, double> BcSpeed = 1;
-}
+message BCSpeeds { map<string, double> BcSpeed = 1; }
 
-message SystemsStatus
-{
+message SystemsStatus {
   Header header = 1;
   repeated BCStatus bcs_status = 2;
   Speeds speeds = 3;
   repeated string peerUrls = 4;
 }
 
-message SystemsStatusReply
-{
+message SystemsStatusReply {
   Header header = 1;
   SystemsStatus systems_status = 2;
 }
 
 // RawUrl return the node's  connect url
-message RawUrl
-{
+message RawUrl {
   Header header = 1;
   string rawUrl = 2;
 }
 
-message Utxo
-{
+message Utxo {
   bytes amount = 1;
   bytes toAddr = 2;
   bytes toPubkey = 3;
@@ -503,8 +489,7 @@ message Utxo
 }
 
 // UtxoInput query info to query utxos
-message UtxoInput
-{
+message UtxoInput {
   Header header = 1;
   // which bcname to select
   string bcname = 2;
@@ -521,8 +506,7 @@ message UtxoInput
 }
 
 // UtxoOutput query results
-message UtxoOutput
-{
+message UtxoOutput {
   Header header = 1;
   // outSign return the output
   // bytes outSign = 2;
@@ -532,30 +516,27 @@ message UtxoOutput
   string totalSelected = 3;
 }
 
-message NativeCodeDesc
-{
+message NativeCodeDesc {
   // native code name
   string name = 1;
   // code version
   string version = 2;
   // digest of binary
   bytes digest = 3;
-  //the previous verion 
+  // the previous verion
   string prevVersion = 4;
   // xuper api version
   int32 xuperApiVersion = 5;
 }
 
-message WasmCodeDesc
-{
+message WasmCodeDesc {
   string runtime = 1;
   string compiler = 2;
   bytes digest = 3;
   string vm_compiler = 4;
 }
 
-message DeployNativeCodeRequest
-{
+message DeployNativeCodeRequest {
   Header header = 1;
   // chain name
   string bcname = 2;
@@ -571,26 +552,20 @@ message DeployNativeCodeRequest
   bytes sign = 7;
 }
 
-message DeployNativeCodeResponse
-{
-  Header header = 1;
-}
+message DeployNativeCodeResponse { Header header = 1; }
 
-message NativeCodeStatus
-{
+message NativeCodeStatus {
   NativeCodeDesc desc = 1;
   int32 status = 2;
   bool healthy = 3;
 }
 
-message NativeCodeStatusRequest
-{
+message NativeCodeStatusRequest {
   Header header = 1;
   string bcname = 2;
 }
 
-message NativeCodeStatusResponse
-{
+message NativeCodeStatusResponse {
   Header header = 1;
   repeated NativeCodeStatus status = 2;
 }
@@ -599,140 +574,121 @@ message NativeCodeStatusResponse
  * DPoS query interface
  */
 // 候选人列表接口
-message DposCandidatesRequest
-{
+message DposCandidatesRequest {
   Header header = 1;
   string bcname = 2;
 }
 
 // 候选人列表返回
-message DposCandidatesResponse
-{
+message DposCandidatesResponse {
   Header header = 1;
   repeated string candidatesInfo = 2;
 }
 
 // 提名者提名记录请求
-message DposNominateRecordsRequest
-{
+message DposNominateRecordsRequest {
   Header header = 1;
   string bcname = 2;
   string address = 3;
 }
 
 // 候选人信息
-message DposNominateInfo
-{
+message DposNominateInfo {
   string candidate = 1;
   string txid = 2;
 }
 
 // 提名者提名记录返回
-message DposNominateRecordsResponse
-{
+message DposNominateRecordsResponse {
   Header header = 1;
   repeated DposNominateInfo nominateRecords = 2;
 }
 
 // 候选人被提名记录请求
-message DposNomineeRecordsRequest
-{
+message DposNomineeRecordsRequest {
   Header header = 1;
   string bcname = 2;
   string address = 3;
 }
 
 // 候选人被提名记录返回
-message DposNomineeRecordsResponse
-{
+message DposNomineeRecordsResponse {
   Header header = 1;
   string txid = 2;
 }
 
 // 选民投票记录请求
-message DposVoteRecordsRequest
-{
+message DposVoteRecordsRequest {
   Header header = 1;
   string bcname = 2;
   string address = 3;
 }
 
 // 选民投票记录
-message voteRecord
-{
+message voteRecord {
   string candidate = 1;
   string txid = 2;
 }
 
 // 选民投票记录返回
-message DposVoteRecordsResponse
-{
+message DposVoteRecordsResponse {
   Header header = 1;
   // 选民投票txid记录
   repeated voteRecord voteTxidRecords = 2;
 }
 
 // 候选人被投票记录请求
-message DposVotedRecordsRequest
-{
+message DposVotedRecordsRequest {
   Header header = 1;
   string bcname = 2;
   string address = 3;
 }
 // 候选人被投票记录
-message votedRecord
-{
+message votedRecord {
   string voter = 1;
   string txid = 2;
 }
 
 // 候选人被投票记录返回
-message DposVotedRecordsResponse
-{
+message DposVotedRecordsResponse {
   Header header = 1;
   // 候选人被投票的txid记录
   repeated votedRecord votedTxidRecords = 2;
 }
 
 // 查询检票结果记录请求
-message DposCheckResultsRequest
-{
+message DposCheckResultsRequest {
   Header header = 1;
   string bcname = 2;
   int64 term = 3;
 }
 
 // 查询检票结果记录返回
-message DposCheckResultsResponse
-{
+message DposCheckResultsResponse {
   Header header = 1;
   int64 term = 2;
   repeated string checkResult = 3;
 }
 
 // query dpos consensus current status request
-message DposStatusRequest
-{
+message DposStatusRequest {
   Header header = 1;
   string bcname = 2;
 }
 
 // query dpos consensus current status reply
-message DposStatusResponse
-{
+message DposStatusResponse {
   Header header = 1;
   DposStatus status = 2;
 }
 
-message DposStatus
-{ 
+message DposStatus {
   int64 term = 1;
   int64 block_num = 2;
   string proposer = 3;
   int64 proposer_num = 4;
   repeated string checkResult = 5;
 }
-
 
 message InvokeRPCRequest {
   Header header = 1;
@@ -775,7 +731,7 @@ message TxInputExt {
 }
 
 //扩展输出
-message TxOutputExt{
+message TxOutputExt {
   string bucket = 1;
   bytes key = 2;
   bytes value = 3;
@@ -784,23 +740,23 @@ message TxOutputExt{
 // 签名详情
 message SignatureInfo {
   string PublicKey = 1;
-  bytes  Sign = 2;
+  bytes Sign = 2;
 }
 
 // --------   Account and Permission Section --------
 enum PermissionRule {
-  NULL = 0;       // 无权限控制
-  SIGN_THRESHOLD = 1;   // 签名阈值策略
+  NULL = 0;           // 无权限控制
+  SIGN_THRESHOLD = 1; // 签名阈值策略
   SIGN_AKSET = 2;     // AKSet签名策略
-  SIGN_RATE = 3;    // 签名率策略
-  SIGN_SUM = 4;     // 签名个数策略
-  CA_SERVER = 5;    // CA服务器鉴权
-  COMMUNITY_VOTE = 6;   // 社区治理
+  SIGN_RATE = 3;      // 签名率策略
+  SIGN_SUM = 4;       // 签名个数策略
+  CA_SERVER = 5;      // CA服务器鉴权
+  COMMUNITY_VOTE = 6; // 社区治理
 }
 
 message PermissionModel {
   PermissionRule rule = 1;
-  double acceptValue = 2;  // 取决于用哪种rule, 可以表示签名率，签名数或权重阈值
+  double acceptValue = 2; // 取决于用哪种rule, 可以表示签名率，签名数或权重阈值
 }
 
 // AK集的表示方法
@@ -808,14 +764,15 @@ message AkSet {
   repeated string aks = 1; //一堆公钥
 }
 message AkSets {
-  map<string, AkSet> sets = 1;   // 公钥or账户名集
-  string expression = 2;    // 表达式，一期不支持表达式，默认集合内是and，集合间是or
+  map<string, AkSet> sets = 1; // 公钥or账户名集
+  string expression =
+      2; // 表达式，一期不支持表达式，默认集合内是and，集合间是or
 }
 
 // Acl实际使用的结构
 message Acl {
-  PermissionModel  pm = 1;       // 采用的权限模型
-  map<string, double>  aksWeight = 2;  // 公钥or账户名  -> 权重
+  PermissionModel pm = 1;            // 采用的权限模型
+  map<string, double> aksWeight = 2; // 公钥or账户名  -> 权重
   AkSets akSets = 3;
 }
 
@@ -832,17 +789,15 @@ message AclStatus {
 
 // Identity authentication request
 message IdentityAuth {
-  bytes  sign = 1;
-  bytes  pubkey = 2;
+  bytes sign = 1;
+  bytes pubkey = 2;
   string addr = 3;
   string peerID = 4;
   string timestamp = 5;
 }
 
 // Identity authentication requests
-message IdentityAuths {
-  repeated IdentityAuth auth = 1;
-}
+message IdentityAuths { repeated IdentityAuth auth = 1; }
 
 enum ResourceType {
   CPU = 0;
@@ -857,35 +812,32 @@ message ResourceLimit {
 }
 
 message AK2AccountRequest {
-	Header header = 1;
-	string bcname = 2;
-	string address = 3;
+  Header header = 1;
+  string bcname = 2;
+  string address = 3;
 }
 
 message AK2AccountResponse {
-	Header header = 1;
-	string bcname = 2;
-	repeated string account = 3;
+  Header header = 1;
+  string bcname = 2;
+  repeated string account = 3;
 }
 
 // Query account contracts request
-message GetAccountContractsRequest
-{
+message GetAccountContractsRequest {
   Header header = 1;
   string bcname = 2;
   string account = 3;
 }
 
 // Query account contracts response
-message GetAccountContractsResponse
-{
+message GetAccountContractsResponse {
   Header header = 1;
   repeated ContractStatus contracts_status = 2;
 }
 
 // Status of a contract
-message ContractStatus
-{
+message ContractStatus {
   string contract_name = 1;
   string txid = 2;
   bytes desc = 3;

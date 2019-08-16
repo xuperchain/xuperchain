@@ -80,21 +80,21 @@ func (uv *UtxoVM) ImmediateVerifyTx(tx *pb.Transaction, isRootTx bool) (bool, er
 		ok, err = uv.verifyUTXOPermission(tx, verifiedID)
 		if !ok {
 			uv.xlog.Warn("ImmediateVerifyTx: verifyUTXOPermission failed", "error", err)
-			return ok, ErrAclNotEnough
+			return ok, ErrACLNotEnough
 		}
 
 		// verify contract requests' permission using ACL
 		ok, err = uv.verifyContractPermission(tx)
 		if !ok {
 			uv.xlog.Warn("ImmediateVerifyTx: verifyContractPermission failed", "error", err)
-			return ok, ErrAclNotEnough
+			return ok, ErrACLNotEnough
 		}
 
 		// verify the permission of RWSet using ACL
 		ok, err = uv.verifyRWSetPermission(tx, verifiedID)
 		if !ok {
 			uv.xlog.Warn("ImmediateVerifyTx: verifyRWSetPermission failed", "error", err)
-			return ok, ErrAclNotEnough
+			return ok, ErrACLNotEnough
 		}
 
 		// verify RWSet(run contracts and compare RWSet)
@@ -214,7 +214,7 @@ func (uv *UtxoVM) verifyUTXOPermission(tx *pb.Transaction, verifiedID map[string
 			}
 			if ok, err := pm.IdentifyAccount(string(name), tx.AuthRequire, uv.aclMgr); !ok {
 				uv.xlog.Warn("verifyUTXOPermission error, failed to IdentifyAccount", "error", err)
-				return false, ErrAclNotEnough
+				return false, ErrACLNotEnough
 			}
 		} else if akType == 0 {
 			// Identify address failed, if address not in verifiedID then it must have no signature
@@ -336,7 +336,7 @@ func (uv *UtxoVM) verifyContractPermission(tx *pb.Transaction) (bool, error) {
 		if err != nil || !ok {
 			uv.xlog.Warn("verify contract method ACL failed ", "contract", contractName, "method",
 				methodName, "error", err)
-			return ok, ErrAclNotEnough
+			return ok, ErrACLNotEnough
 		}
 	}
 	return true, nil
