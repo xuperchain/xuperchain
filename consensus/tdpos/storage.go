@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/xuperchain/xuperunion/pb"
+	"github.com/xuperchain/xuperunion/permission/acl"
 )
 
 //GenCandidateBallotsPrefix generate candidate ballots prefix
@@ -137,5 +138,8 @@ func genRevokeKey(txid string) string {
 }
 
 func checkCandidateName(name string) bool {
-	return strings.Contains(name, "_")
+	if acl.IsAccount(name) != 0 {
+		return false
+	}
+	return true
 }
