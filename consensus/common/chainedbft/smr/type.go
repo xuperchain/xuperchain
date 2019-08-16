@@ -6,6 +6,7 @@ import (
 	log "github.com/xuperchain/log15"
 	cons_base "github.com/xuperchain/xuperunion/consensus/base"
 	"github.com/xuperchain/xuperunion/consensus/common/chainedbft/config"
+	"github.com/xuperchain/xuperunion/consensus/common/chainedbft/external"
 	chainedbft_pb "github.com/xuperchain/xuperunion/consensus/common/chainedbft/pb"
 	"github.com/xuperchain/xuperunion/p2pv2"
 	xuper_p2p "github.com/xuperchain/xuperunion/p2pv2/pb"
@@ -22,6 +23,8 @@ type Smr struct {
 	address string
 	// validates sets, changes with external layer consensus
 	validates []*cons_base.CandidateInfo
+	// externalCons is the instance that chained bft communicate with
+	externalCons external.ExternalInterface
 
 	// p2p is the network instance
 	p2p *p2pv2.P2PServerV2

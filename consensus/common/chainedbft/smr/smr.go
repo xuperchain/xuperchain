@@ -117,7 +117,6 @@ func (s *Smr) ProcessNewView(viewNumber int64, leader, preLeader string) error {
 
 	// if as the new leader, wait for the (n-f) new view message from other replicas and call back extenal consensus
 	if leader == s.address {
-		// TODO: zq register call back function to extenal consensus
 		s.slog.Trace("ProcessNewView as a new leader, wait for (n - f) new view messags")
 		s.addViewMsg(newViewMsg)
 		return s.addViewMsg(newViewMsg)
@@ -258,17 +257,33 @@ func (s *Smr) handleReceivedProposal(msg *p2p_pb.XuperMessage) error {
 		return err
 	}
 	propsQC := propMsg.GetProposalQC()
-	// Step1: TODO: call back extenal consensus for chained proposals
+	// Step1: call extenal consensus for chained proposals
 	// prePropsQC is the propsQC's ProposalMsg's JustifyQC
 	// prePrePropsQC is the prePropsQC's ProposalMsg's JustifyQC
 	// prePrePropsQC <- prePropsQC <- propsQC
-	prePropsQC := &chainedbft_pb.QuorumCert{}
-	prePrePropsQC := &chainedbft_pb.QuorumCert{}
+	prePropsQC, err := s.externalCons.CallPreQc(propsQC)
+	if err != nil {
+		s.slog.Error("handleReceivedProposal CallPreQc call prePropsQC error", "err", err)
+		return err
+	}
+	prePrePropsQC, err := s.externalCons.CallPreQc(prePropsQC)
+	if err != nil {
+		s.slog.Error("handleReceivedProposal CallPreQc call prePrePropsQC error", "err", err)
+		return err
+	}
 
 	// preProposalMsg is the propsQC.ProposalMsg's parent block
 	// prePreProposalMsg is the propsQC.ProposalMsg's grandparent block
-	preProposalMsg := []byte{}
-	prePreProposalMsg := []byte{}
+	preProposalMsg, err := s.externalCons.CallPreProposalMsg(propsQC.GetProposalMsg())
+	if err != nil {
+		s.slog.Error("handleReceivedProposal CallProposalMsg call preProposalMsg error", "err", err)
+		return err
+	}
+	prePreProposalMsg, err := s.externalCons.CallPrePreProposalMsg(propsQC.GetProposalMsg())
+	if err != nil {
+		s.slog.Error("handleReceivedProposal CallProposalMsg call prePreProposalMsg error", "err", err)
+		return err
+	}
 
 	// Step2: judge safety
 	ok, err := s.safeProposal(propsQC, prePropsQC)
