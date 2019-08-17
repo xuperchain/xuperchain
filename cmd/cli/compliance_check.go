@@ -21,7 +21,6 @@ type GetComplianceCheckSignCommand struct {
 	xcheckclient pb.XcheckClient
 
 	tx     string
-	host   string
 	output string
 }
 
@@ -42,7 +41,7 @@ func NewGetComplianceCheckSignCommand(cli *Cli) *cobra.Command {
 }
 
 func (c *GetComplianceCheckSignCommand) initXcheckClient() error {
-	conn, err := grpc.Dial(c.host, grpc.WithInsecure(), grpc.WithMaxMsgSize(64<<20-1))
+	conn, err := grpc.Dial(c.cli.RootOptions.Host, grpc.WithInsecure(), grpc.WithMaxMsgSize(64<<20-1))
 	if err != nil {
 		return err
 	}
@@ -57,7 +56,6 @@ func (c *GetComplianceCheckSignCommand) XcheckClient() pb.XcheckClient {
 
 func (c *GetComplianceCheckSignCommand) addFlags() {
 	c.cmd.Flags().StringVar(&c.tx, "tx", "./tx.out", "Serialized transaction data file")
-	c.cmd.Flags().StringVar(&c.host, "host", "localhost:6718", "host to get signature from compliance check service")
 	c.cmd.Flags().StringVar(&c.output, "output", "./compliance_check_sign.out", "Generate signature file for a transaction.")
 }
 
