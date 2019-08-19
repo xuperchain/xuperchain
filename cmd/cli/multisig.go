@@ -14,14 +14,13 @@ type MultisigCommand struct {
 func NewMultisigCommand(cli *Cli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "multisig",
-		Short: "Operate a command with multisign: check|gen|send|sign.",
+		Short: "Operate a command with multisign: check|gen|send|sign|get.",
 	}
 	cmd.AddCommand(NewMultisigGenCommand(cli))
 	cmd.AddCommand(NewMultisigCheckCommand(cli))
 	cmd.AddCommand(NewMultisigSignCommand(cli))
 	cmd.AddCommand(NewMultisigSendCommand(cli))
 	cmd.AddCommand(NewGetComplianceCheckSignCommand(cli))
-	cmd.AddCommand(NewGetTransferCheckSignCommand(cli))
 	return cmd
 }
 
