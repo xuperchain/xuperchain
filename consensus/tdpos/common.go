@@ -300,7 +300,7 @@ func (tp *TDpos) validateNominateCandidate(desc *contract.TxDesc) (*CandidateInf
 		return nil, "", errors.New("validateNominateCandidate candidate can not be null")
 	}
 	if candidate, ok := desc.Args["candidate"].(string); ok {
-		if checkCandidateName(candidate) {
+		if !checkCandidateName(candidate) {
 			return nil, "", errors.New("validateNominateCandidate candidate name invalid")
 		}
 		canInfo.Address = candidate
