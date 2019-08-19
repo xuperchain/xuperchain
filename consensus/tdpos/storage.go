@@ -140,5 +140,5 @@ func checkCandidateName(name string) bool {
 	if name == "" {
 		return false
 	}
-	return strings.Contains(name, "_")
+	return !strings.Contains(name, "_")
 }
