@@ -7,6 +7,7 @@ package utxo
 
 import (
 	"bytes"
+	"crypto/ecdsa"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -124,10 +125,15 @@ func (uv *UtxoVM) ImmediateVerifyTx(tx *pb.Transaction, isRootTx bool) (bool, er
 }
 
 // verify signatures only, from V3.3, we verify all signatures ahead of permission
+// Note that if tx.XuperSign is not nil, the signature verification use XuperSign process
 func (uv *UtxoVM) verifySignatures(tx *pb.Transaction, digestHash []byte) (bool, map[string]bool, error) {
-	verifiedAddr := make(map[string]bool)
+	// XuperSign is not empty, use XuperSign verify
+	if tx.GetXuperSign() != nil {
+		return uv.verifyXuperSign(tx, digestHash)
+	}
 
-	// TODO: after integrate multisig, there is only one signature for all AKs.
+	// Not XuperSign(multisig/rignsign etc.), use old signature process
+	verifiedAddr := make(map[string]bool)
 	if len(tx.InitiatorSigns) < 1 || len(tx.AuthRequire) != len(tx.AuthRequireSigns) {
 		return false, nil, errors.New("invalid signature param")
 	}
@@ -159,13 +165,51 @@ func (uv *UtxoVM) verifySignatures(tx *pb.Transaction, digestHash []byte) (bool,
 	return true, verifiedAddr, nil
 }
 
-// verify UTXO input permission in transaction using ACL
-func (uv *UtxoVM) verifyUTXOPermission(tx *pb.Transaction, verifiedID map[string]bool) (bool, error) {
-	// TODO: this could be changed after crypto multisig integrated
-	if len(tx.GetAuthRequire()) != len(tx.GetAuthRequireSigns()) {
-		return false, fmt.Errorf("tx.AuthRequire length not equal to tx.AuthRequireSigns")
+func (uv *UtxoVM) verifyXuperSign(tx *pb.Transaction, digestHash []byte) (bool, map[string]bool, error) {
+	uniqueAddrs := make(map[string]bool)
+	// get all addresses
+	uniqueAddrs[tx.Initiator] = true
+	addrList := make([]string, 0)
+	addrList = append(addrList, tx.Initiator)
+	for _, authReq := range tx.AuthRequire {
+		splitRes := strings.Split(authReq, "/")
+		addr := splitRes[len(splitRes)-1]
+		if uniqueAddrs[addr] {
+			continue
+		}
+		uniqueAddrs[addr] = true
+		addrList = append(addrList, addr)
 	}
 
+	// check addresses and public keys
+	if len(addrList) != len(tx.GetXuperSign().GetPublicKeys()) {
+		return false, nil, errors.New("XuperSign: number of address and public key not match")
+	}
+	pubkeys := make([]*ecdsa.PublicKey, 0)
+	for _, pubJSON := range tx.GetXuperSign().GetPublicKeys() {
+		pubkey, err := uv.cryptoClient.GetEcdsaPublicKeyFromJSON(pubJSON)
+		if err != nil {
+			return false, nil, errors.New("XuperSign: found invalid public key")
+		}
+		pubkeys = append(pubkeys, pubkey)
+	}
+	for idx, addr := range addrList {
+		ok, _ := uv.cryptoClient.VerifyAddressUsingPublicKey(addr, pubkeys[idx])
+		if !ok {
+			uv.xlog.Warn("XuperSign: address and public key not match", "addr", addr, "pubkey", pubkeys[idx])
+			return false, nil, errors.New("XuperSign: address and public key not match")
+		}
+	}
+	ok, err := uv.cryptoClient.XuperVerify(pubkeys, tx.GetXuperSign().GetSignature(), digestHash)
+	if err != nil || !ok {
+		uv.xlog.Warn("XuperSign: signature verify failed", "error", err)
+		return false, nil, errors.New("XuperSign: address and public key not match")
+	}
+	return ok, uniqueAddrs, nil
+}
+
+// verify UTXO input permission in transaction using ACL
+func (uv *UtxoVM) verifyUTXOPermission(tx *pb.Transaction, verifiedID map[string]bool) (bool, error) {
 	// verify tx input ACL
 	for _, txInput := range tx.TxInputs {
 		name := string(txInput.FromAddr)

@@ -89,7 +89,7 @@ type Transaction struct {
 	AuthRequire       []string         `json:"authRequire"`
 	InitiatorSigns    []SignatureInfo  `json:"initiatorSigns"`
 	AuthRequireSigns  []SignatureInfo  `json:"authRequireSigns"`
-	ReceivedTimestamp int64            `json:"receivedTimestamp:`
+	ReceivedTimestamp int64            `json:"receivedTimestamp:"`
 }
 
 // BigInt big int

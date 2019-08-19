@@ -1174,7 +1174,7 @@ func (uv *UtxoVM) VerifyTx(tx *pb.Transaction) (bool, error) {
 	if err != nil || !isValid {
 		uv.xlog.Warn("ImmediateVerifyTx failed", "error", err,
 			"AuthRequire ", tx.AuthRequire, "AuthRequireSigns ", tx.AuthRequireSigns,
-			"Initiator", tx.Initiator, "InitiatorSigns", tx.InitiatorSigns)
+			"Initiator", tx.Initiator, "InitiatorSigns", tx.InitiatorSigns, "XuperSign", tx.XuperSign)
 	}
 	return isValid, err
 }
