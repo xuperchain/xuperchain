@@ -137,5 +137,8 @@ func genRevokeKey(txid string) string {
 }
 
 func checkCandidateName(name string) bool {
-	return strings.Contains(name, "_")
+	if name == "" {
+		return false
+	}
+	return !strings.Contains(name, "_")
 }
