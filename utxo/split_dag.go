@@ -1,8 +1,6 @@
 package utxo
 
 import (
-	"fmt"
-
 	"github.com/xuperchain/xuperunion/pb"
 )
 
@@ -10,7 +8,7 @@ func (uv *UtxoVM) buildTxDeps(txs []*pb.Transaction) (map[string]*pb.Transaction
 	txMap := map[string]*pb.Transaction{}
 	txGraph := TxGraph{}
 	for _, tx := range txs {
-		txid := fmt.Sprintf("%x", tx.Txid)
+		txid := string(tx.Txid)
 		txMap[txid] = tx
 		txGraph[txid] = []string{}
 	}
