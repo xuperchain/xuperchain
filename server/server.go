@@ -14,7 +14,6 @@ import (
 	"math/big"
 	"net"
 	"net/http"
-	"strconv"
 
 	"github.com/golang/protobuf/proto"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
@@ -325,6 +324,7 @@ func (s *server) GetSystemStatus(ctx context.Context, in *pb.CommonIn) (*pb.Syst
 			systemsStatus.Speeds.BcSpeeds[v] = &pb.BCSpeeds{}
 			systemsStatus.Speeds.BcSpeeds[v].BcSpeed = bc.Speed.GetMaxSpeed()
 		}
+		fmt.Println("status:->", bcst)
 		systemsStatus.BcsStatus = append(systemsStatus.BcsStatus, bcst)
 	}
 	systemsStatus.Speeds.SumSpeeds = s.mg.Speed.GetMaxSpeed()
@@ -674,60 +674,6 @@ func (s *server) DposStatus(ctx context.Context, request *pb.DposStatusRequest) 
 	response.Status.CheckResult = checkResult
 	response.Status.ProposerNum = int64(len(checkResult))
 	return response, nil
-}
-
-// PreExecWithSelectUTXO preExec + selectUtxo
-func (s *server) PreExecWithSelectUTXO(ctx context.Context, request *pb.PreExecWithSelectUTXORequest) (*pb.PreExecWithSelectUTXOResponse, error) {
-	// verify input param
-	if request == nil {
-		return nil, errors.New("request is invalid")
-	}
-	if request.Header == nil {
-		request.Header = global.GHeader()
-	}
-
-	// initialize output
-	responses := &pb.PreExecWithSelectUTXOResponse{Header: &pb.Header{Logid: request.Header.Logid}}
-	responses.Bcname = request.GetBcname()
-	// for PreExec
-	preExecRequest := request.GetRequest()
-	fee := int64(0)
-	if preExecRequest != nil {
-		preExecRequest.Header = request.Header
-		invokeRPCResponse, preErr := s.PreExec(ctx, preExecRequest)
-		if preErr != nil {
-			return nil, preErr
-		}
-		invokeResponse := invokeRPCResponse.GetResponse()
-		responses.Response = invokeResponse
-		fee = responses.Response.GetGasUsed()
-	}
-
-	totalAmount := request.GetTotalAmount() + fee
-
-	if totalAmount > 0 {
-		utxoInput := &pb.UtxoInput{
-			Bcname:    request.GetBcname(),
-			Address:   request.GetAddress(),
-			TotalNeed: strconv.FormatInt(totalAmount, 10),
-			Publickey: request.GetSignInfo().GetPublicKey(),
-			UserSign:  request.GetSignInfo().GetSign(),
-			NeedLock:  request.GetNeedLock(),
-		}
-		if ok := validUtxoAccess(utxoInput, s.mg.Get(utxoInput.GetBcname())); !ok {
-			return nil, errors.New("validUtxoAccess failed")
-		}
-		utxoOutput, selectErr := s.SelectUTXO(ctx, utxoInput)
-		if selectErr != nil {
-			return nil, selectErr
-		}
-		if utxoOutput.Header.Error != pb.XChainErrorEnum_SUCCESS {
-			return nil, common.ServerError{utxoOutput.Header.Error}
-		}
-		responses.UtxoOutput = utxoOutput
-	}
-
-	return responses, nil
 }
 
 // PreExec smart contract preExec process
