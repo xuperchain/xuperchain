@@ -302,14 +302,12 @@ func (tp *TDpos) validateNominateCandidate(desc *contract.TxDesc) (*CandidateInf
 	if desc.Args["candidate"] == nil {
 		return nil, "", errors.New("validateNominateCandidate candidate can not be null")
 	}
-	switch desc.Args["candidate"].(type) {
-	case string:
-		candidate := desc.Args["candidate"].(string)
-		if checkCandidateName(candidate) {
+	if candidate, ok := desc.Args["candidate"].(string); ok {
+		if !checkCandidateName(candidate) {
 			return nil, "", errors.New("validateNominateCandidate candidate name invalid")
 		}
 		canInfo.Address = candidate
-	default:
+	} else {
 		return nil, "", errors.New("validateNominateCandidate candidates should be string")
 	}
 
