@@ -515,7 +515,7 @@ func (xc *XChainCore) doMiner() {
 					"utxo blockid", global.F(utxovmLastID))
 				return
 			} else {
-				err := xc.Ledger.Truncate(ledgerLastID, utxovmLastID)
+				err := xc.Ledger.Truncate(utxovmLastID)
 				if err != nil {
 					return
 				}

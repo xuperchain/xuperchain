@@ -387,7 +387,7 @@ func TestTruncate(t *testing.T) {
 
 	t.Log(ledger.meta)
 
-	err = ledger.Truncate(block2.Blockid, block1.Blockid)
+	err = ledger.Truncate(block1.Blockid)
 	if err != nil {
 		t.Fatalf("Trucate error")
 	}

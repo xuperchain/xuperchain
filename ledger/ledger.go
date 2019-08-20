@@ -1028,7 +1028,7 @@ func (l *Ledger) GetBaseDB() kvdb.Database {
 	return l.baseDB
 }
 
-func (l *Ledger) Truncate(ledgerLastID []byte, utxovmLastID []byte) error {
+func (l *Ledger) Truncate(utxovmLastID []byte) error {
 	batchWrite := l.baseDB.NewBatch()
 
 	l.mutex.Lock()
