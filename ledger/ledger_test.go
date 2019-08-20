@@ -328,3 +328,75 @@ func TestSplitFunc(t *testing.T) {
 
 	ledger.Close()
 }
+
+func TestTruncate(t *testing.T) {
+	workSpace, dirErr := ioutil.TempDir("/tmp", "")
+	if dirErr != nil {
+		t.Fatal(dirErr)
+	}
+	os.RemoveAll(workSpace)
+	defer os.RemoveAll(workSpace)
+	ledger, err := NewLedger(workSpace, nil, nil, DefaultKvEngine, crypto_client.CryptoTypeDefault)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(ledger.meta)
+
+	t1 := &pb.Transaction{}
+	t2 := &pb.Transaction{}
+	t1.TxOutputs = append(t1.TxOutputs, &pb.TxOutput{Amount: []byte("888"), ToAddr: []byte(BobAddress)})
+	t1.Coinbase = true
+	t1.Desc = []byte(`{"maxblocksize" : "128"}`)
+	t1.Txid, _ = txhash.MakeTransactionID(t1)
+	t2.TxInputs = append(t2.TxInputs, &pb.TxInput{RefTxid: t1.Txid, RefOffset: 0, FromAddr: []byte(AliceAddress)})
+	t2.Txid, _ = txhash.MakeTransactionID(t2)
+	ecdsaPk, pkErr := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	t.Logf("pkSk: %v", ecdsaPk)
+	if pkErr != nil {
+		t.Fatal("fail to generate publice/private key")
+	}
+	block1, err := ledger.FormatRootBlock([]*pb.Transaction{t1})
+	if err != nil {
+		t.Fatalf("format block fail, %v", err)
+	}
+	t.Logf("block1 id %x", block1.Blockid)
+	confirmStatus := ledger.ConfirmBlock(block1, true)
+	if !confirmStatus.Succ {
+		t.Fatal("confirm block fail")
+	}
+
+	t1 = &pb.Transaction{}
+	t2 = &pb.Transaction{}
+	t1.TxOutputs = append(t1.TxOutputs, &pb.TxOutput{Amount: []byte("666"), ToAddr: []byte(BobAddress)})
+	t1.Txid, _ = txhash.MakeTransactionID(t1)
+	t2.TxInputs = append(t2.TxInputs, &pb.TxInput{RefTxid: t1.Txid, RefOffset: 0, FromAddr: []byte(AliceAddress)})
+	t2.Txid, _ = txhash.MakeTransactionID(t2)
+	block2, err := ledger.FormatBlock([]*pb.Transaction{t1, t2},
+		[]byte("xchain-Miner-222222"),
+		ecdsaPk,
+		223456789,
+		0,
+		0,
+		block1.Blockid, big.NewInt(0),
+	)
+	t.Logf("bolock2 id %x", block2.Blockid)
+	confirmStatus = ledger.ConfirmBlock(block2, false)
+	if !confirmStatus.Succ {
+		t.Fatal("confirm block fail 2")
+	}
+
+	t.Log(ledger.meta)
+
+	err = ledger.Truncate(block1.Blockid)
+	if err != nil {
+		t.Fatalf("Trucate error")
+	}
+
+	t.Log(ledger.meta)
+
+	metaBuf, _ := ledger.metaTable.Get([]byte(""))
+	_ = proto.Unmarshal(metaBuf, ledger.meta)
+	t.Log(ledger.meta)
+
+	ledger.Close()
+}
