@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/xuperchain/xuperunion/contract"
 	"github.com/xuperchain/xuperunion/pb"
 	"github.com/xuperchain/xuperunion/permission/acl"
 	"github.com/xuperchain/xuperunion/permission/acl/utils"
@@ -66,7 +67,7 @@ func validACL(acl *pb.Acl) error {
 }
 
 // Invoke NewAccount method implementation
-func (na *NewAccountMethod) Invoke(ctx *KContext, args map[string][]byte) ([]byte, error) {
+func (na *NewAccountMethod) Invoke(ctx *KContext, args map[string][]byte) (*contract.Response, error) {
 	if ctx.ResourceLimit.XFee < newAccountGasAmount {
 		return nil, fmt.Errorf("gas not enough, expect no less than %d", newAccountGasAmount)
 	}
@@ -114,11 +115,14 @@ func (na *NewAccountMethod) Invoke(ctx *KContext, args map[string][]byte) ([]byt
 
 	ctx.AddXFeeUsed(newAccountGasAmount)
 
-	return aclJSON, nil
+	return &contract.Response{
+		Status: contract.StatusOK,
+		Body:   aclJSON,
+	}, nil
 }
 
 // Invoke SetAccountACL method implementation
-func (saa *SetAccountACLMethod) Invoke(ctx *KContext, args map[string][]byte) ([]byte, error) {
+func (saa *SetAccountACLMethod) Invoke(ctx *KContext, args map[string][]byte) (*contract.Response, error) {
 	if ctx.ResourceLimit.XFee < setACLGasAmount {
 		return nil, fmt.Errorf("gas not enough, expect no less than %d", setACLGasAmount)
 	}
@@ -150,11 +154,15 @@ func (saa *SetAccountACLMethod) Invoke(ctx *KContext, args map[string][]byte) ([
 	}
 
 	ctx.AddXFeeUsed(setACLGasAmount)
-	return aclJSON, nil
+
+	return &contract.Response{
+		Status: contract.StatusOK,
+		Body:   aclJSON,
+	}, nil
 }
 
 // Invoke SetMethodACL method implementation
-func (sma *SetMethodACLMethod) Invoke(ctx *KContext, args map[string][]byte) ([]byte, error) {
+func (sma *SetMethodACLMethod) Invoke(ctx *KContext, args map[string][]byte) (*contract.Response, error) {
 	if ctx.ResourceLimit.XFee < setACLGasAmount {
 		return nil, fmt.Errorf("gas not enough, expect no less than %d", setACLGasAmount)
 	}
@@ -181,5 +189,8 @@ func (sma *SetMethodACLMethod) Invoke(ctx *KContext, args map[string][]byte) ([]
 	}
 
 	ctx.AddXFeeUsed(setACLGasAmount)
-	return aclJSON, nil
+	return &contract.Response{
+		Status: contract.StatusOK,
+		Body:   aclJSON,
+	}, nil
 }

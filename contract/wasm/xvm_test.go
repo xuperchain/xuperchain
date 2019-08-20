@@ -44,7 +44,7 @@ func TestXvmDeploy(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		t.Logf("%s", out)
+		t.Logf("%v", out)
 	})
 }
 

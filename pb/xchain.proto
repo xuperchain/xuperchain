@@ -725,6 +725,7 @@ message InvokeResponse {
   repeated bytes response = 3;
   int64 gas_used = 4;
   repeated InvokeRequest requests = 5;
+  repeated ContractResponse responses = 6;
 }
 
 //扩展输入
@@ -867,4 +868,11 @@ message PreExecWithSelectUTXOResponse {
   InvokeResponse response = 3;
   // for preExec & selectUTXO
   UtxoOutput utxoOutput = 4;
+}
+
+// ContractResponse is the response returnd by contract
+message ContractResponse {
+  int32  status = 1;
+  string message = 2;
+  bytes  body = 3;
 }

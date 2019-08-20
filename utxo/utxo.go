@@ -737,6 +737,7 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 	response := [][]byte{}
 
 	var requests []*pb.InvokeRequest
+	var responses []*pb.ContractResponse
 	for i, tmpReq := range req.Requests {
 		moduleName := tmpReq.GetModuleName()
 		vm, err := uv.vmMgr3.GetVM(moduleName)
@@ -763,7 +764,8 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 				"contractName", tmpReq.GetContractName())
 			return nil, err
 		}
-		response = append(response, res)
+		response = append(response, res.Body)
+		responses = append(responses, contract.ToPBContractResponse(res))
 
 		resourceUsed := ctx.ResourceUsed()
 		if i >= len(reservedRequests) {
@@ -780,11 +782,12 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 		return nil, err
 	}
 	rsps := &pb.InvokeResponse{
-		Inputs:   xmodel.GetTxInputs(inputs),
-		Outputs:  xmodel.GetTxOutputs(outputs),
-		Response: response,
-		Requests: requests,
-		GasUsed:  gasUesdTotal,
+		Inputs:    xmodel.GetTxInputs(inputs),
+		Outputs:   xmodel.GetTxOutputs(outputs),
+		Response:  response,
+		Requests:  requests,
+		GasUsed:   gasUesdTotal,
+		Responses: responses,
 	}
 	return rsps, nil
 }
