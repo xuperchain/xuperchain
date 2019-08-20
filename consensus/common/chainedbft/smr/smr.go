@@ -10,6 +10,7 @@ import (
 	"github.com/xuperchain/xuperunion/consensus/common/chainedbft/config"
 	chainedbft_pb "github.com/xuperchain/xuperunion/consensus/common/chainedbft/pb"
 
+	"github.com/xuperchain/xuperunion/consensus/common/chainedbft/utils"
 	"github.com/xuperchain/xuperunion/p2pv2"
 	p2p_pb "github.com/xuperchain/xuperunion/p2pv2/pb"
 )
@@ -22,6 +23,7 @@ var (
 )
 
 // NewSmr return smr instance
+// TODO: too many params, need to discuss with  @yucao
 func NewSmr(cfg config.Config, bcname string, p2p *p2pv2.P2PServerV2, proposalQC, generateQC, lockedQC *chainedbft_pb.QuorumCert) (*Smr, error) {
 	xlog := log.New("module", "smr")
 	// set up smr
@@ -31,7 +33,6 @@ func NewSmr(cfg config.Config, bcname string, p2p *p2pv2.P2PServerV2, proposalQC
 	}
 
 	smr := &Smr{
-		// TODO: zq check init all member variables
 		slog:       xlog,
 		bcname:     bcname,
 		p2p:        p2p,
@@ -42,11 +43,7 @@ func NewSmr(cfg config.Config, bcname string, p2p *p2pv2.P2PServerV2, proposalQC
 		lockedQC:   lockedQC,
 		QuitCh:     make(chan bool, 1),
 	}
-	// register to p2p network
-	if err := smr.registerToNetwork(); err != nil {
-		xlog.Error("NewSmr register to network error", "error", err)
-		return nil, err
-	}
+
 	return smr, nil
 }
 
@@ -70,7 +67,12 @@ func (s *Smr) registerToNetwork() error {
 }
 
 // Start used to start smr instance and process msg
-func (s *Smr) Start() {
+func (s *Smr) Start() error {
+	// register to p2p network
+	if err := s.registerToNetwork(); err != nil {
+		s.slog.Error("NewSmr register to network error", "error", err)
+		return err
+	}
 	for {
 		select {
 		case msg := <-s.p2pMsgChan:
@@ -79,7 +81,7 @@ func (s *Smr) Start() {
 			s.slog.Info("Quit chainedbft smr ...")
 			s.QuitCh <- true
 			s.stop()
-			return
+			return nil
 		}
 	}
 }
@@ -100,10 +102,13 @@ func (s *Smr) ProcessNewView(viewNumber int64, leader, preLeader string) error {
 		return ErrNewViewNum
 	}
 
-	// TODO: zq sign for this msg
 	newViewMsg := &chainedbft_pb.ChainedBftPhaseMessage{
 		Type:       chainedbft_pb.QCState_NEW_VIEW,
 		ViewNumber: viewNumber,
+		Signature: &chainedbft_pb.SignInfo{
+			Address:   s.address,
+			PublicKey: s.publicKey,
+		},
 	}
 
 	if preLeader == s.address {
@@ -113,6 +118,12 @@ func (s *Smr) ProcessNewView(viewNumber int64, leader, preLeader string) error {
 			ViewNumber: s.proposalQC.GetViewNumber(),
 			SignInfos:  s.proposalQC.GetSignInfos(),
 		}
+	}
+
+	newViewMsg, err := utils.MakePhaseMsgSign(s.cryptoClient, s.privateKey, newViewMsg)
+	if err != nil {
+		s.slog.Error("ProcessNewView MakePhaseMsgSign error", "error", err)
+		return err
 	}
 
 	// if as the new leader, wait for the (n-f) new view message from other replicas and call back extenal consensus
@@ -151,11 +162,20 @@ func (s *Smr) ProcessProposal(viewNumber int64, proposalID,
 		SignInfos:   &chainedbft_pb.QCSignInfos{},
 	}
 
-	// TODO: zq sign for this msg
 	propMsg := &chainedbft_pb.ChainedBftPhaseMessage{
 		Type:       chainedbft_pb.QCState_PREPARE,
 		ViewNumber: viewNumber,
 		ProposalQC: qc,
+		Signature: &chainedbft_pb.SignInfo{
+			Address:   s.address,
+			PublicKey: s.publicKey,
+		},
+	}
+
+	propMsg, err := utils.MakePhaseMsgSign(s.cryptoClient, s.privateKey, propMsg)
+	if err != nil {
+		s.slog.Error("ProcessProposal MakePhaseMsgSign error", "error", err)
+		return nil, err
 	}
 
 	// send to other replicas
@@ -222,7 +242,7 @@ func (s *Smr) handleReceivedVoteMsg(msg *p2p_pb.XuperMessage) error {
 	}
 
 	// as a leader, if the num of votes about proposalQC more than (n -f), need to update local status
-	if s.checkVoteNum(voteMsg) {
+	if s.checkVoteNum(voteMsg.GetProposalId()) {
 		s.votedView = s.proposalQC.GetViewNumber()
 		s.lockedQC = s.generateQC
 		s.generateQC = s.proposalQC
@@ -292,10 +312,19 @@ func (s *Smr) handleReceivedProposal(msg *p2p_pb.XuperMessage) error {
 		return ErrSafeProposal
 	}
 	// Step3: vote for this proposal
-	// TODO: zq sign for this msg
 	voteMsg := &chainedbft_pb.ChainedBftVoteMessage{
 		ProposalId: propsQC.GetProposalId(),
+		Signature: &chainedbft_pb.SignInfo{
+			Address:   s.address,
+			PublicKey: s.publicKey,
+		},
 	}
+	_, err = utils.MakeVoteMsgSign(s.cryptoClient, s.privateKey, voteMsg.GetSignature(), propsQC.GetProposalMsg())
+	if err != nil {
+		s.slog.Error("ProcessProposal MakeVoteMsgSign error", "error", err)
+		return err
+	}
+
 	// send to leader
 	msgBuf, err := proto.Marshal(voteMsg)
 	if err != nil {

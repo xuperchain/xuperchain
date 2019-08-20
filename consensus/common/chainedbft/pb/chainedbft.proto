@@ -33,7 +33,7 @@ message QuorumCert {
 // Crypto lib support Threshold-Signatures.
 message QCSignInfos {
     // QCSignInfos 
-    map<string, SignInfo> QCSignInfos = 1;   
+   repeated SignInfo QCSignInfos = 1; 
 }
 
 // SignInfo is the signature information of the 
@@ -55,8 +55,10 @@ message ChainedBftPhaseMessage {
 	QuorumCert ProposalQC = 3;
     // JustifyQC is the QC of the leader gathered, send to next leader, while the message type is "NEW_VIEW_MESSAGE"
     QuorumCert JustifyQC = 4;
+    // MsgDigest is the digest of the msgg
+    bytes MsgDigest = 5;
     // Signature for this msg
-    SignInfo Signature = 5;
+    SignInfo Signature = 6;
 }
 
 // ChainedBftVoteMessage is the vote message of the protocal.

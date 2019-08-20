@@ -16,4 +16,7 @@ type ExternalInterface interface {
 
 	// CallVerifyQc call external consensus for proposalMsg verify with the given QC
 	CallVerifyQc(*chainedbft_pb.QuorumCert) (bool, error)
+
+	// CallProposalMsgWithProposalID call  external consensus for proposalMsg  with the given ProposalID
+	CallProposalMsgWithProposalID([]byte) ([]byte, error)
 }

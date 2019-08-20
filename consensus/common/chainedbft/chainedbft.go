@@ -21,12 +21,14 @@ type ChainedBft struct {
 }
 
 // NewChainedBft create and start the chained-bft instance
+// TODO: too many params, need to discuss with  @yucao
 func NewChainedBft(cfg config.Config, bcname string, p2p *p2pv2.P2PServerV2, proposalQC, generateQC, lockedQC *chainedbft_pb.QuorumCert) (*ChainedBft, error) {
 	// set up log
 	xlog := log.New("module", "chainedbft")
 	xlog.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
 
 	// set up smr
+	// TODO: too many params, need to discuss with  @yucao
 	smr, err := smr.NewSmr(cfg, bcname, p2p, proposalQC, generateQC, lockedQC)
 	if err != nil {
 		xlog.Error("NewChainedBft instance error")
