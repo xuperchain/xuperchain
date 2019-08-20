@@ -38,13 +38,19 @@ func NewMultisigSendCommand(cli *Cli) *cobra.Command {
 	c.cmd = &cobra.Command{
 		Use:   "send",
 		Short: "Post a raw transaction along with multi-signatures.",
-		Long: `./xchain-cli multisig --tx ./tx.out arg1 arg2
-arg1: Initiator signature array, separated with commas; arg2: AuthRequire signature array, separated with commas.`,
+		Long: `./xchain-cli multisig --tx ./tx.out arg1 [arg2] --signtype [multi/ring]
+If signtype is empty:
+	arg1: Initiator signature array, separated with commas; 
+	arg2: AuthRequire signature array, separated with commas.
+If signtype is "multi":
+    arg1: The signature array, separated with commas.`,
 		Args: cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := context.TODO()
 			if c.signType == "multi" {
 				return c.sendXuper(ctx, args[0])
+			} else if c.signType != "" {
+				return fmt.Errorf("SignType[%s] is not supported", c.signType)
 			}
 			if len(args) < 2 {
 				return fmt.Errorf("Args error, need at least two arguments but got %d", len(args))

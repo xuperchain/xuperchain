@@ -111,7 +111,9 @@ func (c *MultisigSignCommand) sign() error {
 		if err != nil {
 			return errors.New("WriteFile error")
 		}
-
+		fmt.Println(string(jsonContent))
+	} else if c.signType != "" {
+		return fmt.Errorf("SignType[%s] is not supported", c.signType)
 	} else {
 		signTx, err := c.genSignTx(tx)
 		if err != nil {
