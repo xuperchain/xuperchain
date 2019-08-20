@@ -78,6 +78,11 @@ func (s *Smr) addViewMsg(msg *chainedbft_pb.ChainedBftPhaseMessage) error {
 		s.slog.Error("addViewMsg checkValidateSets error")
 		return errors.New("addViewMsg checkValidateSets error")
 	}
+	// add JustifyQC
+	if msg.GetJustifyQC() != nil {
+		s.slog.Info("addViewMsg GetJustifyQC not nil", "GetJustifyQC.SignInfos", msg.GetJustifyQC().GetSignInfos())
+		s.qcVoteMsgs.LoadOrStore(string(msg.GetJustifyQC().GetProposalId()), msg.GetJustifyQC().GetSignInfos())
+	}
 
 	// add View msg
 	v, ok := s.newViewMsgs.Load(msg.GetViewNumber())

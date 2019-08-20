@@ -23,6 +23,8 @@ var (
 	ErrNewViewNum = errors.New("new view number error")
 	// ErrSafeProposal check new proposal error
 	ErrSafeProposal = errors.New("check new proposal error")
+	// ErrGetVotes get votes error
+	ErrGetVotes = errors.New("get votes error")
 )
 
 // NewSmr return smr instance
@@ -128,12 +130,7 @@ func (s *Smr) ProcessNewView(viewNumber int64, leader, preLeader string) error {
 	}
 
 	if preLeader == s.address {
-		newViewMsg.JustifyQC = &chainedbft_pb.QuorumCert{
-			ProposalId: s.proposalQC.GetProposalId(),
-			Type:       s.proposalQC.GetType(),
-			ViewNumber: s.proposalQC.GetViewNumber(),
-			SignInfos:  s.proposalQC.GetSignInfos(),
-		}
+		newViewMsg.JustifyQC = s.generateQC
 	}
 
 	newViewMsg, err := utils.MakePhaseMsgSign(s.cryptoClient, s.privateKey, newViewMsg)
@@ -164,6 +161,11 @@ func (s *Smr) ProcessNewView(viewNumber int64, leader, preLeader string) error {
 	}
 	go s.p2p.SendMessage(context.Background(), netMsg, opts...)
 	return nil
+}
+
+// GetGenerateQC get latest GenerateQC while dominer
+func (s *Smr) GetGenerateQC(proposalID []byte) (*chainedbft_pb.QuorumCert, error) {
+	return s.generateQC, nil
 }
 
 // ProcessProposal used to generate new QuorumCert and broadcast to other replicas
@@ -262,6 +264,12 @@ func (s *Smr) handleReceivedVoteMsg(msg *p2p_pb.XuperMessage) error {
 		s.votedView = s.proposalQC.GetViewNumber()
 		s.lockedQC = s.generateQC
 		s.generateQC = s.proposalQC
+		v, ok := s.qcVoteMsgs.Load(string(s.proposalQC.GetProposalId()))
+		if !ok {
+			s.slog.Error("handleReceivedVoteMsg get votes error")
+			return ErrGetVotes
+		}
+		s.generateQC.SignInfos = v.(*chainedbft_pb.QCSignInfos)
 	}
 	return nil
 }
@@ -274,7 +282,6 @@ func (s *Smr) handleReceivedNewView(msg *p2p_pb.XuperMessage) error {
 			"logid", msg.GetHeader().GetLogid(), "error", err)
 		return err
 	}
-
 	if err := s.addViewMsg(newViewMsg); err != nil {
 		s.slog.Error("handleReceivedNewView add vote msg error",
 			"logid", msg.GetHeader().GetLogid(), "error", err)

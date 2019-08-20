@@ -83,6 +83,11 @@ func (cb *ChainedBft) ProcessNewView(viewNumber int64, leader, preLeader string)
 	return cb.smr.ProcessNewView(viewNumber, leader, preLeader)
 }
 
+// GetGenerateQC get latest proposal QC
+func (cb *ChainedBft) GetGenerateQC(proposalID []byte) (*chainedbft_pb.QuorumCert, error) {
+	return cb.smr.GetGenerateQC(proposalID)
+}
+
 // ProcessProposal used to generate new QuorumCert and broadcast to other replicas
 func (cb *ChainedBft) ProcessProposal(viewNumber int64, proposalID, proposalMsg []byte) (*chainedbft_pb.QuorumCert, error) {
 	return cb.smr.ProcessProposal(viewNumber, proposalID, proposalMsg)
