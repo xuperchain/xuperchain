@@ -13,6 +13,7 @@ import (
 	"testing"
 
 	log "github.com/xuperchain/log15"
+	cons_base "github.com/xuperchain/xuperunion/consensus/base"
 	"github.com/xuperchain/xuperunion/contract"
 	crypto_client "github.com/xuperchain/xuperunion/crypto/client"
 	"github.com/xuperchain/xuperunion/ledger"
@@ -289,17 +290,17 @@ func TestTermProposerBasic(t *testing.T) {
 			proposerNum:       int64(1),
 			blockNum:          int64(20),
 			voteUnitPrice:     big.NewInt(12),
-			initProposer: map[int64][]*CandidateInfo{
-				1: []*CandidateInfo{
-					&CandidateInfo{
+			initProposer: map[int64][]*cons_base.CandidateInfo{
+				1: []*cons_base.CandidateInfo{
+					&cons_base.CandidateInfo{
 						Address:  "Y4TmpfV4pvhYT5W17J7TqHSLo6cqq23x3",
 						PeerAddr: "peerid1",
 					},
-					&CandidateInfo{
+					&cons_base.CandidateInfo{
 						Address:  "RUEMFGDEnLBpnYYggnXukpVfR9Skm59ph",
 						PeerAddr: "peerid2",
 					},
-					&CandidateInfo{
+					&cons_base.CandidateInfo{
 						Address:  "bob",
 						PeerAddr: "peerid3",
 					},
@@ -309,7 +310,7 @@ func TestTermProposerBasic(t *testing.T) {
 	}
 	tdpos.context = &contract.TxContext{}
 	tdpos.context.UtxoBatch = tdpos.utxoVM.NewBatch()
-	canInfo := &CandidateInfo{
+	canInfo := &cons_base.CandidateInfo{
 		Address:  "f3prTg9itaZY6m48wXXikXdcxiByW7zgk",
 		PeerAddr: "peerid4",
 	}

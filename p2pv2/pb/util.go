@@ -10,6 +10,7 @@ import (
 const (
 	XuperMsgVersion1 = "1.0.0"
 	XuperMsgVersion2 = "2.0.0"
+	XuperMsgVersion3 = "3.0.0"
 )
 
 // NewXuperMessage create P2P message instance with given params
@@ -28,9 +29,6 @@ func NewXuperMessage(version, bcName, lgid string, tp XuperMessage_MessageType, 
 		msg.Header.Logid = global.Glogid()
 	} else {
 		msg.Header.Logid = lgid
-	}
-	if version > XuperMsgVersion1 {
-		msg.Header.ErrorType = ep
 	}
 	msg.Header.DataCheckSum = CalDataCheckSum(msg)
 	return msg, nil
