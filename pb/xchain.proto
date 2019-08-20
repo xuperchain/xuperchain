@@ -385,6 +385,8 @@ message LedgerMeta
   int64 max_block_size = 4;
   // preset contracts
   repeated InvokeRequest reserved_contracts = 5;
+  // reset forbidden contract configuration
+  InvokeRequest forbidden_contract = 6;
 }
 
 // Utxo metadata

@@ -294,6 +294,37 @@ func (k *Kernel) validateUpdateMaxBlockSize(desc *contract.TxDesc) error {
 	return nil
 }
 
+func (k *Kernel) validateUpdateForbiddenContract(desc *contract.TxDesc, name string) (*pb.InvokeRequest, error) {
+	result := ledger.InvokeRequest{}
+
+	// 检测参数
+	if desc.Args[name] == nil {
+		return nil, fmt.Errorf("miss argument in contract: %s", name)
+	}
+	// 获取参数内容
+	args, ok := desc.Args[name].(interface{})
+	if !ok {
+		return nil, fmt.Errorf("validateUpdateForbiddenContract argName:%s invalid", name)
+	}
+	// 解析参数至结构体中
+	err := mapstructure.Decode(args, &result)
+	if err != nil {
+		return nil, err
+	}
+	// 将ledger.InvokeRequest转化为pb.InvokeRequest
+	forbiddenContractParam, transErr := ledger.InvokeRequestFromJSON2Pb([]ledger.InvokeRequest{result})
+	if transErr != nil {
+		return nil, transErr
+	}
+
+	k.log.Info("Kernel validateUpdateForbiddenContract succes", "param", forbiddenContractParam)
+	if len(forbiddenContractParam) >= 1 {
+		return forbiddenContractParam[0], nil
+	}
+
+	return nil, errors.New("validateForbiddenContract failed")
+}
+
 func (k *Kernel) validateUpdateReservedContract(desc *contract.TxDesc, name string) (
 	[]*pb.InvokeRequest, error) {
 	result := []ledger.InvokeRequest{}
@@ -368,6 +399,8 @@ func (k *Kernel) Run(desc *contract.TxDesc) error {
 		return k.runUpdateMaxBlockSize(desc)
 	case "UpdateReservedContract":
 		return k.runUpdateReservedContract(desc)
+	case "UpdateForbiddenContract":
+		return k.runUpdateForbiddenContract(desc)
 	default:
 		k.log.Warn("method not implemented", "method", desc.Method)
 		return ErrMethodNotImplemented
@@ -400,6 +433,8 @@ func (k *Kernel) Rollback(desc *contract.TxDesc) error {
 		return k.rollbackUpdateMaxBlockSize(desc)
 	case "UpdateReservedContract":
 		return k.rollbackUpdateReservedContract(desc)
+	case "UpdateForbiddenContract":
+		return k.rollbackUpdateForbiddenContract(desc)
 	default:
 		k.log.Warn("method not implemented", "method", desc.Method)
 		return ErrMethodNotImplemented
@@ -435,6 +470,63 @@ func (k *Kernel) rollbackUpdateMaxBlockSize(desc *contract.TxDesc) error {
 	}
 	oldBlockSize := int64(desc.Args["old_block_size"].(float64))
 	err := k.context.LedgerObj.UpdateMaxBlockSize(oldBlockSize, k.context.UtxoBatch)
+	return err
+}
+
+func (k *Kernel) runUpdateForbiddenContract(desc *contract.TxDesc) error {
+	if k.context == nil || k.context.LedgerObj == nil {
+		return fmt.Errorf("failed to update forbidden contract, because no ledger object in context")
+	}
+
+	oldParams, err := k.validateUpdateForbiddenContract(desc, "old_forbidden_contract")
+	if err != nil {
+		return err
+	}
+	k.log.Info("run update forbidden contract, params", "oldParams", oldParams)
+
+	originalForbiddenContract := k.context.LedgerObj.GetMeta().ForbiddenContract
+
+	originalModuleName := originalForbiddenContract.GetModuleName()
+	originalContractName := originalForbiddenContract.GetContractName()
+	originalMethodName := originalForbiddenContract.GetMethodName()
+	originalArgs := originalForbiddenContract.GetArgs()
+	oldParamsModuleName := oldParams.GetModuleName()
+	oldParamsContractName := oldParams.GetContractName()
+	oldParamsMethodName := oldParams.GetMethodName()
+	oldParamsArgs := oldParams.GetArgs()
+
+	// compare originalForbiddenContract with oldParams
+	if originalModuleName != oldParamsModuleName || originalContractName != oldParamsContractName || originalMethodName != oldParamsMethodName || len(originalArgs) != len(oldParamsArgs) {
+		return fmt.Errorf("old_forbidden_contract conf doesn't match current node forbidden_contract conf")
+	}
+
+	for oldKey, oldValue := range oldParamsArgs {
+		if originalValue, ok := originalArgs[oldKey]; !ok || !reflect.DeepEqual(oldValue, originalValue) {
+			return fmt.Errorf("old_forbidden_contract args doesn't match current node forbidden_contract args")
+		}
+	}
+
+	params, err := k.validateUpdateForbiddenContract(desc, "forbidden_contract")
+	if err != nil {
+		return err
+	}
+	k.log.Info("update reservered contract", "params", params)
+	err = k.context.LedgerObj.UpdateForbiddenContract(params, k.context.UtxoBatch)
+
+	return err
+}
+
+func (k *Kernel) rollbackUpdateForbiddenContract(desc *contract.TxDesc) error {
+	if k.context == nil || k.context.LedgerObj == nil {
+		return fmt.Errorf("failed to update forbidden contract, because no ledger object in context")
+	}
+	params, err := k.validateUpdateForbiddenContract(desc, "old_forbidden_contract")
+	if err != nil {
+		return err
+	}
+	k.log.Info("rollback forbidden contract: params", "params", params)
+	err = k.context.LedgerObj.UpdateForbiddenContract(params, k.context.UtxoBatch)
+
 	return err
 }
 
@@ -483,6 +575,10 @@ func (k *Kernel) rollbackUpdateReservedContract(desc *contract.TxDesc) error {
 		return err
 	}
 	k.log.Info("rollback reservered contract: params", "params", params)
+	if err != nil {
+		return err
+	}
+	k.log.Info("rollback reservered contract")
 	err = k.context.LedgerObj.UpdateReservedContract(params, k.context.UtxoBatch)
 	return err
 }
