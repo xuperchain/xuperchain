@@ -1027,3 +1027,34 @@ func (l *Ledger) MaxTxSizePerBlock() int {
 func (l *Ledger) GetBaseDB() kvdb.Database {
 	return l.baseDB
 }
+
+func (l *Ledger) Truncate(utxovmLastID []byte) error {
+	batchWrite := l.baseDB.NewBatch()
+
+	l.mutex.Lock()
+	defer l.mutex.Unlock()
+
+	newMeta := proto.Clone(l.meta).(*pb.LedgerMeta)
+	newMeta.TipBlockid = utxovmLastID
+	block, findErr := l.fetchBlock(utxovmLastID)
+	if findErr != nil {
+		l.xlog.Warn("find pre block fail", "findErr", findErr)
+		return findErr
+	}
+	newMeta.TrunkHeight = block.Height
+	metaBuf, pbErr := proto.Marshal(newMeta)
+	if pbErr != nil {
+		l.xlog.Warn("failed to marshal pb meta")
+		return pbErr
+	}
+	batchWrite.Put([]byte(pb.MetaTablePrefix), metaBuf)
+	kvErr := batchWrite.Write()
+	if kvErr != nil {
+		l.xlog.Warn("batch write failed when Truncate", "kvErr", kvErr)
+		return kvErr
+	}
+
+	l.meta = newMeta
+	l.xlog.Info("truncate blockid succeed")
+	return nil
+}
