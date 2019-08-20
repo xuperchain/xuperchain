@@ -113,6 +113,22 @@ func (c *AccountSplitUtxoCommand) splitUtxo(ctx context.Context) error {
 	if err != nil {
 		return errors.New("genAuthRequire error")
 	}
+	// preExec
+	preExeRPCReq := &pb.InvokeRPCRequest{
+		Bcname:      c.cli.RootOptions.Name,
+		Requests:    []*pb.InvokeRequest{},
+		Header:      global.GHeader(),
+		Initiator:   initAk,
+		AuthRequire: tx.AuthRequire,
+	}
+	preExeRes, err := ct.XchainClient.PreExec(context.Background(), preExeRPCReq)
+	if err != nil {
+		return err
+	}
+	tx.ContractRequests = preExeRes.GetResponse().GetRequests()
+	tx.TxInputsExt = preExeRes.GetResponse().GetInputs()
+	tx.TxOutputsExt = preExeRes.GetResponse().GetOutputs()
+
 	tx.InitiatorSigns, err = ct.genInitSign(tx)
 	if err != nil {
 		return err
@@ -122,6 +138,7 @@ func (c *AccountSplitUtxoCommand) splitUtxo(ctx context.Context) error {
 		return err
 	}
 
+	// calculate txid
 	tx.Txid, err = txhash.MakeTransactionID(tx)
 	if err != nil {
 		return err
