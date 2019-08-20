@@ -29,7 +29,6 @@ func genArgs(req []*pb.InvokeRequest) *reservedArgs {
 func (uv *UtxoVM) verifyReservedWhitelist(tx *pb.Transaction) bool {
 	// verify reservedContracts len
 	reservedContracts := uv.ledger.GetMeta().ReservedContracts
-	uv.xlog.Warn("meta in verifyReservedWhitelist", "meta in", uv.ledger.GetMeta().ReservedContracts)
 	if len(reservedContracts) == 0 {
 		uv.xlog.Info("verifyReservedWhitelist false reservedReqs is nil")
 		return false
