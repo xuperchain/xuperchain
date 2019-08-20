@@ -254,6 +254,8 @@ type LedgerMeta struct {
 	TrunkHeight int64 `json:"trunkHeight"`
 	// MaxBlockSize MaxBlockSize
 	MaxBlockSize int64 `json:"maxBlockSize"`
+	// ReservedContracts ReservedContracts
+	ReservedContracts []InvokeRequest `json:"reservedContracts"`
 }
 
 // UtxoMeta proto.UtxoMeta
@@ -290,13 +292,29 @@ func FromSystemStatusPB(statuspb *pb.SystemsStatus) *SystemStatus {
 	for _, chain := range statuspb.GetBcsStatus() {
 		ledgerMeta := chain.GetMeta()
 		utxoMeta := chain.GetUtxoMeta()
+		ReservedContracts := ledgerMeta.GetReservedContracts()
+		rcs := []InvokeRequest{}
+		for _, rcpb := range ReservedContracts {
+			args := map[string]string{}
+			for k, v := range rcpb.GetArgs() {
+				args[k] = string(v)
+			}
+			rc := InvokeRequest{
+				ModuleName:   rcpb.GetModuleName(),
+				ContractName: rcpb.GetContractName(),
+				MethodName:   rcpb.GetMethodName(),
+				Args:         args,
+			}
+			rcs = append(rcs, rc)
+		}
 		status.ChainStatus = append(status.ChainStatus, ChainStatus{
 			Name: chain.GetBcname(),
 			LedgerMeta: LedgerMeta{
-				RootBlockid:  ledgerMeta.GetRootBlockid(),
-				TipBlockid:   ledgerMeta.GetTipBlockid(),
-				TrunkHeight:  ledgerMeta.GetTrunkHeight(),
-				MaxBlockSize: ledgerMeta.GetMaxBlockSize(),
+				RootBlockid:       ledgerMeta.GetRootBlockid(),
+				TipBlockid:        ledgerMeta.GetTipBlockid(),
+				TrunkHeight:       ledgerMeta.GetTrunkHeight(),
+				MaxBlockSize:      ledgerMeta.GetMaxBlockSize(),
+				ReservedContracts: rcs,
 			},
 			UtxoMeta: UtxoMeta{
 				LatestBlockid:     utxoMeta.GetLatestBlockid(),

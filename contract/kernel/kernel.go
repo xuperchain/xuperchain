@@ -449,10 +449,13 @@ func (k *Kernel) runUpdateReservedContract(desc *contract.TxDesc) error {
 	}
 	k.log.Info("run update reservered contract, params", "oldParams", oldParams)
 
-	originalReservedContracts := k.context.LedgerObj.GetMeta().ReservedContracts
+	originalReservedContracts := k.context.LedgerObj.GetMeta().GetReservedContracts()
 
-	for _, vold := range oldParams {
-		for _, vorig := range originalReservedContracts {
+	for i, vold := range oldParams {
+		for j, vorig := range originalReservedContracts {
+			if i != j {
+				continue
+			}
 			if vold.ModuleName != vorig.ModuleName || vold.ContractName != vorig.ContractName ||
 				vold.MethodName != vorig.MethodName || len(vold.Args) != len(vorig.Args) {
 				return fmt.Errorf("old_reserved_contracts values are not equal to the current node")
