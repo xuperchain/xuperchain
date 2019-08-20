@@ -26,11 +26,12 @@ import (
 // ImmediateVerifyTx verify tx Immediately
 // Transaction verification workflow:
 //   1. verify transaction ID is the same with data hash
-//   2. verify all signatures of initiator and auth requires
+//   2. verify initiator type, should be ak
+//   3. verify all signatures of initiator and auth requires
 //   4. verify the account ACL of utxo input
-//   3. verify the contract requests' permission
-//   5. verify the permission of contract RWSet (WriteSet could including unauthorized data change)
-//   6. run contract requests and verify if the RWSet result is the same with preExed RWSet (heavy
+//   5. verify the contract requests' permission
+//   6. verify the permission of contract RWSet (WriteSet could including unauthorized data change)
+//   7. run contract requests and verify if the RWSet result is the same with preExed RWSet (heavy
 //      operation, keep it at last)
 func (uv *UtxoVM) ImmediateVerifyTx(tx *pb.Transaction, isRootTx bool) (bool, error) {
 	// Pre processing of tx data
@@ -60,6 +61,11 @@ func (uv *UtxoVM) ImmediateVerifyTx(tx *pb.Transaction, isRootTx bool) (bool, er
 		if bytes.Compare(tx.Txid, txid) != 0 {
 			uv.xlog.Warn("ImmediateVerifyTx: txid not match", "tx.Txid", tx.Txid, "txid", txid)
 			return false, fmt.Errorf("Txid verify failed")
+		}
+
+		// verify initiator type
+		if akType := acl.IsAccount(tx.Initiator); akType != 0 {
+			return false, ErrInitiatorType
 		}
 
 		// get digestHash
@@ -127,49 +133,13 @@ func (uv *UtxoVM) verifySignatures(tx *pb.Transaction, digestHash []byte) (bool,
 	}
 
 	// verify initiator
-	// TODO: do not check type after the change of initiator could only be address (@zq)
-	akType := acl.IsAccount(tx.Initiator)
-	if akType == 0 {
-		// check initiator address signature
-		ok, err := pm.IdentifyAK(tx.Initiator, tx.InitiatorSigns[0], digestHash)
-		if err != nil || !ok {
-			uv.xlog.Warn("verifySignatures failed", "address", tx.Initiator, "error", err)
-			return false, nil, err
-		}
-		verifiedAddr[tx.Initiator] = true
-	} else if akType == 1 {
-		initiatorAddr := make([]string, 0)
-		// check initiator account signatures
-		for _, sign := range tx.InitiatorSigns {
-			ak, err := uv.cryptoClient.GetEcdsaPublicKeyFromJSON([]byte(sign.PublicKey))
-			if err != nil {
-				uv.xlog.Warn("verifySignatures failed", "address", tx.Initiator, "error", err)
-				return false, nil, err
-			}
-			addr, err := uv.cryptoClient.GetAddressFromPublicKey(ak)
-			if err != nil {
-				uv.xlog.Warn("verifySignatures failed", "address", tx.Initiator, "error", err)
-				return false, nil, err
-			}
-			ok, err := pm.IdentifyAK(addr, sign, digestHash)
-			if !ok {
-				uv.xlog.Warn("verifySignatures failed", "address", tx.Initiator, "error", err)
-				return ok, nil, err
-			}
-			verifiedAddr[addr] = true
-			initiatorAddr = append(initiatorAddr, tx.Initiator+"/"+addr)
-		}
-		// check initator ACL here, this part should be removed after initiator is address.
-		ok, err := pm.IdentifyAccount(tx.Initiator, initiatorAddr, uv.aclMgr)
-		if !ok {
-			uv.xlog.Warn("verifySignatures initiator permission check failed",
-				"account", tx.Initiator, "error", err)
-			return false, nil, err
-		}
-	} else {
-		uv.xlog.Warn("verifySignatures failed, invalid address", "address", tx.Initiator)
-		return false, nil, ErrInvalidSignature
+	// check initiator address signature, initiator could only be address after verify initiator type check
+	ok, err := pm.IdentifyAK(tx.Initiator, tx.InitiatorSigns[0], digestHash)
+	if err != nil || !ok {
+		uv.xlog.Warn("verifySignatures failed", "address", tx.Initiator, "error", err)
+		return false, nil, err
 	}
+	verifiedAddr[tx.GetInitiator()] = true
 
 	// verify authRequire
 	for idx, authReq := range tx.AuthRequire {

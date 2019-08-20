@@ -7,7 +7,10 @@ import (
 	"io/ioutil"
 	"math/big"
 	"os"
+	"reflect"
 	"sync"
+
+	"github.com/mitchellh/mapstructure"
 
 	log "github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperunion/contract"
@@ -291,6 +294,39 @@ func (k *Kernel) validateUpdateMaxBlockSize(desc *contract.TxDesc) error {
 	return nil
 }
 
+func (k *Kernel) validateUpdateReservedContract(desc *contract.TxDesc, name string) (
+	[]*pb.InvokeRequest, error) {
+	result := []ledger.InvokeRequest{}
+	for _, argName := range []string{"old_reserved_contracts", "reserved_contracts"} {
+		if desc.Args[argName] == nil {
+			return nil, fmt.Errorf("miss argument in contact: %s", argName)
+		}
+		args, ok := desc.Args[argName].([]interface{})
+		if !ok {
+			return nil, fmt.Errorf("validateUpdateReservedContract argName:%s invalid", argName)
+		}
+
+		params := []ledger.InvokeRequest{}
+		for _, arg := range args {
+			param := ledger.InvokeRequest{}
+			err := mapstructure.Decode(arg, &param)
+			if err != nil {
+				return nil, fmt.Errorf("validateUpdateReservedContract transfer invokeRequest failed")
+			}
+			params = append(params, param)
+		}
+
+		if argName == name {
+			result = params
+		}
+	}
+
+	reservedContractParams, _ := ledger.InvokeRequestFromJSON2Pb(result)
+
+	k.log.Info("Kernel validateUpdateReservedContract success", "params", reservedContractParams)
+	return reservedContractParams, nil
+}
+
 // Run implements ContractInterface
 func (k *Kernel) Run(desc *contract.TxDesc) error {
 	k.mutex.Lock()
@@ -330,6 +366,8 @@ func (k *Kernel) Run(desc *contract.TxDesc) error {
 		return nil
 	case "UpdateMaxBlockSize":
 		return k.runUpdateMaxBlockSize(desc)
+	case "UpdateReservedContract":
+		return k.runUpdateReservedContract(desc)
 	default:
 		k.log.Warn("method not implemented", "method", desc.Method)
 		return ErrMethodNotImplemented
@@ -360,6 +398,8 @@ func (k *Kernel) Rollback(desc *contract.TxDesc) error {
 		return nil
 	case "UpdateMaxBlockSize":
 		return k.rollbackUpdateMaxBlockSize(desc)
+	case "UpdateReservedContract":
+		return k.rollbackUpdateReservedContract(desc)
 	default:
 		k.log.Warn("method not implemented", "method", desc.Method)
 		return ErrMethodNotImplemented
@@ -381,7 +421,7 @@ func (k *Kernel) runUpdateMaxBlockSize(desc *contract.TxDesc) error {
 	if oldBlockSize != curMaxBlockSize {
 		return fmt.Errorf("unexpected old block size, got %v, expected: %v", oldBlockSize, curMaxBlockSize)
 	}
-	err := k.context.LedgerObj.UpdateMaxBlockSize(newBlockSize)
+	err := k.context.LedgerObj.UpdateMaxBlockSize(newBlockSize, k.context.UtxoBatch)
 	return err
 }
 
@@ -394,7 +434,56 @@ func (k *Kernel) rollbackUpdateMaxBlockSize(desc *contract.TxDesc) error {
 		return vErr
 	}
 	oldBlockSize := int64(desc.Args["old_block_size"].(float64))
-	err := k.context.LedgerObj.UpdateMaxBlockSize(oldBlockSize)
+	err := k.context.LedgerObj.UpdateMaxBlockSize(oldBlockSize, k.context.UtxoBatch)
+	return err
+}
+
+func (k *Kernel) runUpdateReservedContract(desc *contract.TxDesc) error {
+	if k.context == nil || k.context.LedgerObj == nil {
+		return fmt.Errorf("failed to update reservered contract, because no ledger object in context")
+	}
+
+	oldParams, err := k.validateUpdateReservedContract(desc, "old_reserved_contracts")
+	if err != nil {
+		return err
+	}
+	k.log.Info("run update reservered contract, params", "oldParams", oldParams)
+
+	originalReservedContracts := k.context.LedgerObj.GetMeta().ReservedContracts
+
+	for _, vold := range oldParams {
+		for _, vorig := range originalReservedContracts {
+			if vold.ModuleName != vorig.ModuleName || vold.ContractName != vorig.ContractName ||
+				vold.MethodName != vorig.MethodName || len(vold.Args) != len(vorig.Args) {
+				return fmt.Errorf("old_reserved_contracts values are not equal to the current node")
+			}
+			for k, vp := range vold.Args {
+				if vo, ok := vorig.Args[k]; !ok || !reflect.DeepEqual(vp, vo) {
+					return fmt.Errorf("old_reserved_contracts values are not equal to the current node")
+				}
+			}
+		}
+	}
+
+	params, err := k.validateUpdateReservedContract(desc, "reserved_contracts")
+	if err != nil {
+		return err
+	}
+	k.log.Info("update reservered contract", "params", params)
+	err = k.context.LedgerObj.UpdateReservedContract(params, k.context.UtxoBatch)
+	return err
+}
+
+func (k *Kernel) rollbackUpdateReservedContract(desc *contract.TxDesc) error {
+	if k.context == nil || k.context.LedgerObj == nil {
+		return fmt.Errorf("failed to update reservered contract, because no ledger object in context")
+	}
+	params, err := k.validateUpdateReservedContract(desc, "old_reserved_contracts")
+	if err != nil {
+		return err
+	}
+	k.log.Info("rollback reservered contract: params", "params", params)
+	err = k.context.LedgerObj.UpdateReservedContract(params, k.context.UtxoBatch)
 	return err
 }
 

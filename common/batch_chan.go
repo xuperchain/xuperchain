@@ -33,16 +33,25 @@ func NewBatchChan(window int, waitms int, itemChan chan *pb.Transaction) *BatchC
 func (bc *BatchChan) loopMakeBatch() {
 	timer := time.Tick(time.Millisecond * time.Duration(bc.waitms))
 	buffer := []*pb.Transaction{}
+	timeFlag := false
 	for {
 		select {
 		case item := <-bc.itemChan:
 			buffer = append(buffer, item)
 		case <-timer:
+			timeFlag = true
 		}
-		if len(buffer) >= bc.window {
+
+		// 数量控制 + 时间控制
+		// case1: 当buffer中积攒的unconfirm transactions数量超过bc.window
+		// case2: 当经过bc.waitms时间窗口后
+		// case1以及case2都需要转发本地buffer中的unconfirm transactions
+		if len(buffer) >= bc.window || (len(buffer) > 0 && timeFlag == true) {
 			bc.queue <- buffer
 			buffer = []*pb.Transaction{}
+			timeFlag = false
 		}
+
 	}
 }
 

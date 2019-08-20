@@ -88,6 +88,9 @@ type tDposConfig struct {
 	voteUnitPrice *big.Int
 	// 系统指定的前两轮的候选人名单
 	initProposer map[int64][]*cons_base.CandidateInfo
+	// is proposers' netURL needed for nomination and tdpos config
+	// this is read from config need_neturl
+	needNetURL bool
 }
 
 // 每个选票的详情, 支持一票多投

@@ -323,6 +323,7 @@ func TestRunUpdateMaxBlockSize(t *testing.T) {
 	t.Log("L.GetMaxBlockSize:", L.GetMaxBlockSize())
 	context := &contract.TxContext{
 		LedgerObj: L,
+		UtxoBatch: L.GetBaseDB().NewBatch(),
 	}
 	kl := &Kernel{}
 	kLogger := log.New("module", "kernel")
@@ -338,5 +339,120 @@ func TestRunUpdateMaxBlockSize(t *testing.T) {
 	runUpdateBlkChainErr := kl.runUpdateMaxBlockSize(txDesc)
 	if runUpdateBlkChainErr != nil {
 		t.Error("runUpdateMaxBlockSize error ", runUpdateBlkChainErr.Error())
+	}
+}
+
+func TestRunUpdateReservedContracts(t *testing.T) {
+	workspace, workSpaceErr := ioutil.TempDir("/tmp", "")
+	if workSpaceErr != nil {
+		t.Error("create dir error ", workSpaceErr.Error())
+	}
+	defer os.RemoveAll(workspace)
+
+	L, err := ledger.NewLedger(workspace+"xuper", nil, nil, defaultKVEngine, crypto_client.CryptoTypeDefault)
+	if err != nil {
+		t.Error("new ledger error ", err.Error())
+	}
+	utxovm, _ := utxo.MakeUtxoVM("xuper", L, workspace+"xuper", "", "", []byte(""), nil, 5000, 60, 500, nil, false, defaultKVEngine, crypto_client.CryptoTypeDefault)
+	tx, generateRootErr := utxovm.GenerateRootTx([]byte(`
+    {
+        "version" : "1"
+        , "consensus" : {
+            "miner" : "0x00000000000"
+        }
+        , "predistribution":[
+            {
+                "address" : "` + BobAddress + `",
+                "quota" : "100"
+            },
+            {
+                "address" : "` + AliceAddress + `",
+                "quota" : "200"
+            }
+        ]
+        , "maxblocksize" : "128"
+        , "period" : "5000"
+        , "award" : "1000"
+		, "reserved_contracts": [
+            {
+                "module_name": "wasm",
+                "contract_name": "banned",
+                "method_name": "verify",
+                "args": {
+                    "contract": "{{.ContractNames}}"
+                }
+            }
+        ]
+    }
+    `))
+	if generateRootErr != nil {
+		t.Error("generate genesis tx error ", generateRootErr.Error())
+	}
+	block, _ := L.FormatRootBlock([]*pb.Transaction{tx})
+	t.Logf("blockid %x", block.Blockid)
+	confirmStatus := L.ConfirmBlock(block, true)
+	if !confirmStatus.Succ {
+		t.Error("confirm block fail")
+	}
+	playErr := utxovm.Play(block.Blockid)
+	if playErr != nil {
+		t.Error(playErr)
+	}
+	reservedContracts := []*pb.InvokeRequest{}
+	originalReservedContracts, err := L.GenesisBlock.GetConfig().GetReservedContract()
+	if err != nil {
+		t.Error("originalReservedContracts ", originalReservedContracts)
+	}
+	MetaReservedContracts := L.GetMeta().ReservedContracts
+	t.Log("MetaReservedContracts: ", MetaReservedContracts)
+	if MetaReservedContracts != nil {
+		reservedContracts = MetaReservedContracts
+	} else {
+		reservedContracts = originalReservedContracts
+	}
+	t.Log("reservedContracts: ", reservedContracts)
+	context := &contract.TxContext{
+		LedgerObj: L,
+		UtxoBatch: L.GetBaseDB().NewBatch(),
+	}
+	kl := &Kernel{}
+	kLogger := log.New("module", "kernel")
+	kLogger.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
+	kl.Init(workspace, kLogger, nil, "xuper")
+	kl.SetContext(context)
+	args := []byte(`
+        {
+            "args":{
+                "old_reserved_contracts":[
+                    {
+                        "module_name":"wasm",
+                        "contract_name":"banned",
+                        "method_name":"verify",
+                        "args":{
+                            "contract":"{{.ContractNames}}"
+                        }
+                    }
+                ],
+                "reserved_contracts":[
+                {
+                    "module_name":"wasm",
+                    "contract_name":"identity",
+                    "method_name":"verify",
+                        "args":{}
+                }
+                ]
+            }
+        }
+	`)
+	txDesc := &contract.TxDesc{}
+	_ = json.Unmarshal(args, txDesc)
+	runUpdateBlkChainErr := kl.runUpdateReservedContract(txDesc)
+	if runUpdateBlkChainErr != nil {
+		t.Error("runUpdateReservedContracts error: ", runUpdateBlkChainErr.Error())
+	}
+
+	rollbackUpdateBlkChainErr := kl.rollbackUpdateReservedContract(txDesc)
+	if rollbackUpdateBlkChainErr != nil {
+		t.Error("runUpdateReservedContracts error: ", rollbackUpdateBlkChainErr.Error())
 	}
 }

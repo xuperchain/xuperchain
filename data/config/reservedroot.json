@@ -55,6 +55,12 @@
         ,"reserved_whitelist": {
             "account": "XC9999999999999999@xuper"
         } 
+        , "forbidden_contract": {
+                "module_name": "wasm",
+                "contract_name": "forbidden",
+                "method_name": "get",
+                "args":{}
+        }
         , "permission": {
                 "CreateAccount" : { "rule" : "Null", "acl": {}},
                 "SetAccountAcl": { "rule" : "Null", "acl": {}},
