@@ -256,6 +256,8 @@ type LedgerMeta struct {
 	MaxBlockSize int64 `json:"maxBlockSize"`
 	// ReservedContracts ReservedContracts
 	ReservedContracts []InvokeRequest `json:"reservedContracts"`
+	// ForbiddenContract forbidden contract
+	ForbiddenContract InvokeRequest `json:"forbiddenContract"`
 }
 
 // UtxoMeta proto.UtxoMeta
@@ -307,6 +309,20 @@ func FromSystemStatusPB(statuspb *pb.SystemsStatus) *SystemStatus {
 			}
 			rcs = append(rcs, rc)
 		}
+
+		forbiddenContract := ledgerMeta.GetForbiddenContract()
+		args := forbiddenContract.GetArgs()
+		originalArgs := map[string]string{}
+		for key, value := range args {
+			originalArgs[key] = string(value)
+		}
+		forbiddenContractMap := InvokeRequest{
+			ModuleName:   forbiddenContract.GetModuleName(),
+			ContractName: forbiddenContract.GetContractName(),
+			MethodName:   forbiddenContract.GetMethodName(),
+			Args:         originalArgs,
+		}
+
 		status.ChainStatus = append(status.ChainStatus, ChainStatus{
 			Name: chain.GetBcname(),
 			LedgerMeta: LedgerMeta{
@@ -315,6 +331,7 @@ func FromSystemStatusPB(statuspb *pb.SystemsStatus) *SystemStatus {
 				TrunkHeight:       ledgerMeta.GetTrunkHeight(),
 				MaxBlockSize:      ledgerMeta.GetMaxBlockSize(),
 				ReservedContracts: rcs,
+				ForbiddenContract: forbiddenContractMap,
 			},
 			UtxoMeta: UtxoMeta{
 				LatestBlockid:     utxoMeta.GetLatestBlockid(),

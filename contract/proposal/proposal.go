@@ -318,6 +318,16 @@ func (prp *Proposal) fillOldState(desc []byte) ([]byte, error) {
 			reservedContracts = append(reservedContracts, param)
 		}
 		descObj.Args["old_reserved_contracts"] = reservedContracts
+	case "kernel.UpdateForbiddenContract":
+		prp.log.Trace("contract desc need to process", "contractKey", "kernel.UpdateForbiddenContract")
+		forbiddenContract := prp.ledger.GetMeta().GetForbiddenContract()
+		forbiddenContractMap := map[string]interface{}{}
+		forbiddenContractMap["module_name"] = forbiddenContract.GetModuleName()
+		forbiddenContractMap["contract_name"] = forbiddenContract.GetContractName()
+		forbiddenContractMap["method_name"] = forbiddenContract.GetMethodName()
+		forbiddenContractMap["args"] = forbiddenContract.GetArgs()
+
+		descObj.Args["old_forbidden_contract"] = forbiddenContractMap
 	default:
 		prp.log.Trace("contract desc do not need to process")
 	}
