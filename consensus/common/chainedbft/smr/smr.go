@@ -3,14 +3,17 @@ package smr
 import (
 	"bytes"
 	"context"
+	"crypto/ecdsa"
 	"errors"
 
 	"github.com/golang/protobuf/proto"
 	log "github.com/xuperchain/log15"
+	cons_base "github.com/xuperchain/xuperunion/consensus/base"
 	"github.com/xuperchain/xuperunion/consensus/common/chainedbft/config"
+	"github.com/xuperchain/xuperunion/consensus/common/chainedbft/external"
 	chainedbft_pb "github.com/xuperchain/xuperunion/consensus/common/chainedbft/pb"
-
 	"github.com/xuperchain/xuperunion/consensus/common/chainedbft/utils"
+	crypto_base "github.com/xuperchain/xuperunion/crypto/client/base"
 	"github.com/xuperchain/xuperunion/p2pv2"
 	p2p_pb "github.com/xuperchain/xuperunion/p2pv2/pb"
 )
@@ -23,27 +26,45 @@ var (
 )
 
 // NewSmr return smr instance
-// TODO: too many params, need to discuss with  @yucao
-func NewSmr(cfg config.Config, bcname string, p2p *p2pv2.P2PServerV2, proposalQC, generateQC, lockedQC *chainedbft_pb.QuorumCert) (*Smr, error) {
+func NewSmr(
+	cfg config.Config,
+	bcname string,
+	address string,
+	publicKey string,
+	privateKey *ecdsa.PrivateKey,
+	validates []*cons_base.CandidateInfo,
+	externalCons external.ExternalInterface,
+	cryptoClient crypto_base.CryptoClient,
+	p2p *p2pv2.P2PServerV2,
+	proposalQC,
+	generateQC,
+	lockedQC *chainedbft_pb.QuorumCert) (*Smr, error) {
+
 	xlog := log.New("module", "smr")
 	// set up smr
-	if proposalQC == nil || generateQC == nil || lockedQC == nil {
-		xlog.Error("NewSmr params error, init QC status can not be nil")
-		return nil, errors.New("NewSmr QC params error")
-	}
+	//todo: validate params
 
 	smr := &Smr{
-		slog:       xlog,
-		bcname:     bcname,
-		p2p:        p2p,
-		p2pMsgChan: make(chan *p2p_pb.XuperMessage, cfg.NetMsgChanSize),
-		votedView:  generateQC.ViewNumber,
-		proposalQC: proposalQC,
-		generateQC: generateQC,
-		lockedQC:   lockedQC,
-		QuitCh:     make(chan bool, 1),
+		slog:         xlog,
+		bcname:       bcname,
+		address:      address,
+		publicKey:    publicKey,
+		privateKey:   privateKey,
+		validates:    validates,
+		externalCons: externalCons,
+		cryptoClient: cryptoClient,
+		p2p:          p2p,
+		p2pMsgChan:   make(chan *p2p_pb.XuperMessage, cfg.NetMsgChanSize),
+		votedView:    generateQC.ViewNumber,
+		proposalQC:   proposalQC,
+		generateQC:   generateQC,
+		lockedQC:     lockedQC,
+		QuitCh:       make(chan bool, 1),
 	}
-
+	if err := smr.registerToNetwork(); err != nil {
+		xlog.Error("smr registerToNetwork error", "error", err)
+		return nil, err
+	}
 	return smr, nil
 }
 
@@ -67,12 +88,7 @@ func (s *Smr) registerToNetwork() error {
 }
 
 // Start used to start smr instance and process msg
-func (s *Smr) Start() error {
-	// register to p2p network
-	if err := s.registerToNetwork(); err != nil {
-		s.slog.Error("NewSmr register to network error", "error", err)
-		return err
-	}
+func (s *Smr) Start() {
 	for {
 		select {
 		case msg := <-s.p2pMsgChan:
@@ -81,7 +97,7 @@ func (s *Smr) Start() error {
 			s.slog.Info("Quit chainedbft smr ...")
 			s.QuitCh <- true
 			s.stop()
-			return nil
+			return
 		}
 	}
 }

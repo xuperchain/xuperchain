@@ -2,13 +2,16 @@
 package chainedbft
 
 import (
+	"crypto/ecdsa"
 	"os"
 
 	log "github.com/xuperchain/log15"
 	cons_base "github.com/xuperchain/xuperunion/consensus/base"
 	"github.com/xuperchain/xuperunion/consensus/common/chainedbft/config"
+	"github.com/xuperchain/xuperunion/consensus/common/chainedbft/external"
 	chainedbft_pb "github.com/xuperchain/xuperunion/consensus/common/chainedbft/pb"
 	"github.com/xuperchain/xuperunion/consensus/common/chainedbft/smr"
+	crypto_base "github.com/xuperchain/xuperunion/crypto/client/base"
 	"github.com/xuperchain/xuperunion/p2pv2"
 )
 
@@ -21,15 +24,25 @@ type ChainedBft struct {
 }
 
 // NewChainedBft create and start the chained-bft instance
-// TODO: too many params, need to discuss with  @yucao
-func NewChainedBft(cfg config.Config, bcname string, p2p *p2pv2.P2PServerV2, proposalQC, generateQC, lockedQC *chainedbft_pb.QuorumCert) (*ChainedBft, error) {
+func NewChainedBft(
+	cfg config.Config,
+	bcname string,
+	address string,
+	publicKey string,
+	privateKey *ecdsa.PrivateKey,
+	validates []*cons_base.CandidateInfo,
+	externalCons external.ExternalInterface,
+	cryptoClient crypto_base.CryptoClient,
+	p2p *p2pv2.P2PServerV2,
+	proposalQC, generateQC, lockedQC *chainedbft_pb.QuorumCert) (*ChainedBft, error) {
+
 	// set up log
 	xlog := log.New("module", "chainedbft")
 	xlog.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
 
 	// set up smr
-	// TODO: too many params, need to discuss with  @yucao
-	smr, err := smr.NewSmr(cfg, bcname, p2p, proposalQC, generateQC, lockedQC)
+	smr, err := smr.NewSmr(cfg, bcname, address, publicKey, privateKey,
+		validates, externalCons, cryptoClient, p2p, proposalQC, generateQC, lockedQC)
 	if err != nil {
 		xlog.Error("NewChainedBft instance error")
 		return nil, err

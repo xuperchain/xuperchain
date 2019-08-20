@@ -32,13 +32,12 @@ type Smr struct {
 	validates []*cons_base.CandidateInfo
 	// externalCons is the instance that chained bft communicate with
 	externalCons external.ExternalInterface
-
+	// cryptoClient is default cryptoclient of chain
+	cryptoClient crypto_base.CryptoClient
 	// p2p is the network instance
 	p2p *p2pv2.P2PServerV2
 	// p2pMsgChan is the msg channel registered to network
 	p2pMsgChan chan *xuper_p2p.XuperMessage
-	// cryptoClient is default cryptoclient of chain
-	cryptoClient crypto_base.CryptoClient
 
 	// Hotstuff State of this nodes
 	// votedView is the last voted view, view changes with chain
