@@ -310,6 +310,9 @@ Again:
 		goto Again
 	}
 	// 查当前时间的term 和 pos
+	// t2是铸币时间
+	// CompeteMaster中的时间是铸币时间
+	// FormatPOWBlock中的时间是出块时间
 	t2 := time.Now()
 	un2 := t2.UnixNano()
 	term, pos, blockPos := tp.minerScheduling(un2)
@@ -428,15 +431,20 @@ func (tp *TDpos) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock) (bool,
 // ProcessBeforeMiner is the specific implementation of ConsensusInterface
 func (tp *TDpos) ProcessBeforeMiner(timestamp int64) (map[string]interface{}, bool) {
 	res := make(map[string]interface{})
-	term, pos, _ := tp.minerScheduling(timestamp)
+	term, pos, blockPos := tp.minerScheduling(timestamp)
+	if term != tp.curTerm || blockPos > tp.config.blockNum || pos >= tp.config.proposerNum {
+		return res, false
+	}
 	if !tp.isProposer(term, pos, tp.address) {
 		tp.log.Warn("ProcessBeforeMiner prepare too long, omit!")
 		return nil, false
 	}
 
 	res["type"] = TYPE
-	res["curTerm"] = tp.curTerm
-	res["curBlockNum"] = tp.curBlockNum
+	//res["curTerm"] = tp.curTerm
+	//res["curBlockNum"] = tp.curBlockNum
+	res["curTerm"] = term
+	res["curBlockNum"] = blockPos
 	tp.log.Trace("ProcessBeforeMiner", "res", res)
 	return res, true
 }
