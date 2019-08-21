@@ -414,10 +414,6 @@ func (tp *TDpos) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock) (bool,
 				return false, ErrProposeBlockMoreThanConfig
 			}
 		}
-		if blockPos < in.CurBlockNum {
-			tp.log.Warn("CheckMinerMatch failed, CurBlockNum not match!")
-			return false, nil
-		}
 	} else {
 		tp.log.Warn("CheckMinerMatch failed, revieved block shouldn't proposed!")
 		return false, nil
