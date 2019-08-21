@@ -200,12 +200,16 @@ func (s *XModel) queryTx(txid []byte) (*pb.Transaction, bool, error) {
 }
 
 // QueryTx query transaction including unconfirmed table and confirmed table
-func (s *XModel) QueryTx(txid []byte) (*pb.Transaction, error) {
-	tx, _, err := s.queryTx(txid)
+func (s *XModel) QueryTx(txid []byte) (*pb.TxStatus, error) {
+	tx, isConfirmed, err := s.queryTx(txid)
 	if err != nil {
 		return nil, err
 	}
-	return tx, nil
+	status := pb.TransactionStatus_UNCONFIRM
+	if isConfirmed {
+		status = pb.TransactionStatus_CONFIRM
+	}
+	return &pb.TxStatus{Tx: tx, Status: status}, nil
 }
 
 // QueryBlock query block from ledger

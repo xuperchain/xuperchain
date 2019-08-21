@@ -1,11 +1,10 @@
-// +build !wasm
+// +build wasm
 
 package code
 
 import (
+	pb "github.com/xuperchain/xuperunion/contractsdk/go/litepb"
 	"math/big"
-
-	pb "github.com/xuperchain/xuperunion/contractsdk/go/pb"
 )
 
 // Context is the context in which the contract runs

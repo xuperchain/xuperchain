@@ -109,11 +109,11 @@ func (c *contractContext) NewIterator(start, limit []byte) code.Iterator {
 	return nil
 }
 
-func (c *contractContext) QueryTx(txid []byte) (*code.TxStatus, error) {
+func (c *contractContext) QueryTx(txid []byte) (*pb.TxStatus, error) {
 	return nil, nil
 }
 
-func (c *contractContext) QueryBlock(blockid []byte) (*code.Block, error) {
+func (c *contractContext) QueryBlock(blockid []byte) (*pb.Block, error) {
 	return nil, nil
 }
 
