@@ -310,9 +310,6 @@ Again:
 		goto Again
 	}
 	// 查当前时间的term 和 pos
-	// t2是铸币时间
-	// CompeteMaster中的时间是铸币时间
-	// FormatPOWBlock中的时间是出块时间
 	t2 := time.Now()
 	un2 := t2.UnixNano()
 	term, pos, blockPos := tp.minerScheduling(un2)
