@@ -31,7 +31,7 @@ func (s *Smr) safeProposal(propsQC, justify *chainedbft_pb.QuorumCert) (bool, er
 			return false, ErrInValidateSets
 		}
 
-		ok, err := utils.VerifyVoteMsgSign(s.cryptoClient, v, justify.GetProposalMsg())
+		ok, err := utils.VerifyVoteMsgSign(s.cryptoClient, v, justify.GetProposalId())
 		if !ok || err != nil {
 			s.slog.Error("safeProposal VerifyVoteMsgSign error", "ok", ok, "error", err)
 			return false, ErrVerifyVoteSign
