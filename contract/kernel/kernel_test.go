@@ -456,3 +456,109 @@ func TestRunUpdateReservedContracts(t *testing.T) {
 		t.Error("runUpdateReservedContracts error: ", rollbackUpdateBlkChainErr.Error())
 	}
 }
+
+func TestRunUpdateForbiddenContract(t *testing.T) {
+	workSpace, workSpaceErr := ioutil.TempDir("", "./")
+	if workSpaceErr != nil {
+		t.Error("create temporary dir failed", workSpaceErr.Error())
+	}
+	defer os.RemoveAll(workSpace)
+
+	L, ledgerErr := ledger.NewLedger(workSpace+"xuper", nil, nil, defaultKVEngine, crypto_client.CryptoTypeDefault)
+	if ledgerErr != nil {
+		t.Error("new ledger error", ledgerErr.Error())
+	}
+
+	utxovm, _ := utxo.MakeUtxoVM("xuper", L, workSpace+"xuper", "", "", []byte(""), nil, 5000, 60, 500, nil, false, defaultKVEngine, crypto_client.CryptoTypeDefault)
+	tx, generateRootErr := utxovm.GenerateRootTx([]byte(`
+	{
+		"version" : "1"
+		, "consensus" : {
+			"miner" : "0x00000000000"
+		}
+		, "predistribution":[
+			{
+				"address" : "` + BobAddress + `",
+				"quota" : "100"
+			},
+			{
+				"address" : "` + AliceAddress + `",
+				"quota" : "200"
+			}
+		]
+		, "maxblocksize" : "128"
+		, "period" : "5000"
+		, "award" : "1000"
+		, "forbidden_contract": {
+			"module_name": "wasm",
+			"contract_name": "forbidden",
+			"method_name": "get",
+			"args": {}
+		}
+	}
+`))
+	if generateRootErr != nil {
+		t.Error("generate genesis tx error ", generateRootErr.Error())
+	}
+	block, _ := L.FormatRootBlock([]*pb.Transaction{tx})
+	t.Logf("blockid %x", block.Blockid)
+	confirmStatus := L.ConfirmBlock(block, true)
+	if !confirmStatus.Succ {
+		t.Error("confirm block fail")
+	}
+	playErr := utxovm.Play(block.Blockid)
+	if playErr != nil {
+		t.Error(playErr)
+	}
+	forbiddenContract := &pb.InvokeRequest{}
+	originalForbiddenContract, err := L.GenesisBlock.GetConfig().GetForbiddenContract()
+	if err != nil {
+		t.Error("get originalForbiddenContract error->", err)
+	}
+	MetaForbiddenContract := L.GetMeta().ForbiddenContract
+	t.Log("MetaForbiddenContract:", MetaForbiddenContract)
+	if MetaForbiddenContract != nil {
+		forbiddenContract = MetaForbiddenContract
+	} else {
+		forbiddenContract = originalForbiddenContract[0]
+	}
+	t.Log("forbiddenContract:->", forbiddenContract)
+	context := &contract.TxContext{
+		LedgerObj: L,
+		UtxoBatch: L.GetBaseDB().NewBatch(),
+	}
+	kl := &Kernel{}
+	kLogger := log.New("module", "kernel")
+	kLogger.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
+	kl.Init(workSpace, kLogger, nil, "xuper")
+	kl.SetContext(context)
+	args := []byte(`
+	{
+		"args":{
+			"old_forbidden_contract": {
+				"module_name": "wasm",
+				"contract_name": "forbidden",
+				"method_name": "get",
+				"args":{}
+			},
+			"forbidden_contract": {
+				"module_name": "wasm",
+				"contract_name": "forbidden",
+				"method_name": "get1",
+				"args":{}
+			}
+		}
+	}
+	`)
+	txDesc := &contract.TxDesc{}
+	json.Unmarshal(args, txDesc)
+	runUpdateBlkChainErr := kl.runUpdateForbiddenContract(txDesc)
+	if runUpdateBlkChainErr != nil {
+		t.Error("runUpdateForbiddenContract error:->", runUpdateBlkChainErr.Error())
+	}
+
+	rollbackUpdateBlkChainErr := kl.rollbackUpdateForbiddenContract(txDesc)
+	if rollbackUpdateBlkChainErr != nil {
+		t.Error("runUpdateForbiddenContract error:->", rollbackUpdateBlkChainErr.Error())
+	}
+}

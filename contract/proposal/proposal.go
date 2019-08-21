@@ -301,6 +301,33 @@ func (prp *Proposal) fillOldState(desc []byte) ([]byte, error) {
 	case "kernel.UpdateMaxBlockSize":
 		prp.log.Trace("contract desc need to process", "contractKey", "kernel.UpdateMaxBlockSize")
 		descObj.Args["old_block_size"] = prp.ledger.GetMaxBlockSize()
+	case "kernel.UpdateReservedContract":
+		prp.log.Trace("contract desc need to process", "contractKey", "kernel.UpdateReservedContract")
+		reservedContracts := []ledger.InvokeRequest{}
+		for _, rc := range prp.ledger.GetMeta().GetReservedContracts() {
+			args := map[string]string{}
+			for k, v := range rc.GetArgs() {
+				args[k] = string(v)
+			}
+			param := ledger.InvokeRequest{
+				ModuleName:   rc.GetModuleName(),
+				ContractName: rc.GetContractName(),
+				MethodName:   rc.GetMethodName(),
+				Args:         args,
+			}
+			reservedContracts = append(reservedContracts, param)
+		}
+		descObj.Args["old_reserved_contracts"] = reservedContracts
+	case "kernel.UpdateForbiddenContract":
+		prp.log.Trace("contract desc need to process", "contractKey", "kernel.UpdateForbiddenContract")
+		forbiddenContract := prp.ledger.GetMeta().GetForbiddenContract()
+		forbiddenContractMap := map[string]interface{}{}
+		forbiddenContractMap["module_name"] = forbiddenContract.GetModuleName()
+		forbiddenContractMap["contract_name"] = forbiddenContract.GetContractName()
+		forbiddenContractMap["method_name"] = forbiddenContract.GetMethodName()
+		forbiddenContractMap["args"] = forbiddenContract.GetArgs()
+
+		descObj.Args["old_forbidden_contract"] = forbiddenContractMap
 	default:
 		prp.log.Trace("contract desc do not need to process")
 	}
@@ -346,7 +373,7 @@ func (prp *Proposal) GetVerifiableAutogenTx(blockHeight int64, maxCount int, tim
 		if err != nil {
 			prp.log.Warn("failed to generate triggered tx", "err", err)
 		}
-		prp.log.Debug("tirgger new tx", "txid", tx.HexTxid(), "desc", string(desc), "tx", tx)
+		prp.log.Debug("tirgger new tx", "txid", tx.HexTxid(), "desc", string(desc), "tx", tx, "tx.desc", string(tx.Desc))
 		triggeredTxList = append(triggeredTxList, tx)
 	}
 	if it.Error() != nil {
