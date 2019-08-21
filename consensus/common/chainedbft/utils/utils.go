@@ -7,7 +7,11 @@ import (
 
 // IsInValidateSets check whether addr in validates
 func IsInValidateSets(validates []*cons_base.CandidateInfo, addr string) bool {
-	// todo
+	for _, v := range validates {
+		if v.Address == addr {
+			return true
+		}
+	}
 	return false
 }
 
