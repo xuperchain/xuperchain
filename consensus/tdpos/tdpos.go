@@ -384,7 +384,7 @@ func (tp *TDpos) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock) (bool,
 	}
 	tp.log.Trace("CheckMinerMatch", "preBlock.CurTerm", preBlock.CurTerm, "in.CurTerm", in.CurTerm, " in.Proposer",
 		string(in.Proposer), "blockid", fmt.Sprintf("%x", in.Blockid))
-	term, pos, blockPos := tp.minerScheduling(in.Timestamp)
+	term, pos, _ := tp.minerScheduling(in.Timestamp)
 	if tp.isProposer(term, pos, in.Proposer) {
 		// 当不是第一轮时需要和前面的
 		if in.CurTerm != 1 {
