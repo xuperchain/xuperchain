@@ -229,7 +229,11 @@ func (c *SyscallService) SetOutput(ctx context.Context, in *pb.SetOutputRequest)
 	return new(pb.SetOutputResponse), nil
 }
 
-func ConvertTxToSDKTx(tx *xchainpb.Transaction) *pb.Transaction {
+func ConvertTxToSDKTx(txStatus *xchainpb.TxStatus) *pb.TxStatus {
+	if txStatus.Status != xchainpb.TransactionStatus_CONFIRM {
+		return &pb.TxStatus{Tx: nil, Status: pb.TransactionStatus(int(txStatus.Status))}
+	}
+	tx := txStatus.Tx
 	txIns := []*pb.TxInput{}
 	for _, in := range tx.TxInputs {
 		txIn := &pb.TxInput{
@@ -262,5 +266,5 @@ func ConvertTxToSDKTx(tx *xchainpb.Transaction) *pb.Transaction {
 		AuthRequire: tx.AuthRequire,
 	}
 
-	return txsdk
+	return &pb.TxStatus{Tx: txsdk, Status: pb.TransactionStatus(int(txStatus.Status))}
 }
