@@ -22,9 +22,9 @@ protoc -I consensus/common/chainedbft/pb consensus/common/chainedbft/pb/chainedb
 protoc -I xmodel/pb xmodel/pb/versioned_data.proto --go_out=xmodel/pb 
 
 protoc -I contractsdk/pb contractsdk/pb/contract_service.proto \
-       --go_out=plugins=grpc:contractsdk/go/pb
+       --go_out=plugins=grpc,paths=source_relative:contractsdk/go/pbrpc
 protoc -I contractsdk/pb contractsdk/pb/contract.proto \
-       --go_out=contractsdk/go/pb
+       --go_out=paths=source_relative:contractsdk/go/pb
 
 !
 
