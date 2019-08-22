@@ -121,6 +121,100 @@ func MultiSign(keys []*ecdsa.PrivateKey, message []byte) ([]byte, error) {
 
 }
 
+// GenCommonPublicKey using public key to generate common result of multisig
+// return (R, C), Array[K], Error
+// R is common random key, C is common public key, Array[K] is random K array for each public key
+func GenCommonPublicKey(keys []*ecdsa.PublicKey, message []byte) (*common.MultiSigCommon, [][]byte, error) {
+	if len(keys) < MinimumParticipant {
+		return nil, nil, ErrTooSmallNumOfkeys
+	}
+
+	if len(message) == 0 {
+		return nil, nil, ErrEmptyMessage
+	}
+
+	// 1. 检验传入的公钥参数是否合法
+	// 所有参与者需要使用同一条椭圆曲线
+	curveCheckResult := checkCurveForPublicKeys(keys)
+	if curveCheckResult == false {
+		return nil, nil, ErrNotExactTheSameCurveInput
+	}
+
+	// 2. 生成临时随机数的数组(k1, k2, ..., kn)
+	num := len(keys)
+	arrayOfK, err := getRandomBytesArray(num)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	// 3. 计算：R = k1*G + k2*G + ... + kn*G
+	r := getRUsingRandomK(keys[0].Curve, arrayOfK)
+
+	// 4. 计算公共公钥：C = P1 + P2 + ... + Pn
+	c, err := GetSharedPublicKeyForPublicKeys(keys)
+	if err != nil {
+		return nil, nil, err
+	}
+	res := &common.MultiSigCommon{
+		R: r,
+		C: c,
+	}
+	return res, arrayOfK, nil
+}
+
+// GetPartialSign return partial multisig value of a private key
+func GetPartialSign(key *ecdsa.PrivateKey, k []byte, msc *common.MultiSigCommon, msg []byte) ([]byte, error) {
+	// 计算HASH(P,R,m)
+	hashBytes := hash.UsingSha256(BytesCombine(msc.C, msc.R, msg))
+
+	// 计算HASH(P,R,m) * xi
+	tempRHS := new(big.Int).Mul(new(big.Int).SetBytes(hashBytes), key.D)
+
+	// 计算ki + HASH(P,R,m) * xi
+	res := new(big.Int).Add(new(big.Int).SetBytes(k), tempRHS)
+
+	return res.Bytes(), nil
+}
+
+// MergeMultiSig merge partial signatures into multisig result
+func MergeMultiSig(partialS [][]byte, r []byte) ([]byte, error) {
+	s := big.NewInt(0)
+	// 计算s1 + s2 + ... + sn
+	for _, ps := range partialS {
+		psi := big.NewInt(0).SetBytes(ps)
+		s = s.Add(s, psi)
+	}
+
+	// 生成多重签名：(sum(S), R)
+	multiSig := &common.MultiSignature{
+		S: s.Bytes(),
+		R: r,
+	}
+
+	// 生成超级签名
+	// 转换json
+	sigContent, err := json.Marshal(multiSig)
+	//	sigContent, err := marshalMultiSignature(s, r)
+	if err != nil {
+		return nil, err
+	}
+
+	xuperSig := &common.XuperSignature{
+		SigType:    common.MultiSig,
+		SigContent: sigContent,
+	}
+
+	// log.Printf("xuperSig before marshal: %s", xuperSig)
+
+	//	sig, err := common.MarshalXuperSignature(xuperSig)
+	sig, err := json.Marshal(xuperSig)
+	if err != nil {
+		return nil, err
+	}
+
+	return sig, nil
+}
+
 //func marshalMultiSignature(s, r []byte) ([]byte, error) {
 //	return asn1.Marshal(MultiSignature{s, r})
 //}
@@ -169,6 +263,23 @@ func getS(keys []*ecdsa.PrivateKey, arrayOfK [][]byte, c []byte, r []byte, messa
 func getRUsingRandomBytesArray(keys []*ecdsa.PrivateKey, arrayOfK [][]byte) []byte {
 	num := len(keys)
 	curve := keys[0].Curve
+	x, y := big.NewInt(0), big.NewInt(0)
+	for i := 0; i < num; i++ {
+		// 计算K*G
+		x1, y1 := curve.ScalarBaseMult(arrayOfK[i])
+
+		// 计算k1*G + k2*G + ...
+		x, y = curve.Add(x, y, x1, y1)
+	}
+	// 计算R，converts a point into the uncompressed form specified in section 4.3.6 of ANSI X9.62
+	r := elliptic.Marshal(curve, x, y)
+
+	return r
+}
+
+// 计算：R = k1*G + k2*G + ... + kn*G
+func getRUsingRandomK(curve elliptic.Curve, arrayOfK [][]byte) []byte {
+	num := len(arrayOfK)
 	x, y := big.NewInt(0), big.NewInt(0)
 	for i := 0; i < num; i++ {
 		// 计算K*G

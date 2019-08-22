@@ -23,8 +23,9 @@ type MultisigSignCommand struct {
 	cli *Cli
 	cmd *cobra.Command
 
-	tx     string
-	output string
+	tx       string
+	output   string
+	signType string
 }
 
 // NewMultisigSignCommand multisig sign init method
@@ -44,6 +45,7 @@ func NewMultisigSignCommand(cli *Cli) *cobra.Command {
 
 func (c *MultisigSignCommand) addFlags() {
 	c.cmd.Flags().StringVar(&c.tx, "tx", "./tx.out", "Raw serialized transaction data file")
+	c.cmd.Flags().StringVar(&c.signType, "signtype", "", "type of signature, support multi/ring")
 	c.cmd.Flags().StringVar(&c.output, "output", "./sign.out", "Generate signature file for a transaction.")
 }
 
@@ -64,16 +66,65 @@ func (c *MultisigSignCommand) sign() error {
 		return err
 	}
 
-	signTx, err := c.genSignTx(tx)
-	if err != nil {
-		return errors.New("Sign tx error")
-	}
+	if c.signType == "multi" {
+		signData, err := ioutil.ReadFile(c.tx + ".ext")
+		if err != nil {
+			return err
+		}
+		msd := &MultisigData{}
+		err = json.Unmarshal(signData, msd)
+		if err != nil {
+			return err
+		}
+		fromScrkey, err := readPrivateKey(c.cli.RootOptions.Keys)
+		if err != nil {
+			return err
+		}
 
-	err = c.genSignFile(fromPubkey, signTx)
-	if err != nil {
-		return err
-	}
+		xcc, err := crypto_client.CreateCryptoClientFromJSONPrivateKey([]byte(fromScrkey))
+		if err != nil {
+			return err
+		}
+		priv, err := xcc.GetEcdsaPrivateKeyFromJSON([]byte(fromScrkey))
+		if err != nil {
+			return err
+		}
+		digestHash, err := txhash.MakeTxDigestHash(tx)
+		if err != nil {
+			return err
+		}
+		// TODO get partial sign
+		ki, idx, err := c.findKfromKlist(msd, []byte(fromPubkey))
+		if err != nil {
+			return err
+		}
+		si := xcc.GetSiUsingKCRM(priv, ki, msd.C, msd.R, digestHash)
+		psd := &PartialSign{
+			Si:    si,
+			Index: idx,
+		}
+		jsonContent, err := json.Marshal(psd)
+		if err != nil {
+			return err
+		}
+		err = ioutil.WriteFile(c.output, jsonContent, 0755)
+		if err != nil {
+			return errors.New("WriteFile error")
+		}
+		fmt.Println(string(jsonContent))
+	} else if c.signType != "" {
+		return fmt.Errorf("SignType[%s] is not supported", c.signType)
+	} else {
+		signTx, err := c.genSignTx(tx)
+		if err != nil {
+			return errors.New("Sign tx error")
+		}
 
+		err = c.genSignFile(fromPubkey, signTx)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 
@@ -116,4 +167,33 @@ func (c *MultisigSignCommand) genSignFile(pubkey string, sign []byte) error {
 	}
 
 	return nil
+}
+
+func (c *MultisigSignCommand) findKfromKlist(msd *MultisigData, pubJSON []byte) ([]byte, int, error) {
+	xcc, err := crypto_client.CreateCryptoClientFromJSONPublicKey(pubJSON)
+	if err != nil {
+		return nil, 0, err
+	}
+	pubkey, err := xcc.GetEcdsaPublicKeyFromJSON(pubJSON)
+	if err != nil {
+		return nil, 0, err
+	}
+	addr, err := xcc.GetAddressFromPublicKey(pubkey)
+	if err != nil {
+		return nil, 0, err
+	}
+	for idx, ki := range msd.KList {
+		tmpkey, err := xcc.GetEcdsaPublicKeyFromJSON(msd.PubKeys[idx])
+		if err != nil {
+			continue
+		}
+		tmpaddr, err := xcc.GetAddressFromPublicKey(tmpkey)
+		if err != nil {
+			continue
+		}
+		if addr == tmpaddr {
+			return ki, idx, nil
+		}
+	}
+	return nil, 0, fmt.Errorf("Public key not found in multisig data")
 }
