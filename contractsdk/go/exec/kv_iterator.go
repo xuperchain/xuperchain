@@ -11,6 +11,7 @@ var (
 
 const MAX_ITERATOR_CAP = 100
 
+// kvIterator is a private struct
 type kvIterator struct {
 	buf          []*pb.IteratorItem // current buffer of the kv items
 	curBuf       *pb.IteratorItem   // pointer of current position
