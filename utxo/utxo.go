@@ -32,7 +32,6 @@ import (
 	"github.com/xuperchain/xuperunion/kv/kvdb"
 	ledger_pkg "github.com/xuperchain/xuperunion/ledger"
 	"github.com/xuperchain/xuperunion/pb"
-	pm "github.com/xuperchain/xuperunion/permission"
 	"github.com/xuperchain/xuperunion/permission/acl"
 	acli "github.com/xuperchain/xuperunion/permission/acl/impl"
 	"github.com/xuperchain/xuperunion/permission/acl/utils"
@@ -66,7 +65,7 @@ var (
 	ErrInvalidWithdrawAmount   = errors.New("withdraw amount is invalid")
 	ErrServiceRefused          = errors.New("Service refused")
 	ErrRWSetInvalid            = errors.New("RWSet of transaction invalid")
-	ErrAclNotEnough            = errors.New("ACL not enough")
+	ErrACLNotEnough            = errors.New("ACL not enough")
 	ErrInvalidSignature        = errors.New("the signature is invalid or not match the address")
 	ErrInitiatorType           = errors.New("the initiator type is invalid, need AK")
 
@@ -1175,31 +1174,9 @@ func (uv *UtxoVM) VerifyTx(tx *pb.Transaction) (bool, error) {
 	if err != nil || !isValid {
 		uv.xlog.Warn("ImmediateVerifyTx failed", "error", err,
 			"AuthRequire ", tx.AuthRequire, "AuthRequireSigns ", tx.AuthRequireSigns,
-			"Initiator", tx.Initiator, "InitiatorSigns", tx.InitiatorSigns)
+			"Initiator", tx.Initiator, "InitiatorSigns", tx.InitiatorSigns, "XuperSign", tx.XuperSign)
 	}
 	return isValid, err
-}
-
-// verifyTxSign 纯密码学验证
-func (uv *UtxoVM) verifyTxSign(tx *pb.Transaction) (bool, error) {
-	if len(tx.GetAuthRequire()) != len(tx.GetAuthRequireSigns()) {
-		return false, fmt.Errorf("tx.AuthRequire length not equal to tx.AuthRequireSigns")
-	}
-	digestHash, dhErr := txhash.MakeTxDigestHash(tx)
-	if dhErr != nil {
-		return false, dhErr
-	}
-	verifiedAddrs := map[string]bool{}
-	for i, ak := range tx.AuthRequire {
-		if verifiedAddrs[string(ak)] {
-			continue
-		}
-		if ok, _ := pm.IdentifyAK(ak, tx.AuthRequireSigns[i], digestHash); !ok {
-			return false, errors.New("utxo.verifyTxSign error")
-		}
-		verifiedAddrs[ak] = true
-	}
-	return true, nil
 }
 
 // IsInUnConfirm check if the given txid is in unconfirm table
