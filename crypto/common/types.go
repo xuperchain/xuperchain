@@ -58,4 +58,10 @@ type MultiSignature struct {
 	R []byte
 }
 
+// MultiSigCommon 多重签名中间公共结果，C是公共公钥，R是公共随机数
+type MultiSigCommon struct {
+	C []byte
+	R []byte
+}
+
 // --- 签名数据结构相关 end ---
