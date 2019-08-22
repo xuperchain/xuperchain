@@ -155,7 +155,12 @@ func (x *xvmInstance) Exec(function string) error {
 	if mem == nil {
 		return errors.New("bad contract, no memory")
 	}
-	_, err := x.execCtx.Exec(function, []int64{})
+	var args []int64
+	// go's entry function expects argc and argv these two arguments
+	if x.desc.GetRuntime() == "go" {
+		args = []int64{0, 0}
+	}
+	_, err := x.execCtx.Exec(function, args)
 	if err != nil {
 		log.Error("exec contract error", "error", err, "contract", x.bridgeCtx.ContractName)
 	}
