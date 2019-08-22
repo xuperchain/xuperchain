@@ -143,6 +143,7 @@ type NativeConfig struct {
 	StopTimeout int
 	Deploy      NativeDeployConfig
 	Docker      NativeDockerConfig
+	Enable      bool
 }
 
 // XVMConfig contains the xvm configuration
@@ -203,6 +204,7 @@ type NodeConfig struct {
 	GatewaySwitch   bool       `yaml:"gatewaySwitch,omitempty"`
 	Wasm            WasmConfig `yaml:"wasm,omitempty"`
 	CoreConnection  bool       `yaml:"coreConnection,omitempty"`
+	FailSkip        bool       `yaml:"failSkip,omitempty"`
 }
 
 // KernelConfig kernel config
@@ -294,6 +296,7 @@ func (nc *NodeConfig) defaultNodeConfig() {
 		},
 	}
 	nc.CoreConnection = false
+	nc.FailSkip = false
 }
 
 // NewNodeConfig returns a config of a node
@@ -402,6 +405,8 @@ func (nc *NodeConfig) ApplyFlags(flags *pflag.FlagSet) {
 	flags.StringVar(&nc.MemProfile, "memprofile", nc.MemProfile, "used to store mem profile data --memprofile <pprof file>")
 
 	flags.StringVar(&nc.PluginConfPath, "pluginConfPath", nc.PluginConfPath, "used for config overwrite --pluginConfPath <plugin conf path>")
+
+	flags.BoolVar(&nc.FailSkip, "failSkip", nc.FailSkip, "used for config overwrite --failSkip <>")
 }
 
 // VisitAll print all config of node

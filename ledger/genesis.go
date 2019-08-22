@@ -93,6 +93,10 @@ func (rc *RootConfig) GetReservedContract() ([]*pb.InvokeRequest, error) {
 	return InvokeRequestFromJSON2Pb(rc.ReservedContracts)
 }
 
+func (rc *RootConfig) GetForbiddenContract() ([]*pb.InvokeRequest, error) {
+	return InvokeRequestFromJSON2Pb([]InvokeRequest{rc.ForbiddenContract})
+}
+
 // GetReservedWhitelistAccount return reserved whitelist account
 func (rc *RootConfig) GetReservedWhitelistAccount() string {
 	return rc.ReservedWhitelist.Account

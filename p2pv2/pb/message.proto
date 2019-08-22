@@ -19,12 +19,20 @@ message XuperMessage {
         
         MSG_TYPE_NONE = 10;
       
-        // 询问RPC端口信息 
+        // query RPC port information
         GET_RPC_PORT = 11;
         GET_RPC_PORT_RES = 12;
-    
+
+        // get authentication information
         GET_AUTHENTICATION = 13;
         GET_AUTHENTICATION_RES = 14;
+
+        // chained-bft NEW_VIEW message
+        CHAINED_BFT_NEW_VIEW_MSG = 15;
+        // chained-bft NEW_PROPOSAL message
+        CHAINED_BFT_NEW_PROPOSAL_MSG = 16;
+        // chained-bft vote message
+        CHAINED_BFT_VOTE_MSG = 17;
     }
     enum ErrorType {
         // success 

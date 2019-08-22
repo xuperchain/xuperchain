@@ -392,6 +392,10 @@ func (s *server) DeployNativeCode(ctx context.Context, request *pb.DeployNativeC
 	if request.Header == nil {
 		request.Header = global.GHeader()
 	}
+	if !s.mg.Cfg.Native.Enable {
+		return nil, errors.New("native module is disabled")
+	}
+
 	cfg := s.mg.Cfg.Native.Deploy
 	if cfg.WhiteList.Enable {
 		found := false
@@ -447,6 +451,10 @@ func (s *server) DeployNativeCode(ctx context.Context, request *pb.DeployNativeC
 
 // NativeCodeStatus get native contract status
 func (s *server) NativeCodeStatus(ctx context.Context, request *pb.NativeCodeStatusRequest) (*pb.NativeCodeStatusResponse, error) {
+	if !s.mg.Cfg.Native.Enable {
+		return nil, errors.New("native module is disabled")
+	}
+
 	bc := s.mg.Get(request.GetBcname())
 	if request.Header == nil {
 		request.Header = global.GHeader()
