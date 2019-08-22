@@ -156,6 +156,9 @@ service Xchain {
     };
   }
 
+  // PreExecWithSelectUTXO preExec & selectUtxo
+  rpc PreExecWithSelectUTXO(PreExecWithSelectUTXORequest) returns (PreExecWithSelectUTXOResponse);
+
   // Native code deploy interface
   rpc DeployNativeCode(DeployNativeCodeRequest) returns (DeployNativeCodeResponse);
   // Native code status
@@ -380,6 +383,10 @@ message LedgerMeta
   int64 trunk_height = 3;
   // max block size
   int64 max_block_size = 4;
+  // preset contracts
+  repeated InvokeRequest reserved_contracts = 5;
+  // reset forbidden contract configuration
+  InvokeRequest forbidden_contract = 6;
 }
 
 // Utxo metadata
@@ -888,4 +895,24 @@ message ContractStatus
   string txid = 2;
   bytes desc = 3;
   bool is_banned = 4;
+}
+
+// PreExecWithSelectUTXORequest preExec + selectUtxo for request
+message PreExecWithSelectUTXORequest {
+  Header header = 1;
+  string bcname = 2;
+  string address = 3;
+  int64 totalAmount = 4;
+  SignatureInfo signInfo = 6;
+  bool needLock = 7;
+  InvokeRPCRequest request = 5;
+}
+
+// PreExecWithSelectUTXOResponse preExec + selectUtxo for response
+message PreExecWithSelectUTXOResponse {
+  Header header = 1;
+  string bcname = 2;
+  InvokeResponse response = 3;
+  // for preExec & selectUTXO
+  UtxoOutput utxoOutput = 4;
 }

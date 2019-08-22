@@ -197,6 +197,19 @@ func (l *Ledger) loadGenesisBlock() error {
 	if l.meta.MaxBlockSize == 0 {
 		l.meta.MaxBlockSize = l.GenesisBlock.GetConfig().GetMaxBlockSizeInByte()
 	}
+	if l.meta.ReservedContracts == nil {
+		l.meta.ReservedContracts, gErr = l.GenesisBlock.GetConfig().GetReservedContract()
+		if gErr != nil {
+			return gErr
+		}
+	}
+	if l.meta.ForbiddenContract == nil {
+		forbiddenContractArr, gErr := l.GenesisBlock.GetConfig().GetForbiddenContract()
+		if gErr != nil || len(forbiddenContractArr) <= 0 {
+			return gErr
+		}
+		l.meta.ForbiddenContract = forbiddenContractArr[0]
+	}
 	return nil
 }
 
@@ -459,7 +472,7 @@ func (l *Ledger) IsValidTx(idx int, tx *pb.Transaction, block *pb.InternalBlock)
 }
 
 // UpdateMaxBlockSize update block max size
-func (l *Ledger) UpdateMaxBlockSize(maxBlockSize int64) error {
+func (l *Ledger) UpdateMaxBlockSize(maxBlockSize int64, batch kvdb.Batch) error {
 	if maxBlockSize <= 0 {
 		return fmt.Errorf("invalid block size: %d", maxBlockSize)
 	}
@@ -472,12 +485,58 @@ func (l *Ledger) UpdateMaxBlockSize(maxBlockSize int64) error {
 		l.xlog.Warn("failed to marshal pb meta")
 		return pbErr
 	}
-	putErr := l.metaTable.Put([]byte(""), metaBuf)
-	if putErr != nil {
-		l.xlog.Warn("write new block size to meta failed", "err", putErr)
-		return putErr
-	}
+	batch.Put([]byte(pb.MetaTablePrefix), metaBuf)
 	l.meta = newMeta
+	l.xlog.Info("update max block size succeed")
+	return nil
+}
+
+// UpdateReserveredContract update reservered contract
+func (l *Ledger) UpdateReservedContract(params []*pb.InvokeRequest, batch kvdb.Batch) error {
+	if params == nil {
+		return fmt.Errorf("invalid reservered contract requests")
+	}
+
+	l.mutex.Lock()
+	defer l.mutex.Unlock()
+
+	newMeta := proto.Clone(l.meta).(*pb.LedgerMeta)
+	newMeta.ReservedContracts = params
+
+	metaBuf, pbErr := proto.Marshal(newMeta)
+	if pbErr != nil {
+		l.xlog.Warn("failed to marshal pb meta")
+		return pbErr
+	}
+
+	batch.Put([]byte(pb.MetaTablePrefix), metaBuf)
+
+	l.meta = newMeta
+	l.xlog.Info("Update reservered contract", "reservedContracts", l.meta.ReservedContracts)
+	return nil
+}
+
+// UpdateForbiddenContract update forbidden contract param
+func (l *Ledger) UpdateForbiddenContract(param *pb.InvokeRequest, batch kvdb.Batch) error {
+	if param == nil {
+		return fmt.Errorf("invalid forbidden contract request")
+	}
+
+	l.mutex.Lock()
+	defer l.mutex.Unlock()
+
+	newMeta := proto.Clone(l.meta).(*pb.LedgerMeta)
+	newMeta.ForbiddenContract = param
+
+	metaBuf, pbErr := proto.Marshal(newMeta)
+	if pbErr != nil {
+		l.xlog.Warn("failed to marshal pb meta")
+		return pbErr
+	}
+	batch.Put([]byte(pb.MetaTablePrefix), metaBuf)
+
+	l.meta = newMeta
+	l.xlog.Info("Update forbidden contract", "forbiddenContract", l.meta.ForbiddenContract)
 	return nil
 }
 
@@ -997,4 +1056,39 @@ func (l *Ledger) QueryBlockByHeight(height int64) (*pb.InternalBlock, error) {
 func (l *Ledger) MaxTxSizePerBlock() int {
 	maxBlkSize := float64(l.GetMaxBlockSize())
 	return int(maxBlkSize * TxSizePercent)
+}
+
+func (l *Ledger) GetBaseDB() kvdb.Database {
+	return l.baseDB
+}
+
+func (l *Ledger) Truncate(utxovmLastID []byte) error {
+	batchWrite := l.baseDB.NewBatch()
+
+	l.mutex.Lock()
+	defer l.mutex.Unlock()
+
+	newMeta := proto.Clone(l.meta).(*pb.LedgerMeta)
+	newMeta.TipBlockid = utxovmLastID
+	block, findErr := l.fetchBlock(utxovmLastID)
+	if findErr != nil {
+		l.xlog.Warn("find pre block fail", "findErr", findErr)
+		return findErr
+	}
+	newMeta.TrunkHeight = block.Height
+	metaBuf, pbErr := proto.Marshal(newMeta)
+	if pbErr != nil {
+		l.xlog.Warn("failed to marshal pb meta")
+		return pbErr
+	}
+	batchWrite.Put([]byte(pb.MetaTablePrefix), metaBuf)
+	kvErr := batchWrite.Write()
+	if kvErr != nil {
+		l.xlog.Warn("batch write failed when Truncate", "kvErr", kvErr)
+		return kvErr
+	}
+
+	l.meta = newMeta
+	l.xlog.Info("truncate blockid succeed")
+	return nil
 }

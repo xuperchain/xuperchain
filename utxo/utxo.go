@@ -68,6 +68,7 @@ var (
 	ErrRWSetInvalid            = errors.New("RWSet of transaction invalid")
 	ErrAclNotEnough            = errors.New("ACL not enough")
 	ErrInvalidSignature        = errors.New("the signature is invalid or not match the address")
+	ErrInitiatorType           = errors.New("the initiator type is invalid, need AK")
 
 	ErrGasNotEnough   = errors.New("Gas not enough")
 	ErrInvalidAccount = errors.New("Invalid account")
@@ -706,6 +707,12 @@ func (uv *UtxoVM) SelectUtxos(fromAddr string, fromPubKey string, totalNeed *big
 
 // PreExec the Xuper3 contract model uses previous execution to generate RWSets
 func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.InvokeResponse, error) {
+	// verify initiator type
+	if akType := acl.IsAccount(req.GetInitiator()); akType != 0 {
+		return nil, ErrInitiatorType
+	}
+
+	// get reserved contracts from chain config
 	reservedRequests, err := uv.getReservedContractRequests(req.GetRequests(), true)
 	if err != nil {
 		uv.xlog.Error("PreExec getReservedContractRequests error", "error", err)
@@ -864,8 +871,8 @@ func (uv *UtxoVM) GetUnconfirmedTx(dedup bool) ([]*pb.Transaction, error) {
 		return nil, loadErr
 	}
 	// 拓扑排序，输出的顺序是被依赖的在前，依赖方在后
-	outputTxList, unexpectedCyclic := TopSortDFS(txGraph)
-	if len(unexpectedCyclic) > 0 { // 交易之间检测出了环形的依赖关系
+	outputTxList, unexpectedCyclic, _ := TopSortDFS(txGraph)
+	if unexpectedCyclic { // 交易之间检测出了环形的依赖关系
 		uv.xlog.Warn("transaction conflicted", "unexpectedCyclic", unexpectedCyclic)
 		return nil, ErrUnexpected
 	}
@@ -1344,8 +1351,8 @@ func (uv *UtxoVM) processUnconfirmTxs(block *pb.InternalBlock, batch kvdb.Batch,
 	}
 	if needRepost {
 		go func() {
-			sortTxList, unexpectedCyclic := TopSortDFS(unconfirmTxGraph)
-			if len(unexpectedCyclic) > 0 {
+			sortTxList, unexpectedCyclic, _ := TopSortDFS(unconfirmTxGraph)
+			if unexpectedCyclic {
 				uv.xlog.Warn("transaction conflicted", "unexpectedCyclic", unexpectedCyclic)
 				return
 			}
@@ -1392,20 +1399,18 @@ func (uv *UtxoVM) PlayAndRepost(blockid []byte, needRepost bool, isRootTx bool) 
 	// 进入正题，开始执行block里面的交易，预期不会有冲突了
 	uv.xlog.Debug("autogen tx list size, before play block", "len", len(autoGenTxList))
 	idx, length := 0, len(block.Transactions)
+
+	// parallel verify
+	verifyErr := uv.verifyBlockTxs(block, isRootTx, unconfirmToConfirm)
+	if verifyErr != nil {
+		uv.xlog.Warn("verifyBlockTx error ", "err", verifyErr)
+		return verifyErr
+	}
+
 	for idx < length {
 		tx := block.Transactions[idx]
 		txid := string(tx.Txid)
 		if unconfirmToConfirm[txid] == false { // 本地没预执行过的Tx, 从block中收到的，需要Play执行
-			if !uv.verifyAutogenTx(tx) {
-				uv.xlog.Warn("PlayAndRepost found invalid autogen tx", "txid", fmt.Sprintf("%x", tx.Txid))
-				return ErrInvalidAutogenTx
-			}
-			if !tx.Autogen && !tx.Coinbase {
-				if ok, err := uv.ImmediateVerifyTx(tx, isRootTx); !ok {
-					uv.xlog.Warn("dotx failed to ImmediateVerifyTx", "txid", fmt.Sprintf("%x", tx.Txid), "err", err)
-					return errors.New("dotx failed to ImmediateVerifyTx error")
-				}
-			}
 			err := uv.doTxInternal(tx, batch)
 			if err != nil {
 				uv.xlog.Warn("dotx failed when Play", "txid", fmt.Sprintf("%x", tx.Txid), "err", err)
@@ -1614,6 +1619,12 @@ func (uv *UtxoVM) Walk(blockid []byte) error {
 		idx, length := 0, len(todoBlk.Transactions)
 		for idx < length {
 			tx := todoBlk.Transactions[idx]
+			if !tx.Autogen && !tx.Coinbase {
+				if ok, err := uv.ImmediateVerifyTx(tx, false); !ok {
+					uv.xlog.Warn("dotx failed to ImmediateVerifyTx", "txid", fmt.Sprintf("%x", tx.Txid), "err", err)
+					return errors.New("dotx failed to ImmediateVerifyTx error")
+				}
+			}
 			txErr := uv.doTxInternal(tx, batch)
 			if txErr != nil {
 				uv.xlog.Warn("failed to do tx when Walk", "txErr", txErr, "txid", fmt.Sprintf("%x", tx.Txid))
@@ -1980,7 +1991,7 @@ func (uv *UtxoVM) GetAccountContracts(account string) ([]string, error) {
 		uv.xlog.Warn("GetAccountContracts valid account name error", "error", "account name is not valid")
 		return nil, errors.New("account name is not valid")
 	}
-	prefKey := pb.ExtUtxoTablePrefix + string(xmodel.MakeRawKey(utils.GetAccount2ContractBucket(), []byte(account)))
+	prefKey := pb.ExtUtxoTablePrefix + string(xmodel.MakeRawKey(utils.GetAccount2ContractBucket(), []byte(account+utils.GetACLSeparator())))
 	it := uv.ldb.NewIteratorWithPrefix([]byte(prefKey))
 	defer it.Release()
 	for it.Next() {

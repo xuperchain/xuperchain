@@ -32,7 +32,7 @@ import (
 // Init init tdpos
 func (tp *TDpos) Init() {
 	tp.config = tDposConfig{
-		initProposer: make(map[int64][]*CandidateInfo),
+		initProposer: make(map[int64][]*cons_base.CandidateInfo),
 	}
 	tp.isProduce = make(map[int64]bool)
 	tp.candidateBallots = new(sync.Map)
@@ -239,7 +239,7 @@ func (tp *TDpos) buildConfigs(xlog log.Logger, cfg *config.NodeConfig, consCfg m
 	}
 
 	for _, v := range initProposer1 {
-		canInfo := &CandidateInfo{}
+		canInfo := &cons_base.CandidateInfo{}
 		canInfo.Address = v.(string)
 		tp.config.initProposer[1] = append(tp.config.initProposer[1], canInfo)
 	}
@@ -384,7 +384,7 @@ func (tp *TDpos) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock) (bool,
 	}
 	tp.log.Trace("CheckMinerMatch", "preBlock.CurTerm", preBlock.CurTerm, "in.CurTerm", in.CurTerm, " in.Proposer",
 		string(in.Proposer), "blockid", fmt.Sprintf("%x", in.Blockid))
-	term, pos, blockPos := tp.minerScheduling(in.Timestamp)
+	term, pos, _ := tp.minerScheduling(in.Timestamp)
 	if tp.isProposer(term, pos, in.Proposer) {
 		// 当不是第一轮时需要和前面的
 		if in.CurTerm != 1 {
@@ -414,10 +414,6 @@ func (tp *TDpos) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock) (bool,
 				return false, ErrProposeBlockMoreThanConfig
 			}
 		}
-		if blockPos < in.CurBlockNum {
-			tp.log.Warn("CheckMinerMatch failed, CurBlockNum not match!")
-			return false, nil
-		}
 	} else {
 		tp.log.Warn("CheckMinerMatch failed, revieved block shouldn't proposed!")
 		return false, nil
@@ -428,15 +424,20 @@ func (tp *TDpos) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock) (bool,
 // ProcessBeforeMiner is the specific implementation of ConsensusInterface
 func (tp *TDpos) ProcessBeforeMiner(timestamp int64) (map[string]interface{}, bool) {
 	res := make(map[string]interface{})
-	term, pos, _ := tp.minerScheduling(timestamp)
+	term, pos, blockPos := tp.minerScheduling(timestamp)
+	if term != tp.curTerm || blockPos > tp.config.blockNum || pos >= tp.config.proposerNum {
+		return res, false
+	}
 	if !tp.isProposer(term, pos, tp.address) {
 		tp.log.Warn("ProcessBeforeMiner prepare too long, omit!")
 		return nil, false
 	}
 
 	res["type"] = TYPE
-	res["curTerm"] = tp.curTerm
-	res["curBlockNum"] = tp.curBlockNum
+	//res["curTerm"] = tp.curTerm
+	//res["curBlockNum"] = tp.curBlockNum
+	res["curTerm"] = term
+	res["curBlockNum"] = blockPos
 	tp.log.Trace("ProcessBeforeMiner", "res", res)
 	return res, true
 }

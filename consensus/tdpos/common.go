@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/xuperchain/xuperunion/common"
+	cons_base "github.com/xuperchain/xuperunion/consensus/base"
 	"github.com/xuperchain/xuperunion/contract"
 	"github.com/xuperchain/xuperunion/pb"
 )
@@ -57,7 +58,7 @@ func (tp *TDpos) isProposer(term int64, pos int64, address []byte) bool {
 }
 
 // 查询当前轮的验证者名单
-func (tp *TDpos) getTermProposer(term int64) []*CandidateInfo {
+func (tp *TDpos) getTermProposer(term int64) []*cons_base.CandidateInfo {
 	if term == 1 {
 		return tp.config.initProposer[1]
 	}
@@ -97,7 +98,7 @@ func (tp *TDpos) getTermProposer(term int64) []*CandidateInfo {
 			return tp.config.initProposer[1]
 		}
 	}
-	proposers := []*CandidateInfo{}
+	proposers := []*cons_base.CandidateInfo{}
 	err = json.Unmarshal(val, &proposers)
 	if err != nil {
 		tp.log.Error("TDpos Unmarshal vote result error", "term", term, "error", err)
@@ -108,10 +109,10 @@ func (tp *TDpos) getTermProposer(term int64) []*CandidateInfo {
 }
 
 // 生成当前轮的验证者名单
-func (tp *TDpos) genTermProposer() ([]*CandidateInfo, error) {
+func (tp *TDpos) genTermProposer() ([]*cons_base.CandidateInfo, error) {
 	//var res []string
 	var termBallotSli termBallotsSlice
-	res := []*CandidateInfo{}
+	res := []*cons_base.CandidateInfo{}
 
 	tp.candidateBallots.Range(func(k, v interface{}) bool {
 		key := k.(string)
@@ -145,7 +146,7 @@ func (tp *TDpos) genTermProposer() ([]*CandidateInfo, error) {
 		if err != nil {
 			return nil, err
 		}
-		var canInfo *CandidateInfo
+		var canInfo *cons_base.CandidateInfo
 		err = json.Unmarshal(ciValue, &canInfo)
 		if err != nil {
 			return nil, err
@@ -278,7 +279,7 @@ func (tp *TDpos) inCandidate(candidate string) bool {
 }
 
 // 验证提名候选人合约参数是否合法
-func (tp *TDpos) validateNominateCandidate(desc *contract.TxDesc) (*CandidateInfo, string, error) {
+func (tp *TDpos) validateNominateCandidate(desc *contract.TxDesc) (*cons_base.CandidateInfo, string, error) {
 	utxoTotal := tp.utxoVM.GetTotal()
 	amount, err := calAmount(desc.Tx)
 	if err != nil {
@@ -286,7 +287,7 @@ func (tp *TDpos) validateNominateCandidate(desc *contract.TxDesc) (*CandidateInf
 	}
 	// TODO: zq 多来源以后, 这里需要优化一下
 	fromAddr := string(desc.Tx.TxInputs[0].FromAddr)
-	canInfo := &CandidateInfo{}
+	canInfo := &cons_base.CandidateInfo{}
 
 	utxoTotal.Div(utxoTotal, big.NewInt(minNominateProportion))
 	if ok := amount.Cmp(utxoTotal) >= 0; !ok {
@@ -300,7 +301,7 @@ func (tp *TDpos) validateNominateCandidate(desc *contract.TxDesc) (*CandidateInf
 		return nil, "", errors.New("validateNominateCandidate candidate can not be null")
 	}
 	if candidate, ok := desc.Args["candidate"].(string); ok {
-		if checkCandidateName(candidate) {
+		if !checkCandidateName(candidate) {
 			return nil, "", errors.New("validateNominateCandidate candidate name invalid")
 		}
 		canInfo.Address = candidate
