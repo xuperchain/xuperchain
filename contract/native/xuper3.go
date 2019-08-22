@@ -10,13 +10,14 @@ import (
 	"github.com/xuperchain/xuperunion/contract"
 	"github.com/xuperchain/xuperunion/contract/bridge"
 	pb "github.com/xuperchain/xuperunion/contractsdk/go/pb"
+	pbrpc "github.com/xuperchain/xuperunion/contractsdk/go/pbrpc"
 	"google.golang.org/grpc"
 )
 
 // RegisterSyscallService implements bridge.Executor
 func (gscf *GeneralSCFramework) RegisterSyscallService(service *bridge.SyscallService) {
 	rpcServer := grpc.NewServer()
-	pb.RegisterSyscallServer(rpcServer, service)
+	pbrpc.RegisterSyscallServer(rpcServer, service)
 	uid, gid := os.Getuid(), os.Getgid()
 
 	relpath, err := RelPathOfCWD(gscf.chainSock3Path)

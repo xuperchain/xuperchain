@@ -2277,7 +2277,7 @@ func (uv *UtxoVM) GetContractStatus(contractName string) (*pb.ContractStatus, er
 		uv.xlog.Warn("GetContractStatus query tx error", "error", err.Error())
 		return nil, err
 	}
-	res.Desc = tx.GetDesc()
+	res.Desc = tx.Tx.GetDesc()
 	// query if contract is bannded
 	res.IsBanned, err = uv.queryContractBannedStatus(contractName)
 	return res, nil

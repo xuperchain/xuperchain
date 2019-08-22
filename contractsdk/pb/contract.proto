@@ -1,13 +1,8 @@
 syntax = "proto3";
 option optimize_for = LITE_RUNTIME;
+option go_package = "github.com/xuperchain/xuperunion/contractsdk/go/pb";
 
 package xchain.contract.sdk;
-
-// service provided by chain code, called by xchain
-service NativeCode {
-  rpc Call(NativeCallRequest) returns (NativeCallResponse);
-  rpc Ping(PingRequest) returns (PingResponse);
-}
 
 message PingRequest {
 }
@@ -34,27 +29,6 @@ message CallArgs {
   string initiator = 3;
   repeated string auth_require = 4;
 }
-
-// xchain syscall service
-service Syscall {
-  // KV service
-  rpc PutObject(PutRequest) returns (PutResponse);
-  rpc GetObject(GetRequest) returns (GetResponse);
-  rpc DeleteObject(DeleteRequest) returns (DeleteResponse);
-  rpc NewIterator(IteratorRequest) returns (IteratorResponse);
-
-  // Chain service
-  rpc QueryTx(QueryTxRequest) returns (QueryTxResponse);
-  rpc QueryBlock(QueryBlockRequest) returns (QueryBlockResponse);
-  rpc Transfer(TransferRequest) returns (TransferResponse);
-  rpc ContractCall(ContractCallRequest) returns (ContractCallResponse);
-
-  // Heartbeat
-  rpc Ping(PingRequest) returns (PingResponse);
-
-  rpc GetCallArgs(GetCallArgsRequest) returns (CallArgs);
-  rpc SetOutput(SetOutputRequest) returns (SetOutputResponse);
-} 
 
 message SyscallHeader {
   int64 ctxid = 1;
@@ -111,7 +85,7 @@ message QueryTxRequest {
 
 message QueryTxResponse {
   // defined in user code
-  Transaction tx = 1;
+  TxStatus tx = 1;
 }
 
 message QueryBlockRequest {
@@ -186,6 +160,26 @@ message TxOutput
     bytes to_addr = 2;
     // Fronzen height
     int64 frozen_height = 4;
+}
+
+// TransactionStatus is the status of transaction
+enum TransactionStatus {
+// Undefined status
+  UNDEFINE = 0;
+// Transaction not exist
+  NOEXIST = 1;
+// Transaction have been confirmed
+  CONFIRM = 2;
+// Transaction is on the furcation
+  FURCATION = 3;
+// Transaction have not been confirmed
+  UNCONFIRM = 4;
+}
+
+// tx with status
+message TxStatus {
+  TransactionStatus status = 4;
+  Transaction tx = 7;
 }
 
 // Transaction is the information of the transaction
