@@ -1058,10 +1058,41 @@ func (l *Ledger) MaxTxSizePerBlock() int {
 	return int(maxBlkSize * TxSizePercent)
 }
 
+// GetBaseDB get internal db instance
 func (l *Ledger) GetBaseDB() kvdb.Database {
 	return l.baseDB
 }
 
+func (l *Ledger) removeBlocks(fromBlockid []byte, toBlockid []byte, batch kvdb.Batch) error {
+	fromBlock, findErr := l.fetchBlock(fromBlockid)
+	if findErr != nil {
+		l.xlog.Warn("failed to find block", "findErr", findErr)
+		return findErr
+	}
+	toBlock, findErr := l.fetchBlock(toBlockid)
+	if findErr != nil {
+		l.xlog.Warn("failed to find block", "findErr", findErr)
+		return findErr
+	}
+	for fromBlock.Height > toBlock.Height {
+		l.xlog.Info("remove block", "blockid", global.F(fromBlock.Blockid), "height", fromBlock.Height)
+		l.blkHeaderCache.Del(string(fromBlock.Blockid))
+		batch.Delete(append([]byte(pb.BlocksTablePrefix), fromBlock.Blockid...))
+		if fromBlock.InTrunk {
+			sHeight := []byte(fmt.Sprintf("%020d", fromBlock.Height))
+			batch.Delete(append([]byte(pb.BlockHeightPrefix), sHeight...))
+		}
+		//iter to prev block
+		fromBlock, findErr = l.fetchBlock(fromBlock.PreHash)
+		if findErr != nil {
+			l.xlog.Warn("failed to find prev block", "findErr", findErr)
+			return findErr
+		}
+	}
+	return nil
+}
+
+// Truncate truncate ledger and set tipblock to utxovmLastID
 func (l *Ledger) Truncate(utxovmLastID []byte) error {
 	batchWrite := l.baseDB.NewBatch()
 
@@ -1072,8 +1103,13 @@ func (l *Ledger) Truncate(utxovmLastID []byte) error {
 	newMeta.TipBlockid = utxovmLastID
 	block, findErr := l.fetchBlock(utxovmLastID)
 	if findErr != nil {
-		l.xlog.Warn("find pre block fail", "findErr", findErr)
+		l.xlog.Warn("failed to find utxovm last block", "findErr", findErr)
 		return findErr
+	}
+	rmErr := l.removeBlocks(l.meta.TipBlockid, block.Blockid, batchWrite)
+	if rmErr != nil {
+		l.xlog.Warn("failed to remove garbage blocks", "from", global.F(l.meta.TipBlockid), "to", global.F(block.Blockid))
+		return rmErr
 	}
 	newMeta.TrunkHeight = block.Height
 	metaBuf, pbErr := proto.Marshal(newMeta)
