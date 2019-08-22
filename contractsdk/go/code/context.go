@@ -1,5 +1,3 @@
-// +build !wasm
-
 package code
 
 import (

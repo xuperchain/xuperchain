@@ -1,5 +1,3 @@
-// +build !wasm
-
 package exec
 
 import (
@@ -108,7 +106,7 @@ func (c *contractContext) DeleteObject(key []byte) error {
 }
 
 func (c *contractContext) NewIterator(start, limit []byte) code.Iterator {
-	return NewKVIterator(c, start, limit)
+	return newKVIterator(c, start, limit)
 }
 
 func (c *contractContext) QueryTx(txid []byte) (*pb.TxStatus, error) {

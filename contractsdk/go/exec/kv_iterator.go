@@ -1,5 +1,3 @@
-// +build !wasm
-
 package exec
 
 import (
@@ -22,8 +20,8 @@ type KVIterator struct {
 	start, limit []byte
 }
 
-// NewKVIterator return a code.Iterator
-func NewKVIterator(c *contractContext, start, limit []byte) code.Iterator {
+// newKVIterator return a code.Iterator
+func newKVIterator(c *contractContext, start, limit []byte) code.Iterator {
 	return &KVIterator{
 		start: start,
 		limit: limit,

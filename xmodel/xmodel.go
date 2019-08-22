@@ -203,11 +203,14 @@ func (s *XModel) queryTx(txid []byte) (*pb.Transaction, bool, error) {
 func (s *XModel) QueryTx(txid []byte) (*pb.TxStatus, error) {
 	tx, isConfirmed, err := s.queryTx(txid)
 	if err != nil {
-		return nil, err
+		return &pb.TxStatus{Tx: nil, Status: pb.TransactionStatus_NOEXIST}, err
 	}
 	status := pb.TransactionStatus_UNCONFIRM
 	if isConfirmed {
 		status = pb.TransactionStatus_CONFIRM
+	} else {
+		//notice: can not access the unconfirmed tx in smart contract
+		tx = nil
 	}
 	return &pb.TxStatus{Tx: tx, Status: status}, nil
 }
