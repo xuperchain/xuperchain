@@ -18,8 +18,8 @@ type Context interface {
 	DeleteObject(key []byte) error
 	NewIterator(start, limit []byte) Iterator
 
-	QueryTx(txid []byte) (*pb.TxStatus, error)
-	QueryBlock(blockid []byte) (*pb.Block, error)
+	QueryTx(txid string) (*pb.TxStatus, error)
+	QueryBlock(blockid string) (*pb.Block, error)
 	Transfer(to string, amount *big.Int) error
 	Call(module, contract, method string, args map[string][]byte) (*Response, error)
 }

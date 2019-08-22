@@ -6,12 +6,12 @@ import (
 )
 
 var (
-	_ code.Iterator = (*KVIterator)(nil)
+	_ code.Iterator = (*kvIterator)(nil)
 )
 
 const MAX_ITERATOR_CAP = 100
 
-type KVIterator struct {
+type kvIterator struct {
 	buf          []*pb.IteratorItem // current buffer of the kv items
 	curBuf       *pb.IteratorItem   // pointer of current position
 	curIdx       int                // next index
@@ -20,9 +20,9 @@ type KVIterator struct {
 	start, limit []byte
 }
 
-// newKVIterator return a code.Iterator
-func newKVIterator(c *contractContext, start, limit []byte) code.Iterator {
-	return &KVIterator{
+// newkvIterator return a code.Iterator
+func newKvIterator(c *contractContext, start, limit []byte) code.Iterator {
+	return &kvIterator{
 		start: start,
 		limit: limit,
 		c:     c,
@@ -30,7 +30,7 @@ func newKVIterator(c *contractContext, start, limit []byte) code.Iterator {
 }
 
 // load loads the data from xbrigde, called when buf is empty, maintains the curIdx and starter
-func (ki *KVIterator) load() {
+func (ki *kvIterator) load() {
 	//clean the buf at beginning
 	ki.buf = ki.buf[0:0]
 	req := &pb.IteratorRequest{
@@ -53,15 +53,15 @@ func (ki *KVIterator) load() {
 	ki.start = resp.Items[len(resp.Items)-1].Key
 }
 
-func (ki *KVIterator) Key() []byte {
+func (ki *kvIterator) Key() []byte {
 	return ki.curBuf.Key
 }
 
-func (ki *KVIterator) Value() []byte {
+func (ki *kvIterator) Value() []byte {
 	return ki.curBuf.Value
 }
 
-func (ki *KVIterator) Next() bool {
+func (ki *kvIterator) Next() bool {
 	//永远保证有数据
 	if ki.curIdx == len(ki.buf) {
 		ki.load()
@@ -73,8 +73,8 @@ func (ki *KVIterator) Next() bool {
 	ki.curIdx += 1
 	return true
 }
-func (ki *KVIterator) Error() error {
+func (ki *kvIterator) Error() error {
 	return ki.err
 }
 
-func (ki *KVIterator) Close() {}
+func (ki *kvIterator) Close() {}

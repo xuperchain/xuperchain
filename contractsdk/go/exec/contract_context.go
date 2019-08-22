@@ -106,10 +106,10 @@ func (c *contractContext) DeleteObject(key []byte) error {
 }
 
 func (c *contractContext) NewIterator(start, limit []byte) code.Iterator {
-	return newKVIterator(c, start, limit)
+	return newKvIterator(c, start, limit)
 }
 
-func (c *contractContext) QueryTx(txid []byte) (*pb.TxStatus, error) {
+func (c *contractContext) QueryTx(txid string) (*pb.TxStatus, error) {
 	req := &pb.QueryTxRequest{
 		Header: &c.header,
 		Txid:   string(txid),
@@ -121,7 +121,7 @@ func (c *contractContext) QueryTx(txid []byte) (*pb.TxStatus, error) {
 	return resp.Tx, nil
 }
 
-func (c *contractContext) QueryBlock(blockid []byte) (*pb.Block, error) {
+func (c *contractContext) QueryBlock(blockid string) (*pb.Block, error) {
 	//TODO @zhangmiao
 	return nil, nil
 }

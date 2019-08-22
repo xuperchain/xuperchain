@@ -230,6 +230,9 @@ func (c *SyscallService) SetOutput(ctx context.Context, in *pb.SetOutputRequest)
 }
 
 func ConvertTxToSDKTx(txStatus *xchainpb.TxStatus) *pb.TxStatus {
+	if txStatus.Status != xchainpb.TransactionStatus_CONFIRM {
+		return &pb.TxStatus{Tx: nil, Status: pb.TransactionStatus(int(txStatus.Status))}
+	}
 	tx := txStatus.Tx
 	txIns := []*pb.TxInput{}
 	for _, in := range tx.TxInputs {
