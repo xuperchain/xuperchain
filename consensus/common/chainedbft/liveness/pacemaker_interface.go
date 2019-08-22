@@ -15,7 +15,7 @@ type PacemakerInterface interface {
 	// CurretQCHigh return current QuorumCert high of this node.
 	CurretQCHigh() error
 	// CurrentView return current vie of this node.
-	CurrentView() error
+	CurrentView() int64
 }
 
 // TODO @yucao: DPoS need to implement this
