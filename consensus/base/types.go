@@ -20,3 +20,9 @@ type ConsensusStatus struct {
 	Term     int64
 	BlockNum int64
 }
+
+// CandidateInfo define the candidate info
+type CandidateInfo struct {
+	Address  string
+	PeerAddr string
+}

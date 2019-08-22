@@ -104,6 +104,8 @@ type XChainCore struct {
 	isCoreMiner bool
 	// enable core peer connection or not
 	coreConnection bool
+	// if failSkip is false, you will execute loop of walk, or just only once walk
+	failSkip bool
 }
 
 // Status return the status of the chain
@@ -132,6 +134,7 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	xc.nodeMode = nodeMode
 	xc.stopFlag = false
 	xc.coreConnection = cfg.CoreConnection
+	xc.failSkip = cfg.FailSkip
 	ledger.MemCacheSize = cfg.DBCache.MemCacheSize
 	ledger.FileHandlersCacheSize = cfg.DBCache.FdCacheSize
 	datapath := cfg.Datapath + "/" + bcname
@@ -247,23 +250,25 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	xc.Utxovm.RegisterVM("consensus", xc.con, global.VMPrivRing0)
 	xc.Utxovm.RegisterVM("proposal", xc.proposal, global.VMPrivRing0)
 
-	nc, err := native.New(&cfg.Native, datapath+"/native", xc.log, datapathOthers, kvEngineType)
-	if err != nil {
-		xc.log.Error("make native", "error", err)
-		return err
-	}
-	xc.NativeCodeMgr = nc
-
-	xc.Utxovm.RegisterVM("native", nc, global.VMPrivRing0)
-
 	xbridge := bridge.New()
+	if cfg.Native.Enable {
+		nc, err := native.New(&cfg.Native, datapath+"/native", xc.log, datapathOthers, kvEngineType)
+		if err != nil {
+			xc.log.Error("make native", "error", err)
+			return err
+		}
+		xc.NativeCodeMgr = nc
+
+		xc.Utxovm.RegisterVM("native", nc, global.VMPrivRing0)
+		xbridge.RegisterExecutor("native", nc)
+	}
+
 	wasmvm, err := wasm.New(&cfg.Wasm, filepath.Join(datapath, "wasm"), xbridge, xc.Utxovm.GetXModel())
 	if err != nil {
 		xc.log.Error("initialize WASM error", "error", err)
 		return err
 	}
 
-	xbridge.RegisterExecutor("native", nc)
 	xbridge.RegisterExecutor("wasm", wasmvm)
 	xbridge.RegisterToXCore(xc.Utxovm.RegisterVM3)
 
@@ -502,15 +507,23 @@ func (xc *XChainCore) doMiner() {
 	ledgerLastID := xc.Ledger.GetMeta().TipBlockid
 	utxovmLastID := xc.Utxovm.GetLatestBlockid()
 
-	// 如果Walk一直失败，建议不要挖矿了，而是报警处理
-	for !bytes.Equal(ledgerLastID, utxovmLastID) {
+	if !bytes.Equal(ledgerLastID, utxovmLastID) {
 		xc.log.Warn("ledger last blockid is not equal utxovm last id")
 		err := xc.Utxovm.Walk(ledgerLastID)
+		// if xc.failSkip = false, then keep logic, if not equal, retry
 		if err != nil {
-			xc.log.Error("Walk error ", "ledger blockid", global.F(ledgerLastID),
-				"utxo blockid", global.F(utxovmLastID))
-			return
+			if !xc.failSkip {
+				xc.log.Error("Walk error at", "ledger blockid", global.F(ledgerLastID),
+					"utxo blockid", global.F(utxovmLastID))
+				return
+			} else {
+				err := xc.Ledger.Truncate(utxovmLastID)
+				if err != nil {
+					return
+				}
+			}
 		}
+
 		ledgerLastID = xc.Ledger.GetMeta().TipBlockid
 		utxovmLastID = xc.Utxovm.GetLatestBlockid()
 	}
@@ -574,7 +587,7 @@ func (xc *XChainCore) doMiner() {
 		txs = append(txs, ucTx)
 	}
 	fakeBlock, err := xc.Ledger.FormatFakeBlock(txs, xc.address, xc.privateKey,
-		t.UnixNano(), curTerm, curBlockNum, meta.TipBlockid, xc.Utxovm.GetTotal())
+		t.UnixNano(), curTerm, curBlockNum, xc.Utxovm.GetLatestBlockid(), xc.Utxovm.GetTotal())
 	if err != nil {
 		xc.log.Warn("[Minning] format fake block error", "logid")
 		return
@@ -594,7 +607,7 @@ func (xc *XChainCore) doMiner() {
 	minerTimer.Mark("GenAwardTx")
 	txs = append(txs, awardtx)
 	freshBlock, err = xc.Ledger.FormatPOWBlock(txs, xc.address, xc.privateKey,
-		t.UnixNano(), curTerm, curBlockNum, meta.TipBlockid, targetBits, xc.Utxovm.GetTotal(), fakeBlock.FailedTxs)
+		t.UnixNano(), curTerm, curBlockNum, xc.Utxovm.GetLatestBlockid(), targetBits, xc.Utxovm.GetTotal(), fakeBlock.FailedTxs)
 	if err != nil {
 		xc.log.Warn("[Minning] format block error", "logid", header.Logid, "err", err)
 		return
@@ -754,7 +767,7 @@ func (xc *XChainCore) PostTx(in *pb.TxStatus, hd *global.XContext) (*pb.CommonRe
 			out.Header.Error = pb.XChainErrorEnum_GAS_NOT_ENOUGH_ERROR
 		case utxo.ErrRWSetInvalid, utxo.ErrInvalidTxExt:
 			out.Header.Error = pb.XChainErrorEnum_RWSET_INVALID_ERROR
-		case utxo.ErrAclNotEnough:
+		case utxo.ErrACLNotEnough:
 			out.Header.Error = pb.XChainErrorEnum_RWACL_INVALID_ERROR
 		case utxo.ErrVersionInvalid:
 			out.Header.Error = pb.XChainErrorEnum_TX_VERSION_INVALID_ERROR
@@ -1097,7 +1110,7 @@ func (xc *XChainCore) GetDposVotedRecords(addr string) ([]*pb.VotedRecord, error
 // GetCheckResults get all proposers for specific term
 func (xc *XChainCore) GetCheckResults(term int64) ([]string, error) {
 	res := []string{}
-	proposers := []*tdpos.CandidateInfo{}
+	proposers := []*cons_base.CandidateInfo{}
 	version := xc.con.Version(xc.Ledger.GetMeta().TrunkHeight + 1)
 	key := tdpos.GenTermCheckKey(version, term)
 	val, err := xc.Utxovm.GetFromTable(nil, []byte(key))

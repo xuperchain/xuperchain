@@ -57,6 +57,7 @@ kernel:
 
 # 管理native合约的配置
 native:
+  enable: false
   # 与部署相关的配置
   deploy:
     # 部署白名单，列表为钱包地址
