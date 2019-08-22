@@ -361,7 +361,7 @@ func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
 		xc.log.Debug("Block is exist", "logid", in.Header.Logid, "cost", hd.Timer.Print())
 		return ErrBlockExist
 	}
-	if in.Block.Height < xc.Ledger.GetMeta().TrunkHeight {
+	if in.Block.Height <= xc.Ledger.GetMeta().TrunkHeight {
 		xc.log.Warn("refuse short chain of blocks", "remote", in.Block.Height, "local", xc.Ledger.GetMeta().TrunkHeight)
 		return ErrServiceRefused
 	}
