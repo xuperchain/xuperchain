@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/xuperchain/xuperunion/common"
+	"github.com/xuperchain/xuperunion/contract"
 	"github.com/xuperchain/xuperunion/contract/wasm"
 	"github.com/xuperchain/xuperunion/permission/acl/utils"
 )
@@ -15,7 +16,7 @@ type DeployMethod struct {
 }
 
 // Invoke Deploy contract method implementation
-func (dm *DeployMethod) Invoke(ctx *KContext, args map[string][]byte) ([]byte, error) {
+func (dm *DeployMethod) Invoke(ctx *KContext, args map[string][]byte) (*contract.Response, error) {
 	// check if account exist
 	accountName := args["account_name"]
 	contractName := args["contract_name"]

@@ -5,13 +5,41 @@ import (
 	"sync"
 
 	log "github.com/xuperchain/log15"
+	"github.com/xuperchain/xuperunion/pb"
 	"github.com/xuperchain/xuperunion/xmodel"
+)
+
+const (
+	// StatusOK is used when contract successfully ends.
+	StatusOK = 200
+	// StatusErrorThreshold is the status dividing line for the normal operation of the contract
+	StatusErrorThreshold = 400
+	// StatusError is used when contract fails.
+	StatusError = 500
 )
 
 var (
 	// ErrVMNotExist is returned when found vm not exist
 	ErrVMNotExist = errors.New("Vm not exist in vm manager")
 )
+
+// Response is the result of the contract run
+type Response struct {
+	// Status 用于反映合约的运行结果的错误码
+	Status int `json:"status"`
+	// Message 用于携带一些有用的debug信息
+	Message string `json:"message"`
+	// Data 字段用于存储合约执行的结果
+	Body []byte `json:"body"`
+}
+
+func ToPBContractResponse(resp *Response) *pb.ContractResponse {
+	return &pb.ContractResponse{
+		Status:  int32(resp.Status),
+		Message: resp.Message,
+		Body:    resp.Body,
+	}
+}
 
 // ContextConfig define the config of context
 type ContextConfig struct {
@@ -30,7 +58,7 @@ type VirtualMachine interface {
 
 // Context define context interface
 type Context interface {
-	Invoke(method string, args map[string][]byte) ([]byte, error)
+	Invoke(method string, args map[string][]byte) (*Response, error)
 	ResourceUsed() Limits
 	Release() error
 }
