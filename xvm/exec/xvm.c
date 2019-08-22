@@ -111,18 +111,26 @@ static void wasm_rt_allocate_memory(void* context,
   memory->max_pages = max_pages;
   memory->size = initial_pages * PAGE_SIZE;
   if (memory->size != 0) {
-    memory->data = calloc(memory->size, 1);
-  }
-  /* memory->data = mmap(0, memory->size, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, -1, 0); */
-  if (memory->data == MAP_FAILED) {
-    wasm_rt_trap(0);
+    /* memory->data = calloc(memory->size, 1); */
+    memory->data = mmap(0, memory->size, PROT_READ|PROT_WRITE,
+    MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+    if (memory->data == MAP_FAILED) {
+        wasm_rt_trap(WASM_RT_TRAP_OOB);
+    }
   }
   xvm_context_t* ctx = context;
   ctx->mem = memory;
 }
 
+static void wasm_rt_free_memory(wasm_rt_memory_t* mem) {
+    /* free(ctx->mem->data); */
+    munmap(mem->data, mem->size);
+}
+
 static uint32_t wasm_rt_grow_memory(void* context, wasm_rt_memory_t* memory, uint32_t delta) {
-  /* wasm_rt_trap(0); */
+  // do not support grow memory
+  wasm_rt_trap(WASM_RT_TRAP_OOB);
+
   uint32_t old_pages = memory->pages;
   uint32_t new_pages = memory->pages + delta;
   if (new_pages < old_pages || new_pages > memory->max_pages) {
@@ -274,8 +282,7 @@ int xvm_init_context(xvm_context_t* ctx, xvm_code_t* code) {
 
 void xvm_release_context(xvm_context_t* ctx) {
   if (ctx->mem != NULL) {
-    /* munmap(ctx->mem->data, ctx->mem->size); */
-    free(ctx->mem->data);
+    wasm_rt_free_memory(ctx->mem);
   }
   if (ctx->table != NULL) {
     free(ctx->table->data);
