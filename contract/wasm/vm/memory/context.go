@@ -68,11 +68,11 @@ func (c *codeContext) NewIterator(start []byte, limit []byte) code.Iterator {
 	panic("not implemented")
 }
 
-func (c *codeContext) QueryTx(txid []byte) (*code.TxStatus, error) {
+func (c *codeContext) QueryTx(txid []byte) (*pb.TxStatus, error) {
 	panic("not implemented")
 }
 
-func (c *codeContext) QueryBlock(blockid []byte) (*code.Block, error) {
+func (c *codeContext) QueryBlock(blockid []byte) (*pb.Block, error) {
 	panic("not implemented")
 }
 
