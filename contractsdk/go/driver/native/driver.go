@@ -13,7 +13,7 @@ import (
 
 	"github.com/docker/go-connections/sockets"
 	"github.com/xuperchain/xuperunion/contractsdk/go/code"
-	pb "github.com/xuperchain/xuperunion/contractsdk/go/pb"
+	pbrpc "github.com/xuperchain/xuperunion/contractsdk/go/pbrpc"
 	"google.golang.org/grpc"
 )
 
@@ -51,7 +51,7 @@ func (d *driver) Serve(contract code.Contract) {
 
 	nativeCodeService := newNativeCodeService(*chainSockpath, contract)
 	rpcServer := grpc.NewServer()
-	pb.RegisterNativeCodeServer(rpcServer, nativeCodeService)
+	pbrpc.RegisterNativeCodeServer(rpcServer, nativeCodeService)
 
 	var err error
 	var listener net.Listener
