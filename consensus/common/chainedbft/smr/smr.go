@@ -25,6 +25,14 @@ var (
 	ErrSafeProposal = errors.New("check new proposal error")
 	// ErrGetVotes get votes error
 	ErrGetVotes = errors.New("get votes error")
+	// ErrPropsViewNum return proposal view number error
+	ErrPropsViewNum = errors.New("proposal view number error")
+	// ErrJustifySignNotEnough return justify sign not enough error
+	ErrJustifySignNotEnough = errors.New("proposal justify sign not enough error")
+	// ErrVerifyVoteSign return verify vote sign error
+	ErrVerifyVoteSign = errors.New("verify justify sign error")
+	// ErrInValidateSets return in validate sets error
+	ErrInValidateSets = errors.New("in validate sets error")
 )
 
 // NewSmr return smr instance
@@ -342,7 +350,7 @@ func (s *Smr) handleReceivedProposal(msg *p2p_pb.XuperMessage) error {
 			PublicKey: s.publicKey,
 		},
 	}
-	_, err = utils.MakeVoteMsgSign(s.cryptoClient, s.privateKey, voteMsg.GetSignature(), propsQC.GetProposalMsg())
+	_, err = utils.MakeVoteMsgSign(s.cryptoClient, s.privateKey, voteMsg.GetSignature(), propsQC.GetProposalId())
 	if err != nil {
 		s.slog.Error("ProcessProposal MakeVoteMsgSign error", "error", err)
 		return err
@@ -375,5 +383,104 @@ func (s *Smr) handleReceivedProposal(msg *p2p_pb.XuperMessage) error {
 		bytes.Equal(prePreProposalMsg, prePrePropsQC.GetProposalMsg()) {
 		s.lockedQC = prePrePropsQC
 	}
+	return nil
+}
+
+// addViewMsg check and add new view msg to smr
+// 1: check sign of msg
+// 2: check if the msg from validate sets replica
+func (s *Smr) addViewMsg(msg *chainedbft_pb.ChainedBftPhaseMessage) error {
+	// check msg sign
+	ok, err := utils.VerifyPhaseMsgSign(s.cryptoClient, msg)
+	if !ok || err != nil {
+		s.slog.Error("addViewMsg VerifyPhaseMsgSign error", "ok", ok, "error", err)
+		return errors.New("addViewMsg VerifyPhaseMsgSign error")
+	}
+	// check whether view outdate
+	if msg.GetViewNumber() < s.votedView {
+		s.slog.Error("addViewMsg view outdate", "votedView", s.votedView, "viewRecivied", msg.GetViewNumber())
+		return errors.New("addViewMsg view outdate")
+	}
+
+	// check in ValidateSets
+	if !utils.IsInValidateSets(s.validates, msg.GetSignature().GetAddress()) {
+		s.slog.Error("addViewMsg checkValidateSets error")
+		return errors.New("addViewMsg checkValidateSets error")
+	}
+	// add JustifyQC
+	if msg.GetJustifyQC() != nil {
+		s.slog.Info("addViewMsg GetJustifyQC not nil", "GetJustifyQC.SignInfos", msg.GetJustifyQC().GetSignInfos())
+		s.qcVoteMsgs.LoadOrStore(string(msg.GetJustifyQC().GetProposalId()), msg.GetJustifyQC().GetSignInfos())
+	}
+
+	// add View msg
+	v, ok := s.newViewMsgs.Load(msg.GetViewNumber())
+	if !ok {
+		viewMsgs := []*chainedbft_pb.ChainedBftPhaseMessage{}
+		viewMsgs = append(viewMsgs, msg)
+		s.newViewMsgs.Store(msg.GetViewNumber(), viewMsgs)
+		return nil
+	}
+
+	viewMsgs := v.([]*chainedbft_pb.ChainedBftPhaseMessage)
+	viewMsgs = append(viewMsgs, msg)
+	s.newViewMsgs.Store(msg.GetViewNumber(), viewMsgs)
+	return nil
+}
+
+// addVoteMsg check and add vote msg to smr
+// 1: check sign of msg
+// 2: check if the msg from validate sets
+func (s *Smr) addVoteMsg(msg *chainedbft_pb.ChainedBftVoteMessage) error {
+	// check in ValidateSets
+	if !utils.IsInValidateSets(s.validates, msg.GetSignature().GetAddress()) {
+		s.slog.Error("addVoteMsg IsInValidateSets error")
+		return ErrInValidateSets
+	}
+
+	// check msg sign
+	ok, err := utils.VerifyVoteMsgSign(s.cryptoClient, msg.GetSignature(), msg.GetProposalId())
+	if !ok || err != nil {
+		s.slog.Error("addVoteMsg VerifyVoteMsgSign error", "ok", ok, "error", err)
+		return ErrVerifyVoteSign
+	}
+
+	// add vote msg
+	v, ok := s.qcVoteMsgs.Load(string(msg.GetProposalId()))
+	if !ok {
+		voteMsgs := &chainedbft_pb.QCSignInfos{}
+		voteMsgs.QCSignInfos = append(voteMsgs.QCSignInfos, msg.GetSignature())
+		s.qcVoteMsgs.Store(string(msg.GetProposalId()), voteMsgs)
+		return nil
+	}
+
+	voteMsgs := v.(*chainedbft_pb.QCSignInfos)
+	if utils.CheckIsVoted(voteMsgs, msg.GetSignature()) {
+		s.slog.Error("addVoteMsg CheckIsVoted error, this address have voted")
+		return errors.New("addVoteMsg CheckIsVoted error")
+	}
+	voteMsgs.QCSignInfos = append(voteMsgs.QCSignInfos, msg.GetSignature())
+	s.qcVoteMsgs.Store(string(msg.GetProposalId()), voteMsgs)
+	return nil
+}
+
+// checkVoteNum leader will check whether the vote nums more than (n-f)
+func (s *Smr) checkVoteNum(proposalID []byte) bool {
+	v, ok := s.qcVoteMsgs.Load(string(proposalID))
+	if !ok {
+		s.slog.Error("smr checkVoteNum error, voteMsgs not found!")
+		return false
+	}
+	voteMsgs := v.(*chainedbft_pb.QCSignInfos)
+
+	if len(voteMsgs.GetQCSignInfos()) > (len(s.validates)-1)*2/3 {
+		return true
+	}
+	return false
+}
+
+// UpdateValidateSets update current ValidateSets by ex
+func (s *Smr) UpdateValidateSets(validates []*cons_base.CandidateInfo) error {
+	s.validates = validates
 	return nil
 }
