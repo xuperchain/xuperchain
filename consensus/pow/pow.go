@@ -237,7 +237,7 @@ func (pc *PowConsensus) calDifficulty(curBlock *pb.InternalBlock) int32 {
 	if curBlock.Height <= int64(pc.config.adjustHeightGap) {
 		return pc.config.defaultTarget
 	}
-	height := curBlock.Height - 1
+	height := curBlock.Height
 	preBlock, err := pc.getPrevBlock(curBlock, 1)
 	if err != nil {
 		pc.log.Warn("query prev block failed", "err", err, "height", height-1)
