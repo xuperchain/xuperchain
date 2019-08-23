@@ -46,7 +46,7 @@ func (m *math) Invoke(nci code.Context) code.Response {
 	} else if action == "querytx" {
 		id := string(args["id"])
 		rawid, _ := hex.DecodeString(id)
-		tx, err := nci.QueryTx(rawid)
+		tx, err := nci.QueryTx(string(rawid))
 		if err != nil {
 			return code.Error(err)
 		}
@@ -55,7 +55,7 @@ func (m *math) Invoke(nci code.Context) code.Response {
 	} else if action == "queryblock" {
 		id := string(args["id"])
 		rawid, _ := hex.DecodeString(id)
-		block, err := nci.QueryBlock(rawid)
+		block, err := nci.QueryBlock(string(rawid))
 		if err != nil {
 		}
 		out, _ := json.MarshalIndent(block, "", "  ")

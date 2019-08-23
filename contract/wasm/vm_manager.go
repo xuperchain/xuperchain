@@ -128,7 +128,7 @@ func (v *VMManager) verifyContractName(name string) error {
 }
 
 // DeployContract deploy contract and initialize contract
-func (v *VMManager) DeployContract(contextConfig *contract.ContextConfig, args map[string][]byte) ([]byte, contract.Limits, error) {
+func (v *VMManager) DeployContract(contextConfig *contract.ContextConfig, args map[string][]byte) (*contract.Response, contract.Limits, error) {
 	store := contextConfig.XMCache
 	name := args["contract_name"]
 	if name == nil {
@@ -197,7 +197,7 @@ func (v *VMManager) DeployContract(contextConfig *contract.ContextConfig, args m
 	return out, resourceUsed, nil
 }
 
-func (v *VMManager) initContract(contextConfig *contract.ContextConfig, args map[string][]byte) ([]byte, contract.Limits, error) {
+func (v *VMManager) initContract(contextConfig *contract.ContextConfig, args map[string][]byte) (*contract.Response, contract.Limits, error) {
 	vm, ok := v.xbridge.GetVirtualMachine("wasm")
 	if !ok {
 		return nil, contract.Limits{}, errors.New("wasm vm not registered")

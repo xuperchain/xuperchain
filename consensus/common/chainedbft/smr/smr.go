@@ -11,11 +11,11 @@ import (
 	cons_base "github.com/xuperchain/xuperunion/consensus/base"
 	"github.com/xuperchain/xuperunion/consensus/common/chainedbft/config"
 	"github.com/xuperchain/xuperunion/consensus/common/chainedbft/external"
-	chainedbft_pb "github.com/xuperchain/xuperunion/consensus/common/chainedbft/pb"
 	"github.com/xuperchain/xuperunion/consensus/common/chainedbft/utils"
 	crypto_base "github.com/xuperchain/xuperunion/crypto/client/base"
 	"github.com/xuperchain/xuperunion/p2pv2"
 	p2p_pb "github.com/xuperchain/xuperunion/p2pv2/pb"
+	pb "github.com/xuperchain/xuperunion/pb"
 )
 
 var (
@@ -37,7 +37,7 @@ var (
 
 // NewSmr return smr instance
 func NewSmr(
-	cfg config.Config,
+	cfg *config.Config,
 	bcname string,
 	address string,
 	publicKey string,
@@ -45,10 +45,10 @@ func NewSmr(
 	validates []*cons_base.CandidateInfo,
 	externalCons external.ExternalInterface,
 	cryptoClient crypto_base.CryptoClient,
-	p2p *p2pv2.P2PServerV2,
+	p2p p2pv2.P2PServer,
 	proposalQC,
 	generateQC,
-	lockedQC *chainedbft_pb.QuorumCert) (*Smr, error) {
+	lockedQC *pb.QuorumCert) (*Smr, error) {
 
 	xlog := log.New("module", "smr")
 	// set up smr
@@ -128,10 +128,10 @@ func (s *Smr) ProcessNewView(viewNumber int64, leader, preLeader string) error {
 		return ErrNewViewNum
 	}
 
-	newViewMsg := &chainedbft_pb.ChainedBftPhaseMessage{
-		Type:       chainedbft_pb.QCState_NEW_VIEW,
+	newViewMsg := &pb.ChainedBftPhaseMessage{
+		Type:       pb.QCState_NEW_VIEW,
 		ViewNumber: viewNumber,
-		Signature: &chainedbft_pb.SignInfo{
+		Signature: &pb.SignInfo{
 			Address:   s.address,
 			PublicKey: s.publicKey,
 		},
@@ -172,27 +172,27 @@ func (s *Smr) ProcessNewView(viewNumber int64, leader, preLeader string) error {
 }
 
 // GetGenerateQC get latest GenerateQC while dominer
-func (s *Smr) GetGenerateQC(proposalID []byte) (*chainedbft_pb.QuorumCert, error) {
+func (s *Smr) GetGenerateQC(proposalID []byte) (*pb.QuorumCert, error) {
 	return s.generateQC, nil
 }
 
 // ProcessProposal used to generate new QuorumCert and broadcast to other replicas
 func (s *Smr) ProcessProposal(viewNumber int64, proposalID,
-	proposalMsg []byte) (*chainedbft_pb.QuorumCert, error) {
+	proposalMsg []byte) (*pb.QuorumCert, error) {
 
-	qc := &chainedbft_pb.QuorumCert{
+	qc := &pb.QuorumCert{
 		ProposalId:  proposalID,
 		ProposalMsg: proposalMsg,
 		ViewNumber:  viewNumber,
-		Type:        chainedbft_pb.QCState_PREPARE,
-		SignInfos:   &chainedbft_pb.QCSignInfos{},
+		Type:        pb.QCState_PREPARE,
+		SignInfos:   &pb.QCSignInfos{},
 	}
 
-	propMsg := &chainedbft_pb.ChainedBftPhaseMessage{
-		Type:       chainedbft_pb.QCState_PREPARE,
+	propMsg := &pb.ChainedBftPhaseMessage{
+		Type:       pb.QCState_PREPARE,
 		ViewNumber: viewNumber,
 		ProposalQC: qc,
-		Signature: &chainedbft_pb.SignInfo{
+		Signature: &pb.SignInfo{
 			Address:   s.address,
 			PublicKey: s.publicKey,
 		},
@@ -254,7 +254,7 @@ func (s *Smr) handleReceivedMsg(msg *p2p_pb.XuperMessage) {
 
 // handleReceivedVoteMsg used to process while receiving vote msg from network
 func (s *Smr) handleReceivedVoteMsg(msg *p2p_pb.XuperMessage) error {
-	voteMsg := &chainedbft_pb.ChainedBftVoteMessage{}
+	voteMsg := &pb.ChainedBftVoteMessage{}
 	if err := proto.Unmarshal(msg.GetData().GetMsgInfo(), voteMsg); err != nil {
 		s.slog.Error("handleReceivedVoteMsg Unmarshal msg error",
 			"logid", msg.GetHeader().GetLogid(), "error", err)
@@ -277,14 +277,14 @@ func (s *Smr) handleReceivedVoteMsg(msg *p2p_pb.XuperMessage) error {
 			s.slog.Error("handleReceivedVoteMsg get votes error")
 			return ErrGetVotes
 		}
-		s.generateQC.SignInfos = v.(*chainedbft_pb.QCSignInfos)
+		s.generateQC.SignInfos = v.(*pb.QCSignInfos)
 	}
 	return nil
 }
 
 // handleReceivedNewView used to handle new view msg from other replicas
 func (s *Smr) handleReceivedNewView(msg *p2p_pb.XuperMessage) error {
-	newViewMsg := &chainedbft_pb.ChainedBftPhaseMessage{}
+	newViewMsg := &pb.ChainedBftPhaseMessage{}
 	if err := proto.Unmarshal(msg.GetData().GetMsgInfo(), newViewMsg); err != nil {
 		s.slog.Error("handleReceivedNewView Unmarshal msg error",
 			"logid", msg.GetHeader().GetLogid(), "error", err)
@@ -301,7 +301,7 @@ func (s *Smr) handleReceivedNewView(msg *p2p_pb.XuperMessage) error {
 // handleReceivedProposal is the core function of hotstuff. It uesd to change QuorumCerts's phase.
 // It will change three previous QuorumCerts's state because hotstuff is a three chained bft.
 func (s *Smr) handleReceivedProposal(msg *p2p_pb.XuperMessage) error {
-	propMsg := &chainedbft_pb.ChainedBftPhaseMessage{}
+	propMsg := &pb.ChainedBftPhaseMessage{}
 	if err := proto.Unmarshal(msg.GetData().GetMsgInfo(), propMsg); err != nil {
 		s.slog.Error("handleReceivedProposal Unmarshal msg error",
 			"logid", msg.GetHeader().GetLogid(), "error", err)
@@ -343,9 +343,9 @@ func (s *Smr) handleReceivedProposal(msg *p2p_pb.XuperMessage) error {
 		return ErrSafeProposal
 	}
 	// Step3: vote for this proposal
-	voteMsg := &chainedbft_pb.ChainedBftVoteMessage{
+	voteMsg := &pb.ChainedBftVoteMessage{
 		ProposalId: propsQC.GetProposalId(),
-		Signature: &chainedbft_pb.SignInfo{
+		Signature: &pb.SignInfo{
 			Address:   s.address,
 			PublicKey: s.publicKey,
 		},
@@ -389,7 +389,7 @@ func (s *Smr) handleReceivedProposal(msg *p2p_pb.XuperMessage) error {
 // addViewMsg check and add new view msg to smr
 // 1: check sign of msg
 // 2: check if the msg from validate sets replica
-func (s *Smr) addViewMsg(msg *chainedbft_pb.ChainedBftPhaseMessage) error {
+func (s *Smr) addViewMsg(msg *pb.ChainedBftPhaseMessage) error {
 	// check msg sign
 	ok, err := utils.VerifyPhaseMsgSign(s.cryptoClient, msg)
 	if !ok || err != nil {
@@ -416,13 +416,13 @@ func (s *Smr) addViewMsg(msg *chainedbft_pb.ChainedBftPhaseMessage) error {
 	// add View msg
 	v, ok := s.newViewMsgs.Load(msg.GetViewNumber())
 	if !ok {
-		viewMsgs := []*chainedbft_pb.ChainedBftPhaseMessage{}
+		viewMsgs := []*pb.ChainedBftPhaseMessage{}
 		viewMsgs = append(viewMsgs, msg)
 		s.newViewMsgs.Store(msg.GetViewNumber(), viewMsgs)
 		return nil
 	}
 
-	viewMsgs := v.([]*chainedbft_pb.ChainedBftPhaseMessage)
+	viewMsgs := v.([]*pb.ChainedBftPhaseMessage)
 	viewMsgs = append(viewMsgs, msg)
 	s.newViewMsgs.Store(msg.GetViewNumber(), viewMsgs)
 	return nil
@@ -431,7 +431,7 @@ func (s *Smr) addViewMsg(msg *chainedbft_pb.ChainedBftPhaseMessage) error {
 // addVoteMsg check and add vote msg to smr
 // 1: check sign of msg
 // 2: check if the msg from validate sets
-func (s *Smr) addVoteMsg(msg *chainedbft_pb.ChainedBftVoteMessage) error {
+func (s *Smr) addVoteMsg(msg *pb.ChainedBftVoteMessage) error {
 	// check in ValidateSets
 	if !utils.IsInValidateSets(s.validates, msg.GetSignature().GetAddress()) {
 		s.slog.Error("addVoteMsg IsInValidateSets error")
@@ -448,13 +448,13 @@ func (s *Smr) addVoteMsg(msg *chainedbft_pb.ChainedBftVoteMessage) error {
 	// add vote msg
 	v, ok := s.qcVoteMsgs.Load(string(msg.GetProposalId()))
 	if !ok {
-		voteMsgs := &chainedbft_pb.QCSignInfos{}
+		voteMsgs := &pb.QCSignInfos{}
 		voteMsgs.QCSignInfos = append(voteMsgs.QCSignInfos, msg.GetSignature())
 		s.qcVoteMsgs.Store(string(msg.GetProposalId()), voteMsgs)
 		return nil
 	}
 
-	voteMsgs := v.(*chainedbft_pb.QCSignInfos)
+	voteMsgs := v.(*pb.QCSignInfos)
 	if utils.CheckIsVoted(voteMsgs, msg.GetSignature()) {
 		s.slog.Error("addVoteMsg CheckIsVoted error, this address have voted")
 		return errors.New("addVoteMsg CheckIsVoted error")
@@ -471,7 +471,7 @@ func (s *Smr) checkVoteNum(proposalID []byte) bool {
 		s.slog.Error("smr checkVoteNum error, voteMsgs not found!")
 		return false
 	}
-	voteMsgs := v.(*chainedbft_pb.QCSignInfos)
+	voteMsgs := v.(*pb.QCSignInfos)
 
 	if len(voteMsgs.GetQCSignInfos()) > (len(s.validates)-1)*2/3 {
 		return true

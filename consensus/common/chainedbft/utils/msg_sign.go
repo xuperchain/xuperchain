@@ -8,11 +8,11 @@ import (
 
 	"github.com/xuperchain/xuperunion/crypto/hash"
 
-	chainedbft_pb "github.com/xuperchain/xuperunion/consensus/common/chainedbft/pb"
 	crypto_base "github.com/xuperchain/xuperunion/crypto/client/base"
+	"github.com/xuperchain/xuperunion/pb"
 )
 
-func encodeChainedBftPhaseMessage(msg *chainedbft_pb.ChainedBftPhaseMessage) ([]byte, error) {
+func encodeChainedBftPhaseMessage(msg *pb.ChainedBftPhaseMessage) ([]byte, error) {
 	var msgBuf bytes.Buffer
 	encoder := json.NewEncoder(&msgBuf)
 	if err := encoder.Encode(msg.Type); err != nil {
@@ -31,7 +31,7 @@ func encodeChainedBftPhaseMessage(msg *chainedbft_pb.ChainedBftPhaseMessage) ([]
 }
 
 // MakePhaseMsgDigest make ChainedBftPhaseMessage Digest
-func MakePhaseMsgDigest(msg *chainedbft_pb.ChainedBftPhaseMessage) ([]byte, error) {
+func MakePhaseMsgDigest(msg *pb.ChainedBftPhaseMessage) ([]byte, error) {
 	msgEncoder, err := encodeChainedBftPhaseMessage(msg)
 	if err != nil {
 		return nil, err
@@ -41,7 +41,7 @@ func MakePhaseMsgDigest(msg *chainedbft_pb.ChainedBftPhaseMessage) ([]byte, erro
 }
 
 // VerifyPhaseMsgDigest verify ChainedBftPhaseMessage Digest
-func VerifyPhaseMsgDigest(msg *chainedbft_pb.ChainedBftPhaseMessage) ([]byte, bool, error) {
+func VerifyPhaseMsgDigest(msg *pb.ChainedBftPhaseMessage) ([]byte, bool, error) {
 	if msg.GetMsgDigest() == nil {
 		return nil, false, errors.New("VerifyMsgDigest error for msgDigest is nil")
 	}
@@ -54,7 +54,7 @@ func VerifyPhaseMsgDigest(msg *chainedbft_pb.ChainedBftPhaseMessage) ([]byte, bo
 
 // MakePhaseMsgSign make ChainedBftPhaseMessage sign
 func MakePhaseMsgSign(cryptoClient crypto_base.CryptoClient, privateKey *ecdsa.PrivateKey,
-	msg *chainedbft_pb.ChainedBftPhaseMessage) (*chainedbft_pb.ChainedBftPhaseMessage, error) {
+	msg *pb.ChainedBftPhaseMessage) (*pb.ChainedBftPhaseMessage, error) {
 	msgDigest, err := MakePhaseMsgDigest(msg)
 	if err != nil {
 		return nil, err
@@ -69,7 +69,7 @@ func MakePhaseMsgSign(cryptoClient crypto_base.CryptoClient, privateKey *ecdsa.P
 }
 
 // VerifyPhaseMsgSign verify ChainedBftPhaseMessage Sign
-func VerifyPhaseMsgSign(cryptoClient crypto_base.CryptoClient, msg *chainedbft_pb.ChainedBftPhaseMessage) (bool, error) {
+func VerifyPhaseMsgSign(cryptoClient crypto_base.CryptoClient, msg *pb.ChainedBftPhaseMessage) (bool, error) {
 	msgDigest, ok, err := VerifyPhaseMsgDigest(msg)
 	if !ok || err != nil {
 		return false, err
@@ -93,7 +93,7 @@ func VerifyPhaseMsgSign(cryptoClient crypto_base.CryptoClient, msg *chainedbft_p
 
 // MakeVoteMsgSign make ChainedBftVoteMessage sign
 func MakeVoteMsgSign(cryptoClient crypto_base.CryptoClient, privateKey *ecdsa.PrivateKey,
-	sig *chainedbft_pb.SignInfo, msg []byte) (*chainedbft_pb.SignInfo, error) {
+	sig *pb.SignInfo, msg []byte) (*pb.SignInfo, error) {
 	sign, err := cryptoClient.SignECDSA(privateKey, msg)
 	if err != nil {
 		return nil, err
@@ -103,7 +103,7 @@ func MakeVoteMsgSign(cryptoClient crypto_base.CryptoClient, privateKey *ecdsa.Pr
 }
 
 // VerifyVoteMsgSign verify ChainedBftVoteMessage sign
-func VerifyVoteMsgSign(cryptoClient crypto_base.CryptoClient, sig *chainedbft_pb.SignInfo, msg []byte) (bool, error) {
+func VerifyVoteMsgSign(cryptoClient crypto_base.CryptoClient, sig *pb.SignInfo, msg []byte) (bool, error) {
 	ak, err := cryptoClient.GetEcdsaPublicKeyFromJSON([]byte(sig.GetPublicKey()))
 	if err != nil {
 		return false, err
