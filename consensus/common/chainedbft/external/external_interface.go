@@ -1,6 +1,8 @@
 package external
 
-import pb "github.com/xuperchain/xuperunion/pb"
+import (
+	pb "github.com/xuperchain/xuperunion/pb"
+)
 
 // ExternalInterface is the interface that chainedbft can communicate with external interface
 // external consensus need to implements this.

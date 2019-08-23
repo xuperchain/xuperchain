@@ -6,6 +6,7 @@ import (
 	"github.com/golang/protobuf/proto"
 
 	"github.com/xuperchain/log15"
+	"github.com/xuperchain/xuperunion/consensus/base"
 	"github.com/xuperchain/xuperunion/consensus/common/chainedbft"
 	"github.com/xuperchain/xuperunion/pb"
 )
@@ -15,10 +16,11 @@ type DPoSPaceMaker struct {
 	currentView int64
 	cbft        *chainedbft.ChainedBft
 	log         log.Logger
+	cons        base.ConsensusInterface
 }
 
 // NewDPoSPaceMaker create new DPoSPaceMaker instance
-func NewDPoSPaceMaker(viewNum int64, cbft *chainedbft.ChainedBft, xlog log.Logger) (*DPoSPaceMaker, error) {
+func NewDPoSPaceMaker(viewNum int64, cbft *chainedbft.ChainedBft, xlog log.Logger, cons base.ConsensusInterface) (*DPoSPaceMaker, error) {
 	if cbft == nil {
 		return nil, fmt.Errorf("Chained-BFT instance is nil")
 	}
@@ -27,6 +29,7 @@ func NewDPoSPaceMaker(viewNum int64, cbft *chainedbft.ChainedBft, xlog log.Logge
 		currentView: viewNum,
 		cbft:        cbft,
 		log:         xlog,
+		cons:        cons,
 	}, nil
 }
 
@@ -70,4 +73,9 @@ func (dpm *DPoSPaceMaker) NextNewProposal(proposalID []byte, data interface{}) e
 		return err
 	}
 	return nil
+}
+
+// UpdateValidatorSet update the validator set of BFT
+func (dpm *DPoSPaceMaker) UpdateValidatorSet(validators []*base.CandidateInfo) error {
+	return dpm.cbft.UpdateValidateSets(validators)
 }

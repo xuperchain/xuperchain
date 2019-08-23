@@ -238,7 +238,7 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 		xc.log.Warn("Get genesis consensus error", "error", err.Error())
 		return err
 	}
-	xc.con, err = consensus.NewPluggableConsensus(xlog, cfg, bcname, xc.Ledger, xc.Utxovm, gCon, cryptoType)
+	xc.con, err = consensus.NewPluggableConsensus(xlog, cfg, bcname, xc.Ledger, xc.Utxovm, gCon, cryptoType, p2p)
 	if err != nil {
 		xc.log.Warn("New PluggableConsensus Error")
 		return err

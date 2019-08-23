@@ -1,5 +1,9 @@
 package liveness
 
+import (
+	cons_base "github.com/xuperchain/xuperunion/consensus/base"
+)
+
 // PacemakerInterface is the interface of Pacemaker. It responsible for generating a new round.
 // We assume Pacemaker in all correct replicas will have synchronized leadership after GST.
 // Safty is entirely decoupled from liveness by any potential instantiation of Packmaker.
@@ -16,6 +20,8 @@ type PacemakerInterface interface {
 	CurretQCHigh() error
 	// CurrentView return current vie of this node.
 	CurrentView() int64
+	// UpdateValidatorSet update the validator set of BFT
+	UpdateValidatorSet(validators []*cons_base.CandidateInfo) error
 }
 
 // TODO @yucao: DPoS need to implement this

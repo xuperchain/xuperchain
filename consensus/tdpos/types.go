@@ -2,14 +2,17 @@ package tdpos
 
 import (
 	"errors"
+	"github.com/xuperchain/xuperunion/consensus/tdpos/bft"
 	"math/big"
 	"sync"
 
 	log "github.com/xuperchain/log15"
 	cons_base "github.com/xuperchain/xuperunion/consensus/base"
+	bft_config "github.com/xuperchain/xuperunion/consensus/common/chainedbft/config"
 	"github.com/xuperchain/xuperunion/contract"
 	crypto_base "github.com/xuperchain/xuperunion/crypto/client/base"
 	"github.com/xuperchain/xuperunion/ledger"
+	"github.com/xuperchain/xuperunion/p2pv2"
 	"github.com/xuperchain/xuperunion/utxo"
 )
 
@@ -70,6 +73,9 @@ type TDpos struct {
 	// 执行智能合约获取合约上下文
 	context *contract.TxContext
 	mutex   *sync.RWMutex
+	// BFT module
+	bftPaceMaker *bft.DPoSPaceMaker
+	p2psvr       p2pv2.P2PServer
 }
 
 // tdpos 共识机制的配置
@@ -91,6 +97,10 @@ type tDposConfig struct {
 	// is proposers' netURL needed for nomination and tdpos config
 	// this is read from config need_neturl
 	needNetURL bool
+
+	// BTF related config
+	enableBFT bool
+	bftConfig *bft_config.Config
 }
 
 // 每个选票的详情, 支持一票多投

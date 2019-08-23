@@ -33,7 +33,7 @@ func NewChainedBft(
 	validates []*cons_base.CandidateInfo,
 	externalCons external.ExternalInterface,
 	cryptoClient crypto_base.CryptoClient,
-	p2p *p2pv2.P2PServerV2,
+	p2p p2pv2.P2PServer,
 	proposalQC, generateQC, lockedQC *pb.QuorumCert) (*ChainedBft, error) {
 
 	// set up log
