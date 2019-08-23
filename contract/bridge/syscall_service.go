@@ -95,7 +95,7 @@ func (c *SyscallService) QueryTx(ctx context.Context, in *pb.QueryTxRequest) (*p
 		return nil, err
 	}
 
-	if err == nil && status == false {
+	if status == false {
 		return nil, fmt.Errorf("Unconfirm tx:%s", in.Txid)
 	}
 
