@@ -19,6 +19,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 
+	"github.com/xuperchain/xuperunion/contract"
 	crypto_client "github.com/xuperchain/xuperunion/crypto/client"
 	"github.com/xuperchain/xuperunion/global"
 	"github.com/xuperchain/xuperunion/pb"
@@ -121,8 +122,11 @@ func (c *CommTrans) GenPreExeRes(ctx context.Context) (
 	if err != nil {
 		return nil, nil, fmt.Errorf("PreExe contract response : %v, logid:%s", err, preExeRPCReq.Header.Logid)
 	}
-	for _, res := range preExeRPCRes.Response.Response {
-		fmt.Printf("contract response: %s\n", string(res))
+	for _, res := range preExeRPCRes.Response.Responses {
+		if res.Status >= contract.StatusErrorThreshold {
+			return nil, nil, fmt.Errorf("contract error status:%d message:%s", res.Status, res.Message)
+		}
+		fmt.Printf("contract response: %s\n", string(res.Body))
 	}
 	return preExeRPCRes, preExeRPCRes.Response.Requests, nil
 }

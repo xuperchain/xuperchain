@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	cons_base "github.com/xuperchain/xuperunion/consensus/base"
+	"github.com/xuperchain/xuperunion/pb"
 )
 
 func TestIsInValidateSets(t *testing.T) {
@@ -53,5 +54,55 @@ func TestIsInValidateSets(t *testing.T) {
 }
 
 func TestCheckIsVoted(t *testing.T) {
+	testCases := map[string]struct {
+		votedMsgs *pb.QCSignInfos
+		voteMsg   *pb.SignInfo
+		expected  bool
+	}{
+		"case1": {
+			votedMsgs: &pb.QCSignInfos{
+				QCSignInfos: []*pb.SignInfo{
+					&pb.SignInfo{
+						Address: "addr1",
+					},
+					&pb.SignInfo{
+						Address: "addr2",
+					},
+				},
+			},
+			voteMsg: &pb.SignInfo{
+				Address: "addr1",
+			},
+			expected: true,
+		},
+		"case2": {
+			votedMsgs: &pb.QCSignInfos{
+				QCSignInfos: []*pb.SignInfo{
+					&pb.SignInfo{
+						Address: "addr1",
+					},
+					&pb.SignInfo{
+						Address: "addr2",
+					},
+				},
+			},
+			voteMsg: &pb.SignInfo{
+				Address: "addr3",
+			},
+			expected: false,
+		},
+		"case3": {
+			votedMsgs: &pb.QCSignInfos{},
+			voteMsg:   &pb.SignInfo{},
+			expected:  false,
+		},
+	}
 
+	for k, v := range testCases {
+		ok := CheckIsVoted(v.votedMsgs, v.voteMsg)
+		if ok != v.expected {
+			t.Error("test IsInValidateSets error", "casename",
+				k, "expected", v.expected, "actual", ok)
+		}
+	}
 }

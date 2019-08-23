@@ -245,6 +245,7 @@ func TestXChainMgBasic(t *testing.T) {
 	if formatBlockErr != nil {
 		t.Error("format block error", formatBlockErr.Error())
 	}
+	block.Height = rootXCore.Ledger.GetMeta().TrunkHeight + 1
 	globalBlock = &pb.Block{
 		Header:  &pb.Header{},
 		Bcname:  "xuper",
@@ -274,6 +275,7 @@ func TestXChainMgBasic(t *testing.T) {
 	if formatBlockErr != nil {
 		t.Error("format block error", formatBlockErr.Error())
 	}
+	block.Height = rootXCore.Ledger.GetMeta().TrunkHeight + 1
 	globalBlock = &pb.Block{
 		Header:  &pb.Header{},
 		Bcname:  "xuper",
@@ -308,6 +310,7 @@ func TestXChainMgBasic(t *testing.T) {
 		Status:  pb.Block_TRUNK,
 		Block:   block2,
 	}
+	block2.Height = rootXCore.Ledger.GetMeta().TrunkHeight + 1
 	sendBlockErr = rootXCore.SendBlock(globalBlock, &global.XContext{Timer: global.NewXTimer()})
 	if sendBlockErr != nil {
 		t.Error("send block error ", sendBlockErr.Error())
