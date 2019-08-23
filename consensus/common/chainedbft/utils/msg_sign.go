@@ -8,8 +8,8 @@ import (
 
 	"github.com/xuperchain/xuperunion/crypto/hash"
 
-	 "github.com/xuperchain/xuperunion/pb"
 	crypto_base "github.com/xuperchain/xuperunion/crypto/client/base"
+	"github.com/xuperchain/xuperunion/pb"
 )
 
 func encodeChainedBftPhaseMessage(msg *pb.ChainedBftPhaseMessage) ([]byte, error) {
