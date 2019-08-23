@@ -85,7 +85,7 @@ message QueryTxRequest {
 
 message QueryTxResponse {
   // defined in user code
-  TxStatus tx = 1;
+  Transaction tx = 1;
 }
 
 message QueryBlockRequest {
@@ -160,26 +160,6 @@ message TxOutput
     bytes to_addr = 2;
     // Fronzen height
     int64 frozen_height = 4;
-}
-
-// TransactionStatus is the status of transaction
-enum TransactionStatus {
-// Undefined status
-  UNDEFINE = 0;
-// Transaction not exist
-  NOEXIST = 1;
-// Transaction have been confirmed
-  CONFIRM = 2;
-// Transaction is on the furcation
-  FURCATION = 3;
-// Transaction have not been confirmed
-  UNCONFIRM = 4;
-}
-
-// tx with status
-message TxStatus {
-  TransactionStatus status = 4;
-  Transaction tx = 7;
 }
 
 // Transaction is the information of the transaction
