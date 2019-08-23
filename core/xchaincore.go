@@ -250,23 +250,25 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	xc.Utxovm.RegisterVM("consensus", xc.con, global.VMPrivRing0)
 	xc.Utxovm.RegisterVM("proposal", xc.proposal, global.VMPrivRing0)
 
-	nc, err := native.New(&cfg.Native, datapath+"/native", xc.log, datapathOthers, kvEngineType)
-	if err != nil {
-		xc.log.Error("make native", "error", err)
-		return err
-	}
-	xc.NativeCodeMgr = nc
-
-	xc.Utxovm.RegisterVM("native", nc, global.VMPrivRing0)
-
 	xbridge := bridge.New()
+	if cfg.Native.Enable {
+		nc, err := native.New(&cfg.Native, datapath+"/native", xc.log, datapathOthers, kvEngineType)
+		if err != nil {
+			xc.log.Error("make native", "error", err)
+			return err
+		}
+		xc.NativeCodeMgr = nc
+
+		xc.Utxovm.RegisterVM("native", nc, global.VMPrivRing0)
+		xbridge.RegisterExecutor("native", nc)
+	}
+
 	wasmvm, err := wasm.New(&cfg.Wasm, filepath.Join(datapath, "wasm"), xbridge, xc.Utxovm.GetXModel())
 	if err != nil {
 		xc.log.Error("initialize WASM error", "error", err)
 		return err
 	}
 
-	xbridge.RegisterExecutor("native", nc)
 	xbridge.RegisterExecutor("wasm", wasmvm)
 	xbridge.RegisterToXCore(xc.Utxovm.RegisterVM3)
 
@@ -765,7 +767,7 @@ func (xc *XChainCore) PostTx(in *pb.TxStatus, hd *global.XContext) (*pb.CommonRe
 			out.Header.Error = pb.XChainErrorEnum_GAS_NOT_ENOUGH_ERROR
 		case utxo.ErrRWSetInvalid, utxo.ErrInvalidTxExt:
 			out.Header.Error = pb.XChainErrorEnum_RWSET_INVALID_ERROR
-		case utxo.ErrAclNotEnough:
+		case utxo.ErrACLNotEnough:
 			out.Header.Error = pb.XChainErrorEnum_RWACL_INVALID_ERROR
 		case utxo.ErrVersionInvalid:
 			out.Header.Error = pb.XChainErrorEnum_TX_VERSION_INVALID_ERROR

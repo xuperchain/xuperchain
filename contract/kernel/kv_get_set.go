@@ -2,6 +2,8 @@ package kernel
 
 import (
 	"fmt"
+
+	"github.com/xuperchain/xuperunion/contract"
 )
 
 // GetMethod define Get type
@@ -13,7 +15,7 @@ type SetMethod struct {
 }
 
 // Invoke Get method implementation
-func (gm *GetMethod) Invoke(ctx *KContext, args map[string][]byte) ([]byte, error) {
+func (gm *GetMethod) Invoke(ctx *KContext, args map[string][]byte) (*contract.Response, error) {
 	if args["Bucket"] == nil || args["Key"] == nil {
 		return nil, fmt.Errorf("invoke Get failed, args are invalid: %v", args)
 	}
@@ -23,11 +25,14 @@ func (gm *GetMethod) Invoke(ctx *KContext, args map[string][]byte) ([]byte, erro
 	if err != nil {
 		return nil, err
 	}
-	return getResult.PureData.Value, nil
+	return &contract.Response{
+		Status: contract.StatusOK,
+		Body:   getResult.PureData.Value,
+	}, nil
 }
 
 // Invoke Set method implementation
-func (sm *SetMethod) Invoke(ctx *KContext, args map[string][]byte) ([]byte, error) {
+func (sm *SetMethod) Invoke(ctx *KContext, args map[string][]byte) (*contract.Response, error) {
 	if args["Bucket"] == nil || args["Key"] == nil || args["Value"] == nil {
 		return nil, fmt.Errorf("invoke Set failed, args are invalid: %v", args)
 	}
@@ -39,5 +44,8 @@ func (sm *SetMethod) Invoke(ctx *KContext, args map[string][]byte) ([]byte, erro
 	if err != nil {
 		return nil, err
 	}
-	return value, nil
+	return &contract.Response{
+		Status: contract.StatusOK,
+		Body:   value,
+	}, nil
 }

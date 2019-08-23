@@ -10,6 +10,20 @@ import "github.com/spf13/cobra"
 type MultisigCommand struct {
 }
 
+// MultisigData generated multisig data
+type MultisigData struct {
+	R       []byte   // common random value
+	C       []byte   // common public key
+	KList   [][]byte // random value list
+	PubKeys [][]byte // all public keys
+}
+
+// PartialSign partial sign is single Si sign for multisig
+type PartialSign struct {
+	Si    []byte
+	Index int
+}
+
 // NewMultisigCommand MultisigCommand init method
 func NewMultisigCommand(cli *Cli) *cobra.Command {
 	cmd := &cobra.Command{

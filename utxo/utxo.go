@@ -32,7 +32,6 @@ import (
 	"github.com/xuperchain/xuperunion/kv/kvdb"
 	ledger_pkg "github.com/xuperchain/xuperunion/ledger"
 	"github.com/xuperchain/xuperunion/pb"
-	pm "github.com/xuperchain/xuperunion/permission"
 	"github.com/xuperchain/xuperunion/permission/acl"
 	acli "github.com/xuperchain/xuperunion/permission/acl/impl"
 	"github.com/xuperchain/xuperunion/permission/acl/utils"
@@ -66,7 +65,7 @@ var (
 	ErrInvalidWithdrawAmount   = errors.New("withdraw amount is invalid")
 	ErrServiceRefused          = errors.New("Service refused")
 	ErrRWSetInvalid            = errors.New("RWSet of transaction invalid")
-	ErrAclNotEnough            = errors.New("ACL not enough")
+	ErrACLNotEnough            = errors.New("ACL not enough")
 	ErrInvalidSignature        = errors.New("the signature is invalid or not match the address")
 	ErrInitiatorType           = errors.New("the initiator type is invalid, need AK")
 
@@ -738,6 +737,7 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 	response := [][]byte{}
 
 	var requests []*pb.InvokeRequest
+	var responses []*pb.ContractResponse
 	for i, tmpReq := range req.Requests {
 		moduleName := tmpReq.GetModuleName()
 		vm, err := uv.vmMgr3.GetVM(moduleName)
@@ -764,7 +764,8 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 				"contractName", tmpReq.GetContractName())
 			return nil, err
 		}
-		response = append(response, res)
+		response = append(response, res.Body)
+		responses = append(responses, contract.ToPBContractResponse(res))
 
 		resourceUsed := ctx.ResourceUsed()
 		if i >= len(reservedRequests) {
@@ -781,11 +782,12 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 		return nil, err
 	}
 	rsps := &pb.InvokeResponse{
-		Inputs:   xmodel.GetTxInputs(inputs),
-		Outputs:  xmodel.GetTxOutputs(outputs),
-		Response: response,
-		Requests: requests,
-		GasUsed:  gasUesdTotal,
+		Inputs:    xmodel.GetTxInputs(inputs),
+		Outputs:   xmodel.GetTxOutputs(outputs),
+		Response:  response,
+		Requests:  requests,
+		GasUsed:   gasUesdTotal,
+		Responses: responses,
 	}
 	return rsps, nil
 }
@@ -1175,31 +1177,9 @@ func (uv *UtxoVM) VerifyTx(tx *pb.Transaction) (bool, error) {
 	if err != nil || !isValid {
 		uv.xlog.Warn("ImmediateVerifyTx failed", "error", err,
 			"AuthRequire ", tx.AuthRequire, "AuthRequireSigns ", tx.AuthRequireSigns,
-			"Initiator", tx.Initiator, "InitiatorSigns", tx.InitiatorSigns)
+			"Initiator", tx.Initiator, "InitiatorSigns", tx.InitiatorSigns, "XuperSign", tx.XuperSign)
 	}
 	return isValid, err
-}
-
-// verifyTxSign 纯密码学验证
-func (uv *UtxoVM) verifyTxSign(tx *pb.Transaction) (bool, error) {
-	if len(tx.GetAuthRequire()) != len(tx.GetAuthRequireSigns()) {
-		return false, fmt.Errorf("tx.AuthRequire length not equal to tx.AuthRequireSigns")
-	}
-	digestHash, dhErr := txhash.MakeTxDigestHash(tx)
-	if dhErr != nil {
-		return false, dhErr
-	}
-	verifiedAddrs := map[string]bool{}
-	for i, ak := range tx.AuthRequire {
-		if verifiedAddrs[string(ak)] {
-			continue
-		}
-		if ok, _ := pm.IdentifyAK(ak, tx.AuthRequireSigns[i], digestHash); !ok {
-			return false, errors.New("utxo.verifyTxSign error")
-		}
-		verifiedAddrs[ak] = true
-	}
-	return true, nil
 }
 
 // IsInUnConfirm check if the given txid is in unconfirm table
@@ -2024,7 +2004,7 @@ func (uv *UtxoVM) GetContractStatus(contractName string) (*pb.ContractStatus, er
 		uv.xlog.Warn("GetContractStatus query tx error", "error", err.Error())
 		return nil, err
 	}
-	res.Desc = tx.GetDesc()
+	res.Desc = tx.Tx.GetDesc()
 	// query if contract is bannded
 	res.IsBanned, err = uv.queryContractBannedStatus(contractName)
 	return res, nil

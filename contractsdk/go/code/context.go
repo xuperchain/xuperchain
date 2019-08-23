@@ -2,6 +2,8 @@ package code
 
 import (
 	"math/big"
+
+	pb "github.com/xuperchain/xuperunion/contractsdk/go/pb"
 )
 
 // Context is the context in which the contract runs
@@ -16,8 +18,8 @@ type Context interface {
 	DeleteObject(key []byte) error
 	NewIterator(start, limit []byte) Iterator
 
-	QueryTx(txid []byte) (*TxStatus, error)
-	QueryBlock(blockid []byte) (*Block, error)
+	QueryTx(txid string) (*pb.TxStatus, error)
+	QueryBlock(blockid string) (*pb.Block, error)
 	Transfer(to string, amount *big.Int) error
 	Call(module, contract, method string, args map[string][]byte) (*Response, error)
 }

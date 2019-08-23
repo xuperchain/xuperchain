@@ -5,6 +5,9 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"encoding/json"
+	"fmt"
+	"github.com/xuperchain/xuperunion/crypto/common"
 
 	"github.com/xuperchain/xuperunion/crypto/account"
 	"github.com/xuperchain/xuperunion/crypto/client/base"
@@ -16,9 +19,13 @@ import (
 	walletRand "github.com/xuperchain/xuperunion/hdwallet/rand"
 )
 
+// make sure this plugin implemented the interface
+var _ base.CryptoClient = (*XchainCryptoClient)(nil)
+
 // XchainCryptoClient is the implementation for xchain default crypto
 type XchainCryptoClient struct {
 	base.CryptoClientCommon
+	base.CryptoClientCommonMultiSig
 }
 
 // GetInstance returns the an instance of XchainCryptoClient
@@ -145,4 +152,51 @@ func (xcc XchainCryptoClient) GetEcdsaPrivateKeyFromJSON(jsonBytes []byte) (*ecd
 // GetEcdsaPublicKeyFromJSON 从导出的公钥文件读取公钥
 func (xcc XchainCryptoClient) GetEcdsaPublicKeyFromJSON(jsonBytes []byte) (*ecdsa.PublicKey, error) {
 	return account.GetEcdsaPublicKeyFromJSON(jsonBytes)
+}
+
+// XuperVerify 统一验签算法, common signature verification function
+func (xcc XchainCryptoClient) XuperVerify(keys []*ecdsa.PublicKey, sig []byte, message []byte) (bool, error) {
+	if len(keys) < 1 {
+		return false, fmt.Errorf("no public key found")
+	}
+	curveName := keys[0].Params().Name
+	xuperSig := new(common.XuperSignature)
+	err := json.Unmarshal(sig, xuperSig)
+	if err != nil {
+		return false, err
+	}
+
+	// 说明不是统一超级签名的格式
+	if err != nil {
+		switch keys[0].Params().Name {
+		case config.CurveNist: // NIST
+			verifyResult, err := sign.VerifyECDSA(keys[0], sig, message)
+			return verifyResult, err
+		default: // 不支持的密码学类型
+			return false, fmt.Errorf("This cryptography[%v] has not been supported yet", keys[0].Params().Name)
+		}
+	}
+
+	switch xuperSig.SigType {
+	// ECDSA签名
+	case common.ECDSA:
+		if curveName == config.CurveNist {
+			verifyResult, err := sign.VerifyECDSA(keys[0], xuperSig.SigContent, message)
+			return verifyResult, err
+		}
+		return false, fmt.Errorf("This cryptography[%v] has not been supported yet", curveName)
+
+	// 多重签名
+	case common.MultiSig:
+		if curveName == config.CurveNist {
+			verifyResult, err := xcc.VerifyMultiSig(keys, xuperSig.SigContent, message)
+			return verifyResult, err
+		}
+		return false, fmt.Errorf("This cryptography[%v] has not been supported yet", curveName)
+
+	// 不支持的签名类型
+	default:
+		err = fmt.Errorf("This XuperSignature type[%v] is not supported in this version", xuperSig.SigType)
+		return false, err
+	}
 }

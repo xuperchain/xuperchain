@@ -136,6 +136,7 @@ type NativeConfig struct {
 	StopTimeout int
 	Deploy      NativeDeployConfig
 	Docker      NativeDockerConfig
+	Enable      bool
 }
 
 // XVMConfig contains the xvm configuration
