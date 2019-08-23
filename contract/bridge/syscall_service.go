@@ -90,12 +90,12 @@ func (c *SyscallService) QueryTx(ctx context.Context, in *pb.QueryTxRequest) (*p
 		return nil, err
 	}
 
-	tx, status, err := nctx.Cache.QueryTx(rawTxid)
+	tx, confirmed, err := nctx.Cache.QueryTx(rawTxid)
 	if err != nil {
 		return nil, err
 	}
 
-	if status == false {
+	if !confirmed {
 		return nil, fmt.Errorf("Unconfirm tx:%s", in.Txid)
 	}
 
