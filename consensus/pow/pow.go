@@ -216,7 +216,7 @@ func (pc *PowConsensus) getTargetBitsFromBlock(block *pb.InternalBlock) int32 {
 }
 
 func (pc *PowConsensus) getPrevBlock(curBlock *pb.InternalBlock, gap int32) (prevBlock *pb.InternalBlock, err error) {
-	for i := int32(0); i <= gap; i++ {
+	for i := int32(0); i < gap; i++ {
 		prevBlock, err = pc.ledger.QueryBlockHeader(curBlock.PreHash)
 		if err != nil {
 			return
