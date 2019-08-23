@@ -1,6 +1,6 @@
 syntax = "proto3";
 
-package chainedbft_pb;
+package pb;
 
 // QCState is the phase of hotstuff
 enum QCState {

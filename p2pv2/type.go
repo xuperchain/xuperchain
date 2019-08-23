@@ -27,7 +27,7 @@ type P2PServer interface {
 	UnRegister(sub *Subscriber) error
 
 	SendMessage(context.Context, *p2pPb.XuperMessage, ...MessageOption) error
-	// todo: 将请求的参数改为Option的方式
+
 	SendMessageWithResponse(context.Context, *p2pPb.XuperMessage, ...MessageOption) ([]*p2pPb.XuperMessage, error)
 
 	GetNetURL() string
