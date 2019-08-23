@@ -25,7 +25,7 @@ type vmContextImpl struct {
 	release  func()
 }
 
-func (v *vmContextImpl) Invoke(method string, args map[string][]byte) ([]byte, error) {
+func (v *vmContextImpl) Invoke(method string, args map[string][]byte) (*contract.Response, error) {
 	v.ctx.Method = method
 	v.ctx.Args = args
 	err := v.instance.Exec()
@@ -40,13 +40,11 @@ func (v *vmContextImpl) Invoke(method string, args map[string][]byte) ([]byte, e
 		}
 	}
 
-	if v.ctx.Output.GetStatus() > 400 {
-		return nil, &ContractError{
-			Status:  int(v.ctx.Output.GetStatus()),
-			Message: v.ctx.Output.GetMessage(),
-		}
-	}
-	return v.ctx.Output.GetBody(), nil
+	return &contract.Response{
+		Status:  int(v.ctx.Output.GetStatus()),
+		Message: v.ctx.Output.GetMessage(),
+		Body:    v.ctx.Output.GetBody(),
+	}, nil
 }
 
 func (v *vmContextImpl) ResourceUsed() contract.Limits {

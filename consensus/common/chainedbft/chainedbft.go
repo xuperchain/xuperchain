@@ -9,10 +9,10 @@ import (
 	cons_base "github.com/xuperchain/xuperunion/consensus/base"
 	"github.com/xuperchain/xuperunion/consensus/common/chainedbft/config"
 	"github.com/xuperchain/xuperunion/consensus/common/chainedbft/external"
-	chainedbft_pb "github.com/xuperchain/xuperunion/consensus/common/chainedbft/pb"
 	"github.com/xuperchain/xuperunion/consensus/common/chainedbft/smr"
 	crypto_base "github.com/xuperchain/xuperunion/crypto/client/base"
 	"github.com/xuperchain/xuperunion/p2pv2"
+	"github.com/xuperchain/xuperunion/pb"
 )
 
 // ChainedBft is the implements of hotstuff
@@ -25,7 +25,7 @@ type ChainedBft struct {
 
 // NewChainedBft create and start the chained-bft instance
 func NewChainedBft(
-	cfg config.Config,
+	cfg *config.Config,
 	bcname string,
 	address string,
 	publicKey string,
@@ -34,7 +34,7 @@ func NewChainedBft(
 	externalCons external.ExternalInterface,
 	cryptoClient crypto_base.CryptoClient,
 	p2p *p2pv2.P2PServerV2,
-	proposalQC, generateQC, lockedQC *chainedbft_pb.QuorumCert) (*ChainedBft, error) {
+	proposalQC, generateQC, lockedQC *pb.QuorumCert) (*ChainedBft, error) {
 
 	// set up log
 	xlog := log.New("module", "chainedbft")
@@ -84,12 +84,12 @@ func (cb *ChainedBft) ProcessNewView(viewNumber int64, leader, preLeader string)
 }
 
 // GetGenerateQC get latest proposal QC
-func (cb *ChainedBft) GetGenerateQC(proposalID []byte) (*chainedbft_pb.QuorumCert, error) {
+func (cb *ChainedBft) GetGenerateQC(proposalID []byte) (*pb.QuorumCert, error) {
 	return cb.smr.GetGenerateQC(proposalID)
 }
 
 // ProcessProposal used to generate new QuorumCert and broadcast to other replicas
-func (cb *ChainedBft) ProcessProposal(viewNumber int64, proposalID, proposalMsg []byte) (*chainedbft_pb.QuorumCert, error) {
+func (cb *ChainedBft) ProcessProposal(viewNumber int64, proposalID, proposalMsg []byte) (*pb.QuorumCert, error) {
 	return cb.smr.ProcessProposal(viewNumber, proposalID, proposalMsg)
 }
 

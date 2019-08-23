@@ -1,8 +1,9 @@
 syntax = "proto3";
-
+ 
+import "google/api/annotations.proto";
+import "chainedbft.proto";
 package pb;
 
-import "google/api/annotations.proto";
 
 enum XChainErrorEnum {
   SUCCESS = 0;
@@ -430,6 +431,9 @@ message InternalBlock {
   map<string, string> failed_txs = 18; // txid -> failed reason
   int32 targetBits = 19;
 
+  // Justify used in chained-bft
+  QuorumCert Justify = 20;
+  
   //下面的属性会动态变化
   // If the block is on the trunk
   bool in_trunk = 14;
@@ -725,6 +729,7 @@ message InvokeResponse {
   repeated bytes response = 3;
   int64 gas_used = 4;
   repeated InvokeRequest requests = 5;
+  repeated ContractResponse responses = 6;
 }
 
 //扩展输入
@@ -867,4 +872,11 @@ message PreExecWithSelectUTXOResponse {
   InvokeResponse response = 3;
   // for preExec & selectUTXO
   UtxoOutput utxoOutput = 4;
+}
+
+// ContractResponse is the response returnd by contract
+message ContractResponse {
+  int32  status = 1;
+  string message = 2;
+  bytes  body = 3;
 }
