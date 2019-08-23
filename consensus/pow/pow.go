@@ -152,7 +152,7 @@ func (pc *PowConsensus) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock)
 
 	targetBits := pc.calDifficulty(in.Height)
 	if targetBits != in.TargetBits {
-		pc.log.Warn("unexpected target bits", "expect", targetBits, "got", in.TargetBits)
+		pc.log.Warn("unexpected target bits", "expect", targetBits, "got", in.TargetBits, "proposer", string(in.Proposer))
 		return false, nil
 	}
 	preBlock, err := pc.ledger.QueryBlock(in.PreHash)
