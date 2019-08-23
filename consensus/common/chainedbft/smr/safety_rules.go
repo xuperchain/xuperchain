@@ -1,15 +1,15 @@
 package smr
 
 import (
-	chainedbft_pb "github.com/xuperchain/xuperunion/consensus/common/chainedbft/pb"
 	"github.com/xuperchain/xuperunion/consensus/common/chainedbft/utils"
+	"github.com/xuperchain/xuperunion/pb"
 )
 
 // safeProposal make sure whether Proposal is safe
 // 1 check the proposal' view number
 // 2 verify justify's votes
 // 3 external consensus make sure whether the proposalMsg is safe
-func (s *Smr) safeProposal(propsQC, justify *chainedbft_pb.QuorumCert) (bool, error) {
+func (s *Smr) safeProposal(propsQC, justify *pb.QuorumCert) (bool, error) {
 	// step1: liveness rule
 	// the proposQC's view number need to more than lockedQC
 	if propsQC.GetViewNumber() < s.lockedQC.GetViewNumber() {
