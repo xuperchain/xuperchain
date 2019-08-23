@@ -4,7 +4,7 @@ set -e -x
 
 cd `dirname $0`
 
-#:<<!
+:<<!
 # install protoc 3.7.1 
 # export GO111MODULES=on
 # go install github.com/golang/protobuf/protoc-gen-go
@@ -24,7 +24,7 @@ protoc -I contractsdk/pb contractsdk/pb/contract_service.proto \
 protoc -I contractsdk/pb contractsdk/pb/contract.proto \
        --go_out=paths=source_relative:contractsdk/go/pb
 
-#!
+!
 
 # build wasm2c
 make -C xvm/compile/wabt -j 4
