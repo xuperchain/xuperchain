@@ -14,6 +14,7 @@ import (
 	"math/big"
 	"net"
 	"net/http"
+	_ "net/http/pprof"
 
 	"github.com/golang/protobuf/proto"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
