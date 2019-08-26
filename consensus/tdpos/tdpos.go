@@ -341,15 +341,30 @@ Again:
 	if blockPos > tp.config.blockNum || pos >= tp.config.proposerNum {
 		if !sentNewView {
 			// only run once when term or proposer change
-			tp.notifyNewView(height)
+			err := tp.notifyNewView(height)
+			if err != nil {
+				tp.log.Warn("proposer or term change, bft Newview failed", "error", err)
+			}
 			sentNewView = true
 		}
 		goto Again
 	}
+	// reset proposers when term changed
+	if pos == 0 && blockPos == 1 {
+		err := tp.notifyTermChanged(tp.curTerm)
+		if err != nil {
+			tp.log.Warn("proposer or term change, bft Update Validators failed", "error", err)
+		}
+	}
+
+	// if NewView not sent, send NewView message
 	if !sentNewView {
 		// if no term or proposer change, run NewView before generate block
-		tp.notifyNewView(height)
-		sentNewView = false
+		err := tp.notifyNewView(height)
+		if err != nil {
+			tp.log.Warn("proposer not changed, bft Newview failed", "error", err)
+		}
+		sentNewView = true
 	}
 	// master check
 	if tp.isProposer(term, pos, tp.address) {
@@ -385,8 +400,6 @@ func (tp *TDpos) notifyNewView(height int64) error {
 		return nil
 	}
 
-	// get next proposer
-
 	// get current proposer
 	meta := tp.ledger.GetMeta()
 	proposer, err := tp.getProposer(0, 0)
@@ -401,6 +414,7 @@ func (tp *TDpos) notifyNewView(height int64) error {
 		proposer = string(blockTip.GetProposer())
 	}
 
+	// get next proposer
 	// 查当前时间的term 和 pos
 	t2 := time.Now()
 	un2 := t2.UnixNano()
@@ -410,7 +424,18 @@ func (tp *TDpos) notifyNewView(height int64) error {
 		return err
 	}
 
-	return tp.bftPaceMaker.NextNewView(height, proposer, nextProposer)
+	// old height might out-of-date, use current trunkHeight when NewView
+	return tp.bftPaceMaker.NextNewView(meta.TrunkHeight+1, nextProposer, proposer)
+}
+
+func (tp *TDpos) notifyTermChanged(term int64) error {
+	if !tp.config.enableBFT {
+		// BFT not enabled, continue
+		return nil
+	}
+
+	proposers := tp.getTermProposer(term)
+	return tp.bftPaceMaker.UpdateValidatorSet(proposers)
 }
 
 // CheckMinerMatch is the specific implementation of ConsensusInterface
@@ -501,6 +526,15 @@ func (tp *TDpos) ProcessBeforeMiner(timestamp int64) (map[string]interface{}, bo
 		return nil, false
 	}
 
+	if tp.config.enableBFT {
+		qc, err := tp.bftPaceMaker.CurrentQCHigh([]byte(""))
+		if err != nil {
+			return nil, false
+		}
+		res["quorum_cert"] = qc
+		tp.log.Debug("bft quorum_cert", "value", qc)
+	}
+
 	res["type"] = TYPE
 	//res["curTerm"] = tp.curTerm
 	//res["curBlockNum"] = tp.curBlockNum
@@ -512,7 +546,8 @@ func (tp *TDpos) ProcessBeforeMiner(timestamp int64) (map[string]interface{}, bo
 
 // ProcessConfirmBlock is the specific implementation of ConsensusInterface
 func (tp *TDpos) ProcessConfirmBlock(block *pb.InternalBlock) error {
-	if tp.config.enableBFT {
+	// send bft NewProposal if bft enable and it's the miner
+	if tp.config.enableBFT && bytes.Compare(block.GetProposer(), tp.address) == 0 {
 		blockData := &pb.Block{
 			Bcname:  tp.bcname,
 			Blockid: block.Blockid,
@@ -599,7 +634,11 @@ func (tp *TDpos) SetContext(context *contract.TxContext) error {
 }
 
 // Stop is the specific implementation of interface contract
-func (tp *TDpos) Stop() {}
+func (tp *TDpos) Stop() {
+	if tp.config.enableBFT && tp.bftPaceMaker != nil {
+		tp.bftPaceMaker.Stop()
+	}
+}
 
 // ReadOutput is the specific implementation of interface contract
 func (tp *TDpos) ReadOutput(desc *contract.TxDesc) (contract.ContractOutputInterface, error) {
@@ -742,5 +781,5 @@ func (tp *TDpos) initBFT(cfg *config.NodeConfig) error {
 		}
 	}
 	tp.bftPaceMaker = paceMaker
-	return nil
+	return tp.bftPaceMaker.Start()
 }

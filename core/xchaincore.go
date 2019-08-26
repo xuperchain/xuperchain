@@ -539,6 +539,7 @@ func (xc *XChainCore) doMiner() {
 	// 挖矿前共识的预处理
 	var curTerm, curBlockNum int64
 	var targetBits int32
+	qc := (*pb.QuorumCert)(nil)
 	data, ok := xc.con.ProcessBeforeMiner(xc.Ledger.GetMeta().TrunkHeight+1, t.UnixNano())
 	minerTimer.Mark("ProcessBeforeMiner")
 	if ok {
@@ -549,6 +550,9 @@ func (xc *XChainCore) doMiner() {
 					xc.log.Trace("Minning tdpos ProcessBeforeMiner!")
 					curTerm = data["curTerm"].(int64)
 					curBlockNum = data["curBlockNum"].(int64)
+					if qci, ok := data["quorum_cert"].(*pb.QuorumCert); ok {
+						qc = qci
+					}
 				case consensus.ConsensusTypePow:
 					xc.log.Trace("Minning tdpos ProcessBeforeMiner!")
 					targetBits = data["targetBits"].(int32)
@@ -610,8 +614,9 @@ func (xc *XChainCore) doMiner() {
 	awardtx, err := xc.Utxovm.GenerateAwardTx(xc.address, blockAward.String(), []byte{'1'})
 	minerTimer.Mark("GenAwardTx")
 	txs = append(txs, awardtx)
-	freshBlock, err = xc.Ledger.FormatPOWBlock(txs, xc.address, xc.privateKey,
-		t.UnixNano(), curTerm, curBlockNum, xc.Utxovm.GetLatestBlockid(), targetBits, xc.Utxovm.GetTotal(), fakeBlock.FailedTxs)
+	freshBlock, err = xc.Ledger.FormatMinerBlock(txs, xc.address, xc.privateKey,
+		t.UnixNano(), curTerm, curBlockNum, xc.Utxovm.GetLatestBlockid(), targetBits,
+		xc.Utxovm.GetTotal(), qc, fakeBlock.FailedTxs)
 	if err != nil {
 		xc.log.Warn("[Minning] format block error", "logid", header.Logid, "err", err)
 		return

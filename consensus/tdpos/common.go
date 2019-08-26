@@ -95,26 +95,27 @@ func (tp *TDpos) getNextProposer(term int64, pos int64, blockPos int64) (string,
 		tp.log.Warn("TDpos getTermProposer error", "term", term)
 		return "", errors.New("no proposer found")
 	}
-	if pos < 0 || pos > int64(len(proposers)-1) {
-		tp.log.Warn("TDpos getTermProposer error, pos index out of range", "pos", pos, "proposers", proposers)
-		return "", errors.New("invalid pos")
-	}
 
-	// leader not changed
-	if blockPos < tp.config.blockNum {
-		return proposers[pos].Address, nil
-	}
 	// current proposer is the last proposer of this term
-	if pos == int64(len(proposers)-1) {
+	if pos >= int64(len(proposers)) {
 		proposers := tp.getTermProposer(term + 1)
 		if proposers == nil {
 			tp.log.Warn("TDpos getTermProposer error", "term", term+1)
 			return "", errors.New("no proposer found")
 		}
 		return proposers[0].Address, nil
+	} else if pos < 0 {
+		tp.log.Warn("TDpos getTermProposer error, pos index out of range", "pos", pos, "proposers", proposers)
+		return "", errors.New("invalid pos")
 	}
+
+	// leader not changed
+	if blockPos <= tp.config.blockNum {
+		return proposers[pos].Address, nil
+	}
+
 	// return next proposer of current term
-	return proposers[pos+1].Address, nil
+	return proposers[(pos+1)%int64(len(proposers))].Address, nil
 }
 
 // 查询当前轮的验证者名单

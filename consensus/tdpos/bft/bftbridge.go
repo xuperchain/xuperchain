@@ -43,9 +43,11 @@ func (cb *CbftBridge) CallPreQc(qc *pb.QuorumCert) (*pb.QuorumCert, error) {
 		return nil, err
 	}
 
-	// TODO get pre qc from block content
+	if block.GetBlock() == nil {
+		return nil, fmt.Errorf("CallPreQC block content is not complete")
+	}
 
-	return nil, nil
+	return block.Block.Justify, nil
 }
 
 // CallPreProposalMsg call external consensus for the marshal format of proposalMsg's parent block

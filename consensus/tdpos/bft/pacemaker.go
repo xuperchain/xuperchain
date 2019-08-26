@@ -1,6 +1,8 @@
 package bft
 
 import (
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
 
 	"github.com/golang/protobuf/proto"
@@ -44,8 +46,10 @@ func (dpm *DPoSPaceMaker) NextNewView(viewNum int64, proposer, preProposer strin
 	if viewNum < dpm.currentView {
 		return fmt.Errorf("next view cannot smaller than current view number")
 	}
-	dpm.cbft.ProcessNewView(viewNum, proposer, preProposer)
-	return nil
+	dpm.currentView = viewNum
+	err := dpm.cbft.ProcessNewView(viewNum, proposer, preProposer)
+	dpm.log.Trace("bft NewView", "viewNum", viewNum, "proposer", proposer, "preProposer", preProposer)
+	return err
 }
 
 // NextNewProposal used to submit new proposal to bft network
@@ -61,21 +65,35 @@ func (dpm *DPoSPaceMaker) NextNewProposal(proposalID []byte, data interface{}) e
 		dpm.log.Warn("proposal proto marshal failed", "error", err)
 		return err
 	}
-	_, err = dpm.cbft.GetGenerateQC(proposalID)
-	if err != nil {
-		dpm.log.Warn("proposal QC generate failed", "error", err)
-		return err
-	}
-	// TODO: add qc into block
 	_, err = dpm.cbft.ProcessProposal(dpm.currentView, blockid, blockMsg)
 	if err != nil {
 		dpm.log.Warn("ProcessProposal failed", "error", err)
 		return err
 	}
+	dpm.log.Trace("bft NewProposal", "viewNum", dpm.currentView, "blockid", hex.EncodeToString(blockid))
 	return nil
+}
+
+// CurrentQCHigh get the latest QuorumCert
+func (dpm *DPoSPaceMaker) CurrentQCHigh(proposalID []byte) (*pb.QuorumCert, error) {
+	// TODO: what would happen if current QC don't have 2/3 signature?
+	return dpm.cbft.GetGenerateQC(proposalID)
 }
 
 // UpdateValidatorSet update the validator set of BFT
 func (dpm *DPoSPaceMaker) UpdateValidatorSet(validators []*base.CandidateInfo) error {
+	valStr, _ := json.Marshal(validators)
+	dpm.log.Debug("bft update validator set", "validators", string(valStr))
 	return dpm.cbft.UpdateValidateSets(validators)
+}
+
+// Start run BFT
+func (dpm *DPoSPaceMaker) Start() error {
+	go dpm.cbft.Start()
+	return nil
+}
+
+// Stop finish running BFT
+func (dpm *DPoSPaceMaker) Stop() error {
+	return dpm.cbft.Stop()
 }
