@@ -10,7 +10,6 @@ import (
 	"github.com/xuperchain/xuperunion/contract/wasm/vm/memory"
 	"github.com/xuperchain/xuperunion/contractsdk/go/code"
 	"github.com/xuperchain/xuperunion/pb"
-	"github.com/xuperchain/xuperunion/xmodel"
 )
 
 type contractCode struct {
@@ -101,12 +100,8 @@ func TestWasmInvoke(t *testing.T) {
 			t.Fatal(err)
 		}
 		{
-			cache, err := xmodel.NewXModelCache(tctx.Model, true)
-			if err != nil {
-				t.Fatal(err)
-			}
 			ctxCfg := &contract.ContextConfig{
-				XMCache:        cache,
+				XMCache:        tctx.Cache,
 				Initiator:      "",
 				AuthRequire:    []string{},
 				ContractName:   "counter",
@@ -124,6 +119,44 @@ func TestWasmInvoke(t *testing.T) {
 				t.Fatal(err)
 			}
 			t.Logf("out:%v", out)
+		}
+	})
+}
+
+func TestWasmInitializeMethod(t *testing.T) {
+	WithTestContext(t, "memory", func(tctx *FakeWASMContext) {
+		deployArgs := makeDeployArgs(t)
+		_, _, err := tctx.vmm.DeployContract(&contract.ContextConfig{
+			XMCache:        tctx.Cache,
+			ResourceLimits: contract.MaxLimits,
+		}, deployArgs)
+		if err != nil {
+			t.Fatal(err)
+		}
+		err = tctx.CommitCache()
+		if err != nil {
+			t.Fatal(err)
+		}
+		{
+			ctxCfg := &contract.ContextConfig{
+				XMCache:        tctx.Cache,
+				Initiator:      "",
+				AuthRequire:    []string{},
+				ContractName:   "counter",
+				ResourceLimits: contract.MaxLimits,
+				CanInitialize:  false,
+			}
+			ctx, err := tctx.vm.NewContext(ctxCfg)
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer ctx.Release()
+			_, err = ctx.Invoke("initialize", map[string][]byte{
+				"key": []byte("mycounter"),
+			})
+			if err == nil {
+				t.Fatal("expect non nil error")
+			}
 		}
 	})
 }
