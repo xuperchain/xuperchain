@@ -186,6 +186,7 @@ func (v *VMManager) DeployContract(contextConfig *contract.ContextConfig, args m
 
 	initConfig := *contextConfig
 	initConfig.ContractName = contractName
+	initConfig.CanInitialize = true
 	out, resourceUsed, err := v.initContract(&initConfig, initArgs)
 	if err != nil {
 		if _, ok := err.(*bridge.ContractError); !ok {
