@@ -84,6 +84,7 @@ func (v *vmImpl) NewContext(ctxCfg *contract.ContextConfig) (contract.Context, e
 	}
 	instance, err := v.exec.NewInstance(ctx)
 	if err != nil {
+		v.ctxmgr.DestroyContext(ctx)
 		return nil, err
 	}
 	return &vmContextImpl{
