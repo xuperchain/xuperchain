@@ -1999,12 +1999,12 @@ func (uv *UtxoVM) GetContractStatus(contractName string) (*pb.ContractStatus, er
 	}
 	txid := verdata.GetRefTxid()
 	res.Txid = fmt.Sprintf("%x", txid)
-	tx, err := uv.model3.QueryTx(txid)
+	tx, _, err := uv.model3.QueryTx(txid)
 	if err != nil {
 		uv.xlog.Warn("GetContractStatus query tx error", "error", err.Error())
 		return nil, err
 	}
-	res.Desc = tx.Tx.GetDesc()
+	res.Desc = tx.GetDesc()
 	// query if contract is bannded
 	res.IsBanned, err = uv.queryContractBannedStatus(contractName)
 	return res, nil

@@ -16,6 +16,7 @@ const (
 	methodTransfer     = "Transfer"
 	methodContractCall = "ContractCall"
 	methodQueryTx      = "QueryTx"
+	methodQueryBlock   = "QueryBlock"
 	methodNewIterator  = "NewIterator"
 )
 
@@ -109,7 +110,7 @@ func (c *contractContext) NewIterator(start, limit []byte) code.Iterator {
 	return newKvIterator(c, start, limit)
 }
 
-func (c *contractContext) QueryTx(txid string) (*pb.TxStatus, error) {
+func (c *contractContext) QueryTx(txid string) (*pb.Transaction, error) {
 	req := &pb.QueryTxRequest{
 		Header: &c.header,
 		Txid:   string(txid),
@@ -122,8 +123,15 @@ func (c *contractContext) QueryTx(txid string) (*pb.TxStatus, error) {
 }
 
 func (c *contractContext) QueryBlock(blockid string) (*pb.Block, error) {
-	//TODO @zhangmiao
-	return nil, nil
+	req := &pb.QueryBlockRequest{
+		Header:  &c.header,
+		Blockid: string(blockid),
+	}
+	resp := new(pb.QueryBlockResponse)
+	if err := c.bridgeCallFunc(methodQueryBlock, req, resp); err != nil {
+		return nil, err
+	}
+	return resp.Block, nil
 }
 
 func (c *contractContext) Transfer(to string, amount *big.Int) error {
