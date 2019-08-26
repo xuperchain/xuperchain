@@ -823,18 +823,10 @@ func (l *Ledger) QueryBlock(blockid []byte) (*pb.InternalBlock, error) {
 
 // QueryBlockHeader query a block by blockID in the ledger and return only block header
 func (l *Ledger) QueryBlockHeader(blockid []byte) (*pb.InternalBlock, error) {
-	blkInCache, exist := l.blockCache.Get(string(blockid))
-	if exist {
-		l.xlog.Debug("hit queryblock cache", "blkid", global.F(blockid))
-		tmpBlock := *blkInCache.(*pb.InternalBlock)
-		tmpBlock.Transactions = nil
-		return &tmpBlock, nil
-	}
-	blk, err := l.queryBlock(blockid, true)
+	blk, err := l.QueryBlock(blockid)
 	if err != nil {
 		return nil, err
 	}
-	l.blockCache.Add(string(blockid), blk)
 	tmpBlock := *blk
 	tmpBlock.Transactions = nil
 	//return l.queryBlock(blockid, false)
