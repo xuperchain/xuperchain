@@ -14,6 +14,7 @@ import (
 	"math/big"
 	"net"
 	"net/http"
+	_ "net/http/pprof"
 	"strconv"
 
 	"github.com/golang/protobuf/proto"
