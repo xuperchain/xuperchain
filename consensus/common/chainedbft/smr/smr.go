@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"errors"
+	"sync"
 
 	"github.com/golang/protobuf/proto"
 	log "github.com/xuperchain/log15"
@@ -33,6 +34,8 @@ var (
 	ErrVerifyVoteSign = errors.New("verify justify sign error")
 	// ErrInValidateSets return in validate sets error
 	ErrInValidateSets = errors.New("in validate sets error")
+	// ErrCheckDataSum return check data sum error
+	ErrCheckDataSum = errors.New("check data sum error")
 )
 
 // NewSmr return smr instance
@@ -52,8 +55,6 @@ func NewSmr(
 
 	xlog := log.New("module", "smr")
 	// set up smr
-	//todo: validate params
-
 	smr := &Smr{
 		slog:         xlog,
 		bcname:       bcname,
@@ -65,11 +66,17 @@ func NewSmr(
 		cryptoClient: cryptoClient,
 		p2p:          p2p,
 		p2pMsgChan:   make(chan *p2p_pb.XuperMessage, cfg.NetMsgChanSize),
-		votedView:    generateQC.ViewNumber,
 		proposalQC:   proposalQC,
 		generateQC:   generateQC,
 		lockedQC:     lockedQC,
+		qcVoteMsgs:   &sync.Map{},
+		newViewMsgs:  &sync.Map{},
 		QuitCh:       make(chan bool, 1),
+	}
+	if generateQC == nil {
+		smr.votedView = 0
+	} else {
+		smr.votedView = generateQC.GetViewNumber()
 	}
 	if err := smr.registerToNetwork(); err != nil {
 		xlog.Error("smr registerToNetwork error", "error", err)
@@ -150,7 +157,6 @@ func (s *Smr) ProcessNewView(viewNumber int64, leader, preLeader string) error {
 	// if as the new leader, wait for the (n-f) new view message from other replicas and call back extenal consensus
 	if leader == s.address {
 		s.slog.Trace("ProcessNewView as a new leader, wait for (n - f) new view messags")
-		s.addViewMsg(newViewMsg)
 		return s.addViewMsg(newViewMsg)
 	}
 
@@ -221,21 +227,21 @@ func (s *Smr) ProcessProposal(viewNumber int64, proposalID,
 }
 
 // handleReceivedMsg used to process msg received from network
-func (s *Smr) handleReceivedMsg(msg *p2p_pb.XuperMessage) {
+func (s *Smr) handleReceivedMsg(msg *p2p_pb.XuperMessage) error {
 	s.slog.Info("handleReceivedMsg receive msg", "logid",
 		msg.GetHeader().GetLogid(), "type", msg.GetHeader().GetType())
 
 	// verify msg
 	if !p2p_pb.VerifyDataCheckSum(msg) {
 		s.slog.Warn("handleReceivedMsg verify msg data error!", "logid", msg.GetHeader().GetLogid())
-		return
+		return ErrCheckDataSum
 	}
 
 	// filter msg from other chain
 	if msg.GetHeader().GetBcname() != s.bcname {
 		s.slog.Info("handleReceivedMsg msg doesn't from this chain!",
 			"logid", msg.GetHeader().GetLogid(), "bcname_from", msg.GetHeader().GetBcname(), "bcname", s.bcname)
-		return
+		return nil
 	}
 
 	// dispach msg handler
@@ -248,8 +254,9 @@ func (s *Smr) handleReceivedMsg(msg *p2p_pb.XuperMessage) {
 		go s.handleReceivedVoteMsg(msg)
 	default:
 		s.slog.Info("handleReceivedMsg receive unknow type msg")
-		return
+		return nil
 	}
+	return nil
 }
 
 // handleReceivedVoteMsg used to process while receiving vote msg from network
