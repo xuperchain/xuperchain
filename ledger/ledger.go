@@ -830,7 +830,15 @@ func (l *Ledger) QueryBlockHeader(blockid []byte) (*pb.InternalBlock, error) {
 		tmpBlock.Transactions = nil
 		return &tmpBlock, nil
 	}
-	return l.queryBlock(blockid, false)
+	blk, err := l.queryBlock(blockid, true)
+	if err != nil {
+		return nil, err
+	}
+	l.blockCache.Add(string(blockid), blk)
+	tmpBlock := *blk
+	tmpBlock.Transactions = nil
+	//return l.queryBlock(blockid, false)
+	return &tmpBlock, nil
 }
 
 // HasTransaction check if a transaction exists in the ledger
