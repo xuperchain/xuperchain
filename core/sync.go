@@ -46,7 +46,7 @@ func (xc *XChainCore) SyncBlocks() {
 	}
 }
 
-// syncForOnce sync block from peer nodes for one times
+// syncForOnce sync block from peer nodes once
 func (xc *XChainCore) syncForOnce() (*pb.BCStatus, bool) {
 	bcs := &pb.BCStatus{Bcname: xc.bcname}
 	bcsBuf, _ := proto.Marshal(bcs)
@@ -76,7 +76,7 @@ func countGetBlockChainStatus(hbcs []*xuper_p2p.XuperMessage) *pb.BCStatus {
 	p := hbcs[0]
 	maxCount := 0
 	countHeight := make(map[int64]int)
-	for i := 1; i < len(hbcs); i++ {
+	for i := 0; i < len(hbcs); i++ {
 		bcStatus := &pb.BCStatus{}
 		err := proto.Unmarshal(p.GetData().GetMsgInfo(), bcStatus)
 		if err != nil {
