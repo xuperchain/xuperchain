@@ -166,7 +166,7 @@ func (xc *XMCache) Select(bucket string, startKey []byte, endKey []byte) (Iterat
 }
 
 // QueryTx query transaction from xmodel
-func (xc *XMCache) QueryTx(txid []byte) (*pb.TxStatus, error) {
+func (xc *XMCache) QueryTx(txid []byte) (*pb.Transaction, bool, error) {
 	return xc.model.QueryTx(txid)
 }
 

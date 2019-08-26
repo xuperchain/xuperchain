@@ -86,9 +86,13 @@ func (c *SyscallService) QueryTx(ctx context.Context, in *pb.QueryTxRequest) (*p
 		return nil, err
 	}
 
-	tx, err := nctx.Cache.QueryTx(rawTxid)
+	tx, confirmed, err := nctx.Cache.QueryTx(rawTxid)
 	if err != nil {
 		return nil, err
+	}
+
+	if !confirmed {
+		return nil, fmt.Errorf("Unconfirm tx:%s", in.Txid)
 	}
 
 	txsdk := ConvertTxToSDKTx(tx)
@@ -220,11 +224,7 @@ func (c *SyscallService) SetOutput(ctx context.Context, in *pb.SetOutputRequest)
 	return new(pb.SetOutputResponse), nil
 }
 
-func ConvertTxToSDKTx(txStatus *xchainpb.TxStatus) *pb.TxStatus {
-	if txStatus.Status != xchainpb.TransactionStatus_CONFIRM {
-		return &pb.TxStatus{Tx: nil, Status: pb.TransactionStatus(int(txStatus.Status))}
-	}
-	tx := txStatus.Tx
+func ConvertTxToSDKTx(tx *xchainpb.Transaction) *pb.Transaction {
 	txIns := []*pb.TxInput{}
 	for _, in := range tx.TxInputs {
 		txIn := &pb.TxInput{
@@ -257,5 +257,5 @@ func ConvertTxToSDKTx(txStatus *xchainpb.TxStatus) *pb.TxStatus {
 		AuthRequire: tx.AuthRequire,
 	}
 
-	return &pb.TxStatus{Tx: txsdk, Status: pb.TransactionStatus(int(txStatus.Status))}
+	return txsdk
 }
