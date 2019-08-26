@@ -150,7 +150,7 @@ func (pc *PowConsensus) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock)
 		return false, nil
 	}
 
-	targetBits := pc.calDifficulty(in.Height)
+	targetBits := pc.calDifficulty(in)
 	if targetBits != in.TargetBits {
 		pc.log.Warn("unexpected target bits", "expect", targetBits, "got", in.TargetBits, "proposer", string(in.Proposer))
 		return false, nil
@@ -202,8 +202,7 @@ func (pc *PowConsensus) InitCurrent(block *pb.InternalBlock) error {
 func (pc *PowConsensus) ProcessBeforeMiner(timestamp int64) (map[string]interface{}, bool) {
 	res := make(map[string]interface{})
 	res["type"] = TYPE
-	height := pc.ledger.GetMeta().TrunkHeight + 1
-	res["targetBits"] = pc.calDifficulty(height)
+	res["targetBits"] = pc.calDifficulty(nil)
 	return res, true
 }
 
@@ -216,19 +215,37 @@ func (pc *PowConsensus) getTargetBitsFromBlock(block *pb.InternalBlock) int32 {
 	return block.TargetBits
 }
 
+func (pc *PowConsensus) getPrevBlock(curBlock *pb.InternalBlock, gap int32) (prevBlock *pb.InternalBlock, err error) {
+	for i := int32(0); i < gap; i++ {
+		prevBlock, err = pc.ledger.QueryBlockHeader(curBlock.PreHash)
+		if err != nil {
+			return
+		}
+		curBlock = prevBlock
+	}
+	return
+}
+
 // reference of bitcoin's pow: https://github.com/bitcoin/bitcoin/blob/master/src/pow.cpp#L49
-func (pc *PowConsensus) calDifficulty(height int64) int32 {
-	if height <= int64(pc.config.adjustHeightGap) {
+func (pc *PowConsensus) calDifficulty(curBlock *pb.InternalBlock) int32 {
+	if curBlock == nil {
+		curBlock = &pb.InternalBlock{
+			PreHash: pc.ledger.GetMeta().TipBlockid,
+			Height:  pc.ledger.GetMeta().TrunkHeight + 1,
+		}
+	}
+	if curBlock.Height <= int64(pc.config.adjustHeightGap) {
 		return pc.config.defaultTarget
 	}
-	preBlock, err := pc.ledger.QueryBlockByHeight(height - 1)
+	height := curBlock.Height
+	preBlock, err := pc.getPrevBlock(curBlock, 1)
 	if err != nil {
 		pc.log.Warn("query prev block failed", "err", err, "height", height-1)
 		return pc.config.defaultTarget
 	}
 	prevTargetBits := pc.getTargetBitsFromBlock(preBlock)
 	if height%int64(pc.config.adjustHeightGap) == 0 {
-		farBlock, err := pc.ledger.QueryBlockByHeight(height - int64(pc.config.adjustHeightGap))
+		farBlock, err := pc.getPrevBlock(curBlock, pc.config.adjustHeightGap)
 		if err != nil {
 			pc.log.Warn("query far block failed", "err", err, "height", height-int64(pc.config.adjustHeightGap))
 			return pc.config.defaultTarget

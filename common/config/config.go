@@ -114,13 +114,6 @@ type UtxoConfig struct {
 	MaxConfirmedDelay uint32          `yaml:"maxConfirmedDelay,omitempty"`
 }
 
-// FeeConfig is the config of Fee
-type FeeConfig struct {
-	NeedFee bool `yaml:"needFee,omitempty"`
-	// UnitFee tx 每kb大小的单价
-	UnitFee int64 `yaml:"unitFee,omitempty"`
-}
-
 // NativeDeployConfig native contract deploy config
 type NativeDeployConfig struct {
 	WhiteList struct {
@@ -189,7 +182,6 @@ type NodeConfig struct {
 	DedupCacheSize  int             `yaml:"dedupCacheSize,omitempty"`
 	DedupTimeLimit  int             `yaml:"dedupTimeLimit,omitempty"`
 	Kernel          KernelConfig    `yaml:"kernel,omitempty"`
-	FeeConfig       FeeConfig       `yaml:"feeConfig,omitempty"`
 	CPUProfile      string          `yaml:"cpuprofile,omitempty"`
 	MemProfile      string          `yaml:"memprofile,omitempty"`
 	MemberWhiteList map[string]bool `yaml:"memberWhiteList,omitempty"`
@@ -271,10 +263,6 @@ func (nc *NodeConfig) defaultNodeConfig() {
 		FdCacheSize:  1024, //fd count for each leveldb
 	}
 	nc.DedupTimeLimit = 15 //seconds
-	nc.FeeConfig = FeeConfig{
-		NeedFee: false,
-		UnitFee: 1,
-	}
 	nc.MemberWhiteList = make(map[string]bool)
 	nc.NodeMode = NodeModeNormal
 	nc.Wasm = WasmConfig{
