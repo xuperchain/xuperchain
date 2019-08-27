@@ -1,6 +1,7 @@
 package smr
 
 import (
+	"bytes"
 	"context"
 	"crypto/ecdsa"
 	"errors"
@@ -315,69 +316,64 @@ func (s *Smr) handleReceivedProposal(msg *p2p_pb.XuperMessage) error {
 			"logid", msg.GetHeader().GetLogid(), "error", err)
 		return err
 	}
-	// Step1: call extenal consensus for chained proposals
+	// Step1: call extenal consensus for prePropsQC
 	// prePropsQC is the propsQC's ProposalMsg's JustifyQC
-	// prePrePropsQC is the prePropsQC's ProposalMsg's JustifyQC
 	// prePrePropsQC <- prePropsQC <- propsQC
 	propsQC := propMsg.GetProposalQC()
 	s.slog.Trace("Testlog handleReceivedProposal propsQC", "propsQC", propsQC)
-	// todo: zq
-	// prePropsQC, status, err := s.callPreQcWithStatus(propsQC)
-	// if err != nil {
-	// 	return ErrCallPreQcStatus
-	// }
 
-	// prePropsQC, err := s.externalCons.CallPreQc(propsQC)
-	// s.slog.Trace("Testlog handleReceivedProposal get prePropsQC", "prePropsQC", prePropsQC)
-	// if err != nil {
-	// 	s.slog.Error("handleReceivedProposal CallPreQc call prePropsQC error", "err", err)
-	// 	return err
-	// }
-	// prePropslMsg, err := s.externalCons.CallProposalMsgWithProposalID(prePropsQC.GetProposalId())
-	// if err != nil {
-	// 	s.slog.Error("handleReceivedProposal CallPreQc call prePropsQC ProposalMsg error", "err", err)
-	// 	return err
-	// }
-	// prePropsQC.ProposalMsg = prePropslMsg
-	// prePrePropsQC, err := s.externalCons.CallPreQc(prePropsQC)
-	// if err != nil {
-	// 	s.slog.Error("handleReceivedProposal CallPreQc call prePrePropsQC error", "err", err)
-	// 	return err
-	// }
+	prePropsQC, isFirstProposal, err := s.callPreQcWithStatus(propsQC)
+	if err != nil {
+		s.slog.Error("handleReceivedProposal call prePropsQC error", "error", err)
+		return err
+	}
 
-	// // preProposalMsg is the propsQC.ProposalMsg's parent block
-	// // prePreProposalMsg is the propsQC.ProposalMsg's grandparent block
-	// preProposalMsg, err := s.externalCons.CallPreProposalMsg(propsQC.GetProposalMsg())
-	// if err != nil {
-	// 	s.slog.Error("handleReceivedProposal CallProposalMsg call preProposalMsg error", "err", err)
-	// 	return err
-	// }
-	// prePreProposalMsg, err := s.externalCons.CallPrePreProposalMsg(propsQC.GetProposalMsg())
-	// if err != nil {
-	// 	s.slog.Error("handleReceivedProposal CallProposalMsg call prePreProposalMsg error", "err", err)
-	// 	return err
-	// }
+	// Step2: judge safety
+	ok, err := s.safeProposal(propsQC, prePropsQC)
+	if !ok || err != nil {
+		s.slog.Error("handleReceivedProposal safeProposal error!", "ok", ok, "error", err)
+		return ErrSafeProposal
+	}
 
-	// // Step2: judge safety
-	// ok, err := s.safeProposal(propsQC, prePropsQC)
-	// if !ok || err != nil {
-	// 	s.slog.Error("handleReceivedProposal safeProposal error!", "ok", ok, "error", err)
-	// 	return ErrSafeProposal
-	// }
-	// // Step3: vote for this proposal
-	// err = s.voteProposal(propsQC, propMsg.GetSignature().GetAddress())
+	// propsQC is the first QC
+	if isFirstProposal {
+		err := s.voteProposal(propsQC, propMsg.GetSignature().GetAddress())
+		if err != nil {
+			s.slog.Error("handleReceivedProposal voteProposal error", "error", err)
+			return err
+		}
+		s.updateQcStatus(propsQC, nil, nil)
+		return nil
+	}
 
-	// // Step4: update state
-	// s.proposalQC = propsQC
-	// if bytes.Equal(preProposalMsg, prePropsQC.GetProposalMsg()) {
-	// 	s.votedView = prePropsQC.GetViewNumber()
-	// 	s.generateQC = prePropsQC
-	// }
-
-	// if bytes.Equal(preProposalMsg, prePropsQC.GetProposalMsg()) &&
-	// 	bytes.Equal(prePreProposalMsg, prePrePropsQC.GetProposalMsg()) {
-	// 	s.lockedQC = prePrePropsQC
-	// }
+	// Step3: call extenal consensus for prePrePropsQC
+	// prePrePropsQC is the prePropsQC's ProposalMsg's JustifyQC
+	prePrePropsQC, isFirstProposal, err := s.callPreQcWithStatus(prePropsQC)
+	if err != nil {
+		s.slog.Error("handleReceivedProposal call prePrePropsQC error", "error", err)
+		return err
+	}
+	// preProposalMsg is the propsQC.ProposalMsg's parent block
+	// prePreProposalMsg is the propsQC.ProposalMsg's grandparent block
+	preProposalMsg, err := s.externalCons.CallPreProposalMsg(propsQC.GetProposalMsg())
+	if err != nil {
+		s.slog.Error("handleReceivedProposal CallProposalMsg call preProposalMsg error", "err", err)
+		return err
+	}
+	if bytes.Equal(preProposalMsg, prePropsQC.GetProposalMsg()) {
+		s.updateQcStatus(propsQC, prePropsQC, nil)
+	}
+	if !isFirstProposal {
+		prePreProposalMsg, err := s.externalCons.CallPrePreProposalMsg(propsQC.GetProposalMsg())
+		if err != nil {
+			s.slog.Error("handleReceivedProposal CallProposalMsg call prePreProposalMsg error", "err", err)
+			return err
+		}
+		if bytes.Equal(preProposalMsg, prePropsQC.GetProposalMsg()) &&
+			bytes.Equal(prePreProposalMsg, prePrePropsQC.GetProposalMsg()) {
+			s.updateQcStatus(s.proposalQC, s.generateQC, prePrePropsQC)
+		}
+	}
 	s.slog.Trace("handleReceivedProposal result", "smr.votedView", s.votedView,
 		"smr.generateQC", s.generateQC, "smr.lockedQC", s.lockedQC, "smr.proposalQC", s.proposalQC)
 	return nil

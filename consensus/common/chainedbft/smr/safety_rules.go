@@ -17,13 +17,17 @@ func (s *Smr) safeProposal(propsQC, justify *pb.QuorumCert) (bool, error) {
 			"propsQC.ViewNum", propsQC.GetViewNumber(), "lockedQC.ViewNum", s.lockedQC.GetViewNumber())
 		return false, ErrPropsViewNum
 	}
-	// // step2: verify justify's votes
-	// // verify justify sign number
+	// step2: verify justify's votes
+	// verify justify sign number
+	if justify == nil {
+		s.slog.Warn("safeProposal justify is nil")
+		return s.externalCons.CallVerifyQc(propsQC)
+	}
 	// if ok, err := s.IsQuorumCertValidate(justify); !ok || err != nil {
 	// 	s.slog.Error("safeProposal IsQuorumCertValidate error", "ok", ok, "error", err)
 	// 	return false, err
 	// }
-	// step2: call external consensus verify proposalMsg, this function included IsQuorumCertValidate
+	// step3: call external consensus verify proposalMsg
 	return s.externalCons.CallVerifyQc(propsQC)
 }
 
