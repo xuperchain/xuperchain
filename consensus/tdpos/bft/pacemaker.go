@@ -98,6 +98,11 @@ func (dpm *DPoSPaceMaker) IsFirstProposal(qc *pb.QuorumCert) bool {
 	return false
 }
 
+// GetChainedBFT return the chained-bft module
+func (dpm *DPoSPaceMaker) GetChainedBFT() *chainedbft.ChainedBft {
+	return dpm.cbft
+}
+
 // Start run BFT
 func (dpm *DPoSPaceMaker) Start() error {
 	go dpm.cbft.Start()

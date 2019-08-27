@@ -473,6 +473,16 @@ func (tp *TDpos) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock) (bool,
 		return false, nil
 	}
 
+	if tp.config.enableBFT && tp.height+1 != in.Height {
+		// if BFT enabled and it's not the first proposal
+		// check whether previous block's QuorumCert is valid
+		ok, err := tp.bftPaceMaker.GetChainedBFT().IsQuorumCertValidate(in.GetJustify())
+		if err != nil || !ok {
+			tp.log.Warn("CheckMinerMatch bft IsQuorumCertValidate failed", "logid", header.Logid, "error", err)
+			return false, nil
+		}
+	}
+
 	// 2 验证轮数信息
 	preBlock, err := tp.ledger.QueryBlock(in.PreHash)
 	if err != nil {

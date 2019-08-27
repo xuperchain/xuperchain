@@ -17,19 +17,19 @@ func (s *Smr) safeProposal(propsQC, justify *pb.QuorumCert) (bool, error) {
 			"propsQC.ViewNum", propsQC.GetViewNumber(), "lockedQC.ViewNum", s.lockedQC.GetViewNumber())
 		return false, ErrPropsViewNum
 	}
-	// step2: verify justify's votes
-	// verify justify sign number
-	if ok, err := s.IsQuorumCertValidate(justify); !ok || err != nil {
-		s.slog.Error("safeProposal IsQuorumCertValidate error", "ok", ok, "error", err)
-		return false, err
-	}
-	// step3: call external consensus verify proposalMsg
+	// // step2: verify justify's votes
+	// // verify justify sign number
+	// if ok, err := s.IsQuorumCertValidate(justify); !ok || err != nil {
+	// 	s.slog.Error("safeProposal IsQuorumCertValidate error", "ok", ok, "error", err)
+	// 	return false, err
+	// }
+	// step2: call external consensus verify proposalMsg, this function included IsQuorumCertValidate
 	return s.externalCons.CallVerifyQc(propsQC)
 }
 
 // IsQuorumCertValidate return whether QC is validated
 func (s *Smr) IsQuorumCertValidate(justify *pb.QuorumCert) (bool, error) {
-	if justify.GetSignInfos() == nil || justify.GetProposalId() == nil {
+	if justify == nil || justify.GetSignInfos() == nil || justify.GetProposalId() == nil {
 		return false, ErrParams
 	}
 	justifySigns := justify.GetSignInfos().GetQCSignInfos()
