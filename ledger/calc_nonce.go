@@ -36,6 +36,6 @@ func (l *Ledger) processFormatBlockForPOW(block *pb.InternalBlock, targetBits in
 		l.xlog.Debug("I have been interrupted from a remote node, because it has a higher block")
 		return nil, ErrTxDuplicated
 	}
-	l.xlog.Debug("I have generated a new block", "blockid->", fmt.Sprintf("%v", block.GetBlockid()))
+	l.xlog.Debug("I have generated a new block", "blockid->", fmt.Sprintf("%x", block.GetBlockid()))
 	return block, nil
 }
