@@ -1,6 +1,7 @@
 package bft
 
 import (
+	"bytes"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -10,31 +11,36 @@ import (
 	"github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperunion/consensus/base"
 	"github.com/xuperchain/xuperunion/consensus/common/chainedbft"
+	"github.com/xuperchain/xuperunion/ledger"
 	"github.com/xuperchain/xuperunion/pb"
 )
 
 // DPoSPaceMaker the implementation of PaceMakerInterface for TDPoS
 type DPoSPaceMaker struct {
+	bcname      string
 	startView   int64
 	currentView int64
 	cbft        *chainedbft.ChainedBft
 	log         log.Logger
+	ledger      *ledger.Ledger
 	cons        base.ConsensusInterface
 }
 
 // NewDPoSPaceMaker create new DPoSPaceMaker instance
-func NewDPoSPaceMaker(startView int64, viewNum int64, cbft *chainedbft.ChainedBft,
-	xlog log.Logger, cons base.ConsensusInterface) (*DPoSPaceMaker, error) {
+func NewDPoSPaceMaker(bcname string, startView int64, viewNum int64, cbft *chainedbft.ChainedBft,
+	xlog log.Logger, cons base.ConsensusInterface, ledger *ledger.Ledger) (*DPoSPaceMaker, error) {
 	if cbft == nil {
 		return nil, fmt.Errorf("Chained-BFT instance is nil")
 	}
 
 	return &DPoSPaceMaker{
+		bcname:      bcname,
 		currentView: viewNum,
 		startView:   startView,
 		cbft:        cbft,
 		log:         xlog,
 		cons:        cons,
+		ledger:      ledger,
 	}, nil
 }
 
@@ -96,6 +102,33 @@ func (dpm *DPoSPaceMaker) IsFirstProposal(qc *pb.QuorumCert) bool {
 		return true
 	}
 	return false
+}
+
+func (dpm *DPoSPaceMaker) IsLastViewConfirmed() (bool, error) {
+	tipID := dpm.ledger.GetMeta().GetTipBlockid()
+	qc, err := dpm.cbft.GetGenerateQC([]byte(""))
+	// qc is not valid or qc is valid but it's not the same with last block
+	if err != nil || bytes.Compare(qc.GetProposalId(), tipID) != 0 {
+		dpm.log.Warn("ProcessBeforeMiner IsQuorumCertValidate failed", "error", err)
+		tipBlock, err := dpm.ledger.QueryBlock(tipID)
+		if err != nil {
+			dpm.log.Warn("ProcessBeforeMiner QueryBlock failed", "error", err)
+			return false, err
+		}
+		blockData := &pb.Block{
+			Bcname:  dpm.bcname,
+			Blockid: tipBlock.Blockid,
+			Block:   tipBlock,
+		}
+
+		err = dpm.NextNewProposal(tipBlock.Blockid, blockData)
+		if err != nil {
+			dpm.log.Warn("ProcessBeforeMiner: bft next proposal failed", "error", err)
+			return false, err
+		}
+		return false, nil
+	}
+	return true, nil
 }
 
 // GetChainedBFT return the chained-bft module

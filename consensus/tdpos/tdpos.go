@@ -540,12 +540,20 @@ func (tp *TDpos) ProcessBeforeMiner(timestamp int64) (map[string]interface{}, bo
 		return nil, false
 	}
 
+	// check bft status
 	if tp.config.enableBFT {
 		qc, err := tp.bftPaceMaker.CurrentQCHigh([]byte(""))
 		if err != nil {
 			return nil, false
 		}
 		res["quorum_cert"] = qc
+		if !tp.isFirstblock() {
+			ok, err := tp.bftPaceMaker.IsLastViewConfirmed()
+			if err != nil || !ok {
+				tp.log.Warn("ProcessBeforeMiner last view not confirmed", "error", err)
+				return nil, false
+			}
+		}
 		tp.log.Debug("bft quorum_cert", "value", qc)
 	}
 
@@ -788,7 +796,8 @@ func (tp *TDpos) initBFT(cfg *config.NodeConfig) error {
 		return err
 	}
 
-	paceMaker, err := bft.NewDPoSPaceMaker(tp.height, meta.TrunkHeight, cbft, tp.log, tp)
+	paceMaker, err := bft.NewDPoSPaceMaker(tp.bcname, tp.height, meta.TrunkHeight,
+		cbft, tp.log, tp, tp.ledger)
 	if err != nil {
 		if err != nil {
 			tp.log.Warn("initBFT: create DPoSPaceMaker failed", "error", err)
@@ -798,4 +807,8 @@ func (tp *TDpos) initBFT(cfg *config.NodeConfig) error {
 	tp.bftPaceMaker = paceMaker
 	bridge.SetPaceMaker(paceMaker)
 	return tp.bftPaceMaker.Start()
+}
+
+func (tp *TDpos) isFirstblock() bool {
+	return tp.height+1 == tp.ledger.GetMeta().GetTrunkHeight()
 }
