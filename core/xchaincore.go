@@ -335,6 +335,13 @@ func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
 		xc.log.Debug("refused a connection because block is too large", "logid", in.Header.Logid, "cost", hd.Timer.Print(), "size", blockSize)
 		return ErrServiceRefused
 	}
+
+	// validate for consensus of pow, if ok, tell the miner to stop mining
+	state := ValidPowBlock(in, xc)
+	if state == false {
+		return ErrInvalidBlock
+	}
+
 	xc.mutex.Lock()
 	defer xc.mutex.Unlock()
 

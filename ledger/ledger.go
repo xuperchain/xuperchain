@@ -70,6 +70,8 @@ type Ledger struct {
 	blockCache     *common.LRUCache // block cache, 加速QueryBlock
 	blkHeaderCache *common.LRUCache // block header cache, 加速fetchBlock
 	cryptoClient   crypto_base.CryptoClient
+	powBlockState  bool
+	powMutex       *sync.Mutex
 }
 
 // ConfirmStatus block status
@@ -85,6 +87,7 @@ type ConfirmStatus struct {
 func NewLedger(storePath string, xlog log.Logger, otherPaths []string, kvEngineType string, cryptoType string) (*Ledger, error) {
 	ledger := &Ledger{}
 	ledger.mutex = &sync.RWMutex{}
+	ledger.powMutex = &sync.Mutex{}
 	dbPath := filepath.Join(storePath, "ledger")
 	if xlog == nil { //如果外面没传进来log对象的话
 		xlog = log.New("module", "ledger")
@@ -130,6 +133,7 @@ func NewLedger(storePath string, xlog log.Logger, otherPaths []string, kvEngineT
 	ledger.blockCache = common.NewLRUCache(BlockCacheSize)
 	ledger.blkHeaderCache = common.NewLRUCache(BlockCacheSize)
 	ledger.cryptoClient = cryptoClient
+	ledger.powBlockState = false
 	metaBuf, metaErr := ledger.metaTable.Get([]byte(""))
 	emptyLedger := false
 	if metaErr != nil && common.NormalizedKVError(metaErr) == common.ErrKVNotFound { //说明是新创建的账本
@@ -312,18 +316,14 @@ func (l *Ledger) formatBlock(txList []*pb.Transaction,
 	if err != nil {
 		return nil, err
 	}
-	if targetBits != 0 { //POW 块，需要穷举Nonce
-		var gussNonce int32
-		for !IsProofed(block.Blockid, targetBits) {
-			gussNonce++
-			block.Nonce = gussNonce
-			block.Blockid, err = MakeBlockID(block)
-			//l.xlog.Trace("Try to MakeBlockID", "blockid", fmt.Sprintf("%x", block.Blockid))
-			if err != nil {
-				return nil, err
-			}
+
+	if targetBits != 0 {
+		block, err = l.processFormatBlockForPOW(block, targetBits)
+		if err != nil {
+			return nil, err
 		}
 	}
+
 	if len(preHash) > 0 && needSign {
 		block.Sign, err = l.cryptoClient.SignECDSA(ecdsaPk, block.Blockid)
 	}
@@ -1127,4 +1127,25 @@ func (l *Ledger) Truncate(utxovmLastID []byte) error {
 	l.meta = newMeta
 	l.xlog.Info("truncate blockid succeed")
 	return nil
+}
+
+// StartPowBlockState 更新powBlockState状态
+func (l *Ledger) StartPowBlockState() {
+	l.powMutex.Lock()
+	defer l.powMutex.Unlock()
+	l.powBlockState = true
+}
+
+// AbortPowBlockState 中断挖矿流程
+func (l *Ledger) AbortPowBlockState() {
+	l.powMutex.Lock()
+	defer l.powMutex.Unlock()
+	l.powBlockState = false
+}
+
+// 获取powBlockState状态
+func (l *Ledger) GetPowBlockState() bool {
+	l.powMutex.Lock()
+	defer l.powMutex.Unlock()
+	return l.powBlockState
 }
