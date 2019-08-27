@@ -1129,21 +1129,21 @@ func (l *Ledger) Truncate(utxovmLastID []byte) error {
 	return nil
 }
 
-// StartPowMinning 更新powMinningState状态
+// StartPowMinning set the value of powMinningState true to tell the miner to start minning
 func (l *Ledger) StartPowMinning() {
 	l.powMutex.Lock()
 	defer l.powMutex.Unlock()
 	l.powMinningState = true
 }
 
-// AbortPowMinning 中断挖矿流程
+// AbortPowMinning set the value of powMinningState false to tell the miner to stop minning
 func (l *Ledger) AbortPowMinning() {
 	l.powMutex.Lock()
 	defer l.powMutex.Unlock()
 	l.powMinningState = false
 }
 
-// GetPowMinningState 获取powMinningState状态
+// GetPowMinningState get the value of powMinningState
 func (l *Ledger) GetPowMinningState() bool {
 	l.powMutex.Lock()
 	defer l.powMutex.Unlock()
