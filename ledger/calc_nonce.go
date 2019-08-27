@@ -15,7 +15,7 @@ func (l *Ledger) processFormatBlockForPOW(block *pb.InternalBlock, targetBits in
 	var err error
 
 	for {
-		if gussCount%round == 0 && !l.GetPowMinningState() {
+		if gussCount%round == 0 && !l.IsEnablePowMinning() {
 			break
 		}
 		if valid = IsProofed(block.Blockid, targetBits); !valid {
@@ -31,12 +31,12 @@ func (l *Ledger) processFormatBlockForPOW(block *pb.InternalBlock, targetBits in
 		break
 	}
 	// valid为false说明还没挖到块
-	// l.GetPowMinningState()为false说明被打断了
-	// l.GetPowMinningState()为true说明还未被打断，此时valid不应该为false
-	if !valid && !l.GetPowMinningState() {
+	// l.IsEnablePowMinning() == true  --> 自己挖出块
+	// l.IsEnablePowMinning() == false --> 被中断
+	if !valid && !l.IsEnablePowMinning() {
 		l.StartPowMinning()
 		l.xlog.Debug("I have been interrupted from a remote node, because it has a higher block")
-		return nil, ErrTxDuplicated
+		return nil, ErrMinerInterrupt
 	}
 	l.xlog.Debug("I have generated a new block", "blockid->", fmt.Sprintf("%x", block.GetBlockid()))
 	return block, nil
