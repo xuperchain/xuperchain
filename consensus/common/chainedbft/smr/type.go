@@ -26,6 +26,8 @@ type Smr struct {
 	publicKey string
 	// private key
 	privateKey *ecdsa.PrivateKey
+	// last validates sets, changes with external layer consensus
+	preValidates []*cons_base.CandidateInfo
 	// validates sets, changes with external layer consensus
 	validates []*cons_base.CandidateInfo
 	// externalCons is the instance that chained bft communicate with

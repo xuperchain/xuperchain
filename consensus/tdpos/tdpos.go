@@ -761,6 +761,7 @@ func (tp *TDpos) initBFT(cfg *config.NodeConfig) error {
 	}
 
 	cbft, err := chainedbft.NewChainedBft(
+		tp.log,
 		tp.config.bftConfig,
 		tp.bcname,
 		string(tp.address),

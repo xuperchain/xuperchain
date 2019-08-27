@@ -3,7 +3,6 @@ package chainedbft
 
 import (
 	"crypto/ecdsa"
-	"os"
 
 	log "github.com/xuperchain/log15"
 	cons_base "github.com/xuperchain/xuperunion/consensus/base"
@@ -25,6 +24,7 @@ type ChainedBft struct {
 
 // NewChainedBft create and start the chained-bft instance
 func NewChainedBft(
+	xlog log.Logger,
 	cfg *config.Config,
 	bcname string,
 	address string,
@@ -36,12 +36,8 @@ func NewChainedBft(
 	p2p p2pv2.P2PServer,
 	proposalQC, generateQC, lockedQC *pb.QuorumCert) (*ChainedBft, error) {
 
-	// set up log
-	xlog := log.New("module", "chainedbft")
-	xlog.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
-
 	// set up smr
-	smr, err := smr.NewSmr(cfg, bcname, address, publicKey, privateKey,
+	smr, err := smr.NewSmr(xlog, cfg, bcname, address, publicKey, privateKey,
 		validates, externalCons, cryptoClient, p2p, proposalQC, generateQC, lockedQC)
 	if err != nil {
 		xlog.Error("NewChainedBft instance error")
@@ -96,4 +92,9 @@ func (cb *ChainedBft) ProcessProposal(viewNumber int64, proposalID, proposalMsg 
 // UpdateValidateSets will update the validates while
 func (cb *ChainedBft) UpdateValidateSets(validates []*cons_base.CandidateInfo) error {
 	return cb.smr.UpdateValidateSets(validates)
+}
+
+// IsQuorumCertValidate return whether QC is validated
+func (cb *ChainedBft) IsQuorumCertValidate(qc *pb.QuorumCert) (bool, error) {
+	return cb.smr.IsQuorumCertValidate(qc)
 }

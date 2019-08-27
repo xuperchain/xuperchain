@@ -19,6 +19,19 @@ func (s *Smr) safeProposal(propsQC, justify *pb.QuorumCert) (bool, error) {
 	}
 	// step2: verify justify's votes
 	// verify justify sign number
+	if ok, err := s.IsQuorumCertValidate(justify); !ok || err != nil {
+		s.slog.Error("safeProposal IsQuorumCertValidate error", "ok", ok, "error", err)
+		return false, err
+	}
+	// step3: call external consensus verify proposalMsg
+	return s.externalCons.CallVerifyQc(propsQC)
+}
+
+// IsQuorumCertValidate return whether QC is validated
+func (s *Smr) IsQuorumCertValidate(justify *pb.QuorumCert) (bool, error) {
+	if justify.GetSignInfos() == nil || justify.GetProposalId() == nil {
+		return false, ErrParams
+	}
 	justifySigns := justify.GetSignInfos().GetQCSignInfos()
 	if len(justifySigns) <= (len(s.validates)-1)*2/3 {
 		s.slog.Error("safeProposal proposal justify sign not enough error")
@@ -37,6 +50,5 @@ func (s *Smr) safeProposal(propsQC, justify *pb.QuorumCert) (bool, error) {
 			return false, ErrVerifyVoteSign
 		}
 	}
-	// step3: call external consensus verify proposalMsg
-	return s.externalCons.CallVerifyQc(propsQC)
+	return true, nil
 }
