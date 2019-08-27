@@ -120,6 +120,10 @@ func (tp *TDpos) Configure(xlog log.Logger, cfg *config.NodeConfig, consCfg map[
 		tp.p2psvr = p2psvr
 	}
 
+	if height, ok := extParams["height"].(int64); ok {
+		tp.height = height
+	}
+
 	if err = tp.buildConfigs(xlog, nil, consCfg); err != nil {
 		return err
 	}
@@ -773,7 +777,7 @@ func (tp *TDpos) initBFT(cfg *config.NodeConfig) error {
 		return err
 	}
 
-	paceMaker, err := bft.NewDPoSPaceMaker(meta.TrunkHeight, cbft, tp.log, tp)
+	paceMaker, err := bft.NewDPoSPaceMaker(height, meta.TrunkHeight, cbft, tp.log, tp)
 	if err != nil {
 		if err != nil {
 			tp.log.Warn("initBFT: create DPoSPaceMaker failed", "error", err)

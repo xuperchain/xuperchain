@@ -14,10 +14,11 @@ import (
 
 // CbftBridge implements ExternalInterface that chainedbft can communicate with TDPoS
 type CbftBridge struct {
-	bcname string
-	ledger *ledger.Ledger
-	log    log.Logger
-	cons   base.ConsensusInterface
+	bcname    string
+	ledger    *ledger.Ledger
+	log       log.Logger
+	cons      base.ConsensusInterface
+	paceMaker *DPoSPaceMaker
 }
 
 // NewCbftBridge create new instance of CbftBridge
@@ -28,6 +29,11 @@ func NewCbftBridge(bcname string, ledger *ledger.Ledger, xlog log.Logger, cons b
 		log:    xlog,
 		cons:   cons,
 	}
+}
+
+// SetPaceMaker set pacemaker
+func (cb *CbftBridge) SetPaceMaker(paceMaker *DPoSPaceMaker) {
+	cb.paceMaker = paceMaker
 }
 
 // CallPreQc call external consensus for the PreQc with the given Qc
@@ -161,4 +167,13 @@ func (cb *CbftBridge) CallProposalMsgWithProposalID(proposalID []byte) ([]byte, 
 		return nil, err
 	}
 	return msg, nil
+}
+
+// IsFirstProposal return true if current proposal is the first proposal of bft
+// First proposal could have empty or nil PreQC
+func (cb *CbftBridge) IsFirstProposal(qc *pb.QuorumCert) (bool, error) {
+	if qc == nil {
+		return false, fmt.Errorf("invalid params")
+	}
+	return cb.paceMaker.IsFirstProposal(qc), nil
 }

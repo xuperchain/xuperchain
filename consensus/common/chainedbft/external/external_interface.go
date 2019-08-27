@@ -21,4 +21,8 @@ type ExternalInterface interface {
 
 	// CallProposalMsgWithProposalID call  external consensus for proposalMsg  with the given ProposalID
 	CallProposalMsgWithProposalID([]byte) ([]byte, error)
+
+	// IsFirstProposal return true if current proposal is the first proposal of bft
+	// First proposal could have empty or nil PreQC
+	IsFirstProposal(*pb.QuorumCert) (bool, error)
 }

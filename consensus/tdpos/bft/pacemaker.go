@@ -15,6 +15,7 @@ import (
 
 // DPoSPaceMaker the implementation of PaceMakerInterface for TDPoS
 type DPoSPaceMaker struct {
+	startView   int64
 	currentView int64
 	cbft        *chainedbft.ChainedBft
 	log         log.Logger
@@ -22,13 +23,15 @@ type DPoSPaceMaker struct {
 }
 
 // NewDPoSPaceMaker create new DPoSPaceMaker instance
-func NewDPoSPaceMaker(viewNum int64, cbft *chainedbft.ChainedBft, xlog log.Logger, cons base.ConsensusInterface) (*DPoSPaceMaker, error) {
+func NewDPoSPaceMaker(startView int64, viewNum int64, cbft *chainedbft.ChainedBft,
+	xlog log.Logger, cons base.ConsensusInterface) (*DPoSPaceMaker, error) {
 	if cbft == nil {
 		return nil, fmt.Errorf("Chained-BFT instance is nil")
 	}
 
 	return &DPoSPaceMaker{
 		currentView: viewNum,
+		startView:   startView,
 		cbft:        cbft,
 		log:         xlog,
 		cons:        cons,
@@ -85,6 +88,14 @@ func (dpm *DPoSPaceMaker) UpdateValidatorSet(validators []*base.CandidateInfo) e
 	valStr, _ := json.Marshal(validators)
 	dpm.log.Debug("bft update validator set", "validators", string(valStr))
 	return dpm.cbft.UpdateValidateSets(validators)
+}
+
+// IsFirstProposal check if current view is the first view
+func (dpm *DPoSPaceMaker) IsFirstProposal(qc *pb.QuorumCert) bool {
+	if qc.GetViewNumber() == dpm.startView+1 {
+		return true
+	}
+	return false
 }
 
 // Start run BFT

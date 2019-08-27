@@ -44,7 +44,9 @@ type TDpos struct {
 	config tDposConfig
 	// tpos 版本信息, 要求是数字版本号, 避免由于用户指定字符版本导致取前缀有误
 	version int64
-	log     log.Logger
+	// tdpos start height, 共识起始高度
+	height int64
+	log    log.Logger
 	// 共识作用的链名
 	bcname string
 	// 节点矿工address
