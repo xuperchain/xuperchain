@@ -786,5 +786,6 @@ func (tp *TDpos) initBFT(cfg *config.NodeConfig) error {
 		}
 	}
 	tp.bftPaceMaker = paceMaker
+	bridge.SetPaceMaker(paceMaker)
 	return tp.bftPaceMaker.Start()
 }
