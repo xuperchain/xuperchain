@@ -55,6 +55,9 @@ func (dpm *DPoSPaceMaker) NextNewView(viewNum int64, proposer, preProposer strin
 	if viewNum < dpm.currentView {
 		return fmt.Errorf("next view cannot smaller than current view number")
 	}
+	if ok, _ := dpm.IsLastViewConfirmed(); !ok {
+		return fmt.Errorf("last view not confirmed, so should not change view")
+	}
 	dpm.currentView = viewNum
 	err := dpm.cbft.ProcessNewView(viewNum, proposer, preProposer)
 	dpm.log.Trace("bft NewView", "viewNum", viewNum, "proposer", proposer, "preProposer", preProposer)
@@ -104,28 +107,13 @@ func (dpm *DPoSPaceMaker) IsFirstProposal(qc *pb.QuorumCert) bool {
 	return false
 }
 
+// IsLastViewConfirmed check if last block is confirmed
 func (dpm *DPoSPaceMaker) IsLastViewConfirmed() (bool, error) {
 	tipID := dpm.ledger.GetMeta().GetTipBlockid()
 	qc, err := dpm.cbft.GetGenerateQC([]byte(""))
 	// qc is not valid or qc is valid but it's not the same with last block
 	if err != nil || bytes.Compare(qc.GetProposalId(), tipID) != 0 {
 		dpm.log.Warn("ProcessBeforeMiner IsQuorumCertValidate failed", "error", err)
-		tipBlock, err := dpm.ledger.QueryBlock(tipID)
-		if err != nil {
-			dpm.log.Warn("ProcessBeforeMiner QueryBlock failed", "error", err)
-			return false, err
-		}
-		blockData := &pb.Block{
-			Bcname:  dpm.bcname,
-			Blockid: tipBlock.Blockid,
-			Block:   tipBlock,
-		}
-
-		err = dpm.NextNewProposal(tipBlock.Blockid, blockData)
-		if err != nil {
-			dpm.log.Warn("ProcessBeforeMiner: bft next proposal failed", "error", err)
-			return false, err
-		}
 		return false, nil
 	}
 	return true, nil
