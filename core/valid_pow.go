@@ -1,6 +1,8 @@
 package xchaincore
 
 import (
+	"fmt"
+
 	"github.com/xuperchain/xuperunion/common/log"
 	"github.com/xuperchain/xuperunion/consensus"
 	"github.com/xuperchain/xuperunion/ledger"
@@ -18,18 +20,18 @@ func ValidPowBlock(block *pb.Block, xcore *XChainCore) bool {
 	newBlockHeight := internalBlock.GetHeight()
 	if xcore.con.Type(newBlockHeight) == consensus.ConsensusTypePow {
 		if newBlockHeight < xcore.Ledger.GetMeta().GetTrunkHeight() {
-			log.Warn("invalid block: new block's height is not enough")
+			log.Warn("invalid block: new block's height is not enough", "new block's height->", newBlockHeight, "miner trunk height->", xcore.Ledger.GetMeta().GetTrunkHeight())
 			return false
 		}
 		actualTargetBits := internalBlock.GetTargetBits()
 		if !ledger.IsProofed(internalBlock.Blockid, actualTargetBits) {
-			log.Warn("receive a new block actual difficulty doesn't match blockid")
+			log.Warn("receive a new block actual difficulty doesn't match blockid", "blockid->", fmt.Sprintf("%x", internalBlock.GetBlockid()), "proposer->", internalBlock.GetProposer())
 			return false
 		}
 
 		//xcore.Ledger.StartPowBlockState()
 		// a valid new block shows up, let's interrupt the process of the miner to welcome it.
-		xcore.Ledger.AbortPowBlockState()
+		xcore.Ledger.AbortPowMinning()
 	}
 
 	return true

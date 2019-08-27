@@ -57,21 +57,21 @@ const (
 
 // Ledger define data structure of Ledger
 type Ledger struct {
-	baseDB         kvdb.Database // 底层是一个leveldb实例，kvdb进行了包装
-	metaTable      kvdb.Database // 记录区块链的根节点、高度、末端节点
-	confirmedTable kvdb.Database // 已确认的订单表
-	blocksTable    kvdb.Database // 区块表
-	mutex          *sync.RWMutex
-	xlog           log.Logger       //日志库
-	meta           *pb.LedgerMeta   //账本关键的元数据{genesis, tip, height}
-	GenesisBlock   *GenesisBlock    //创始块
-	pendingTable   kvdb.Database    //保存临时的block区块
-	heightTable    kvdb.Database    //保存高度到Blockid的映射
-	blockCache     *common.LRUCache // block cache, 加速QueryBlock
-	blkHeaderCache *common.LRUCache // block header cache, 加速fetchBlock
-	cryptoClient   crypto_base.CryptoClient
-	powBlockState  bool
-	powMutex       *sync.Mutex
+	baseDB          kvdb.Database // 底层是一个leveldb实例，kvdb进行了包装
+	metaTable       kvdb.Database // 记录区块链的根节点、高度、末端节点
+	confirmedTable  kvdb.Database // 已确认的订单表
+	blocksTable     kvdb.Database // 区块表
+	mutex           *sync.RWMutex
+	xlog            log.Logger       //日志库
+	meta            *pb.LedgerMeta   //账本关键的元数据{genesis, tip, height}
+	GenesisBlock    *GenesisBlock    //创始块
+	pendingTable    kvdb.Database    //保存临时的block区块
+	heightTable     kvdb.Database    //保存高度到Blockid的映射
+	blockCache      *common.LRUCache // block cache, 加速QueryBlock
+	blkHeaderCache  *common.LRUCache // block header cache, 加速fetchBlock
+	cryptoClient    crypto_base.CryptoClient
+	powMinningState bool
+	powMutex        *sync.Mutex
 }
 
 // ConfirmStatus block status
@@ -133,7 +133,7 @@ func NewLedger(storePath string, xlog log.Logger, otherPaths []string, kvEngineT
 	ledger.blockCache = common.NewLRUCache(BlockCacheSize)
 	ledger.blkHeaderCache = common.NewLRUCache(BlockCacheSize)
 	ledger.cryptoClient = cryptoClient
-	ledger.powBlockState = false
+	ledger.powMinningState = false
 	metaBuf, metaErr := ledger.metaTable.Get([]byte(""))
 	emptyLedger := false
 	if metaErr != nil && common.NormalizedKVError(metaErr) == common.ErrKVNotFound { //说明是新创建的账本
@@ -1129,23 +1129,23 @@ func (l *Ledger) Truncate(utxovmLastID []byte) error {
 	return nil
 }
 
-// StartPowBlockState 更新powBlockState状态
-func (l *Ledger) StartPowBlockState() {
+// StartPowMinning 更新powMinningState状态
+func (l *Ledger) StartPowMinning() {
 	l.powMutex.Lock()
 	defer l.powMutex.Unlock()
-	l.powBlockState = true
+	l.powMinningState = true
 }
 
-// AbortPowBlockState 中断挖矿流程
-func (l *Ledger) AbortPowBlockState() {
+// AbortPowMinning 中断挖矿流程
+func (l *Ledger) AbortPowMinning() {
 	l.powMutex.Lock()
 	defer l.powMutex.Unlock()
-	l.powBlockState = false
+	l.powMinningState = false
 }
 
-// 获取powBlockState状态
-func (l *Ledger) GetPowBlockState() bool {
+// GetPowMinningState 获取powMinningState状态
+func (l *Ledger) GetPowMinningState() bool {
 	l.powMutex.Lock()
 	defer l.powMutex.Unlock()
-	return l.powBlockState
+	return l.powMinningState
 }
