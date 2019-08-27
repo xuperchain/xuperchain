@@ -543,20 +543,23 @@ func (tp *TDpos) ProcessBeforeMiner(timestamp int64) (map[string]interface{}, bo
 	// check bft status
 	if tp.config.enableBFT {
 		// TODO: what if IsLastViewConfirmed failed in competemaster, but succeed in ProcessBeforeMiner?
-		if ok, _ := tp.bftPaceMaker.IsLastViewConfirmed(); !ok {
-			tp.log.Warn("ProcessBeforeMiner last block not confirmed, walk to previous block")
-			lastBlockid := tp.ledger.GetMeta().GetTipBlockid()
-			lastBlock, err := tp.ledger.QueryBlock(lastBlockid)
-			if err != nil {
-				tp.log.Warn("ProcessBeforeMiner tip block query failed", "error", err)
-				return nil, false
-			}
-			err = tp.utxoVM.Walk(lastBlock.GetPreHash())
-			if err != nil {
-				tp.log.Warn("ProcessBeforeMiner utxo walt failed", "error", err)
-				return nil, false
+		if !tp.isFirstblock() {
+			if ok, _ := tp.bftPaceMaker.IsLastViewConfirmed(); !ok {
+				tp.log.Warn("ProcessBeforeMiner last block not confirmed, walk to previous block")
+				lastBlockid := tp.ledger.GetMeta().GetTipBlockid()
+				lastBlock, err := tp.ledger.QueryBlock(lastBlockid)
+				if err != nil {
+					tp.log.Warn("ProcessBeforeMiner tip block query failed", "error", err)
+					return nil, false
+				}
+				err = tp.utxoVM.Walk(lastBlock.GetPreHash())
+				if err != nil {
+					tp.log.Warn("ProcessBeforeMiner utxo walt failed", "error", err)
+					return nil, false
+				}
 			}
 		}
+
 		qc, err := tp.bftPaceMaker.CurrentQCHigh([]byte(""))
 		if err != nil {
 			return nil, false

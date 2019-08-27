@@ -113,7 +113,7 @@ func (dpm *DPoSPaceMaker) IsLastViewConfirmed() (bool, error) {
 	qc, err := dpm.cbft.GetGenerateQC([]byte(""))
 	// qc is not valid or qc is valid but it's not the same with last block
 	if err != nil || bytes.Compare(qc.GetProposalId(), tipID) != 0 {
-		dpm.log.Warn("ProcessBeforeMiner IsQuorumCertValidate failed", "error", err)
+		dpm.log.Warn("IsLastViewConfirmed check failed", "error", err)
 		return false, nil
 	}
 	return true, nil
