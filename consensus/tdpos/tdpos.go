@@ -830,5 +830,7 @@ func (tp *TDpos) isFirstblock() bool {
 	if consStartHeight == 0 {
 		consStartHeight++
 	}
-	return consStartHeight == tp.ledger.GetMeta().GetTrunkHeight()
+	tp.log.Debug("isFirstblock check", "consStartHeight", consStartHeight,
+		"trunkHeight", tp.ledger.GetMeta().GetTrunkHeight())
+	return consStartHeight == tp.ledger.GetMeta().GetTrunkHeight()+1
 }

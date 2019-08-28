@@ -59,9 +59,12 @@ func (dpm *DPoSPaceMaker) NextNewView(viewNum int64, proposer, preProposer strin
 	if viewNum < dpm.currentView {
 		return fmt.Errorf("next view cannot smaller than current view number")
 	}
-	if ok, _ := dpm.IsLastViewConfirmed(); !ok {
-		return fmt.Errorf("last view not confirmed, so should not change view")
+	if viewNum != dpm.startView {
+		if ok, _ := dpm.IsLastViewConfirmed(); !ok {
+			return fmt.Errorf("last view not confirmed, so should not change view")
+		}
 	}
+
 	dpm.currentView = viewNum
 	err := dpm.cbft.ProcessNewView(viewNum, proposer, preProposer)
 	dpm.log.Trace("bft NewView", "viewNum", viewNum, "proposer", proposer, "preProposer", preProposer)
