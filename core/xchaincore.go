@@ -337,8 +337,8 @@ func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
 	}
 
 	// validate for consensus of pow, if ok, tell the miner to stop mining
-	state := ValidPowBlock(in, xc)
-	if state == false {
+	isValidBlock := ValidPowBlock(in, xc)
+	if !isValidBlock {
 		return ErrInvalidBlock
 	}
 
