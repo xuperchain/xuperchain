@@ -554,7 +554,12 @@ func (tp *TDpos) ProcessBeforeMiner(timestamp int64) (map[string]interface{}, bo
 				}
 				err = tp.utxoVM.Walk(lastBlock.GetPreHash())
 				if err != nil {
-					tp.log.Warn("ProcessBeforeMiner utxo walt failed", "error", err)
+					tp.log.Warn("ProcessBeforeMiner utxo walk failed", "error", err)
+					return nil, false
+				}
+				err = tp.ledger.Truncate(tp.utxoVM.GetLatestBlockid())
+				if err != nil {
+					tp.log.Warn("ProcessBeforeMiner ledger truncate failed", "error", err)
 					return nil, false
 				}
 			}
