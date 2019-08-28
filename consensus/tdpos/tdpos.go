@@ -427,7 +427,7 @@ func (tp *TDpos) notifyNewView(height int64) error {
 	if err != nil {
 		return err
 	}
-
+	tp.log.Debug("start next new view", "viewnum", meta.TrunkHeight+1)
 	// old height might out-of-date, use current trunkHeight when NewView
 	return tp.bftPaceMaker.NextNewView(meta.TrunkHeight+1, nextProposer, proposer)
 }

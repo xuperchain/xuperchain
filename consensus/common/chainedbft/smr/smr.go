@@ -277,7 +277,13 @@ func (s *Smr) handleReceivedVoteMsg(msg *p2p_pb.XuperMessage) error {
 
 	// as a leader, if the num of votes about proposalQC more than (n -f), need to update local status
 	if s.checkVoteNum(voteMsg.GetProposalId()) {
-		s.updateQcStatus(nil, s.proposalQC, s.generateQC)
+		err := s.updateQcStatus(nil, s.proposalQC, s.generateQC)
+		if err != nil {
+			s.slog.Error("handleReceivedVoteMsg updateQcStatus failed",
+				"logid", msg.GetHeader().GetLogid(), "error", err)
+			return err
+		}
+		s.slog.Debug("handleReceivedVoteMsg checkVoteNum passed")
 		v, ok := s.qcVoteMsgs.Load(string(s.proposalQC.GetProposalId()))
 		if !ok {
 			s.slog.Error("handleReceivedVoteMsg get votes error")
@@ -416,6 +422,7 @@ func (s *Smr) updateQcStatus(proposalQC, generateQC, lockedQC *pb.QuorumCert) er
 	s.lockedQC = lockedQC
 	s.generateQC = generateQC
 	s.proposalQC = proposalQC
+	s.slog.Debug("updateQcStatus result", "generateQC", s.generateQC, "proposalQC", s.proposalQC)
 	return nil
 }
 
@@ -542,6 +549,7 @@ func (s *Smr) checkVoteNum(proposalID []byte) bool {
 	if len(voteMsgs.GetQCSignInfos()) > (len(s.validates)-1)*2/3 {
 		return true
 	}
+	s.slog.Debug("checkVoteNum: current vote", "num", len(voteMsgs.GetQCSignInfos()))
 	return false
 }
 

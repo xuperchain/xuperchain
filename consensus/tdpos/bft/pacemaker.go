@@ -59,7 +59,7 @@ func (dpm *DPoSPaceMaker) NextNewView(viewNum int64, proposer, preProposer strin
 	if viewNum < dpm.currentView {
 		return fmt.Errorf("next view cannot smaller than current view number")
 	}
-	if viewNum != dpm.startView {
+	if viewNum > dpm.startView {
 		if ok, _ := dpm.IsLastViewConfirmed(); !ok {
 			return fmt.Errorf("last view not confirmed, so should not change view")
 		}
@@ -119,6 +119,7 @@ func (dpm *DPoSPaceMaker) IsFirstProposal(qc *pb.QuorumCert) bool {
 func (dpm *DPoSPaceMaker) IsLastViewConfirmed() (bool, error) {
 	tipID := dpm.ledger.GetMeta().GetTipBlockid()
 	qc, err := dpm.cbft.GetGenerateQC([]byte(""))
+	dpm.log.Debug("IsLastViewConfirmed get generate qc", "qc", qc)
 	// qc is not valid or qc is valid but it's not the same with last block
 	if err != nil || bytes.Compare(qc.GetProposalId(), tipID) != 0 {
 		dpm.log.Warn("IsLastViewConfirmed check failed", "error", err)
