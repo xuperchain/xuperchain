@@ -183,8 +183,21 @@ func (s *Smr) ProcessNewView(viewNumber int64, leader, preLeader string) error {
 
 // GetGenerateQC get latest GenerateQC while dominer
 func (s *Smr) GetGenerateQC(proposalID []byte) (*pb.QuorumCert, error) {
-	s.slog.Trace("Testlog GetGenerateQC", "GetGenerateQC", s.generateQC)
-	return s.generateQC, nil
+	s.slog.Trace("Testlog GetGenerateQC", "GetGenerateQCId", hex.EncodeToString(s.generateQC.GetProposalId()), "proposalID", hex.EncodeToString(proposalID))
+	res := s.generateQC
+	if res != nil {
+		res.ProposalMsg = nil
+		if len(res.SignInfos.GetQCSignInfos()) == 0 {
+			v, ok := s.qcVoteMsgs.Load(string(proposalID))
+			if !ok {
+				s.slog.Error("handleReceivedVoteMsg get votes error")
+				return nil, ErrGetVotes
+			}
+			res.SignInfos = v.(*pb.QCSignInfos)
+		}
+	}
+	s.slog.Trace("Testlog GetGenerateQC res", "res", res)
+	return res, nil
 }
 
 // ProcessProposal used to generate new QuorumCert and broadcast to other replicas
