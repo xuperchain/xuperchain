@@ -41,6 +41,8 @@ var (
 	ErrParams = errors.New("params error")
 	// ErrCallPreQcStatus return call pre qc status error
 	ErrCallPreQcStatus = errors.New("call pre qc status error")
+	// ErrGetLocalProposalQC return LocalProposalQC error
+	ErrGetLocalProposalQC = errors.New("get local proposalQC error")
 )
 
 // NewSmr return smr instance
@@ -61,19 +63,20 @@ func NewSmr(
 
 	// set up smr
 	smr := &Smr{
-		slog:         slog,
-		bcname:       bcname,
-		address:      address,
-		publicKey:    publicKey,
-		privateKey:   privateKey,
-		validates:    validates,
-		externalCons: externalCons,
-		cryptoClient: cryptoClient,
-		p2p:          p2p,
-		p2pMsgChan:   make(chan *p2p_pb.XuperMessage, cfg.NetMsgChanSize),
-		qcVoteMsgs:   &sync.Map{},
-		newViewMsgs:  &sync.Map{},
-		QuitCh:       make(chan bool, 1),
+		slog:          slog,
+		bcname:        bcname,
+		address:       address,
+		publicKey:     publicKey,
+		privateKey:    privateKey,
+		validates:     validates,
+		externalCons:  externalCons,
+		cryptoClient:  cryptoClient,
+		p2p:           p2p,
+		p2pMsgChan:    make(chan *p2p_pb.XuperMessage, cfg.NetMsgChanSize),
+		localProposal: &sync.Map{},
+		qcVoteMsgs:    &sync.Map{},
+		newViewMsgs:   &sync.Map{},
+		QuitCh:        make(chan bool, 1),
 	}
 	if err := smr.updateQcStatus(proposalQC, generateQC, lockedQC); err != nil {
 		slog.Error("smr updateQcStatus error", "error", err)
@@ -195,7 +198,7 @@ func (s *Smr) ProcessProposal(viewNumber int64, proposalID,
 		Type:        pb.QCState_PREPARE,
 		SignInfos:   &pb.QCSignInfos{},
 	}
-
+	s.addLocalProposal(qc)
 	propMsg := &pb.ChainedBftPhaseMessage{
 		Type:       pb.QCState_PREPARE,
 		ViewNumber: viewNumber,
@@ -279,8 +282,14 @@ func (s *Smr) handleReceivedVoteMsg(msg *p2p_pb.XuperMessage) error {
 
 	// as a leader, if the num of votes about proposalQC more than (n -f), need to update local status
 	if s.checkVoteNum(voteMsg.GetProposalId()) {
-		s.updateQcStatus(nil, s.proposalQC, s.generateQC)
-		v, ok := s.qcVoteMsgs.Load(string(voteMsg.GetProposalId()))
+		v, ok := s.localProposal.Load(string(voteMsg.GetProposalId()))
+		if !ok {
+			s.slog.Error("checkVoteNum load proposQC error")
+			return ErrGetLocalProposalQC
+		}
+		proposQC := v.(*pb.QuorumCert)
+		s.updateQcStatus(nil, proposQC, s.generateQC)
+		v, ok = s.qcVoteMsgs.Load(string(voteMsg.GetProposalId()))
 		if !ok {
 			s.slog.Error("handleReceivedVoteMsg get votes error")
 			return ErrGetVotes
@@ -581,4 +590,9 @@ func (s *Smr) getAddressPeerURL(address string) string {
 		}
 	}
 	return ""
+}
+
+// addLocalProposal add local proposal
+func (s *Smr) addLocalProposal(qc *pb.QuorumCert) {
+	s.localProposal.Store(string(qc.GetProposalId()), qc)
 }
