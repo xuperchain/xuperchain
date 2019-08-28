@@ -473,7 +473,7 @@ func (tp *TDpos) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock) (bool,
 		return false, nil
 	}
 
-	if tp.config.enableBFT && tp.height+1 != in.Height {
+	if tp.config.enableBFT && !tp.isFirstblock(in.GetHeight()) {
 		// if BFT enabled and it's not the first proposal
 		// check whether previous block's QuorumCert is valid
 		ok, err := tp.bftPaceMaker.GetChainedBFT().IsQuorumCertValidate(in.GetJustify())
@@ -543,7 +543,7 @@ func (tp *TDpos) ProcessBeforeMiner(timestamp int64) (map[string]interface{}, bo
 	// check bft status
 	if tp.config.enableBFT {
 		// TODO: what if IsLastViewConfirmed failed in competemaster, but succeed in ProcessBeforeMiner?
-		if !tp.isFirstblock() {
+		if !tp.isFirstblock(tp.ledger.GetMeta().GetTrunkHeight() + 1) {
 			if ok, _ := tp.bftPaceMaker.IsLastViewConfirmed(); !ok {
 				tp.log.Warn("ProcessBeforeMiner last block not confirmed, walk to previous block")
 				lastBlockid := tp.ledger.GetMeta().GetTipBlockid()
@@ -825,12 +825,12 @@ func (tp *TDpos) initBFT(cfg *config.NodeConfig) error {
 	return tp.bftPaceMaker.Start()
 }
 
-func (tp *TDpos) isFirstblock() bool {
+func (tp *TDpos) isFirstblock(targetHeight int64) bool {
 	consStartHeight := tp.height
 	if consStartHeight == 0 {
 		consStartHeight++
 	}
 	tp.log.Debug("isFirstblock check", "consStartHeight", consStartHeight,
-		"trunkHeight", tp.ledger.GetMeta().GetTrunkHeight())
-	return consStartHeight == tp.ledger.GetMeta().GetTrunkHeight()+1
+		"targetHeight", targetHeight)
+	return consStartHeight == targetHeight
 }

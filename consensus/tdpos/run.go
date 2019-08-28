@@ -296,7 +296,7 @@ func (tp *TDpos) runCheckValidater(desc *contract.TxDesc, block *pb.InternalBloc
 			}
 			keyPre := GenTermCheckKey(version, i)
 			val, err := tp.utxoVM.GetFromTable(nil, []byte(keyPre))
-			tp.log.Trace("runCheckValidater from previous", "keyPre", keyPre, "val", val)
+			//tp.log.Trace("runCheckValidater from previous", "keyPre", keyPre, "val", val)
 			if val != nil {
 				err = json.Unmarshal(val, &proposers)
 				if err == nil {
@@ -304,6 +304,7 @@ func (tp *TDpos) runCheckValidater(desc *contract.TxDesc, block *pb.InternalBloc
 				}
 			}
 		}
+		tp.log.Trace("runCheckValidater from previous OK")
 	}
 	if proposers != nil {
 		proposersJSON, _ := json.Marshal(proposers)
