@@ -8,11 +8,12 @@ import (
 	"github.com/xuperchain/xuperunion/contractsdk/go/code"
 	"github.com/xuperchain/xuperunion/contractsdk/go/exec"
 	pb "github.com/xuperchain/xuperunion/contractsdk/go/pb"
+	pbrpc "github.com/xuperchain/xuperunion/contractsdk/go/pbrpc"
 	"google.golang.org/grpc"
 )
 
 var (
-	_ pb.NativeCodeServer = (*nativeCodeService)(nil)
+	_ pbrpc.NativeCodeServer = (*nativeCodeService)(nil)
 )
 
 type nativeCodeService struct {
@@ -35,7 +36,7 @@ func newNativeCodeService(sockpath string, contract code.Contract) *nativeCodeSe
 
 func (s *nativeCodeService) bridgeCall(method string, request proto.Message, response proto.Message) error {
 	// NOTE sync with contract.proto's package name
-	fullmethod := "/pb.Syscall/" + method
+	fullmethod := "/xchain.contract.svc.Syscall/" + method
 	return s.rpcClient.Invoke(context.Background(), fullmethod, request, response)
 }
 

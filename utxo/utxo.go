@@ -2272,7 +2272,7 @@ func (uv *UtxoVM) GetContractStatus(contractName string) (*pb.ContractStatus, er
 	}
 	txid := verdata.GetRefTxid()
 	res.Txid = fmt.Sprintf("%x", txid)
-	tx, err := uv.model3.QueryTx(txid)
+	tx, _, err := uv.model3.QueryTx(txid)
 	if err != nil {
 		uv.xlog.Warn("GetContractStatus query tx error", "error", err.Error())
 		return nil, err

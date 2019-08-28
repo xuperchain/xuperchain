@@ -86,9 +86,13 @@ func (c *SyscallService) QueryTx(ctx context.Context, in *pb.QueryTxRequest) (*p
 		return nil, err
 	}
 
-	tx, err := nctx.Cache.QueryTx(rawTxid)
+	tx, confirmed, err := nctx.Cache.QueryTx(rawTxid)
 	if err != nil {
 		return nil, err
+	}
+
+	if !confirmed {
+		return nil, fmt.Errorf("Unconfirm tx:%s", in.Txid)
 	}
 
 	txsdk := ConvertTxToSDKTx(tx)

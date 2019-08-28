@@ -22,7 +22,7 @@ type XMReader interface {
 	//扫描一个bucket中所有的kv, 调用者可以设置key区间[startKey, endKey)
 	Select(bucket string, startKey []byte, endKey []byte) (Iterator, error)
 	//查询交易
-	QueryTx(txid []byte) (*pb.Transaction, error)
+	QueryTx(txid []byte) (*pb.Transaction, bool, error)
 	//查询区块
 	QueryBlock(blockid []byte) (*pb.InternalBlock, error)
 }
