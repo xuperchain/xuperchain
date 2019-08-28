@@ -32,7 +32,7 @@ func (uv *UtxoVM) GetConfirmedValue(bucket string, key []byte) ([]byte, bool, er
 		// 被引用的tx还未确认
 		if exist {
 			tx, err = uv.QueryTx(refTxid)
-			if err != nil && err != ErrTxNotFound {
+			if err != nil {
 				return nil, false, err
 			}
 			refTxid = getRefTxidFromTxWithBucketAndKey(tx, bucket, key)
@@ -40,7 +40,10 @@ func (uv *UtxoVM) GetConfirmedValue(bucket string, key []byte) ([]byte, bool, er
 		} else {
 			// 被引用的tx已经被确认
 			// 直接拿到被引用tx的写集
-			tx, _ = uv.ledger.QueryTransaction(refTxid)
+			tx, err = uv.ledger.QueryTransaction(refTxid)
+			if err != nil {
+				return nil, false, err
+			}
 			value := getWriteSetFromTxWithBucketAndKey(tx, bucket, key)
 			return value, true, nil
 		}
