@@ -826,5 +826,9 @@ func (tp *TDpos) initBFT(cfg *config.NodeConfig) error {
 }
 
 func (tp *TDpos) isFirstblock() bool {
-	return tp.height == tp.ledger.GetMeta().GetTrunkHeight()
+	consStartHeight := tp.height
+	if consStartHeight == 0 {
+		consStartHeight++
+	}
+	return consStartHeight == tp.ledger.GetMeta().GetTrunkHeight()
 }

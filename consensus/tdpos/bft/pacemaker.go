@@ -33,6 +33,10 @@ func NewDPoSPaceMaker(bcname string, startView int64, viewNum int64, cbft *chain
 		return nil, fmt.Errorf("Chained-BFT instance is nil")
 	}
 
+	if startView == 0 {
+		startView++
+	}
+
 	return &DPoSPaceMaker{
 		bcname:      bcname,
 		currentView: viewNum,
@@ -101,7 +105,8 @@ func (dpm *DPoSPaceMaker) UpdateValidatorSet(validators []*base.CandidateInfo) e
 
 // IsFirstProposal check if current view is the first view
 func (dpm *DPoSPaceMaker) IsFirstProposal(qc *pb.QuorumCert) bool {
-	if qc.GetViewNumber() == dpm.startView+1 {
+	dpm.log.Info("IsFirstProposal check", "viewNum", qc.GetViewNumber(), "startView", dpm.startView)
+	if qc.GetViewNumber() == dpm.startView {
 		return true
 	}
 	return false
