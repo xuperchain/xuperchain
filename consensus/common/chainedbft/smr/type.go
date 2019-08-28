@@ -48,6 +48,8 @@ type Smr struct {
 	generateQC *pb.QuorumCert
 	// lockedQC is the generateBlock's QC, refer to lockedBlock's votes
 	lockedQC *pb.QuorumCert
+	// localProposal is the proposal local proposaled
+	localProposal *sync.Map
 	// votes of QC in mem, key: prposalID, value: *pb.QCSignInfos
 	qcVoteMsgs *sync.Map
 	// new view msg gathered from other replicas, key: viewNumber, value: []*pb.ChainedBftPhaseMessage
