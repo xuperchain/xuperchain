@@ -335,18 +335,21 @@ func (s *Smr) handleReceivedProposal(msg *p2p_pb.XuperMessage) error {
 		return ErrSafeProposal
 	}
 
+	// Step3: vote justify
+	err = s.voteProposal(propsQC, propMsg.GetSignature().GetAddress(), msg.GetHeader().GetLogid())
+	if err != nil {
+		s.slog.Error("handleReceivedProposal voteProposal error", "error", err)
+		return err
+	}
+
+	// Step4: upstate state
 	// propsQC is the first QC
 	if isFirstProposal {
-		err := s.voteProposal(propsQC, propMsg.GetSignature().GetAddress())
-		if err != nil {
-			s.slog.Error("handleReceivedProposal voteProposal error", "error", err)
-			return err
-		}
 		s.updateQcStatus(propsQC, nil, nil)
 		return nil
 	}
 
-	// Step3: call extenal consensus for prePrePropsQC
+	// call extenal consensus for prePrePropsQC
 	// prePrePropsQC is the prePropsQC's ProposalMsg's JustifyQC
 	prePrePropsQC, isFirstProposal, err := s.callPreQcWithStatus(prePropsQC)
 	if err != nil {
@@ -381,9 +384,10 @@ func (s *Smr) handleReceivedProposal(msg *p2p_pb.XuperMessage) error {
 
 // callPreQcWithStatus call externel consensus for preQc status
 func (s *Smr) callPreQcWithStatus(qc *pb.QuorumCert) (*pb.QuorumCert, bool, error) {
-	if ok, err := s.externalCons.IsFirstProposal(qc); ok || err != nil {
-		s.slog.Warn("callPreQcWithStatus IsFirstProposal status",
-			"proposalId", qc.GetProposalId(), "ok", ok, "err", err)
+	ok, err := s.externalCons.IsFirstProposal(qc)
+	s.slog.Warn("callPreQcWithStatus IsFirstProposal status",
+		"proposalId", qc.GetProposalId(), "ok", ok, "err", err)
+	if ok || err != nil {
 		return nil, ok, err
 	}
 
@@ -416,7 +420,7 @@ func (s *Smr) updateQcStatus(proposalQC, generateQC, lockedQC *pb.QuorumCert) er
 }
 
 // voteProposal vote for this proposal
-func (s *Smr) voteProposal(propsQC *pb.QuorumCert, voteTo string) error {
+func (s *Smr) voteProposal(propsQC *pb.QuorumCert, voteTo, logid string) error {
 	voteMsg := &pb.ChainedBftVoteMessage{
 		ProposalId: propsQC.GetProposalId(),
 		Signature: &pb.SignInfo{
@@ -436,13 +440,13 @@ func (s *Smr) voteProposal(propsQC *pb.QuorumCert, voteTo string) error {
 		s.slog.Error("voteProposal marshal msg error", "error", err)
 		return err
 	}
-
-	netMsg, _ := p2p_pb.NewXuperMessage(p2p_pb.XuperMsgVersion3, s.bcname, "",
+	netMsg, _ := p2p_pb.NewXuperMessage(p2p_pb.XuperMsgVersion3, s.bcname, logid,
 		p2p_pb.XuperMessage_CHAINED_BFT_VOTE_MSG, msgBuf, p2p_pb.XuperMessage_NONE)
+	s.slog.Trace("voteProposal", "msg", netMsg, "voteTo", voteTo, "logid", logid)
 
 	opts := []p2pv2.MessageOption{
 		p2pv2.WithBcName(s.bcname),
-		p2pv2.WithTargetPeerAddrs([]string{voteTo}),
+		p2pv2.WithTargetPeerAddrs([]string{s.getAddressPeerURL(voteTo)}),
 	}
 	go s.p2p.SendMessage(context.Background(), netMsg, opts...)
 	return nil
