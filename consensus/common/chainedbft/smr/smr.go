@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/ecdsa"
+	"encoding/hex"
 	"errors"
 	"sync"
 
@@ -179,6 +180,7 @@ func (s *Smr) ProcessNewView(viewNumber int64, leader, preLeader string) error {
 
 // GetGenerateQC get latest GenerateQC while dominer
 func (s *Smr) GetGenerateQC(proposalID []byte) (*pb.QuorumCert, error) {
+	s.slog.Trace("Testlog GetGenerateQC", "GetGenerateQC", s.generateQC)
 	return s.generateQC, nil
 }
 
@@ -277,19 +279,14 @@ func (s *Smr) handleReceivedVoteMsg(msg *p2p_pb.XuperMessage) error {
 
 	// as a leader, if the num of votes about proposalQC more than (n -f), need to update local status
 	if s.checkVoteNum(voteMsg.GetProposalId()) {
-		err := s.updateQcStatus(nil, s.proposalQC, s.generateQC)
-		if err != nil {
-			s.slog.Error("handleReceivedVoteMsg updateQcStatus failed",
-				"logid", msg.GetHeader().GetLogid(), "error", err)
-			return err
-		}
-		s.slog.Debug("handleReceivedVoteMsg checkVoteNum passed")
-		v, ok := s.qcVoteMsgs.Load(string(s.proposalQC.GetProposalId()))
+		s.updateQcStatus(nil, s.proposalQC, s.generateQC)
+		v, ok := s.qcVoteMsgs.Load(string(voteMsg.GetProposalId()))
 		if !ok {
 			s.slog.Error("handleReceivedVoteMsg get votes error")
 			return ErrGetVotes
 		}
 		s.generateQC.SignInfos = v.(*pb.QCSignInfos)
+		s.slog.Trace("handleReceivedVoteMsg", "s.generateQC.SignInfos", s.generateQC.SignInfos)
 	}
 	return nil
 }
@@ -534,6 +531,7 @@ func (s *Smr) addVoteMsg(msg *pb.ChainedBftVoteMessage) error {
 	}
 	voteMsgs.QCSignInfos = append(voteMsgs.QCSignInfos, msg.GetSignature())
 	s.qcVoteMsgs.Store(string(msg.GetProposalId()), voteMsgs)
+	s.slog.Trace("Testlog addVoteMsg", "voteMsgs", voteMsgs)
 	return nil
 }
 
@@ -545,11 +543,12 @@ func (s *Smr) checkVoteNum(proposalID []byte) bool {
 		return false
 	}
 	voteMsgs := v.(*pb.QCSignInfos)
-
+	s.slog.Trace("Testlog checkVoteNum", "actual", len(voteMsgs.GetQCSignInfos()), "require", (len(s.validates)-1)*2/3)
 	if len(voteMsgs.GetQCSignInfos()) > (len(s.validates)-1)*2/3 {
+		s.slog.Trace("Testlog checkVoteNum", "res", true, "proposalID", hex.EncodeToString(proposalID))
 		return true
 	}
-	s.slog.Debug("checkVoteNum: current vote", "num", len(voteMsgs.GetQCSignInfos()))
+	s.slog.Trace("Testlog checkVoteNum", "res", false, "proposalID", hex.EncodeToString(proposalID))
 	return false
 }
 

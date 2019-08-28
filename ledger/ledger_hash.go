@@ -88,11 +88,11 @@ func encodeJustify(buf *bytes.Buffer, block *pb.InternalBlock) error {
 	}
 	if block.Justify.SignInfos != nil {
 		for _, sign := range block.Justify.SignInfos.QCSignInfos {
-			err = binary.Write(buf, binary.LittleEndian, sign.Address)
+			err = binary.Write(buf, binary.LittleEndian, []byte(sign.Address))
 			if err != nil {
 				return err
 			}
-			err = binary.Write(buf, binary.LittleEndian, sign.PublicKey)
+			err = binary.Write(buf, binary.LittleEndian, []byte(sign.PublicKey))
 			if err != nil {
 				return err
 			}
