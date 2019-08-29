@@ -13,7 +13,8 @@ func (l *Ledger) processFormatBlockForPOW(block *pb.InternalBlock, targetBits in
 	var gussCount int64
 	valid := false
 	var err error
-
+	// 在每次挖矿时，设置为true
+	l.StartPowMinning()
 	for {
 		if gussCount%round == 0 && !l.IsEnablePowMinning() {
 			break
