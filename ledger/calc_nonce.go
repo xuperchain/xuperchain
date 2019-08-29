@@ -13,7 +13,8 @@ func (l *Ledger) processFormatBlockForPOW(block *pb.InternalBlock, targetBits in
 	var gussCount int64
 	valid := false
 	var err error
-
+	// 在每次挖矿时，设置为true
+	l.StartPowMinning()
 	for {
 		if gussCount%round == 0 && !l.IsEnablePowMinning() {
 			break
@@ -34,7 +35,6 @@ func (l *Ledger) processFormatBlockForPOW(block *pb.InternalBlock, targetBits in
 	// l.IsEnablePowMinning() == true  --> 自己挖出块
 	// l.IsEnablePowMinning() == false --> 被中断
 	if !valid && !l.IsEnablePowMinning() {
-		l.StartPowMinning()
 		l.xlog.Debug("I have been interrupted from a remote node, because it has a higher block")
 		return nil, ErrMinerInterrupt
 	}
