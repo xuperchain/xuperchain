@@ -80,8 +80,8 @@ func (cb *ChainedBft) ProcessNewView(viewNumber int64, leader, preLeader string)
 }
 
 // GetGenerateQC get latest proposal QC
-func (cb *ChainedBft) GetGenerateQC(proposalID []byte) (*pb.QuorumCert, error) {
-	return cb.smr.GetGenerateQC(proposalID)
+func (cb *ChainedBft) GetGenerateQC() (*pb.QuorumCert, error) {
+	return cb.smr.GetGenerateQC()
 }
 
 // ProcessProposal used to generate new QuorumCert and broadcast to other replicas

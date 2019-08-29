@@ -6,9 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 
+	log "github.com/xuperchain/log15"
+
 	"github.com/golang/protobuf/proto"
 
-	"github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperunion/consensus/base"
 	"github.com/xuperchain/xuperunion/consensus/common/chainedbft"
 	"github.com/xuperchain/xuperunion/ledger"
@@ -111,7 +112,7 @@ func (dpm *DPoSPaceMaker) NextNewProposal(proposalID []byte, data interface{}) e
 // CurrentQCHigh get the latest QuorumCert
 func (dpm *DPoSPaceMaker) CurrentQCHigh(proposalID []byte) (*pb.QuorumCert, error) {
 	// TODO: what would happen if current QC don't have 2/3 signature?
-	return dpm.cbft.GetGenerateQC(proposalID)
+	return dpm.cbft.GetGenerateQC()
 }
 
 // UpdateValidatorSet update the validator set of BFT
@@ -133,7 +134,7 @@ func (dpm *DPoSPaceMaker) IsFirstProposal(qc *pb.QuorumCert) bool {
 // IsLastViewConfirmed check if last block is confirmed
 func (dpm *DPoSPaceMaker) IsLastViewConfirmed() (bool, error) {
 	tipID := dpm.ledger.GetMeta().GetTipBlockid()
-	qc, err := dpm.cbft.GetGenerateQC([]byte(""))
+	qc, err := dpm.cbft.GetGenerateQC()
 	dpm.log.Debug("IsLastViewConfirmed get generate qc", "qc", qc,
 		"proposalID", hex.EncodeToString(qc.GetProposalId()))
 	// qc is not valid or qc is valid but it's not the same with last block

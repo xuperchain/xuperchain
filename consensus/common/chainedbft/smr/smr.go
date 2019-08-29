@@ -157,10 +157,9 @@ func (s *Smr) ProcessNewView(viewNumber int64, leader, preLeader string) error {
 		s.slog.Error("ProcessNewView MakePhaseMsgSign error", "error", err)
 		return err
 	}
-
 	// if as the new leader, wait for the (n-f) new view message from other replicas and call back extenal consensus
 	if leader == s.address {
-		s.slog.Trace("ProcessNewView as a new leader, wait for (n - f) new view messags")
+		s.slog.Trace("ProcessNewView as a new leader, wait for n*2/3 new view messags")
 		return s.addViewMsg(newViewMsg)
 	}
 
@@ -175,20 +174,19 @@ func (s *Smr) ProcessNewView(viewNumber int64, leader, preLeader string) error {
 		p2p_pb.XuperMessage_CHAINED_BFT_NEW_VIEW_MSG, msgBuf, p2p_pb.XuperMessage_NONE)
 	opts := []p2pv2.MessageOption{
 		p2pv2.WithBcName(s.bcname),
-		p2pv2.WithTargetPeerAddrs([]string{leader}),
+		p2pv2.WithTargetPeerAddrs([]string{s.getAddressPeerURL(leader)}),
 	}
 	go s.p2p.SendMessage(context.Background(), netMsg, opts...)
 	return nil
 }
 
 // GetGenerateQC get latest GenerateQC while dominer
-func (s *Smr) GetGenerateQC(proposalID []byte) (*pb.QuorumCert, error) {
-	s.slog.Trace("Testlog GetGenerateQC", "GetGenerateQCId", hex.EncodeToString(s.generateQC.GetProposalId()), "proposalID", hex.EncodeToString(proposalID))
+func (s *Smr) GetGenerateQC() (*pb.QuorumCert, error) {
 	res := s.generateQC
 	if res != nil {
 		res.ProposalMsg = nil
 		if len(res.SignInfos.GetQCSignInfos()) == 0 {
-			v, ok := s.qcVoteMsgs.Load(string(proposalID))
+			v, ok := s.qcVoteMsgs.Load(string(res.GetProposalId()))
 			if !ok {
 				s.slog.Error("handleReceivedVoteMsg get votes error")
 				return nil, ErrGetVotes
@@ -196,7 +194,7 @@ func (s *Smr) GetGenerateQC(proposalID []byte) (*pb.QuorumCert, error) {
 			res.SignInfos = v.(*pb.QCSignInfos)
 		}
 	}
-	s.slog.Trace("Testlog GetGenerateQC res", "res", res)
+	s.slog.Debug("GetGenerateQC res", "res", res)
 	return res, nil
 }
 
@@ -368,6 +366,10 @@ func (s *Smr) handleReceivedProposal(msg *p2p_pb.XuperMessage) error {
 	}
 
 	// Step4: upstate state
+	if bytes.Equal(propsQC.GetProposalId(), s.generateQC.GetProposalId()) {
+		s.slog.Info("handleReceivedProposal as the preleader, no need to updateQcStatus.")
+		return nil
+	}
 	// propsQC is the first QC
 	if isFirstProposal {
 		s.updateQcStatus(propsQC, nil, nil)
@@ -501,7 +503,9 @@ func (s *Smr) addViewMsg(msg *pb.ChainedBftPhaseMessage) error {
 	}
 	// add JustifyQC
 	if msg.GetJustifyQC() != nil {
-		s.slog.Info("addViewMsg GetJustifyQC not nil", "GetJustifyQC.SignInfos", msg.GetJustifyQC().GetSignInfos())
+		// todo zq verify sign
+		s.slog.Info("addViewMsg GetJustifyQC not nil", "proposalid", hex.EncodeToString(msg.GetJustifyQC().GetProposalId()), "GetJustifyQC.SignInfos", msg.GetJustifyQC().GetSignInfos())
+		s.updateQcStatus(nil, s.proposalQC, s.generateQC)
 		s.qcVoteMsgs.LoadOrStore(string(msg.GetJustifyQC().GetProposalId()), msg.GetJustifyQC().GetSignInfos())
 	}
 
