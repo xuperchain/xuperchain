@@ -35,7 +35,6 @@ func (l *Ledger) processFormatBlockForPOW(block *pb.InternalBlock, targetBits in
 	// l.IsEnablePowMinning() == true  --> 自己挖出块
 	// l.IsEnablePowMinning() == false --> 被中断
 	if !valid && !l.IsEnablePowMinning() {
-		l.StartPowMinning()
 		l.xlog.Debug("I have been interrupted from a remote node, because it has a higher block")
 		return nil, ErrMinerInterrupt
 	}
