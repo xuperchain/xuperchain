@@ -136,15 +136,17 @@ func (cp *CorePeersFilter) Filter() ([]peer.ID, error) {
 
 // MultiStrategy a peer filter that contains multiple filters
 type MultiStrategy struct {
-	node    *Node
-	filters []PeersFilter
+	node       *Node
+	filters    []PeersFilter
+	extraPeers []peer.ID
 }
 
 // NewMultiStrategy create instance of MultiStrategy
-func NewMultiStrategy(node *Node, filters []PeersFilter) *MultiStrategy {
+func NewMultiStrategy(node *Node, filters []PeersFilter, extraPeers []peer.ID) *MultiStrategy {
 	return &MultiStrategy{
-		node:    node,
-		filters: filters,
+		node:       node,
+		filters:    filters,
+		extraPeers: extraPeers,
 	}
 }
 
