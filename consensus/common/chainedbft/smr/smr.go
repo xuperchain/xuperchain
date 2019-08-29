@@ -505,7 +505,9 @@ func (s *Smr) addViewMsg(msg *pb.ChainedBftPhaseMessage) error {
 	if msg.GetJustifyQC() != nil {
 		// todo zq verify sign
 		s.slog.Info("addViewMsg GetJustifyQC not nil", "proposalid", hex.EncodeToString(msg.GetJustifyQC().GetProposalId()), "GetJustifyQC.SignInfos", msg.GetJustifyQC().GetSignInfos())
-		s.updateQcStatus(nil, s.proposalQC, s.generateQC)
+		if s.proposalQC != nil && bytes.Equal(s.proposalQC.GetProposalId(), msg.GetJustifyQC().GetProposalId()) {
+			s.updateQcStatus(nil, s.proposalQC, s.generateQC)
+		}
 		s.qcVoteMsgs.LoadOrStore(string(msg.GetJustifyQC().GetProposalId()), msg.GetJustifyQC().GetSignInfos())
 	}
 
