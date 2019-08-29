@@ -623,9 +623,12 @@ func (uv *UtxoVM) SelectUtxos(fromAddr string, fromPubKey string, totalNeed *big
 			}
 			txInputs = append(txInputs, txInput)
 			cacheKeys[uKey] = true
-			if utxoTotal.Cmp(totalNeed) >= 0 {
-				foundEnough = true
-				break
+			// when cancel lease, totalNeed equals negative one
+			if totalNeed != big.NewInt(-1) {
+				if utxoTotal.Cmp(totalNeed) >= 0 {
+					foundEnough = true
+					break
+				}
 			}
 		}
 	}
@@ -685,10 +688,12 @@ func (uv *UtxoVM) SelectUtxos(fromAddr string, fromPubKey string, totalNeed *big
 			txInputs = append(txInputs, txInput)
 			utxoTotal.Add(utxoTotal, uItem.Amount) // utxo累加
 			// uv.xlog.Debug("select", "utxo_amount", utxo_amount, "txid", fmt.Sprintf("%x", txInput.RefTxid))
-			if utxoTotal.Cmp(totalNeed) >= 0 { // 找到了足够的utxo用于支付
-				foundEnough = true
-				uv.prevFoundKeyCache.Add(fromAddr, key)
-				break
+			if totalNeed != big.NewInt(-1) {
+				if utxoTotal.Cmp(totalNeed) >= 0 { // 找到了足够的utxo用于支付
+					foundEnough = true
+					uv.prevFoundKeyCache.Add(fromAddr, key)
+					break
+				}
 			}
 		}
 		if it.Error() != nil {
@@ -1416,6 +1421,14 @@ func (uv *UtxoVM) PlayAndRepost(blockid []byte, needRepost bool, isRootTx bool) 
 		// 合约执行失败，不影响签发块
 		return err
 	}
+
+	// 更新区块的utxo变化
+	addrToUtxo := uv.StatUTXOWithBlock(block.GetTransactions(), false)
+	saveUtxoErr := uv.SaveUTXOByHeightInterval(addrToUtxo, block.GetHeight(), batch)
+	if saveUtxoErr != nil {
+		return saveUtxoErr
+	}
+
 	//更新latestBlockid
 	persistErr := uv.updateLatestBlockid(block.Blockid, batch, "failed to save block")
 	if persistErr != nil {
@@ -1474,6 +1487,13 @@ func (uv *UtxoVM) PlayForMiner(blockid []byte, batch kvdb.Batch) error {
 		uv.xlog.Warn("smart contract.finalize failed", "blockid", fmt.Sprintf("%x", block.Blockid))
 		return err
 	}
+
+	addrToUtxo := uv.StatUTXOWithBlock(block.GetTransactions(), false)
+	saveUtxoErr := uv.SaveUTXOByHeightInterval(addrToUtxo, block.GetHeight(), batch)
+	if saveUtxoErr != nil {
+		return saveUtxoErr
+	}
+
 	//更新latestBlockid
 	err = uv.updateLatestBlockid(block.Blockid, batch, "failed to save block")
 	if err != nil {
@@ -1579,6 +1599,13 @@ func (uv *UtxoVM) Walk(blockid []byte) error {
 			uv.xlog.Error("smart contract fianlize failed", "blockid", fmt.Sprintf("%x", undoBlk.Blockid))
 			return err
 		}
+
+		addrToUtxo := uv.StatUTXOWithBlock(undoBlk.GetTransactions(), true)
+		saveUtxoErr := uv.SaveUTXOByHeightInterval(addrToUtxo, undoBlk.GetHeight(), batch)
+		if saveUtxoErr != nil {
+			return saveUtxoErr
+		}
+
 		updateErr := uv.updateLatestBlockid(undoBlk.PreHash, batch, "error occurs when undo blocks")
 		if updateErr != nil {
 			return updateErr
@@ -1626,6 +1653,13 @@ func (uv *UtxoVM) Walk(blockid []byte) error {
 			uv.xlog.Error("smart contract fianlize failed", "blockid", fmt.Sprintf("%x", todoBlk.Blockid))
 			return err
 		}
+
+		addrToUtxo := uv.StatUTXOWithBlock(todoBlk.GetTransactions(), false)
+		saveUtxoErr := uv.SaveUTXOByHeightInterval(addrToUtxo, todoBlk.GetHeight(), batch)
+		if saveUtxoErr != nil {
+			return saveUtxoErr
+		}
+
 		updateErr := uv.updateLatestBlockid(todoBlk.Blockid, batch, "error occurs when do blocks") // 每do一个block,是一个原子batch写
 		if updateErr != nil {
 			return updateErr
@@ -2052,4 +2086,34 @@ func (uv *UtxoVM) queryContractBannedStatus(contractName string) (bool, error) {
 	}
 	ctx.Release()
 	return false, nil
+}
+
+// QuerySlot2Address query info about slot to address
+func (uv *UtxoVM) QuerySlot2Address() ([]*pb.Slot2Addr, error) {
+	return uv.querySlot2Address()
+}
+
+// querySlot2Address only get confirmed infos
+func (uv *UtxoVM) querySlot2Address() ([]*pb.Slot2Addr, error) {
+	slot2Addr := []*pb.Slot2Addr{}
+	// TODO, @ToWorld 写到共识里
+	count := int64(15)
+
+	for count > 0 {
+		currSlot := strconv.FormatInt(count-1, 10)
+		// 获取currSlot对应的confirmed的value
+		address, confirmed, err := uv.model3.GetConfirmedValue(utils.GetSlot2AddressBucket(), []byte(currSlot))
+		if address == nil || !confirmed || err != nil || string(address) == "None" {
+			count--
+			continue
+		}
+		tmpSlot2Addr := &pb.Slot2Addr{
+			Slot: currSlot,
+			Addr: string(address),
+		}
+		count--
+		slot2Addr = append(slot2Addr, tmpSlot2Addr)
+	}
+
+	return slot2Addr, nil
 }

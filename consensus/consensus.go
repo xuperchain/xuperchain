@@ -29,6 +29,7 @@ const (
 	ConsensusTypeTdpos    = "tdpos"
 	ConsensusTypePow      = "pow"
 	ConsensusTypeSingle   = "single"
+	ConsensusTypeXpos     = "xpos"
 )
 
 // StepConsensus is the struct stored the consensus instance
@@ -49,6 +50,7 @@ type PluggableConsensus struct {
 	cons         []*StepConsensus
 	cryptoClient crypto_base.CryptoClient
 	mutex        *sync.RWMutex
+	initProposer string
 }
 
 func genPlugConsKey(height int64, timestamp int64) string {
@@ -96,6 +98,12 @@ func (pc *PluggableConsensus) makeFirstCons(xlog log.Logger, cfg *config.NodeCon
 			return nil, err
 		}
 		timestamp = tmpTime
+	}
+	if name == ConsensusTypeXpos {
+		if consConf["init_proposer"] == nil {
+			return nil, errors.New("init_proposer is required by the consensus of xpos")
+		}
+		pc.initProposer = consConf["init_proposer"].(string)
 	}
 	return pc.newUpdateConsensus(name, height, timestamp, consConf, nil)
 }
@@ -292,13 +300,16 @@ func (pc *PluggableConsensus) newUpdateConsensus(name string, height int64, time
 	extParams := make(map[string]interface{})
 	extParams["block"] = block
 	extParams["crypto_client"] = pc.cryptoClient
-	if name == ConsensusTypeTdpos {
+	if name == ConsensusTypeTdpos || name == ConsensusTypeXpos {
 		extParams["bcname"] = pc.bcname
 		extParams["ledger"] = pc.ledger
 		extParams["utxovm"] = pc.utxoVM
 		extParams["timestamp"] = timestamp
 	} else if name == ConsensusTypePow {
 		extParams["ledger"] = pc.ledger
+	}
+	if name == ConsensusTypeXpos {
+		extParams["initProposer"] = pc.initProposer
 	}
 	// create and config consensus instance
 	cons, err := pc.updateConsensusByName(name, height, consConf, extParams)

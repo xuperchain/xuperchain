@@ -373,6 +373,11 @@ func (s *server) SelectUTXO(ctx context.Context, in *pb.UtxoInput) (*pb.UtxoOutp
 	}
 	utxoList := []*pb.Utxo{}
 	for _, v := range utxos {
+		if in.Txid != "" {
+			if in.Txid != fmt.Sprintf("%x", v.RefTxid) {
+				continue
+			}
+		}
 		utxo := &pb.Utxo{}
 		utxo.RefTxid = v.RefTxid
 		utxo.Amount = v.Amount
@@ -921,6 +926,53 @@ func startTCPServer(xchainmg *xchaincore.XChainMG) error {
 		return err
 	}
 	return nil
+}
+
+// QuerySlot query slot infos
+func (s *server) QuerySlot(ctx context.Context, request *pb.Slot2AddressRequest) (*pb.Slot2AddressResponse, error) {
+	if request.Header == nil {
+		request.Header = global.GHeader()
+	}
+	bc := s.mg.Get(request.Bcname)
+	if bc == nil {
+		out := pb.Slot2AddressResponse{Header: &pb.Header{}}
+		out.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
+		return &out, nil
+	}
+	out := &pb.Slot2AddressResponse{
+		Bcname: request.Bcname,
+		Header: global.GHeader(),
+	}
+	slot2Address, err := bc.QuerySlot2Address()
+	if err != nil || slot2Address == nil {
+		return out, err
+	}
+	out.Slot2Addr = slot2Address
+	return out, err
+}
+
+// QueryXPower query the xpower value of an address
+func (s *server) QueryXPower(ctx context.Context, in *pb.XPowerRequest) (*pb.XPowerResponse, error) {
+	s.mg.Speed.Add("QueryXPower")
+	if in.Header == nil {
+		in.Header = global.GHeader()
+	}
+	out := &pb.XPowerResponse{Header: &pb.Header{}}
+	bc := s.mg.Get(in.GetBcname())
+	if bc == nil {
+		out.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
+		s.log.Trace("refused a connection at function call QueryXPower", "logid", in.Header.Logid)
+		return out, nil
+	}
+
+	address := in.GetAddress()
+	xpower, err := bc.QueryXPower(address)
+	if err != nil {
+		return out, err
+	}
+	out.Xpower = xpower
+
+	return out, nil
 }
 
 // SerRun xchain server start entrance

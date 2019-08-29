@@ -1,0 +1,22 @@
+{
+	"version": "1",
+	"predistribution": [
+		{
+			"address": "dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN",
+			"quota": "100000000000000000000"
+		}
+	],
+	"maxblocksize": "128",
+	"award": "1000000",
+	"decimals": "8",
+	"award_decay": {
+		"height_gap": 31536000,
+		"ratio": 1
+	},
+	"genesis_consensus": {
+		"name": "xpos",
+		"config": {
+			"init_proposer": "dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN"
+		}
+	}
+}

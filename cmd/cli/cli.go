@@ -330,6 +330,8 @@ func assembleTxSupportAccount(ctx context.Context, client pb.XchainClient, opt *
 		Nonce:     global.GenNonce(),
 		Timestamp: time.Now().UnixNano(),
 		Initiator: initAddr,
+		// 交易类型
+		Type: opt.Type,
 	}
 	account := &pb.TxDataAccount{
 		Address:      opt.To,
@@ -356,6 +358,13 @@ func assembleTxSupportAccount(ctx context.Context, client pb.XchainClient, opt *
 		txOutput.FrozenHeight = acc.FrozenHeight
 		tx.TxOutputs = append(tx.TxOutputs, txOutput)
 	}
+
+	// 如果发起的交易是取消租赁交易
+	// 扫描出utxo中所有的记录(SelectUTXO)
+	if opt.LeaseTxid != "" && opt.Type == pb.TransactionType_CANCELLEASE {
+		totalNeed = big.NewInt(-1)
+	}
+
 	// 组装input 和 剩余output
 	txInputs, deltaTxOutput, err := assembleTxInputsSupportAccount(ctx, client, opt, totalNeed)
 	if err != nil {
@@ -490,7 +499,7 @@ func assembleTxInputsSupportAccount(ctx context.Context, client pb.XchainClient,
 		return nil, nil, ErrSelectUtxo
 	}
 	// 多出来的utxo需要再转给自己
-	if utxoTotal.Cmp(totalNeed) > 0 {
+	if totalNeed.Cmp(big.NewInt(-1)) != 0 && utxoTotal.Cmp(totalNeed) > 0 {
 		delta := utxoTotal.Sub(utxoTotal, totalNeed)
 		txOutput = &pb.TxOutput{
 			ToAddr: []byte(opt.From), // 收款人就是汇款人自己

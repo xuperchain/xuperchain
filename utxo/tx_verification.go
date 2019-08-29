@@ -132,6 +132,7 @@ func (uv *UtxoVM) verifySignatures(tx *pb.Transaction, digestHash []byte) (bool,
 		return uv.verifyXuperSign(tx, digestHash)
 	}
 
+	name := tx.Initiator
 	// Not XuperSign(multisig/rignsign etc.), use old signature process
 	verifiedAddr := make(map[string]bool)
 	if len(tx.InitiatorSigns) < 1 || len(tx.AuthRequire) != len(tx.AuthRequireSigns) {
@@ -139,6 +140,14 @@ func (uv *UtxoVM) verifySignatures(tx *pb.Transaction, digestHash []byte) (bool,
 	}
 
 	// verify initiator
+	// 验证发起者，针对CANCELLEASE类型的交易做特殊化处理
+	// 租赁关系: lease#toAddr_fromAddr
+	if tx.GetType() == pb.TransactionType_CANCELLEASE {
+		res := strings.Split(name, "_")
+		if len(res) != 0 {
+			name = res[len(res)-1]
+		}
+	}
 	// check initiator address signature, initiator could only be address after verify initiator type check
 	ok, err := pm.IdentifyAK(tx.Initiator, tx.InitiatorSigns[0], digestHash)
 	if err != nil || !ok {
@@ -212,6 +221,16 @@ func (uv *UtxoVM) verifyXuperSign(tx *pb.Transaction, digestHash []byte) (bool, 
 func (uv *UtxoVM) verifyUTXOPermission(tx *pb.Transaction, verifiedID map[string]bool) (bool, error) {
 	// verify tx input ACL
 	for _, txInput := range tx.TxInputs {
+		// 如果是calcel lease交易,验证fromAddr即可
+		if strings.HasPrefix(string(txInput.FromAddr), "lease#") {
+			res := strings.Split(tx.Initiator, "_")
+			if len(res) != 0 {
+				tmpStr := res[len(res)-1]
+				if verifiedID[tmpStr] {
+					continue
+				}
+			}
+		}
 		name := string(txInput.FromAddr)
 		if verifiedID[name] {
 			// this ID(either AK or Account) is verified before
@@ -328,6 +347,86 @@ func (uv *UtxoVM) verifyRWSetPermission(tx *pb.Transaction, verifiedID map[strin
 				return ok, accountErr
 			}
 			verifiedID[accountName] = true
+		// 修改address2SlotBucket
+		// 场景: 竞争槽位/释放槽位
+		case aclu.GetAddress2SlotBucket():
+			value := ele.GetValue()
+			address := string(key)
+			slotId := string(value)
+			transactionType := tx.GetType()
+
+			versionData, err := uv.model3.Get(aclu.GetAddress2SlotBucket(), []byte(address))
+			if err != nil {
+				return false, err
+			}
+			confirmed := versionData.GetConfirmed()
+			if !confirmed && versionData.GetRefTxid() != nil {
+				return false, errors.New("there has been a tx contending the slot")
+			}
+
+			// case1: 竞争槽位
+			// 判断当前槽位是否已经被占用
+			// 判断当前竞争者的balance是否超过1M
+			// 判断当前槽位被占用的address与当前竞争者的xpower
+			if transactionType == pb.TransactionType_CONTENDSLOT {
+				verifyContendRet, verifyErr := uv.verifyContendSlot(slotId, address)
+				if !verifyContendRet || verifyErr != nil {
+					return verifyContendRet, verifyErr
+				}
+				continue
+			}
+			// case2: 释放槽位
+			// 判断待释放的槽位是否被占用
+			// 判断交易发起者是否等于被释放的槽位对应的地址
+			if transactionType == pb.TransactionType_RELEASESLOT {
+				slotId = string(versionData.GetPureData().GetValue())
+				// 已经有人在修改这块数据了，放弃操作
+				verifyReleaseRet, verifyErr := uv.verifyReleaseSlot(slotId, address, tx.GetInitiator(), "GetAddress2SlotBucket")
+				if !verifyReleaseRet || verifyErr != nil {
+					return verifyReleaseRet, verifyErr
+				}
+				continue
+			}
+			return false, errors.New("invalid transaction type")
+		// 修改slot2AddressBucket
+		case aclu.GetSlot2AddressBucket():
+			value := ele.GetValue()
+			slotId := string(key)
+			addressContend := string(value)
+			transactionType := tx.GetType()
+
+			versionData, err := uv.model3.Get(aclu.GetSlot2AddressBucket(), []byte(slotId))
+			if err != nil {
+				return false, err
+			}
+			confirmed := versionData.GetConfirmed()
+			if !confirmed && versionData.GetRefTxid() != nil {
+				return false, errors.New("there has been a tx releasing a slot")
+			}
+
+			// case1: 竞争槽位
+			// 判断当前竞争者的balance是否超过1M
+			// 判断当前槽位是否已经被占用
+			// 判断当前槽位被占用的address与当前竞争者的xpower
+			if transactionType == pb.TransactionType_CONTENDSLOT {
+				verifyContendRet, verifyErr := uv.verifyContendSlot(slotId, addressContend)
+				if !verifyContendRet || verifyErr != nil {
+					return verifyContendRet, verifyErr
+				}
+				continue
+			}
+			// case2: 释放槽位
+			// 判断待释放的槽位是否被占用
+			// 判断交易发起者是否等于被释放的槽位对应的地址
+			if transactionType == pb.TransactionType_RELEASESLOT {
+				addressContend = string(versionData.GetPureData().GetValue())
+				verifyReleaseRet, verifyErr := uv.verifyReleaseSlot(slotId, addressContend, tx.GetInitiator(), "GetSlot2AddressBucket")
+				if !verifyReleaseRet || verifyErr != nil {
+					return verifyReleaseRet, verifyErr
+				}
+				continue
+			}
+			return false, errors.New("invalid transaction type")
 		}
 	}
 	return true, nil

@@ -1,0 +1,7 @@
+{
+	"module_name": "xkernel",
+	"method_name": "ReleaseSlot",
+	"args": {
+		"slot": "11"
+	}
+}

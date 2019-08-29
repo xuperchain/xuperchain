@@ -56,6 +56,7 @@ go build --buildmode=plugin -o plugins/crypto/crypto-schnorr.so.1.0.0 github.com
 go build --buildmode=plugin -o plugins/consensus/consensus-pow.so.1.0.0 github.com/xuperchain/xuperunion/consensus/pow
 go build --buildmode=plugin -o plugins/consensus/consensus-single.so.1.0.0 github.com/xuperchain/xuperunion/consensus/single
 go build --buildmode=plugin -o plugins/consensus/consensus-tdpos.so.1.0.0 github.com/xuperchain/xuperunion/consensus/tdpos/main
+go build --buildmode=plugin -o plugins/consensus/consensus-xpos.so.1.0.0 github.com/xuperchain/xuperunion/consensus/xpos
 
 # build output dir
 mkdir -p output

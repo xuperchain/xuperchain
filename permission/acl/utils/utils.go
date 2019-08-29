@@ -17,6 +17,8 @@ const (
 	accountContractValue   = "true"
 	newAccountGasAmount    = 1000
 	ak2AccountValue        = "true"
+	address2Slot           = "XCAddress2Slot"
+	slot2Address           = "XCSlot2Address"
 )
 
 // GetContract2AccountBucket get the bucket name of contract to account map
@@ -107,4 +109,14 @@ func GetContractNameMinSize() int {
 // GetAK2AccountBucket return the ak2Account bucket
 func GetAK2AccountBucket() string {
 	return ak2AccountBucket
+}
+
+// GetAddress2SlotBucket return the address2Slot bucket
+func GetAddress2SlotBucket() string {
+	return address2Slot
+}
+
+// GetSlot2AddressBucket return the slot2Address bucket
+func GetSlot2AddressBucket() string {
+	return slot2Address
 }

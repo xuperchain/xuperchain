@@ -1,0 +1,8 @@
+{
+	"module_name": "xkernel",
+	"method_name": "ContendSlot",
+	"args": {
+		"slot": "11",
+		"address": "dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN"
+	}
+}

@@ -43,6 +43,8 @@ type TransferOptions struct {
 	// 支持账户转账
 	From        string
 	AccountPath string
+	LeaseTxid   string
+	Type        pb.TransactionType
 }
 
 // TransferCommand transfer cmd

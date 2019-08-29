@@ -52,6 +52,8 @@ type CommTrans struct {
 	Keys         string
 	XchainClient pb.XchainClient
 	CryptoType   string
+	// Transaction Type
+	TransactionType pb.TransactionType
 }
 
 // GenerateTx generate raw tx
@@ -183,6 +185,7 @@ func (c *CommTrans) GenRawTx(ctx context.Context, desc []byte, preExeRes *pb.Inv
 		Nonce:     global.GenNonce(),
 		Timestamp: time.Now().UnixNano(),
 		Version:   utxo.TxVersion,
+		Type:      c.TransactionType,
 	}
 
 	var gasUsed int64

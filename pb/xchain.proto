@@ -56,7 +56,8 @@ enum TransactionStatus {
 
 // Xchain is the main interfaces
 service Xchain {
-
+  rpc QueryXPower(XPowerRequest) returns (XPowerResponse) {}
+  rpc QuerySlot(Slot2AddressRequest) returns (Slot2AddressResponse) {}
   // PostTx post Transaction to a node
   rpc PostTx(TxStatus) returns (CommonReply) {
     option (google.api.http) = {
@@ -370,6 +371,8 @@ message Transaction {
   int64 received_timestamp = 30;
   // 统一签名(支持多重签名/环签名等，与initiator_signs/auth_require_signs不同时使用)
   XuperSignature xuper_sign = 31;
+  // 交易类型
+  TransactionType type = 32;
 }
 
 // Ledger metadata
@@ -512,6 +515,8 @@ message UtxoInput {
   bytes userSign = 7;
   // need lock
   bool needLock = 8;
+  // which txid it belongs to
+  string txid = 9;
 }
 
 // UtxoOutput query results
@@ -879,4 +884,39 @@ message ContractResponse {
   int32  status = 1;
   string message = 2;
   bytes  body = 3;
+}
+
+enum TransactionType {
+  DEFAULT = 0;
+  COINBASE = 1;
+  CANCELLEASE = 2;
+  CONTENDSLOT = 3;
+  RELEASESLOT = 4;
+}
+
+message XPowerRequest {
+  Header header = 1;
+  string bcname = 2;
+  string address = 3;
+}
+
+message XPowerResponse {
+  Header header = 1;
+  double xpower = 2;
+}
+
+message Slot2Addr {
+  string slot = 1;
+  string addr = 2;
+}
+
+message Slot2AddressRequest {
+  Header header = 1;
+  string bcname = 2;
+}
+
+message Slot2AddressResponse {
+  Header header = 1;
+  string bcname = 2;
+  repeated Slot2Addr slot2Addr = 3;
 }

@@ -490,6 +490,7 @@ func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
 			}
 			return nil
 		}
+		// 已经发生了主干切换
 		err := xc.Utxovm.Walk(block0.Blockid)
 		xc.log.Debug("Walk Time", "logid", in.Header.Logid, "cost", hd.Timer.Print())
 		if err != nil {
@@ -1215,4 +1216,37 @@ func (xc *XChainCore) GetAccountContractsStatus(account string) ([]*pb.ContractS
 		res = append(res, contractStatus)
 	}
 	return res, nil
+}
+
+// QuerySlot2Address get all infos about slot -> address
+func (xc *XChainCore) QuerySlot2Address() ([]*pb.Slot2Addr, error) {
+	if xc == nil {
+		return nil, errors.New("xchain core is nil")
+	}
+	if xc.Status() != global.Normal {
+		return nil, ErrNotReady
+	}
+	slot2Addr, err := xc.Utxovm.QuerySlot2Address()
+	if err != nil {
+		return nil, err
+	}
+	return slot2Addr, nil
+}
+
+// QueryXPower get the xpower value of an address
+func (xc *XChainCore) QueryXPower(address string) (float64, error) {
+	if xc == nil {
+		return float64(0), errors.New("xchain core is nil")
+	}
+	if xc.Status() != global.Normal {
+		return float64(0), ErrNotReady
+	}
+	xpower, err := xc.Utxovm.CalcXPower(address, xc.Ledger.GetMeta().TrunkHeight)
+	if err != nil {
+		return float64(0), err
+	}
+
+	ret, _ := xpower.Float64()
+
+	return ret, nil
 }

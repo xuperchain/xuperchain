@@ -41,6 +41,8 @@ func NewKernel(vmm *wasm.VMManager) (*XuperKernel, error) {
 			"SetAccountAcl": &SetAccountACLMethod{},
 			"SetMethodAcl":  &SetMethodACLMethod{},
 			"Deploy":        &DeployMethod{vmm: vmm},
+			"ContendSlot":   &ContendSlotMethod{},
+			"ReleaseSlot":   &ReleaseSlotMethod{},
 		},
 	}, nil
 }
