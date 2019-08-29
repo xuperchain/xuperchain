@@ -20,6 +20,7 @@ type DPoSPaceMaker struct {
 	bcname      string
 	startView   int64
 	currentView int64
+	address     string
 	cbft        *chainedbft.ChainedBft
 	log         log.Logger
 	ledger      *ledger.Ledger
@@ -27,7 +28,7 @@ type DPoSPaceMaker struct {
 }
 
 // NewDPoSPaceMaker create new DPoSPaceMaker instance
-func NewDPoSPaceMaker(bcname string, startView int64, viewNum int64, cbft *chainedbft.ChainedBft,
+func NewDPoSPaceMaker(bcname string, startView int64, viewNum int64, address string, cbft *chainedbft.ChainedBft,
 	xlog log.Logger, cons base.ConsensusInterface, ledger *ledger.Ledger) (*DPoSPaceMaker, error) {
 	if cbft == nil {
 		return nil, fmt.Errorf("Chained-BFT instance is nil")
@@ -41,6 +42,7 @@ func NewDPoSPaceMaker(bcname string, startView int64, viewNum int64, cbft *chain
 		bcname:      bcname,
 		currentView: viewNum,
 		startView:   startView,
+		address:     address,
 		cbft:        cbft,
 		log:         xlog,
 		cons:        cons,
@@ -59,11 +61,17 @@ func (dpm *DPoSPaceMaker) NextNewView(viewNum int64, proposer, preProposer strin
 	if viewNum < dpm.currentView {
 		return fmt.Errorf("next view cannot smaller than current view number")
 	}
-	if viewNum > dpm.startView {
-		if ok, _ := dpm.IsLastViewConfirmed(); !ok {
-			return fmt.Errorf("last view not confirmed, so should not change view")
-		}
-	}
+	// if viewNum > dpm.startView {
+	// 	if proposer == dpm.address {
+	// 		if ok, _ := dpm.IsLastViewConfirmed(); !ok {
+	// 			return fmt.Errorf("as master, last view not confirmed, so should not change view")
+	// 		}
+	// 	} else {
+	// 		if !dpm.slaveViewCheck(viewNum) {
+	// 			return fmt.Errorf("as slave, last view not confirmed, so should not change view")
+	// 		}
+	// 	}
+	// }
 
 	dpm.currentView = viewNum
 	err := dpm.cbft.ProcessNewView(viewNum, proposer, preProposer)
@@ -78,17 +86,24 @@ func (dpm *DPoSPaceMaker) NextNewProposal(proposalID []byte, data interface{}) e
 	if !ok {
 		return fmt.Errorf("Proposal data is not block")
 	}
+	if block.GetBlock().GetHeight() < dpm.currentView-1 {
+		return fmt.Errorf("Proposal height is too small")
+	}
 	blockid := block.GetBlockid()
 	blockMsg, err := proto.Marshal(block)
 	if err != nil {
 		dpm.log.Warn("proposal proto marshal failed", "error", err)
 		return err
 	}
+	// set current view number to block height
+	dpm.currentView = block.GetBlock().GetHeight()
 	_, err = dpm.cbft.ProcessProposal(dpm.currentView, blockid, blockMsg)
 	if err != nil {
 		dpm.log.Warn("ProcessProposal failed", "error", err)
 		return err
 	}
+	// set current view number to block height
+	dpm.currentView = block.GetBlock().GetHeight()
 	dpm.log.Trace("bft NewProposal", "viewNum", dpm.currentView, "blockid", hex.EncodeToString(blockid))
 	return nil
 }
@@ -119,13 +134,19 @@ func (dpm *DPoSPaceMaker) IsFirstProposal(qc *pb.QuorumCert) bool {
 func (dpm *DPoSPaceMaker) IsLastViewConfirmed() (bool, error) {
 	tipID := dpm.ledger.GetMeta().GetTipBlockid()
 	qc, err := dpm.cbft.GetGenerateQC([]byte(""))
-	dpm.log.Debug("IsLastViewConfirmed get generate qc", "qc", qc)
+	dpm.log.Debug("IsLastViewConfirmed get generate qc", "qc", qc,
+		"proposalID", hex.EncodeToString(qc.GetProposalId()))
 	// qc is not valid or qc is valid but it's not the same with last block
 	if err != nil || bytes.Compare(qc.GetProposalId(), tipID) != 0 {
 		dpm.log.Warn("IsLastViewConfirmed check failed", "error", err)
 		return false, nil
 	}
 	return true, nil
+}
+
+func (dpm *DPoSPaceMaker) slaveViewCheck(viewNum int64) bool {
+	trunkHeight := dpm.ledger.GetMeta().GetTrunkHeight()
+	return viewNum == trunkHeight+1
 }
 
 // GetChainedBFT return the chained-bft module

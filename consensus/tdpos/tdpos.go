@@ -813,7 +813,7 @@ func (tp *TDpos) initBFT(cfg *config.NodeConfig) error {
 	}
 
 	paceMaker, err := bft.NewDPoSPaceMaker(tp.bcname, tp.height, meta.TrunkHeight,
-		cbft, tp.log, tp, tp.ledger)
+		string(tp.address), cbft, tp.log, tp, tp.ledger)
 	if err != nil {
 		if err != nil {
 			tp.log.Warn("initBFT: create DPoSPaceMaker failed", "error", err)
