@@ -1,4 +1,4 @@
-package utxo
+package xmodel
 
 import (
 	"errors"
@@ -9,8 +9,8 @@ import (
 // GetConfirmedValue get the confirmed value of a specific key
 // step1: get the value rewritten by the tx executed recently and successfully
 // step2: check if the tx has been confirmed, and if not, check the reftix recursively
-func (uv *UtxoVM) GetConfirmedValue(bucket string, key []byte) ([]byte, bool, error) {
-	versionData, err := uv.model3.Get(bucket, key)
+func (s *XModel) GetConfirmedValue(bucket string, key []byte) ([]byte, bool, error) {
+	versionData, err := s.Get(bucket, key)
 	if err != nil {
 		return nil, false, err
 	}
@@ -21,32 +21,25 @@ func (uv *UtxoVM) GetConfirmedValue(bucket string, key []byte) ([]byte, bool, er
 	}
 	// 从它引用的reftxid获取已经confirmed的value
 	refTxid := versionData.GetRefTxid()
-	tx := &pb.Transaction{}
 	for {
 		// no confirmed value and mission failed
 		if refTxid == nil {
 			return nil, false, errors.New("no confirmed value")
 		}
-		// 因为HasTx永远不会返回error,这里就不判断error的返回值
-		exist, _ := uv.HasTx(refTxid)
+		// s.queryTx会从confirmed/unconfirmed中查询tx
+		tx, confirmed, err := s.queryTx(refTxid)
+		if err != nil {
+			return nil, false, err
+		}
 		// 被引用的tx还未确认
-		if exist {
-			tx, err = uv.QueryTx(refTxid)
-			if err != nil {
-				return nil, false, err
-			}
+		if !confirmed {
 			refTxid = getRefTxidFromTxWithBucketAndKey(tx, bucket, key)
 			continue
-		} else {
-			// 被引用的tx已经被确认
-			// 直接拿到被引用tx的写集
-			tx, err = uv.ledger.QueryTransaction(refTxid)
-			if err != nil {
-				return nil, false, err
-			}
-			value := getWriteSetFromTxWithBucketAndKey(tx, bucket, key)
-			return value, true, nil
 		}
+		// 被引用的tx已经被确认
+		// 直接拿到被引用tx的写集
+		value := getWriteSetFromTxWithBucketAndKey(tx, bucket, key)
+		return value, true, nil
 	}
 }
 
