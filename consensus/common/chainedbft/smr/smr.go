@@ -236,7 +236,7 @@ func (s *Smr) ProcessProposal(viewNumber int64, proposalID,
 	}
 	netMsg, _ := p2p_pb.NewXuperMessage(p2p_pb.XuperMsgVersion3, s.bcname, "",
 		p2p_pb.XuperMessage_CHAINED_BFT_NEW_PROPOSAL_MSG, msgBuf, p2p_pb.XuperMessage_NONE)
-	s.slog.Trace("ProcessProposal proposal msg", "netMsg", netMsg)
+	s.slog.Debug("ProcessProposal proposal msg", "netMsg", netMsg)
 	opts := []p2pv2.MessageOption{
 		p2pv2.WithBcName(s.bcname),
 		p2pv2.WithTargetPeerAddrs(s.getReplicasURL()),

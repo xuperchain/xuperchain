@@ -427,7 +427,6 @@ func (tp *TDpos) notifyNewView(height int64) error {
 	if err != nil {
 		return err
 	}
-	tp.log.Debug("start next new view", "viewnum", meta.TrunkHeight+1)
 	// old height might out-of-date, use current trunkHeight when NewView
 	return tp.bftPaceMaker.NextNewView(meta.TrunkHeight+1, nextProposer, proposer)
 }
@@ -570,7 +569,6 @@ func (tp *TDpos) ProcessBeforeMiner(timestamp int64) (map[string]interface{}, bo
 			return nil, false
 		}
 		res["quorum_cert"] = qc
-		tp.log.Debug("bft quorum_cert", "value", qc)
 	}
 
 	res["type"] = TYPE

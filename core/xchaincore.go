@@ -361,10 +361,11 @@ func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
 		xc.log.Debug("Block is exist", "logid", in.Header.Logid, "cost", hd.Timer.Print())
 		return ErrBlockExist
 	}
-	// if in.Block.Height <= xc.Ledger.GetMeta().TrunkHeight {
-	// 	xc.log.Warn("refuse short chain of blocks", "remote", in.Block.Height, "local", xc.Ledger.GetMeta().TrunkHeight)
-	// 	return ErrServiceRefused
-	// }
+	// Note in BFT case, we should accept blocks with same hight
+	if in.Block.Height < xc.Ledger.GetMeta().TrunkHeight {
+		xc.log.Warn("refuse short chain of blocks", "remote", in.Block.Height, "local", xc.Ledger.GetMeta().TrunkHeight)
+		return ErrServiceRefused
+	}
 	blocksIds := []string{}
 	//如果是接受到老的block（版本是1）, TODO
 	blocksIds = append(blocksIds, string(in.Block.Blockid))

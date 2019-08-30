@@ -62,21 +62,10 @@ func (dpm *DPoSPaceMaker) NextNewView(viewNum int64, proposer, preProposer strin
 	if viewNum < dpm.currentView {
 		return fmt.Errorf("next view cannot smaller than current view number")
 	}
-	// if viewNum > dpm.startView {
-	// 	if proposer == dpm.address {
-	// 		if ok, _ := dpm.IsLastViewConfirmed(); !ok {
-	// 			return fmt.Errorf("as master, last view not confirmed, so should not change view")
-	// 		}
-	// 	} else {
-	// 		if !dpm.slaveViewCheck(viewNum) {
-	// 			return fmt.Errorf("as slave, last view not confirmed, so should not change view")
-	// 		}
-	// 	}
-	// }
 
 	dpm.currentView = viewNum
 	err := dpm.cbft.ProcessNewView(viewNum, proposer, preProposer)
-	dpm.log.Trace("bft NewView", "viewNum", viewNum, "proposer", proposer, "preProposer", preProposer)
+	dpm.log.Info("bft NewView", "viewNum", viewNum, "proposer", proposer, "preProposer", preProposer)
 	return err
 }
 
@@ -105,7 +94,7 @@ func (dpm *DPoSPaceMaker) NextNewProposal(proposalID []byte, data interface{}) e
 	}
 	// set current view number to block height
 	dpm.currentView = block.GetBlock().GetHeight()
-	dpm.log.Trace("bft NewProposal", "viewNum", dpm.currentView, "blockid", hex.EncodeToString(blockid))
+	dpm.log.Info("bft NewProposal", "viewNum", dpm.currentView, "blockid", hex.EncodeToString(blockid))
 	return nil
 }
 
@@ -118,13 +107,13 @@ func (dpm *DPoSPaceMaker) CurrentQCHigh(proposalID []byte) (*pb.QuorumCert, erro
 // UpdateValidatorSet update the validator set of BFT
 func (dpm *DPoSPaceMaker) UpdateValidatorSet(validators []*base.CandidateInfo) error {
 	valStr, _ := json.Marshal(validators)
-	dpm.log.Debug("bft update validator set", "validators", string(valStr))
+	dpm.log.Trace("bft update validator set", "validators", string(valStr))
 	return dpm.cbft.UpdateValidateSets(validators)
 }
 
 // IsFirstProposal check if current view is the first view
 func (dpm *DPoSPaceMaker) IsFirstProposal(qc *pb.QuorumCert) bool {
-	dpm.log.Info("IsFirstProposal check", "viewNum", qc.GetViewNumber(), "startView", dpm.startView)
+	dpm.log.Trace("IsFirstProposal check", "viewNum", qc.GetViewNumber(), "startView", dpm.startView)
 	if qc.GetViewNumber() == dpm.startView {
 		return true
 	}
@@ -135,8 +124,8 @@ func (dpm *DPoSPaceMaker) IsFirstProposal(qc *pb.QuorumCert) bool {
 func (dpm *DPoSPaceMaker) IsLastViewConfirmed() (bool, error) {
 	tipID := dpm.ledger.GetMeta().GetTipBlockid()
 	qc, err := dpm.cbft.GetGenerateQC()
-	dpm.log.Debug("IsLastViewConfirmed get generate qc", "qc", qc,
-		"proposalID", hex.EncodeToString(qc.GetProposalId()))
+	// dpm.log.Debug("IsLastViewConfirmed get generate qc", "qc", qc,
+	// 	"proposalID", hex.EncodeToString(qc.GetProposalId()))
 	// qc is not valid or qc is valid but it's not the same with last block
 	if err != nil || bytes.Compare(qc.GetProposalId(), tipID) != 0 {
 		dpm.log.Warn("IsLastViewConfirmed check failed", "error", err)
