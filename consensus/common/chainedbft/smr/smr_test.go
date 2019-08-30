@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
+	log "github.com/xuperchain/log15"
 	cons_base "github.com/xuperchain/xuperunion/consensus/base"
 	"github.com/xuperchain/xuperunion/consensus/common/chainedbft/config"
 	"github.com/xuperchain/xuperunion/consensus/common/chainedbft/external"
@@ -63,8 +64,10 @@ func MakeSmr(t *testing.T) (*Smr, error) {
 			PeerAddr: "",
 		},
 	}
+	xlog := log.New("module", "consensus")
 
 	smr, err := NewSmr(
+		xlog,
 		&config.Config{},
 		"xuper",
 		user.address,
@@ -236,13 +239,14 @@ func TestHandleReceivedVoteMsg(t *testing.T) {
 		t.Error("TestHandleReceivedVoteMsg MakeSmr error", err)
 		return
 	}
+	proposal := &pb.QuorumCert{
+		ProposalId: []byte("proposalQC ProposalId"),
+	}
+	smr.localProposal.Store(string(proposal.GetProposalId()), proposal)
 	netMsg, err := MakeVoteMsg(t)
 	err = smr.handleReceivedVoteMsg(netMsg)
 	if err != nil {
 		t.Error("TestHandleReceivedVoteMsg handleReceivedVoteMsg error", err)
-	}
-	if smr.votedView != 1005 {
-		t.Error("TestHandleReceivedVoteMsg handleReceivedVoteMsg error", smr)
 	}
 }
 
