@@ -55,6 +55,8 @@ type Smr struct {
 	// new view msg gathered from other replicas, key: viewNumber, value: []*pb.ChainedBftPhaseMessage
 	newViewMsgs *sync.Map
 
+	// lk lock
+	lk *sync.Mutex
 	// quitCh stop channel
 	QuitCh chan bool
 }
