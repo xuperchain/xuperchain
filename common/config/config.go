@@ -197,6 +197,7 @@ type NodeConfig struct {
 	Wasm            WasmConfig `yaml:"wasm,omitempty"`
 	CoreConnection  bool       `yaml:"coreConnection,omitempty"`
 	FailSkip        bool       `yaml:"failSkip,omitempty"`
+	EnableXEndorser bool       `yaml:"enableXEndorser,omitempty"`
 }
 
 // KernelConfig kernel config
@@ -285,6 +286,7 @@ func (nc *NodeConfig) defaultNodeConfig() {
 	}
 	nc.CoreConnection = false
 	nc.FailSkip = false
+	nc.EnableXEndorser = false
 }
 
 // NewNodeConfig returns a config of a node
