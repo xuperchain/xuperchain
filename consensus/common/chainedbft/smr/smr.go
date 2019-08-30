@@ -150,7 +150,8 @@ func (s *Smr) ProcessNewView(viewNumber int64, leader, preLeader string) error {
 	}
 
 	if preLeader == s.address {
-		newViewMsg.JustifyQC = s.generateQC
+		gQC, _ := s.GetGenerateQC()
+		newViewMsg.JustifyQC = gQC
 	}
 
 	newViewMsg, err := utils.MakePhaseMsgSign(s.cryptoClient, s.privateKey, newViewMsg)
@@ -522,9 +523,9 @@ func (s *Smr) addViewMsg(msg *pb.ChainedBftPhaseMessage) error {
 			if ok, _ := s.IsQuorumCertValidate(justify); ok {
 				s.slog.Debug("addViewMsg update local as a new leader")
 				s.updateQcStatus(nil, s.proposalQC, s.generateQC)
+				s.qcVoteMsgs.Store(string(justify.GetProposalId()), justify.GetSignInfos())
 			}
 		}
-		s.qcVoteMsgs.LoadOrStore(string(justify.GetProposalId()), justify.GetSignInfos())
 	}
 
 	// add View msg
