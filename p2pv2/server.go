@@ -134,7 +134,8 @@ func (p *P2PServerV2) getFilter(opts *msgOptions) PeersFilter {
 	fs := opts.filters
 	bcname := opts.bcname
 	peerids := make([]peer.ID, 0)
-	if len(fs) == 0 {
+	tpLen := len(opts.targetPeerAddrs)
+	if len(fs) == 0 && tpLen == 0 {
 		return &BucketsFilter{node: p.node}
 	}
 	pfs := make([]PeersFilter, 0)
@@ -155,7 +156,7 @@ func (p *P2PServerV2) getFilter(opts *msgOptions) PeersFilter {
 		pfs = append(pfs, filter)
 	}
 	// process target peer addresses
-	if len(opts.targetPeerAddrs) > 0 {
+	if tpLen > 0 {
 		// connect to extra target peers async
 		go p.node.ConnectToPeersByAddr(opts.targetPeerAddrs)
 		// get corresponding peer ids
@@ -168,10 +169,7 @@ func (p *P2PServerV2) getFilter(opts *msgOptions) PeersFilter {
 			peerids = append(peerids, pid)
 		}
 	}
-	if len(pfs) > 1 {
-		return NewMultiStrategy(p.node, pfs, peerids)
-	}
-	return pfs[0]
+	return NewMultiStrategy(p.node, pfs, peerids)
 }
 
 // GetPeerUrls 查询所连接节点的信息
