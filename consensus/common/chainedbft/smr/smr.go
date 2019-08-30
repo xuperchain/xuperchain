@@ -368,7 +368,7 @@ func (s *Smr) handleReceivedProposal(msg *p2p_pb.XuperMessage) error {
 	}
 
 	// Step4: upstate state
-	if bytes.Equal(propsQC.GetProposalId(), s.generateQC.GetProposalId()) {
+	if prePropsQC != nil && bytes.Equal(prePropsQC.GetProposalId(), s.generateQC.GetProposalId()) {
 		s.slog.Info("handleReceivedProposal as the preleader, no need to updateQcStatus.")
 		return nil
 	}
