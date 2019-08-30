@@ -154,6 +154,7 @@ func NewMultiStrategy(node *Node, filters []PeersFilter, extraPeers []peer.ID) *
 func (cp *MultiStrategy) Filter() ([]peer.ID, error) {
 	res := make([]peer.ID, 0)
 	dupCheck := make(map[string]bool)
+	// add all filters
 	for _, filter := range cp.filters {
 		peers, err := filter.Filter()
 		if err != nil {
@@ -164,6 +165,13 @@ func (cp *MultiStrategy) Filter() ([]peer.ID, error) {
 				dupCheck[peer.Pretty()] = true
 				res = append(res, peer)
 			}
+		}
+	}
+	// add extra peers
+	for _, peer := range cp.extraPeers {
+		if _, ok := dupCheck[peer.Pretty()]; !ok {
+			dupCheck[peer.Pretty()] = true
+			res = append(res, peer)
 		}
 	}
 
