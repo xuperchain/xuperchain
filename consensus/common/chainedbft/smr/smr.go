@@ -76,6 +76,7 @@ func NewSmr(
 		localProposal: &sync.Map{},
 		qcVoteMsgs:    &sync.Map{},
 		newViewMsgs:   &sync.Map{},
+		lk:            &sync.Mutex{},
 		QuitCh:        make(chan bool, 1),
 	}
 	if err := smr.updateQcStatus(proposalQC, generateQC, lockedQC); err != nil {
@@ -194,7 +195,7 @@ func (s *Smr) GetGenerateQC() (*pb.QuorumCert, error) {
 			res.SignInfos = v.(*pb.QCSignInfos)
 		}
 	}
-	s.slog.Debug("GetGenerateQC res", "res", res)
+	s.slog.Debug("GetGenerateQC res", "ProposalId", hex.EncodeToString(res.GetProposalId()), "res", res)
 	return res, nil
 }
 
@@ -256,7 +257,7 @@ func (s *Smr) handleReceivedMsg(msg *p2p_pb.XuperMessage) error {
 
 	// filter msg from other chain
 	if msg.GetHeader().GetBcname() != s.bcname {
-		s.slog.Info("handleReceivedMsg msg doesn't from this chain!",
+		s.slog.Warn("handleReceivedMsg msg doesn't from this chain!",
 			"logid", msg.GetHeader().GetLogid(), "bcname_from", msg.GetHeader().GetBcname(), "bcname", s.bcname)
 		return nil
 	}
@@ -306,7 +307,7 @@ func (s *Smr) handleReceivedVoteMsg(msg *p2p_pb.XuperMessage) error {
 			return ErrGetVotes
 		}
 		s.generateQC.SignInfos = v.(*pb.QCSignInfos)
-		s.slog.Trace("handleReceivedVoteMsg", "s.generateQC.SignInfos", s.generateQC.SignInfos)
+		s.slog.Debug("handleReceivedVoteMsg", "s.generateQC.SignInfos", s.generateQC.SignInfos)
 	}
 	return nil
 }
@@ -330,7 +331,7 @@ func (s *Smr) handleReceivedNewView(msg *p2p_pb.XuperMessage) error {
 // handleReceivedProposal is the core function of hotstuff. It uesd to change QuorumCerts's phase.
 // It will change three previous QuorumCerts's state because hotstuff is a three chained bft.
 func (s *Smr) handleReceivedProposal(msg *p2p_pb.XuperMessage) error {
-	s.slog.Info("handleReceivedProposal", "logid",
+	s.slog.Trace("handleReceivedProposal", "logid",
 		msg.GetHeader().GetLogid(), "msg", msg)
 
 	propMsg := &pb.ChainedBftPhaseMessage{}
@@ -343,7 +344,7 @@ func (s *Smr) handleReceivedProposal(msg *p2p_pb.XuperMessage) error {
 	// prePropsQC is the propsQC's ProposalMsg's JustifyQC
 	// prePrePropsQC <- prePropsQC <- propsQC
 	propsQC := propMsg.GetProposalQC()
-	s.slog.Trace("Testlog handleReceivedProposal propsQC", "propsQC", propsQC)
+	s.slog.Debug("handleReceivedProposal propsQC", "propsQC", propsQC)
 
 	prePropsQC, isFirstProposal, err := s.callPreQcWithStatus(propsQC)
 	if err != nil {
@@ -404,7 +405,7 @@ func (s *Smr) handleReceivedProposal(msg *p2p_pb.XuperMessage) error {
 			s.updateQcStatus(s.proposalQC, s.generateQC, prePrePropsQC)
 		}
 	}
-	s.slog.Trace("handleReceivedProposal result", "smr.votedView", s.votedView,
+	s.slog.Debug("handleReceivedProposal result", "smr.votedView", s.votedView,
 		"smr.generateQC", s.generateQC, "smr.lockedQC", s.lockedQC, "smr.proposalQC", s.proposalQC)
 	return nil
 }
@@ -413,13 +414,13 @@ func (s *Smr) handleReceivedProposal(msg *p2p_pb.XuperMessage) error {
 func (s *Smr) callPreQcWithStatus(qc *pb.QuorumCert) (*pb.QuorumCert, bool, error) {
 	ok, err := s.externalCons.IsFirstProposal(qc)
 	s.slog.Warn("callPreQcWithStatus IsFirstProposal status",
-		"proposalId", qc.GetProposalId(), "ok", ok, "err", err)
+		"proposalId", hex.EncodeToString(qc.GetProposalId()), "ok", ok, "err", err)
 	if ok || err != nil {
 		return nil, ok, err
 	}
 
 	prePropsQC, err := s.externalCons.CallPreQc(qc)
-	s.slog.Trace("Testlog callPreQcWithStatus get prePropsQC", "prePropsQC", prePropsQC)
+	s.slog.Debug("callPreQcWithStatus get prePropsQC", "prePropsQC", prePropsQC)
 	if err != nil {
 		s.slog.Error("callPreQcWithStatus CallPreQc call prePropsQC error", "err", err)
 		return nil, false, err
@@ -435,6 +436,7 @@ func (s *Smr) callPreQcWithStatus(qc *pb.QuorumCert) (*pb.QuorumCert, bool, erro
 
 // updateQcStatus upstate QC status with given qc's
 func (s *Smr) updateQcStatus(proposalQC, generateQC, lockedQC *pb.QuorumCert) error {
+	s.lk.Lock()
 	if generateQC == nil {
 		s.votedView = 0
 	} else {
@@ -443,7 +445,17 @@ func (s *Smr) updateQcStatus(proposalQC, generateQC, lockedQC *pb.QuorumCert) er
 	s.lockedQC = lockedQC
 	s.generateQC = generateQC
 	s.proposalQC = proposalQC
-	s.slog.Debug("updateQcStatus result", "generateQC", s.generateQC, "proposalQC", s.proposalQC)
+	s.lk.Unlock()
+	// debuglog
+	if s.proposalQC != nil {
+		s.slog.Debug("updateQcStatus result", "proposalQCId", hex.EncodeToString(s.proposalQC.GetProposalId()))
+	}
+	if s.generateQC != nil {
+		s.slog.Debug("updateQcStatus result", "generateQCId", hex.EncodeToString(s.generateQC.GetProposalId()))
+	}
+	if s.lockedQC != nil {
+		s.slog.Debug("updateQcStatus result", "lockedQCId", hex.EncodeToString(s.lockedQC.GetProposalId()))
+	}
 	return nil
 }
 
@@ -502,13 +514,17 @@ func (s *Smr) addViewMsg(msg *pb.ChainedBftPhaseMessage) error {
 		return errors.New("addViewMsg checkValidateSets error")
 	}
 	// add JustifyQC
-	if msg.GetJustifyQC() != nil {
-		// todo zq verify sign
-		s.slog.Info("addViewMsg GetJustifyQC not nil", "proposalid", hex.EncodeToString(msg.GetJustifyQC().GetProposalId()), "GetJustifyQC.SignInfos", msg.GetJustifyQC().GetSignInfos())
-		if s.proposalQC != nil && bytes.Equal(s.proposalQC.GetProposalId(), msg.GetJustifyQC().GetProposalId()) {
-			s.updateQcStatus(nil, s.proposalQC, s.generateQC)
+	justify := msg.GetJustifyQC()
+	if justify != nil {
+		s.slog.Debug("addViewMsg GetJustifyQC not nil", "justifyId", hex.EncodeToString(justify.GetProposalId()),
+			"proposalId", hex.EncodeToString(s.proposalQC.GetProposalId()), "GetJustifyQC.SignInfos", justify.GetSignInfos())
+		if s.proposalQC != nil && bytes.Equal(s.proposalQC.GetProposalId(), justify.GetProposalId()) {
+			if ok, _ := s.IsQuorumCertValidate(justify); ok {
+				s.slog.Debug("addViewMsg update local as a new leader")
+				s.updateQcStatus(nil, s.proposalQC, s.generateQC)
+			}
 		}
-		s.qcVoteMsgs.LoadOrStore(string(msg.GetJustifyQC().GetProposalId()), msg.GetJustifyQC().GetSignInfos())
+		s.qcVoteMsgs.LoadOrStore(string(justify.GetProposalId()), justify.GetSignInfos())
 	}
 
 	// add View msg
@@ -559,7 +575,6 @@ func (s *Smr) addVoteMsg(msg *pb.ChainedBftVoteMessage) error {
 	}
 	voteMsgs.QCSignInfos = append(voteMsgs.QCSignInfos, msg.GetSignature())
 	s.qcVoteMsgs.Store(string(msg.GetProposalId()), voteMsgs)
-	s.slog.Trace("Testlog addVoteMsg", "voteMsgs", voteMsgs)
 	return nil
 }
 
@@ -571,12 +586,12 @@ func (s *Smr) checkVoteNum(proposalID []byte) bool {
 		return false
 	}
 	voteMsgs := v.(*pb.QCSignInfos)
-	s.slog.Trace("Testlog checkVoteNum", "actual", len(voteMsgs.GetQCSignInfos()), "require", (len(s.validates)-1)*2/3)
+	s.slog.Debug("checkVoteNum", "actual", len(voteMsgs.GetQCSignInfos()), "require", (len(s.validates)-1)*2/3)
 	if len(voteMsgs.GetQCSignInfos()) > (len(s.validates)-1)*2/3 {
-		s.slog.Trace("Testlog checkVoteNum", "res", true, "proposalID", hex.EncodeToString(proposalID))
+		s.slog.Debug("checkVoteNum", "res", true, "proposalID", hex.EncodeToString(proposalID))
 		return true
 	}
-	s.slog.Trace("Testlog checkVoteNum", "res", false, "proposalID", hex.EncodeToString(proposalID))
+	s.slog.Debug("checkVoteNum", "res", false, "proposalID", hex.EncodeToString(proposalID))
 	return false
 }
 
