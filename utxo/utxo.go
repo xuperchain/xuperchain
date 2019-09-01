@@ -15,7 +15,6 @@ import (
 	"fmt"
 	"math/big"
 	"os"
-	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -35,7 +34,6 @@ import (
 	"github.com/xuperchain/xuperunion/permission/acl"
 	acli "github.com/xuperchain/xuperunion/permission/acl/impl"
 	"github.com/xuperchain/xuperunion/permission/acl/utils"
-	"github.com/xuperchain/xuperunion/pluginmgr"
 	"github.com/xuperchain/xuperunion/utxo/txhash"
 	"github.com/xuperchain/xuperunion/vat"
 	"github.com/xuperchain/xuperunion/xmodel"
@@ -333,30 +331,18 @@ func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, priv
 		xlog = log.New("module", "utxoVM")
 		xlog.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
 	}
-	dbPath := filepath.Join(storePath, "utxoVM")
-	plgMgr, plgErr := pluginmgr.GetPluginMgr()
-	if plgErr != nil {
-		xlog.Warn("fail to get plugin manager")
-		return nil, plgErr
+	// new kvdb instance
+	kvParam := &kvdb.KVParameter{
+		StorePath:             storePath,
+		TableName:             "utxoVM",
+		KvEngineType:          kvEngineType,
+		MemCacheSize:          ledger_pkg.MemCacheSize,
+		FileHandlersCacheSize: ledger_pkg.FileHandlersCacheSize,
+		OtherPaths:            otherPaths,
 	}
-	var baseDB kvdb.Database
-	soInst, err := plgMgr.PluginMgr.CreatePluginInstance("kv", kvEngineType)
+	baseDB, err := kvdb.NewKVDBInstance(kvParam)
 	if err != nil {
-		xlog.Warn("fail to create plugin instance", "kvtype", kvEngineType)
-		return nil, err
-	}
-	baseDB = soInst.(kvdb.Database)
-	err = baseDB.Open(dbPath, map[string]interface{}{
-		"cache":     ledger_pkg.MemCacheSize,
-		"fds":       ledger_pkg.FileHandlersCacheSize,
-		"dataPaths": otherPaths,
-	})
-	if err != nil {
-		xlog.Warn("fail to open db", "dbPath", dbPath)
-		return nil, err
-	}
-	if err != nil {
-		xlog.Warn("fail to open leveldb", "dbPath", dbPath, "err", err)
+		xlog.Warn("fail to open leveldb", "dbPath", storePath+"utxoVM", "err", err)
 		return nil, err
 	}
 
