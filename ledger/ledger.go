@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math/big"
 	"os"
+	"path/filepath"
 	"runtime"
 	"sync"
 
@@ -95,16 +96,15 @@ func NewLedger(storePath string, xlog log.Logger, otherPaths []string, kvEngineT
 
 	// new kvdb instance
 	kvParam := &kvdb.KVParameter{
-		StorePath:             storePath,
-		TableName:             "ledger",
-		KvEngineType:          kvEngineType,
+		DBPath:                filepath.Join(storePath, "ledger"),
+		KVEngineType:          kvEngineType,
 		MemCacheSize:          MemCacheSize,
 		FileHandlersCacheSize: FileHandlersCacheSize,
 		OtherPaths:            otherPaths,
 	}
 	baseDB, err := kvdb.NewKVDBInstance(kvParam)
 	if err != nil {
-		xlog.Warn("fail to open leveldb", "dbPath", storePath+"ledger", "err", err)
+		xlog.Warn("fail to open leveldb", "dbPath", storePath+"/ledger", "err", err)
 		return nil, err
 	}
 

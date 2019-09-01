@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"math/big"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -333,16 +334,15 @@ func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, priv
 	}
 	// new kvdb instance
 	kvParam := &kvdb.KVParameter{
-		StorePath:             storePath,
-		TableName:             "utxoVM",
-		KvEngineType:          kvEngineType,
+		DBPath:                filepath.Join(storePath, "utxoVM"),
+		KVEngineType:          kvEngineType,
 		MemCacheSize:          ledger_pkg.MemCacheSize,
 		FileHandlersCacheSize: ledger_pkg.FileHandlersCacheSize,
 		OtherPaths:            otherPaths,
 	}
 	baseDB, err := kvdb.NewKVDBInstance(kvParam)
 	if err != nil {
-		xlog.Warn("fail to open leveldb", "dbPath", storePath+"utxoVM", "err", err)
+		xlog.Warn("fail to open leveldb", "dbPath", storePath+"/utxoVM", "err", err)
 		return nil, err
 	}
 
