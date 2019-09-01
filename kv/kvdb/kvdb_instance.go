@@ -5,6 +5,7 @@ import (
 	"github.com/xuperchain/xuperunion/pluginmgr"
 )
 
+// KVParameter structure for kv instance parameters
 type KVParameter struct {
 	DBPath                string
 	KVEngineType          string
@@ -13,26 +14,32 @@ type KVParameter struct {
 	OtherPaths            []string
 }
 
+// GetDBPath return the value of DBPath
 func (param *KVParameter) GetDBPath() string {
 	return param.DBPath
 }
 
+// GetKVEngineType return the value of KVEngineType
 func (param *KVParameter) GetKVEngineType() string {
 	return param.KVEngineType
 }
 
+// GetMemCacheSize return the value of MemCacheSize
 func (param *KVParameter) GetMemCacheSize() int {
 	return param.MemCacheSize
 }
 
+// GetFileHandlersCacheSize return the value of FileHandlersCacheSize
 func (param *KVParameter) GetFileHandlersCacheSize() int {
 	return param.FileHandlersCacheSize
 }
 
+// GetOtherPaths return the value of OtherPaths
 func (param *KVParameter) GetOtherPaths() []string {
 	return param.OtherPaths
 }
 
+// NewKVDBInstance instance an object of kvdb
 func NewKVDBInstance(param *KVParameter) (Database, error) {
 	plgMgr, plgErr := pluginmgr.GetPluginMgr()
 	if plgErr != nil {
