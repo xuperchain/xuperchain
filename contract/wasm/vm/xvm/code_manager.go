@@ -3,6 +3,7 @@ package xvm
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -65,6 +66,10 @@ func (c *codeManager) purgeMemCache(name string) {
 }
 
 func (c *codeManager) makeMemCache(name, libpath string, desc *pb.WasmCodeDesc) (*contractCode, error) {
+	if _, ok := c.codes[name]; ok {
+		return nil, errors.New("old contract code not purged")
+	}
+
 	execCode, err := c.makeExecCode(libpath)
 	if err != nil {
 		return nil, err
@@ -73,9 +78,6 @@ func (c *codeManager) makeMemCache(name, libpath string, desc *pb.WasmCodeDesc) 
 		ContractName: name,
 		ExecCode:     execCode,
 		Desc:         *desc,
-	}
-	if old, ok := c.codes[name]; ok {
-		old.ExecCode.Release()
 	}
 	c.codes[name] = code
 
