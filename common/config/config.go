@@ -28,6 +28,8 @@ const (
 	DefaultStreamIPLimitSize     = 10
 	DefaultMaxBroadcastPeers     = 20
 	DefaultMaxBroadcastCorePeers = 10
+	DefaultIsStorePeers          = false
+	DefaultP2PDataPath           = "./data/"
 )
 
 // LogConfig is the log config of node
@@ -93,6 +95,10 @@ type P2PConfig struct {
 	// this only works when NodeConfig.CoreConnection is true. Note that the number
 	// of core peers is included in MaxBroadcastPeers.
 	MaxBroadcastCorePeers int `yaml:"maxBroadcastCorePeers,omitempty"`
+	// P2PDataPath stores the peer info connected last time
+	P2PDataPath string `yaml:"p2PDataPath,omitempty"`
+	// IsStorePeers determine wherther storing the peers infos
+	IsStorePeers bool `yaml:"isStorePeers,omitempty"`
 }
 
 // MinerConfig is the config of miner
@@ -310,6 +316,8 @@ func newP2pConfigWithDefault() P2PConfig {
 		StreamIPLimitSize:     DefaultStreamIPLimitSize,
 		MaxBroadcastPeers:     DefaultMaxBroadcastPeers,
 		MaxBroadcastCorePeers: DefaultMaxBroadcastCorePeers,
+		IsStorePeers:          DefaultIsStorePeers,
+		P2PDataPath:           DefaultP2PDataPath,
 	}
 }
 
