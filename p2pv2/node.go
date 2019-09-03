@@ -151,7 +151,7 @@ func NewNode(cfg config.P2PConfig, log log.Logger) (*Node, error) {
 	if no.isStorePeers {
 		peers, err = no.getPeersFromDisk()
 		if err != nil {
-			return nil, ErrGetPeersFromDisk
+			no.log.Warn("getPeersFromDisk error", "err", err)
 		}
 	}
 	if len(cfg.BootNodes) > 0 {
