@@ -3,6 +3,7 @@ package xvm
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -57,7 +58,18 @@ func (c *codeManager) lookupMemCache(name string, desc *pb.WasmCodeDesc) (*contr
 	return nil, false
 }
 
+func (c *codeManager) purgeMemCache(name string) {
+	if ccode, ok := c.codes[name]; ok {
+		ccode.ExecCode.Release()
+	}
+	delete(c.codes, name)
+}
+
 func (c *codeManager) makeMemCache(name, libpath string, desc *pb.WasmCodeDesc) (*contractCode, error) {
+	if _, ok := c.codes[name]; ok {
+		return nil, errors.New("old contract code not purged")
+	}
+
 	execCode, err := c.makeExecCode(libpath)
 	if err != nil {
 		return nil, err
@@ -137,6 +149,9 @@ func (c *codeManager) GetExecCode(name string, cp vm.ContractCodeProvider) (*con
 		return execCode, nil
 	}
 
+	// old code handle should be closed before open new code
+	// see https://github.com/xuperchain/xuperunion/issues/352
+	c.purgeMemCache(name)
 	libpath, ok := c.lookupDiskCache(name, desc)
 	if !ok {
 		log.Debug("contract code need make disk cache", "contract", name)
