@@ -896,6 +896,10 @@ func startTCPServer(xchainmg *xchaincore.XChainMG) error {
 	log.Trace("start rpc server")
 	s := grpc.NewServer(rpcOptions...)
 	pb.RegisterXchainServer(s, &svr)
+	if cfg.EnableXEndorser {
+		endorser := NewDefaultXEndorser(&svr)
+		pb.RegisterXendorserServer(s, endorser)
+	}
 	if cfg.TCPServer.MetricPort != "" {
 		grpc_prometheus.EnableHandlingTimeHistogram(
 			grpc_prometheus.WithHistogramBuckets([]float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10}),
