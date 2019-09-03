@@ -29,7 +29,7 @@ const (
 	DefaultMaxBroadcastPeers     = 20
 	DefaultMaxBroadcastCorePeers = 10
 	DefaultIsStorePeers          = false
-	DefaultP2PDataPath           = "./data/"
+	DefaultP2PDataPath           = "./data/p2p"
 )
 
 // LogConfig is the log config of node

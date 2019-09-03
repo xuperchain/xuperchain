@@ -117,7 +117,7 @@ func NewNode(cfg config.P2PConfig, log log.Logger) (*Node, error) {
 		p2pDataPath:  cfg.P2PDataPath,
 	}
 	if no.isStorePeers {
-		no.ldb, err = newBaseDB("./p2p")
+		no.ldb, err = newBaseDB(no.p2pDataPath)
 		if err != nil {
 			return nil, err
 		}
