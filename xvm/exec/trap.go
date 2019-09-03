@@ -127,6 +127,12 @@ func go_xvm_trap(code C.wasm_rt_trap_t) {
 	}
 }
 
+//export xvm_raise
+func xvm_raise(msgptr *C.char) {
+	msg := C.GoString(msgptr)
+	Throw(NewTrap(msg))
+}
+
 func init() {
 	C.init_go_trap()
 }
