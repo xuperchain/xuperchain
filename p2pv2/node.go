@@ -145,16 +145,9 @@ func NewNode(cfg config.P2PConfig, log log.Logger) (*Node, error) {
 		}
 	}
 
-	// connect to bootNodes
-	/*
-		succNum := no.connectToPeersByAddr(cfg.BootNodes)
-		if len(cfg.BootNodes) != 0 && succNum == 0 {
-			return nil, ErrConnectBootStrap
-		}
-	*/
-	peers := []string{}
-	// connect to bootNodes
 	// connect to peers stored last time recently
+	// connect to bootNodes
+	peers := []string{}
 	if no.isStorePeers {
 		peers, err = no.getPeersFromDisk()
 		if err != nil {
