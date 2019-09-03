@@ -199,7 +199,10 @@ func (no *Node) Start() {
 			no.log.Trace("RoutingTable", "size", no.kdht.RoutingTable().Size())
 			no.kdht.RoutingTable().Print()
 			if no.isStorePeers {
-				no.persistPeersToDisk()
+				ret := no.persistPeersToDisk()
+				if !ret {
+					log.Warn("persistPeersToDisk failed")
+				}
 			}
 		}
 	}
@@ -467,7 +470,11 @@ func (no *Node) persistPeersToDisk() bool {
 	for _, peer := range peers {
 		batch.Put([]byte(prefix+peer), []byte("true"))
 	}
-	batch.Write()
+	writeErr := batch.Write()
+	if writeErr != nil {
+		log.Warn("p2p module, persistPeersToDisk error", "err", writeErr)
+		return false
+	}
 	return true
 }
 
