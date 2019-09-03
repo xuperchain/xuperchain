@@ -30,6 +30,10 @@ struct xvm_resolver_t;
 // Override this variable to define trap function
 extern void (*wasm_rt_trap)(wasm_rt_trap_t code);
 
+#define TRAP_NO_MEMORY "run out of memory"
+// xvm_raise is used to raise internal trap error
+extern void xvm_raise(char* msg);
+
 typedef struct xvm_resolver_t {
   void* env;
   void* (*resolve_func)(void* env, char* module, char* name);
