@@ -51,7 +51,6 @@ var (
 	ErrConnectBootStrap = errors.New("error to connect to all bootstrap")
 	ErrConnectCorePeers = errors.New("error to connect to all core peers")
 	ErrInvalidParams    = errors.New("invalid params")
-	ErrGetPeersFromDisk = errors.New("get peers from disk error")
 )
 
 type corePeerInfo struct {
