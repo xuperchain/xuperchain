@@ -19,7 +19,6 @@ import (
 	"github.com/xuperchain/xuperunion/global"
 	"github.com/xuperchain/xuperunion/kv/kvdb"
 	"github.com/xuperchain/xuperunion/pb"
-	"github.com/xuperchain/xuperunion/pluginmgr"
 )
 
 var (
@@ -90,30 +89,22 @@ func NewLedger(storePath string, xlog log.Logger, otherPaths []string, kvEngineT
 	ledger := &Ledger{}
 	ledger.mutex = &sync.RWMutex{}
 	ledger.powMutex = &sync.Mutex{}
-	dbPath := filepath.Join(storePath, "ledger")
 	if xlog == nil { //如果外面没传进来log对象的话
 		xlog = log.New("module", "ledger")
 		xlog.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
 	}
-	plgMgr, plgErr := pluginmgr.GetPluginMgr()
-	if plgErr != nil {
-		xlog.Warn("fail to get plugin manager")
-		return nil, plgErr
+
+	// new kvdb instance
+	kvParam := &kvdb.KVParameter{
+		DBPath:                filepath.Join(storePath, "ledger"),
+		KVEngineType:          kvEngineType,
+		MemCacheSize:          MemCacheSize,
+		FileHandlersCacheSize: FileHandlersCacheSize,
+		OtherPaths:            otherPaths,
 	}
-	var baseDB kvdb.Database
-	soInst, err := plgMgr.PluginMgr.CreatePluginInstance("kv", kvEngineType)
+	baseDB, err := kvdb.NewKVDBInstance(kvParam)
 	if err != nil {
-		xlog.Warn("fail to create plugin instance", "kvtype", kvEngineType)
-		return nil, err
-	}
-	baseDB = soInst.(kvdb.Database)
-	err = baseDB.Open(dbPath, map[string]interface{}{
-		"cache":     MemCacheSize,
-		"fds":       FileHandlersCacheSize,
-		"dataPaths": otherPaths,
-	})
-	if err != nil {
-		xlog.Warn("fail to open db", "db_path", dbPath)
+		xlog.Warn("fail to open leveldb", "dbPath", storePath+"/ledger", "err", err)
 		return nil, err
 	}
 

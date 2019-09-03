@@ -9,7 +9,6 @@ import (
 	"github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperunion/kv/kvdb"
 	"github.com/xuperchain/xuperunion/pb"
-	"github.com/xuperchain/xuperunion/pluginmgr"
 	xmodel_pb "github.com/xuperchain/xuperunion/xmodel/pb"
 )
 
@@ -70,25 +69,17 @@ func saveUnconfirmTx(tx *pb.Transaction, batch kvdb.Batch) error {
 }
 
 func openDB(dbPath string, logger log.Logger) (kvdb.Database, error) {
-	plgMgr, plgErr := pluginmgr.GetPluginMgr()
-	if plgErr != nil {
-		logger.Warn("fail to get plugin manager")
-		return nil, plgErr
+	// new kvdb instance
+	kvParam := &kvdb.KVParameter{
+		DBPath:                dbPath,
+		KVEngineType:          "default",
+		MemCacheSize:          128,
+		FileHandlersCacheSize: 512,
+		OtherPaths:            []string{},
 	}
-	var baseDB kvdb.Database
-	soInst, err := plgMgr.PluginMgr.CreatePluginInstance("kv", "default")
+	baseDB, err := kvdb.NewKVDBInstance(kvParam)
 	if err != nil {
-		logger.Warn("fail to create plugin instance", "kvtype", "default")
-		return nil, err
-	}
-	baseDB = soInst.(kvdb.Database)
-	err = baseDB.Open(dbPath, map[string]interface{}{
-		"cache":     128,
-		"fds":       512,
-		"dataPaths": []string{},
-	})
-	if err != nil {
-		logger.Warn("xmodel::openDB failed to open db", "dbPath", dbPath)
+		logger.Warn("xmodel::openDB failed to open db", "dbPath", dbPath, "err", err)
 		return nil, err
 	}
 	return baseDB, nil
