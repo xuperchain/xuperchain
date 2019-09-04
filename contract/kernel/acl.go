@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	newAccountGasAmount = 1000
-	setACLGasAmount     = 10
+	newAccountGasAmount = 10000000 // 10^7
+	setACLGasAmount     = 100000   // 10^5
 )
 
 // NewAccountMethod define NewAccountMethod type
