@@ -1,4 +1,5 @@
 #include <inttypes.h>
+#include <iostream>
 #include "table/table.h"
 
 namespace xchain { namespace cdt {

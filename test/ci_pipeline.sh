@@ -241,7 +241,9 @@ function deploy_invoke_contract()
 	cd $basepath/node1 
 	rand_name=`date +%y%s%m%d`
 	sed -i'' -e "s/\(\"account_name\": \"\).*/\1$rand_name\"\,/; s/TH/$addr2/" $basepath/relate_file/account.json
-	account_out=$(./xchain-cli account new --desc=$basepath/relate_file/account.json --fee=1000)
+	fee_out=$(./xchain-cli account new --desc=$basepath/relate_file/account.json)
+	will_fee=$(echo "$fee_out" | grep "The gas you cousume is" | awk -F': ' '{print $2}')
+	account_out=$(./xchain-cli account new --desc=$basepath/relate_file/account.json --fee=$will_fee)
 	account_name=$(echo $account_out | awk -F'account name: ' '{print $2}')
 	echo $account_name > $basepath/relate_file/account_name.txt
 
