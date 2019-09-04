@@ -19,7 +19,6 @@ import (
 	"github.com/xuperchain/xuperunion/global"
 	"github.com/xuperchain/xuperunion/kv/kvdb"
 	"github.com/xuperchain/xuperunion/pb"
-	"github.com/xuperchain/xuperunion/pluginmgr"
 )
 
 var (
@@ -31,6 +30,8 @@ var (
 	ErrTxDuplicated = errors.New("transaction duplicated in different blocks")
 	// ErrRootBlockAlreadyExist is returned when two genesis block is checked in the process of confirming block
 	ErrRootBlockAlreadyExist = errors.New("this ledger already has genesis block")
+	// ErrMinerInterrupt is returned when IsEnablePowMinning is false
+	ErrMinerInterrupt = errors.New("new block interrupts the process of the miner")
 	// NumCPU returns the number of CPU cores for the current system
 	NumCPU = runtime.NumCPU()
 )
@@ -57,19 +58,21 @@ const (
 
 // Ledger define data structure of Ledger
 type Ledger struct {
-	baseDB         kvdb.Database // 底层是一个leveldb实例，kvdb进行了包装
-	metaTable      kvdb.Database // 记录区块链的根节点、高度、末端节点
-	confirmedTable kvdb.Database // 已确认的订单表
-	blocksTable    kvdb.Database // 区块表
-	mutex          *sync.RWMutex
-	xlog           log.Logger       //日志库
-	meta           *pb.LedgerMeta   //账本关键的元数据{genesis, tip, height}
-	GenesisBlock   *GenesisBlock    //创始块
-	pendingTable   kvdb.Database    //保存临时的block区块
-	heightTable    kvdb.Database    //保存高度到Blockid的映射
-	blockCache     *common.LRUCache // block cache, 加速QueryBlock
-	blkHeaderCache *common.LRUCache // block header cache, 加速fetchBlock
-	cryptoClient   crypto_base.CryptoClient
+	baseDB           kvdb.Database // 底层是一个leveldb实例，kvdb进行了包装
+	metaTable        kvdb.Database // 记录区块链的根节点、高度、末端节点
+	confirmedTable   kvdb.Database // 已确认的订单表
+	blocksTable      kvdb.Database // 区块表
+	mutex            *sync.RWMutex
+	xlog             log.Logger       //日志库
+	meta             *pb.LedgerMeta   //账本关键的元数据{genesis, tip, height}
+	GenesisBlock     *GenesisBlock    //创始块
+	pendingTable     kvdb.Database    //保存临时的block区块
+	heightTable      kvdb.Database    //保存高度到Blockid的映射
+	blockCache       *common.LRUCache // block cache, 加速QueryBlock
+	blkHeaderCache   *common.LRUCache // block header cache, 加速fetchBlock
+	cryptoClient     crypto_base.CryptoClient
+	enablePowMinning bool
+	powMutex         *sync.Mutex
 }
 
 // ConfirmStatus block status
@@ -85,30 +88,23 @@ type ConfirmStatus struct {
 func NewLedger(storePath string, xlog log.Logger, otherPaths []string, kvEngineType string, cryptoType string) (*Ledger, error) {
 	ledger := &Ledger{}
 	ledger.mutex = &sync.RWMutex{}
-	dbPath := filepath.Join(storePath, "ledger")
+	ledger.powMutex = &sync.Mutex{}
 	if xlog == nil { //如果外面没传进来log对象的话
 		xlog = log.New("module", "ledger")
 		xlog.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
 	}
-	plgMgr, plgErr := pluginmgr.GetPluginMgr()
-	if plgErr != nil {
-		xlog.Warn("fail to get plugin manager")
-		return nil, plgErr
+
+	// new kvdb instance
+	kvParam := &kvdb.KVParameter{
+		DBPath:                filepath.Join(storePath, "ledger"),
+		KVEngineType:          kvEngineType,
+		MemCacheSize:          MemCacheSize,
+		FileHandlersCacheSize: FileHandlersCacheSize,
+		OtherPaths:            otherPaths,
 	}
-	var baseDB kvdb.Database
-	soInst, err := plgMgr.PluginMgr.CreatePluginInstance("kv", kvEngineType)
+	baseDB, err := kvdb.NewKVDBInstance(kvParam)
 	if err != nil {
-		xlog.Warn("fail to create plugin instance", "kvtype", kvEngineType)
-		return nil, err
-	}
-	baseDB = soInst.(kvdb.Database)
-	err = baseDB.Open(dbPath, map[string]interface{}{
-		"cache":     MemCacheSize,
-		"fds":       FileHandlersCacheSize,
-		"dataPaths": otherPaths,
-	})
-	if err != nil {
-		xlog.Warn("fail to open db", "db_path", dbPath)
+		xlog.Warn("fail to open leveldb", "dbPath", storePath+"/ledger", "err", err)
 		return nil, err
 	}
 
@@ -130,6 +126,7 @@ func NewLedger(storePath string, xlog log.Logger, otherPaths []string, kvEngineT
 	ledger.blockCache = common.NewLRUCache(BlockCacheSize)
 	ledger.blkHeaderCache = common.NewLRUCache(BlockCacheSize)
 	ledger.cryptoClient = cryptoClient
+	ledger.enablePowMinning = true
 	metaBuf, metaErr := ledger.metaTable.Get([]byte(""))
 	emptyLedger := false
 	if metaErr != nil && common.NormalizedKVError(metaErr) == common.ErrKVNotFound { //说明是新创建的账本
@@ -312,18 +309,14 @@ func (l *Ledger) formatBlock(txList []*pb.Transaction,
 	if err != nil {
 		return nil, err
 	}
-	if targetBits != 0 { //POW 块，需要穷举Nonce
-		var gussNonce int32
-		for !IsProofed(block.Blockid, targetBits) {
-			gussNonce++
-			block.Nonce = gussNonce
-			block.Blockid, err = MakeBlockID(block)
-			//l.xlog.Trace("Try to MakeBlockID", "blockid", fmt.Sprintf("%x", block.Blockid))
-			if err != nil {
-				return nil, err
-			}
+
+	if targetBits != 0 {
+		block, err = l.processFormatBlockForPOW(block, targetBits)
+		if err != nil {
+			return nil, err
 		}
 	}
+
 	if len(preHash) > 0 && needSign {
 		block.Sign, err = l.cryptoClient.SignECDSA(ecdsaPk, block.Blockid)
 	}
@@ -1127,4 +1120,25 @@ func (l *Ledger) Truncate(utxovmLastID []byte) error {
 	l.meta = newMeta
 	l.xlog.Info("truncate blockid succeed")
 	return nil
+}
+
+// StartPowMinning set the value of enablePowMinning true to tell the miner to start minning
+func (l *Ledger) StartPowMinning() {
+	l.powMutex.Lock()
+	defer l.powMutex.Unlock()
+	l.enablePowMinning = true
+}
+
+// AbortPowMinning set the value of enablePowMinning false to tell the miner to stop minning
+func (l *Ledger) AbortPowMinning() {
+	l.powMutex.Lock()
+	defer l.powMutex.Unlock()
+	l.enablePowMinning = false
+}
+
+// IsEnablePowMinning get the value of enablePowMinning
+func (l *Ledger) IsEnablePowMinning() bool {
+	l.powMutex.Lock()
+	defer l.powMutex.Unlock()
+	return l.enablePowMinning
 }
