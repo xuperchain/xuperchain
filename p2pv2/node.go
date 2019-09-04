@@ -6,6 +6,8 @@ import (
 	"math/rand"
 	"sync"
 	"time"
+	//"path/filepath"
+	"strings"
 
 	iaddr "github.com/ipfs/go-ipfs-addr"
 	"github.com/libp2p/go-libp2p"
@@ -22,11 +24,14 @@ import (
 
 	"github.com/xuperchain/xuperunion/common/config"
 	p2pPb "github.com/xuperchain/xuperunion/p2pv2/pb"
+
+	"github.com/xuperchain/xuperunion/kv/kvdb"
 )
 
 // define the common config
 const (
-	XuperProtocolID = "/xuper/2.0.0" // protocol version
+	XuperProtocolID    = "/xuper/2.0.0" // protocol version
+	P2PMultiAddrPrefix = "p2pMulti_"
 )
 
 var (
@@ -76,6 +81,11 @@ type Node struct {
 	routeLock sync.RWMutex
 	// StreamLimit
 	streamLimit *StreamLimit
+	// ldb persist peers info and get peers info
+	ldb kvdb.Database
+	// isStorePeers determine whether open isStorePeers
+	isStorePeers bool
+	p2pDataPath  string
 }
 
 // NewNode define the node of the xuper, it will set streamHandler for this node.
@@ -101,7 +111,15 @@ func NewNode(cfg config.P2PConfig, log log.Logger) (*Node, error) {
 		addrs:     map[string]*XchainAddrInfo{},
 		coreRoute: make(map[string]*corePeersRoute),
 		// new StreamLimit
-		streamLimit: &StreamLimit{},
+		streamLimit:  &StreamLimit{},
+		isStorePeers: cfg.IsStorePeers,
+		p2pDataPath:  cfg.P2PDataPath,
+	}
+	if no.isStorePeers {
+		no.ldb, err = newBaseDB(no.p2pDataPath)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	// set broadcast peers limitation
@@ -126,9 +144,20 @@ func NewNode(cfg config.P2PConfig, log log.Logger) (*Node, error) {
 		}
 	}
 
+	// connect to peers stored last time recently
 	// connect to bootNodes
-	succNum := no.connectToPeersByAddr(cfg.BootNodes)
-	if len(cfg.BootNodes) != 0 && succNum == 0 {
+	peers := []string{}
+	if no.isStorePeers {
+		peers, err = no.getPeersFromDisk()
+		if err != nil {
+			no.log.Warn("getPeersFromDisk error", "err", err)
+		}
+	}
+	if len(cfg.BootNodes) > 0 {
+		peers = append(peers, cfg.BootNodes...)
+	}
+	succNum := no.connectToPeersByAddr(peers)
+	if succNum == 0 && len(cfg.BootNodes) != 0 {
 		return nil, ErrConnectBootStrap
 	}
 	return no, nil
@@ -168,6 +197,12 @@ func (no *Node) Start() {
 		case <-t.C:
 			no.log.Trace("RoutingTable", "size", no.kdht.RoutingTable().Size())
 			no.kdht.RoutingTable().Print()
+			if no.isStorePeers {
+				ret := no.persistPeersToDisk()
+				if !ret {
+					log.Warn("persistPeersToDisk failed")
+				}
+			}
 		}
 	}
 }
@@ -414,4 +449,64 @@ func (no *Node) createPeerStream(ppi []*pstore.PeerInfo) int {
 		}
 	}
 	return succNum
+}
+
+// persistPeersToDisk persist peers connecting to each other to disk
+func (no *Node) persistPeersToDisk() bool {
+	batch := no.ldb.NewBatch()
+	prefix := no.GetP2PMultiAddrPrefix()
+	it := no.ldb.NewIteratorWithPrefix([]byte(prefix))
+	defer it.Release()
+	// delete history records before
+	for it.Next() {
+		batch.Delete(it.Key())
+	}
+	if it.Error() != nil {
+		return false
+	}
+	peers := no.streamLimit.GetStreams()
+	// persist recent records after
+	for _, peer := range peers {
+		batch.Put([]byte(prefix+peer), []byte("true"))
+	}
+	writeErr := batch.Write()
+	if writeErr != nil {
+		log.Warn("p2p module, persistPeersToDisk error", "err", writeErr)
+		return false
+	}
+	return true
+}
+
+// getPeersFromDisk get peers from disk
+func (no *Node) getPeersFromDisk() ([]string, error) {
+	peers := []string{}
+	prefix := no.GetP2PMultiAddrPrefix()
+	it := no.ldb.NewIteratorWithPrefix([]byte(prefix))
+	defer it.Release()
+	for it.Next() {
+		key := string(it.Key())
+		key = strings.TrimPrefix(key, prefix)
+		peers = append(peers, key)
+	}
+	if it.Error() != nil {
+		return nil, it.Error()
+	}
+	return peers, nil
+}
+
+func newBaseDB(dbPath string) (kvdb.Database, error) {
+	// new kv instance
+	kvParam := &kvdb.KVParameter{
+		DBPath:                dbPath,
+		KVEngineType:          "default",
+		MemCacheSize:          128,
+		FileHandlersCacheSize: 512,
+		OtherPaths:            []string{},
+	}
+	return kvdb.NewKVDBInstance(kvParam)
+}
+
+// GetP2PMultiAddrPrefix return P2PMultiAddrPrefix
+func (no *Node) GetP2PMultiAddrPrefix() string {
+	return P2PMultiAddrPrefix
 }
