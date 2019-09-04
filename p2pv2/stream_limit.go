@@ -113,3 +113,18 @@ func (sl *StreamLimit) nearFull(ip string) bool {
 	defer sl.mutex.Unlock()
 	return sl.ip2cnt[ip] >= sl.limit
 }
+
+// GetStreams get all NetURLs from effective streams
+func (sl *StreamLimit) GetStreams() []string {
+	peers := []string{}
+	sl.streams.Range(func(key, value interface{}) bool {
+		peer := sl.makeNetURL(key.(string), value.(peer.ID))
+		peers = append(peers, peer)
+		return true
+	})
+	return peers
+}
+
+func (sl *StreamLimit) makeNetURL(key string, peerID peer.ID) string {
+	return key + "/p2p/" + string(peerID.Pretty())
+}
