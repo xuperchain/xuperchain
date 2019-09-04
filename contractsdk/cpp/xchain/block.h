@@ -1,7 +1,11 @@
 #ifndef XCHAIN_BLOCK_H
 #define XCHAIN_BLOCK_H
 
-#include "xchain/contract.pb.h"
+namespace xchain {
+namespace contract {
+namespace sdk {
+    class Block;
+}}}
 
 namespace xchain {
 
