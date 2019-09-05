@@ -386,6 +386,8 @@ message LedgerMeta {
   repeated InvokeRequest reserved_contracts = 5;
   // reset forbidden contract configuration
   InvokeRequest forbidden_contract = 6;
+  // the resource amount of creating an account
+  int64 new_account_resource_amount = 7;
 }
 
 // Utxo metadata

@@ -722,11 +722,12 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 	}
 
 	contextConfig := &contract.ContextConfig{
-		XMCache:        modelCache,
-		Initiator:      req.GetInitiator(),
-		AuthRequire:    req.GetAuthRequire(),
-		ContractName:   "",
-		ResourceLimits: contract.MaxLimits,
+		XMCache:                  modelCache,
+		Initiator:                req.GetInitiator(),
+		AuthRequire:              req.GetAuthRequire(),
+		NewAccountResourceAmount: uv.ledger.GetMeta().GetNewAccountResourceAmount(),
+		ContractName:             "",
+		ResourceLimits:           contract.MaxLimits,
 	}
 	gasUesdTotal := int64(0)
 	response := [][]byte{}

@@ -27,6 +27,8 @@ type Context struct {
 
 	AuthRequire []string
 
+	NewAccountResourceAmount int64
+
 	CanInitialize bool
 
 	// Write by contract

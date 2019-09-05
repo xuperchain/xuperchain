@@ -23,13 +23,14 @@ type XuperKernel struct {
 
 // KContext define kernel contract context type
 type KContext struct {
-	xk            *XuperKernel
-	resourceUsed  contract.Limits
-	ResourceLimit contract.Limits
-	ModelCache    *xmodel.XMCache
-	Initiator     string
-	AuthRequire   []string
-	ContextConfig *contract.ContextConfig
+	xk                       *XuperKernel
+	resourceUsed             contract.Limits
+	ResourceLimit            contract.Limits
+	ModelCache               *xmodel.XMCache
+	Initiator                string
+	AuthRequire              []string
+	NewAccountResourceAmount int64
+	ContextConfig            *contract.ContextConfig
 }
 
 // NewKernel new an instance of XuperKernel, initialized with kernel contract method
@@ -53,12 +54,13 @@ func (xk *XuperKernel) GetName() string {
 // NewContext new a context, initialized with KernelContext
 func (xk *XuperKernel) NewContext(ctxCfg *contract.ContextConfig) (contract.Context, error) {
 	return &KContext{
-		ModelCache:    ctxCfg.XMCache,
-		xk:            xk,
-		Initiator:     ctxCfg.Initiator,
-		AuthRequire:   ctxCfg.AuthRequire,
-		ResourceLimit: ctxCfg.ResourceLimits,
-		ContextConfig: ctxCfg,
+		ModelCache:               ctxCfg.XMCache,
+		xk:                       xk,
+		Initiator:                ctxCfg.Initiator,
+		AuthRequire:              ctxCfg.AuthRequire,
+		NewAccountResourceAmount: ctxCfg.NewAccountResourceAmount,
+		ResourceLimit:            ctxCfg.ResourceLimits,
+		ContextConfig:            ctxCfg,
 	}, nil
 }
 
