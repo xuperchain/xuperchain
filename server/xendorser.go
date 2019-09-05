@@ -48,6 +48,11 @@ func (dxe *DefaultXEndorser) EndorserCall(ctx context.Context, req *pb.EndorserR
 
 	switch req.GetRequestName() {
 	case "ComplianceCheck":
+		success, errcode, err := dxe.processFee(ctx, req)
+		if err != nil || !success {
+			resHeader.Error = errcode
+			return dxe.generateErrorResponse(req, resHeader, err)
+		}
 		return dxe.generateSuccessResponse(req, []byte(""), resHeader)
 	case "PreExecWithFee":
 		resData, errcode, err := dxe.getPreExecResult(ctx, req)
@@ -78,6 +83,28 @@ func (dxe *DefaultXEndorser) getPreExecResult(ctx context.Context, req *pb.Endor
 		return nil, pb.XChainErrorEnum_SERVICE_REFUSED_ERROR, err
 	}
 	return sData, pb.XChainErrorEnum_SUCCESS, nil
+}
+
+func (dxe *DefaultXEndorser) processFee(ctx context.Context, req *pb.EndorserRequest) (bool, pb.XChainErrorEnum, error) {
+	if req.GetFee() == nil {
+		// no fee provided, default to true
+		return true, pb.XChainErrorEnum_SUCCESS, nil
+	}
+
+	txStatus := &pb.TxStatus{
+		Txid:   req.GetFee().GetTxid(),
+		Bcname: req.GetBcName(),
+		Tx:     req.GetFee(),
+	}
+
+	res, err := dxe.svr.PostTx(ctx, txStatus)
+	if err != nil {
+		return false, res.GetHeader().GetError(), err
+	} else if res.GetHeader().GetError() != pb.XChainErrorEnum_SUCCESS {
+		return false, res.GetHeader().GetError(), errors.New("Fee post to chain failed")
+	}
+
+	return true, pb.XChainErrorEnum_SUCCESS, nil
 }
 
 func (dxe *DefaultXEndorser) generateErrorResponse(req *pb.EndorserRequest, header *pb.Header,
