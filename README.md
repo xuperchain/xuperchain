@@ -182,6 +182,7 @@ make test
 
 单机版xchain
 ```
+cd output
 ./xchain-cli createChain
 nohup ./xchain &
 ./xchain-cli status
