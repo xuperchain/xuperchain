@@ -258,6 +258,8 @@ type LedgerMeta struct {
 	ReservedContracts []InvokeRequest `json:"reservedContracts"`
 	// ForbiddenContract forbidden contract
 	ForbiddenContract InvokeRequest `json:"forbiddenContract"`
+	// NewAccountResourceAmount resource amount of creating an account
+	NewAccountResourceAmount int64 `json:"newAccountResourceAmount"`
 }
 
 // UtxoMeta proto.UtxoMeta
@@ -310,28 +312,33 @@ func FromSystemStatusPB(statuspb *pb.SystemsStatus) *SystemStatus {
 			rcs = append(rcs, rc)
 		}
 
+		fc := InvokeRequest{}
 		forbiddenContract := ledgerMeta.GetForbiddenContract()
-		args := forbiddenContract.GetArgs()
-		originalArgs := map[string]string{}
-		for key, value := range args {
-			originalArgs[key] = string(value)
-		}
-		forbiddenContractMap := InvokeRequest{
-			ModuleName:   forbiddenContract.GetModuleName(),
-			ContractName: forbiddenContract.GetContractName(),
-			MethodName:   forbiddenContract.GetMethodName(),
-			Args:         originalArgs,
+		if forbiddenContract != nil {
+			args := forbiddenContract.GetArgs()
+			originalArgs := map[string]string{}
+			for key, value := range args {
+				originalArgs[key] = string(value)
+			}
+			forbiddenContractMap := InvokeRequest{
+				ModuleName:   forbiddenContract.GetModuleName(),
+				ContractName: forbiddenContract.GetContractName(),
+				MethodName:   forbiddenContract.GetMethodName(),
+				Args:         originalArgs,
+			}
+			fc = forbiddenContractMap
 		}
 
 		status.ChainStatus = append(status.ChainStatus, ChainStatus{
 			Name: chain.GetBcname(),
 			LedgerMeta: LedgerMeta{
-				RootBlockid:       ledgerMeta.GetRootBlockid(),
-				TipBlockid:        ledgerMeta.GetTipBlockid(),
-				TrunkHeight:       ledgerMeta.GetTrunkHeight(),
-				MaxBlockSize:      ledgerMeta.GetMaxBlockSize(),
-				ReservedContracts: rcs,
-				ForbiddenContract: forbiddenContractMap,
+				RootBlockid:              ledgerMeta.GetRootBlockid(),
+				TipBlockid:               ledgerMeta.GetTipBlockid(),
+				TrunkHeight:              ledgerMeta.GetTrunkHeight(),
+				MaxBlockSize:             ledgerMeta.GetMaxBlockSize(),
+				NewAccountResourceAmount: ledgerMeta.GetNewAccountResourceAmount(),
+				ReservedContracts:        rcs,
+				ForbiddenContract:        fc,
 			},
 			UtxoMeta: UtxoMeta{
 				LatestBlockid:     utxoMeta.GetLatestBlockid(),

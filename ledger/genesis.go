@@ -39,7 +39,8 @@ type RootConfig struct {
 	ReservedWhitelist struct {
 		Account string `json:"account"`
 	} `json:"reserved_whitelist"`
-	ForbiddenContract InvokeRequest `json:"forbidden_contract"`
+	ForbiddenContract        InvokeRequest `json:"forbidden_contract"`
+	NewAccountResourceAmount int64         `json:"new_account_resource_amount"`
 }
 
 // InvokeRequest define genesis reserved_contracts configure
@@ -72,6 +73,11 @@ func (rc *RootConfig) GetMaxBlockSizeInByte() (n int64) {
 	maxSizeMB, _ := strconv.Atoi(rc.MaxBlockSize)
 	n = int64(maxSizeMB) << 20
 	return
+}
+
+// GetNewAccountResourceAmount get the resource amount of new an account
+func (rc *RootConfig) GetNewAccountResourceAmount() int64 {
+	return rc.NewAccountResourceAmount
 }
 
 // GetGenesisConsensus get consensus config of genesis block

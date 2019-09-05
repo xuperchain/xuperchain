@@ -194,6 +194,9 @@ func (l *Ledger) loadGenesisBlock() error {
 	if l.meta.MaxBlockSize == 0 {
 		l.meta.MaxBlockSize = l.GenesisBlock.GetConfig().GetMaxBlockSizeInByte()
 	}
+	if l.meta.NewAccountResourceAmount == 0 {
+		l.meta.NewAccountResourceAmount = l.GenesisBlock.GetConfig().GetNewAccountResourceAmount()
+	}
 	if l.meta.ReservedContracts == nil {
 		l.meta.ReservedContracts, gErr = l.GenesisBlock.GetConfig().GetReservedContract()
 		if gErr != nil {
@@ -481,6 +484,26 @@ func (l *Ledger) UpdateMaxBlockSize(maxBlockSize int64, batch kvdb.Batch) error 
 	batch.Put([]byte(pb.MetaTablePrefix), metaBuf)
 	l.meta = newMeta
 	l.xlog.Info("update max block size succeed")
+	return nil
+}
+
+// UpdateNewAccountResourceAmount update the resource amount of new an account
+func (l *Ledger) UpdateNewAccountResourceAmount(newAccountResourceAmount int64, batch kvdb.Batch) error {
+	if newAccountResourceAmount <= 0 {
+		return fmt.Errorf("invalid newAccountResourceAmount: %d", newAccountResourceAmount)
+	}
+	l.mutex.Lock()
+	defer l.mutex.Unlock()
+	newMeta := proto.Clone(l.meta).(*pb.LedgerMeta)
+	newMeta.NewAccountResourceAmount = newAccountResourceAmount
+	metaBuf, pbErr := proto.Marshal(newMeta)
+	if pbErr != nil {
+		l.xlog.Warn("failed to marshal pb meta")
+		return pbErr
+	}
+	batch.Put([]byte(pb.MetaTablePrefix), metaBuf)
+	l.meta = newMeta
+	l.xlog.Info("update newAccountResource succeed")
 	return nil
 }
 
@@ -977,6 +1000,16 @@ func (l *Ledger) GetMaxBlockSize() int64 {
 		return blockSizeUpdated
 	}
 	return defaultBlockSize
+}
+
+// GetNewAccountResourceAmount return the resource amount of new an account
+func (l *Ledger) GetNewAccountResourceAmount() int64 {
+	defaultNewAccountResourceAmount := l.GenesisBlock.GetConfig().GetNewAccountResourceAmount()
+	newAccountResourceAmountUpdated := l.meta.NewAccountResourceAmount
+	if newAccountResourceAmountUpdated != 0 {
+		return newAccountResourceAmountUpdated
+	}
+	return defaultNewAccountResourceAmount
 }
 
 // SavePendingBlock put block into pending table
