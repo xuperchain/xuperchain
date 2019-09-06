@@ -300,7 +300,7 @@ func (k *Kernel) validateUpdateNewAccountResourceAmount(desc *contract.TxDesc) e
 			return fmt.Errorf("miss argument in contract: %s", argName)
 		}
 		switch tp := desc.Args[argName].(type) {
-		case int64:
+		case float64:
 			return nil
 		default:
 			return fmt.Errorf("invalid arg type: %s, %v", argName, tp)
@@ -487,8 +487,8 @@ func (k *Kernel) runUpdateNewAccountResourceAmount(desc *contract.TxDesc) error 
 	if vErr != nil {
 		return vErr
 	}
-	newNewAccountResourceAmount := int64(desc.Args["new_new_account_resource_amount"].(int64))
-	oldNewAccountResourceAmount := int64(desc.Args["old_new_account_resource_amount"].(int64))
+	newNewAccountResourceAmount := int64(desc.Args["new_new_account_resource_amount"].(float64))
+	oldNewAccountResourceAmount := int64(desc.Args["old_new_account_resource_amount"].(float64))
 	k.log.Info("update newAccountResourceAmount", "old", oldNewAccountResourceAmount, "new", newNewAccountResourceAmount)
 	curNewAccountResourceAmount := k.context.LedgerObj.GetNewAccountResourceAmount()
 	if oldNewAccountResourceAmount != curNewAccountResourceAmount {
@@ -519,7 +519,7 @@ func (k *Kernel) rollbackUpdateNewAccountResourceAmount(desc *contract.TxDesc) e
 	if vErr != nil {
 		return vErr
 	}
-	oldNewAccountResourceAmount := int64(desc.Args["old_new_account_resource_amount"].(int64))
+	oldNewAccountResourceAmount := int64(desc.Args["old_new_account_resource_amount"].(float64))
 	err := k.context.LedgerObj.UpdateNewAccountResourceAmount(oldNewAccountResourceAmount, k.context.UtxoBatch)
 	return err
 }

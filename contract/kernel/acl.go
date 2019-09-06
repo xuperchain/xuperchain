@@ -11,11 +11,6 @@ import (
 	"github.com/xuperchain/xuperunion/xmodel"
 )
 
-const (
-	newAccountGasAmount = 1000
-	setACLGasAmount     = 10
-)
-
 // NewAccountMethod define NewAccountMethod type
 type NewAccountMethod struct {
 }
@@ -68,7 +63,6 @@ func validACL(acl *pb.Acl) error {
 
 // Invoke NewAccount method implementation
 func (na *NewAccountMethod) Invoke(ctx *KContext, args map[string][]byte) (*contract.Response, error) {
-	//if ctx.ResourceLimit.XFee < newAccountGasAmount {
 	if ctx.ResourceLimit.XFee < ctx.NewAccountResourceAmount {
 		return nil, fmt.Errorf("gas not enough, expect no less than %d", newAccountGasAmount)
 	}
@@ -114,9 +108,7 @@ func (na *NewAccountMethod) Invoke(ctx *KContext, args map[string][]byte) (*cont
 		return nil, err
 	}
 
-	//ctx.AddXFeeUsed(newAccountGasAmount)
 	ctx.AddXFeeUsed(ctx.NewAccountResourceAmount)
-	fmt.Println("----------------> NewAccountResourceAmount->", ctx.NewAccountResourceAmount)
 
 	return &contract.Response{
 		Status: contract.StatusOK,
@@ -126,7 +118,6 @@ func (na *NewAccountMethod) Invoke(ctx *KContext, args map[string][]byte) (*cont
 
 // Invoke SetAccountACL method implementation
 func (saa *SetAccountACLMethod) Invoke(ctx *KContext, args map[string][]byte) (*contract.Response, error) {
-	//if ctx.ResourceLimit.XFee < setACLGasAmount {
 	if ctx.ResourceLimit.XFee < ctx.NewAccountResourceAmount/1000 {
 		return nil, fmt.Errorf("gas not enough, expect no less than %d", setACLGasAmount)
 	}
@@ -157,7 +148,6 @@ func (saa *SetAccountACLMethod) Invoke(ctx *KContext, args map[string][]byte) (*
 		return nil, err
 	}
 
-	//ctx.AddXFeeUsed(setACLGasAmount)
 	ctx.AddXFeeUsed(ctx.NewAccountResourceAmount / 1000)
 
 	return &contract.Response{
@@ -168,7 +158,6 @@ func (saa *SetAccountACLMethod) Invoke(ctx *KContext, args map[string][]byte) (*
 
 // Invoke SetMethodACL method implementation
 func (sma *SetMethodACLMethod) Invoke(ctx *KContext, args map[string][]byte) (*contract.Response, error) {
-	//if ctx.ResourceLimit.XFee < setACLGasAmount {
 	if ctx.ResourceLimit.XFee < ctx.NewAccountResourceAmount/1000 {
 		return nil, fmt.Errorf("gas not enough, expect no less than %d", setACLGasAmount)
 	}
