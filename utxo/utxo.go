@@ -35,7 +35,6 @@ import (
 	"github.com/xuperchain/xuperunion/permission/acl"
 	acli "github.com/xuperchain/xuperunion/permission/acl/impl"
 	"github.com/xuperchain/xuperunion/permission/acl/utils"
-	"github.com/xuperchain/xuperunion/pluginmgr"
 	"github.com/xuperchain/xuperunion/utxo/txhash"
 	"github.com/xuperchain/xuperunion/vat"
 	"github.com/xuperchain/xuperunion/xmodel"
@@ -100,7 +99,7 @@ type UtxoVM struct {
 	ldb               kvdb.Database
 	mutex             *sync.RWMutex // utxo leveldb表读写锁
 	mutexMem          *sync.Mutex   // 内存锁定状态互斥锁
-	lockKeys          map[string]int64
+	lockKeys          map[string]*UtxoLockItem
 	lockKeyList       *list.List // 按锁定的先后顺序，方便过期清理
 	lockExpireTime    int        // 临时锁定的最长时间
 	utxoCache         *UtxoCache
@@ -160,6 +159,11 @@ type RootJSON struct {
 		Address string `json:"address"`
 		Quota   string `json:"quota"`
 	} `json:"predistribution"`
+}
+
+type UtxoLockItem struct {
+	timestamp int64
+	holder    *list.Element
 }
 
 func genUtxoKey(addr []byte, txid []byte, offset int32) string {
@@ -266,7 +270,11 @@ func (uv *UtxoVM) unlockKey(utxoKey []byte) {
 	uv.mutexMem.Lock()
 	defer uv.mutexMem.Unlock()
 	uv.xlog.Trace("    unlock utxo key", "key", string(utxoKey))
-	delete(uv.lockKeys, string(utxoKey))
+	lockItem := uv.lockKeys[string(utxoKey)]
+	if lockItem != nil {
+		uv.lockKeyList.Remove(lockItem.holder)
+		delete(uv.lockKeys, string(utxoKey))
+	}
 }
 
 // 试图临时锁定utxo, 返回是否锁定成功
@@ -274,8 +282,8 @@ func (uv *UtxoVM) tryLockKey(key []byte) bool {
 	uv.mutexMem.Lock()
 	defer uv.mutexMem.Unlock()
 	if _, exist := uv.lockKeys[string(key)]; !exist {
-		uv.lockKeys[string(key)] = time.Now().Unix()
-		uv.lockKeyList.PushBack(key)
+		holder := uv.lockKeyList.PushBack(key)
+		uv.lockKeys[string(key)] = &UtxoLockItem{timestamp: time.Now().Unix(), holder: holder}
 		if !uv.asyncMode {
 			uv.xlog.Trace("  lock utxo key", "key", string(key))
 		}
@@ -295,10 +303,10 @@ func (uv *UtxoVM) clearExpiredLocks() {
 			break
 		}
 		topKey := topItem.Value.([]byte)
-		createTime, exist := uv.lockKeys[string(topKey)]
+		lockItem, exist := uv.lockKeys[string(topKey)]
 		if !exist {
 			uv.lockKeyList.Remove(topItem)
-		} else if createTime+int64(uv.lockExpireTime) <= now {
+		} else if lockItem.timestamp+int64(uv.lockExpireTime) <= now {
 			uv.lockKeyList.Remove(topItem)
 			delete(uv.lockKeys, string(topKey))
 		} else {
@@ -324,30 +332,17 @@ func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, priv
 		xlog = log.New("module", "utxoVM")
 		xlog.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
 	}
-	dbPath := filepath.Join(storePath, "utxoVM")
-	plgMgr, plgErr := pluginmgr.GetPluginMgr()
-	if plgErr != nil {
-		xlog.Warn("fail to get plugin manager")
-		return nil, plgErr
+	// new kvdb instance
+	kvParam := &kvdb.KVParameter{
+		DBPath:                filepath.Join(storePath, "utxoVM"),
+		KVEngineType:          kvEngineType,
+		MemCacheSize:          ledger_pkg.MemCacheSize,
+		FileHandlersCacheSize: ledger_pkg.FileHandlersCacheSize,
+		OtherPaths:            otherPaths,
 	}
-	var baseDB kvdb.Database
-	soInst, err := plgMgr.PluginMgr.CreatePluginInstance("kv", kvEngineType)
+	baseDB, err := kvdb.NewKVDBInstance(kvParam)
 	if err != nil {
-		xlog.Warn("fail to create plugin instance", "kvtype", kvEngineType)
-		return nil, err
-	}
-	baseDB = soInst.(kvdb.Database)
-	err = baseDB.Open(dbPath, map[string]interface{}{
-		"cache":     ledger_pkg.MemCacheSize,
-		"fds":       ledger_pkg.FileHandlersCacheSize,
-		"dataPaths": otherPaths,
-	})
-	if err != nil {
-		xlog.Warn("fail to open db", "dbPath", dbPath)
-		return nil, err
-	}
-	if err != nil {
-		xlog.Warn("fail to open leveldb", "dbPath", dbPath, "err", err)
+		xlog.Warn("fail to open leveldb", "dbPath", storePath+"/utxoVM", "err", err)
 		return nil, err
 	}
 
@@ -382,7 +377,7 @@ func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, priv
 		ldb:                  baseDB,
 		mutex:                utxoMutex,
 		mutexMem:             &sync.Mutex{},
-		lockKeys:             map[string]int64{},
+		lockKeys:             map[string]*UtxoLockItem{},
 		lockKeyList:          list.New(),
 		lockExpireTime:       tmplockSeconds,
 		xlog:                 xlog,
@@ -1999,12 +1994,12 @@ func (uv *UtxoVM) GetContractStatus(contractName string) (*pb.ContractStatus, er
 	}
 	txid := verdata.GetRefTxid()
 	res.Txid = fmt.Sprintf("%x", txid)
-	tx, err := uv.model3.QueryTx(txid)
+	tx, _, err := uv.model3.QueryTx(txid)
 	if err != nil {
 		uv.xlog.Warn("GetContractStatus query tx error", "error", err.Error())
 		return nil, err
 	}
-	res.Desc = tx.Tx.GetDesc()
+	res.Desc = tx.GetDesc()
 	// query if contract is bannded
 	res.IsBanned, err = uv.queryContractBannedStatus(contractName)
 	return res, nil

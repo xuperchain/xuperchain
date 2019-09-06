@@ -48,6 +48,8 @@ type ContextConfig struct {
 	AuthRequire    []string
 	ContractName   string
 	ResourceLimits Limits
+	// Whether contract can be initialized
+	CanInitialize bool
 }
 
 // VirtualMachine define virtual machine interface

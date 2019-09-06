@@ -9,8 +9,6 @@ import (
 	proto "github.com/golang/protobuf/proto"
 	pb "github.com/xuperchain/xuperunion/contractsdk/go/pb"
 	grpc "google.golang.org/grpc"
-	codes "google.golang.org/grpc/codes"
-	status "google.golang.org/grpc/status"
 	math "math"
 )
 
@@ -103,17 +101,6 @@ func (c *nativeCodeClient) Ping(ctx context.Context, in *pb.PingRequest, opts ..
 type NativeCodeServer interface {
 	Call(context.Context, *pb.NativeCallRequest) (*pb.NativeCallResponse, error)
 	Ping(context.Context, *pb.PingRequest) (*pb.PingResponse, error)
-}
-
-// UnimplementedNativeCodeServer can be embedded to have forward compatible implementations.
-type UnimplementedNativeCodeServer struct {
-}
-
-func (*UnimplementedNativeCodeServer) Call(ctx context.Context, req *pb.NativeCallRequest) (*pb.NativeCallResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Call not implemented")
-}
-func (*UnimplementedNativeCodeServer) Ping(ctx context.Context, req *pb.PingRequest) (*pb.PingResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
 }
 
 func RegisterNativeCodeServer(s *grpc.Server, srv NativeCodeServer) {
@@ -316,44 +303,6 @@ type SyscallServer interface {
 	Ping(context.Context, *pb.PingRequest) (*pb.PingResponse, error)
 	GetCallArgs(context.Context, *pb.GetCallArgsRequest) (*pb.CallArgs, error)
 	SetOutput(context.Context, *pb.SetOutputRequest) (*pb.SetOutputResponse, error)
-}
-
-// UnimplementedSyscallServer can be embedded to have forward compatible implementations.
-type UnimplementedSyscallServer struct {
-}
-
-func (*UnimplementedSyscallServer) PutObject(ctx context.Context, req *pb.PutRequest) (*pb.PutResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method PutObject not implemented")
-}
-func (*UnimplementedSyscallServer) GetObject(ctx context.Context, req *pb.GetRequest) (*pb.GetResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetObject not implemented")
-}
-func (*UnimplementedSyscallServer) DeleteObject(ctx context.Context, req *pb.DeleteRequest) (*pb.DeleteResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteObject not implemented")
-}
-func (*UnimplementedSyscallServer) NewIterator(ctx context.Context, req *pb.IteratorRequest) (*pb.IteratorResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method NewIterator not implemented")
-}
-func (*UnimplementedSyscallServer) QueryTx(ctx context.Context, req *pb.QueryTxRequest) (*pb.QueryTxResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method QueryTx not implemented")
-}
-func (*UnimplementedSyscallServer) QueryBlock(ctx context.Context, req *pb.QueryBlockRequest) (*pb.QueryBlockResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method QueryBlock not implemented")
-}
-func (*UnimplementedSyscallServer) Transfer(ctx context.Context, req *pb.TransferRequest) (*pb.TransferResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Transfer not implemented")
-}
-func (*UnimplementedSyscallServer) ContractCall(ctx context.Context, req *pb.ContractCallRequest) (*pb.ContractCallResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ContractCall not implemented")
-}
-func (*UnimplementedSyscallServer) Ping(ctx context.Context, req *pb.PingRequest) (*pb.PingResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Ping not implemented")
-}
-func (*UnimplementedSyscallServer) GetCallArgs(ctx context.Context, req *pb.GetCallArgsRequest) (*pb.CallArgs, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetCallArgs not implemented")
-}
-func (*UnimplementedSyscallServer) SetOutput(ctx context.Context, req *pb.SetOutputRequest) (*pb.SetOutputResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method SetOutput not implemented")
 }
 
 func RegisterSyscallServer(s *grpc.Server, srv SyscallServer) {

@@ -196,23 +196,15 @@ func (s *XModel) queryTx(txid []byte) (*pb.Transaction, bool, error) {
 		return nil, false, err
 	}
 	return confirmedTx, true, nil
-
 }
 
 // QueryTx query transaction including unconfirmed table and confirmed table
-func (s *XModel) QueryTx(txid []byte) (*pb.TxStatus, error) {
-	tx, isConfirmed, err := s.queryTx(txid)
+func (s *XModel) QueryTx(txid []byte) (*pb.Transaction, bool, error) {
+	tx, status, err := s.queryTx(txid)
 	if err != nil {
-		return &pb.TxStatus{Tx: nil, Status: pb.TransactionStatus_NOEXIST}, err
+		return nil, status, err
 	}
-	status := pb.TransactionStatus_UNCONFIRM
-	if isConfirmed {
-		status = pb.TransactionStatus_CONFIRM
-	} else {
-		//notice: can not access the unconfirmed tx in smart contract
-		tx = nil
-	}
-	return &pb.TxStatus{Tx: tx, Status: status}, nil
+	return tx, status, nil
 }
 
 // QueryBlock query block from ledger

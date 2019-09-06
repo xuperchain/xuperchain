@@ -27,6 +27,8 @@ type Context struct {
 
 	AuthRequire []string
 
+	CanInitialize bool
+
 	// Write by contract
 	Output *pb.Response
 }
