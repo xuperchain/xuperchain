@@ -13,9 +13,8 @@ type Config struct {
 
 // MakeConfig return config from raw json struct
 func MakeConfig(rawConf map[string]interface{}) *Config {
-	conf := &Config{}
-	if v, ok := rawConf["netMsgChanSize"].(int64); ok {
-		conf.NetMsgChanSize = v
+	conf := &Config{
+		NetMsgChanSize: DefaultNetMsgChanSize,
 	}
 	return conf
 }

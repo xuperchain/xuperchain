@@ -33,9 +33,7 @@
                     "/ip4/127.0.0.1/tcp/47101/p2p/QmVxeNubpg1ZQjQT8W5yZC9fD7ZB1ViArwvyGUB53sqf8e"
                 ]
             },
-            "bft_config": {
-                "netMsgChanSize": 1000
-            }
+            "bft_config": {}
         }
     }
 }
