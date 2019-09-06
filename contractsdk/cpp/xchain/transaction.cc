@@ -1,3 +1,4 @@
+#include "xchain/contract.pb.h"
 #include "xchain/transaction.h"
 
 namespace pb = xchain::contract::sdk;

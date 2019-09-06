@@ -1,6 +1,7 @@
 #include "xchain/xchain.h"
 #include "xchain/basic_iterator.h"
 #include "xchain/syscall.h"
+#include "xchain/contract.pb.h"
 
 namespace pb = xchain::contract::sdk;
 
