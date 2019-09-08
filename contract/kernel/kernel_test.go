@@ -561,4 +561,23 @@ func TestRunUpdateForbiddenContract(t *testing.T) {
 	if rollbackUpdateBlkChainErr != nil {
 		t.Error("runUpdateForbiddenContract error:->", rollbackUpdateBlkChainErr.Error())
 	}
+
+	args2 := []byte(`
+	{
+		"args":{
+			"old_new_account_resource_amount": 10000,
+			"new_new_account_resource_amount": 100
+		}
+	}
+	`)
+	json.Unmarshal(args2, txDesc)
+	runUpadteNewAccountResourceAmountErr := kl.runUpdateNewAccountResourceAmount(txDesc)
+	if runUpadteNewAccountResourceAmountErr != nil {
+		t.Error("runUpadteNewAccountResourceAmount error:->", runUpadteNewAccountResourceAmountErr.Error())
+	}
+
+	rollbackUpdateNewAccountResourceAmountErr := kl.rollbackUpdateNewAccountResourceAmount(txDesc)
+	if rollbackUpdateNewAccountResourceAmountErr != nil {
+		t.Error("rollbackUpdateNewAccountResourceAmount error:->", rollbackUpdateNewAccountResourceAmountErr.Error())
+	}
 }
