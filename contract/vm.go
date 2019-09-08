@@ -43,9 +43,10 @@ func ToPBContractResponse(resp *Response) *pb.ContractResponse {
 
 // ContextConfig define the config of context
 type ContextConfig struct {
-	XMCache                  *xmodel.XMCache
-	Initiator                string
-	AuthRequire              []string
+	XMCache     *xmodel.XMCache
+	Initiator   string
+	AuthRequire []string
+	// NewAccountResourceAmount the amount of creating a contract account
 	NewAccountResourceAmount int64
 	ContractName             string
 	ResourceLimits           Limits

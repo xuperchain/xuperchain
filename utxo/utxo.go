@@ -722,9 +722,10 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 	}
 
 	contextConfig := &contract.ContextConfig{
-		XMCache:                  modelCache,
-		Initiator:                req.GetInitiator(),
-		AuthRequire:              req.GetAuthRequire(),
+		XMCache:     modelCache,
+		Initiator:   req.GetInitiator(),
+		AuthRequire: req.GetAuthRequire(),
+		// NewAccountResourceAmount the amount of creating an account
 		NewAccountResourceAmount: uv.ledger.GetMeta().GetNewAccountResourceAmount(),
 		ContractName:             "",
 		ResourceLimits:           contract.MaxLimits,
