@@ -50,6 +50,10 @@ const std::string& ContextImpl::auth_require(int idx) const {
     return _call_args.auth_require(idx);
 }
 
+const int64 ContextImpl::new_account_resource_amount() const {
+    return _call_args.new_account_resource_amount();
+}
+
 bool ContextImpl::get_object(const std::string& key, std::string* value) {
     pb::GetRequest req;
     pb::GetResponse rep;

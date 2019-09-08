@@ -216,10 +216,11 @@ func (c *SyscallService) GetCallArgs(ctx context.Context, in *pb.GetCallArgsRequ
 		return args[i].Key < args[j].Key
 	})
 	return &pb.CallArgs{
-		Method:      nctx.Method,
-		Args:        args,
-		Initiator:   nctx.Initiator,
-		AuthRequire: nctx.AuthRequire,
+		Method:                   nctx.Method,
+		Args:                     args,
+		Initiator:                nctx.Initiator,
+		AuthRequire:              nctx.AuthRequire,
+		NewAccountResourceAmount: nctx.NewAccountResourceAmount,
 	}, nil
 }
 
