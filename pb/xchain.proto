@@ -909,4 +909,3 @@ message PreExecWithSelectUTXOResponse {
   // for preExec & selectUTXO
   UtxoOutput utxoOutput = 4;
 }
->>>>>>> 87eae8d... merge PreExec and SelectUtxo (#301)
