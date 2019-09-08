@@ -28,7 +28,6 @@ message CallArgs {
   repeated ArgPair args = 2;
   string initiator = 3;
   repeated string auth_require = 4;
-  int64 new_account_resource_amount = 5;
 }
 
 message SyscallHeader {
