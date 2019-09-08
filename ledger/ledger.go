@@ -489,7 +489,7 @@ func (l *Ledger) UpdateMaxBlockSize(maxBlockSize int64, batch kvdb.Batch) error 
 
 // UpdateNewAccountResourceAmount update the resource amount of new an account
 func (l *Ledger) UpdateNewAccountResourceAmount(newAccountResourceAmount int64, batch kvdb.Batch) error {
-	if newAccountResourceAmount < 0 {
+	if newAccountResourceAmount <= 0 {
 		return fmt.Errorf("invalid newAccountResourceAmount: %d", newAccountResourceAmount)
 	}
 	l.mutex.Lock()
