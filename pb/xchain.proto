@@ -161,7 +161,7 @@ service Xchain {
   // GetNetURL return net url
   rpc GetNetURL(CommonIn) returns (RawUrl) {}
 
-  // 鏂扮殑Select utxos鎺ュ彛, 涓嶉渶瑕佺鍚嶏紝鍙互鏀寔閫夋嫨璐︽埛鐨剈txo
+  // 新的Select utxos接口, 不需要签名，可以支持选择账户的utxo
   rpc SelectUTXO(UtxoInput) returns (UtxoOutput) {
     option (google.api.http) = {
       post : "/v1/select_utxos_v2"
@@ -210,21 +210,20 @@ service Xchain {
     };
   }
 
-  //棰勬墽琛屽悎绾�
+  //预执行合约
   rpc PreExec(InvokeRPCRequest) returns (InvokeRPCResponse);
 }
 
 message Header {
-  string logid = 1; //濡傛灉logid娌″～鍐欙紝鐢熸垚涓�涓�
-  string from_node =
-      2; // call rpc client address锛屽鎴风鍙互涓虹┖锛岃妭鐐逛竴瀹氳鍐欒嚜宸辩殑address
+  string logid = 1;  //如果logid没填写，生成一个
+  string from_node = 2;  //call rpc client address，客户端可以为空，节点一定要写自己的address
   XChainErrorEnum error = 3;
 }
 
 message TxDataAccount {
-  string address = 1;      //鍦板潃
-  string amount = 2;       //閲戦
-  int64 frozen_height = 3; //鍐荤粨楂樺害
+  string address = 1;  //地址
+  string amount = 2;  //金额
+  int64 frozen_height = 3; //冻结高度
 }
 
 message TxData {
@@ -257,8 +256,8 @@ message TxStatus {
   Header header = 1;
   string bcname = 2;
   bytes txid = 3;
-  TransactionStatus status = 4; //褰撳墠鐘舵��
-  int64 distance = 5;           //绂讳富骞叉湯绔殑璺濈锛堝鏋滃湪涓诲共涓�)
+  TransactionStatus status = 4;  //当前状态
+  int64 distance = 5;  //离主干末端的距离（如果在主干上)
   Transaction tx = 7;
 }
 
@@ -286,7 +285,7 @@ message BlockID {
   string bcname = 1;
   bytes blockid = 2;
   // if need content
-  bool need_content = 3; //鏄惁闇�瑕佸唴瀹�
+  bool need_content = 3;  //是否需要内容
 }
 
 message BlockHeight {
@@ -379,7 +378,7 @@ message Transaction {
   string nonce = 8;
   // Timestamp to launch the transaction
   int64 timestamp = 9;
-  // tx format version; tx鏍煎紡鐗堟湰鍙�
+  // tx format version; tx格式版本号
   int32 version = 10;
   // auto generated tx
   bool autogen = 11;
@@ -388,18 +387,18 @@ message Transaction {
   repeated TxOutputExt tx_outputs_ext = 24;
   repeated InvokeRequest contract_requests = 25;
 
-  // 鏉冮檺绯荤粺鏂板瀛楁
-  // 浜ゆ槗鍙戣捣鑰�, 鍙互鏄竴涓狝ddress鎴栬�呬竴涓狝ccount
+  // 权限系统新增字段
+  // 交易发起者, 可以是一个Address或者一个Account
   string initiator = 26;
-  // 浜ゆ槗鍙戣捣闇�瑕佽鏀堕泦绛惧悕鐨凙ddressURL闆嗗悎淇℃伅锛屽寘鎷敤浜巙txo杞处鍜岀敤浜庡悎绾﹁皟鐢�
+  // 交易发起需要被收集签名的AddressURL集合信息，包括用于utxo转账和用于合约调用
   repeated string auth_require = 27;
-  // 浜ゆ槗鍙戣捣鑰呭浜ゆ槗鍏冩暟鎹鍚嶏紝绛惧悕鐨勫唴瀹瑰寘鎷琣uth_require瀛楁
+  // 交易发起者对交易元数据签名，签名的内容包括auth_require字段
   repeated SignatureInfo initiator_signs = 28;
-  // 鏀堕泦鍒扮殑绛惧悕
+  // 收集到的签名
   repeated SignatureInfo auth_require_signs = 29;
-  // 鑺傜偣鏀跺埌tx鐨勬椂闂存埑锛屼笉鍙備笌绛惧悕
+  // 节点收到tx的时间戳，不参与签名
   int64 received_timestamp = 30;
-  // 缁熶竴绛惧悕(鏀寔澶氶噸绛惧悕/鐜鍚嶇瓑锛屼笌initiator_signs/auth_require_signs涓嶅悓鏃朵娇鐢�)
+  // 统一签名(支持多重签名/环签名等，与initiator_signs/auth_require_signs不同时使用)
   XuperSignature xuper_sign = 31;
 }
 
@@ -421,11 +420,11 @@ message LedgerMeta {
 
 // Utxo metadata
 message UtxoMeta {
-  bytes latest_blockid = 1; // utxo vm鐩墠鎵ц鍒扮殑blockid
+  bytes latest_blockid = 1; // utxo vm目前执行到的blockid
   repeated string lock_key_list = 2;
-  string utxo_total = 3;       //褰撳墠utxo vm涓婄殑鎬昏祫浜�
-  int64 avgDelay = 4;          //骞冲潎涓婇摼寤舵椂
-  int64 unconfirmTxAmount = 5; //寰呯‘璁や氦鏄撻噺
+  string utxo_total = 3;       // 当前utxo vm上的总资产
+  int64 avgDelay = 4;          // 平均上链延时
+  int64 unconfirmTxAmount = 5; // 待确认交易量
 }
 
 // The internal block struct
@@ -455,7 +454,7 @@ message InternalBlock {
   repeated Transaction transactions = 11;
   // The transaction count of the block
   int32 tx_count = 12;
-  //鎵�鏈変氦鏄揾ash鐨刴erkle tree
+  // 所有交易hash的merkle tree
   repeated bytes merkle_tree = 13;
   int64 curTerm = 16;
   int64 curBlockNum = 17;
@@ -465,7 +464,7 @@ message InternalBlock {
   // Justify used in chained-bft
   QuorumCert Justify = 20;
   
-  //涓嬮潰鐨勫睘鎬т細鍔ㄦ�佸彉鍖�
+  // 下面的属性会动态变化
   // If the block is on the trunk
   bool in_trunk = 14;
   // Next next block which on trunk
@@ -613,97 +612,97 @@ message NativeCodeStatusResponse {
 /*
  * DPoS query interface
  */
-// 鍊欓�変汉鍒楄〃鎺ュ彛
+// 候选人列表接口
 message DposCandidatesRequest {
   Header header = 1;
   string bcname = 2;
 }
 
-// 鍊欓�変汉鍒楄〃杩斿洖
+// 候选人列表返回
 message DposCandidatesResponse {
   Header header = 1;
   repeated string candidatesInfo = 2;
 }
 
-// 鎻愬悕鑰呮彁鍚嶈褰曡姹�
+// 提名者提名记录请求
 message DposNominateRecordsRequest {
   Header header = 1;
   string bcname = 2;
   string address = 3;
 }
 
-// 鍊欓�変汉淇℃伅
+// 候选人信息
 message DposNominateInfo {
   string candidate = 1;
   string txid = 2;
 }
 
-// 鎻愬悕鑰呮彁鍚嶈褰曡繑鍥�
+// 提名者提名记录返回
 message DposNominateRecordsResponse {
   Header header = 1;
   repeated DposNominateInfo nominateRecords = 2;
 }
 
-// 鍊欓�変汉琚彁鍚嶈褰曡姹�
+// 候选人被提名记录请求
 message DposNomineeRecordsRequest {
   Header header = 1;
   string bcname = 2;
   string address = 3;
 }
 
-// 鍊欓�変汉琚彁鍚嶈褰曡繑鍥�
+// 候选人被提名记录返回
 message DposNomineeRecordsResponse {
   Header header = 1;
   string txid = 2;
 }
 
-// 閫夋皯鎶曠エ璁板綍璇锋眰
+// 选民投票记录请求
 message DposVoteRecordsRequest {
   Header header = 1;
   string bcname = 2;
   string address = 3;
 }
 
-// 閫夋皯鎶曠エ璁板綍
+// 选民投票记录
 message voteRecord {
   string candidate = 1;
   string txid = 2;
 }
 
-// 閫夋皯鎶曠エ璁板綍杩斿洖
+// 选民投票记录返回
 message DposVoteRecordsResponse {
   Header header = 1;
-  // 閫夋皯鎶曠エtxid璁板綍
+  // 选民投票txid记录
   repeated voteRecord voteTxidRecords = 2;
 }
 
-// 鍊欓�変汉琚姇绁ㄨ褰曡姹�
+// 候选人被投票记录请求
 message DposVotedRecordsRequest {
   Header header = 1;
   string bcname = 2;
   string address = 3;
 }
-// 鍊欓�変汉琚姇绁ㄨ褰�
+// 候选人被投票记录
 message votedRecord {
   string voter = 1;
   string txid = 2;
 }
 
-// 鍊欓�変汉琚姇绁ㄨ褰曡繑鍥�
+// 候选人被投票记录返回
 message DposVotedRecordsResponse {
   Header header = 1;
-  // 鍊欓�変汉琚姇绁ㄧ殑txid璁板綍
+  // 候选人被投票的txid记录
   repeated votedRecord votedTxidRecords = 2;
 }
 
-// 鏌ヨ妫�绁ㄧ粨鏋滆褰曡姹�
+// 查询检票结果记录请求
 message DposCheckResultsRequest {
   Header header = 1;
   string bcname = 2;
   int64 term = 3;
 }
 
-// 鏌ヨ妫�绁ㄧ粨鏋滆褰曡繑鍥�
+// 查询检票结果记录返回
 message DposCheckResultsResponse {
   Header header = 1;
   int64 term = 2;
@@ -744,7 +743,7 @@ message InvokeRPCResponse {
   InvokeResponse response = 3;
 }
 
-//棰勬墽琛岀殑璇锋眰缁撴瀯
+// 预执行的请求结构
 message InvokeRequest {
   string module_name = 1;
   string contract_name = 2;
@@ -753,7 +752,7 @@ message InvokeRequest {
   repeated ResourceLimit resource_limits = 5;
 }
 
-//棰勬墽琛岀殑杩斿洖缁撴瀯
+// 预执行的返回结构
 message InvokeResponse {
   repeated TxInputExt inputs = 1;
   repeated TxOutputExt outputs = 2;
@@ -763,7 +762,7 @@ message InvokeResponse {
   repeated ContractResponse responses = 6;
 }
 
-//鎵╁睍杈撳叆
+// 扩展输入
 message TxInputExt {
   string bucket = 1;
   bytes key = 2;
@@ -771,14 +770,14 @@ message TxInputExt {
   int32 ref_offset = 4;
 }
 
-//鎵╁睍杈撳嚭
+// 扩展输出
 message TxOutputExt {
   string bucket = 1;
   bytes key = 2;
   bytes value = 3;
 }
 
-// 绛惧悕璇︽儏
+// 签名详情
 message SignatureInfo {
   string PublicKey = 1;
   bytes Sign = 2;
@@ -786,38 +785,38 @@ message SignatureInfo {
 
 // --------   Account and Permission Section --------
 enum PermissionRule {
-  NULL = 0;           // 鏃犳潈闄愭帶鍒�
-  SIGN_THRESHOLD = 1; // 绛惧悕闃堝�肩瓥鐣�
-  SIGN_AKSET = 2;     // AKSet绛惧悕绛栫暐
-  SIGN_RATE = 3;      // 绛惧悕鐜囩瓥鐣�
-  SIGN_SUM = 4;       // 绛惧悕涓暟绛栫暐
-  CA_SERVER = 5;      // CA鏈嶅姟鍣ㄩ壌鏉�
-  COMMUNITY_VOTE = 6; // 绀惧尯娌荤悊
+  NULL = 0;           // 无权限控制
+  SIGN_THRESHOLD = 1; // 签名阈值策略
+  SIGN_AKSET = 2;     // AKSet签名策略
+  SIGN_RATE = 3;      // 签名率策略
+  SIGN_SUM = 4;       // 签名个数策略
+  CA_SERVER = 5;      // CA服务器鉴权
+  COMMUNITY_VOTE = 6; // 社区治理
 }
 
 message PermissionModel {
   PermissionRule rule = 1;
-  double acceptValue = 2; // 鍙栧喅浜庣敤鍝rule, 鍙互琛ㄧず绛惧悕鐜囷紝绛惧悕鏁版垨鏉冮噸闃堝��
+  double acceptValue = 2; // 取决于用哪种rule, 可以表示签名率，签名数或权重阈值
 }
 
-// AK闆嗙殑琛ㄧず鏂规硶
+// AK集的表示方法
 message AkSet {
-  repeated string aks = 1; //涓�鍫嗗叕閽�
+  repeated string aks = 1; // 一堆公钥
 }
 message AkSets {
-  map<string, AkSet> sets = 1; // 鍏挜or璐︽埛鍚嶉泦
+  map<string, AkSet> sets = 1; // 公钥or账户名集
   string expression =
-      2; // 琛ㄨ揪寮忥紝涓�鏈熶笉鏀寔琛ㄨ揪寮忥紝榛樿闆嗗悎鍐呮槸and锛岄泦鍚堥棿鏄痮r
+      2; // 表达式，一期不支持表达式，默认集合内是and，集合间是or
 }
 
-// Acl瀹為檯浣跨敤鐨勭粨鏋�
+// Acl实际使用的结构
 message Acl {
-  PermissionModel pm = 1;            // 閲囩敤鐨勬潈闄愭ā鍨�
-  map<string, double> aksWeight = 2; // 鍏挜or璐︽埛鍚�  -> 鏉冮噸
+  PermissionModel pm = 1;            // 采用的权限模型
+  map<string, double> aksWeight = 2; // 公钥or账户名  -> 权重
   AkSets akSets = 3;
 }
 
-// 鏌ヨAcl
+// 查询Acl
 message AclStatus {
   Header header = 1;
   string bcname = 2;
