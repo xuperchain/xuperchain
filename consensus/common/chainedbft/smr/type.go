@@ -26,6 +26,8 @@ type Smr struct {
 	publicKey string
 	// private key
 	privateKey *ecdsa.PrivateKey
+	// last validates sets, changes with external layer consensus
+	preValidates []*cons_base.CandidateInfo
 	// validates sets, changes with external layer consensus
 	validates []*cons_base.CandidateInfo
 	// externalCons is the instance that chained bft communicate with
@@ -46,11 +48,15 @@ type Smr struct {
 	generateQC *pb.QuorumCert
 	// lockedQC is the generateBlock's QC, refer to lockedBlock's votes
 	lockedQC *pb.QuorumCert
+	// localProposal is the proposal local proposaled
+	localProposal *sync.Map
 	// votes of QC in mem, key: prposalID, value: *pb.QCSignInfos
 	qcVoteMsgs *sync.Map
 	// new view msg gathered from other replicas, key: viewNumber, value: []*pb.ChainedBftPhaseMessage
 	newViewMsgs *sync.Map
 
+	// lk lock
+	lk *sync.Mutex
 	// quitCh stop channel
 	QuitCh chan bool
 }

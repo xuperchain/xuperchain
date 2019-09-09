@@ -233,15 +233,16 @@ func (l *Ledger) FormatBlock(txList []*pb.Transaction,
 	proposer []byte, ecdsaPk *ecdsa.PrivateKey, /*矿工的公钥私钥*/
 	timestamp int64, curTerm int64, curBlockNum int64,
 	preHash []byte, utxoTotal *big.Int) (*pb.InternalBlock, error) {
-	return l.formatBlock(txList, proposer, ecdsaPk, timestamp, curTerm, curBlockNum, preHash, 0, utxoTotal, true, nil)
+	return l.formatBlock(txList, proposer, ecdsaPk, timestamp, curTerm, curBlockNum, preHash, 0, utxoTotal, true, nil, nil)
 }
 
-// FormatPOWBlock format block for consensus of pow
-func (l *Ledger) FormatPOWBlock(txList []*pb.Transaction,
+// FormatMinerBlock format block for miner
+func (l *Ledger) FormatMinerBlock(txList []*pb.Transaction,
 	proposer []byte, ecdsaPk *ecdsa.PrivateKey, /*矿工的公钥私钥*/
 	timestamp int64, curTerm int64, curBlockNum int64,
-	preHash []byte, targetBits int32, utxoTotal *big.Int, failedTxs map[string]string) (*pb.InternalBlock, error) {
-	return l.formatBlock(txList, proposer, ecdsaPk, timestamp, curTerm, curBlockNum, preHash, targetBits, utxoTotal, true, failedTxs)
+	preHash []byte, targetBits int32, utxoTotal *big.Int,
+	qc *pb.QuorumCert, failedTxs map[string]string) (*pb.InternalBlock, error) {
+	return l.formatBlock(txList, proposer, ecdsaPk, timestamp, curTerm, curBlockNum, preHash, targetBits, utxoTotal, true, qc, failedTxs)
 }
 
 // IsProofed check workload proof
@@ -261,7 +262,7 @@ func (l *Ledger) FormatFakeBlock(txList []*pb.Transaction,
 	proposer []byte, ecdsaPk *ecdsa.PrivateKey, /*矿工的公钥私钥*/
 	timestamp int64, curTerm int64, curBlockNum int64,
 	preHash []byte, utxoTotal *big.Int) (*pb.InternalBlock, error) {
-	return l.formatBlock(txList, proposer, ecdsaPk, timestamp, curTerm, curBlockNum, preHash, 0, utxoTotal, false, nil)
+	return l.formatBlock(txList, proposer, ecdsaPk, timestamp, curTerm, curBlockNum, preHash, 0, utxoTotal, false, nil, nil)
 }
 
 /*
@@ -270,7 +271,8 @@ func (l *Ledger) FormatFakeBlock(txList []*pb.Transaction,
 func (l *Ledger) formatBlock(txList []*pb.Transaction,
 	proposer []byte, ecdsaPk *ecdsa.PrivateKey, /*矿工的公钥私钥*/
 	timestamp int64, curTerm int64, curBlockNum int64,
-	preHash []byte, targetBits int32, utxoTotal *big.Int, needSign bool, failedTxs map[string]string) (*pb.InternalBlock, error) {
+	preHash []byte, targetBits int32, utxoTotal *big.Int, needSign bool,
+	qc *pb.QuorumCert, failedTxs map[string]string) (*pb.InternalBlock, error) {
 	l.xlog.Info("begin format block", "preHash", fmt.Sprintf("%x", preHash))
 	//编译的环境变量指定
 	block := &pb.InternalBlock{Version: BlockVersion}
@@ -281,6 +283,7 @@ func (l *Ledger) formatBlock(txList []*pb.Transaction,
 	block.CurTerm = curTerm
 	block.CurBlockNum = curBlockNum
 	block.TargetBits = targetBits
+	block.Justify = qc
 	jsPk, pkErr := l.cryptoClient.GetEcdsaPublicKeyJSONFormat(ecdsaPk)
 	if pkErr != nil {
 		return nil, pkErr

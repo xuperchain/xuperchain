@@ -3,6 +3,7 @@ package ledger
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"math"
 	"sort"
 
@@ -64,6 +65,46 @@ func encodeFailedTxs(buf *bytes.Buffer, block *pb.InternalBlock) error {
 	return nil
 }
 
+func encodeJustify(buf *bytes.Buffer, block *pb.InternalBlock) error {
+	if block.Justify == nil {
+		// no justify field
+		return nil
+	}
+	err := binary.Write(buf, binary.LittleEndian, block.Justify.ProposalId)
+	if err != nil {
+		return err
+	}
+	err = binary.Write(buf, binary.LittleEndian, block.Justify.ProposalMsg)
+	if err != nil {
+		return err
+	}
+	err = binary.Write(buf, binary.LittleEndian, block.Justify.Type)
+	if err != nil {
+		return err
+	}
+	err = binary.Write(buf, binary.LittleEndian, block.Justify.ViewNumber)
+	if err != nil {
+		return err
+	}
+	if block.Justify.SignInfos != nil {
+		for _, sign := range block.Justify.SignInfos.QCSignInfos {
+			err = binary.Write(buf, binary.LittleEndian, []byte(sign.Address))
+			if err != nil {
+				return err
+			}
+			err = binary.Write(buf, binary.LittleEndian, []byte(sign.PublicKey))
+			if err != nil {
+				return err
+			}
+			err = binary.Write(buf, binary.LittleEndian, sign.Sign)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 // MakeBlockID generate BlockID
 func MakeBlockID(block *pb.InternalBlock) ([]byte, error) {
 	buf := new(bytes.Buffer)
@@ -120,6 +161,10 @@ func MakeBlockID(block *pb.InternalBlock) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
+	}
+	err = encodeJustify(buf, block)
+	if err != nil {
+		return nil, fmt.Errorf("encodeJustify failed, err=%v", err)
 	}
 	return hash.DoubleSha256(buf.Bytes()), nil
 }

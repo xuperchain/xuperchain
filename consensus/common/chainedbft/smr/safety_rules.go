@@ -1,6 +1,8 @@
 package smr
 
 import (
+	"encoding/hex"
+
 	"github.com/xuperchain/xuperunion/consensus/common/chainedbft/utils"
 	"github.com/xuperchain/xuperunion/pb"
 )
@@ -19,9 +21,27 @@ func (s *Smr) safeProposal(propsQC, justify *pb.QuorumCert) (bool, error) {
 	}
 	// step2: verify justify's votes
 	// verify justify sign number
+	if justify == nil {
+		s.slog.Warn("safeProposal justify is nil")
+		return s.externalCons.CallVerifyQc(propsQC)
+	}
+	// if ok, err := s.IsQuorumCertValidate(justify); !ok || err != nil {
+	// 	s.slog.Error("safeProposal IsQuorumCertValidate error", "ok", ok, "error", err)
+	// 	return false, err
+	// }
+	// step3: call external consensus verify proposalMsg
+	return s.externalCons.CallVerifyQc(propsQC)
+}
+
+// IsQuorumCertValidate return whether QC is validated
+func (s *Smr) IsQuorumCertValidate(justify *pb.QuorumCert) (bool, error) {
+	s.slog.Debug("IsQuorumCertValidate", "justify.ProposalId", hex.EncodeToString(justify.GetProposalId()))
+	if justify == nil || justify.GetSignInfos() == nil || justify.GetProposalId() == nil {
+		return false, ErrParams
+	}
 	justifySigns := justify.GetSignInfos().GetQCSignInfos()
+	s.slog.Warn("safeProposal proposal justify sign", "autual", len(justifySigns), "require", (len(s.validates)-1)*2/3)
 	if len(justifySigns) <= (len(s.validates)-1)*2/3 {
-		s.slog.Error("safeProposal proposal justify sign not enough error")
 		return false, ErrJustifySignNotEnough
 	}
 	// verify justify sign
@@ -37,6 +57,5 @@ func (s *Smr) safeProposal(propsQC, justify *pb.QuorumCert) (bool, error) {
 			return false, ErrVerifyVoteSign
 		}
 	}
-	// step3: call external consensus verify proposalMsg
-	return s.externalCons.CallVerifyQc(propsQC)
+	return true, nil
 }
