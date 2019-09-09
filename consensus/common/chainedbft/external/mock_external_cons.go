@@ -62,3 +62,8 @@ func (mec *MockExternalConsensus) CallVerifyQc(qc *pb.QuorumCert) (bool, error) 
 func (mec *MockExternalConsensus) CallProposalMsgWithProposalID(proposalID []byte) ([]byte, error) {
 	return nil, nil
 }
+
+// IsFirstProposal return true if current proposal is the first proposal of bft
+func (mec *MockExternalConsensus) IsFirstProposal(*pb.QuorumCert) (bool, error) {
+	return false, nil
+}

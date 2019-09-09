@@ -3,6 +3,7 @@ package consensus
 import (
 	"errors"
 	"fmt"
+	"github.com/xuperchain/xuperunion/p2pv2"
 	"os"
 	"strconv"
 	"strings"
@@ -49,6 +50,7 @@ type PluggableConsensus struct {
 	cons         []*StepConsensus
 	cryptoClient crypto_base.CryptoClient
 	mutex        *sync.RWMutex
+	p2psvr       p2pv2.P2PServer
 }
 
 func genPlugConsKey(height int64, timestamp int64) string {
@@ -103,7 +105,7 @@ func (pc *PluggableConsensus) makeFirstCons(xlog log.Logger, cfg *config.NodeCon
 // NewPluggableConsensus create the PluggableConsensus instance
 func NewPluggableConsensus(xlog log.Logger, cfg *config.NodeConfig, bcname string,
 	ledger *ledger.Ledger, utxoVM *utxo.UtxoVM, gCon map[string]interface{},
-	cryptoType string) (*PluggableConsensus, error) {
+	cryptoType string, p2psvr p2pv2.P2PServer) (*PluggableConsensus, error) {
 	if xlog == nil {
 		xlog = log.New("module", "plug_cons")
 		xlog.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
@@ -121,6 +123,7 @@ func NewPluggableConsensus(xlog log.Logger, cfg *config.NodeConfig, bcname strin
 		utxoVM:       utxoVM,
 		cryptoClient: cryptoClient,
 		mutex:        new(sync.RWMutex),
+		p2psvr:       p2psvr,
 	}
 
 	first, err := pc.makeFirstCons(xlog, cfg, gCon)
@@ -297,6 +300,8 @@ func (pc *PluggableConsensus) newUpdateConsensus(name string, height int64, time
 		extParams["ledger"] = pc.ledger
 		extParams["utxovm"] = pc.utxoVM
 		extParams["timestamp"] = timestamp
+		extParams["p2psvr"] = pc.p2psvr
+		extParams["height"] = height
 	} else if name == ConsensusTypePow {
 		extParams["ledger"] = pc.ledger
 	}

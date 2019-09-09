@@ -21,10 +21,14 @@ import (
 	"github.com/xuperchain/xuperunion/common"
 	"github.com/xuperchain/xuperunion/common/config"
 	cons_base "github.com/xuperchain/xuperunion/consensus/base"
+	chainedbft "github.com/xuperchain/xuperunion/consensus/common/chainedbft"
+	bft_config "github.com/xuperchain/xuperunion/consensus/common/chainedbft/config"
+	"github.com/xuperchain/xuperunion/consensus/tdpos/bft"
 	"github.com/xuperchain/xuperunion/contract"
 	crypto_base "github.com/xuperchain/xuperunion/crypto/client/base"
 	"github.com/xuperchain/xuperunion/global"
 	"github.com/xuperchain/xuperunion/ledger"
+	"github.com/xuperchain/xuperunion/p2pv2"
 	"github.com/xuperchain/xuperunion/pb"
 	"github.com/xuperchain/xuperunion/utxo"
 )
@@ -112,7 +116,20 @@ func (tp *TDpos) Configure(xlog log.Logger, cfg *config.NodeConfig, consCfg map[
 		return errors.New(errMsg)
 	}
 
+	if p2psvr, ok := extParams["p2psvr"].(p2pv2.P2PServer); ok {
+		tp.p2psvr = p2psvr
+	}
+
+	if height, ok := extParams["height"].(int64); ok {
+		tp.height = height
+	}
+
 	if err = tp.buildConfigs(xlog, nil, consCfg); err != nil {
+		return err
+	}
+
+	if err = tp.initBFT(cfg); err != nil {
+		xlog.Warn("init chained-bft failed!", "error", err)
 		return err
 	}
 
@@ -266,6 +283,15 @@ func (tp *TDpos) buildConfigs(xlog log.Logger, cfg *config.NodeConfig, consCfg m
 		}
 	}
 
+	// parse bft related config
+	tp.config.enableBFT = false
+	if bftConfData, ok := consCfg["bft_config"].(map[string]interface{}); ok {
+		bftconf := bft_config.MakeConfig(bftConfData)
+		// if bft_config is not empty, enable bft
+		tp.config.enableBFT = true
+		tp.config.bftConfig = bftconf
+	}
+
 	tp.log.Trace("TDpos after config", "TTDpos.config", tp.config)
 	return nil
 }
@@ -293,6 +319,7 @@ func (tp *TDpos) initCandidateBallots() error {
 
 // CompeteMaster is the specific implementation of ConsensusInterface
 func (tp *TDpos) CompeteMaster(height int64) (bool, bool) {
+	sentNewView := false
 Again:
 	t := time.Now()
 	un := t.UnixNano()
@@ -316,8 +343,34 @@ Again:
 	// 查当前term 和 pos是否是自己
 	tp.curTerm = term
 	if blockPos > tp.config.blockNum || pos >= tp.config.proposerNum {
+		if !sentNewView {
+			// only run once when term or proposer change
+			err := tp.notifyNewView(height)
+			if err != nil {
+				tp.log.Warn("proposer or term change, bft Newview failed", "error", err)
+			}
+			sentNewView = true
+		}
 		goto Again
 	}
+	// reset proposers when term changed
+	if pos == 0 && blockPos == 1 {
+		err := tp.notifyTermChanged(tp.curTerm)
+		if err != nil {
+			tp.log.Warn("proposer or term change, bft Update Validators failed", "error", err)
+		}
+	}
+
+	// if NewView not sent, send NewView message
+	if !sentNewView {
+		// if no term or proposer change, run NewView before generate block
+		err := tp.notifyNewView(height)
+		if err != nil {
+			tp.log.Warn("proposer not changed, bft Newview failed", "error", err)
+		}
+		sentNewView = true
+	}
+	// master check
 	if tp.isProposer(term, pos, tp.address) {
 		tp.log.Trace("CompeteMaster now xterm infos", "term", term, "pos", pos, "blockPos", blockPos, "un2", un2,
 			"master", true)
@@ -343,6 +396,49 @@ func (tp *TDpos) needSync() bool {
 		return false
 	}
 	return true
+}
+
+func (tp *TDpos) notifyNewView(height int64) error {
+	if !tp.config.enableBFT {
+		// BFT not enabled, continue
+		return nil
+	}
+
+	// get current proposer
+	meta := tp.ledger.GetMeta()
+	proposer, err := tp.getProposer(0, 0)
+	if err != nil {
+		return err
+	}
+	if meta.TrunkHeight != 0 {
+		blockTip, err := tp.ledger.QueryBlock(meta.TipBlockid)
+		if err != nil {
+			return err
+		}
+		proposer = string(blockTip.GetProposer())
+	}
+
+	// get next proposer
+	// 查当前时间的term 和 pos
+	t2 := time.Now()
+	un2 := t2.UnixNano()
+	term, pos, blockPos := tp.minerScheduling(un2)
+	nextProposer, err := tp.getNextProposer(term, pos, blockPos)
+	if err != nil {
+		return err
+	}
+	// old height might out-of-date, use current trunkHeight when NewView
+	return tp.bftPaceMaker.NextNewView(meta.TrunkHeight+1, nextProposer, proposer)
+}
+
+func (tp *TDpos) notifyTermChanged(term int64) error {
+	if !tp.config.enableBFT {
+		// BFT not enabled, continue
+		return nil
+	}
+
+	proposers := tp.getTermProposer(term)
+	return tp.bftPaceMaker.UpdateValidatorSet(proposers)
 }
 
 // CheckMinerMatch is the specific implementation of ConsensusInterface
@@ -374,6 +470,16 @@ func (tp *TDpos) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock) (bool,
 	if err != nil || !valid {
 		tp.log.Warn("CheckMinerMatch VerifyECDSA error", "logid", header.Logid, "error", err)
 		return false, nil
+	}
+
+	if tp.config.enableBFT && !tp.isFirstblock(in.GetHeight()) {
+		// if BFT enabled and it's not the first proposal
+		// check whether previous block's QuorumCert is valid
+		ok, err := tp.bftPaceMaker.GetChainedBFT().IsQuorumCertValidate(in.GetJustify())
+		if err != nil || !ok {
+			tp.log.Warn("CheckMinerMatch bft IsQuorumCertValidate failed", "logid", header.Logid, "error", err)
+			return false, nil
+		}
 	}
 
 	// 2 验证轮数信息
@@ -433,6 +539,38 @@ func (tp *TDpos) ProcessBeforeMiner(timestamp int64) (map[string]interface{}, bo
 		return nil, false
 	}
 
+	// check bft status
+	if tp.config.enableBFT {
+		// TODO: what if IsLastViewConfirmed failed in competemaster, but succeed in ProcessBeforeMiner?
+		if !tp.isFirstblock(tp.ledger.GetMeta().GetTrunkHeight() + 1) {
+			if ok, _ := tp.bftPaceMaker.IsLastViewConfirmed(); !ok {
+				tp.log.Warn("ProcessBeforeMiner last block not confirmed, walk to previous block")
+				lastBlockid := tp.ledger.GetMeta().GetTipBlockid()
+				lastBlock, err := tp.ledger.QueryBlock(lastBlockid)
+				if err != nil {
+					tp.log.Warn("ProcessBeforeMiner tip block query failed", "error", err)
+					return nil, false
+				}
+				err = tp.utxoVM.Walk(lastBlock.GetPreHash())
+				if err != nil {
+					tp.log.Warn("ProcessBeforeMiner utxo walk failed", "error", err)
+					return nil, false
+				}
+				err = tp.ledger.Truncate(tp.utxoVM.GetLatestBlockid())
+				if err != nil {
+					tp.log.Warn("ProcessBeforeMiner ledger truncate failed", "error", err)
+					return nil, false
+				}
+			}
+		}
+
+		qc, err := tp.bftPaceMaker.CurrentQCHigh([]byte(""))
+		if err != nil {
+			return nil, false
+		}
+		res["quorum_cert"] = qc
+	}
+
 	res["type"] = TYPE
 	//res["curTerm"] = tp.curTerm
 	//res["curBlockNum"] = tp.curBlockNum
@@ -444,6 +582,20 @@ func (tp *TDpos) ProcessBeforeMiner(timestamp int64) (map[string]interface{}, bo
 
 // ProcessConfirmBlock is the specific implementation of ConsensusInterface
 func (tp *TDpos) ProcessConfirmBlock(block *pb.InternalBlock) error {
+	// send bft NewProposal if bft enable and it's the miner
+	if tp.config.enableBFT && bytes.Compare(block.GetProposer(), tp.address) == 0 {
+		blockData := &pb.Block{
+			Bcname:  tp.bcname,
+			Blockid: block.Blockid,
+			Block:   block,
+		}
+
+		err := tp.bftPaceMaker.NextNewProposal(block.Blockid, blockData)
+		if err != nil {
+			tp.log.Warn("ProcessConfirmBlock: bft next proposal failed", "error", err)
+			return err
+		}
+	}
 	return nil
 }
 
@@ -518,7 +670,11 @@ func (tp *TDpos) SetContext(context *contract.TxContext) error {
 }
 
 // Stop is the specific implementation of interface contract
-func (tp *TDpos) Stop() {}
+func (tp *TDpos) Stop() {
+	if tp.config.enableBFT && tp.bftPaceMaker != nil {
+		tp.bftPaceMaker.Stop()
+	}
+}
 
 // ReadOutput is the specific implementation of interface contract
 func (tp *TDpos) ReadOutput(desc *contract.TxDesc) (contract.ContractOutputInterface, error) {
@@ -590,4 +746,89 @@ func (tp *TDpos) GetStatus() *cons_base.ConsensusStatus {
 		status.Proposer = proposers[int(pos)].Address
 	}
 	return status
+}
+
+func (tp *TDpos) initBFT(cfg *config.NodeConfig) error {
+	// BFT not enabled
+	if !tp.config.enableBFT {
+		return nil
+	}
+
+	// read keys
+	pkpath := cfg.Miner.Keypath + "/public.key"
+	pkJSON, err := ioutil.ReadFile(pkpath)
+	if err != nil {
+		tp.log.Warn("load private key error", "path", pkpath)
+		return err
+	}
+	skpath := cfg.Miner.Keypath + "/private.key"
+	skJSON, err := ioutil.ReadFile(skpath)
+	if err != nil {
+		tp.log.Warn("load private key error", "path", skpath)
+		return err
+	}
+	sk, err := tp.cryptoClient.GetEcdsaPrivateKeyFromJSON(skJSON)
+	if err != nil {
+		tp.log.Warn("parse private key failed", "privateKey", skJSON)
+		return err
+	}
+
+	// initialize bft
+	bridge := bft.NewCbftBridge(tp.bcname, tp.ledger, tp.log, tp)
+	qcNeeded := 3
+	qc := make([]*pb.QuorumCert, qcNeeded)
+	meta := tp.ledger.GetMeta()
+	if meta.TrunkHeight != 0 {
+		blockid := meta.TipBlockid
+		for qcNeeded > 0 {
+			qcNeeded--
+			block, err := tp.ledger.QueryBlock(blockid)
+			if err != nil {
+				tp.log.Warn("initBFT: get block failed", "error", err)
+				return err
+			}
+			qc[qcNeeded] = block.GetJustify()
+			blockid = block.GetPreHash()
+		}
+	}
+
+	cbft, err := chainedbft.NewChainedBft(
+		tp.log,
+		tp.config.bftConfig,
+		tp.bcname,
+		string(tp.address),
+		string(pkJSON),
+		sk,
+		tp.config.initProposer[1],
+		bridge,
+		tp.cryptoClient,
+		tp.p2psvr,
+		qc[2], qc[1], qc[0])
+
+	if err != nil {
+		tp.log.Warn("initBFT: create ChainedBft failed", "error", err)
+		return err
+	}
+
+	paceMaker, err := bft.NewDPoSPaceMaker(tp.bcname, tp.height, meta.TrunkHeight,
+		string(tp.address), cbft, tp.log, tp, tp.ledger)
+	if err != nil {
+		if err != nil {
+			tp.log.Warn("initBFT: create DPoSPaceMaker failed", "error", err)
+			return err
+		}
+	}
+	tp.bftPaceMaker = paceMaker
+	bridge.SetPaceMaker(paceMaker)
+	return tp.bftPaceMaker.Start()
+}
+
+func (tp *TDpos) isFirstblock(targetHeight int64) bool {
+	consStartHeight := tp.height
+	if consStartHeight == 0 {
+		consStartHeight++
+	}
+	tp.log.Debug("isFirstblock check", "consStartHeight", consStartHeight,
+		"targetHeight", targetHeight)
+	return consStartHeight == targetHeight
 }

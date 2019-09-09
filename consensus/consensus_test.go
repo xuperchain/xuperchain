@@ -166,7 +166,7 @@ func plugPrepareWithGensisBlock(t *testing.T) *PluggableConsensus {
 			"miner":  "dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN",
 		},
 	}
-	plugCons, plugErr := NewPluggableConsensus(nil, cfg, bcname, ledger, utxoVM, rootConfig, tCryptoType)
+	plugCons, plugErr := NewPluggableConsensus(nil, cfg, bcname, ledger, utxoVM, rootConfig, tCryptoType, nil)
 	if plugErr != nil {
 		t.Fatal(plugErr)
 	}
@@ -191,7 +191,7 @@ func plugPrepare(t *testing.T) *PluggableConsensus {
 			"miner": "dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN",
 		},
 	}
-	plugCons, err := NewPluggableConsensus(nil, cfg, bcname, ldg, utxoVM, rootConfig, tCryptoType)
+	plugCons, err := NewPluggableConsensus(nil, cfg, bcname, ldg, utxoVM, rootConfig, tCryptoType, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
