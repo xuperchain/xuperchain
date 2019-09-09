@@ -1868,7 +1868,7 @@ func (uv *UtxoVM) GetFrozenBalance(addr string) (*big.Int, error) {
 	return utxoFrozen, nil
 }
 
-// GetFrozenBalance 查询Address的被冻结/未冻结的余额
+// GetFrozenBalance 查询Address的被冻结的余额 / 未冻结的余额
 func (uv *UtxoVM) GetBalanceDetail(addr string) ([]*pb.TokenFrozenDetail, error) {
 	addrPrefix := fmt.Sprintf("%s%s_", pb.UTXOTablePrefix, addr)
 	utxoFrozen := big.NewInt(0)
