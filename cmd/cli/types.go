@@ -70,6 +70,50 @@ type SignatureInfo struct {
 	Sign      HexID  `json:"sign"`
 }
 
+// QCState is the phase of hotstuff
+type QCState int32
+
+// QCState defination
+const (
+	QCState_NEW_VIEW   QCState = 0
+	QCState_PREPARE    QCState = 1
+	QCState_PRE_COMMIT QCState = 2
+	QCState_COMMIT     QCState = 3
+	QCState_DECIDE     QCState = 4
+)
+
+// SignInfo is the signature information of the
+type SignInfo struct {
+	Address   string `protobuf:"bytes,1,opt,name=Address,proto3" json:"Address,omitempty"`
+	PublicKey string `protobuf:"bytes,2,opt,name=PublicKey,proto3" json:"PublicKey,omitempty"`
+	Sign      []byte `protobuf:"bytes,3,opt,name=Sign,proto3" json:"Sign,omitempty"`
+}
+
+// QCSignInfos is the signs of the leader gathered from replicas of a specifically certType.
+// A slice of signs is used at present.
+// TODO @qizheng09: It will be change to Threshold-Signatures after
+// Crypto lib support Threshold-Signatures.
+type QCSignInfos struct {
+	// QCSignInfos
+	QCSignInfos []*SignInfo `protobuf:"bytes,1,rep,name=QCSignInfos,proto3" json:"QCSignInfos,omitempty"`
+}
+
+// QuorumCert is a data type that combines a collection of signatures from replicas.
+type QuorumCert struct {
+	// The id of Proposal this QC certified.
+	ProposalId []byte `protobuf:"bytes,1,opt,name=ProposalId,proto3" json:"ProposalId,omitempty"`
+	// The msg of Proposal this QC certified.
+	ProposalMsg []byte `protobuf:"bytes,2,opt,name=ProposalMsg,proto3" json:"ProposalMsg,omitempty"`
+	// The current type of this QC certified.
+	// the type contains `NEW_VIEW`, `PREPARE`
+	Type QCState `protobuf:"varint,3,opt,name=Type,proto3,enum=pb.QCState" json:"Type,omitempty"`
+	// The view number of this QC certified.
+	ViewNumber int64 `protobuf:"varint,4,opt,name=ViewNumber,proto3" json:"ViewNumber,omitempty"`
+	// SignInfos is the signs of the leader gathered from replicas
+	// of a specifically certType.
+	SignInfos *QCSignInfos `protobuf:"bytes,5,opt,name=SignInfos,proto3" json:"SignInfos,omitempty"`
+}
+
 // Transaction proto.Transaction
 type Transaction struct {
 	Txid              HexID            `json:"txid"`
@@ -212,6 +256,7 @@ type InternalBlock struct {
 	FailedTxs    map[string]string `json:"failedTxs"`
 	CurTerm      int64             `json:"curTerm"`
 	CurBlockNum  int64             `json:"curBlockNum"`
+	Justify      *QuorumCert       `json:"justify"`
 }
 
 // FromInternalBlockPB block info
@@ -241,7 +286,31 @@ func FromInternalBlockPB(block *pb.InternalBlock) *InternalBlock {
 	for i := range block.Transactions {
 		iblock.Transactions[i] = FromPBTx(block.Transactions[i])
 	}
+	iblock.Justify = FromPBJustify(block.Justify)
 	return iblock
+}
+
+// FromPBJustify use pb.QuorumCert to construct local QuorumCert in block
+func FromPBJustify(qc *pb.QuorumCert) *QuorumCert {
+	justify := &QuorumCert{}
+	if qc != nil {
+		justify.ProposalId = qc.ProposalId
+		justify.ProposalMsg = qc.ProposalMsg
+		justify.Type = QCState(int(qc.Type))
+		justify.ViewNumber = qc.ViewNumber
+		justify.SignInfos = &QCSignInfos{
+			QCSignInfos: make([]*SignInfo, 0),
+		}
+		for _, sign := range qc.SignInfos.QCSignInfos {
+			tmpSign := &SignInfo{
+				Address:   sign.Address,
+				PublicKey: sign.PublicKey,
+				Sign:      sign.Sign,
+			}
+			justify.SignInfos.QCSignInfos = append(justify.SignInfos.QCSignInfos, tmpSign)
+		}
+	}
+	return justify
 }
 
 // LedgerMeta proto.LedgerMeta

@@ -10,8 +10,11 @@ import (
 	"strconv"
 	"time"
 
+	iaddr "github.com/ipfs/go-ipfs-addr"
 	crypto "github.com/libp2p/go-libp2p-crypto"
 	peer "github.com/libp2p/go-libp2p-peer"
+	pstore "github.com/libp2p/go-libp2p-peerstore"
+
 	"github.com/xuperchain/xuperunion/common/config"
 	crypto_client "github.com/xuperchain/xuperunion/crypto/client"
 	"github.com/xuperchain/xuperunion/crypto/hash"
@@ -124,4 +127,17 @@ func GetAuthRequest(v *XchainAddrInfo) (*pb.IdentityAuth, error) {
 	}
 
 	return identityAuth, nil
+}
+
+// GetIDFromAddr return peer ID corresponding to peerAddr
+func GetIDFromAddr(peerAddr string) (peer.ID, error) {
+	addr, err := iaddr.ParseString(peerAddr)
+	if err != nil {
+		return "", err
+	}
+	peerinfo, err := pstore.InfoFromP2pAddr(addr.Multiaddr())
+	if err != nil {
+		return "", err
+	}
+	return peerinfo.ID, nil
 }

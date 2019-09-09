@@ -156,7 +156,7 @@ func NewNode(cfg config.P2PConfig, log log.Logger) (*Node, error) {
 	if len(cfg.BootNodes) > 0 {
 		peers = append(peers, cfg.BootNodes...)
 	}
-	succNum := no.connectToPeersByAddr(peers)
+	succNum := no.ConnectToPeersByAddr(peers)
 	if succNum == 0 && len(cfg.BootNodes) != 0 {
 		return nil, ErrConnectBootStrap
 	}
@@ -278,20 +278,6 @@ func (no *Node) ListPeers() []peer.ID {
 	return peers
 }
 
-func (no *Node) getIDFromAddr(peerAddr string) (peer.ID, error) {
-	addr, err := iaddr.ParseString(peerAddr)
-	if err != nil {
-		log.Error("peer parse error", "peerAddr", peerAddr, "error", err.Error())
-		return "", err
-	}
-	peerinfo, err := pstore.InfoFromP2pAddr(addr.Multiaddr())
-	if err != nil {
-		log.Error("peer node info error", "peerAddr", peerAddr, "error", err.Error())
-		return "", err
-	}
-	return peerinfo.ID, nil
-}
-
 // UpdateCorePeers update core peers' info and keep connection to core peers
 func (no *Node) UpdateCorePeers(cp *CorePeersInfo) error {
 	if cp == nil {
@@ -388,7 +374,8 @@ func (no *Node) getRoutePeerFromAddr(peerAddr string) (*corePeerInfo, error) {
 	return cpi, nil
 }
 
-func (no *Node) connectToPeersByAddr(addrs []string) int {
+// ConnectToPeersByAddr provide connection support using peer address(netURL)
+func (no *Node) ConnectToPeersByAddr(addrs []string) int {
 	peers := make([]*pstore.PeerInfo, 0)
 	for _, addr := range addrs {
 		pi, err := no.getRoutePeerFromAddr(addr)
