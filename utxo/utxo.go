@@ -1868,6 +1868,52 @@ func (uv *UtxoVM) GetFrozenBalance(addr string) (*big.Int, error) {
 	return utxoFrozen, nil
 }
 
+// GetFrozenBalance 查询Address的被冻结/未冻结的余额
+func (uv *UtxoVM) GetBalanceDetail(addr string) ([]*pb.TokenFrozenDetail, error) {
+	addrPrefix := fmt.Sprintf("%s%s_", pb.UTXOTablePrefix, addr)
+	utxoFrozen := big.NewInt(0)
+	utxoUnFrozen := big.NewInt(0)
+	curHeight := uv.ledger.GetMeta().TrunkHeight
+	it := uv.ldb.NewIteratorWithPrefix([]byte(addrPrefix))
+	defer it.Release()
+	for it.Next() {
+		uBinary := it.Value()
+		uItem := &UtxoItem{}
+		uErr := uItem.Loads(uBinary)
+		if uErr != nil {
+			return nil, uErr
+		}
+		if uItem.FrozenHeight <= curHeight && uItem.FrozenHeight != -1 {
+			utxoUnFrozen.Add(utxoUnFrozen, uItem.Amount) // utxo累加
+			continue
+		}
+		utxoFrozen.Add(utxoFrozen, uItem.Amount) // utxo累加
+	}
+	if it.Error() != nil {
+		return nil, it.Error()
+	}
+	//	return utxoFrozen, nil
+
+	// TODO 补充TokenFrozenDetail的数据结构
+	var tokenFrozenDetails []*pb.TokenFrozenDetail
+
+	tokenFrozenDetail := &pb.TokenFrozenDetail{
+		//		Bcname:  bcname,
+		Balance:  utxoFrozen.String(),
+		IsFrozen: true,
+	}
+	tokenFrozenDetails = append(tokenFrozenDetails, tokenFrozenDetail)
+
+	tokenUnFrozenDetail := &pb.TokenFrozenDetail{
+		//		Bcname:   bcname,
+		Balance:  utxoUnFrozen.String(),
+		IsFrozen: false,
+	}
+	tokenFrozenDetails = append(tokenFrozenDetails, tokenUnFrozenDetail)
+
+	return tokenFrozenDetails, nil
+}
+
 // Close 关闭utxo vm, 目前主要是关闭leveldb
 func (uv *UtxoVM) Close() {
 	uv.smartContract.Stop()
