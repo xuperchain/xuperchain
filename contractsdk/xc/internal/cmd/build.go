@@ -58,7 +58,7 @@ func newBuildCommand() *cobra.Command {
 			return c.build()
 		},
 	}
-	cmd.Flags().BoolVarP(&c.makeFileOnly, "makefile", "m", false, "generate makefile and exists")
+	cmd.Flags().BoolVarP(&c.makeFileOnly, "makefile", "m", false, "generate makefile and exits")
 	cmd.Flags().BoolVarP(&c.cleanBuild, "clean", "c", false, "clean stage directory")
 	cmd.Flags().BoolVarP(&c.genCompileCommand, "compile_command", "p", false, "generate compile_commands.json for IDE")
 	return cmd
