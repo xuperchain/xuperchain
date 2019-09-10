@@ -1,6 +1,8 @@
 package cmd
 
 import (
+	"fmt"
+
 	"github.com/spf13/cobra"
 )
 
@@ -8,6 +10,7 @@ var (
 	commandFuncs []func() *cobra.Command
 
 	rootOptions RootOptions
+	version     string
 )
 
 type RootOptions struct {
@@ -22,11 +25,16 @@ func rootCommand() *cobra.Command {
 		Use:           "xc",
 		SilenceErrors: false,
 		SilenceUsage:  true,
+		Version:       version,
 	}
 	for _, cmdFunc := range commandFuncs {
 		rootCmd.AddCommand(cmdFunc())
 	}
 	return rootCmd
+}
+
+func SetVersion(ver, date, commit string) {
+	version = fmt.Sprintf("%s-%s %s", ver, commit, date)
 }
 
 func Main() {
