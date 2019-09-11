@@ -97,6 +97,17 @@ service Xchain {
       body : "*"
     };
   }
+  
+  // GetFrozenBalance get two kinds of balance
+  // 1. Still be frozen of an address
+  // 2. Available now of an address
+  // Address is required for this
+  rpc GetBalanceDetail(AddressBalanceStatus) returns (AddressBalanceStatus) {
+  option (google.api.http) = {
+    post: "/v1/get_balance_detail"
+    body: "*"
+    };
+  }
 
   // GetFrozenBalance get balance that still be frozen of an address,
   // Address is required for this
@@ -204,15 +215,14 @@ service Xchain {
 }
 
 message Header {
-  string logid = 1; //如果logid没填写，生成一个
-  string from_node =
-      2; // call rpc client address，客户端可以为空，节点一定要写自己的address
+  string logid = 1;  //如果logid没填写，生成一个
+  string from_node = 2;  //call rpc client address，客户端可以为空，节点一定要写自己的address
   XChainErrorEnum error = 3;
 }
 
 message TxDataAccount {
-  string address = 1;      //地址
-  string amount = 2;       //金额
+  string address = 1;  //地址
+  string amount = 2;  //金额
   int64 frozen_height = 3; //冻结高度
 }
 
@@ -246,8 +256,8 @@ message TxStatus {
   Header header = 1;
   string bcname = 2;
   bytes txid = 3;
-  TransactionStatus status = 4; //当前状态
-  int64 distance = 5;           //离主干末端的距离（如果在主干上)
+  TransactionStatus status = 4;  //当前状态
+  int64 distance = 5;  //离主干末端的距离（如果在主干上)
   Transaction tx = 7;
 }
 
@@ -275,7 +285,7 @@ message BlockID {
   string bcname = 1;
   bytes blockid = 2;
   // if need content
-  bool need_content = 3; //是否需要内容
+  bool need_content = 3;  //是否需要内容
 }
 
 message BlockHeight {
@@ -298,6 +308,26 @@ message AddressStatus {
   Header header = 1;
   string address = 2;
   repeated TokenDetail bcs = 3;
+}
+
+message TokenFrozenDetail
+{
+  string balance = 1;
+  bool isFrozen = 2;
+}
+
+message TokenFrozenDetails
+{
+  string bcname = 1;
+  repeated TokenFrozenDetail tfd = 2;
+  XChainErrorEnum error  = 3;
+}
+
+message AddressBalanceStatus
+{
+  Header header = 1;
+  string address = 2;
+  repeated TokenFrozenDetails tfds = 3;
 }
 
 // Transaction input
@@ -392,9 +422,9 @@ message LedgerMeta {
 message UtxoMeta {
   bytes latest_blockid = 1; // utxo vm目前执行到的blockid
   repeated string lock_key_list = 2;
-  string utxo_total = 3;       //当前utxo vm上的总资产
-  int64 avgDelay = 4;          //平均上链延时
-  int64 unconfirmTxAmount = 5; //待确认交易量
+  string utxo_total = 3;       // 当前utxo vm上的总资产
+  int64 avgDelay = 4;          // 平均上链延时
+  int64 unconfirmTxAmount = 5; // 待确认交易量
 }
 
 // The internal block struct
@@ -424,7 +454,7 @@ message InternalBlock {
   repeated Transaction transactions = 11;
   // The transaction count of the block
   int32 tx_count = 12;
-  //所有交易hash的merkle tree
+  // 所有交易hash的merkle tree
   repeated bytes merkle_tree = 13;
   int64 curTerm = 16;
   int64 curBlockNum = 17;
@@ -434,7 +464,7 @@ message InternalBlock {
   // Justify used in chained-bft
   QuorumCert Justify = 20;
   
-  //下面的属性会动态变化
+  // 下面的属性会动态变化
   // If the block is on the trunk
   bool in_trunk = 14;
   // Next next block which on trunk
@@ -713,7 +743,7 @@ message InvokeRPCResponse {
   InvokeResponse response = 3;
 }
 
-//预执行的请求结构
+// 预执行的请求结构
 message InvokeRequest {
   string module_name = 1;
   string contract_name = 2;
@@ -722,7 +752,7 @@ message InvokeRequest {
   repeated ResourceLimit resource_limits = 5;
 }
 
-//预执行的返回结构
+// 预执行的返回结构
 message InvokeResponse {
   repeated TxInputExt inputs = 1;
   repeated TxOutputExt outputs = 2;
@@ -732,7 +762,7 @@ message InvokeResponse {
   repeated ContractResponse responses = 6;
 }
 
-//扩展输入
+// 扩展输入
 message TxInputExt {
   string bucket = 1;
   bytes key = 2;
@@ -740,7 +770,7 @@ message TxInputExt {
   int32 ref_offset = 4;
 }
 
-//扩展输出
+// 扩展输出
 message TxOutputExt {
   string bucket = 1;
   bytes key = 2;
@@ -771,7 +801,7 @@ message PermissionModel {
 
 // AK集的表示方法
 message AkSet {
-  repeated string aks = 1; //一堆公钥
+  repeated string aks = 1; // 一堆公钥
 }
 message AkSets {
   map<string, AkSet> sets = 1; // 公钥or账户名集
