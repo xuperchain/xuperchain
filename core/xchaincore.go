@@ -1001,6 +1001,24 @@ func (xc *XChainCore) GetFrozenBalance(addr string) (string, error) {
 	return bint.String(), nil
 }
 
+// GetFrozenBalance get balance that still be frozen from utxo
+func (xc *XChainCore) GetBalanceDetail(addr string) (*pb.TokenFrozenDetails, error) {
+	if xc.Status() != global.Normal {
+		return nil, ErrNotReady
+	}
+	tokenDetails, err := xc.Utxovm.GetBalanceDetail(addr)
+	if err != nil {
+		return nil, err
+	}
+
+	tokenFrozenDetails := &pb.TokenFrozenDetails{
+		Bcname: xc.bcname,
+		Tfd:    tokenDetails,
+	}
+
+	return tokenFrozenDetails, nil
+}
+
 // GetConsType get consensus type for specific block chain
 func (xc *XChainCore) GetConsType() string {
 	return xc.con.Type(xc.Ledger.GetMeta().TrunkHeight + 1)
