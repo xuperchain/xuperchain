@@ -9,11 +9,18 @@ import (
 )
 
 // XEndorser is the interface for endorser service
+// Endorser protocol provide standard interface for endorser operations.
+// In many cases, a full node could be used for Endorser service.
+// For example, an endorser service can provide delegated computing and
+// compliance check for transactions, and set an endorser fee for each request.
+// endorser service provider could decide how much fee needed for each operation.
 type XEndorser interface {
 	EndorserCall(ctx context.Context, req *pb.EndorserRequest) (*pb.EndorserResponse, error)
 }
 
 // DefaultXEndorser default implementation of XEndorser
+// Endorser service can implement the interface in their own way and follow
+// the protocol defined in xendorser.proto.
 type DefaultXEndorser struct {
 	svr         *server
 	requestType map[string]bool
