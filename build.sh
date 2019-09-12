@@ -42,6 +42,7 @@ function buildpkg() {
 
 buildpkg xchain-cli github.com/xuperchain/xuperunion/cmd/cli
 buildpkg xchain github.com/xuperchain/xuperunion/cmd/xchain
+buildpkg xc github.com/xuperchain/xuperunion/contractsdk/xc
 go build -o dump_chain test/dump_chain.go
 
 # build plugins
@@ -63,6 +64,7 @@ output_dir=output
 mv xchain-cli xchain ${output_dir}
 mv wasm2c ${output_dir}
 mv dump_chain ${output_dir}
+mv xc ${output_dir}
 cp -rf  plugins ${output_dir}
 cp -rf data ${output_dir}
 cp -rf conf ${output_dir}
