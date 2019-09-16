@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 
+	peer "github.com/libp2p/go-libp2p-peer"
 	"github.com/pkg/errors"
 	log "github.com/xuperchain/log15"
 
@@ -132,7 +133,9 @@ func (p *P2PServerV2) GetNetURL() string {
 func (p *P2PServerV2) getFilter(opts *msgOptions) PeersFilter {
 	fs := opts.filters
 	bcname := opts.bcname
-	if len(fs) == 0 {
+	peerids := make([]peer.ID, 0)
+	tpLen := len(opts.targetPeerAddrs)
+	if len(fs) == 0 && tpLen == 0 {
 		return &BucketsFilter{node: p.node}
 	}
 	pfs := make([]PeersFilter, 0)
@@ -152,10 +155,21 @@ func (p *P2PServerV2) getFilter(opts *msgOptions) PeersFilter {
 		}
 		pfs = append(pfs, filter)
 	}
-	if len(pfs) > 1 {
-		return NewMultiStrategy(p.node, pfs)
+	// process target peer addresses
+	if tpLen > 0 {
+		// connect to extra target peers async
+		go p.node.ConnectToPeersByAddr(opts.targetPeerAddrs)
+		// get corresponding peer ids
+		for _, addr := range opts.targetPeerAddrs {
+			pid, err := GetIDFromAddr(addr)
+			if err != nil {
+				p.log.Warn("getFilter parse peer address failed", "paddr", addr, "error", err)
+				continue
+			}
+			peerids = append(peerids, pid)
+		}
 	}
-	return pfs[0]
+	return NewMultiStrategy(p.node, pfs, peerids)
 }
 
 // GetPeerUrls 查询所连接节点的信息

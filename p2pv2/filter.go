@@ -136,15 +136,17 @@ func (cp *CorePeersFilter) Filter() ([]peer.ID, error) {
 
 // MultiStrategy a peer filter that contains multiple filters
 type MultiStrategy struct {
-	node    *Node
-	filters []PeersFilter
+	node       *Node
+	filters    []PeersFilter
+	extraPeers []peer.ID
 }
 
 // NewMultiStrategy create instance of MultiStrategy
-func NewMultiStrategy(node *Node, filters []PeersFilter) *MultiStrategy {
+func NewMultiStrategy(node *Node, filters []PeersFilter, extraPeers []peer.ID) *MultiStrategy {
 	return &MultiStrategy{
-		node:    node,
-		filters: filters,
+		node:       node,
+		filters:    filters,
+		extraPeers: extraPeers,
 	}
 }
 
@@ -152,6 +154,7 @@ func NewMultiStrategy(node *Node, filters []PeersFilter) *MultiStrategy {
 func (cp *MultiStrategy) Filter() ([]peer.ID, error) {
 	res := make([]peer.ID, 0)
 	dupCheck := make(map[string]bool)
+	// add all filters
 	for _, filter := range cp.filters {
 		peers, err := filter.Filter()
 		if err != nil {
@@ -162,6 +165,13 @@ func (cp *MultiStrategy) Filter() ([]peer.ID, error) {
 				dupCheck[peer.Pretty()] = true
 				res = append(res, peer)
 			}
+		}
+	}
+	// add extra peers
+	for _, peer := range cp.extraPeers {
+		if _, ok := dupCheck[peer.Pretty()]; !ok {
+			dupCheck[peer.Pretty()] = true
+			res = append(res, peer)
 		}
 	}
 

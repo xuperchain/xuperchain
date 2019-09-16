@@ -4,6 +4,8 @@
 #include "xchain/contract.pb.h"
 #include "xchain/xchain.h"
 
+namespace pb = xchain::contract::sdk;
+
 namespace xchain {
 
 class ContextImpl : public Context {
@@ -26,6 +28,7 @@ public:
     virtual void ok(const std::string& body);
     virtual void error(const std::string& body);
     virtual Response* mutable_response();
+    virtual std::unique_ptr<Iterator> new_iterator(const std::string& start, const std::string& limit);
 
 private:
     pb::CallArgs _call_args;

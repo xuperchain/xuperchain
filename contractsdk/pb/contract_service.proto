@@ -1,0 +1,35 @@
+syntax = "proto3";
+option optimize_for = LITE_RUNTIME;
+option go_package = "github.com/xuperchain/xuperunion/contractsdk/go/pbrpc";
+
+import "contract.proto";
+package xchain.contract.svc;
+
+
+// service provided by chain code, called by xchain
+service NativeCode {
+  rpc Call(xchain.contract.sdk.NativeCallRequest) returns (xchain.contract.sdk.NativeCallResponse);
+  rpc Ping(xchain.contract.sdk.PingRequest) returns (xchain.contract.sdk.PingResponse);
+}
+
+// xchain syscall service
+service Syscall {
+  // KV service
+  rpc PutObject(xchain.contract.sdk.PutRequest) returns (xchain.contract.sdk.PutResponse);
+  rpc GetObject(xchain.contract.sdk.GetRequest) returns (xchain.contract.sdk.GetResponse);
+  rpc DeleteObject(xchain.contract.sdk.DeleteRequest) returns (xchain.contract.sdk.DeleteResponse);
+  rpc NewIterator(xchain.contract.sdk.IteratorRequest) returns (xchain.contract.sdk.IteratorResponse);
+
+  // Chain service
+  rpc QueryTx(xchain.contract.sdk.QueryTxRequest) returns (xchain.contract.sdk.QueryTxResponse);
+  rpc QueryBlock(xchain.contract.sdk.QueryBlockRequest) returns (xchain.contract.sdk.QueryBlockResponse);
+  rpc Transfer(xchain.contract.sdk.TransferRequest) returns (xchain.contract.sdk.TransferResponse);
+  rpc ContractCall(xchain.contract.sdk.ContractCallRequest) returns (xchain.contract.sdk.ContractCallResponse);
+
+  // Heartbeat
+  rpc Ping(xchain.contract.sdk.PingRequest) returns (xchain.contract.sdk.PingResponse);
+
+  rpc GetCallArgs(xchain.contract.sdk.GetCallArgsRequest) returns (xchain.contract.sdk.CallArgs);
+  rpc SetOutput(xchain.contract.sdk.SetOutputRequest) returns (xchain.contract.sdk.SetOutputResponse);
+} 
+

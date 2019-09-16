@@ -12,7 +12,7 @@ func TestNewContext(t *testing.T) {
 			t.Fatal(err)
 		}
 		defer ctx.Release()
-		ret, err := ctx.Exec("_add", []uint32{1, 2})
+		ret, err := ctx.Exec("_add", []int64{1, 2})
 		if err != nil {
 			t.Fatal(err)
 		}

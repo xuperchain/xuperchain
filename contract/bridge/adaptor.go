@@ -1,9 +1,14 @@
 package bridge
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/xuperchain/xuperunion/contract"
+)
+
+const (
+	initMethod = "initialize"
 )
 
 // ContractError indicates the error of the contract running result
@@ -25,7 +30,11 @@ type vmContextImpl struct {
 	release  func()
 }
 
-func (v *vmContextImpl) Invoke(method string, args map[string][]byte) ([]byte, error) {
+func (v *vmContextImpl) Invoke(method string, args map[string][]byte) (*contract.Response, error) {
+	if !v.ctx.CanInitialize && method == initMethod {
+		return nil, errors.New("invalid contract method " + method)
+	}
+
 	v.ctx.Method = method
 	v.ctx.Args = args
 	err := v.instance.Exec()
@@ -40,13 +49,11 @@ func (v *vmContextImpl) Invoke(method string, args map[string][]byte) ([]byte, e
 		}
 	}
 
-	if v.ctx.Output.GetStatus() > 400 {
-		return nil, &ContractError{
-			Status:  int(v.ctx.Output.GetStatus()),
-			Message: v.ctx.Output.GetMessage(),
-		}
-	}
-	return v.ctx.Output.GetBody(), nil
+	return &contract.Response{
+		Status:  int(v.ctx.Output.GetStatus()),
+		Message: v.ctx.Output.GetMessage(),
+		Body:    v.ctx.Output.GetBody(),
+	}, nil
 }
 
 func (v *vmContextImpl) ResourceUsed() contract.Limits {
@@ -81,11 +88,13 @@ func (v *vmImpl) NewContext(ctxCfg *contract.ContextConfig) (contract.Context, e
 	ctx.Initiator = ctxCfg.Initiator
 	ctx.AuthRequire = ctxCfg.AuthRequire
 	ctx.ResourceLimits = ctxCfg.ResourceLimits
+	ctx.CanInitialize = ctxCfg.CanInitialize
 	release := func() {
 		v.ctxmgr.DestroyContext(ctx)
 	}
 	instance, err := v.exec.NewInstance(ctx)
 	if err != nil {
+		v.ctxmgr.DestroyContext(ctx)
 		return nil, err
 	}
 	return &vmContextImpl{

@@ -3,8 +3,10 @@
 
 #include <map>
 #include <string>
+#include <vector>
 #include "xchain/transaction.h"
-#include "xchain/block.h" 
+#include "xchain/block.h"
+#include "xchain/basic_iterator.h"
 
 namespace xchain {
 
@@ -13,6 +15,8 @@ struct Response {
     std::string message;
     std::string body;
 };
+
+const std::string kUnknownKey = "";
 
 class Context {
 public:
@@ -31,6 +35,7 @@ public:
     virtual void ok(const std::string& body) = 0;
     virtual void error(const std::string& body) = 0;
     virtual Response* mutable_response() = 0;
+    virtual std::unique_ptr<Iterator> new_iterator(const std::string& start, const std::string& limit) = 0;
 };
 
 class Contract {

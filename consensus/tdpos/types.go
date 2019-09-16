@@ -2,13 +2,17 @@ package tdpos
 
 import (
 	"errors"
+	"github.com/xuperchain/xuperunion/consensus/tdpos/bft"
 	"math/big"
 	"sync"
 
 	log "github.com/xuperchain/log15"
+	cons_base "github.com/xuperchain/xuperunion/consensus/base"
+	bft_config "github.com/xuperchain/xuperunion/consensus/common/chainedbft/config"
 	"github.com/xuperchain/xuperunion/contract"
 	crypto_base "github.com/xuperchain/xuperunion/crypto/client/base"
 	"github.com/xuperchain/xuperunion/ledger"
+	"github.com/xuperchain/xuperunion/p2pv2"
 	"github.com/xuperchain/xuperunion/utxo"
 )
 
@@ -40,7 +44,9 @@ type TDpos struct {
 	config tDposConfig
 	// tpos 版本信息, 要求是数字版本号, 避免由于用户指定字符版本导致取前缀有误
 	version int64
-	log     log.Logger
+	// tdpos start height, 共识起始高度
+	height int64
+	log    log.Logger
 	// 共识作用的链名
 	bcname string
 	// 节点矿工address
@@ -69,6 +75,9 @@ type TDpos struct {
 	// 执行智能合约获取合约上下文
 	context *contract.TxContext
 	mutex   *sync.RWMutex
+	// BFT module
+	bftPaceMaker *bft.DPoSPaceMaker
+	p2psvr       p2pv2.P2PServer
 }
 
 // tdpos 共识机制的配置
@@ -86,7 +95,14 @@ type tDposConfig struct {
 	// 投票单价
 	voteUnitPrice *big.Int
 	// 系统指定的前两轮的候选人名单
-	initProposer map[int64][]*CandidateInfo
+	initProposer map[int64][]*cons_base.CandidateInfo
+	// is proposers' netURL needed for nomination and tdpos config
+	// this is read from config need_neturl
+	needNetURL bool
+
+	// BTF related config
+	enableBFT bool
+	bftConfig *bft_config.Config
 }
 
 // 每个选票的详情, 支持一票多投
@@ -127,10 +143,4 @@ type candidateBallotsCacheValue struct {
 	ballots int64
 	// 是否被标记为删除
 	isDel bool
-}
-
-// CandidateInfo define the candidate info
-type CandidateInfo struct {
-	Address  string
-	PeerAddr string
 }

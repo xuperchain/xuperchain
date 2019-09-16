@@ -1,5 +1,3 @@
-// +build !wasm
-
 package exec
 
 import (
@@ -17,6 +15,9 @@ const (
 	methodGetCallArgs  = "GetCallArgs"
 	methodTransfer     = "Transfer"
 	methodContractCall = "ContractCall"
+	methodQueryTx      = "QueryTx"
+	methodQueryBlock   = "QueryBlock"
+	methodNewIterator  = "NewIterator"
 )
 
 var (
@@ -106,15 +107,31 @@ func (c *contractContext) DeleteObject(key []byte) error {
 }
 
 func (c *contractContext) NewIterator(start, limit []byte) code.Iterator {
-	return nil
+	return newKvIterator(c, start, limit)
 }
 
-func (c *contractContext) QueryTx(txid []byte) (*code.TxStatus, error) {
-	return nil, nil
+func (c *contractContext) QueryTx(txid string) (*pb.Transaction, error) {
+	req := &pb.QueryTxRequest{
+		Header: &c.header,
+		Txid:   string(txid),
+	}
+	resp := new(pb.QueryTxResponse)
+	if err := c.bridgeCallFunc(methodQueryTx, req, resp); err != nil {
+		return nil, err
+	}
+	return resp.Tx, nil
 }
 
-func (c *contractContext) QueryBlock(blockid []byte) (*code.Block, error) {
-	return nil, nil
+func (c *contractContext) QueryBlock(blockid string) (*pb.Block, error) {
+	req := &pb.QueryBlockRequest{
+		Header:  &c.header,
+		Blockid: string(blockid),
+	}
+	resp := new(pb.QueryBlockResponse)
+	if err := c.bridgeCallFunc(methodQueryBlock, req, resp); err != nil {
+		return nil, err
+	}
+	return resp.Block, nil
 }
 
 func (c *contractContext) Transfer(to string, amount *big.Int) error {

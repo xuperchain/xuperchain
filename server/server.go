@@ -14,6 +14,8 @@ import (
 	"math/big"
 	"net"
 	"net/http"
+	_ "net/http/pprof"
+	"strconv"
 
 	"github.com/golang/protobuf/proto"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
@@ -227,6 +229,32 @@ func (s *server) GetFrozenBalance(ctx context.Context, in *pb.AddressStatus) (*p
 	return in, nil
 }
 
+// GetFrozenBalance get balance frozened for account or addr
+func (s *server) GetBalanceDetail(ctx context.Context, in *pb.AddressBalanceStatus) (*pb.AddressBalanceStatus, error) {
+	s.mg.Speed.Add("GetFrozenBalance")
+	if in.Header == nil {
+		in.Header = global.GHeader()
+	}
+	for i := 0; i < len(in.Tfds); i++ {
+		bc := s.mg.Get(in.Tfds[i].Bcname)
+		if bc == nil {
+			in.Tfds[i].Error = pb.XChainErrorEnum_BLOCKCHAIN_NOTEXIST
+			in.Tfds[i].Tfd = nil
+		} else {
+			tfd, err := bc.GetBalanceDetail(in.Address)
+			if err != nil {
+				in.Tfds[i].Error = HandleBlockCoreError(err)
+				in.Tfds[i].Tfd = nil
+			} else {
+				in.Tfds[i].Error = pb.XChainErrorEnum_SUCCESS
+				//				in.Bcs[i].Balance = bi
+				in.Tfds[i] = tfd
+			}
+		}
+	}
+	return in, nil
+}
+
 // GetBlock get block info according to blockID
 func (s *server) GetBlock(ctx context.Context, in *pb.BlockID) (*pb.Block, error) {
 	s.mg.Speed.Add("GetBlock")
@@ -391,6 +419,10 @@ func (s *server) DeployNativeCode(ctx context.Context, request *pb.DeployNativeC
 	if request.Header == nil {
 		request.Header = global.GHeader()
 	}
+	if !s.mg.Cfg.Native.Enable {
+		return nil, errors.New("native module is disabled")
+	}
+
 	cfg := s.mg.Cfg.Native.Deploy
 	if cfg.WhiteList.Enable {
 		found := false
@@ -446,6 +478,10 @@ func (s *server) DeployNativeCode(ctx context.Context, request *pb.DeployNativeC
 
 // NativeCodeStatus get native contract status
 func (s *server) NativeCodeStatus(ctx context.Context, request *pb.NativeCodeStatusRequest) (*pb.NativeCodeStatusResponse, error) {
+	if !s.mg.Cfg.Native.Enable {
+		return nil, errors.New("native module is disabled")
+	}
+
 	bc := s.mg.Get(request.GetBcname())
 	if request.Header == nil {
 		request.Header = global.GHeader()
@@ -675,6 +711,60 @@ func (s *server) DposStatus(ctx context.Context, request *pb.DposStatusRequest) 
 	return response, nil
 }
 
+// PreExecWithSelectUTXO preExec + selectUtxo
+func (s *server) PreExecWithSelectUTXO(ctx context.Context, request *pb.PreExecWithSelectUTXORequest) (*pb.PreExecWithSelectUTXOResponse, error) {
+	// verify input param
+	if request == nil {
+		return nil, errors.New("request is invalid")
+	}
+	if request.Header == nil {
+		request.Header = global.GHeader()
+	}
+
+	// initialize output
+	responses := &pb.PreExecWithSelectUTXOResponse{Header: &pb.Header{Logid: request.Header.Logid}}
+	responses.Bcname = request.GetBcname()
+	// for PreExec
+	preExecRequest := request.GetRequest()
+	fee := int64(0)
+	if preExecRequest != nil {
+		preExecRequest.Header = request.Header
+		invokeRPCResponse, preErr := s.PreExec(ctx, preExecRequest)
+		if preErr != nil {
+			return nil, preErr
+		}
+		invokeResponse := invokeRPCResponse.GetResponse()
+		responses.Response = invokeResponse
+		fee = responses.Response.GetGasUsed()
+	}
+
+	totalAmount := request.GetTotalAmount() + fee
+
+	if totalAmount > 0 {
+		utxoInput := &pb.UtxoInput{
+			Bcname:    request.GetBcname(),
+			Address:   request.GetAddress(),
+			TotalNeed: strconv.FormatInt(totalAmount, 10),
+			Publickey: request.GetSignInfo().GetPublicKey(),
+			UserSign:  request.GetSignInfo().GetSign(),
+			NeedLock:  request.GetNeedLock(),
+		}
+		if ok := validUtxoAccess(utxoInput, s.mg.Get(utxoInput.GetBcname())); !ok {
+			return nil, errors.New("validUtxoAccess failed")
+		}
+		utxoOutput, selectErr := s.SelectUTXO(ctx, utxoInput)
+		if selectErr != nil {
+			return nil, selectErr
+		}
+		if utxoOutput.Header.Error != pb.XChainErrorEnum_SUCCESS {
+			return nil, common.ServerError{utxoOutput.Header.Error}
+		}
+		responses.UtxoOutput = utxoOutput
+	}
+
+	return responses, nil
+}
+
 // PreExec smart contract preExec process
 func (s *server) PreExec(ctx context.Context, request *pb.InvokeRPCRequest) (*pb.InvokeRPCResponse, error) {
 	s.log.Trace("Got PreExec req", "req", request)
@@ -696,7 +786,7 @@ func (s *server) PreExec(ctx context.Context, request *pb.InvokeRPCRequest) (*pb
 	txInputs := vmResponse.GetInputs()
 	for _, txInput := range txInputs {
 		if bc.QueryTxFromForbidden(txInput.GetRefTxid()) {
-			return rsps, nil
+			return rsps, errors.New("RefTxid has been forbidden")
 		}
 	}
 	rsps.Response = vmResponse

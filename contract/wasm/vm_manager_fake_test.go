@@ -17,12 +17,15 @@ type FakeWASMContext struct {
 	vm  contract.VirtualMachine
 }
 
-func WithTestContext(t *testing.T, driver string, callback func(tctx *FakeWASMContext)) {
+func WithTestContext(t testing.TB, driver string, callback func(tctx *FakeWASMContext)) {
 	util.WithXModelContext(t, func(x *util.XModelContext) {
 		basedir := filepath.Join(x.Basedir, "wasm")
 		xbridge := bridge.New()
 		vmm, err := New(&config.WasmConfig{
 			Driver: driver,
+			XVM: config.XVMConfig{
+				OptLevel: 0,
+			},
 		}, basedir, xbridge, x.Model)
 		if err != nil {
 			t.Fatal(err)
@@ -38,7 +41,7 @@ func WithTestContext(t *testing.T, driver string, callback func(tctx *FakeWASMCo
 	})
 }
 
-func loadWasmBinary(t *testing.T, filepath string) []byte {
+func loadWasmBinary(t testing.TB, filepath string) []byte {
 	by, err := ioutil.ReadFile(filepath)
 	if err != nil {
 		t.Fatal(err)

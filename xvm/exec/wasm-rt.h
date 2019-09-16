@@ -43,9 +43,10 @@ typedef enum {
   WASM_RT_TRAP_DIV_BY_ZERO,  /** Integer divide by zero. */
   WASM_RT_TRAP_INVALID_CONVERSION, /** Conversion from NaN to integer. */
   WASM_RT_TRAP_UNREACHABLE,        /** Unreachable instruction executed. */
-  WASM_RT_TRAP_CALL_INDIRECT,      /** Invalid call_indirect, for any reason. */
-  WASM_RT_TRAP_EXHAUSTION,         /** Call stack exhausted. */
-  WASM_RT_TRAP_GAS_EXHAUSTION,         /** Gas exhaustion. */
+  WASM_RT_TRAP_CALL_INDIRECT,  /** Invalid call_indirect, for any reason. */
+  WASM_RT_TRAP_EXHAUSTION,     /** Call stack exhausted. */
+  WASM_RT_TRAP_GAS_EXHAUSTION, /** Gas exhaustion. */
+  WASM_RT_TRAP_INVALID_ARGUMENT, /** Invalid argument. */
 } wasm_rt_trap_t;
 
 /** Value types. Used to define function signatures. */

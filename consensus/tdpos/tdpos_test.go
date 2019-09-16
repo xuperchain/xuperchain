@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/xuperchain/xuperunion/common/config"
+	cons_base "github.com/xuperchain/xuperunion/consensus/base"
 	"github.com/xuperchain/xuperunion/contract"
 	crypto_client "github.com/xuperchain/xuperunion/crypto/client"
 	"github.com/xuperchain/xuperunion/global"
@@ -62,21 +63,21 @@ func TestTDpos(t *testing.T) {
 	}
 	tdpos := &TDpos{}
 	tdpos.Init()
-	tdpos.config.initProposer = map[int64][]*CandidateInfo{
-		1: []*CandidateInfo{
-			&CandidateInfo{
+	tdpos.config.initProposer = map[int64][]*cons_base.CandidateInfo{
+		1: []*cons_base.CandidateInfo{
+			&cons_base.CandidateInfo{
 				Address:  "dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN",
 				PeerAddr: "/ip4/127.0.0.1/tcp/47101/p2p/QmVxeNubpg1ZQY4TmpfV4pvhYT5W17J7TqHSLo6cqq23x3",
 			},
-			&CandidateInfo{
+			&cons_base.CandidateInfo{
 				Address:  "Y4TmpfV4pvhYT5W17J7TqHSLo6cqq23x3",
 				PeerAddr: "/ip4/127.0.0.1/tcp/47102/p2p/QmVxeNubpg1ZQjQT8W5yZC9fD7ZB1ViArwvyGUB53sqf8e",
 			},
-			&CandidateInfo{
+			&cons_base.CandidateInfo{
 				Address:  "RUEMFGDEnLBpnYYggnXukpVfR9Skm59ph",
 				PeerAddr: "/ip4/127.0.0.1/tcp/47103/p2p/U9sKwFmgJVfzgWcfAG47dKn1kLQTqeZN3ZB1ViArwvTmpa",
 			},
-			&CandidateInfo{
+			&cons_base.CandidateInfo{
 				Address:  "bob",
 				PeerAddr: "peerid4",
 			},

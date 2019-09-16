@@ -36,17 +36,21 @@ type RootConfig struct {
 	Decimals          string                 `json:"decimals"`
 	GenesisConsensus  map[string]interface{} `json:"genesis_consensus"`
 	ReservedContracts []InvokeRequest        `json:"reserved_contracts"`
+	ReservedWhitelist struct {
+		Account string `json:"account"`
+	} `json:"reserved_whitelist"`
+	ForbiddenContract InvokeRequest `json:"forbidden_contract"`
 }
 
 // InvokeRequest define genesis reserved_contracts configure
 type InvokeRequest struct {
-	ModuleName   string            `json:"module_name"`
-	ContractName string            `json:"contract_name"`
-	MethodName   string            `json:"method_name"`
-	Args         map[string]string `json:"args"`
+	ModuleName   string            `json:"module_name" mapstructure:"module_name"`
+	ContractName string            `json:"contract_name" mapstructure:"contract_name"`
+	MethodName   string            `json:"method_name" mapstructure:"method_name"`
+	Args         map[string]string `json:"args" mapstructure:"args"`
 }
 
-func invokeRequestFromJSON2Pb(jsonRequest []InvokeRequest) ([]*pb.InvokeRequest, error) {
+func InvokeRequestFromJSON2Pb(jsonRequest []InvokeRequest) ([]*pb.InvokeRequest, error) {
 	requestsWithPb := []*pb.InvokeRequest{}
 	for _, request := range jsonRequest {
 		tmpReqWithPB := &pb.InvokeRequest{
@@ -86,7 +90,16 @@ func (rc *RootConfig) GetGenesisConsensus() (map[string]interface{}, error) {
 
 // GetReservedContract get default contract config of genesis block
 func (rc *RootConfig) GetReservedContract() ([]*pb.InvokeRequest, error) {
-	return invokeRequestFromJSON2Pb(rc.ReservedContracts)
+	return InvokeRequestFromJSON2Pb(rc.ReservedContracts)
+}
+
+func (rc *RootConfig) GetForbiddenContract() ([]*pb.InvokeRequest, error) {
+	return InvokeRequestFromJSON2Pb([]InvokeRequest{rc.ForbiddenContract})
+}
+
+// GetReservedWhitelistAccount return reserved whitelist account
+func (rc *RootConfig) GetReservedWhitelistAccount() string {
+	return rc.ReservedWhitelist.Account
 }
 
 // GenesisBlock genesis block data structure

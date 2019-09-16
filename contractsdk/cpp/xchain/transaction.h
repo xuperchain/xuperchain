@@ -1,9 +1,11 @@
 #ifndef XCHAIN_TRANSACTION_H
 #define XCHAIN_TRANSACTION_H
 
-#include "xchain/contract.pb.h"
-
-namespace pb = xchain::contract::sdk;
+namespace xchain {
+namespace contract {
+namespace sdk {
+    class Transaction;
+}}}
 
 namespace xchain {
 

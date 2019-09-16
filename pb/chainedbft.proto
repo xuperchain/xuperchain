@@ -1,0 +1,70 @@
+syntax = "proto3";
+
+package pb;
+
+// QCState is the phase of hotstuff
+enum QCState {
+    NEW_VIEW = 0; 
+    PREPARE = 1;
+    PRE_COMMIT = 2;
+    COMMIT = 3;
+    DECIDE = 4;
+}
+
+// QuorumCert is a data type that combines a collection of signatures from replicas.
+message QuorumCert {
+    // The id of Proposal this QC certified.
+    bytes ProposalId = 1;
+    // The msg of Proposal this QC certified. 
+    bytes ProposalMsg = 2;
+    // The current type of this QC certified.
+    // the type contains `NEW_VIEW`, `PREPARE`
+	QCState Type = 3;
+	// The view number of this QC certified.
+	int64 ViewNumber = 4;
+	// SignInfos is the signs of the leader gathered from replicas
+    // of a specifically certType.
+    QCSignInfos SignInfos  = 5;
+}
+
+// QCSignInfos is the signs of the leader gathered from replicas of a specifically certType.
+// A slice of signs is used at present.
+// TODO @qizheng09: It will be change to Threshold-Signatures after 
+// Crypto lib support Threshold-Signatures.
+message QCSignInfos {
+    // QCSignInfos 
+   repeated SignInfo QCSignInfos = 1; 
+}
+
+// SignInfo is the signature information of the 
+message SignInfo {
+  string Address = 1;
+  string PublicKey = 2;
+  bytes  Sign = 3;
+}
+
+// ChainedBftPhaseMessage is the proposal message of the protocal.
+// In Hotstuff, there are two kinds of messages, "NEW_VIEW_MESSAGE" and "QC_Message".
+// A stable leader can skip this "NEW_VIEW_MESSAGE".
+message ChainedBftPhaseMessage {
+    // Message Type: NEW_VIEW_MESSAGE or QC_MESSAGE
+    QCState Type = 1;
+    // ViewNumber the current view number 
+    int64 ViewNumber = 2;
+    // The new proposal send to other replicas while the 
+	QuorumCert ProposalQC = 3;
+    // JustifyQC is the QC of the leader gathered, send to next leader, while the message type is "NEW_VIEW_MESSAGE"
+    QuorumCert JustifyQC = 4;
+    // MsgDigest is the digest of the msgg
+    bytes MsgDigest = 5;
+    // Signature for this msg
+    SignInfo Signature = 6;
+}
+
+// ChainedBftVoteMessage is the vote message of the protocal.
+message ChainedBftVoteMessage {
+    // The id of this message votes for.
+    bytes ProposalId = 1;
+    // Replica will sign the QCMessage if the QuorumCert if valid.
+    SignInfo Signature = 2;
+}

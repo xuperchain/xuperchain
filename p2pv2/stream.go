@@ -3,7 +3,6 @@ package p2pv2
 import (
 	"bufio"
 	"context"
-	"encoding/json"
 	"errors"
 	"io"
 	"sync"
@@ -82,9 +81,13 @@ func (s *Stream) valid() bool {
 }
 
 func (s *Stream) reset() {
+	s.lk.Lock()
+	defer s.lk.Unlock()
+	s.resetLockFree()
+}
+
+func (s *Stream) resetLockFree() {
 	if s.valid() {
-		s.lk.Lock()
-		defer s.lk.Unlock()
 		if s.s != nil {
 			s.s.Reset()
 		}
@@ -162,7 +165,7 @@ func (s *Stream) writeData(msg *p2pPb.XuperMessage) error {
 	defer s.lk.Unlock()
 	msg.Header.From = s.node.NodeID().Pretty()
 	if err := s.wc.WriteMsg(msg); err != nil {
-		s.reset()
+		s.resetLockFree()
 		return err
 	}
 	return s.w.Flush()
@@ -260,26 +263,17 @@ func (s *Stream) Authenticate() error {
 	msg, err := p2pPb.NewXuperMessage(p2pPb.XuperMsgVersion2, "", "",
 		p2pPb.XuperMessage_GET_AUTHENTICATION, msgbuf, p2pPb.XuperMessage_NONE)
 
-	res, err := s.SendMessageWithResponse(context.Background(), msg)
-	if err != nil {
-		s.node.log.Warn("Stream Authenticate", "err", err)
-		return err
-	}
+	go func(s *Stream, msg *p2pPb.XuperMessage) {
+		res, err := s.SendMessageWithResponse(context.Background(), msg)
+		if err != nil {
+			s.node.log.Warn("Stream Authenticate", "err", err)
+		}
 
-	if res.Header.ErrorType != p2pPb.XuperMessage_SUCCESS {
-		return errors.New("Authenticate Get res type error")
-	}
+		if res.GetHeader().GetErrorType() != p2pPb.XuperMessage_SUCCESS {
+			s.node.log.Warn("Stream Authenticate Header ErrorType", "err", err)
+		}
+	}(s, msg)
 
-	var auths []string
-	err = json.Unmarshal(res.Data.MsgInfo, &auths)
-	if err != nil {
-		s.node.log.Warn("Authenticate unmarshal res error", "error", err)
-		return errors.New("Authenticate Get res unmarshal error")
-	}
-
-	s.node.log.Trace("Stream Authenticate success", "type", res.Header.Type, "logid", res.Header.Logid,
-		"checksum", res.Header.DataCheckSum, "res.from", res.Header.From, "peerid", s.p.Pretty(),
-		"auths", auths)
 	return nil
 }
 
