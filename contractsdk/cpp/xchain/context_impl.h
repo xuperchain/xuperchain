@@ -20,7 +20,6 @@ public:
     virtual const std::string& initiator() const;
     virtual int auth_require_size() const;
     virtual const std::string& auth_require(int idx) const;
-    virtual const int64 new_account_resource_amount() const;
     virtual bool get_object(const std::string& key, std::string* value);
     virtual bool put_object(const std::string& key, const std::string& value);
     virtual bool delete_object(const std::string& key);

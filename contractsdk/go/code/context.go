@@ -12,7 +12,6 @@ type Context interface {
 	Caller() string
 	Initiator() string
 	AuthRequire() []string
-	NewAccountResourceAmount() int64
 
 	PutObject(key []byte, value []byte) error
 	GetObject(key []byte) ([]byte, error)

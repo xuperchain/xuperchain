@@ -194,6 +194,7 @@ func (l *Ledger) loadGenesisBlock() error {
 	if l.meta.MaxBlockSize == 0 {
 		l.meta.MaxBlockSize = l.GenesisBlock.GetConfig().GetMaxBlockSizeInByte()
 	}
+	// NewAccountResourceAmount supports 0
 	if l.meta.NewAccountResourceAmount == 0 {
 		l.meta.NewAccountResourceAmount = l.GenesisBlock.GetConfig().GetNewAccountResourceAmount()
 	}
@@ -489,7 +490,9 @@ func (l *Ledger) UpdateMaxBlockSize(maxBlockSize int64, batch kvdb.Batch) error 
 
 // UpdateNewAccountResourceAmount update the resource amount of new an account
 func (l *Ledger) UpdateNewAccountResourceAmount(newAccountResourceAmount int64, batch kvdb.Batch) error {
-	if newAccountResourceAmount <= 0 {
+	// newAccountResourceAmount supports 0
+	//if newAccountResourceAmount <= 0 {
+	if newAccountResourceAmount < 0 {
 		return fmt.Errorf("invalid newAccountResourceAmount: %d", newAccountResourceAmount)
 	}
 	l.mutex.Lock()
@@ -1004,12 +1007,15 @@ func (l *Ledger) GetMaxBlockSize() int64 {
 
 // GetNewAccountResourceAmount return the resource amount of new an account
 func (l *Ledger) GetNewAccountResourceAmount() int64 {
-	defaultNewAccountResourceAmount := l.GenesisBlock.GetConfig().GetNewAccountResourceAmount()
+	//defaultNewAccountResourceAmount := l.GenesisBlock.GetConfig().GetNewAccountResourceAmount()
 	newAccountResourceAmountUpdated := l.meta.NewAccountResourceAmount
-	if newAccountResourceAmountUpdated != 0 {
-		return newAccountResourceAmountUpdated
-	}
-	return defaultNewAccountResourceAmount
+	/*
+		if newAccountResourceAmountUpdated != 0 {
+			return newAccountResourceAmountUpdated
+		}
+		return defaultNewAccountResourceAmount
+	*/
+	return newAccountResourceAmountUpdated
 }
 
 // SavePendingBlock put block into pending table

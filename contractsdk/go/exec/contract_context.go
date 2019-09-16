@@ -74,10 +74,6 @@ func (c *contractContext) AuthRequire() []string {
 	return c.callArgs.AuthRequire
 }
 
-func (c *contractContext) NewAccountResourceAmount() int64 {
-	return c.callArgs.NewAccountResourceAmount
-}
-
 func (c *contractContext) PutObject(key, value []byte) error {
 	req := &pb.PutRequest{
 		Header: &c.header,
