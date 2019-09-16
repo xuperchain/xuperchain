@@ -10,19 +10,19 @@ cd `dirname $0`
 # go install github.com/golang/protobuf/protoc-gen-go
 # go install github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway
 
-protoc -I pb pb/xchain.proto pb/xchain_spv.proto pb/xcheck.proto \
+protoc -I pb pb/xchain.proto pb/xchain_spv.proto pb/xcheck.proto pb/chainedbft.proto \
 	-I pb/googleapis \
 	--go_out=plugins=grpc:pb \
-	--grpc-gateway_out=logtostderr=true:pb
+	--grpc-gateway_out=logtostderr=true:pb 
 
 protoc -I p2pv2/pb p2pv2/pb/message.proto  --go_out=p2pv2/pb
 
 protoc -I xmodel/pb xmodel/pb/versioned_data.proto --go_out=xmodel/pb 
 
+protoc -I contractsdk/pb contractsdk/pb/contract_service.proto \
+       --go_out=plugins=grpc,paths=source_relative:contractsdk/go/pbrpc
 protoc -I contractsdk/pb contractsdk/pb/contract.proto \
-       --go_out=plugins=grpc:contractsdk/go/pb
-protoc -I contractsdk/pb contractsdk/pb/contract.proto \
-       --go_out=contractsdk/go/litepb
+       --go_out=paths=source_relative:contractsdk/go/pb
 
 !
 
@@ -42,6 +42,7 @@ function buildpkg() {
 
 buildpkg xchain-cli github.com/xuperchain/xuperunion/cmd/cli
 buildpkg xchain github.com/xuperchain/xuperunion/cmd/xchain
+buildpkg xc github.com/xuperchain/xuperunion/contractsdk/xc
 go build -o dump_chain test/dump_chain.go
 
 # build plugins
@@ -52,6 +53,7 @@ go build --buildmode=plugin --tags multi -o plugins/kv/kv-ldb-multi.so.1.0.0 git
 go build --buildmode=plugin --tags single -o plugins/kv/kv-ldb-single.so.1.0.0 github.com/xuperchain/xuperunion/kv/kvdb/plugin-ldb
 go build --buildmode=plugin -o plugins/kv/kv-badger.so.1.0.0 github.com/xuperchain/xuperunion/kv/kvdb/plugin-badger
 go build --buildmode=plugin -o plugins/crypto/crypto-default.so.1.0.0 github.com/xuperchain/xuperunion/crypto/client/xchain
+go build --buildmode=plugin -o plugins/crypto/crypto-schnorr.so.1.0.0 github.com/xuperchain/xuperunion/crypto/client/schnorr
 go build --buildmode=plugin -o plugins/consensus/consensus-pow.so.1.0.0 github.com/xuperchain/xuperunion/consensus/pow
 go build --buildmode=plugin -o plugins/consensus/consensus-single.so.1.0.0 github.com/xuperchain/xuperunion/consensus/single
 go build --buildmode=plugin -o plugins/consensus/consensus-tdpos.so.1.0.0 github.com/xuperchain/xuperunion/consensus/tdpos/main
@@ -62,7 +64,9 @@ output_dir=output
 mv xchain-cli xchain ${output_dir}
 mv wasm2c ${output_dir}
 mv dump_chain ${output_dir}
+mv xc ${output_dir}
 cp -rf  plugins ${output_dir}
 cp -rf data ${output_dir}
 cp -rf conf ${output_dir}
+cp -rf cmd/quick_shell/* ${output_dir}
 mkdir -p ${output_dir}/data/blockchain

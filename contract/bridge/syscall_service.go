@@ -4,15 +4,21 @@ package bridge
 
 import (
 	"context"
-	"encoding/json"
+	"encoding/hex"
 	"errors"
 	"fmt"
+	"sort"
 
-	"github.com/xuperchain/xuperunion/contractsdk/go/pb"
+	pb "github.com/xuperchain/xuperunion/contractsdk/go/pb"
+	xchainpb "github.com/xuperchain/xuperunion/pb"
 )
 
 var (
 	ErrOutOfDiskLimit = errors.New("out of disk limit")
+)
+
+const (
+	DefaultCap = 1000
 )
 
 // SyscallService is the handler of contract syscalls
@@ -39,17 +45,36 @@ func (c *SyscallService) QueryBlock(ctx context.Context, in *pb.QueryBlockReques
 		return nil, fmt.Errorf("bad ctx id:%d", in.Header.Ctxid)
 	}
 
-	block, err := nctx.Cache.QueryBlock(in.Blockid)
+	rawBlockid, err := hex.DecodeString(in.Blockid)
 	if err != nil {
 		return nil, err
 	}
 
-	blockbuf, err := json.Marshal(block)
+	block, err := nctx.Cache.QueryBlock(rawBlockid)
 	if err != nil {
 		return nil, err
 	}
+
+	txids := []string{}
+	for _, t := range block.Transactions {
+		txids = append(txids, hex.EncodeToString(t.Txid))
+	}
+
+	blocksdk := &pb.Block{
+		Blockid:  hex.EncodeToString(block.Blockid),
+		PreHash:  block.PreHash,
+		Proposer: block.Proposer,
+		Sign:     block.Sign,
+		Pubkey:   block.Pubkey,
+		Height:   block.Height,
+		Txids:    txids,
+		TxCount:  block.TxCount,
+		InTrunk:  block.InTrunk,
+		NextHash: block.NextHash,
+	}
+
 	return &pb.QueryBlockResponse{
-		Block: blockbuf,
+		Block: blocksdk,
 	}, nil
 }
 
@@ -59,17 +84,25 @@ func (c *SyscallService) QueryTx(ctx context.Context, in *pb.QueryTxRequest) (*p
 	if !ok {
 		return nil, fmt.Errorf("bad ctx id:%d", in.Header.Ctxid)
 	}
-	tx, err := nctx.Cache.QueryTx(in.Txid)
+
+	rawTxid, err := hex.DecodeString(in.Txid)
 	if err != nil {
 		return nil, err
 	}
 
-	txbuf, err := json.Marshal(tx)
+	tx, confirmed, err := nctx.Cache.QueryTx(rawTxid)
 	if err != nil {
 		return nil, err
 	}
+
+	if !confirmed {
+		return nil, fmt.Errorf("Unconfirm tx:%s", in.Txid)
+	}
+
+	txsdk := ConvertTxToSDKTx(tx)
+
 	return &pb.QueryTxResponse{
-		Tx: txbuf,
+		Tx: txsdk,
 	}, nil
 }
 
@@ -143,16 +176,21 @@ func (c *SyscallService) NewIterator(ctx context.Context, in *pb.IteratorRequest
 		return nil, fmt.Errorf("bad ctx id:%d", in.Header.Ctxid)
 	}
 
+	limit := in.Cap
+	if limit <= 0 {
+		limit = DefaultCap
+	}
 	iter, err := nctx.Cache.Select(nctx.ContractName, in.Start, in.Limit)
 	if err != nil {
 		return nil, err
 	}
 	out := new(pb.IteratorResponse)
-	for iter.Next() {
+	for iter.Next() && limit > 0 {
 		out.Items = append(out.Items, &pb.IteratorItem{
 			Key:   iter.Key(),
 			Value: iter.Data().GetPureData().GetValue(),
 		})
+		limit -= 1
 	}
 	if iter.Error() != nil {
 		return nil, err
@@ -167,9 +205,19 @@ func (c *SyscallService) GetCallArgs(ctx context.Context, in *pb.GetCallArgsRequ
 	if !ok {
 		return nil, fmt.Errorf("bad ctx id:%d", in.Header.Ctxid)
 	}
+	var args []*pb.ArgPair
+	for key, value := range nctx.Args {
+		args = append(args, &pb.ArgPair{
+			Key:   key,
+			Value: value,
+		})
+	}
+	sort.Slice(args, func(i, j int) bool {
+		return args[i].Key < args[j].Key
+	})
 	return &pb.CallArgs{
 		Method:      nctx.Method,
-		Args:        nctx.Args,
+		Args:        args,
 		Initiator:   nctx.Initiator,
 		AuthRequire: nctx.AuthRequire,
 	}, nil
@@ -183,4 +231,40 @@ func (c *SyscallService) SetOutput(ctx context.Context, in *pb.SetOutputRequest)
 	}
 	nctx.Output = in.GetResponse()
 	return new(pb.SetOutputResponse), nil
+}
+
+func ConvertTxToSDKTx(tx *xchainpb.Transaction) *pb.Transaction {
+	txIns := []*pb.TxInput{}
+	for _, in := range tx.TxInputs {
+		txIn := &pb.TxInput{
+			RefTxid:      in.RefTxid,
+			RefOffset:    in.RefOffset,
+			FromAddr:     in.FromAddr,
+			Amount:       in.Amount,
+			FrozenHeight: in.FrozenHeight,
+		}
+		txIns = append(txIns, txIn)
+	}
+
+	txOuts := []*pb.TxOutput{}
+	for _, out := range tx.TxOutputs {
+		txOut := &pb.TxOutput{
+			Amount:       out.Amount,
+			ToAddr:       out.ToAddr,
+			FrozenHeight: out.FrozenHeight,
+		}
+		txOuts = append(txOuts, txOut)
+	}
+
+	txsdk := &pb.Transaction{
+		Txid:        hex.EncodeToString(tx.Txid),
+		Blockid:     hex.EncodeToString(tx.Blockid),
+		TxInputs:    txIns,
+		TxOutputs:   txOuts,
+		Desc:        tx.Desc,
+		Initiator:   tx.Initiator,
+		AuthRequire: tx.AuthRequire,
+	}
+
+	return txsdk
 }

@@ -15,18 +15,17 @@ import (
 	"github.com/xuperchain/xuperunion/pb"
 )
 
-type GetSignCommand struct {
+type GetComplianceCheckSignCommand struct {
 	cli          *Cli
 	cmd          *cobra.Command
 	xcheckclient pb.XcheckClient
 
 	tx     string
-	host   string
 	output string
 }
 
-func NewGetSignCommand(cli *Cli) *cobra.Command {
-	c := new(GetSignCommand)
+func NewGetComplianceCheckSignCommand(cli *Cli) *cobra.Command {
+	c := new(GetComplianceCheckSignCommand)
 	c.cli = cli
 	c.cmd = &cobra.Command{
 		Use:   "get",
@@ -41,8 +40,8 @@ func NewGetSignCommand(cli *Cli) *cobra.Command {
 	return c.cmd
 }
 
-func (c *GetSignCommand) initXcheckClient() error {
-	conn, err := grpc.Dial(c.host, grpc.WithInsecure(), grpc.WithMaxMsgSize(64<<20-1))
+func (c *GetComplianceCheckSignCommand) initXcheckClient() error {
+	conn, err := grpc.Dial(c.cli.RootOptions.Host, grpc.WithInsecure(), grpc.WithMaxMsgSize(64<<20-1))
 	if err != nil {
 		return err
 	}
@@ -50,18 +49,17 @@ func (c *GetSignCommand) initXcheckClient() error {
 	return nil
 }
 
-func (c *GetSignCommand) XcheckClient() pb.XcheckClient {
+func (c *GetComplianceCheckSignCommand) XcheckClient() pb.XcheckClient {
 	c.initXcheckClient()
 	return c.xcheckclient
 }
 
-func (c *GetSignCommand) addFlags() {
+func (c *GetComplianceCheckSignCommand) addFlags() {
 	c.cmd.Flags().StringVar(&c.tx, "tx", "./tx.out", "Serialized transaction data file")
-	c.cmd.Flags().StringVar(&c.host, "host", "localhost:6718", "host to get signature from compliance check service")
 	c.cmd.Flags().StringVar(&c.output, "output", "./compliance_check_sign.out", "Generate signature file for a transaction.")
 }
 
-func (c *GetSignCommand) get(ctx context.Context) error {
+func (c *GetComplianceCheckSignCommand) get(ctx context.Context) error {
 	data, err := ioutil.ReadFile(c.tx)
 	if err != nil {
 		return errors.New("Fail to open serialized transaction data file")

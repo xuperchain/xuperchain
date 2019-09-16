@@ -3,14 +3,16 @@ package xvm
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"sync"
 
+	"github.com/xuperchain/xuperunion/common/log"
 	"github.com/xuperchain/xuperunion/contract/wasm/vm"
 	"github.com/xuperchain/xuperunion/pb"
+	"github.com/xuperchain/xuperunion/xvm/compile"
 	"github.com/xuperchain/xuperunion/xvm/exec"
 )
 
@@ -42,7 +44,6 @@ func newCodeManager(basedir string, compile compileFunc, makeExec makeExecCodeFu
 }
 
 func codeDescEqual(a, b *pb.WasmCodeDesc) bool {
-	// TODO: 比对VM的编译器变化
 	return bytes.Equal(a.GetDigest(), b.GetDigest())
 }
 
@@ -57,7 +58,18 @@ func (c *codeManager) lookupMemCache(name string, desc *pb.WasmCodeDesc) (*contr
 	return nil, false
 }
 
+func (c *codeManager) purgeMemCache(name string) {
+	if ccode, ok := c.codes[name]; ok {
+		ccode.ExecCode.Release()
+	}
+	delete(c.codes, name)
+}
+
 func (c *codeManager) makeMemCache(name, libpath string, desc *pb.WasmCodeDesc) (*contractCode, error) {
+	if _, ok := c.codes[name]; ok {
+		return nil, errors.New("old contract code not purged")
+	}
+
 	execCode, err := c.makeExecCode(libpath)
 	if err != nil {
 		return nil, err
@@ -95,7 +107,8 @@ func (c *codeManager) lookupDiskCache(name string, desc *pb.WasmCodeDesc) (strin
 	if err != nil {
 		return "", false
 	}
-	if !codeDescEqual(&localDesc, desc) {
+	if !codeDescEqual(&localDesc, desc) ||
+		localDesc.GetVmCompiler() != compile.Version {
 		return "", false
 	}
 	return libpath, true
@@ -115,7 +128,9 @@ func (c *codeManager) makeDiskCache(name string, desc *pb.WasmCodeDesc, codebuf 
 	if err != nil {
 		return "", err
 	}
-	descbuf, _ := json.Marshal(desc)
+	localDesc := *desc
+	localDesc.VmCompiler = compile.Version
+	descbuf, _ := json.Marshal(&localDesc)
 	err = ioutil.WriteFile(descpath, descbuf, 0600)
 	if err != nil {
 		os.RemoveAll(basedir)
@@ -133,13 +148,16 @@ func (c *codeManager) GetExecCode(name string, cp vm.ContractCodeProvider) (*con
 	}
 	execCode, ok := c.lookupMemCache(name, desc)
 	if ok {
-		log.Printf("%s hit memory cache", name)
+		log.Debug("contract code hit memory cache", "contract", name)
 		return execCode, nil
 	}
 
+	// old code handle should be closed before open new code
+	// see https://github.com/xuperchain/xuperunion/issues/352
+	c.purgeMemCache(name)
 	libpath, ok := c.lookupDiskCache(name, desc)
 	if !ok {
-		log.Printf("%s need make disk cache", name)
+		log.Debug("contract code need make disk cache", "contract", name)
 		codebuf, err := cp.GetContractCode(name)
 		if err != nil {
 			return nil, err
@@ -149,7 +167,7 @@ func (c *codeManager) GetExecCode(name string, cp vm.ContractCodeProvider) (*con
 			return nil, err
 		}
 	} else {
-		log.Printf("%s hit disk cache", name)
+		log.Debug("contract code hit disk cache", "contract", name)
 	}
 	return c.makeMemCache(name, libpath, desc)
 }

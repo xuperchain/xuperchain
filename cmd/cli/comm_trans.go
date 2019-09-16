@@ -19,6 +19,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 
+	"github.com/xuperchain/xuperunion/contract"
 	crypto_client "github.com/xuperchain/xuperunion/crypto/client"
 	"github.com/xuperchain/xuperunion/global"
 	"github.com/xuperchain/xuperunion/pb"
@@ -92,8 +93,6 @@ func (c *CommTrans) GenPreExeRes(ctx context.Context) (
 		}
 		if tmpReq != nil {
 			preExeReqs = append(preExeReqs, tmpReq)
-		} else if err == nil {
-			return nil, nil, nil
 		}
 	}
 
@@ -123,8 +122,11 @@ func (c *CommTrans) GenPreExeRes(ctx context.Context) (
 	if err != nil {
 		return nil, nil, fmt.Errorf("PreExe contract response : %v, logid:%s", err, preExeRPCReq.Header.Logid)
 	}
-	for _, res := range preExeRPCRes.Response.Response {
-		fmt.Printf("contract response: %s\n", string(res))
+	for _, res := range preExeRPCRes.Response.Responses {
+		if res.Status >= contract.StatusErrorThreshold {
+			return nil, nil, fmt.Errorf("contract error status:%d message:%s", res.Status, res.Message)
+		}
+		fmt.Printf("contract response: %s\n", string(res.Body))
 	}
 	return preExeRPCRes, preExeRPCRes.Response.Requests, nil
 }
@@ -223,9 +225,6 @@ func (c *CommTrans) GenRawTx(ctx context.Context, desc []byte, preExeRes *pb.Inv
 
 // genInitiator generate initiator of transaction
 func (c *CommTrans) genInitiator() (string, error) {
-	if c.From != "" {
-		return c.From, nil
-	}
 	fromAddr, err := readAddress(c.Keys)
 	if err != nil {
 		return "", err
@@ -274,8 +273,12 @@ func (c *CommTrans) GenTxOutputs(gasUsed int64) ([]*pb.TxOutput, *big.Int, error
 		if !ok {
 			return nil, nil, ErrInvalidAmount
 		}
-		if amount.Cmp(bigZero) < 0 {
+		cmpRes := amount.Cmp(bigZero)
+		if cmpRes < 0 {
 			return nil, nil, ErrNegativeAmount
+		} else if cmpRes == 0 {
+			// trim 0 output
+			continue
 		}
 		// 得到总的转账金额
 		totalNeed.Add(totalNeed, amount)
@@ -386,7 +389,6 @@ func (c *CommTrans) SendTx(ctx context.Context, tx *pb.Transaction) error {
 	if err != nil {
 		return errors.New("MakeTxDigesthash txid error")
 	}
-
 	txid, err := c.postTx(ctx, tx)
 	if err != nil {
 		return err

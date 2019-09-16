@@ -11,6 +11,7 @@ import (
 	"github.com/golang/protobuf/proto"
 
 	"github.com/xuperchain/xuperunion/common/config"
+	"github.com/xuperchain/xuperunion/common/log"
 	"github.com/xuperchain/xuperunion/contract"
 	"github.com/xuperchain/xuperunion/contract/wasm/vm"
 	"github.com/xuperchain/xuperunion/crypto/hash"
@@ -33,6 +34,7 @@ type VMManager struct {
 	vmimpl       vm.InstanceCreator
 	xbridge      *bridge.XBridge
 	codeProvider vm.ContractCodeProvider
+	debugLogger  *log.Logger
 }
 
 // New instances a new VMManager
@@ -54,6 +56,14 @@ func New(cfg *config.WasmConfig, basedir string, xbridge *bridge.XBridge, xmodel
 		if _, err = pluginMgr.PluginMgr.CreatePluginInstance("wasm", cfg.Driver); err != nil {
 			return nil, err
 		}
+	}
+
+	if cfg.EnableDebugLog {
+		debugLogger, err := log.OpenLog(&cfg.DebugLog)
+		if err != nil {
+			return nil, err
+		}
+		vmm.debugLogger = &debugLogger
 	}
 
 	return vmm, nil
@@ -78,6 +88,7 @@ func (v *VMManager) RegisterSyscallService(syscall *bridge.SyscallService) {
 		Basedir:        filepath.Join(v.basedir, v.config.Driver),
 		SyscallService: syscall,
 		VMConfig:       vmconfig,
+		DebugLogger:    v.debugLogger,
 	})
 	if err != nil {
 		panic(err)
@@ -85,7 +96,7 @@ func (v *VMManager) RegisterSyscallService(syscall *bridge.SyscallService) {
 	v.vmimpl = vmimpl
 }
 
-func contractCodeDescKey(contractName string) []byte {
+func ContractCodeDescKey(contractName string) []byte {
 	return []byte(contractName + "." + "desc")
 }
 
@@ -117,7 +128,7 @@ func (v *VMManager) verifyContractName(name string) error {
 }
 
 // DeployContract deploy contract and initialize contract
-func (v *VMManager) DeployContract(contextConfig *contract.ContextConfig, args map[string][]byte) ([]byte, contract.Limits, error) {
+func (v *VMManager) DeployContract(contextConfig *contract.ContextConfig, args map[string][]byte) (*contract.Response, contract.Limits, error) {
 	store := contextConfig.XMCache
 	name := args["contract_name"]
 	if name == nil {
@@ -156,7 +167,7 @@ func (v *VMManager) DeployContract(contextConfig *contract.ContextConfig, args m
 	desc.Digest = hash.DoubleSha256(code)
 	descbuf, _ = proto.Marshal(&desc)
 
-	store.Put("contract", contractCodeDescKey(contractName), descbuf)
+	store.Put("contract", ContractCodeDescKey(contractName), descbuf)
 	store.Put("contract", contractCodeKey(contractName), code)
 	// 由于部署合约的时候代码还没有持久化，构造一个从ModelCache获取代码的对象
 	// 在执行init函数的时候，代码已经进入vm cache，因此使用VMManager的默认CodeProvider没有问题
@@ -168,23 +179,26 @@ func (v *VMManager) DeployContract(contextConfig *contract.ContextConfig, args m
 	}, cp)
 	if err != nil {
 		v.vmimpl.RemoveCache(contractName)
+		log.Error("create contract instance error when deploy contract", "error", err, "contract", contractName)
 		return nil, contract.Limits{}, err
 	}
 	instance.Release()
 
 	initConfig := *contextConfig
 	initConfig.ContractName = contractName
+	initConfig.CanInitialize = true
 	out, resourceUsed, err := v.initContract(&initConfig, initArgs)
 	if err != nil {
 		if _, ok := err.(*bridge.ContractError); !ok {
 			v.vmimpl.RemoveCache(contractName)
 		}
+		log.Error("call contract initialize method error", "error", err, "contract", contractName)
 		return nil, contract.Limits{}, err
 	}
 	return out, resourceUsed, nil
 }
 
-func (v *VMManager) initContract(contextConfig *contract.ContextConfig, args map[string][]byte) ([]byte, contract.Limits, error) {
+func (v *VMManager) initContract(contextConfig *contract.ContextConfig, args map[string][]byte) (*contract.Response, contract.Limits, error) {
 	vm, ok := v.xbridge.GetVirtualMachine("wasm")
 	if !ok {
 		return nil, contract.Limits{}, errors.New("wasm vm not registered")

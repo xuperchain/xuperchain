@@ -1,9 +1,9 @@
 package gowasm
 
 import (
-	"os"
 	"time"
 
+	"github.com/xuperchain/xuperunion/xvm/debug"
 	"github.com/xuperchain/xuperunion/xvm/exec"
 	"github.com/xuperchain/xuperunion/xvm/runtime/go/js"
 	"github.com/xuperchain/xuperunion/xvm/runtime/go/js/fs"
@@ -51,7 +51,9 @@ func (rt *Runtime) wasmExit(code int32) {
 
 func (rt *Runtime) wasmWrite(fd int64, p int64, n int32) {
 	codec := exec.NewCodec(rt.ctx)
-	os.Stderr.Write(codec.Bytes(uint32(p), uint32(n)))
+	if fd == 1 || fd == 2 {
+		debug.Write(rt.ctx, codec.Bytes(uint32(p), uint32(n)))
+	}
 }
 
 func (rt *Runtime) nanotime() int64 {

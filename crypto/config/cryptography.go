@@ -8,6 +8,8 @@ const (
 	Nist // = 1
 	// 国密
 	Gm // = 2
+	// P-256 + schnorr
+	NistSN
 )
 
 // 定义创建账户时产生的助记词中的标记符的值，及其所对应的预留标记位的类型
@@ -26,6 +28,8 @@ const (
 	CurveNist = "P-256"
 	// 国密椭圆曲线
 	CurveGm = "SM2-P-256"
+	// Nist P256 + schnorr
+	CurveNistSN = "P-256-SN"
 )
 
 // IsValidCryptoType 判断是否支持的加密类型
@@ -34,6 +38,7 @@ func IsValidCryptoType(ctype byte) bool {
 	switch ctype {
 	case Nist:
 	case Gm:
+	case NistSN:
 	default:
 		valid = false
 	}

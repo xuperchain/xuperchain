@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/xuperchain/xuperunion/xvm/compile"
+	"github.com/xuperchain/xuperunion/xvm/debug"
 	"github.com/xuperchain/xuperunion/xvm/exec"
 	"github.com/xuperchain/xuperunion/xvm/runtime/emscripten"
 	gowasm "github.com/xuperchain/xuperunion/xvm/runtime/go"
@@ -104,6 +105,7 @@ func run(modulePath string, args []string) error {
 		gowasm.RegisterRuntime(ctx)
 	}
 	defer ctx.Release()
+	debug.SetWriter(ctx, os.Stderr)
 	var entry string
 	switch *environ {
 	case "c":
@@ -116,8 +118,9 @@ func run(modulePath string, args []string) error {
 	if ctx.Memory() != nil {
 		argc, argv = prepareArgs(ctx.Memory(), args, nil)
 	}
-	_, err = ctx.Exec(entry, []uint32{uint32(argc), uint32(argv)})
+	ret, err := ctx.Exec(entry, []int64{int64(argc), int64(argv)})
 	fmt.Println("gas: ", ctx.GasUsed())
+	fmt.Println("ret: ", ret)
 	return err
 }
 

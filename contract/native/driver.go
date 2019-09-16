@@ -13,7 +13,8 @@ import (
 	log "github.com/xuperchain/log15"
 	"google.golang.org/grpc"
 
-	"github.com/xuperchain/xuperunion/contractsdk/go/pb"
+	pb "github.com/xuperchain/xuperunion/contractsdk/go/pb"
+	pbrpc "github.com/xuperchain/xuperunion/contractsdk/go/pbrpc"
 	"github.com/xuperchain/xuperunion/crypto/hash"
 	xpb "github.com/xuperchain/xuperunion/pb"
 )
@@ -41,7 +42,7 @@ type standardNativeContract struct {
 
 	lostBeatheart bool
 	mutex         *sync.Mutex
-	rpcClient     pb.NativeCodeClient
+	rpcClient     pbrpc.NativeCodeClient
 	desc          *xpb.NativeCodeDesc
 
 	process       Process
@@ -66,7 +67,7 @@ func (snc *standardNativeContract) Init() error {
 	if err != nil {
 		return err
 	}
-	snc.rpcClient = pb.NewNativeCodeClient(conn)
+	snc.rpcClient = pbrpc.NewNativeCodeClient(conn)
 	return nil
 }
 

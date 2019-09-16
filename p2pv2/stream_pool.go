@@ -19,6 +19,7 @@ var (
 	ErrStreamPoolFull = errors.New("stream pool is full")
 	ErrAddStream      = errors.New("error to add stream")
 	ErrRequest        = errors.New("error request from network")
+	ErrAuth           = errors.New("error invalid auth request")
 )
 
 // StreamPool manage all the stream
@@ -72,6 +73,9 @@ func (sp *StreamPool) Add(s net.Stream) *Stream {
 	stream := NewStream(s, sp.no)
 	if err := sp.AddStream(stream); err != nil {
 		stream.Close()
+		sp.DelStream(stream)
+		sp.no.kdht.RoutingTable().Remove(stream.p)
+		sp.log.Warn("New stream is deleted")
 		return nil
 	}
 	return stream
@@ -162,6 +166,10 @@ func (sp *StreamPool) streamForPeer(p peer.ID) (*Stream, error) {
 	if v, ok := sp.streams.Get(p.Pretty()); ok {
 		s, _ := v.(*Stream)
 		if s.valid() {
+			if sp.no.srv.config.IsAuthentication && !s.auth() {
+				sp.log.Warn("stream failed to be authenticated")
+				return nil, ErrAuth
+			}
 			return s, nil
 		}
 	}

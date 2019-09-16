@@ -4,10 +4,8 @@
 package pb
 
 import (
-	context "context"
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
-	grpc "google.golang.org/grpc"
 	math "math"
 )
 
@@ -155,21 +153,68 @@ func (m *NativeCallResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_NativeCallResponse proto.InternalMessageInfo
 
+type ArgPair struct {
+	Key                  string   `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	Value                []byte   `protobuf:"bytes,2,opt,name=value,proto3" json:"value,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *ArgPair) Reset()         { *m = ArgPair{} }
+func (m *ArgPair) String() string { return proto.CompactTextString(m) }
+func (*ArgPair) ProtoMessage()    {}
+func (*ArgPair) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d19debeba7dea55a, []int{4}
+}
+
+func (m *ArgPair) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ArgPair.Unmarshal(m, b)
+}
+func (m *ArgPair) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ArgPair.Marshal(b, m, deterministic)
+}
+func (m *ArgPair) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ArgPair.Merge(m, src)
+}
+func (m *ArgPair) XXX_Size() int {
+	return xxx_messageInfo_ArgPair.Size(m)
+}
+func (m *ArgPair) XXX_DiscardUnknown() {
+	xxx_messageInfo_ArgPair.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ArgPair proto.InternalMessageInfo
+
+func (m *ArgPair) GetKey() string {
+	if m != nil {
+		return m.Key
+	}
+	return ""
+}
+
+func (m *ArgPair) GetValue() []byte {
+	if m != nil {
+		return m.Value
+	}
+	return nil
+}
+
 type CallArgs struct {
-	Method               string            `protobuf:"bytes,1,opt,name=method,proto3" json:"method,omitempty"`
-	Args                 map[string][]byte `protobuf:"bytes,2,rep,name=args,proto3" json:"args,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	Initiator            string            `protobuf:"bytes,3,opt,name=initiator,proto3" json:"initiator,omitempty"`
-	AuthRequire          []string          `protobuf:"bytes,4,rep,name=auth_require,json=authRequire,proto3" json:"auth_require,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
-	XXX_unrecognized     []byte            `json:"-"`
-	XXX_sizecache        int32             `json:"-"`
+	Method               string     `protobuf:"bytes,1,opt,name=method,proto3" json:"method,omitempty"`
+	Args                 []*ArgPair `protobuf:"bytes,2,rep,name=args,proto3" json:"args,omitempty"`
+	Initiator            string     `protobuf:"bytes,3,opt,name=initiator,proto3" json:"initiator,omitempty"`
+	AuthRequire          []string   `protobuf:"bytes,4,rep,name=auth_require,json=authRequire,proto3" json:"auth_require,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}   `json:"-"`
+	XXX_unrecognized     []byte     `json:"-"`
+	XXX_sizecache        int32      `json:"-"`
 }
 
 func (m *CallArgs) Reset()         { *m = CallArgs{} }
 func (m *CallArgs) String() string { return proto.CompactTextString(m) }
 func (*CallArgs) ProtoMessage()    {}
 func (*CallArgs) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{4}
+	return fileDescriptor_d19debeba7dea55a, []int{5}
 }
 
 func (m *CallArgs) XXX_Unmarshal(b []byte) error {
@@ -197,7 +242,7 @@ func (m *CallArgs) GetMethod() string {
 	return ""
 }
 
-func (m *CallArgs) GetArgs() map[string][]byte {
+func (m *CallArgs) GetArgs() []*ArgPair {
 	if m != nil {
 		return m.Args
 	}
@@ -229,7 +274,7 @@ func (m *SyscallHeader) Reset()         { *m = SyscallHeader{} }
 func (m *SyscallHeader) String() string { return proto.CompactTextString(m) }
 func (*SyscallHeader) ProtoMessage()    {}
 func (*SyscallHeader) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{5}
+	return fileDescriptor_d19debeba7dea55a, []int{6}
 }
 
 func (m *SyscallHeader) XXX_Unmarshal(b []byte) error {
@@ -270,7 +315,7 @@ func (m *PutRequest) Reset()         { *m = PutRequest{} }
 func (m *PutRequest) String() string { return proto.CompactTextString(m) }
 func (*PutRequest) ProtoMessage()    {}
 func (*PutRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{6}
+	return fileDescriptor_d19debeba7dea55a, []int{7}
 }
 
 func (m *PutRequest) XXX_Unmarshal(b []byte) error {
@@ -322,7 +367,7 @@ func (m *PutResponse) Reset()         { *m = PutResponse{} }
 func (m *PutResponse) String() string { return proto.CompactTextString(m) }
 func (*PutResponse) ProtoMessage()    {}
 func (*PutResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{7}
+	return fileDescriptor_d19debeba7dea55a, []int{8}
 }
 
 func (m *PutResponse) XXX_Unmarshal(b []byte) error {
@@ -355,7 +400,7 @@ func (m *GetRequest) Reset()         { *m = GetRequest{} }
 func (m *GetRequest) String() string { return proto.CompactTextString(m) }
 func (*GetRequest) ProtoMessage()    {}
 func (*GetRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{8}
+	return fileDescriptor_d19debeba7dea55a, []int{9}
 }
 
 func (m *GetRequest) XXX_Unmarshal(b []byte) error {
@@ -401,7 +446,7 @@ func (m *GetResponse) Reset()         { *m = GetResponse{} }
 func (m *GetResponse) String() string { return proto.CompactTextString(m) }
 func (*GetResponse) ProtoMessage()    {}
 func (*GetResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{9}
+	return fileDescriptor_d19debeba7dea55a, []int{10}
 }
 
 func (m *GetResponse) XXX_Unmarshal(b []byte) error {
@@ -441,7 +486,7 @@ func (m *DeleteRequest) Reset()         { *m = DeleteRequest{} }
 func (m *DeleteRequest) String() string { return proto.CompactTextString(m) }
 func (*DeleteRequest) ProtoMessage()    {}
 func (*DeleteRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{10}
+	return fileDescriptor_d19debeba7dea55a, []int{11}
 }
 
 func (m *DeleteRequest) XXX_Unmarshal(b []byte) error {
@@ -486,7 +531,7 @@ func (m *DeleteResponse) Reset()         { *m = DeleteResponse{} }
 func (m *DeleteResponse) String() string { return proto.CompactTextString(m) }
 func (*DeleteResponse) ProtoMessage()    {}
 func (*DeleteResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{11}
+	return fileDescriptor_d19debeba7dea55a, []int{12}
 }
 
 func (m *DeleteResponse) XXX_Unmarshal(b []byte) error {
@@ -523,7 +568,7 @@ func (m *IteratorRequest) Reset()         { *m = IteratorRequest{} }
 func (m *IteratorRequest) String() string { return proto.CompactTextString(m) }
 func (*IteratorRequest) ProtoMessage()    {}
 func (*IteratorRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{12}
+	return fileDescriptor_d19debeba7dea55a, []int{13}
 }
 
 func (m *IteratorRequest) XXX_Unmarshal(b []byte) error {
@@ -584,7 +629,7 @@ func (m *IteratorItem) Reset()         { *m = IteratorItem{} }
 func (m *IteratorItem) String() string { return proto.CompactTextString(m) }
 func (*IteratorItem) ProtoMessage()    {}
 func (*IteratorItem) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{13}
+	return fileDescriptor_d19debeba7dea55a, []int{14}
 }
 
 func (m *IteratorItem) XXX_Unmarshal(b []byte) error {
@@ -630,7 +675,7 @@ func (m *IteratorResponse) Reset()         { *m = IteratorResponse{} }
 func (m *IteratorResponse) String() string { return proto.CompactTextString(m) }
 func (*IteratorResponse) ProtoMessage()    {}
 func (*IteratorResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{14}
+	return fileDescriptor_d19debeba7dea55a, []int{15}
 }
 
 func (m *IteratorResponse) XXX_Unmarshal(b []byte) error {
@@ -660,7 +705,7 @@ func (m *IteratorResponse) GetItems() []*IteratorItem {
 
 type QueryTxRequest struct {
 	Header               *SyscallHeader `protobuf:"bytes,1,opt,name=header,proto3" json:"header,omitempty"`
-	Txid                 []byte         `protobuf:"bytes,2,opt,name=txid,proto3" json:"txid,omitempty"`
+	Txid                 string         `protobuf:"bytes,2,opt,name=txid,proto3" json:"txid,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
 	XXX_unrecognized     []byte         `json:"-"`
 	XXX_sizecache        int32          `json:"-"`
@@ -670,7 +715,7 @@ func (m *QueryTxRequest) Reset()         { *m = QueryTxRequest{} }
 func (m *QueryTxRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryTxRequest) ProtoMessage()    {}
 func (*QueryTxRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{15}
+	return fileDescriptor_d19debeba7dea55a, []int{16}
 }
 
 func (m *QueryTxRequest) XXX_Unmarshal(b []byte) error {
@@ -698,26 +743,26 @@ func (m *QueryTxRequest) GetHeader() *SyscallHeader {
 	return nil
 }
 
-func (m *QueryTxRequest) GetTxid() []byte {
+func (m *QueryTxRequest) GetTxid() string {
 	if m != nil {
 		return m.Txid
 	}
-	return nil
+	return ""
 }
 
 type QueryTxResponse struct {
 	// defined in user code
-	Tx                   []byte   `protobuf:"bytes,1,opt,name=tx,proto3" json:"tx,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+	Tx                   *Transaction `protobuf:"bytes,1,opt,name=tx,proto3" json:"tx,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
+	XXX_unrecognized     []byte       `json:"-"`
+	XXX_sizecache        int32        `json:"-"`
 }
 
 func (m *QueryTxResponse) Reset()         { *m = QueryTxResponse{} }
 func (m *QueryTxResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryTxResponse) ProtoMessage()    {}
 func (*QueryTxResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{16}
+	return fileDescriptor_d19debeba7dea55a, []int{17}
 }
 
 func (m *QueryTxResponse) XXX_Unmarshal(b []byte) error {
@@ -738,7 +783,7 @@ func (m *QueryTxResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryTxResponse proto.InternalMessageInfo
 
-func (m *QueryTxResponse) GetTx() []byte {
+func (m *QueryTxResponse) GetTx() *Transaction {
 	if m != nil {
 		return m.Tx
 	}
@@ -747,7 +792,7 @@ func (m *QueryTxResponse) GetTx() []byte {
 
 type QueryBlockRequest struct {
 	Header               *SyscallHeader `protobuf:"bytes,1,opt,name=header,proto3" json:"header,omitempty"`
-	Blockid              []byte         `protobuf:"bytes,2,opt,name=blockid,proto3" json:"blockid,omitempty"`
+	Blockid              string         `protobuf:"bytes,2,opt,name=blockid,proto3" json:"blockid,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
 	XXX_unrecognized     []byte         `json:"-"`
 	XXX_sizecache        int32          `json:"-"`
@@ -757,7 +802,7 @@ func (m *QueryBlockRequest) Reset()         { *m = QueryBlockRequest{} }
 func (m *QueryBlockRequest) String() string { return proto.CompactTextString(m) }
 func (*QueryBlockRequest) ProtoMessage()    {}
 func (*QueryBlockRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{17}
+	return fileDescriptor_d19debeba7dea55a, []int{18}
 }
 
 func (m *QueryBlockRequest) XXX_Unmarshal(b []byte) error {
@@ -785,16 +830,16 @@ func (m *QueryBlockRequest) GetHeader() *SyscallHeader {
 	return nil
 }
 
-func (m *QueryBlockRequest) GetBlockid() []byte {
+func (m *QueryBlockRequest) GetBlockid() string {
 	if m != nil {
 		return m.Blockid
 	}
-	return nil
+	return ""
 }
 
 type QueryBlockResponse struct {
 	// defined in user code
-	Block                []byte   `protobuf:"bytes,1,opt,name=block,proto3" json:"block,omitempty"`
+	Block                *Block   `protobuf:"bytes,1,opt,name=block,proto3" json:"block,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -804,7 +849,7 @@ func (m *QueryBlockResponse) Reset()         { *m = QueryBlockResponse{} }
 func (m *QueryBlockResponse) String() string { return proto.CompactTextString(m) }
 func (*QueryBlockResponse) ProtoMessage()    {}
 func (*QueryBlockResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{18}
+	return fileDescriptor_d19debeba7dea55a, []int{19}
 }
 
 func (m *QueryBlockResponse) XXX_Unmarshal(b []byte) error {
@@ -825,7 +870,7 @@ func (m *QueryBlockResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QueryBlockResponse proto.InternalMessageInfo
 
-func (m *QueryBlockResponse) GetBlock() []byte {
+func (m *QueryBlockResponse) GetBlock() *Block {
 	if m != nil {
 		return m.Block
 	}
@@ -845,7 +890,7 @@ func (m *TransferRequest) Reset()         { *m = TransferRequest{} }
 func (m *TransferRequest) String() string { return proto.CompactTextString(m) }
 func (*TransferRequest) ProtoMessage()    {}
 func (*TransferRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{19}
+	return fileDescriptor_d19debeba7dea55a, []int{20}
 }
 
 func (m *TransferRequest) XXX_Unmarshal(b []byte) error {
@@ -897,7 +942,7 @@ func (m *TransferResponse) Reset()         { *m = TransferResponse{} }
 func (m *TransferResponse) String() string { return proto.CompactTextString(m) }
 func (*TransferResponse) ProtoMessage()    {}
 func (*TransferResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{20}
+	return fileDescriptor_d19debeba7dea55a, []int{21}
 }
 
 func (m *TransferResponse) XXX_Unmarshal(b []byte) error {
@@ -919,21 +964,21 @@ func (m *TransferResponse) XXX_DiscardUnknown() {
 var xxx_messageInfo_TransferResponse proto.InternalMessageInfo
 
 type ContractCallRequest struct {
-	Header               *SyscallHeader    `protobuf:"bytes,1,opt,name=header,proto3" json:"header,omitempty"`
-	Module               string            `protobuf:"bytes,2,opt,name=module,proto3" json:"module,omitempty"`
-	Contract             string            `protobuf:"bytes,3,opt,name=contract,proto3" json:"contract,omitempty"`
-	Method               string            `protobuf:"bytes,4,opt,name=method,proto3" json:"method,omitempty"`
-	Args                 map[string][]byte `protobuf:"bytes,5,rep,name=args,proto3" json:"args,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
-	XXX_unrecognized     []byte            `json:"-"`
-	XXX_sizecache        int32             `json:"-"`
+	Header               *SyscallHeader `protobuf:"bytes,1,opt,name=header,proto3" json:"header,omitempty"`
+	Module               string         `protobuf:"bytes,2,opt,name=module,proto3" json:"module,omitempty"`
+	Contract             string         `protobuf:"bytes,3,opt,name=contract,proto3" json:"contract,omitempty"`
+	Method               string         `protobuf:"bytes,4,opt,name=method,proto3" json:"method,omitempty"`
+	Args                 []*ArgPair     `protobuf:"bytes,5,rep,name=args,proto3" json:"args,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
+	XXX_unrecognized     []byte         `json:"-"`
+	XXX_sizecache        int32          `json:"-"`
 }
 
 func (m *ContractCallRequest) Reset()         { *m = ContractCallRequest{} }
 func (m *ContractCallRequest) String() string { return proto.CompactTextString(m) }
 func (*ContractCallRequest) ProtoMessage()    {}
 func (*ContractCallRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{21}
+	return fileDescriptor_d19debeba7dea55a, []int{22}
 }
 
 func (m *ContractCallRequest) XXX_Unmarshal(b []byte) error {
@@ -982,7 +1027,7 @@ func (m *ContractCallRequest) GetMethod() string {
 	return ""
 }
 
-func (m *ContractCallRequest) GetArgs() map[string][]byte {
+func (m *ContractCallRequest) GetArgs() []*ArgPair {
 	if m != nil {
 		return m.Args
 	}
@@ -1000,7 +1045,7 @@ func (m *ContractCallResponse) Reset()         { *m = ContractCallResponse{} }
 func (m *ContractCallResponse) String() string { return proto.CompactTextString(m) }
 func (*ContractCallResponse) ProtoMessage()    {}
 func (*ContractCallResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{22}
+	return fileDescriptor_d19debeba7dea55a, []int{23}
 }
 
 func (m *ContractCallResponse) XXX_Unmarshal(b []byte) error {
@@ -1041,7 +1086,7 @@ func (m *Response) Reset()         { *m = Response{} }
 func (m *Response) String() string { return proto.CompactTextString(m) }
 func (*Response) ProtoMessage()    {}
 func (*Response) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{23}
+	return fileDescriptor_d19debeba7dea55a, []int{24}
 }
 
 func (m *Response) XXX_Unmarshal(b []byte) error {
@@ -1095,7 +1140,7 @@ func (m *SetOutputRequest) Reset()         { *m = SetOutputRequest{} }
 func (m *SetOutputRequest) String() string { return proto.CompactTextString(m) }
 func (*SetOutputRequest) ProtoMessage()    {}
 func (*SetOutputRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{24}
+	return fileDescriptor_d19debeba7dea55a, []int{25}
 }
 
 func (m *SetOutputRequest) XXX_Unmarshal(b []byte) error {
@@ -1140,7 +1185,7 @@ func (m *SetOutputResponse) Reset()         { *m = SetOutputResponse{} }
 func (m *SetOutputResponse) String() string { return proto.CompactTextString(m) }
 func (*SetOutputResponse) ProtoMessage()    {}
 func (*SetOutputResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{25}
+	return fileDescriptor_d19debeba7dea55a, []int{26}
 }
 
 func (m *SetOutputResponse) XXX_Unmarshal(b []byte) error {
@@ -1172,7 +1217,7 @@ func (m *GetCallArgsRequest) Reset()         { *m = GetCallArgsRequest{} }
 func (m *GetCallArgsRequest) String() string { return proto.CompactTextString(m) }
 func (*GetCallArgsRequest) ProtoMessage()    {}
 func (*GetCallArgsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_d19debeba7dea55a, []int{26}
+	return fileDescriptor_d19debeba7dea55a, []int{27}
 }
 
 func (m *GetCallArgsRequest) XXX_Unmarshal(b []byte) error {
@@ -1200,601 +1245,464 @@ func (m *GetCallArgsRequest) GetHeader() *SyscallHeader {
 	return nil
 }
 
+// Transaction input
+type TxInput struct {
+	// The transaction id referenced to
+	RefTxid []byte `protobuf:"bytes,1,opt,name=ref_txid,json=refTxid,proto3" json:"ref_txid,omitempty"`
+	// The output offset of the transaction referenced to
+	RefOffset int32 `protobuf:"varint,2,opt,name=ref_offset,json=refOffset,proto3" json:"ref_offset,omitempty"`
+	// The address of the launcher
+	FromAddr []byte `protobuf:"bytes,5,opt,name=from_addr,json=fromAddr,proto3" json:"from_addr,omitempty"`
+	// The amount of the transaction
+	Amount []byte `protobuf:"bytes,6,opt,name=amount,proto3" json:"amount,omitempty"`
+	// Frozen height
+	FrozenHeight         int64    `protobuf:"varint,7,opt,name=frozen_height,json=frozenHeight,proto3" json:"frozen_height,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *TxInput) Reset()         { *m = TxInput{} }
+func (m *TxInput) String() string { return proto.CompactTextString(m) }
+func (*TxInput) ProtoMessage()    {}
+func (*TxInput) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d19debeba7dea55a, []int{28}
+}
+
+func (m *TxInput) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_TxInput.Unmarshal(m, b)
+}
+func (m *TxInput) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_TxInput.Marshal(b, m, deterministic)
+}
+func (m *TxInput) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TxInput.Merge(m, src)
+}
+func (m *TxInput) XXX_Size() int {
+	return xxx_messageInfo_TxInput.Size(m)
+}
+func (m *TxInput) XXX_DiscardUnknown() {
+	xxx_messageInfo_TxInput.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_TxInput proto.InternalMessageInfo
+
+func (m *TxInput) GetRefTxid() []byte {
+	if m != nil {
+		return m.RefTxid
+	}
+	return nil
+}
+
+func (m *TxInput) GetRefOffset() int32 {
+	if m != nil {
+		return m.RefOffset
+	}
+	return 0
+}
+
+func (m *TxInput) GetFromAddr() []byte {
+	if m != nil {
+		return m.FromAddr
+	}
+	return nil
+}
+
+func (m *TxInput) GetAmount() []byte {
+	if m != nil {
+		return m.Amount
+	}
+	return nil
+}
+
+func (m *TxInput) GetFrozenHeight() int64 {
+	if m != nil {
+		return m.FrozenHeight
+	}
+	return 0
+}
+
+// Transaction output
+type TxOutput struct {
+	// The amount of the transaction
+	Amount []byte `protobuf:"bytes,1,opt,name=amount,proto3" json:"amount,omitempty"`
+	// The address of the launcher
+	ToAddr []byte `protobuf:"bytes,2,opt,name=to_addr,json=toAddr,proto3" json:"to_addr,omitempty"`
+	// Fronzen height
+	FrozenHeight         int64    `protobuf:"varint,4,opt,name=frozen_height,json=frozenHeight,proto3" json:"frozen_height,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *TxOutput) Reset()         { *m = TxOutput{} }
+func (m *TxOutput) String() string { return proto.CompactTextString(m) }
+func (*TxOutput) ProtoMessage()    {}
+func (*TxOutput) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d19debeba7dea55a, []int{29}
+}
+
+func (m *TxOutput) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_TxOutput.Unmarshal(m, b)
+}
+func (m *TxOutput) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_TxOutput.Marshal(b, m, deterministic)
+}
+func (m *TxOutput) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_TxOutput.Merge(m, src)
+}
+func (m *TxOutput) XXX_Size() int {
+	return xxx_messageInfo_TxOutput.Size(m)
+}
+func (m *TxOutput) XXX_DiscardUnknown() {
+	xxx_messageInfo_TxOutput.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_TxOutput proto.InternalMessageInfo
+
+func (m *TxOutput) GetAmount() []byte {
+	if m != nil {
+		return m.Amount
+	}
+	return nil
+}
+
+func (m *TxOutput) GetToAddr() []byte {
+	if m != nil {
+		return m.ToAddr
+	}
+	return nil
+}
+
+func (m *TxOutput) GetFrozenHeight() int64 {
+	if m != nil {
+		return m.FrozenHeight
+	}
+	return 0
+}
+
+// Transaction is the information of the transaction
+type Transaction struct {
+	// txid is the id of this transaction
+	Txid string `protobuf:"bytes,1,opt,name=txid,proto3" json:"txid,omitempty"`
+	// the blockid the transaction belong to
+	Blockid string `protobuf:"bytes,2,opt,name=blockid,proto3" json:"blockid,omitempty"`
+	// Transaction input list
+	TxInputs []*TxInput `protobuf:"bytes,3,rep,name=tx_inputs,json=txInputs,proto3" json:"tx_inputs,omitempty"`
+	// Transaction output list
+	TxOutputs []*TxOutput `protobuf:"bytes,4,rep,name=tx_outputs,json=txOutputs,proto3" json:"tx_outputs,omitempty"`
+	// Transaction description or system contract
+	Desc []byte `protobuf:"bytes,6,opt,name=desc,proto3" json:"desc,omitempty"`
+	// 权限系统新增字段
+	// 交易发起者, 可以是一个Address或者一个Account
+	Initiator string `protobuf:"bytes,26,opt,name=initiator,proto3" json:"initiator,omitempty"`
+	// 交易发起需要被收集签名的AddressURL集合信息，包括用于utxo转账和用于合约调用
+	AuthRequire          []string `protobuf:"bytes,27,rep,name=auth_require,json=authRequire,proto3" json:"auth_require,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *Transaction) Reset()         { *m = Transaction{} }
+func (m *Transaction) String() string { return proto.CompactTextString(m) }
+func (*Transaction) ProtoMessage()    {}
+func (*Transaction) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d19debeba7dea55a, []int{30}
+}
+
+func (m *Transaction) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Transaction.Unmarshal(m, b)
+}
+func (m *Transaction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Transaction.Marshal(b, m, deterministic)
+}
+func (m *Transaction) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Transaction.Merge(m, src)
+}
+func (m *Transaction) XXX_Size() int {
+	return xxx_messageInfo_Transaction.Size(m)
+}
+func (m *Transaction) XXX_DiscardUnknown() {
+	xxx_messageInfo_Transaction.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Transaction proto.InternalMessageInfo
+
+func (m *Transaction) GetTxid() string {
+	if m != nil {
+		return m.Txid
+	}
+	return ""
+}
+
+func (m *Transaction) GetBlockid() string {
+	if m != nil {
+		return m.Blockid
+	}
+	return ""
+}
+
+func (m *Transaction) GetTxInputs() []*TxInput {
+	if m != nil {
+		return m.TxInputs
+	}
+	return nil
+}
+
+func (m *Transaction) GetTxOutputs() []*TxOutput {
+	if m != nil {
+		return m.TxOutputs
+	}
+	return nil
+}
+
+func (m *Transaction) GetDesc() []byte {
+	if m != nil {
+		return m.Desc
+	}
+	return nil
+}
+
+func (m *Transaction) GetInitiator() string {
+	if m != nil {
+		return m.Initiator
+	}
+	return ""
+}
+
+func (m *Transaction) GetAuthRequire() []string {
+	if m != nil {
+		return m.AuthRequire
+	}
+	return nil
+}
+
+// The block struct
+type Block struct {
+	// blockid generate the hash sign of the block used by sha256
+	Blockid string `protobuf:"bytes,3,opt,name=blockid,proto3" json:"blockid,omitempty"`
+	// pre_hash is the parent blockid of the block
+	PreHash []byte `protobuf:"bytes,4,opt,name=pre_hash,json=preHash,proto3" json:"pre_hash,omitempty"`
+	// The miner id
+	Proposer []byte `protobuf:"bytes,5,opt,name=proposer,proto3" json:"proposer,omitempty"`
+	// The sign which miner signed: blockid + nonce + timestamp
+	Sign []byte `protobuf:"bytes,6,opt,name=sign,proto3" json:"sign,omitempty"`
+	// The pk of the miner
+	Pubkey []byte `protobuf:"bytes,7,opt,name=pubkey,proto3" json:"pubkey,omitempty"`
+	// The height of the blockchain
+	Height int64 `protobuf:"varint,9,opt,name=height,proto3" json:"height,omitempty"`
+	// Transactions of the block, only txid stored on kv, the detail information stored in another table
+	Txids []string `protobuf:"bytes,11,rep,name=txids,proto3" json:"txids,omitempty"`
+	// The transaction count of the block
+	TxCount int32 `protobuf:"varint,12,opt,name=tx_count,json=txCount,proto3" json:"tx_count,omitempty"`
+	//下面的属性会动态变化
+	// If the block is on the trunk
+	InTrunk bool `protobuf:"varint,14,opt,name=in_trunk,json=inTrunk,proto3" json:"in_trunk,omitempty"`
+	// Next next block which on trunk
+	NextHash             []byte   `protobuf:"bytes,15,opt,name=next_hash,json=nextHash,proto3" json:"next_hash,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *Block) Reset()         { *m = Block{} }
+func (m *Block) String() string { return proto.CompactTextString(m) }
+func (*Block) ProtoMessage()    {}
+func (*Block) Descriptor() ([]byte, []int) {
+	return fileDescriptor_d19debeba7dea55a, []int{31}
+}
+
+func (m *Block) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_Block.Unmarshal(m, b)
+}
+func (m *Block) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_Block.Marshal(b, m, deterministic)
+}
+func (m *Block) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Block.Merge(m, src)
+}
+func (m *Block) XXX_Size() int {
+	return xxx_messageInfo_Block.Size(m)
+}
+func (m *Block) XXX_DiscardUnknown() {
+	xxx_messageInfo_Block.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_Block proto.InternalMessageInfo
+
+func (m *Block) GetBlockid() string {
+	if m != nil {
+		return m.Blockid
+	}
+	return ""
+}
+
+func (m *Block) GetPreHash() []byte {
+	if m != nil {
+		return m.PreHash
+	}
+	return nil
+}
+
+func (m *Block) GetProposer() []byte {
+	if m != nil {
+		return m.Proposer
+	}
+	return nil
+}
+
+func (m *Block) GetSign() []byte {
+	if m != nil {
+		return m.Sign
+	}
+	return nil
+}
+
+func (m *Block) GetPubkey() []byte {
+	if m != nil {
+		return m.Pubkey
+	}
+	return nil
+}
+
+func (m *Block) GetHeight() int64 {
+	if m != nil {
+		return m.Height
+	}
+	return 0
+}
+
+func (m *Block) GetTxids() []string {
+	if m != nil {
+		return m.Txids
+	}
+	return nil
+}
+
+func (m *Block) GetTxCount() int32 {
+	if m != nil {
+		return m.TxCount
+	}
+	return 0
+}
+
+func (m *Block) GetInTrunk() bool {
+	if m != nil {
+		return m.InTrunk
+	}
+	return false
+}
+
+func (m *Block) GetNextHash() []byte {
+	if m != nil {
+		return m.NextHash
+	}
+	return nil
+}
+
 func init() {
-	proto.RegisterType((*PingRequest)(nil), "pb.PingRequest")
-	proto.RegisterType((*PingResponse)(nil), "pb.PingResponse")
-	proto.RegisterType((*NativeCallRequest)(nil), "pb.NativeCallRequest")
-	proto.RegisterType((*NativeCallResponse)(nil), "pb.NativeCallResponse")
-	proto.RegisterType((*CallArgs)(nil), "pb.CallArgs")
-	proto.RegisterMapType((map[string][]byte)(nil), "pb.CallArgs.ArgsEntry")
-	proto.RegisterType((*SyscallHeader)(nil), "pb.SyscallHeader")
-	proto.RegisterType((*PutRequest)(nil), "pb.PutRequest")
-	proto.RegisterType((*PutResponse)(nil), "pb.PutResponse")
-	proto.RegisterType((*GetRequest)(nil), "pb.GetRequest")
-	proto.RegisterType((*GetResponse)(nil), "pb.GetResponse")
-	proto.RegisterType((*DeleteRequest)(nil), "pb.DeleteRequest")
-	proto.RegisterType((*DeleteResponse)(nil), "pb.DeleteResponse")
-	proto.RegisterType((*IteratorRequest)(nil), "pb.IteratorRequest")
-	proto.RegisterType((*IteratorItem)(nil), "pb.IteratorItem")
-	proto.RegisterType((*IteratorResponse)(nil), "pb.IteratorResponse")
-	proto.RegisterType((*QueryTxRequest)(nil), "pb.QueryTxRequest")
-	proto.RegisterType((*QueryTxResponse)(nil), "pb.QueryTxResponse")
-	proto.RegisterType((*QueryBlockRequest)(nil), "pb.QueryBlockRequest")
-	proto.RegisterType((*QueryBlockResponse)(nil), "pb.QueryBlockResponse")
-	proto.RegisterType((*TransferRequest)(nil), "pb.TransferRequest")
-	proto.RegisterType((*TransferResponse)(nil), "pb.TransferResponse")
-	proto.RegisterType((*ContractCallRequest)(nil), "pb.ContractCallRequest")
-	proto.RegisterMapType((map[string][]byte)(nil), "pb.ContractCallRequest.ArgsEntry")
-	proto.RegisterType((*ContractCallResponse)(nil), "pb.ContractCallResponse")
-	proto.RegisterType((*Response)(nil), "pb.Response")
-	proto.RegisterType((*SetOutputRequest)(nil), "pb.SetOutputRequest")
-	proto.RegisterType((*SetOutputResponse)(nil), "pb.SetOutputResponse")
-	proto.RegisterType((*GetCallArgsRequest)(nil), "pb.GetCallArgsRequest")
+	proto.RegisterType((*PingRequest)(nil), "xchain.contract.sdk.PingRequest")
+	proto.RegisterType((*PingResponse)(nil), "xchain.contract.sdk.PingResponse")
+	proto.RegisterType((*NativeCallRequest)(nil), "xchain.contract.sdk.NativeCallRequest")
+	proto.RegisterType((*NativeCallResponse)(nil), "xchain.contract.sdk.NativeCallResponse")
+	proto.RegisterType((*ArgPair)(nil), "xchain.contract.sdk.ArgPair")
+	proto.RegisterType((*CallArgs)(nil), "xchain.contract.sdk.CallArgs")
+	proto.RegisterType((*SyscallHeader)(nil), "xchain.contract.sdk.SyscallHeader")
+	proto.RegisterType((*PutRequest)(nil), "xchain.contract.sdk.PutRequest")
+	proto.RegisterType((*PutResponse)(nil), "xchain.contract.sdk.PutResponse")
+	proto.RegisterType((*GetRequest)(nil), "xchain.contract.sdk.GetRequest")
+	proto.RegisterType((*GetResponse)(nil), "xchain.contract.sdk.GetResponse")
+	proto.RegisterType((*DeleteRequest)(nil), "xchain.contract.sdk.DeleteRequest")
+	proto.RegisterType((*DeleteResponse)(nil), "xchain.contract.sdk.DeleteResponse")
+	proto.RegisterType((*IteratorRequest)(nil), "xchain.contract.sdk.IteratorRequest")
+	proto.RegisterType((*IteratorItem)(nil), "xchain.contract.sdk.IteratorItem")
+	proto.RegisterType((*IteratorResponse)(nil), "xchain.contract.sdk.IteratorResponse")
+	proto.RegisterType((*QueryTxRequest)(nil), "xchain.contract.sdk.QueryTxRequest")
+	proto.RegisterType((*QueryTxResponse)(nil), "xchain.contract.sdk.QueryTxResponse")
+	proto.RegisterType((*QueryBlockRequest)(nil), "xchain.contract.sdk.QueryBlockRequest")
+	proto.RegisterType((*QueryBlockResponse)(nil), "xchain.contract.sdk.QueryBlockResponse")
+	proto.RegisterType((*TransferRequest)(nil), "xchain.contract.sdk.TransferRequest")
+	proto.RegisterType((*TransferResponse)(nil), "xchain.contract.sdk.TransferResponse")
+	proto.RegisterType((*ContractCallRequest)(nil), "xchain.contract.sdk.ContractCallRequest")
+	proto.RegisterType((*ContractCallResponse)(nil), "xchain.contract.sdk.ContractCallResponse")
+	proto.RegisterType((*Response)(nil), "xchain.contract.sdk.Response")
+	proto.RegisterType((*SetOutputRequest)(nil), "xchain.contract.sdk.SetOutputRequest")
+	proto.RegisterType((*SetOutputResponse)(nil), "xchain.contract.sdk.SetOutputResponse")
+	proto.RegisterType((*GetCallArgsRequest)(nil), "xchain.contract.sdk.GetCallArgsRequest")
+	proto.RegisterType((*TxInput)(nil), "xchain.contract.sdk.TxInput")
+	proto.RegisterType((*TxOutput)(nil), "xchain.contract.sdk.TxOutput")
+	proto.RegisterType((*Transaction)(nil), "xchain.contract.sdk.Transaction")
+	proto.RegisterType((*Block)(nil), "xchain.contract.sdk.Block")
 }
 
 func init() { proto.RegisterFile("contract.proto", fileDescriptor_d19debeba7dea55a) }
 
 var fileDescriptor_d19debeba7dea55a = []byte{
-	// 893 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x56, 0x51, 0x6f, 0xdb, 0x36,
-	0x10, 0x86, 0x64, 0x3b, 0xb1, 0xce, 0x8a, 0xed, 0x30, 0x6e, 0x26, 0x08, 0x7b, 0x70, 0x38, 0x6c,
-	0x70, 0x8a, 0x22, 0x0f, 0x2e, 0xb2, 0x05, 0xdd, 0xc3, 0xd6, 0x76, 0x43, 0x1a, 0x60, 0x68, 0x3c,
-	0xb5, 0x0f, 0x7b, 0x2b, 0x64, 0x9b, 0x73, 0xb4, 0xca, 0x92, 0x2b, 0x51, 0x9d, 0xbd, 0x5f, 0xb8,
-	0xff, 0xb0, 0xbf, 0xb2, 0x87, 0x81, 0xe4, 0x51, 0xa2, 0xec, 0xb5, 0x40, 0x8c, 0xbc, 0x18, 0xbc,
-	0xe3, 0xdd, 0x7d, 0x1f, 0x8f, 0xa7, 0x8f, 0x86, 0xee, 0x2c, 0x4d, 0x78, 0x16, 0xce, 0xf8, 0xc5,
-	0x2a, 0x4b, 0x79, 0x4a, 0xec, 0xd5, 0x94, 0x1e, 0x41, 0x67, 0x12, 0x25, 0x8b, 0x80, 0x7d, 0x28,
-	0x58, 0xce, 0x69, 0x17, 0x5c, 0x65, 0xe6, 0xab, 0x34, 0xc9, 0x19, 0x3d, 0x87, 0xe3, 0xd7, 0x21,
-	0x8f, 0x3e, 0xb2, 0x97, 0x61, 0x1c, 0x63, 0x10, 0x19, 0x40, 0x6b, 0xc6, 0xd7, 0xd1, 0xdc, 0xb3,
-	0x86, 0xd6, 0xa8, 0x11, 0x28, 0x83, 0x0e, 0x80, 0x98, 0xa1, 0x58, 0xe0, 0x6f, 0x0b, 0xda, 0xc2,
-	0xf1, 0x3c, 0x5b, 0xe4, 0xe4, 0x14, 0x0e, 0x96, 0x8c, 0xdf, 0xa5, 0x2a, 0xd3, 0x09, 0xd0, 0x22,
-	0x8f, 0xa1, 0x19, 0x66, 0x8b, 0xdc, 0xb3, 0x87, 0x8d, 0x51, 0x67, 0x7c, 0x7a, 0xb1, 0x9a, 0x5e,
-	0xe8, 0x9c, 0x0b, 0xf1, 0xf3, 0x73, 0xc2, 0xb3, 0x4d, 0x20, 0x63, 0xc8, 0x97, 0xe0, 0x44, 0x49,
-	0xc4, 0xa3, 0x90, 0xa7, 0x99, 0xd7, 0x90, 0x65, 0x2a, 0x07, 0x39, 0x03, 0x37, 0x2c, 0xf8, 0xdd,
-	0xbb, 0x8c, 0x7d, 0x28, 0xa2, 0x8c, 0x79, 0xcd, 0x61, 0x63, 0xe4, 0x04, 0x1d, 0xe1, 0x0b, 0x94,
-	0xcb, 0xff, 0x0e, 0x9c, 0xb2, 0x26, 0xe9, 0x43, 0xe3, 0x3d, 0xdb, 0x20, 0x1d, 0xb1, 0x14, 0x87,
-	0xfb, 0x18, 0xc6, 0x05, 0xf3, 0xec, 0xa1, 0x35, 0x72, 0x03, 0x65, 0x3c, 0xb3, 0xaf, 0x2c, 0xfa,
-	0x35, 0x1c, 0xbd, 0xd9, 0xe4, 0xb3, 0x30, 0x8e, 0x5f, 0xb1, 0x70, 0xce, 0xb2, 0x4f, 0xf4, 0xe1,
-	0x1d, 0xc0, 0xa4, 0xe0, 0xba, 0x57, 0xe7, 0x70, 0x70, 0x27, 0xa3, 0x65, 0x50, 0x67, 0x7c, 0x2c,
-	0x0e, 0x57, 0x2b, 0x13, 0x60, 0x80, 0xe6, 0xa2, 0x70, 0xeb, 0x5c, 0x1a, 0x06, 0x17, 0x79, 0x65,
-	0x02, 0x00, 0x3b, 0x7c, 0x03, 0x70, 0xcd, 0x1e, 0x04, 0x8f, 0x7e, 0x05, 0x1d, 0x59, 0x4a, 0x55,
-	0xae, 0xe0, 0x2d, 0x13, 0xfe, 0x17, 0x38, 0xfa, 0x89, 0xc5, 0x8c, 0xb3, 0x07, 0x81, 0xec, 0x43,
-	0x57, 0x57, 0xc3, 0xf3, 0xfc, 0x05, 0xbd, 0x1b, 0xce, 0x32, 0x71, 0x9d, 0x7b, 0x20, 0x0c, 0xa0,
-	0x95, 0xf3, 0x30, 0xe3, 0xfa, 0xfa, 0xa4, 0x21, 0xbc, 0x71, 0xb4, 0x8c, 0xb8, 0x6e, 0xa4, 0x34,
-	0x04, 0x9b, 0x59, 0xb8, 0xf2, 0x9a, 0x43, 0x6b, 0xd4, 0x0a, 0xc4, 0x92, 0x7e, 0x0b, 0xae, 0xc6,
-	0xbe, 0xe1, 0x6c, 0x69, 0x8e, 0x87, 0xfb, 0x99, 0xf1, 0xa0, 0xcf, 0xa0, 0x5f, 0x71, 0xc6, 0xee,
-	0x7d, 0x03, 0xad, 0x88, 0xb3, 0x65, 0xee, 0x59, 0x72, 0xaa, 0xfb, 0x82, 0xb3, 0x59, 0x3c, 0x50,
-	0xdb, 0xf4, 0x16, 0xba, 0xbf, 0x16, 0x2c, 0xdb, 0xbc, 0x5d, 0xef, 0x71, 0x5c, 0x02, 0x4d, 0x39,
-	0x81, 0x8a, 0x8d, 0x5c, 0xd3, 0x33, 0xe8, 0x95, 0x05, 0x91, 0x4b, 0x17, 0x6c, 0xbe, 0xc6, 0x63,
-	0xd8, 0x7c, 0x4d, 0x7f, 0x83, 0x63, 0x19, 0xf2, 0x22, 0x4e, 0x67, 0xef, 0xf7, 0x80, 0xf5, 0xe0,
-	0x70, 0x2a, 0x52, 0x4b, 0x64, 0x6d, 0xd2, 0xc7, 0x40, 0xcc, 0xca, 0xd5, 0x24, 0xc9, 0x00, 0x3d,
-	0x49, 0xd2, 0xa0, 0x73, 0xe8, 0xbd, 0xcd, 0xc2, 0x24, 0xff, 0x9d, 0xed, 0x73, 0xd3, 0xe2, 0x4c,
-	0xa9, 0x84, 0x77, 0x02, 0x9b, 0xa7, 0x42, 0x5c, 0xc2, 0x65, 0x5a, 0x24, 0x1c, 0x55, 0x01, 0x2d,
-	0x4a, 0xa0, 0x5f, 0xa1, 0xe0, 0x8c, 0xfd, 0x6b, 0xc1, 0xc9, 0x4b, 0x14, 0x43, 0x53, 0xd9, 0xee,
-	0x01, 0x2f, 0xb4, 0x2c, 0x9d, 0x17, 0x31, 0x43, 0x0a, 0x68, 0x11, 0x1f, 0xda, 0x5a, 0x66, 0x91,
-	0x48, 0x69, 0x1b, 0xfa, 0xd7, 0xac, 0xe9, 0xdf, 0x25, 0xea, 0x5f, 0x4b, 0x4e, 0xca, 0x99, 0xd4,
-	0xbf, 0x5d, 0x76, 0xdb, 0x52, 0xb8, 0xbf, 0x92, 0xfd, 0x08, 0x83, 0x7a, 0x7d, 0xbc, 0xa6, 0x11,
-	0xb4, 0x33, 0x5c, 0x63, 0x03, 0x5c, 0xc1, 0x45, 0xef, 0x07, 0xe5, 0x2e, 0x9d, 0x40, 0xbb, 0xcc,
-	0x3a, 0x85, 0x83, 0x9c, 0x87, 0xbc, 0xc8, 0x65, 0x4e, 0x2b, 0x40, 0x4b, 0x0c, 0xc9, 0x92, 0xe5,
-	0x79, 0xb8, 0xd0, 0x2d, 0xd2, 0xa6, 0x98, 0xda, 0x69, 0x3a, 0xdf, 0xe0, 0xd7, 0x28, 0xd7, 0x74,
-	0x01, 0xfd, 0x37, 0x8c, 0xdf, 0x16, 0x7c, 0xb5, 0x97, 0x78, 0x9a, 0xd4, 0xed, 0xcf, 0x52, 0x3f,
-	0x81, 0x63, 0x03, 0x08, 0x9d, 0x3f, 0x00, 0xb9, 0x66, 0x5c, 0x3f, 0x3a, 0xf7, 0xc7, 0x1f, 0x27,
-	0x00, 0xf8, 0xfa, 0xa5, 0x73, 0x26, 0x2e, 0x54, 0xd4, 0x22, 0x8f, 0x44, 0xc2, 0xce, 0x03, 0xea,
-	0x9f, 0x6e, 0xbb, 0xb1, 0x93, 0xe7, 0xd0, 0x14, 0xaf, 0x2f, 0xe9, 0x89, 0x7d, 0xe3, 0x59, 0xf6,
-	0xfb, 0x95, 0x43, 0x85, 0x8e, 0xff, 0x69, 0xc2, 0x21, 0x32, 0x21, 0x4f, 0xc0, 0x99, 0x14, 0xfc,
-	0x76, 0xfa, 0x07, 0x9b, 0x71, 0xd2, 0x95, 0xa1, 0x65, 0x0f, 0xfd, 0x5e, 0x69, 0x23, 0xc8, 0x13,
-	0x70, 0xae, 0x59, 0x2d, 0xba, 0x7a, 0x3e, 0x54, 0xb4, 0xf9, 0x06, 0x5c, 0x82, 0xab, 0xf4, 0x19,
-	0x13, 0x64, 0x0b, 0x6a, 0xfa, 0xef, 0x13, 0xd3, 0x85, 0x69, 0x57, 0xd0, 0x79, 0xcd, 0xfe, 0xd4,
-	0x72, 0x47, 0x4e, 0x4c, 0xf1, 0xd3, 0x79, 0x83, 0xba, 0x13, 0x33, 0xc7, 0x70, 0x88, 0xea, 0x45,
-	0x64, 0xe1, 0xba, 0x36, 0xfa, 0x27, 0x35, 0x1f, 0xe6, 0x7c, 0x0f, 0x50, 0x89, 0x8e, 0x6a, 0xfa,
-	0x8e, 0xbc, 0xa9, 0xa6, 0xff, 0x8f, 0x36, 0x5d, 0x42, 0x5b, 0xeb, 0x83, 0xe2, 0xb9, 0xa5, 0x49,
-	0x8a, 0xe7, 0xb6, 0x84, 0x90, 0xe7, 0xe0, 0x9a, 0xdf, 0x10, 0xf9, 0xe2, 0x13, 0x5f, 0xad, 0xef,
-	0xed, 0x6e, 0xdc, 0xfb, 0xba, 0xc9, 0x53, 0xf9, 0x32, 0x57, 0x7f, 0xa4, 0xf0, 0x9a, 0xb6, 0x06,
-	0xd6, 0x77, 0xcd, 0xbf, 0x4e, 0xe4, 0x0a, 0x9c, 0x72, 0xd2, 0x89, 0x3c, 0xc5, 0xf6, 0x17, 0xe6,
-	0x3f, 0xda, 0xf2, 0x2a, 0xb8, 0x17, 0xf6, 0xab, 0xc6, 0xf4, 0x40, 0xfe, 0x49, 0x7c, 0xfa, 0x5f,
-	0x00, 0x00, 0x00, 0xff, 0xff, 0xf4, 0xef, 0x36, 0x72, 0x36, 0x0a, 0x00, 0x00,
-}
-
-// Reference imports to suppress errors if they are not otherwise used.
-var _ context.Context
-var _ grpc.ClientConn
-
-// This is a compile-time assertion to ensure that this generated file
-// is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion4
-
-// NativeCodeClient is the client API for NativeCode service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
-type NativeCodeClient interface {
-	Call(ctx context.Context, in *NativeCallRequest, opts ...grpc.CallOption) (*NativeCallResponse, error)
-	Ping(ctx context.Context, in *PingRequest, opts ...grpc.CallOption) (*PingResponse, error)
-}
-
-type nativeCodeClient struct {
-	cc *grpc.ClientConn
-}
-
-func NewNativeCodeClient(cc *grpc.ClientConn) NativeCodeClient {
-	return &nativeCodeClient{cc}
-}
-
-func (c *nativeCodeClient) Call(ctx context.Context, in *NativeCallRequest, opts ...grpc.CallOption) (*NativeCallResponse, error) {
-	out := new(NativeCallResponse)
-	err := c.cc.Invoke(ctx, "/pb.NativeCode/Call", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *nativeCodeClient) Ping(ctx context.Context, in *PingRequest, opts ...grpc.CallOption) (*PingResponse, error) {
-	out := new(PingResponse)
-	err := c.cc.Invoke(ctx, "/pb.NativeCode/Ping", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// NativeCodeServer is the server API for NativeCode service.
-type NativeCodeServer interface {
-	Call(context.Context, *NativeCallRequest) (*NativeCallResponse, error)
-	Ping(context.Context, *PingRequest) (*PingResponse, error)
-}
-
-func RegisterNativeCodeServer(s *grpc.Server, srv NativeCodeServer) {
-	s.RegisterService(&_NativeCode_serviceDesc, srv)
-}
-
-func _NativeCode_Call_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(NativeCallRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(NativeCodeServer).Call(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/pb.NativeCode/Call",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NativeCodeServer).Call(ctx, req.(*NativeCallRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _NativeCode_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PingRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(NativeCodeServer).Ping(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/pb.NativeCode/Ping",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(NativeCodeServer).Ping(ctx, req.(*PingRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-var _NativeCode_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "pb.NativeCode",
-	HandlerType: (*NativeCodeServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "Call",
-			Handler:    _NativeCode_Call_Handler,
-		},
-		{
-			MethodName: "Ping",
-			Handler:    _NativeCode_Ping_Handler,
-		},
-	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "contract.proto",
-}
-
-// SyscallClient is the client API for Syscall service.
-//
-// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
-type SyscallClient interface {
-	// KV service
-	PutObject(ctx context.Context, in *PutRequest, opts ...grpc.CallOption) (*PutResponse, error)
-	GetObject(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error)
-	DeleteObject(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error)
-	NewIterator(ctx context.Context, in *IteratorRequest, opts ...grpc.CallOption) (*IteratorResponse, error)
-	// Chain service
-	QueryTx(ctx context.Context, in *QueryTxRequest, opts ...grpc.CallOption) (*QueryTxResponse, error)
-	QueryBlock(ctx context.Context, in *QueryBlockRequest, opts ...grpc.CallOption) (*QueryBlockResponse, error)
-	Transfer(ctx context.Context, in *TransferRequest, opts ...grpc.CallOption) (*TransferResponse, error)
-	ContractCall(ctx context.Context, in *ContractCallRequest, opts ...grpc.CallOption) (*ContractCallResponse, error)
-	// Heartbeat
-	Ping(ctx context.Context, in *PingRequest, opts ...grpc.CallOption) (*PingResponse, error)
-	GetCallArgs(ctx context.Context, in *GetCallArgsRequest, opts ...grpc.CallOption) (*CallArgs, error)
-	SetOutput(ctx context.Context, in *SetOutputRequest, opts ...grpc.CallOption) (*SetOutputResponse, error)
-}
-
-type syscallClient struct {
-	cc *grpc.ClientConn
-}
-
-func NewSyscallClient(cc *grpc.ClientConn) SyscallClient {
-	return &syscallClient{cc}
-}
-
-func (c *syscallClient) PutObject(ctx context.Context, in *PutRequest, opts ...grpc.CallOption) (*PutResponse, error) {
-	out := new(PutResponse)
-	err := c.cc.Invoke(ctx, "/pb.Syscall/PutObject", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *syscallClient) GetObject(ctx context.Context, in *GetRequest, opts ...grpc.CallOption) (*GetResponse, error) {
-	out := new(GetResponse)
-	err := c.cc.Invoke(ctx, "/pb.Syscall/GetObject", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *syscallClient) DeleteObject(ctx context.Context, in *DeleteRequest, opts ...grpc.CallOption) (*DeleteResponse, error) {
-	out := new(DeleteResponse)
-	err := c.cc.Invoke(ctx, "/pb.Syscall/DeleteObject", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *syscallClient) NewIterator(ctx context.Context, in *IteratorRequest, opts ...grpc.CallOption) (*IteratorResponse, error) {
-	out := new(IteratorResponse)
-	err := c.cc.Invoke(ctx, "/pb.Syscall/NewIterator", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *syscallClient) QueryTx(ctx context.Context, in *QueryTxRequest, opts ...grpc.CallOption) (*QueryTxResponse, error) {
-	out := new(QueryTxResponse)
-	err := c.cc.Invoke(ctx, "/pb.Syscall/QueryTx", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *syscallClient) QueryBlock(ctx context.Context, in *QueryBlockRequest, opts ...grpc.CallOption) (*QueryBlockResponse, error) {
-	out := new(QueryBlockResponse)
-	err := c.cc.Invoke(ctx, "/pb.Syscall/QueryBlock", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *syscallClient) Transfer(ctx context.Context, in *TransferRequest, opts ...grpc.CallOption) (*TransferResponse, error) {
-	out := new(TransferResponse)
-	err := c.cc.Invoke(ctx, "/pb.Syscall/Transfer", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *syscallClient) ContractCall(ctx context.Context, in *ContractCallRequest, opts ...grpc.CallOption) (*ContractCallResponse, error) {
-	out := new(ContractCallResponse)
-	err := c.cc.Invoke(ctx, "/pb.Syscall/ContractCall", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *syscallClient) Ping(ctx context.Context, in *PingRequest, opts ...grpc.CallOption) (*PingResponse, error) {
-	out := new(PingResponse)
-	err := c.cc.Invoke(ctx, "/pb.Syscall/Ping", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *syscallClient) GetCallArgs(ctx context.Context, in *GetCallArgsRequest, opts ...grpc.CallOption) (*CallArgs, error) {
-	out := new(CallArgs)
-	err := c.cc.Invoke(ctx, "/pb.Syscall/GetCallArgs", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *syscallClient) SetOutput(ctx context.Context, in *SetOutputRequest, opts ...grpc.CallOption) (*SetOutputResponse, error) {
-	out := new(SetOutputResponse)
-	err := c.cc.Invoke(ctx, "/pb.Syscall/SetOutput", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-// SyscallServer is the server API for Syscall service.
-type SyscallServer interface {
-	// KV service
-	PutObject(context.Context, *PutRequest) (*PutResponse, error)
-	GetObject(context.Context, *GetRequest) (*GetResponse, error)
-	DeleteObject(context.Context, *DeleteRequest) (*DeleteResponse, error)
-	NewIterator(context.Context, *IteratorRequest) (*IteratorResponse, error)
-	// Chain service
-	QueryTx(context.Context, *QueryTxRequest) (*QueryTxResponse, error)
-	QueryBlock(context.Context, *QueryBlockRequest) (*QueryBlockResponse, error)
-	Transfer(context.Context, *TransferRequest) (*TransferResponse, error)
-	ContractCall(context.Context, *ContractCallRequest) (*ContractCallResponse, error)
-	// Heartbeat
-	Ping(context.Context, *PingRequest) (*PingResponse, error)
-	GetCallArgs(context.Context, *GetCallArgsRequest) (*CallArgs, error)
-	SetOutput(context.Context, *SetOutputRequest) (*SetOutputResponse, error)
-}
-
-func RegisterSyscallServer(s *grpc.Server, srv SyscallServer) {
-	s.RegisterService(&_Syscall_serviceDesc, srv)
-}
-
-func _Syscall_PutObject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PutRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SyscallServer).PutObject(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/pb.Syscall/PutObject",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SyscallServer).PutObject(ctx, req.(*PutRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Syscall_GetObject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SyscallServer).GetObject(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/pb.Syscall/GetObject",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SyscallServer).GetObject(ctx, req.(*GetRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Syscall_DeleteObject_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SyscallServer).DeleteObject(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/pb.Syscall/DeleteObject",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SyscallServer).DeleteObject(ctx, req.(*DeleteRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Syscall_NewIterator_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(IteratorRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SyscallServer).NewIterator(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/pb.Syscall/NewIterator",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SyscallServer).NewIterator(ctx, req.(*IteratorRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Syscall_QueryTx_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryTxRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SyscallServer).QueryTx(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/pb.Syscall/QueryTx",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SyscallServer).QueryTx(ctx, req.(*QueryTxRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Syscall_QueryBlock_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryBlockRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SyscallServer).QueryBlock(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/pb.Syscall/QueryBlock",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SyscallServer).QueryBlock(ctx, req.(*QueryBlockRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Syscall_Transfer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(TransferRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SyscallServer).Transfer(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/pb.Syscall/Transfer",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SyscallServer).Transfer(ctx, req.(*TransferRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Syscall_ContractCall_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(ContractCallRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SyscallServer).ContractCall(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/pb.Syscall/ContractCall",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SyscallServer).ContractCall(ctx, req.(*ContractCallRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Syscall_Ping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(PingRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SyscallServer).Ping(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/pb.Syscall/Ping",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SyscallServer).Ping(ctx, req.(*PingRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Syscall_GetCallArgs_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetCallArgsRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SyscallServer).GetCallArgs(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/pb.Syscall/GetCallArgs",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SyscallServer).GetCallArgs(ctx, req.(*GetCallArgsRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Syscall_SetOutput_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SetOutputRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(SyscallServer).SetOutput(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/pb.Syscall/SetOutput",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(SyscallServer).SetOutput(ctx, req.(*SetOutputRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-var _Syscall_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "pb.Syscall",
-	HandlerType: (*SyscallServer)(nil),
-	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "PutObject",
-			Handler:    _Syscall_PutObject_Handler,
-		},
-		{
-			MethodName: "GetObject",
-			Handler:    _Syscall_GetObject_Handler,
-		},
-		{
-			MethodName: "DeleteObject",
-			Handler:    _Syscall_DeleteObject_Handler,
-		},
-		{
-			MethodName: "NewIterator",
-			Handler:    _Syscall_NewIterator_Handler,
-		},
-		{
-			MethodName: "QueryTx",
-			Handler:    _Syscall_QueryTx_Handler,
-		},
-		{
-			MethodName: "QueryBlock",
-			Handler:    _Syscall_QueryBlock_Handler,
-		},
-		{
-			MethodName: "Transfer",
-			Handler:    _Syscall_Transfer_Handler,
-		},
-		{
-			MethodName: "ContractCall",
-			Handler:    _Syscall_ContractCall_Handler,
-		},
-		{
-			MethodName: "Ping",
-			Handler:    _Syscall_Ping_Handler,
-		},
-		{
-			MethodName: "GetCallArgs",
-			Handler:    _Syscall_GetCallArgs_Handler,
-		},
-		{
-			MethodName: "SetOutput",
-			Handler:    _Syscall_SetOutput_Handler,
-		},
-	},
-	Streams:  []grpc.StreamDesc{},
-	Metadata: "contract.proto",
+	// 1049 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x56, 0x4b, 0x6f, 0xdb, 0x46,
+	0x10, 0x06, 0xf5, 0xd6, 0x48, 0x96, 0x6d, 0xda, 0x48, 0x69, 0x27, 0x01, 0x14, 0x06, 0x05, 0xd4,
+	0x8b, 0x9d, 0xba, 0x40, 0x8a, 0x14, 0xbd, 0x38, 0x2e, 0x1a, 0x1b, 0x05, 0x1a, 0x87, 0xd1, 0x29,
+	0x40, 0xa1, 0xac, 0xc8, 0x95, 0xb8, 0xb0, 0xc4, 0x65, 0x76, 0x87, 0x01, 0xdd, 0x7b, 0x0f, 0x41,
+	0xcf, 0x3d, 0xf6, 0x37, 0xf5, 0x2f, 0x15, 0xfb, 0x20, 0x45, 0x21, 0x72, 0xda, 0xa2, 0xca, 0x6d,
+	0xbe, 0xe1, 0xec, 0xcc, 0x37, 0x0f, 0xce, 0x2e, 0x0c, 0x42, 0x9e, 0xa0, 0x20, 0x21, 0x9e, 0xa4,
+	0x82, 0x23, 0x77, 0x0f, 0xf2, 0x30, 0x26, 0x2c, 0x39, 0x29, 0xd5, 0x32, 0xba, 0xf1, 0x77, 0xa0,
+	0x77, 0xcd, 0x92, 0x79, 0x40, 0xdf, 0x65, 0x54, 0xa2, 0x3f, 0x80, 0xbe, 0x81, 0x32, 0xe5, 0x89,
+	0xa4, 0xfe, 0x57, 0xb0, 0xff, 0x33, 0x41, 0xf6, 0x9e, 0x5e, 0x90, 0xc5, 0xc2, 0x1a, 0xb9, 0x87,
+	0xd0, 0x0c, 0x31, 0x67, 0x91, 0xe7, 0x0c, 0x9d, 0x51, 0x3d, 0x30, 0xc0, 0x3f, 0x04, 0xb7, 0x6a,
+	0x6a, 0x1d, 0x7c, 0x0d, 0xed, 0x73, 0x31, 0xbf, 0x26, 0x4c, 0xb8, 0x7b, 0x50, 0xbf, 0xa1, 0xb7,
+	0xfa, 0x50, 0x37, 0x50, 0xa2, 0x72, 0xf4, 0x9e, 0x2c, 0x32, 0xea, 0xd5, 0x86, 0xce, 0xa8, 0x1f,
+	0x18, 0xe0, 0xff, 0xe1, 0x40, 0x47, 0xf9, 0x38, 0x17, 0x73, 0xe9, 0xde, 0x83, 0xd6, 0x92, 0x62,
+	0xcc, 0x23, 0x7b, 0xce, 0x22, 0xf7, 0x09, 0x34, 0x88, 0x98, 0x4b, 0xaf, 0x36, 0xac, 0x8f, 0x7a,
+	0x67, 0x0f, 0x4e, 0x36, 0xe4, 0x76, 0x62, 0x03, 0x07, 0xda, 0xd2, 0x7d, 0x00, 0x5d, 0x96, 0x30,
+	0x64, 0x04, 0xb9, 0xf0, 0xea, 0xda, 0xd9, 0x4a, 0xe1, 0x3e, 0x82, 0x3e, 0xc9, 0x30, 0x9e, 0x08,
+	0xfa, 0x2e, 0x63, 0x82, 0x7a, 0x8d, 0x61, 0x7d, 0xd4, 0x0d, 0x7a, 0x4a, 0x17, 0x18, 0x95, 0xff,
+	0x25, 0xec, 0xbc, 0xbe, 0x95, 0x21, 0x59, 0x2c, 0x2e, 0x29, 0x89, 0xa8, 0xb8, 0xa3, 0x0e, 0x29,
+	0xc0, 0x75, 0x86, 0x45, 0xad, 0xbe, 0x83, 0x56, 0xac, 0xad, 0xb5, 0x51, 0xef, 0xcc, 0xdf, 0xc8,
+	0x74, 0xcd, 0x6f, 0x60, 0x4f, 0x14, 0x05, 0x33, 0xc5, 0x59, 0x2f, 0x58, 0xbd, 0x5a, 0x30, 0xd5,
+	0x43, 0x15, 0xd1, 0x96, 0xfc, 0x0d, 0xc0, 0x0b, 0xfa, 0x79, 0x08, 0xf8, 0x8f, 0xa1, 0xa7, 0x7d,
+	0x9b, 0x50, 0x2b, 0x3e, 0x4e, 0x95, 0xcf, 0x2f, 0xb0, 0xf3, 0x03, 0x5d, 0x50, 0xa4, 0x9f, 0x87,
+	0xc3, 0x1e, 0x0c, 0x0a, 0xf7, 0x36, 0xe3, 0xdf, 0x1d, 0xd8, 0xbd, 0x42, 0x2a, 0x54, 0x27, 0xb7,
+	0x11, 0xf3, 0x10, 0x9a, 0x12, 0x89, 0xc0, 0x62, 0x2e, 0x35, 0x50, 0xda, 0x05, 0x5b, 0x32, 0x2c,
+	0x8a, 0xaf, 0x81, 0xe2, 0x17, 0x92, 0xd4, 0x6b, 0x0c, 0x9d, 0x51, 0x33, 0x50, 0xa2, 0xff, 0x14,
+	0xfa, 0x05, 0x99, 0x2b, 0xa4, 0xcb, 0xea, 0xdc, 0xf7, 0x3f, 0x35, 0xf7, 0x3f, 0xc1, 0xde, 0x2a,
+	0x09, 0x5b, 0xe0, 0x6f, 0xa1, 0xc9, 0x90, 0x2e, 0xa5, 0xe7, 0xe8, 0x39, 0x7f, 0xb4, 0x31, 0x89,
+	0x6a, 0xb4, 0xc0, 0xd8, 0xfb, 0x6f, 0x61, 0xf0, 0x2a, 0xa3, 0xe2, 0x76, 0x9c, 0x6f, 0xa3, 0x20,
+	0x2e, 0x34, 0xf4, 0xa0, 0xd7, 0xf4, 0x6f, 0xa3, 0x65, 0xff, 0x02, 0x76, 0xcb, 0x08, 0x96, 0xed,
+	0x13, 0xa8, 0x61, 0x6e, 0xdd, 0x0f, 0x37, 0xba, 0x1f, 0x0b, 0x92, 0x48, 0x12, 0x22, 0xe3, 0x49,
+	0x50, 0xc3, 0xdc, 0x67, 0xb0, 0xaf, 0x9d, 0x3c, 0x5f, 0xf0, 0xf0, 0x66, 0x1b, 0x4c, 0x3d, 0x68,
+	0x4f, 0x95, 0xaf, 0x92, 0x6c, 0x01, 0xfd, 0x1f, 0xc1, 0xad, 0x86, 0x2a, 0x29, 0x37, 0xb5, 0x81,
+	0x0d, 0x75, 0xbc, 0x31, 0x94, 0x39, 0x62, 0x0c, 0xfd, 0x0c, 0x76, 0x75, 0x16, 0x33, 0xba, 0x95,
+	0x59, 0x1b, 0x40, 0x0d, 0xb9, 0xe5, 0x5a, 0x43, 0xae, 0x16, 0x1e, 0x59, 0xf2, 0x2c, 0x41, 0xbb,
+	0xa3, 0x2c, 0xf2, 0x5d, 0xd8, 0x5b, 0x85, 0xb5, 0x73, 0xff, 0x97, 0x03, 0x07, 0x17, 0x36, 0x44,
+	0x75, 0x41, 0xff, 0x1f, 0x3e, 0x6a, 0xe1, 0xf2, 0x28, 0x5b, 0x50, 0xcb, 0xc9, 0x22, 0xf7, 0x18,
+	0x3a, 0xc5, 0x69, 0xcb, 0xac, 0xc4, 0x95, 0x25, 0xdd, 0xd8, 0xb8, 0xa4, 0x9b, 0xff, 0x76, 0x49,
+	0xfb, 0xaf, 0xe0, 0x70, 0x3d, 0x21, 0xdb, 0xa6, 0x67, 0xd0, 0x11, 0x56, 0xb6, 0x39, 0x3d, 0xdc,
+	0xe8, 0xad, 0x38, 0x10, 0x94, 0xe6, 0xfe, 0x35, 0x74, 0x4a, 0x37, 0xf7, 0xa0, 0x25, 0x91, 0x60,
+	0x26, 0xb5, 0x93, 0x66, 0x60, 0x91, 0x9a, 0x9a, 0x25, 0x95, 0x92, 0xcc, 0x8b, 0xac, 0x0b, 0xa8,
+	0x26, 0x7f, 0xca, 0xa3, 0x5b, 0xfb, 0xcf, 0x6b, 0xd9, 0xff, 0xe0, 0xc0, 0xde, 0x6b, 0x8a, 0x2f,
+	0x33, 0x4c, 0xb7, 0xb3, 0xe8, 0xab, 0xd9, 0xd5, 0xfe, 0x5b, 0x76, 0x07, 0xb0, 0x5f, 0xa1, 0x52,
+	0xa6, 0xec, 0xbe, 0xa0, 0x58, 0xdc, 0xa1, 0x5b, 0x60, 0xe8, 0xff, 0xe9, 0x40, 0x7b, 0x9c, 0x5f,
+	0x25, 0x69, 0x86, 0xee, 0x91, 0x62, 0x3b, 0x9b, 0x94, 0x37, 0x5f, 0x3f, 0x68, 0x0b, 0x3a, 0x1b,
+	0xe7, 0x2c, 0x72, 0x1f, 0x02, 0xa8, 0x4f, 0x7c, 0x36, 0x93, 0xd4, 0x6c, 0xcf, 0x66, 0xd0, 0x15,
+	0x74, 0xf6, 0x52, 0x2b, 0xdc, 0xfb, 0xd0, 0x9d, 0x09, 0xbe, 0x9c, 0x90, 0x28, 0x12, 0x5e, 0x53,
+	0x1f, 0xed, 0x28, 0xc5, 0x79, 0x14, 0x89, 0xca, 0xe0, 0xb7, 0xf4, 0x17, 0x8b, 0xdc, 0xc7, 0xb0,
+	0x33, 0x13, 0xfc, 0x57, 0x9a, 0x4c, 0x62, 0xca, 0xe6, 0x31, 0x7a, 0x6d, 0x7d, 0xdb, 0xf6, 0x8d,
+	0xf2, 0x52, 0xeb, 0xfc, 0xb7, 0xd0, 0x19, 0xe7, 0xa6, 0x0a, 0x15, 0x47, 0xce, 0x9a, 0xa3, 0x2f,
+	0xa0, 0x8d, 0xdc, 0xc4, 0x36, 0x7b, 0xb7, 0x85, 0x5c, 0x47, 0xfe, 0x28, 0x42, 0x63, 0x43, 0x84,
+	0x0f, 0x35, 0xe8, 0x55, 0xb6, 0x57, 0xb9, 0x12, 0x9d, 0xd5, 0x4a, 0xbc, 0x7b, 0xf9, 0xb8, 0xcf,
+	0xa0, 0x8b, 0xf9, 0x84, 0xa9, 0xfa, 0x49, 0xaf, 0xfe, 0x89, 0xdf, 0xc1, 0x16, 0x39, 0xe8, 0xa0,
+	0x11, 0xa4, 0xfb, 0x3d, 0x00, 0xe6, 0x13, 0xae, 0x73, 0x93, 0xfa, 0x5d, 0x72, 0xd7, 0x78, 0x14,
+	0x15, 0x08, 0xba, 0x68, 0x25, 0xa9, 0x68, 0x46, 0x54, 0x86, 0xb6, 0xa6, 0x5a, 0x5e, 0x7f, 0x09,
+	0x1d, 0xff, 0xd3, 0x4b, 0xe8, 0xfe, 0xc7, 0x2f, 0xa1, 0xdf, 0x6a, 0xd0, 0xd4, 0x3b, 0xb1, 0x9a,
+	0x71, 0x7d, 0x3d, 0xe3, 0x23, 0xe8, 0xa4, 0x82, 0x4e, 0x62, 0x22, 0x63, 0x5d, 0xcf, 0x7e, 0xd0,
+	0x4e, 0x05, 0xbd, 0x24, 0x32, 0x56, 0xab, 0x24, 0x15, 0x3c, 0xe5, 0x92, 0x96, 0x53, 0x50, 0x60,
+	0xc5, 0x57, 0xb2, 0x79, 0x52, 0xf0, 0x55, 0xb2, 0x6a, 0x68, 0x9a, 0x4d, 0xd5, 0x1d, 0xda, 0x36,
+	0x7d, 0x33, 0x48, 0xe9, 0x6d, 0xc3, 0xba, 0xba, 0x61, 0x16, 0xa9, 0xeb, 0x55, 0xb5, 0x43, 0x7a,
+	0x3d, 0x4d, 0xdd, 0x00, 0x45, 0x08, 0xf3, 0x49, 0xa8, 0x07, 0xa3, 0xaf, 0x27, 0xb3, 0x8d, 0xf9,
+	0x85, 0x9e, 0x8c, 0x23, 0xe8, 0xb0, 0x64, 0x82, 0x22, 0x4b, 0x6e, 0xbc, 0xc1, 0xd0, 0x19, 0x75,
+	0x82, 0x36, 0x4b, 0xc6, 0x0a, 0xaa, 0x91, 0x4d, 0x68, 0x8e, 0x26, 0x8f, 0x5d, 0x43, 0x56, 0x29,
+	0x54, 0x22, 0xcf, 0x9f, 0x5e, 0xd6, 0xdf, 0x9c, 0xcd, 0x19, 0xc6, 0xd9, 0xf4, 0x24, 0xe4, 0xcb,
+	0xd3, 0x3c, 0x4b, 0xa9, 0xd0, 0x8d, 0x31, 0x62, 0x96, 0x30, 0x9e, 0x9c, 0x16, 0x3d, 0x92, 0xd1,
+	0xcd, 0xe9, 0x9c, 0x9f, 0xa6, 0xd3, 0x69, 0x4b, 0x3f, 0xc8, 0xbf, 0xf9, 0x3b, 0x00, 0x00, 0xff,
+	0xff, 0x0a, 0xb0, 0x18, 0x35, 0xa2, 0x0b, 0x00, 0x00,
 }

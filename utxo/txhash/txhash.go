@@ -132,6 +132,12 @@ func encodeTxData(tx *pb.Transaction, includeSigns bool) ([]byte, error) {
 		if err = encoder.Encode(tx.AuthRequireSigns); err != nil {
 			return nil, err
 		}
+		if tx.GetXuperSign() != nil {
+			err = encoder.Encode(tx.AuthRequireSigns)
+			if err != nil {
+				return nil, err
+			}
+		}
 	}
 	if err = encoder.Encode(tx.Coinbase); err != nil {
 		return nil, err

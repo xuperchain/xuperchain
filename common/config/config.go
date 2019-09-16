@@ -25,7 +25,11 @@ const (
 	DefaultIsAuthentication = false
 	DefautltAuthTimeout     = 30
 	// limitation size for same ip
-	DefaultStreamIPLimitSize = 10
+	DefaultStreamIPLimitSize     = 10
+	DefaultMaxBroadcastPeers     = 20
+	DefaultMaxBroadcastCorePeers = 10
+	DefaultIsStorePeers          = false
+	DefaultP2PDataPath           = "./data/p2p"
 )
 
 // LogConfig is the log config of node
@@ -84,6 +88,17 @@ type P2PConfig struct {
 	IsAuthentication bool `yaml:"isauthentication,omitempty"`
 	// StreamIPLimitSize set the limitation size for same ip
 	StreamIPLimitSize int64 `yaml:"streamIPLimitSize,omitempty"`
+	// MaxBroadcastPeers limit the number of common peers in a broadcast,
+	// this number do not include MaxBroadcastCorePeers.
+	MaxBroadcastPeers int `yaml:"maxBroadcastPeers,omitempty"`
+	// MaxBroadcastCorePeers limit the number of core peers in a broadcast,
+	// this only works when NodeConfig.CoreConnection is true. Note that the number
+	// of core peers is included in MaxBroadcastPeers.
+	MaxBroadcastCorePeers int `yaml:"maxBroadcastCorePeers,omitempty"`
+	// P2PDataPath stores the peer info connected last time
+	P2PDataPath string `yaml:"p2PDataPath,omitempty"`
+	// IsStorePeers determine wherther storing the peers infos
+	IsStorePeers bool `yaml:"isStorePeers,omitempty"`
 }
 
 // MinerConfig is the config of miner
@@ -103,13 +118,6 @@ type UtxoConfig struct {
 	// 是否开启新版本tx k = bcname, v = isBetaTx
 	IsBetaTx          map[string]bool `yaml:"isBetaTx,omitempty"`
 	MaxConfirmedDelay uint32          `yaml:"maxConfirmedDelay,omitempty"`
-}
-
-// FeeConfig is the config of Fee
-type FeeConfig struct {
-	NeedFee bool `yaml:"needFee,omitempty"`
-	// UnitFee tx 每kb大小的单价
-	UnitFee int64 `yaml:"unitFee,omitempty"`
 }
 
 // NativeDeployConfig native contract deploy config
@@ -134,6 +142,7 @@ type NativeConfig struct {
 	StopTimeout int
 	Deploy      NativeDeployConfig
 	Docker      NativeDockerConfig
+	Enable      bool
 }
 
 // XVMConfig contains the xvm configuration
@@ -146,9 +155,11 @@ type XVMConfig struct {
 
 // WasmConfig wasm config
 type WasmConfig struct {
-	Driver   string
-	External bool
-	XVM      XVMConfig
+	Driver         string
+	External       bool
+	XVM            XVMConfig
+	EnableDebugLog bool
+	DebugLog       LogConfig
 }
 
 // ConsoleConfig is the command config user input
@@ -177,7 +188,6 @@ type NodeConfig struct {
 	DedupCacheSize  int             `yaml:"dedupCacheSize,omitempty"`
 	DedupTimeLimit  int             `yaml:"dedupTimeLimit,omitempty"`
 	Kernel          KernelConfig    `yaml:"kernel,omitempty"`
-	FeeConfig       FeeConfig       `yaml:"feeConfig,omitempty"`
 	CPUProfile      string          `yaml:"cpuprofile,omitempty"`
 	MemProfile      string          `yaml:"memprofile,omitempty"`
 	MemberWhiteList map[string]bool `yaml:"memberWhiteList,omitempty"`
@@ -192,6 +202,7 @@ type NodeConfig struct {
 	GatewaySwitch   bool       `yaml:"gatewaySwitch,omitempty"`
 	Wasm            WasmConfig `yaml:"wasm,omitempty"`
 	CoreConnection  bool       `yaml:"coreConnection,omitempty"`
+	FailSkip        bool       `yaml:"failSkip,omitempty"`
 }
 
 // KernelConfig kernel config
@@ -258,10 +269,6 @@ func (nc *NodeConfig) defaultNodeConfig() {
 		FdCacheSize:  1024, //fd count for each leveldb
 	}
 	nc.DedupTimeLimit = 15 //seconds
-	nc.FeeConfig = FeeConfig{
-		NeedFee: false,
-		UnitFee: 1,
-	}
 	nc.MemberWhiteList = make(map[string]bool)
 	nc.NodeMode = NodeModeNormal
 	nc.Wasm = WasmConfig{
@@ -269,8 +276,21 @@ func (nc *NodeConfig) defaultNodeConfig() {
 		XVM: XVMConfig{
 			OptLevel: 0,
 		},
+		EnableDebugLog: true,
+		DebugLog: LogConfig{
+			Module:         "contract",
+			Filepath:       "logs",
+			Filename:       "contract",
+			Fmt:            "logfmt",
+			Console:        false,
+			Level:          "debug",
+			Async:          false,
+			RotateInterval: 60 * 24, // rotate every 1 day
+			RotateBackups:  14,      // keep old log files for two weeks
+		},
 	}
 	nc.CoreConnection = false
+	nc.FailSkip = false
 }
 
 // NewNodeConfig returns a config of a node
@@ -293,7 +313,11 @@ func newP2pConfigWithDefault() P2PConfig {
 		Timeout:          DefaultTimeout,
 		IsAuthentication: DefaultIsAuthentication,
 		// default stream ip limit size
-		StreamIPLimitSize: DefaultStreamIPLimitSize,
+		StreamIPLimitSize:     DefaultStreamIPLimitSize,
+		MaxBroadcastPeers:     DefaultMaxBroadcastPeers,
+		MaxBroadcastCorePeers: DefaultMaxBroadcastCorePeers,
+		IsStorePeers:          DefaultIsStorePeers,
+		P2PDataPath:           DefaultP2PDataPath,
 	}
 }
 
@@ -377,6 +401,8 @@ func (nc *NodeConfig) ApplyFlags(flags *pflag.FlagSet) {
 	flags.StringVar(&nc.MemProfile, "memprofile", nc.MemProfile, "used to store mem profile data --memprofile <pprof file>")
 
 	flags.StringVar(&nc.PluginConfPath, "pluginConfPath", nc.PluginConfPath, "used for config overwrite --pluginConfPath <plugin conf path>")
+
+	flags.BoolVar(&nc.FailSkip, "failSkip", nc.FailSkip, "used for config overwrite --failSkip <>")
 }
 
 // VisitAll print all config of node

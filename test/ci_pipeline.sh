@@ -121,11 +121,11 @@ function tdpos_nominate()
 function check_nominate()
 {
     cd $basepath/node1
-    check_base=$(./xchain-cli tdpos query-candidates -H=:37101)
+    check_base=$(./xchain-cli tdpos query-candidates -H=127.0.0.1:37101)
     echo "nominate result of node1 is:"$check_base
     for ((i=1;i<=3;i++))
     {
-        result=$(./xchain-cli tdpos query-candidates -H=:3710$i)
+        result=$(./xchain-cli tdpos query-candidates -H=127.0.0.1:3710$i)
         if [ "$check_base" = "$result" ];then
             echo -e "\033[42;30m node$i is the same as node1 \033[0m \n"
         else
@@ -241,7 +241,9 @@ function deploy_invoke_contract()
 	cd $basepath/node1 
 	rand_name=`date +%y%s%m%d`
 	sed -i'' -e "s/\(\"account_name\": \"\).*/\1$rand_name\"\,/; s/TH/$addr2/" $basepath/relate_file/account.json
-	account_out=$(./xchain-cli account new --desc=$basepath/relate_file/account.json --fee=1000)
+	fee_out=$(./xchain-cli account new --desc=$basepath/relate_file/account.json)
+	will_fee=$(echo "$fee_out" | grep "The gas you cousume is" | awk -F': ' '{print $2}')
+	account_out=$(./xchain-cli account new --desc=$basepath/relate_file/account.json --fee=$will_fee)
 	account_name=$(echo $account_out | awk -F'account name: ' '{print $2}')
 	echo $account_name > $basepath/relate_file/account_name.txt
 

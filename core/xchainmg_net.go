@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math/big"
 	"net"
 
 	"github.com/golang/protobuf/proto"
@@ -84,11 +83,7 @@ func (xm *XChainMG) handleReceivedMsg(msg *xuper_p2p.XuperMessage) {
 	case xuper_p2p.XuperMessage_POSTTX:
 		xm.handlePostTx(msg)
 	case xuper_p2p.XuperMessage_SENDBLOCK:
-		if xm.sendBlockMsgDisp.NearFull() == false {
-			xm.sendBlockMsgDisp.msgDispChan <- msg
-		} else {
-			xm.Log.Warn("XuperMessage_SENDBLOCK message will be full, drop this message")
-		}
+		xm.HandleSendBlock(msg)
 	case xuper_p2p.XuperMessage_BATCHPOSTTX:
 		xm.handleBatchPostTx(msg)
 	}
@@ -113,7 +108,7 @@ func (xm *XChainMG) handlePostTx(msg *xuper_p2p.XuperMessage) {
 			p2pv2.WithFilters([]p2pv2.FilterStrategy{p2pv2.DefaultStrategy}),
 			p2pv2.WithBcName(msg.GetHeader().GetBcname()),
 		}
-		xm.P2pv2.SendMessage(context.Background(), msg, opts...)
+		go xm.P2pv2.SendMessage(context.Background(), msg, opts...)
 	}
 	return
 }
@@ -138,23 +133,6 @@ func (xm *XChainMG) ProcessTx(in *pb.TxStatus) (*pb.CommonReply, bool, error) {
 	if bc == nil {
 		out.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
 		return out, false, nil
-	}
-
-	if xm.Cfg.FeeConfig.NeedFee {
-		fee := in.Tx.GetFee()
-		txSize := int64(len(in.Tx.Desc))
-		size := int64(0)
-		if txSize%1024 == 0 {
-			size = txSize / 1024
-		} else {
-			size = txSize/1024 + 1
-		}
-		cost := big.NewInt((size) * xm.Cfg.FeeConfig.UnitFee)
-		if res := fee.Cmp(cost); res < 0 {
-			out.Header.Error = pb.XChainErrorEnum_TX_FEE_NOT_ENOUGH_ERROR
-			xm.Log.Warn("PostTx fee not enough for storage!", "logid", in.Header.Logid)
-			return out, false, nil
-		}
 	}
 
 	hd := &global.XContext{Timer: global.NewXTimer()}
@@ -196,7 +174,7 @@ func (xm *XChainMG) HandleSendBlock(msg *xuper_p2p.XuperMessage) {
 		p2pv2.WithFilters(filters),
 		p2pv2.WithBcName(bcname),
 	}
-	xm.P2pv2.SendMessage(context.Background(), msg, opts...)
+	go xm.P2pv2.SendMessage(context.Background(), msg, opts...)
 	return
 }
 
@@ -252,7 +230,7 @@ func (xm *XChainMG) handleBatchPostTx(msg *xuper_p2p.XuperMessage) {
 			p2pv2.WithFilters([]p2pv2.FilterStrategy{p2pv2.DefaultStrategy}),
 			p2pv2.WithBcName(msg.GetHeader().GetBcname()),
 		}
-		xm.P2pv2.SendMessage(context.Background(), msg, opts...)
+		go xm.P2pv2.SendMessage(context.Background(), msg, opts...)
 	}
 	return
 }

@@ -4,7 +4,7 @@ import (
 	"sync"
 
 	"github.com/xuperchain/xuperunion/contract"
-	"github.com/xuperchain/xuperunion/contractsdk/go/pb"
+	pb "github.com/xuperchain/xuperunion/contractsdk/go/pb"
 	"github.com/xuperchain/xuperunion/xmodel"
 )
 
@@ -26,6 +26,8 @@ type Context struct {
 	Initiator string
 
 	AuthRequire []string
+
+	CanInitialize bool
 
 	// Write by contract
 	Output *pb.Response

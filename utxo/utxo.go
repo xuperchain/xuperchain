@@ -22,20 +22,19 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/xuperchain/log15"
+	log "github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperunion/common"
 	"github.com/xuperchain/xuperunion/contract"
+	"github.com/xuperchain/xuperunion/contract/wasm"
 	crypto_client "github.com/xuperchain/xuperunion/crypto/client"
 	crypto_base "github.com/xuperchain/xuperunion/crypto/client/base"
 	"github.com/xuperchain/xuperunion/global"
 	"github.com/xuperchain/xuperunion/kv/kvdb"
 	ledger_pkg "github.com/xuperchain/xuperunion/ledger"
 	"github.com/xuperchain/xuperunion/pb"
-	pm "github.com/xuperchain/xuperunion/permission"
 	"github.com/xuperchain/xuperunion/permission/acl"
 	acli "github.com/xuperchain/xuperunion/permission/acl/impl"
 	"github.com/xuperchain/xuperunion/permission/acl/utils"
-	"github.com/xuperchain/xuperunion/pluginmgr"
 	"github.com/xuperchain/xuperunion/utxo/txhash"
 	"github.com/xuperchain/xuperunion/vat"
 	"github.com/xuperchain/xuperunion/xmodel"
@@ -65,13 +64,17 @@ var (
 	ErrInvalidWithdrawAmount   = errors.New("withdraw amount is invalid")
 	ErrServiceRefused          = errors.New("Service refused")
 	ErrRWSetInvalid            = errors.New("RWSet of transaction invalid")
-	ErrRWAclNotEnough          = errors.New("ACL not enough")
+	ErrACLNotEnough            = errors.New("ACL not enough")
+	ErrInvalidSignature        = errors.New("the signature is invalid or not match the address")
+	ErrInitiatorType           = errors.New("the initiator type is invalid, need AK")
 
 	ErrGasNotEnough   = errors.New("Gas not enough")
 	ErrInvalidAccount = errors.New("Invalid account")
 	ErrVersionInvalid = errors.New("Invalid tx version")
 	ErrInvalidTxExt   = errors.New("Invalid tx ext")
 	ErrTxTooLarge     = errors.New("Tx size is too large")
+
+	ErrGetReservedContracts = errors.New("Get reserved contracts error")
 )
 
 // package constants
@@ -96,7 +99,7 @@ type UtxoVM struct {
 	ldb               kvdb.Database
 	mutex             *sync.RWMutex // utxo leveldb表读写锁
 	mutexMem          *sync.Mutex   // 内存锁定状态互斥锁
-	lockKeys          map[string]int64
+	lockKeys          map[string]*UtxoLockItem
 	lockKeyList       *list.List // 按锁定的先后顺序，方便过期清理
 	lockExpireTime    int        // 临时锁定的最长时间
 	utxoCache         *UtxoCache
@@ -156,6 +159,11 @@ type RootJSON struct {
 		Address string `json:"address"`
 		Quota   string `json:"quota"`
 	} `json:"predistribution"`
+}
+
+type UtxoLockItem struct {
+	timestamp int64
+	holder    *list.Element
 }
 
 func genUtxoKey(addr []byte, txid []byte, offset int32) string {
@@ -262,7 +270,11 @@ func (uv *UtxoVM) unlockKey(utxoKey []byte) {
 	uv.mutexMem.Lock()
 	defer uv.mutexMem.Unlock()
 	uv.xlog.Trace("    unlock utxo key", "key", string(utxoKey))
-	delete(uv.lockKeys, string(utxoKey))
+	lockItem := uv.lockKeys[string(utxoKey)]
+	if lockItem != nil {
+		uv.lockKeyList.Remove(lockItem.holder)
+		delete(uv.lockKeys, string(utxoKey))
+	}
 }
 
 // 试图临时锁定utxo, 返回是否锁定成功
@@ -270,8 +282,8 @@ func (uv *UtxoVM) tryLockKey(key []byte) bool {
 	uv.mutexMem.Lock()
 	defer uv.mutexMem.Unlock()
 	if _, exist := uv.lockKeys[string(key)]; !exist {
-		uv.lockKeys[string(key)] = time.Now().Unix()
-		uv.lockKeyList.PushBack(key)
+		holder := uv.lockKeyList.PushBack(key)
+		uv.lockKeys[string(key)] = &UtxoLockItem{timestamp: time.Now().Unix(), holder: holder}
 		if !uv.asyncMode {
 			uv.xlog.Trace("  lock utxo key", "key", string(key))
 		}
@@ -291,10 +303,10 @@ func (uv *UtxoVM) clearExpiredLocks() {
 			break
 		}
 		topKey := topItem.Value.([]byte)
-		createTime, exist := uv.lockKeys[string(topKey)]
+		lockItem, exist := uv.lockKeys[string(topKey)]
 		if !exist {
 			uv.lockKeyList.Remove(topItem)
-		} else if createTime+int64(uv.lockExpireTime) <= now {
+		} else if lockItem.timestamp+int64(uv.lockExpireTime) <= now {
 			uv.lockKeyList.Remove(topItem)
 			delete(uv.lockKeys, string(topKey))
 		} else {
@@ -320,30 +332,17 @@ func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, priv
 		xlog = log.New("module", "utxoVM")
 		xlog.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
 	}
-	dbPath := filepath.Join(storePath, "utxoVM")
-	plgMgr, plgErr := pluginmgr.GetPluginMgr()
-	if plgErr != nil {
-		xlog.Warn("fail to get plugin manager")
-		return nil, plgErr
+	// new kvdb instance
+	kvParam := &kvdb.KVParameter{
+		DBPath:                filepath.Join(storePath, "utxoVM"),
+		KVEngineType:          kvEngineType,
+		MemCacheSize:          ledger_pkg.MemCacheSize,
+		FileHandlersCacheSize: ledger_pkg.FileHandlersCacheSize,
+		OtherPaths:            otherPaths,
 	}
-	var baseDB kvdb.Database
-	soInst, err := plgMgr.PluginMgr.CreatePluginInstance("kv", kvEngineType)
+	baseDB, err := kvdb.NewKVDBInstance(kvParam)
 	if err != nil {
-		xlog.Warn("fail to create plugin instance", "kvtype", kvEngineType)
-		return nil, err
-	}
-	baseDB = soInst.(kvdb.Database)
-	err = baseDB.Open(dbPath, map[string]interface{}{
-		"cache":     ledger_pkg.MemCacheSize,
-		"fds":       ledger_pkg.FileHandlersCacheSize,
-		"dataPaths": otherPaths,
-	})
-	if err != nil {
-		xlog.Warn("fail to open db", "dbPath", dbPath)
-		return nil, err
-	}
-	if err != nil {
-		xlog.Warn("fail to open leveldb", "dbPath", dbPath, "err", err)
+		xlog.Warn("fail to open leveldb", "dbPath", storePath+"/utxoVM", "err", err)
 		return nil, err
 	}
 
@@ -378,7 +377,7 @@ func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, priv
 		ldb:                  baseDB,
 		mutex:                utxoMutex,
 		mutexMem:             &sync.Mutex{},
-		lockKeys:             map[string]int64{},
+		lockKeys:             map[string]*UtxoLockItem{},
 		lockKeyList:          list.New(),
 		lockExpireTime:       tmplockSeconds,
 		xlog:                 xlog,
@@ -702,6 +701,12 @@ func (uv *UtxoVM) SelectUtxos(fromAddr string, fromPubKey string, totalNeed *big
 
 // PreExec the Xuper3 contract model uses previous execution to generate RWSets
 func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.InvokeResponse, error) {
+	// verify initiator type
+	if akType := acl.IsAccount(req.GetInitiator()); akType != 0 {
+		return nil, ErrInitiatorType
+	}
+
+	// get reserved contracts from chain config
 	reservedRequests, err := uv.getReservedContractRequests(req.GetRequests(), true)
 	if err != nil {
 		uv.xlog.Error("PreExec getReservedContractRequests error", "error", err)
@@ -709,7 +714,7 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 	}
 	// contract request with reservedRequests
 	req.Requests = append(reservedRequests, req.Requests...)
-	uv.xlog.Error("PreExec requests after merge", "requests", req.Requests)
+	uv.xlog.Trace("PreExec requests after merge", "requests", req.Requests)
 	// init modelCache
 	modelCache, err := xmodel.NewXModelCache(uv.GetXModel(), true)
 	if err != nil {
@@ -727,6 +732,7 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 	response := [][]byte{}
 
 	var requests []*pb.InvokeRequest
+	var responses []*pb.ContractResponse
 	for i, tmpReq := range req.Requests {
 		moduleName := tmpReq.GetModuleName()
 		vm, err := uv.vmMgr3.GetVM(moduleName)
@@ -753,7 +759,8 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 				"contractName", tmpReq.GetContractName())
 			return nil, err
 		}
-		response = append(response, res)
+		response = append(response, res.Body)
+		responses = append(responses, contract.ToPBContractResponse(res))
 
 		resourceUsed := ctx.ResourceUsed()
 		if i >= len(reservedRequests) {
@@ -770,11 +777,12 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 		return nil, err
 	}
 	rsps := &pb.InvokeResponse{
-		Inputs:   xmodel.GetTxInputs(inputs),
-		Outputs:  xmodel.GetTxOutputs(outputs),
-		Response: response,
-		Requests: requests,
-		GasUsed:  gasUesdTotal,
+		Inputs:    xmodel.GetTxInputs(inputs),
+		Outputs:   xmodel.GetTxOutputs(outputs),
+		Response:  response,
+		Requests:  requests,
+		GasUsed:   gasUesdTotal,
+		Responses: responses,
 	}
 	return rsps, nil
 }
@@ -863,8 +871,8 @@ func (uv *UtxoVM) GetUnconfirmedTx(dedup bool) ([]*pb.Transaction, error) {
 		return nil, loadErr
 	}
 	// 拓扑排序，输出的顺序是被依赖的在前，依赖方在后
-	outputTxList, unexpectedCyclic := TopSortDFS(txGraph)
-	if len(unexpectedCyclic) > 0 { // 交易之间检测出了环形的依赖关系
+	outputTxList, unexpectedCyclic, _ := TopSortDFS(txGraph)
+	if unexpectedCyclic { // 交易之间检测出了环形的依赖关系
 		uv.xlog.Warn("transaction conflicted", "unexpectedCyclic", unexpectedCyclic)
 		return nil, ErrUnexpected
 	}
@@ -1117,10 +1125,6 @@ func (uv *UtxoVM) doTxSync(tx *pb.Transaction) error {
 		uv.xlog.Warn("    fail to marshal tx", "pbErr", pbErr)
 		return pbErr
 	}
-	if int64(len(pbTxBuf)) > uv.ledger.GetMaxBlockSize()/2 {
-		uv.xlog.Warn("tx too large, should not be greater than half of max blocksize", "size", len(pbTxBuf))
-		return ErrTxTooLarge
-	}
 	recvTime := time.Now().Unix()
 	uv.mutex.Lock()
 	defer uv.mutex.Unlock() //lock guard
@@ -1171,290 +1175,9 @@ func (uv *UtxoVM) VerifyTx(tx *pb.Transaction) (bool, error) {
 	if err != nil || !isValid {
 		uv.xlog.Warn("ImmediateVerifyTx failed", "error", err,
 			"AuthRequire ", tx.AuthRequire, "AuthRequireSigns ", tx.AuthRequireSigns,
-			"Initiator", tx.Initiator, "InitiatorSigns", tx.InitiatorSigns)
+			"Initiator", tx.Initiator, "InitiatorSigns", tx.InitiatorSigns, "XuperSign", tx.XuperSign)
 	}
 	return isValid, err
-}
-
-// ImmediateVerifyTx verify tx Immediately
-func (uv *UtxoVM) ImmediateVerifyTx(tx *pb.Transaction, isRootTx bool) (bool, error) {
-	if !isRootTx && tx.Version == RootTxVersion {
-		return false, ErrVersionInvalid
-	}
-	if tx.Version > BetaTxVersion {
-		return false, ErrVersionInvalid
-	}
-	// autogen tx should not run ImmediateVerifyTx, this could be a fake tx
-	if tx.Autogen {
-		return false, ErrInvalidAutogenTx
-	}
-	if tx.Version >= TxVersion {
-		// verify rwset
-		ok, err := uv.verifyTxRWSets(tx)
-		if err != nil && strings.HasPrefix(err.Error(), "Gas not enough") {
-			err = ErrGasNotEnough
-		} else {
-			err = ErrRWSetInvalid
-		}
-		if !ok {
-			return ok, err
-		}
-
-		//verify txid (由于老版本txid生成不稳定，因此只对新版本校验txid)
-		txid, err := txhash.MakeTransactionID(tx)
-		if err != nil {
-			uv.xlog.Warn("ImmediateVerifyTx: call MakeTransactionID failed", "error", err)
-			return false, err
-		}
-		if bytes.Compare(tx.Txid, txid) != 0 {
-			uv.xlog.Warn("ImmediateVerifyTx: txid not match", "tx.Txid", tx.Txid, "txid", txid)
-			return false, fmt.Errorf("Txid verify failed")
-		}
-
-		// verify contract method acl permission
-		ok, err = uv.verifyContractValid(tx)
-		if !ok {
-			return ok, err
-		}
-
-		// verify RWSet acl permission
-		ok, err = uv.verifyRWACLValid(tx)
-		if !ok {
-			err = ErrRWAclNotEnough
-			return ok, err
-		}
-
-		// veify initiator and tx input signatures
-		return uv.verifyTxUtxo(tx)
-	}
-	return true, nil
-}
-
-// verifyTxSign 纯密码学验证
-func (uv *UtxoVM) verifyTxSign(tx *pb.Transaction) (bool, error) {
-	if len(tx.GetAuthRequire()) != len(tx.GetAuthRequireSigns()) {
-		return false, fmt.Errorf("tx.AuthRequire length not equal to tx.AuthRequireSigns")
-	}
-	digestHash, dhErr := txhash.MakeTxDigestHash(tx)
-	if dhErr != nil {
-		return false, dhErr
-	}
-	verifiedAddrs := map[string]bool{}
-	for i, ak := range tx.AuthRequire {
-		if verifiedAddrs[string(ak)] {
-			continue
-		}
-		if ok, _ := pm.IdentifyAK(ak, tx.AuthRequireSigns[i], digestHash); !ok {
-			return false, errors.New("utxo.verifyTxSign error")
-		}
-		verifiedAddrs[ak] = true
-	}
-	return true, nil
-}
-
-func (uv *UtxoVM) verifyAkURIPermission(name string, aksuri []string, signs []*pb.SignatureInfo, data []byte) (bool, error) {
-	akType := acl.IsAccount(name)
-	if akType == 1 {
-		// Identify account
-		acl, err := uv.queryAccountACL(name)
-		if err != nil || acl == nil {
-			// valid account should have ACL info, so this account might not exsit
-			uv.xlog.Warn("verifyAkURIPermission error, account might not exist", "account", name, "error", err)
-			return false, ErrInvalidAccount
-		}
-		if ok, err := pm.IdentifyAccount(string(name), aksuri, signs, data, uv.aclMgr); !ok {
-			uv.xlog.Warn("verifyAkURIPermission error, failed to IdentifyAccount", "error", err)
-			return false, errors.New("verifyTxUtxo veify account error")
-		}
-	} else if akType == 0 {
-		// Identify address
-		index, err := getAkIndex(name, aksuri)
-		if err != nil {
-			return false, errors.New("verifyTxUtxo veify address signinfo error")
-		}
-		if ok, err := pm.IdentifyAK(name, signs[index], data); !ok {
-			uv.xlog.Warn("verifyAkURIPermission error, failed to IdentifyAK", "error", err)
-			return false, errors.New("verifyTxUtxo veify address utxo error")
-		}
-	} else {
-		uv.xlog.Warn("verifyAkURIPermission error, Invalid account/address name", "name", name)
-		return false, ErrInvalidAccount
-	}
-	return true, nil
-}
-
-func (uv *UtxoVM) verifyInitiator(tx *pb.Transaction, digestHash []byte) (bool, error) {
-	aksuri := make([]string, 0)
-	name := tx.Initiator
-	nameType := acl.IsAccount(name)
-	if nameType < 0 {
-		return false, fmt.Errorf("Invalid account/address name, name=%s", string(name))
-	}
-	for _, signInfo := range tx.InitiatorSigns {
-		pk, err := uv.cryptoClient.GetEcdsaPublicKeyFromJSON([]byte(signInfo.PublicKey))
-		if err != nil {
-			return false, err
-		}
-		address, err := uv.cryptoClient.GetAddressFromPublicKey(pk)
-		if err != nil {
-			return false, err
-		}
-		if nameType == 1 {
-			address = name + "/" + address
-		}
-		aksuri = append(aksuri, address)
-	}
-	result, err := uv.verifyAkURIPermission(name, aksuri, tx.InitiatorSigns, digestHash)
-	if err != nil || !result {
-		uv.xlog.Warn("verifyAkURIPermission failed", "addr", name,
-			"InitiatorUri", aksuri, "InitiatorSigns", tx.InitiatorSigns, "error", err)
-	}
-	return result, err
-}
-
-func (uv *UtxoVM) verifyTxUtxo(tx *pb.Transaction) (bool, error) {
-	if len(tx.GetAuthRequire()) != len(tx.GetAuthRequireSigns()) {
-		return false, fmt.Errorf("tx.AuthRequire length not equal to tx.AuthRequireSigns")
-	}
-	digestHash, dhErr := txhash.MakeTxDigestHash(tx)
-	if dhErr != nil {
-		return false, dhErr
-	}
-	verifiedAddrs := map[string]bool{}
-	// verify initiator signatures
-	isValid, err := uv.verifyInitiator(tx, digestHash)
-	if err != nil || !isValid {
-		return false, err
-	}
-	verifiedAddrs[string(tx.Initiator)] = true
-	// verify tx input signatures
-	for _, txInput := range tx.TxInputs {
-		if verifiedAddrs[string(txInput.FromAddr)] {
-			continue
-		}
-		ok, err := uv.verifyAkURIPermission(string(txInput.FromAddr), tx.AuthRequire, tx.AuthRequireSigns, digestHash)
-		if err != nil || !ok {
-			uv.xlog.Warn("verifyAkURIPermission failed", "addr", txInput.FromAddr,
-				"AuthRequied", tx.AuthRequire, "AuthSigns", tx.AuthRequireSigns)
-			return false, err
-		}
-		verifiedAddrs[string(txInput.FromAddr)] = true
-	}
-	return true, nil
-}
-
-func getAkIndex(ak string, aksuri []string) (int, error) {
-	for i, v := range aksuri {
-		if ak == v {
-			return i, nil
-		}
-	}
-	return 0, fmt.Errorf("getAkIndex error not found")
-}
-
-func getGasLimitFromTx(tx *pb.Transaction) (int64, error) {
-	for _, output := range tx.GetTxOutputs() {
-		if string(output.GetToAddr()) != "$" {
-			continue
-		}
-		gasLimit := big.NewInt(0).SetBytes(output.GetAmount()).Int64()
-		// FIXME: gasLimit从大数过来的，处理溢出问题
-		if gasLimit <= 0 {
-			return 0, fmt.Errorf("bad gas limit %d", gasLimit)
-		}
-		return gasLimit, nil
-	}
-	// FIXME: 没有小费的tx如何得到gas limit?
-	return 0, nil
-}
-
-// verifyTxRWSets verify tx read sets and write sets
-func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
-	req := tx.GetContractRequests()
-	reservedRequests, err := uv.getReservedContractRequests(tx.GetContractRequests(), false)
-	if err != nil {
-		uv.xlog.Error("getReservedContractRequests error", "error", err.Error())
-		return false, err
-	}
-
-	if !verifyReservedContractRequests(reservedRequests, req) {
-		uv.xlog.Error("verifyReservedContractRequests error", "reservedRequests", reservedRequests, "req", req)
-		return false, fmt.Errorf("verify reservedContracts error")
-	}
-
-	if req == nil {
-		if tx.GetTxInputsExt() != nil || tx.GetTxOutputsExt() != nil {
-			uv.xlog.Error("verifyTxRWSets error", "error", ErrInvalidTxExt.Error())
-			return false, ErrInvalidTxExt
-		}
-		return true, nil
-	}
-
-	env, err := uv.model3.PrepareEnv(tx)
-	if err != nil {
-		return false, err
-	}
-	contextConfig := &contract.ContextConfig{
-		XMCache:      env.GetModelCache(),
-		Initiator:    tx.GetInitiator(),
-		AuthRequire:  tx.GetAuthRequire(),
-		ContractName: "",
-	}
-	gasLimit, err := getGasLimitFromTx(tx)
-	if err != nil {
-		return false, err
-	}
-	uv.xlog.Trace("get gas limit from tx", "gasLimit", gasLimit, "txid", hex.EncodeToString(tx.Txid))
-
-	for i, tmpReq := range tx.GetContractRequests() {
-		if gasLimit <= 0 {
-			uv.xlog.Error("virifyTxRWSets error:out of gas", "contractName", tmpReq.GetContractName(),
-				"txid", hex.EncodeToString(tx.Txid))
-			return false, errors.New("out of gas")
-		}
-
-		moduleName := tmpReq.GetModuleName()
-		vm, err := uv.vmMgr3.GetVM(moduleName)
-		if err != nil {
-			return false, err
-		}
-
-		limits := contract.FromPbLimits(tmpReq.GetResourceLimits())
-		if i >= len(reservedRequests) {
-			gasLimit -= limits.TotalGas()
-		}
-		contextConfig.ResourceLimits = limits
-		contextConfig.ContractName = tmpReq.GetContractName()
-		ctx, err := vm.NewContext(contextConfig)
-		if err != nil {
-			// FIXME zq @icexin: need to return contract not found
-			uv.xlog.Error("verifyTxRWSets NewContext error", "err", err, "contractName", tmpReq.GetContractName())
-			if i < len(reservedRequests) && (err.Error() == "leveldb: not found" || strings.HasSuffix(err.Error(), "not found")) {
-				continue
-			}
-			return false, err
-		}
-
-		_, err = ctx.Invoke(tmpReq.MethodName, tmpReq.Args)
-		if err != nil {
-			ctx.Release()
-			uv.xlog.Error("verifyTxRWSets Invoke error", "error", err, "contractName", tmpReq.GetContractName())
-			return false, err
-		}
-
-		ctx.Release()
-	}
-
-	_, writeSet, err := env.GetModelCache().GetRWSets()
-	if err != nil {
-		return false, err
-	}
-	uv.xlog.Trace("verifyTxRWSets", "env.output", env.GetOutputs(), "writeSet", writeSet)
-	ok := xmodel.Equal(env.GetOutputs(), writeSet)
-	if !ok {
-		return false, fmt.Errorf("Verify error")
-	}
-	return true, nil
 }
 
 // IsInUnConfirm check if the given txid is in unconfirm table
@@ -1606,8 +1329,8 @@ func (uv *UtxoVM) processUnconfirmTxs(block *pb.InternalBlock, batch kvdb.Batch,
 	}
 	if needRepost {
 		go func() {
-			sortTxList, unexpectedCyclic := TopSortDFS(unconfirmTxGraph)
-			if len(unexpectedCyclic) > 0 {
+			sortTxList, unexpectedCyclic, _ := TopSortDFS(unconfirmTxGraph)
+			if unexpectedCyclic {
 				uv.xlog.Warn("transaction conflicted", "unexpectedCyclic", unexpectedCyclic)
 				return
 			}
@@ -1654,20 +1377,18 @@ func (uv *UtxoVM) PlayAndRepost(blockid []byte, needRepost bool, isRootTx bool) 
 	// 进入正题，开始执行block里面的交易，预期不会有冲突了
 	uv.xlog.Debug("autogen tx list size, before play block", "len", len(autoGenTxList))
 	idx, length := 0, len(block.Transactions)
+
+	// parallel verify
+	verifyErr := uv.verifyBlockTxs(block, isRootTx, unconfirmToConfirm)
+	if verifyErr != nil {
+		uv.xlog.Warn("verifyBlockTx error ", "err", verifyErr)
+		return verifyErr
+	}
+
 	for idx < length {
 		tx := block.Transactions[idx]
 		txid := string(tx.Txid)
 		if unconfirmToConfirm[txid] == false { // 本地没预执行过的Tx, 从block中收到的，需要Play执行
-			if !uv.verifyAutogenTx(tx) {
-				uv.xlog.Warn("PlayAndRepost found invalid autogen tx", "txid", fmt.Sprintf("%x", tx.Txid))
-				return ErrInvalidAutogenTx
-			}
-			if !tx.Autogen && !tx.Coinbase {
-				if ok, err := uv.ImmediateVerifyTx(tx, isRootTx); !ok {
-					uv.xlog.Warn("dotx failed to ImmediateVerifyTx", "txid", fmt.Sprintf("%x", tx.Txid), "err", err)
-					return errors.New("dotx failed to ImmediateVerifyTx error")
-				}
-			}
 			err := uv.doTxInternal(tx, batch)
 			if err != nil {
 				uv.xlog.Warn("dotx failed when Play", "txid", fmt.Sprintf("%x", tx.Txid), "err", err)
@@ -1876,6 +1597,12 @@ func (uv *UtxoVM) Walk(blockid []byte) error {
 		idx, length := 0, len(todoBlk.Transactions)
 		for idx < length {
 			tx := todoBlk.Transactions[idx]
+			if !tx.Autogen && !tx.Coinbase {
+				if ok, err := uv.ImmediateVerifyTx(tx, false); !ok {
+					uv.xlog.Warn("dotx failed to ImmediateVerifyTx", "txid", fmt.Sprintf("%x", tx.Txid), "err", err)
+					return errors.New("dotx failed to ImmediateVerifyTx error")
+				}
+			}
 			txErr := uv.doTxInternal(tx, batch)
 			if txErr != nil {
 				uv.xlog.Warn("failed to do tx when Walk", "txErr", txErr, "txid", fmt.Sprintf("%x", tx.Txid))
@@ -1972,10 +1699,18 @@ func (uv *UtxoVM) queryAccountContainAK(address string) ([]string, error) {
 }
 
 func (uv *UtxoVM) queryTxFromForbiddenWithConfirmed(txid []byte) (bool, bool, error) {
+	// 如果配置文件配置了封禁tx监管合约，那么继续下面的执行。否则，直接返回.
+	forbiddenContract := uv.ledger.GenesisBlock.GetConfig().ForbiddenContract
+
+	// 这里不针对ModuleName/ContractName/MethodName做特殊化处理
+	moduleNameForForbidden := forbiddenContract.ModuleName
+	contractNameForForbidden := forbiddenContract.ContractName
+	methodNameForForbidden := forbiddenContract.MethodName
+
 	request := &pb.InvokeRequest{
-		ModuleName:   "wasm",
-		ContractName: "forbidden",
-		MethodName:   "get",
+		ModuleName:   moduleNameForForbidden,
+		ContractName: contractNameForForbidden,
+		MethodName:   methodNameForForbidden,
 		Args: map[string][]byte{
 			"txid": []byte(fmt.Sprintf("%x", txid)),
 		},
@@ -2136,6 +1871,52 @@ func (uv *UtxoVM) GetFrozenBalance(addr string) (*big.Int, error) {
 	return utxoFrozen, nil
 }
 
+// GetFrozenBalance 查询Address的被冻结的余额 / 未冻结的余额
+func (uv *UtxoVM) GetBalanceDetail(addr string) ([]*pb.TokenFrozenDetail, error) {
+	addrPrefix := fmt.Sprintf("%s%s_", pb.UTXOTablePrefix, addr)
+	utxoFrozen := big.NewInt(0)
+	utxoUnFrozen := big.NewInt(0)
+	curHeight := uv.ledger.GetMeta().TrunkHeight
+	it := uv.ldb.NewIteratorWithPrefix([]byte(addrPrefix))
+	defer it.Release()
+	for it.Next() {
+		uBinary := it.Value()
+		uItem := &UtxoItem{}
+		uErr := uItem.Loads(uBinary)
+		if uErr != nil {
+			return nil, uErr
+		}
+		if uItem.FrozenHeight <= curHeight && uItem.FrozenHeight != -1 {
+			utxoUnFrozen.Add(utxoUnFrozen, uItem.Amount) // utxo累加
+			continue
+		}
+		utxoFrozen.Add(utxoFrozen, uItem.Amount) // utxo累加
+	}
+	if it.Error() != nil {
+		return nil, it.Error()
+	}
+	//	return utxoFrozen, nil
+
+	// TODO 补充TokenFrozenDetail的数据结构
+	var tokenFrozenDetails []*pb.TokenFrozenDetail
+
+	tokenFrozenDetail := &pb.TokenFrozenDetail{
+		//		Bcname:  bcname,
+		Balance:  utxoFrozen.String(),
+		IsFrozen: true,
+	}
+	tokenFrozenDetails = append(tokenFrozenDetails, tokenFrozenDetail)
+
+	tokenUnFrozenDetail := &pb.TokenFrozenDetail{
+		//		Bcname:   bcname,
+		Balance:  utxoUnFrozen.String(),
+		IsFrozen: false,
+	}
+	tokenFrozenDetails = append(tokenFrozenDetails, tokenUnFrozenDetail)
+
+	return tokenFrozenDetails, nil
+}
+
 // Close 关闭utxo vm, 目前主要是关闭leveldb
 func (uv *UtxoVM) Close() {
 	uv.smartContract.Stop()
@@ -2225,4 +2006,94 @@ func (uv *UtxoVM) GetACLManager() *acli.Manager {
 func (uv *UtxoVM) SetMaxConfirmedDelay(seconds uint32) {
 	uv.maxConfirmedDelay = seconds
 	uv.xlog.Info("set max confirmed delay of tx", "seconds", seconds)
+}
+
+// GetAccountContracts get account contracts, return a slice of contract names
+func (uv *UtxoVM) GetAccountContracts(account string) ([]string, error) {
+	contracts := []string{}
+	if acl.IsAccount(account) != 1 {
+		uv.xlog.Warn("GetAccountContracts valid account name error", "error", "account name is not valid")
+		return nil, errors.New("account name is not valid")
+	}
+	prefKey := pb.ExtUtxoTablePrefix + string(xmodel.MakeRawKey(utils.GetAccount2ContractBucket(), []byte(account+utils.GetACLSeparator())))
+	it := uv.ldb.NewIteratorWithPrefix([]byte(prefKey))
+	defer it.Release()
+	for it.Next() {
+		key := string(it.Key())
+		ret := strings.Split(key, utils.GetACLSeparator())
+		size := len(ret)
+		if size >= 1 {
+			contracts = append(contracts, ret[size-1])
+		}
+	}
+	if it.Error() != nil {
+		return nil, it.Error()
+	}
+	return contracts, nil
+}
+
+// GetContractStatus get contract status of a contract
+func (uv *UtxoVM) GetContractStatus(contractName string) (*pb.ContractStatus, error) {
+	res := &pb.ContractStatus{}
+	res.ContractName = contractName
+	verdata, err := uv.model3.Get("contract", wasm.ContractCodeDescKey(contractName))
+	if err != nil {
+		uv.xlog.Warn("GetContractStatus get version data error", "error", err.Error())
+		return nil, err
+	}
+	txid := verdata.GetRefTxid()
+	res.Txid = fmt.Sprintf("%x", txid)
+	tx, _, err := uv.model3.QueryTx(txid)
+	if err != nil {
+		uv.xlog.Warn("GetContractStatus query tx error", "error", err.Error())
+		return nil, err
+	}
+	res.Desc = tx.GetDesc()
+	// query if contract is bannded
+	res.IsBanned, err = uv.queryContractBannedStatus(contractName)
+	return res, nil
+}
+
+// queryContractBannedStatus query where the contract is bannded
+// FIXME zq: need to use a grace manner to get the bannded contract name
+func (uv *UtxoVM) queryContractBannedStatus(contractName string) (bool, error) {
+	request := &pb.InvokeRequest{
+		ModuleName:   "wasm",
+		ContractName: "banned",
+		MethodName:   "verify",
+		Args: map[string][]byte{
+			"contract": []byte(contractName),
+		},
+	}
+
+	modelCache, err := xmodel.NewXModelCache(uv.GetXModel(), true)
+	if err != nil {
+		uv.xlog.Warn("queryContractBannedStatus new model cache error", "error", err)
+		return false, err
+	}
+	moduleName := request.GetModuleName()
+	vm, err := uv.vmMgr3.GetVM(moduleName)
+	if err != nil {
+		uv.xlog.Warn("queryContractBannedStatus get VM error", "error", err)
+		return false, err
+	}
+
+	contextConfig := &contract.ContextConfig{
+		XMCache:        modelCache,
+		ResourceLimits: contract.MaxLimits,
+		ContractName:   request.GetContractName(),
+	}
+	ctx, err := vm.NewContext(contextConfig)
+	if err != nil {
+		uv.xlog.Warn("queryContractBannedStatus new context error", "error", err)
+		return false, err
+	}
+	_, err = ctx.Invoke(request.GetMethodName(), request.GetArgs())
+	if err != nil && err.Error() == "contract has been banned" {
+		ctx.Release()
+		uv.xlog.Warn("queryContractBannedStatus error", "error", err)
+		return true, err
+	}
+	ctx.Release()
+	return false, nil
 }

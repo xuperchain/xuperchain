@@ -104,6 +104,8 @@ type XChainCore struct {
 	isCoreMiner bool
 	// enable core peer connection or not
 	coreConnection bool
+	// if failSkip is false, you will execute loop of walk, or just only once walk
+	failSkip bool
 }
 
 // Status return the status of the chain
@@ -132,6 +134,7 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	xc.nodeMode = nodeMode
 	xc.stopFlag = false
 	xc.coreConnection = cfg.CoreConnection
+	xc.failSkip = cfg.FailSkip
 	ledger.MemCacheSize = cfg.DBCache.MemCacheSize
 	ledger.FileHandlersCacheSize = cfg.DBCache.FdCacheSize
 	datapath := cfg.Datapath + "/" + bcname
@@ -235,7 +238,7 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 		xc.log.Warn("Get genesis consensus error", "error", err.Error())
 		return err
 	}
-	xc.con, err = consensus.NewPluggableConsensus(xlog, cfg, bcname, xc.Ledger, xc.Utxovm, gCon, cryptoType)
+	xc.con, err = consensus.NewPluggableConsensus(xlog, cfg, bcname, xc.Ledger, xc.Utxovm, gCon, cryptoType, p2p)
 	if err != nil {
 		xc.log.Warn("New PluggableConsensus Error")
 		return err
@@ -247,23 +250,25 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	xc.Utxovm.RegisterVM("consensus", xc.con, global.VMPrivRing0)
 	xc.Utxovm.RegisterVM("proposal", xc.proposal, global.VMPrivRing0)
 
-	nc, err := native.New(&cfg.Native, datapath+"/native", xc.log, datapathOthers, kvEngineType)
-	if err != nil {
-		xc.log.Error("make native", "error", err)
-		return err
-	}
-	xc.NativeCodeMgr = nc
-
-	xc.Utxovm.RegisterVM("native", nc, global.VMPrivRing0)
-
 	xbridge := bridge.New()
+	if cfg.Native.Enable {
+		nc, err := native.New(&cfg.Native, datapath+"/native", xc.log, datapathOthers, kvEngineType)
+		if err != nil {
+			xc.log.Error("make native", "error", err)
+			return err
+		}
+		xc.NativeCodeMgr = nc
+
+		xc.Utxovm.RegisterVM("native", nc, global.VMPrivRing0)
+		xbridge.RegisterExecutor("native", nc)
+	}
+
 	wasmvm, err := wasm.New(&cfg.Wasm, filepath.Join(datapath, "wasm"), xbridge, xc.Utxovm.GetXModel())
 	if err != nil {
 		xc.log.Error("initialize WASM error", "error", err)
 		return err
 	}
 
-	xbridge.RegisterExecutor("native", nc)
 	xbridge.RegisterExecutor("wasm", wasmvm)
 	xbridge.RegisterToXCore(xc.Utxovm.RegisterVM3)
 
@@ -325,11 +330,18 @@ func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
 		xc.log.Debug("refused a connection at function call GenerateTx", "logid", in.Header.Logid, "cost", hd.Timer.Print())
 		return ErrServiceRefused
 	}
-	blockSize, _ := common.GetIntBlkSerializedSize(in.Block)
+	blockSize := int64(proto.Size(in.Block))
 	if blockSize > xc.Ledger.GetMaxBlockSize() {
 		xc.log.Debug("refused a connection because block is too large", "logid", in.Header.Logid, "cost", hd.Timer.Print(), "size", blockSize)
 		return ErrServiceRefused
 	}
+
+	// validate for consensus of pow, if ok, tell the miner to stop mining
+	isValidBlock := ValidPowBlock(in, xc)
+	if !isValidBlock {
+		return ErrInvalidBlock
+	}
+
 	xc.mutex.Lock()
 	defer xc.mutex.Unlock()
 
@@ -355,6 +367,11 @@ func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
 		//放锁期间，可能这个块已经被另外一个线程存进去了，所以需要再次判断
 		xc.log.Debug("Block is exist", "logid", in.Header.Logid, "cost", hd.Timer.Print())
 		return ErrBlockExist
+	}
+	// Note in BFT case, we should accept blocks with same hight
+	if in.Block.Height < xc.Ledger.GetMeta().TrunkHeight {
+		xc.log.Warn("refuse short chain of blocks", "remote", in.Block.Height, "local", xc.Ledger.GetMeta().TrunkHeight)
+		return ErrServiceRefused
 	}
 	blocksIds := []string{}
 	//如果是接受到老的block（版本是1）, TODO
@@ -390,7 +407,7 @@ func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
 					xc.log.Warn("Save Pending Block error, after got it from network! ", "logid", in.Header.Logid, "blockid", in.Block.Blockid)
 					return ErrCannotSyncBlock
 				}
-				ibSize, _ := common.GetIntBlkSerializedSize(ib.Block)
+				ibSize := int64(proto.Size(ib.Block))
 				if ibSize > xc.Ledger.GetMaxBlockSize() {
 					xc.log.Warn("too large block", "size", ibSize, "blockid", global.F(ib.Block.Blockid))
 					return ErrBlockTooLarge
@@ -502,15 +519,23 @@ func (xc *XChainCore) doMiner() {
 	ledgerLastID := xc.Ledger.GetMeta().TipBlockid
 	utxovmLastID := xc.Utxovm.GetLatestBlockid()
 
-	// 如果Walk一直失败，建议不要挖矿了，而是报警处理
-	for !bytes.Equal(ledgerLastID, utxovmLastID) {
+	if !bytes.Equal(ledgerLastID, utxovmLastID) {
 		xc.log.Warn("ledger last blockid is not equal utxovm last id")
 		err := xc.Utxovm.Walk(ledgerLastID)
+		// if xc.failSkip = false, then keep logic, if not equal, retry
 		if err != nil {
-			xc.log.Error("Walk error ", "ledger blockid", global.F(ledgerLastID),
-				"utxo blockid", global.F(utxovmLastID))
-			return
+			if !xc.failSkip {
+				xc.log.Error("Walk error at", "ledger blockid", global.F(ledgerLastID),
+					"utxo blockid", global.F(utxovmLastID))
+				return
+			} else {
+				err := xc.Ledger.Truncate(utxovmLastID)
+				if err != nil {
+					return
+				}
+			}
 		}
+
 		ledgerLastID = xc.Ledger.GetMeta().TipBlockid
 		utxovmLastID = xc.Utxovm.GetLatestBlockid()
 	}
@@ -522,6 +547,7 @@ func (xc *XChainCore) doMiner() {
 	// 挖矿前共识的预处理
 	var curTerm, curBlockNum int64
 	var targetBits int32
+	qc := (*pb.QuorumCert)(nil)
 	data, ok := xc.con.ProcessBeforeMiner(xc.Ledger.GetMeta().TrunkHeight+1, t.UnixNano())
 	minerTimer.Mark("ProcessBeforeMiner")
 	if ok {
@@ -532,6 +558,9 @@ func (xc *XChainCore) doMiner() {
 					xc.log.Trace("Minning tdpos ProcessBeforeMiner!")
 					curTerm = data["curTerm"].(int64)
 					curBlockNum = data["curBlockNum"].(int64)
+					if qci, ok := data["quorum_cert"].(*pb.QuorumCert); ok {
+						qc = qci
+					}
 				case consensus.ConsensusTypePow:
 					xc.log.Trace("Minning tdpos ProcessBeforeMiner!")
 					targetBits = data["targetBits"].(int32)
@@ -543,65 +572,64 @@ func (xc *XChainCore) doMiner() {
 		return
 	}
 	meta := xc.Ledger.GetMeta()
-	maxBlockSize := xc.Ledger.GetMaxBlockSize()
-	realBlockSize := int64(0)
-	factor := 2
+	accumulatedTxSize := 0
+	txSizeTotalLimit := xc.Ledger.MaxTxSizePerBlock()
 	var freshBlock *pb.InternalBlock
 	var freshBatch kvdb.Batch
-	for realBlockSize == 0 || realBlockSize > maxBlockSize {
-		txs := []*pb.Transaction{}
-		//1. 查询自动生成的交易
-		vatList, err := xc.Utxovm.GetVATList(xc.Ledger.GetMeta().TrunkHeight+1, -1, t.UnixNano())
-		minerTimer.Mark("GetAutogenTxs")
-		if err != nil {
-			xc.log.Warn("[Minning] fail to get triggered tx list", "logid", header.Logid)
-			return
-		}
-		xc.log.Trace("[Minning] get vatList success", "vatList", vatList)
-		txs = append(txs, vatList...)
-		txsUnconf, err := xc.Utxovm.GetUnconfirmedTx(false)
-		if err != nil {
-			xc.log.Warn("[Minning] fail to get unconfirmedtx")
-			return
-		}
-		if realBlockSize > maxBlockSize {
-			txsUnconf = txsUnconf[0 : len(txsUnconf)/factor]
-			xc.log.Warn("pick less unconfirmed tx to fit the max blocksize", "len", len(txsUnconf))
-			factor *= 2
-		}
-		txs = append(txs, txsUnconf...)
-		fakeBlock, err := xc.Ledger.FormatFakeBlock(txs, xc.address, xc.privateKey,
-			t.UnixNano(), curTerm, curBlockNum, meta.TipBlockid, xc.Utxovm.GetTotal())
-		if err != nil {
-			xc.log.Warn("[Minning] format fake block error", "logid")
-			return
-		}
-		//2. pre-execute the contract
-		freshBatch = xc.Utxovm.NewBatch()
-		if txs, _, err = xc.Utxovm.TxOfRunningContractGenerate(txs, fakeBlock, freshBatch, true); err != nil {
-			if err.Error() != common.ErrContractExecutionTimeout.Error() {
-				xc.log.Warn("PrePlay fake block failed", "error", err) //unexpected error
-				return
-			}
-		}
-		minerTimer.Mark("PrePlay")
-		//3. 统一在最后插入矿工奖励
-		blockAward := xc.Ledger.GenesisBlock.CalcAward(xc.Ledger.GetMeta().TrunkHeight + 1)
-		awardtx, err := xc.Utxovm.GenerateAwardTx(xc.address, blockAward.String(), []byte{'1'})
-		minerTimer.Mark("GenAwardTx")
-		txs = append(txs, awardtx)
-		freshBlock, err = xc.Ledger.FormatPOWBlock(txs, xc.address, xc.privateKey,
-			t.UnixNano(), curTerm, curBlockNum, meta.TipBlockid, targetBits, xc.Utxovm.GetTotal(), fakeBlock.FailedTxs)
-		if err != nil {
-			xc.log.Warn("[Minning] format block error", "logid", header.Logid, "err", err)
-			return
-		}
-		minerTimer.Mark("Formatblock2")
-		realBlockSize, _ = common.GetIntBlkSerializedSize(freshBlock)
-		if len(txsUnconf) == 0 {
+	txs := []*pb.Transaction{}
+	//1. 查询自动生成的交易
+	vatList, err := xc.Utxovm.GetVATList(xc.Ledger.GetMeta().TrunkHeight+1, -1, t.UnixNano())
+	minerTimer.Mark("GetAutogenTxs")
+	if err != nil {
+		xc.log.Warn("[Minning] fail to get triggered tx list", "logid", header.Logid)
+		return
+	}
+	xc.log.Trace("[Minning] get vatList success", "vatList", vatList)
+	txs = append(txs, vatList...)
+	for _, vatTx := range txs {
+		accumulatedTxSize += proto.Size(vatTx)
+	}
+	txsUnconf, err := xc.Utxovm.GetUnconfirmedTx(false)
+	if err != nil {
+		xc.log.Warn("[Minning] fail to get unconfirmedtx")
+		return
+	}
+	for _, ucTx := range txsUnconf {
+		accumulatedTxSize += proto.Size(ucTx)
+		if accumulatedTxSize > txSizeTotalLimit {
+			xc.log.Warn("already got enough tx to produce block", "acct", accumulatedTxSize, "limit", txSizeTotalLimit)
 			break
 		}
+		txs = append(txs, ucTx)
 	}
+	fakeBlock, err := xc.Ledger.FormatFakeBlock(txs, xc.address, xc.privateKey,
+		t.UnixNano(), curTerm, curBlockNum, xc.Utxovm.GetLatestBlockid(), xc.Utxovm.GetTotal())
+	if err != nil {
+		xc.log.Warn("[Minning] format fake block error", "logid")
+		return
+	}
+	//2. pre-execute the contract
+	freshBatch = xc.Utxovm.NewBatch()
+	if txs, _, err = xc.Utxovm.TxOfRunningContractGenerate(txs, fakeBlock, freshBatch, true); err != nil {
+		if err.Error() != common.ErrContractExecutionTimeout.Error() {
+			xc.log.Warn("PrePlay fake block failed", "error", err) //unexpected error
+			return
+		}
+	}
+	minerTimer.Mark("PrePlay")
+	//3. 统一在最后插入矿工奖励
+	blockAward := xc.Ledger.GenesisBlock.CalcAward(xc.Ledger.GetMeta().TrunkHeight + 1)
+	awardtx, err := xc.Utxovm.GenerateAwardTx(xc.address, blockAward.String(), []byte{'1'})
+	minerTimer.Mark("GenAwardTx")
+	txs = append(txs, awardtx)
+	freshBlock, err = xc.Ledger.FormatMinerBlock(txs, xc.address, xc.privateKey,
+		t.UnixNano(), curTerm, curBlockNum, xc.Utxovm.GetLatestBlockid(), targetBits,
+		xc.Utxovm.GetTotal(), qc, fakeBlock.FailedTxs)
+	if err != nil {
+		xc.log.Warn("[Minning] format block error", "logid", header.Logid, "err", err)
+		return
+	}
+	minerTimer.Mark("Formatblock2")
 	xc.log.Debug("[Minning] Start to ConfirmBlock", "logid", header.Logid)
 	confirmStatus := xc.Ledger.ConfirmBlock(freshBlock, false)
 	minerTimer.Mark("ConfirmBlock")
@@ -619,7 +647,7 @@ func (xc *XChainCore) doMiner() {
 	lockHold = false
 	xc.Utxovm.SetBlockGenEvent()
 	defer xc.Utxovm.NotifyFinishBlockGen()
-	err := xc.Utxovm.PlayForMiner(freshBlock.Blockid, freshBatch)
+	err = xc.Utxovm.PlayForMiner(freshBlock.Blockid, freshBatch)
 	if err != nil {
 		xc.log.Warn("[Minning] utxo play error ", "logid", header.Logid, "error", err, "blockid", fmt.Sprintf("%x", freshBlock.Blockid))
 		return
@@ -756,12 +784,14 @@ func (xc *XChainCore) PostTx(in *pb.TxStatus, hd *global.XContext) (*pb.CommonRe
 			out.Header.Error = pb.XChainErrorEnum_GAS_NOT_ENOUGH_ERROR
 		case utxo.ErrRWSetInvalid, utxo.ErrInvalidTxExt:
 			out.Header.Error = pb.XChainErrorEnum_RWSET_INVALID_ERROR
-		case utxo.ErrRWAclNotEnough:
+		case utxo.ErrACLNotEnough:
 			out.Header.Error = pb.XChainErrorEnum_RWACL_INVALID_ERROR
 		case utxo.ErrVersionInvalid:
 			out.Header.Error = pb.XChainErrorEnum_TX_VERSION_INVALID_ERROR
-		default:
+		case utxo.ErrInvalidSignature:
 			out.Header.Error = pb.XChainErrorEnum_TX_SIGN_ERROR
+		default:
+			out.Header.Error = pb.XChainErrorEnum_TX_VERIFICATION_ERROR
 		}
 		xc.log.Warn("post tx verify tx error", "txid", global.F(in.Tx.Txid),
 			"valid_err", validErr, "logid", in.Header.Logid)
@@ -1003,6 +1033,24 @@ func (xc *XChainCore) GetFrozenBalance(addr string) (string, error) {
 	return bint.String(), nil
 }
 
+// GetFrozenBalance get balance that still be frozen from utxo
+func (xc *XChainCore) GetBalanceDetail(addr string) (*pb.TokenFrozenDetails, error) {
+	if xc.Status() != global.Normal {
+		return nil, ErrNotReady
+	}
+	tokenDetails, err := xc.Utxovm.GetBalanceDetail(addr)
+	if err != nil {
+		return nil, err
+	}
+
+	tokenFrozenDetails := &pb.TokenFrozenDetails{
+		Bcname: xc.bcname,
+		Tfd:    tokenDetails,
+	}
+
+	return tokenFrozenDetails, nil
+}
+
 // GetConsType get consensus type for specific block chain
 func (xc *XChainCore) GetConsType() string {
 	return xc.con.Type(xc.Ledger.GetMeta().TrunkHeight + 1)
@@ -1097,7 +1145,7 @@ func (xc *XChainCore) GetDposVotedRecords(addr string) ([]*pb.VotedRecord, error
 // GetCheckResults get all proposers for specific term
 func (xc *XChainCore) GetCheckResults(term int64) ([]string, error) {
 	res := []string{}
-	proposers := []*tdpos.CandidateInfo{}
+	proposers := []*cons_base.CandidateInfo{}
 	version := xc.con.Version(xc.Ledger.GetMeta().TrunkHeight + 1)
 	key := tdpos.GenTermCheckKey(version, term)
 	val, err := xc.Utxovm.GetFromTable(nil, []byte(key))
@@ -1173,4 +1221,22 @@ func (xc *XChainCore) GetBlockByHeight(in *pb.BlockHeight) *pb.Block {
 		}
 	}
 	return out
+}
+
+// GetAccountContractsStatus query account contracts
+func (xc *XChainCore) GetAccountContractsStatus(account string) ([]*pb.ContractStatus, error) {
+	res := []*pb.ContractStatus{}
+	contracts, err := xc.Utxovm.GetAccountContracts(account)
+	if err != nil {
+		xc.log.Warn("GetAccountContractsStatus error", "error", err.Error())
+		return nil, err
+	}
+	for _, v := range contracts {
+		contractStatus, err := xc.Utxovm.GetContractStatus(v)
+		if err != nil {
+			return nil, err
+		}
+		res = append(res, contractStatus)
+	}
+	return res, nil
 }

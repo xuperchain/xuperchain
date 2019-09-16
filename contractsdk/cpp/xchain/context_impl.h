@@ -4,6 +4,8 @@
 #include "xchain/contract.pb.h"
 #include "xchain/xchain.h"
 
+namespace pb = xchain::contract::sdk;
+
 namespace xchain {
 
 class ContextImpl : public Context {
@@ -21,15 +23,19 @@ public:
     virtual bool get_object(const std::string& key, std::string* value);
     virtual bool put_object(const std::string& key, const std::string& value);
     virtual bool delete_object(const std::string& key);
+    virtual bool query_tx(const std::string &txid, Transaction* tx);
+    virtual bool query_block(const std::string &blockid, Block* block);
     virtual void ok(const std::string& body);
     virtual void error(const std::string& body);
     virtual Response* mutable_response();
+    virtual std::unique_ptr<Iterator> new_iterator(const std::string& start, const std::string& limit);
 
 private:
     pb::CallArgs _call_args;
     std::map<std::string, std::string> _args;
     Response _resp;
 };
+
 }  // namespace xchain
 
 #endif

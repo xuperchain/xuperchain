@@ -13,7 +13,7 @@ const ModuleName = "xkernel"
 
 // Method define method interface needed
 type Method interface {
-	Invoke(ctx *KContext, args map[string][]byte) ([]byte, error)
+	Invoke(ctx *KContext, args map[string][]byte) (*contract.Response, error)
 }
 
 // XuperKernel define kernel contract method type
@@ -63,7 +63,7 @@ func (xk *XuperKernel) NewContext(ctxCfg *contract.ContextConfig) (contract.Cont
 }
 
 // Invoke entrance for kernel contract method invoke
-func (kc *KContext) Invoke(methodName string, args map[string][]byte) ([]byte, error) {
+func (kc *KContext) Invoke(methodName string, args map[string][]byte) (*contract.Response, error) {
 	method := kc.xk.methods[methodName]
 	if method == nil {
 		return nil, fmt.Errorf("Mehotd %s not exists in %s", methodName, ModuleName)
