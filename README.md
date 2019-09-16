@@ -69,6 +69,7 @@ make test
 There is an output folder if build successfully. Enter the output folder, create a default chain firstly:
 
 ```
+cd ./output
 ./xchain-cli createChain
 ```
 
@@ -182,6 +183,7 @@ make test
 
 单机版xchain
 ```
+cd ./output
 ./xchain-cli createChain
 nohup ./xchain &
 ./xchain-cli status
