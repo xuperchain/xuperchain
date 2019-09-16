@@ -301,6 +301,9 @@ func (prp *Proposal) fillOldState(desc []byte) ([]byte, error) {
 	case "kernel.UpdateMaxBlockSize":
 		prp.log.Trace("contract desc need to process", "contractKey", "kernel.UpdateMaxBlockSize")
 		descObj.Args["old_block_size"] = prp.ledger.GetMaxBlockSize()
+	case "kernel.UpdateNewAccountResourceAmount":
+		prp.log.Trace("contract desc need to process", "contractKey", "kernel.UpdateNewAccountResourceAmount")
+		descObj.Args["old_new_account_resource_amount"] = prp.ledger.GetNewAccountResourceAmount()
 	case "kernel.UpdateReservedContract":
 		prp.log.Trace("contract desc need to process", "contractKey", "kernel.UpdateReservedContract")
 		reservedContracts := []ledger.InvokeRequest{}

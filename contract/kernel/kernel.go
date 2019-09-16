@@ -294,6 +294,21 @@ func (k *Kernel) validateUpdateMaxBlockSize(desc *contract.TxDesc) error {
 	return nil
 }
 
+func (k *Kernel) validateUpdateNewAccountResourceAmount(desc *contract.TxDesc) error {
+	for _, argName := range []string{"new_new_account_resource_amount", "old_new_account_resource_amount"} {
+		if desc.Args[argName] == nil {
+			return fmt.Errorf("miss argument in contract: %s", argName)
+		}
+		switch tp := desc.Args[argName].(type) {
+		case float64:
+			return nil
+		default:
+			return fmt.Errorf("invalid arg type: %s, %v", argName, tp)
+		}
+	}
+	return nil
+}
+
 func (k *Kernel) validateUpdateForbiddenContract(desc *contract.TxDesc, name string) (*pb.InvokeRequest, error) {
 	result := ledger.InvokeRequest{}
 
@@ -401,6 +416,8 @@ func (k *Kernel) Run(desc *contract.TxDesc) error {
 		return k.runUpdateReservedContract(desc)
 	case "UpdateForbiddenContract":
 		return k.runUpdateForbiddenContract(desc)
+	case "UpdateNewAccountResourceAmount":
+		return k.runUpdateNewAccountResourceAmount(desc)
 	default:
 		k.log.Warn("method not implemented", "method", desc.Method)
 		return ErrMethodNotImplemented
@@ -435,6 +452,8 @@ func (k *Kernel) Rollback(desc *contract.TxDesc) error {
 		return k.rollbackUpdateReservedContract(desc)
 	case "UpdateForbiddenContract":
 		return k.rollbackUpdateForbiddenContract(desc)
+	case "UpdateNewAccountResourceAmount":
+		return k.rollbackUpdateNewAccountResourceAmount(desc)
 	default:
 		k.log.Warn("method not implemented", "method", desc.Method)
 		return ErrMethodNotImplemented
@@ -460,6 +479,25 @@ func (k *Kernel) runUpdateMaxBlockSize(desc *contract.TxDesc) error {
 	return err
 }
 
+func (k *Kernel) runUpdateNewAccountResourceAmount(desc *contract.TxDesc) error {
+	if k.context == nil || k.context.LedgerObj == nil {
+		return fmt.Errorf("failed to update newAccountResourceAmount, because no ledger object in context")
+	}
+	vErr := k.validateUpdateNewAccountResourceAmount(desc)
+	if vErr != nil {
+		return vErr
+	}
+	newNewAccountResourceAmount := int64(desc.Args["new_new_account_resource_amount"].(float64))
+	oldNewAccountResourceAmount := int64(desc.Args["old_new_account_resource_amount"].(float64))
+	k.log.Info("update newAccountResourceAmount", "old", oldNewAccountResourceAmount, "new", newNewAccountResourceAmount)
+	curNewAccountResourceAmount := k.context.LedgerObj.GetNewAccountResourceAmount()
+	if oldNewAccountResourceAmount != curNewAccountResourceAmount {
+		fmt.Errorf("unexpected old newAccountResourceAmount, got %v, expected: %v", oldNewAccountResourceAmount, curNewAccountResourceAmount)
+	}
+	err := k.context.LedgerObj.UpdateNewAccountResourceAmount(newNewAccountResourceAmount, k.context.UtxoBatch)
+	return err
+}
+
 func (k *Kernel) rollbackUpdateMaxBlockSize(desc *contract.TxDesc) error {
 	if k.context == nil || k.context.LedgerObj == nil {
 		return fmt.Errorf("failed to update block size, because no ledger object in context")
@@ -470,6 +508,19 @@ func (k *Kernel) rollbackUpdateMaxBlockSize(desc *contract.TxDesc) error {
 	}
 	oldBlockSize := int64(desc.Args["old_block_size"].(float64))
 	err := k.context.LedgerObj.UpdateMaxBlockSize(oldBlockSize, k.context.UtxoBatch)
+	return err
+}
+
+func (k *Kernel) rollbackUpdateNewAccountResourceAmount(desc *contract.TxDesc) error {
+	if k.context == nil || k.context.LedgerObj == nil {
+		return fmt.Errorf("failed to update newAccountResourceAmount, because no ledger object in context")
+	}
+	vErr := k.validateUpdateNewAccountResourceAmount(desc)
+	if vErr != nil {
+		return vErr
+	}
+	oldNewAccountResourceAmount := int64(desc.Args["old_new_account_resource_amount"].(float64))
+	err := k.context.LedgerObj.UpdateNewAccountResourceAmount(oldNewAccountResourceAmount, k.context.UtxoBatch)
 	return err
 }
 
