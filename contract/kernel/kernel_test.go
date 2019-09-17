@@ -489,6 +489,7 @@ func TestRunUpdateForbiddenContract(t *testing.T) {
 		, "maxblocksize" : "128"
 		, "period" : "5000"
 		, "award" : "1000"
+		, "new_account_resource_amount": 1000
 		, "forbidden_contract": {
 			"module_name": "wasm",
 			"contract_name": "forbidden",
@@ -560,5 +561,35 @@ func TestRunUpdateForbiddenContract(t *testing.T) {
 	rollbackUpdateBlkChainErr := kl.rollbackUpdateForbiddenContract(txDesc)
 	if rollbackUpdateBlkChainErr != nil {
 		t.Error("runUpdateForbiddenContract error:->", rollbackUpdateBlkChainErr.Error())
+	}
+
+	args2 := []byte(`
+	{
+		"args":{
+			"old_new_account_resource_amount": 1000,
+			"new_new_account_resource_amount": 100
+		}
+	}
+	`)
+	json.Unmarshal(args2, txDesc)
+	t.Log("original newAccountResourceAmount->", L.GetMeta().NewAccountResourceAmount)
+	if L.GetMeta().NewAccountResourceAmount != 1000 {
+		t.Error("expect 1000, but got ", L.GetMeta().NewAccountResourceAmount)
+	}
+	runUpadteNewAccountResourceAmountErr := kl.runUpdateNewAccountResourceAmount(txDesc)
+	if runUpadteNewAccountResourceAmountErr != nil {
+		t.Error("runUpadteNewAccountResourceAmount error:->", runUpadteNewAccountResourceAmountErr.Error())
+	}
+	t.Log("new newAccountResourceAmount->", L.GetMeta().NewAccountResourceAmount)
+	if L.GetMeta().NewAccountResourceAmount != 100 {
+		t.Error("expect 100, but got ", L.GetMeta().NewAccountResourceAmount)
+	}
+	rollbackUpdateNewAccountResourceAmountErr := kl.rollbackUpdateNewAccountResourceAmount(txDesc)
+	if rollbackUpdateNewAccountResourceAmountErr != nil {
+		t.Error("rollbackUpdateNewAccountResourceAmount error:->", rollbackUpdateNewAccountResourceAmountErr.Error())
+	}
+	t.Log("rollback newAccountResourceAmount->", L.GetMeta().NewAccountResourceAmount)
+	if L.GetMeta().NewAccountResourceAmount != 1000 {
+		t.Error("expect 1000, but got ", L.GetMeta().NewAccountResourceAmount)
 	}
 }
