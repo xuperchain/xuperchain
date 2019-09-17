@@ -238,7 +238,7 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 		xc.log.Warn("Get genesis consensus error", "error", err.Error())
 		return err
 	}
-	xc.con, err = consensus.NewPluggableConsensus(xlog, cfg, bcname, xc.Ledger, xc.Utxovm, gCon, cryptoType)
+	xc.con, err = consensus.NewPluggableConsensus(xlog, cfg, bcname, xc.Ledger, xc.Utxovm, gCon, cryptoType, p2p)
 	if err != nil {
 		xc.log.Warn("New PluggableConsensus Error")
 		return err
@@ -368,7 +368,8 @@ func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
 		xc.log.Debug("Block is exist", "logid", in.Header.Logid, "cost", hd.Timer.Print())
 		return ErrBlockExist
 	}
-	if in.Block.Height <= xc.Ledger.GetMeta().TrunkHeight {
+	// Note in BFT case, we should accept blocks with same hight
+	if in.Block.Height < xc.Ledger.GetMeta().TrunkHeight {
 		xc.log.Warn("refuse short chain of blocks", "remote", in.Block.Height, "local", xc.Ledger.GetMeta().TrunkHeight)
 		return ErrServiceRefused
 	}
@@ -546,6 +547,7 @@ func (xc *XChainCore) doMiner() {
 	// 挖矿前共识的预处理
 	var curTerm, curBlockNum int64
 	var targetBits int32
+	qc := (*pb.QuorumCert)(nil)
 	data, ok := xc.con.ProcessBeforeMiner(xc.Ledger.GetMeta().TrunkHeight+1, t.UnixNano())
 	minerTimer.Mark("ProcessBeforeMiner")
 	if ok {
@@ -556,6 +558,9 @@ func (xc *XChainCore) doMiner() {
 					xc.log.Trace("Minning tdpos ProcessBeforeMiner!")
 					curTerm = data["curTerm"].(int64)
 					curBlockNum = data["curBlockNum"].(int64)
+					if qci, ok := data["quorum_cert"].(*pb.QuorumCert); ok {
+						qc = qci
+					}
 				case consensus.ConsensusTypePow:
 					xc.log.Trace("Minning tdpos ProcessBeforeMiner!")
 					targetBits = data["targetBits"].(int32)
@@ -617,8 +622,9 @@ func (xc *XChainCore) doMiner() {
 	awardtx, err := xc.Utxovm.GenerateAwardTx(xc.address, blockAward.String(), []byte{'1'})
 	minerTimer.Mark("GenAwardTx")
 	txs = append(txs, awardtx)
-	freshBlock, err = xc.Ledger.FormatPOWBlock(txs, xc.address, xc.privateKey,
-		t.UnixNano(), curTerm, curBlockNum, xc.Utxovm.GetLatestBlockid(), targetBits, xc.Utxovm.GetTotal(), fakeBlock.FailedTxs)
+	freshBlock, err = xc.Ledger.FormatMinerBlock(txs, xc.address, xc.privateKey,
+		t.UnixNano(), curTerm, curBlockNum, xc.Utxovm.GetLatestBlockid(), targetBits,
+		xc.Utxovm.GetTotal(), qc, fakeBlock.FailedTxs)
 	if err != nil {
 		xc.log.Warn("[Minning] format block error", "logid", header.Logid, "err", err)
 		return
@@ -1025,6 +1031,24 @@ func (xc *XChainCore) GetFrozenBalance(addr string) (string, error) {
 		return "", err
 	}
 	return bint.String(), nil
+}
+
+// GetFrozenBalance get balance that still be frozen from utxo
+func (xc *XChainCore) GetBalanceDetail(addr string) (*pb.TokenFrozenDetails, error) {
+	if xc.Status() != global.Normal {
+		return nil, ErrNotReady
+	}
+	tokenDetails, err := xc.Utxovm.GetBalanceDetail(addr)
+	if err != nil {
+		return nil, err
+	}
+
+	tokenFrozenDetails := &pb.TokenFrozenDetails{
+		Bcname: xc.bcname,
+		Tfd:    tokenDetails,
+	}
+
+	return tokenFrozenDetails, nil
 }
 
 // GetConsType get consensus type for specific block chain

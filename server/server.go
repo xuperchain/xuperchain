@@ -229,6 +229,32 @@ func (s *server) GetFrozenBalance(ctx context.Context, in *pb.AddressStatus) (*p
 	return in, nil
 }
 
+// GetFrozenBalance get balance frozened for account or addr
+func (s *server) GetBalanceDetail(ctx context.Context, in *pb.AddressBalanceStatus) (*pb.AddressBalanceStatus, error) {
+	s.mg.Speed.Add("GetFrozenBalance")
+	if in.Header == nil {
+		in.Header = global.GHeader()
+	}
+	for i := 0; i < len(in.Tfds); i++ {
+		bc := s.mg.Get(in.Tfds[i].Bcname)
+		if bc == nil {
+			in.Tfds[i].Error = pb.XChainErrorEnum_BLOCKCHAIN_NOTEXIST
+			in.Tfds[i].Tfd = nil
+		} else {
+			tfd, err := bc.GetBalanceDetail(in.Address)
+			if err != nil {
+				in.Tfds[i].Error = HandleBlockCoreError(err)
+				in.Tfds[i].Tfd = nil
+			} else {
+				in.Tfds[i].Error = pb.XChainErrorEnum_SUCCESS
+				//				in.Bcs[i].Balance = bi
+				in.Tfds[i] = tfd
+			}
+		}
+	}
+	return in, nil
+}
+
 // GetBlock get block info according to blockID
 func (s *server) GetBlock(ctx context.Context, in *pb.BlockID) (*pb.Block, error) {
 	s.mg.Speed.Add("GetBlock")

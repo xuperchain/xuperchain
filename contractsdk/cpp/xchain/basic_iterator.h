@@ -1,6 +1,5 @@
 #pragma once
 
-#include "xchain/contract.pb.h"
 #include "xchain/error.h"
 #include "xchain/xchain.h"
 
