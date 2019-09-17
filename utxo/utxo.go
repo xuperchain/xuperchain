@@ -974,9 +974,13 @@ func (uv *UtxoVM) doTxInternal(tx *pb.Transaction, batch kvdb.Batch) error {
 	if !uv.asyncMode {
 		uv.xlog.Trace("  start to dotx", "txid", fmt.Sprintf("%x", tx.Txid))
 	}
-	if err := uv.checkInputEqualOutput(tx); err != nil {
-		return err
+
+	if !tx.Marked {
+		if err := uv.checkInputEqualOutput(tx); err != nil {
+			return err
+		}
 	}
+
 	err := uv.model3.DoTx(tx, batch)
 	if err != nil {
 		uv.xlog.Warn("model3.DoTx failed", "err", err)

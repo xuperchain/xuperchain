@@ -1,6 +1,7 @@
 package kernel
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -13,8 +14,10 @@ import (
 	"github.com/mitchellh/mapstructure"
 
 	log "github.com/xuperchain/log15"
+	"github.com/xuperchain/xuperunion/common/config"
 	"github.com/xuperchain/xuperunion/contract"
 	"github.com/xuperchain/xuperunion/crypto/client"
+	"github.com/xuperchain/xuperunion/crypto/hash"
 	"github.com/xuperchain/xuperunion/global"
 	"github.com/xuperchain/xuperunion/ledger"
 	"github.com/xuperchain/xuperunion/pb"
@@ -25,6 +28,7 @@ import (
 type ChainRegister interface {
 	RegisterBlockChain(name string) error
 	UnloadBlockChain(name string) error
+	GetXchainmgConfig() *config.NodeConfig
 }
 
 // Kernel is the kernel contract
@@ -358,6 +362,53 @@ func (k *Kernel) validateUpdateReservedContract(desc *contract.TxDesc, name stri
 	return reservedContractParams, nil
 }
 
+func (k *Kernel) validateUpdateBlockChainData(desc *contract.TxDesc) error {
+	if desc.Args["txid"] == nil || desc.Args["publicKey"] == nil || desc.Args["sign"] == nil {
+		return fmt.Errorf("miss argument in contact: txid, publicKey, sign")
+	}
+
+	txid, ok := desc.Args["txid"].(string)
+	if !ok {
+		return fmt.Errorf("invalid arg type: txid")
+	}
+
+	publicKey, ok := desc.Args["publicKey"].(string)
+	if !ok {
+		return fmt.Errorf("invalid arg type: publicKey")
+	}
+	bytespk := []byte(publicKey)
+	xcc, err := client.CreateCryptoClientFromJSONPublicKey(bytespk)
+	if err != nil {
+		return err
+	}
+	ecdsaKey, err := xcc.GetEcdsaPublicKeyFromJSON(bytespk)
+	if err != nil {
+		return err
+	}
+	addr := k.register.GetXchainmgConfig().ModifyBlockAddr
+	isMatch, _ := xcc.VerifyAddressUsingPublicKey(addr, ecdsaKey)
+	if !isMatch {
+		return errors.New("address and public key not match")
+	}
+
+	sign, ok := desc.Args["sign"].(string)
+	if !ok {
+		return fmt.Errorf("invalid arg type: sign")
+	}
+	bytesign, err := hex.DecodeString(sign)
+	if err != nil {
+		return fmt.Errorf("invalide arg type: sign byte")
+	}
+	digestHash := hash.DoubleSha256([]byte(txid))
+	ok, err = xcc.VerifyECDSA(ecdsaKey, bytesign, digestHash)
+	if err != nil || !ok {
+		k.log.Warn("validateUpdateBlockChainData verifySignatures failed")
+		return err
+	}
+
+	return nil
+}
+
 // Run implements ContractInterface
 func (k *Kernel) Run(desc *contract.TxDesc) error {
 	k.mutex.Lock()
@@ -401,6 +452,8 @@ func (k *Kernel) Run(desc *contract.TxDesc) error {
 		return k.runUpdateReservedContract(desc)
 	case "UpdateForbiddenContract":
 		return k.runUpdateForbiddenContract(desc)
+	case "UpdateBlockChainData":
+		return k.runUpdateBlockChainData(desc)
 	default:
 		k.log.Warn("method not implemented", "method", desc.Method)
 		return ErrMethodNotImplemented
@@ -435,6 +488,8 @@ func (k *Kernel) Rollback(desc *contract.TxDesc) error {
 		return k.rollbackUpdateReservedContract(desc)
 	case "UpdateForbiddenContract":
 		return k.rollbackUpdateForbiddenContract(desc)
+	case "UpdateBlockChainData":
+		return k.rollbackUpdateBlockChainData(desc)
 	default:
 		k.log.Warn("method not implemented", "method", desc.Method)
 		return ErrMethodNotImplemented
@@ -583,6 +638,40 @@ func (k *Kernel) rollbackUpdateReservedContract(desc *contract.TxDesc) error {
 	}
 	k.log.Info("rollback reservered contract")
 	err = k.context.LedgerObj.UpdateReservedContract(params, k.context.UtxoBatch)
+	return err
+}
+
+func (k *Kernel) runUpdateBlockChainData(desc *contract.TxDesc) error {
+	if k.context == nil || k.context.LedgerObj == nil {
+		return fmt.Errorf("failed to update blockchain data, because no ledger object in context")
+	}
+
+	err := k.validateUpdateBlockChainData(desc)
+	if err != nil {
+		k.log.Warn("runUpdateBlockChainData validate params error")
+		return err
+	}
+
+	txid := desc.Args["txid"].(string)
+	k.log.Info("runUpdateBlockChainData", "txid", txid)
+	err = k.context.LedgerObj.UpdateBlockChainData(txid, hex.EncodeToString(desc.Tx.Txid))
+	return err
+}
+
+func (k *Kernel) rollbackUpdateBlockChainData(desc *contract.TxDesc) error {
+	if k.context == nil || k.context.LedgerObj == nil {
+		return fmt.Errorf("failed to modify blockchain data, because no ledger object in context")
+	}
+
+	err := k.validateUpdateBlockChainData(desc)
+	if err != nil {
+		k.log.Warn("runModifyBlockChainData validate params error")
+		return err
+	}
+
+	txid := desc.Args["txid"].(string)
+	k.log.Info("rollbackModifyBlockChainData start, txid: %s", txid)
+	//err = k.context.LedgerObj.UpdateBlockChainData(txid, hex.EncodeToString(desc.Tx.Txid))
 	return err
 }
 

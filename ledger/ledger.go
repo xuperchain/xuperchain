@@ -3,6 +3,7 @@ package ledger
 import (
 	"bytes"
 	"crypto/ecdsa"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"math/big"
@@ -509,6 +510,41 @@ func (l *Ledger) UpdateReservedContract(params []*pb.InvokeRequest, batch kvdb.B
 
 	l.meta = newMeta
 	l.xlog.Info("Update reservered contract", "reservedContracts", l.meta.ReservedContracts)
+	return nil
+}
+
+// UpdateBlockChainData modify tx which txid is txid
+func (l *Ledger) UpdateBlockChainData(txid string, ptxid string) error {
+	if txid == "" || ptxid == "" {
+		return fmt.Errorf("invalid update blockchaindata requests")
+	}
+
+	l.mutex.Lock()
+	defer l.mutex.Unlock()
+
+	l.xlog.Info("ledger UpdateBlockChainData", "tx", txid, "ptxid", ptxid)
+
+	rawTxid, err := hex.DecodeString(txid)
+	tx, err := l.QueryTransaction(rawTxid)
+	if err != nil {
+		l.xlog.Warn("ledger UpdateBlockChainData query tx error")
+		return fmt.Errorf("ledger UpdateBlockChainData query tx error")
+	}
+	tx.Marked = true
+	tx.EffectiveTxid = ptxid
+	tx.EffectiveHeight = l.GetMeta().TrunkHeight + 1
+	tx.TxOutputs = []*pb.TxOutput{}
+	tx.Desc = []byte("")
+	tx.TxOutputsExt = []*pb.TxOutputExt{}
+
+	pbTxBuf, err := proto.Marshal(tx)
+	if err != nil {
+		l.xlog.Warn("marshal trasaction failed when UpdateBlockChainData", "err", err)
+		return err
+	}
+	l.confirmedTable.Put(tx.Txid, pbTxBuf)
+
+	l.xlog.Info("Update BlockChainData success", "txid", hex.EncodeToString(tx.Txid))
 	return nil
 }
 

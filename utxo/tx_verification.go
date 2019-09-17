@@ -53,6 +53,23 @@ func (uv *UtxoVM) ImmediateVerifyTx(tx *pb.Transaction, isRootTx bool) (bool, er
 
 	// Start transaction verification workflow
 	if tx.Version > RootTxVersion {
+		// verify deleted tx
+		if tx.Marked {
+			return true, nil
+		}
+
+		isRely, ok, err := uv.verifyRelyOnMarkedTxs(tx)
+		if err != nil {
+			uv.xlog.Warn("ImmediateVerifyTx: verifyRelyOnMarkedTxs failed", "error", err)
+			return false, err
+		}
+		if isRely {
+			if ok {
+				return true, nil
+			}
+			return false, err
+		}
+
 		// verify txid
 		txid, err := txhash.MakeTransactionID(tx)
 		if err != nil {
@@ -462,4 +479,48 @@ func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
 		return false, fmt.Errorf("Verify error")
 	}
 	return true, nil
+}
+
+// verifyRelyOnMarkedTxs
+// bool isRely, bool verify
+func (uv *UtxoVM) verifyRelyOnMarkedTxs(tx *pb.Transaction) (bool, bool, error) {
+	isRely := false
+	for _, txInput := range tx.TxInputs {
+		reftxid := txInput.RefTxid
+		reftx, err := uv.ledger.QueryTransaction(reftxid)
+		if err != nil {
+			uv.xlog.Warn("verifyRelyOnMarkedTxs query tx error")
+			return isRely, false, fmt.Errorf("query tx error")
+		}
+		if reftx.Marked {
+			isRely = true
+			block, err := uv.ledger.QueryBlock(tx.Blockid)
+			if err != nil {
+				return isRely, false, err
+			}
+			if block.Height > reftx.EffectiveHeight {
+				return isRely, false, nil
+			}
+		}
+	}
+	for _, txIn := range tx.TxInputsExt {
+		reftxid := txIn.RefTxid
+		reftx, err := uv.ledger.QueryTransaction(reftxid)
+		if err != nil {
+			uv.xlog.Warn("verifyRelyOnMarkedTxs query tx error")
+			return isRely, false, fmt.Errorf("query tx error")
+		}
+		if reftx.Marked {
+			isRely = true
+			block, err := uv.ledger.QueryBlock(tx.Blockid)
+			if err != nil {
+				return isRely, false, err
+			}
+			if block.Height > reftx.EffectiveHeight {
+				return isRely, false, nil
+			}
+		}
+	}
+
+	return isRely, true, nil
 }

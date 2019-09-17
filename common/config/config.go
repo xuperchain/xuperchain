@@ -203,6 +203,7 @@ type NodeConfig struct {
 	Wasm            WasmConfig `yaml:"wasm,omitempty"`
 	CoreConnection  bool       `yaml:"coreConnection,omitempty"`
 	FailSkip        bool       `yaml:"failSkip,omitempty"`
+	ModifyBlockAddr string     `yaml:"modifyBlockAddr,omitempty"`
 }
 
 // KernelConfig kernel config
@@ -291,6 +292,7 @@ func (nc *NodeConfig) defaultNodeConfig() {
 	}
 	nc.CoreConnection = false
 	nc.FailSkip = false
+	nc.ModifyBlockAddr = "dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN"
 }
 
 // NewNodeConfig returns a config of a node
@@ -403,6 +405,7 @@ func (nc *NodeConfig) ApplyFlags(flags *pflag.FlagSet) {
 	flags.StringVar(&nc.PluginConfPath, "pluginConfPath", nc.PluginConfPath, "used for config overwrite --pluginConfPath <plugin conf path>")
 
 	flags.BoolVar(&nc.FailSkip, "failSkip", nc.FailSkip, "used for config overwrite --failSkip <>")
+	flags.StringVar(&nc.ModifyBlockAddr, "modifyBlockAddr", nc.ModifyBlockAddr, "used for config overwrite --modifyBlockAddr <>")
 }
 
 // VisitAll print all config of node

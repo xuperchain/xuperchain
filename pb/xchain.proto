@@ -400,6 +400,12 @@ message Transaction {
   int64 received_timestamp = 30;
   // 统一签名(支持多重签名/环签名等，与initiator_signs/auth_require_signs不同时使用)
   XuperSignature xuper_sign = 31;
+  // txid交易被effective_txid的交易提出可修改区块链的请求
+  string effective_txid = 32;
+  // 本交易是否已被修改标记
+  bool marked = 33;
+  // txid交易被修改生效的高度
+  int64 effective_height = 34;
 }
 
 // Ledger metadata

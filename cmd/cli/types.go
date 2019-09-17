@@ -134,6 +134,9 @@ type Transaction struct {
 	InitiatorSigns    []SignatureInfo  `json:"initiatorSigns"`
 	AuthRequireSigns  []SignatureInfo  `json:"authRequireSigns"`
 	ReceivedTimestamp int64            `json:"receivedTimestamp:"`
+	Marked            bool             `json:"marked:"`
+	EffectiveHeight   int64            `json:"effectiveHeight:"`
+	EffectiveTxid     string           `json:"effectiveTxid:"`
 }
 
 // BigInt big int
@@ -165,6 +168,9 @@ func FromPBTx(tx *pb.Transaction) *Transaction {
 		Coinbase:          tx.Coinbase,
 		Initiator:         tx.Initiator,
 		ReceivedTimestamp: tx.ReceivedTimestamp,
+		EffectiveHeight:   tx.EffectiveHeight,
+		Marked:            tx.Marked,
+		EffectiveTxid:     tx.EffectiveTxid,
 	}
 	for _, input := range tx.TxInputs {
 		t.TxInputs = append(t.TxInputs, TxInput{
