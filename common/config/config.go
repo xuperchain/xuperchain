@@ -204,6 +204,7 @@ type NodeConfig struct {
 	CoreConnection  bool       `yaml:"coreConnection,omitempty"`
 	FailSkip        bool       `yaml:"failSkip,omitempty"`
 	ModifyBlockAddr string     `yaml:"modifyBlockAddr,omitempty"`
+	EnableXEndorser bool       `yaml:"enableXEndorser,omitempty"`
 }
 
 // KernelConfig kernel config
@@ -293,6 +294,7 @@ func (nc *NodeConfig) defaultNodeConfig() {
 	nc.CoreConnection = false
 	nc.FailSkip = false
 	nc.ModifyBlockAddr = "dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN"
+	nc.EnableXEndorser = false
 }
 
 // NewNodeConfig returns a config of a node
