@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	rpcEndpoint = flag.String("gateway_endpoint", "localhost:50089", "endpoint of grpc service forward to")
+	rpcEndpoint = flag.String("gateway_endpoint", "localhost:37101", "endpoint of grpc service forward to")
 	// http port
 	httpEndpoint = flag.String("http_endpoint", ":8098", "endpoint of http service")
 	// InitialWindowSize window size
