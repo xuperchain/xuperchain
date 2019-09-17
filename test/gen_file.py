@@ -52,6 +52,7 @@ body5 = {
         "height_gap": 31536000,
         "ratio": 1
     },
+    "new_account_resource_amount": 1000,
     "genesis_consensus": {
         "name": "tdpos",
         "config": {
