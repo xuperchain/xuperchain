@@ -790,8 +790,8 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 }
 
 // 加载所有未确认的订单表到内存
-// 参数:	dedup : true-删除已经确认tx, false-保留已经确认tx
-//  返回：txMap : txid -> Transaction
+// 参数: dedup : true-删除已经确认tx, false-保留已经确认tx
+// 返回: txMap : txid -> Transaction
 //        txGraph:  txid ->  [依赖此txid的tx]
 func (uv *UtxoVM) sortUnconfirmedTx() (map[string]*pb.Transaction, TxGraph, map[string]bool, error) {
 	// 构造反向依赖关系图, key是被依赖的交易
@@ -799,8 +799,9 @@ func (uv *UtxoVM) sortUnconfirmedTx() (map[string]*pb.Transaction, TxGraph, map[
 	delayedTxMap := map[string]bool{}
 	txGraph := TxGraph{}
 	uv.unconfirmTxInMem.Range(func(k, v interface{}) bool {
-		txMap[k.(string)] = v.(*pb.Transaction)
-		txGraph[k.(string)] = []string{}
+		txid := k.(string)
+		txMap[txid] = v.(*pb.Transaction)
+		txGraph[txid] = []string{}
 		return true
 	})
 	var totalDelay int64
@@ -827,12 +828,14 @@ func (uv *UtxoVM) sortUnconfirmedTx() (map[string]*pb.Transaction, TxGraph, map[
 			txGraph[refTxID] = append(txGraph[refTxID], txID)
 		}
 	}
-	if len(txMap) > 0 {
-		avgDelay := totalDelay / int64(len(txMap)) //平均unconfirm滞留时间
-		uv.xlog.Info("average unconfirm delay", "micro-senconds", avgDelay/1e6, "count", len(txMap))
-		uv.avgDelay = avgDelay / 1e6
+	txMapSize := int64(len(txMap))
+	if txMapSize > 0 {
+		avgDelay := totalDelay / txMapSize //平均unconfirm滞留时间
+		microSec := avgDelay / 1e6
+		uv.xlog.Info("average unconfirm delay", "micro-senconds", microSec, "count", txMapSize)
+		uv.avgDelay = microSec
 	}
-	uv.unconfirmTxAmount = int64(len(txMap))
+	uv.unconfirmTxAmount = txMapSize
 	return txMap, txGraph, delayedTxMap, nil
 }
 
