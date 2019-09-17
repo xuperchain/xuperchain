@@ -43,6 +43,7 @@ function buildpkg() {
 buildpkg xchain-cli github.com/xuperchain/xuperunion/cmd/cli
 buildpkg xchain github.com/xuperchain/xuperunion/cmd/xchain
 buildpkg xc github.com/xuperchain/xuperunion/contractsdk/xc
+go build -o xchain-httpgw gateway/http_gateway.go
 go build -o dump_chain test/dump_chain.go
 
 # build plugins
@@ -62,6 +63,7 @@ go build --buildmode=plugin -o plugins/consensus/consensus-tdpos.so.1.0.0 github
 mkdir -p output
 output_dir=output
 mv xchain-cli xchain ${output_dir}
+mv xchain-httpgw ${output_dir}
 mv wasm2c ${output_dir}
 mv dump_chain ${output_dir}
 mv xc ${output_dir}
