@@ -485,8 +485,11 @@ func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
 // bool isRely, bool verify
 func (uv *UtxoVM) verifyRelyOnMarkedTxs(tx *pb.Transaction) (bool, bool, error) {
 	isRely := false
-	for _, txInput := range tx.TxInputs {
+	for _, txInput := range tx.GetTxInputs() {
 		reftxid := txInput.RefTxid
+		if string(reftxid) == "" {
+			continue
+		}
 		reftx, err := uv.ledger.QueryTransaction(reftxid)
 		if err != nil {
 			uv.xlog.Warn("verifyRelyOnMarkedTxs query tx error")
@@ -503,8 +506,11 @@ func (uv *UtxoVM) verifyRelyOnMarkedTxs(tx *pb.Transaction) (bool, bool, error) 
 			}
 		}
 	}
-	for _, txIn := range tx.TxInputsExt {
+	for _, txIn := range tx.GetTxInputsExt() {
 		reftxid := txIn.RefTxid
+		if string(reftxid) == "" {
+			continue
+		}
 		reftx, err := uv.ledger.QueryTransaction(reftxid)
 		if err != nil {
 			uv.xlog.Warn("verifyRelyOnMarkedTxs query tx error")
