@@ -492,8 +492,7 @@ func (uv *UtxoVM) verifyRelyOnMarkedTxs(tx *pb.Transaction) (bool, bool, error) 
 		}
 		reftx, err := uv.ledger.QueryTransaction(reftxid)
 		if err != nil {
-			uv.xlog.Warn("verifyRelyOnMarkedTxs query tx not found")
-			return isRely, true, nil
+			continue
 		}
 		if reftx.Marked {
 			isRely = true
@@ -513,8 +512,7 @@ func (uv *UtxoVM) verifyRelyOnMarkedTxs(tx *pb.Transaction) (bool, bool, error) 
 		}
 		reftx, err := uv.ledger.QueryTransaction(reftxid)
 		if err != nil {
-			uv.xlog.Warn("verifyRelyOnMarkedTxs query tx not found")
-			return isRely, true, nil
+			continue
 		}
 		if reftx.Marked {
 			isRely = true
