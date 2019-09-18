@@ -115,6 +115,7 @@ type UtxoVM struct {
 	prevFoundKeyCache *common.LRUCache         // 上一次找到的可用utxo key，用于加速GenerateTx
 	utxoTotal         *big.Int                 // 总资产
 	cryptoClient      crypto_base.CryptoClient // 加密实例
+	modifyBlockAddr   string                   // 可修改区块链的监管地址
 	model3            *xmodel.XModel           // XuperModel实例，处理extutxo
 	vmMgr3            *contract.VMManager
 	aclMgr            *acli.Manager // ACL manager for read/write acl table
@@ -322,12 +323,12 @@ func (uv *UtxoVM) clearExpiredLocks() {
 func NewUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, privateKey, publicKey string,
 	address []byte, xlog log.Logger, isBeta bool, kvEngineType string, cryptoType string) (*UtxoVM, error) {
 	return MakeUtxoVM(bcname, ledger, storePath, privateKey, publicKey, address, xlog, UTXOCacheSize,
-		UTXOLockExpiredSecond, UTXOContractExecutionTime, []string{}, isBeta, kvEngineType, cryptoType)
+		UTXOLockExpiredSecond, UTXOContractExecutionTime, []string{}, isBeta, kvEngineType, cryptoType, "")
 }
 
 // MakeUtxoVM 这个函数比NewUtxoVM更加可订制化
 func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, privateKey, publicKey string, address []byte, xlog log.Logger,
-	cachesize int, tmplockSeconds, contractExectionTime int, otherPaths []string, iBeta bool, kvEngineType string, cryptoType string) (*UtxoVM, error) {
+	cachesize int, tmplockSeconds, contractExectionTime int, otherPaths []string, iBeta bool, kvEngineType string, cryptoType string, modifyaddr string) (*UtxoVM, error) {
 	if xlog == nil { // 如果外面没传进来log对象的话
 		xlog = log.New("module", "utxoVM")
 		xlog.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
@@ -413,6 +414,7 @@ func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, priv
 		vmMgr3:               vmManager,
 		aclMgr:               aclManager,
 		maxConfirmedDelay:    DefaultMaxConfirmedDelay,
+		modifyBlockAddr:      modifyaddr,
 	}
 	if iBeta {
 		utxoVM.defaultTxVersion = BetaTxVersion
@@ -980,7 +982,7 @@ func (uv *UtxoVM) doTxInternal(tx *pb.Transaction, batch kvdb.Batch) error {
 		uv.xlog.Trace("  start to dotx", "txid", fmt.Sprintf("%x", tx.Txid))
 	}
 
-	if !tx.Marked {
+	if tx.GetModifyBlock() == nil || (tx.GetModifyBlock() != nil && !tx.ModifyBlock.Marked) {
 		if err := uv.checkInputEqualOutput(tx); err != nil {
 			return err
 		}
@@ -1182,6 +1184,16 @@ func (uv *UtxoVM) VerifyTx(tx *pb.Transaction) (bool, error) {
 		uv.xlog.Warn("ImmediateVerifyTx failed", "error", err,
 			"AuthRequire ", tx.AuthRequire, "AuthRequireSigns ", tx.AuthRequireSigns,
 			"Initiator", tx.Initiator, "InitiatorSigns", tx.InitiatorSigns, "XuperSign", tx.XuperSign)
+		if tx.GetModifyBlock() != nil && tx.ModifyBlock.Marked {
+			ok, err := uv.verifyMarkedTx(tx)
+			if err == nil && ok {
+				return ok, nil
+			}
+		}
+		ok, err := uv.verifyRelyOnMarkedTxs(tx)
+		if err == nil || ok {
+			return ok, nil
+		}
 	}
 	return isValid, err
 }

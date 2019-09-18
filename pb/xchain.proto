@@ -400,12 +400,8 @@ message Transaction {
   int64 received_timestamp = 30;
   // 统一签名(支持多重签名/环签名等，与initiator_signs/auth_require_signs不同时使用)
   XuperSignature xuper_sign = 31;
-  // txid交易被effective_txid的交易提出可修改区块链的请求
-  string effective_txid = 32;
-  // 本交易是否已被修改标记
-  bool marked = 33;
-  // txid交易被修改生效的高度
-  int64 effective_height = 34;
+  // 可修改区块链标记
+  ModifyBlock modify_block = 32;
 }
 
 // Ledger metadata
@@ -918,3 +914,17 @@ message ContractResponse {
   string message = 2;
   bytes  body = 3;
 }
+
+message ModifyBlock {
+  // txid交易被effective_txid的交易提出可修改区块链的请求
+  string effective_txid = 1;
+  // 本交易是否已被修改标记
+  bool marked = 2;
+  // txid交易被修改生效的高度
+  int64 effective_height = 3;
+  // 监管的public key
+  string public_key = 4;
+  // 监管地址对修改的交易id的签名
+  string sign = 5;
+}
+

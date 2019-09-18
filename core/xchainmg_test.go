@@ -405,7 +405,7 @@ func InitCreateBlockChain(t *testing.T) {
 	kLogger.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
 	kl.Init(workSpace, kLogger, nil, "xuper")
 	kl.SetNewChainWhiteList(map[string]bool{BobAddress: true})
-	utxoVM, _ := utxo.MakeUtxoVM("xuper", ledger, workSpace, "", "", []byte(""), nil, 5000, 60, 500, nil, false, DefaultKvEngine, crypto_client.CryptoTypeDefault)
+	utxoVM, _ := utxo.MakeUtxoVM("xuper", ledger, workSpace, "", "", []byte(""), nil, 5000, 60, 500, nil, false, DefaultKvEngine, crypto_client.CryptoTypeDefault, "")
 	utxoVM.RegisterVM("kernel", kl, global.VMPrivRing0)
 	//创建链的时候分配财富
 	tx, err2 := utxoVM.GenerateRootTx([]byte(`

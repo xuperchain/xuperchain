@@ -703,9 +703,11 @@ func (k *Kernel) runUpdateBlockChainData(desc *contract.TxDesc) error {
 		return err
 	}
 
-	txid := desc.Args["txid"].(string)
+	txid, _ := desc.Args["txid"].(string)
+	publicKey, _ := desc.Args["publicKey"].(string)
+	sign, _ := desc.Args["sign"].(string)
 	k.log.Info("runUpdateBlockChainData", "txid", txid)
-	err = k.context.LedgerObj.UpdateBlockChainData(txid, hex.EncodeToString(desc.Tx.Txid))
+	err = k.context.LedgerObj.UpdateBlockChainData(txid, hex.EncodeToString(desc.Tx.Txid), publicKey, sign)
 	return err
 }
 

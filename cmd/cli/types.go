@@ -134,9 +134,13 @@ type Transaction struct {
 	InitiatorSigns    []SignatureInfo  `json:"initiatorSigns"`
 	AuthRequireSigns  []SignatureInfo  `json:"authRequireSigns"`
 	ReceivedTimestamp int64            `json:"receivedTimestamp:"`
-	Marked            bool             `json:"marked:"`
-	EffectiveHeight   int64            `json:"effectiveHeight:"`
-	EffectiveTxid     string           `json:"effectiveTxid:"`
+	ModifyBlock       ModifyBlock      `json:"modifyBlock:"`
+}
+
+type ModifyBlock struct {
+	Marked          bool   `json:"marked:"`
+	EffectiveHeight int64  `json:"effectiveHeight:"`
+	EffectiveTxid   string `json:"effectiveTxid:"`
 }
 
 // BigInt big int
@@ -168,9 +172,6 @@ func FromPBTx(tx *pb.Transaction) *Transaction {
 		Coinbase:          tx.Coinbase,
 		Initiator:         tx.Initiator,
 		ReceivedTimestamp: tx.ReceivedTimestamp,
-		EffectiveHeight:   tx.EffectiveHeight,
-		Marked:            tx.Marked,
-		EffectiveTxid:     tx.EffectiveTxid,
 	}
 	for _, input := range tx.TxInputs {
 		t.TxInputs = append(t.TxInputs, TxInput{
@@ -240,6 +241,11 @@ func FromPBTx(tx *pb.Transaction) *Transaction {
 		})
 	}
 
+	t.ModifyBlock = ModifyBlock{
+		EffectiveHeight: tx.ModifyBlock.EffectiveHeight,
+		Marked:          tx.ModifyBlock.Marked,
+		EffectiveTxid:   tx.ModifyBlock.EffectiveTxid,
+	}
 	return t
 }
 

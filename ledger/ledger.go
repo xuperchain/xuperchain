@@ -537,7 +537,7 @@ func (l *Ledger) UpdateReservedContract(params []*pb.InvokeRequest, batch kvdb.B
 }
 
 // UpdateBlockChainData modify tx which txid is txid
-func (l *Ledger) UpdateBlockChainData(txid string, ptxid string) error {
+func (l *Ledger) UpdateBlockChainData(txid string, ptxid string, publickey string, sign string) error {
 	if txid == "" || ptxid == "" {
 		return fmt.Errorf("invalid update blockchaindata requests")
 	}
@@ -553,9 +553,13 @@ func (l *Ledger) UpdateBlockChainData(txid string, ptxid string) error {
 		l.xlog.Warn("ledger UpdateBlockChainData query tx error")
 		return fmt.Errorf("ledger UpdateBlockChainData query tx error")
 	}
-	tx.Marked = true
-	tx.EffectiveTxid = ptxid
-	tx.EffectiveHeight = l.GetMeta().TrunkHeight + 1
+	tx.ModifyBlock = &pb.ModifyBlock{
+		Marked:          true,
+		EffectiveTxid:   ptxid,
+		EffectiveHeight: l.GetMeta().TrunkHeight + 1,
+		PublicKey:       publickey,
+		Sign:            sign,
+	}
 	tx.TxOutputs = []*pb.TxOutput{}
 	tx.Desc = []byte("")
 	tx.TxOutputsExt = []*pb.TxOutputExt{}
