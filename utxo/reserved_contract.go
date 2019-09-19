@@ -116,17 +116,11 @@ func (uv *UtxoVM) verifyReservedContractRequests(reservedReqs, txReqs []*pb.Invo
 
 // geReservedContractRequest get reserved contract requests from system params, it doesn't consume gas.
 func (uv *UtxoVM) getReservedContractRequests(req []*pb.InvokeRequest, isPreExec bool) ([]*pb.InvokeRequest, error) {
-	reservedContractstpl := []*pb.InvokeRequest{}
-	originalReservedContracts, err := uv.ledger.GenesisBlock.GetConfig().GetReservedContract()
-	if err != nil {
-		return nil, err
-	}
 	MetaReservedContracts := uv.ledger.GetMeta().ReservedContracts
-	if MetaReservedContracts != nil {
-		reservedContractstpl = MetaReservedContracts
-	} else {
-		reservedContractstpl = originalReservedContracts
+	if MetaReservedContracts == nil {
+		return nil, nil
 	}
+	reservedContractstpl := []*pb.InvokeRequest{}
 	uv.xlog.Info("MetaReservedContracts", "reservedContracts", reservedContractstpl)
 
 	// if all reservedContracts have not been updated, return nil, nil
