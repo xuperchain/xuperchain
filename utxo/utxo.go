@@ -323,12 +323,12 @@ func (uv *UtxoVM) clearExpiredLocks() {
 func NewUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, privateKey, publicKey string,
 	address []byte, xlog log.Logger, isBeta bool, kvEngineType string, cryptoType string) (*UtxoVM, error) {
 	return MakeUtxoVM(bcname, ledger, storePath, privateKey, publicKey, address, xlog, UTXOCacheSize,
-		UTXOLockExpiredSecond, UTXOContractExecutionTime, []string{}, isBeta, kvEngineType, cryptoType, "")
+		UTXOLockExpiredSecond, UTXOContractExecutionTime, []string{}, isBeta, kvEngineType, cryptoType)
 }
 
 // MakeUtxoVM 这个函数比NewUtxoVM更加可订制化
 func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, privateKey, publicKey string, address []byte, xlog log.Logger,
-	cachesize int, tmplockSeconds, contractExectionTime int, otherPaths []string, iBeta bool, kvEngineType string, cryptoType string, modifyaddr string) (*UtxoVM, error) {
+	cachesize int, tmplockSeconds, contractExectionTime int, otherPaths []string, iBeta bool, kvEngineType string, cryptoType string) (*UtxoVM, error) {
 	if xlog == nil { // 如果外面没传进来log对象的话
 		xlog = log.New("module", "utxoVM")
 		xlog.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
@@ -414,7 +414,6 @@ func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, priv
 		vmMgr3:               vmManager,
 		aclMgr:               aclManager,
 		maxConfirmedDelay:    DefaultMaxConfirmedDelay,
-		modifyBlockAddr:      modifyaddr,
 	}
 	if iBeta {
 		utxoVM.defaultTxVersion = BetaTxVersion
@@ -2024,6 +2023,12 @@ func (uv *UtxoVM) GetACLManager() *acli.Manager {
 func (uv *UtxoVM) SetMaxConfirmedDelay(seconds uint32) {
 	uv.maxConfirmedDelay = seconds
 	uv.xlog.Info("set max confirmed delay of tx", "seconds", seconds)
+}
+
+// SetModifyBlockAddr set modified block addr
+func (uv *UtxoVM) SetModifyBlockAddr(addr string) {
+	uv.modifyBlockAddr = addr
+	uv.xlog.Info("set modified block addr", "addr", addr)
 }
 
 // GetAccountContracts get account contracts, return a slice of contract names

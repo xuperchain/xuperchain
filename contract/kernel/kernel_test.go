@@ -98,7 +98,7 @@ func TestCreateBlockChain(t *testing.T) {
 	kl.Init(workspace, kLogger, nil, "xuper")
 	kl.SetNewChainWhiteList(map[string]bool{BobAddress: true})
 	kl.SetMinNewChainAmount("0")
-	utxovm, _ := utxo.MakeUtxoVM("xuper", ledger, workspace+"xuper", "", "", []byte(""), nil, 5000, 60, 500, nil, false, defaultKVEngine, crypto_client.CryptoTypeDefault, "")
+	utxovm, _ := utxo.MakeUtxoVM("xuper", ledger, workspace+"xuper", "", "", []byte(""), nil, 5000, 60, 500, nil, false, defaultKVEngine, crypto_client.CryptoTypeDefault)
 	utxovm.RegisterVM("kernel", kl, global.VMPrivRing0)
 	//创建链的时候分配财富
 	tx, err := utxovm.GenerateRootTx([]byte(`
@@ -191,7 +191,7 @@ func TestCreateBlockChainPermission(t *testing.T) {
 	kLogger.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
 	kl.Init(workspace, kLogger, nil, chainName)
 	kl.SetNewChainWhiteList(map[string]bool{BobAddress: true})
-	utxovm, _ := utxo.MakeUtxoVM(chainName, ledger, workspace+chainName, "", "", []byte(""), nil, 5000, 60, 500, nil, false, defaultKVEngine, crypto_client.CryptoTypeDefault, "")
+	utxovm, _ := utxo.MakeUtxoVM(chainName, ledger, workspace+chainName, "", "", []byte(""), nil, 5000, 60, 500, nil, false, defaultKVEngine, crypto_client.CryptoTypeDefault)
 	utxovm.RegisterVM("kernel", kl, global.VMPrivRing0)
 	//创建链的时候分配财富
 	tx, err := utxovm.GenerateRootTx([]byte(`
@@ -285,7 +285,7 @@ func TestRunUpdateMaxBlockSize(t *testing.T) {
 	if err != nil {
 		t.Error("new ledger error ", err.Error())
 	}
-	utxovm, _ := utxo.MakeUtxoVM("xuper", L, workspace+"xuper", "", "", []byte(""), nil, 5000, 60, 500, nil, false, defaultKVEngine, crypto_client.CryptoTypeDefault, "")
+	utxovm, _ := utxo.MakeUtxoVM("xuper", L, workspace+"xuper", "", "", []byte(""), nil, 5000, 60, 500, nil, false, defaultKVEngine, crypto_client.CryptoTypeDefault)
 	tx, generateRootErr := utxovm.GenerateRootTx([]byte(`
     {
         "version" : "1"
@@ -353,7 +353,7 @@ func TestRunUpdateReservedContracts(t *testing.T) {
 	if err != nil {
 		t.Error("new ledger error ", err.Error())
 	}
-	utxovm, _ := utxo.MakeUtxoVM("xuper", L, workspace+"xuper", "", "", []byte(""), nil, 5000, 60, 500, nil, false, defaultKVEngine, crypto_client.CryptoTypeDefault, "")
+	utxovm, _ := utxo.MakeUtxoVM("xuper", L, workspace+"xuper", "", "", []byte(""), nil, 5000, 60, 500, nil, false, defaultKVEngine, crypto_client.CryptoTypeDefault)
 	tx, generateRootErr := utxovm.GenerateRootTx([]byte(`
     {
         "version" : "1"
@@ -469,7 +469,7 @@ func TestRunUpdateForbiddenContract(t *testing.T) {
 		t.Error("new ledger error", ledgerErr.Error())
 	}
 
-	utxovm, _ := utxo.MakeUtxoVM("xuper", L, workSpace+"xuper", "", "", []byte(""), nil, 5000, 60, 500, nil, false, defaultKVEngine, crypto_client.CryptoTypeDefault, "")
+	utxovm, _ := utxo.MakeUtxoVM("xuper", L, workSpace+"xuper", "", "", []byte(""), nil, 5000, 60, 500, nil, false, defaultKVEngine, crypto_client.CryptoTypeDefault)
 	tx, generateRootErr := utxovm.GenerateRootTx([]byte(`
 	{
 		"version" : "1"

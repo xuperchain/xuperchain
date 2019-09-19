@@ -715,17 +715,7 @@ func (k *Kernel) rollbackUpdateBlockChainData(desc *contract.TxDesc) error {
 	if k.context == nil || k.context.LedgerObj == nil {
 		return fmt.Errorf("failed to modify blockchain data, because no ledger object in context")
 	}
-
-	err := k.validateUpdateBlockChainData(desc)
-	if err != nil {
-		k.log.Warn("runModifyBlockChainData validate params error")
-		return err
-	}
-
-	txid := desc.Args["txid"].(string)
-	k.log.Info("rollbackModifyBlockChainData start, txid: %s", txid)
-	//err = k.context.LedgerObj.UpdateBlockChainData(txid, hex.EncodeToString(desc.Tx.Txid))
-	return err
+	return nil
 }
 
 // Finalize implements ContractInterface
