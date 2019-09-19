@@ -120,7 +120,7 @@ func (uv *UtxoVM) getReservedContractRequests(req []*pb.InvokeRequest, isPreExec
 	if MetaReservedContracts == nil {
 		return nil, nil
 	}
-	reservedContractstpl := []*pb.InvokeRequest{}
+	reservedContractstpl := MetaReservedContracts
 	uv.xlog.Info("MetaReservedContracts", "reservedContracts", reservedContractstpl)
 
 	// if all reservedContracts have not been updated, return nil, nil
