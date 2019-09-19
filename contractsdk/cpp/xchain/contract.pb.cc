@@ -6001,6 +6001,7 @@ TransferRequest::HasBitSetters::header(const TransferRequest* msg) {
 }
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
 const int TransferRequest::kHeaderFieldNumber;
+const int TransferRequest::kFromFieldNumber;
 const int TransferRequest::kToFieldNumber;
 const int TransferRequest::kAmountFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
@@ -6014,6 +6015,10 @@ TransferRequest::TransferRequest(const TransferRequest& from)
   : ::google::protobuf::MessageLite(),
       _internal_metadata_(nullptr) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
+  from_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.from().size() > 0) {
+    from_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.from_);
+  }
   to_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (from.to().size() > 0) {
     to_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.to_);
@@ -6033,6 +6038,7 @@ TransferRequest::TransferRequest(const TransferRequest& from)
 void TransferRequest::SharedCtor() {
   ::google::protobuf::internal::InitSCC(
       &scc_info_TransferRequest_contract_2eproto.base);
+  from_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   to_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   amount_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   header_ = nullptr;
@@ -6044,6 +6050,7 @@ TransferRequest::~TransferRequest() {
 }
 
 void TransferRequest::SharedDtor() {
+  from_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   to_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   amount_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (this != internal_default_instance()) delete header_;
@@ -6064,6 +6071,7 @@ void TransferRequest::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
+  from_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   to_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   amount_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (GetArenaNoVirtual() == nullptr && header_ != nullptr) {
@@ -6099,9 +6107,25 @@ const char* TransferRequest::_InternalParse(const char* begin, const char* end, 
             {parser_till_end, object}, ptr - size, ptr));
         break;
       }
-      // string to = 2;
+      // string from = 2;
       case 2: {
         if (static_cast<::google::protobuf::uint8>(tag) != 18) goto handle_unusual;
+        ptr = ::google::protobuf::io::ReadSize(ptr, &size);
+        GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+        ctx->extra_parse_data().SetFieldName(nullptr);
+        object = msg->mutable_from();
+        if (size > end - ptr + ::google::protobuf::internal::ParseContext::kSlopBytes) {
+          parser_till_end = ::google::protobuf::internal::GreedyStringParserUTF8;
+          goto string_till_end;
+        }
+        GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheckUTF8(ptr, size, ctx));
+        ::google::protobuf::internal::InlineGreedyStringParser(object, ptr, size, ctx);
+        ptr += size;
+        break;
+      }
+      // string to = 3;
+      case 3: {
+        if (static_cast<::google::protobuf::uint8>(tag) != 26) goto handle_unusual;
         ptr = ::google::protobuf::io::ReadSize(ptr, &size);
         GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
         ctx->extra_parse_data().SetFieldName(nullptr);
@@ -6115,9 +6139,9 @@ const char* TransferRequest::_InternalParse(const char* begin, const char* end, 
         ptr += size;
         break;
       }
-      // string amount = 3;
-      case 3: {
-        if (static_cast<::google::protobuf::uint8>(tag) != 26) goto handle_unusual;
+      // string amount = 4;
+      case 4: {
+        if (static_cast<::google::protobuf::uint8>(tag) != 34) goto handle_unusual;
         ptr = ::google::protobuf::io::ReadSize(ptr, &size);
         GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
         ctx->extra_parse_data().SetFieldName(nullptr);
@@ -6182,9 +6206,24 @@ bool TransferRequest::MergePartialFromCodedStream(
         break;
       }
 
-      // string to = 2;
+      // string from = 2;
       case 2: {
         if (static_cast< ::google::protobuf::uint8>(tag) == (18 & 0xFF)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_from()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->from().data(), static_cast<int>(this->from().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "xchain.contract.sdk.TransferRequest.from"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // string to = 3;
+      case 3: {
+        if (static_cast< ::google::protobuf::uint8>(tag) == (26 & 0xFF)) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadString(
                 input, this->mutable_to()));
           DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
@@ -6197,9 +6236,9 @@ bool TransferRequest::MergePartialFromCodedStream(
         break;
       }
 
-      // string amount = 3;
-      case 3: {
-        if (static_cast< ::google::protobuf::uint8>(tag) == (26 & 0xFF)) {
+      // string amount = 4;
+      case 4: {
+        if (static_cast< ::google::protobuf::uint8>(tag) == (34 & 0xFF)) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadString(
                 input, this->mutable_amount()));
           DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
@@ -6245,24 +6284,34 @@ void TransferRequest::SerializeWithCachedSizes(
       1, HasBitSetters::header(this), output);
   }
 
-  // string to = 2;
+  // string from = 2;
+  if (this->from().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->from().data(), static_cast<int>(this->from().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "xchain.contract.sdk.TransferRequest.from");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      2, this->from(), output);
+  }
+
+  // string to = 3;
   if (this->to().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->to().data(), static_cast<int>(this->to().length()),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
       "xchain.contract.sdk.TransferRequest.to");
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
-      2, this->to(), output);
+      3, this->to(), output);
   }
 
-  // string amount = 3;
+  // string amount = 4;
   if (this->amount().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->amount().data(), static_cast<int>(this->amount().length()),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
       "xchain.contract.sdk.TransferRequest.amount");
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
-      3, this->amount(), output);
+      4, this->amount(), output);
   }
 
   output->WriteRaw(_internal_metadata_.unknown_fields().data(),
@@ -6280,14 +6329,21 @@ size_t TransferRequest::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // string to = 2;
+  // string from = 2;
+  if (this->from().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::StringSize(
+        this->from());
+  }
+
+  // string to = 3;
   if (this->to().size() > 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::StringSize(
         this->to());
   }
 
-  // string amount = 3;
+  // string amount = 4;
   if (this->amount().size() > 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::StringSize(
@@ -6318,6 +6374,10 @@ void TransferRequest::MergeFrom(const TransferRequest& from) {
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
+  if (from.from().size() > 0) {
+
+    from_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.from_);
+  }
   if (from.to().size() > 0) {
 
     to_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.to_);
@@ -6349,6 +6409,8 @@ void TransferRequest::Swap(TransferRequest* other) {
 void TransferRequest::InternalSwap(TransferRequest* other) {
   using std::swap;
   _internal_metadata_.Swap(&other->_internal_metadata_);
+  from_.Swap(&other->from_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+    GetArenaNoVirtual());
   to_.Swap(&other->to_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
     GetArenaNoVirtual());
   amount_.Swap(&other->amount_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),

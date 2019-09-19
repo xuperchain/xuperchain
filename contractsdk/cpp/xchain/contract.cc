@@ -19,6 +19,10 @@ Contract::Contract() {
     ContextImpl* ctximpl = new (ContextImpl);
     ctximpl->init();
     _ctx = ctximpl;
+
+    xchain::Account* account = new (xchain::Account);
+    account->init(_ctx->initiator());
+    _account = account;
 }
 
 Contract::~Contract() {

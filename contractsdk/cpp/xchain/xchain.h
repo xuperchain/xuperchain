@@ -7,6 +7,7 @@
 #include "xchain/transaction.h"
 #include "xchain/block.h"
 #include "xchain/basic_iterator.h"
+#include "xchain/account.h"
 
 namespace xchain {
 
@@ -43,9 +44,11 @@ public:
     Contract();
     virtual ~Contract();
     Context* context() { return _ctx; };
+    xchain::Account* account() { return _account; };
 
 private:
     Context* _ctx;
+    xchain::Account* _account;
 };
 
 }  // namespace xchain
