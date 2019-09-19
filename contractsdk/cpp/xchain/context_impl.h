@@ -29,11 +29,13 @@ public:
     virtual void error(const std::string& body);
     virtual Response* mutable_response();
     virtual std::unique_ptr<Iterator> new_iterator(const std::string& start, const std::string& limit);
+    virtual Account* sender();
 
 private:
     pb::CallArgs _call_args;
     std::map<std::string, std::string> _args;
     Response _resp;
+    Account* _account;
 };
 
 }  // namespace xchain

@@ -5,14 +5,13 @@ namespace xchain {
 
 class Account {
 public:
-    Account();
+    Account(const std::string& name);
     virtual ~Account();
-    void init(const std::string& name);
     std::string get_account();
     bool transfer(const std::string& to, const std::string& amount);
 
 private:
-    std::string _sender;
+    std::string _name;
 };
 
 }  // namespace xchain

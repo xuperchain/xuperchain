@@ -37,6 +37,7 @@ public:
     virtual void error(const std::string& body) = 0;
     virtual Response* mutable_response() = 0;
     virtual std::unique_ptr<Iterator> new_iterator(const std::string& start, const std::string& limit) = 0;
+    virtual Account* sender() = 0;
 };
 
 class Contract {
@@ -44,11 +45,9 @@ public:
     Contract();
     virtual ~Contract();
     Context* context() { return _ctx; };
-    xchain::Account* account() { return _account; };
 
 private:
     Context* _ctx;
-    xchain::Account* _account;
 };
 
 }  // namespace xchain
