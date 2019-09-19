@@ -8,7 +8,7 @@ public:
     Account();
     Account(const std::string& name);
     virtual ~Account();
-    std::string get_account();
+    const std::string& get_name();
     bool transfer(const std::string& to, const std::string& amount);
 
 private:
