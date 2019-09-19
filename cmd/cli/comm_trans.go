@@ -221,9 +221,7 @@ func (c *CommTrans) GenRawTx(ctx context.Context, desc []byte, preExeRes *pb.Inv
 
 // genInitiator generate initiator of transaction
 func (c *CommTrans) genInitiator() (string, error) {
-	if c.From != "" {
-		return c.From, nil
-	}
+	// initiator should be ak
 	fromAddr, err := readAddress(c.Keys)
 	if err != nil {
 		return "", err
