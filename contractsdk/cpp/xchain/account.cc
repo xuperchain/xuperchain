@@ -6,8 +6,12 @@ namespace pb = xchain::contract::sdk;
 
 namespace xchain {
 
-Account::Account(const std::string& name) {
-    _name = name;
+Account::Account() {
+
+}
+
+Account::Account(const std::string& name) : _name(name) {
+
 }
 
 Account::~Account() {}

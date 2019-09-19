@@ -5,6 +5,7 @@ namespace xchain {
 
 class Account {
 public:
+    Account();
     Account(const std::string& name);
     virtual ~Account();
     std::string get_account();
