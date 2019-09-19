@@ -736,6 +736,9 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 	var requests []*pb.InvokeRequest
 	var responses []*pb.ContractResponse
 	for i, tmpReq := range req.Requests {
+		if tmpReq == nil {
+			continue
+		}
 		moduleName := tmpReq.GetModuleName()
 		vm, err := uv.vmMgr3.GetVM(moduleName)
 		if err != nil {
