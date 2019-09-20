@@ -502,39 +502,38 @@ func (uv *UtxoVM) verifyRelyOnMarkedTxs(tx *pb.Transaction) (bool, error) {
 		if string(reftxid) == "" {
 			continue
 		}
-		reftx, err := uv.ledger.QueryTransaction(reftxid)
-		if err != nil {
-			continue
-		}
-		if reftx.GetModifyBlock() != nil && reftx.ModifyBlock.Marked {
-			block, err := uv.ledger.QueryBlock(tx.Blockid)
-			if err != nil {
-				return false, err
-			}
-			if block.Height > reftx.ModifyBlock.EffectiveHeight {
-				return false, nil
-			}
+		ok, err := uv.checkRelyOnMarkedTxid(reftxid, tx.Blockid)
+		if !ok || err != nil {
+			return ok, err
 		}
 	}
 	for _, txIn := range tx.GetTxInputsExt() {
 		reftxid := txIn.RefTxid
-		if string(reftxid) == "" {
-			continue
-		}
-		reftx, err := uv.ledger.QueryTransaction(reftxid)
-		if err != nil {
-			continue
-		}
-		if reftx.GetModifyBlock() != nil && reftx.ModifyBlock.Marked {
-			block, err := uv.ledger.QueryBlock(tx.Blockid)
-			if err != nil {
-				return false, err
-			}
-			if block.Height > reftx.ModifyBlock.EffectiveHeight {
-				return false, nil
-			}
+		ok, err := uv.checkRelyOnMarkedTxid(reftxid, tx.Blockid)
+		if !ok || err != nil {
+			return ok, err
 		}
 	}
 
+	return true, nil
+}
+
+func (uv *UtxoVM) checkRelyOnMarkedTxid(reftxid []byte, blockid []byte) (bool, error) {
+	if string(reftxid) == "" {
+		return true, nil
+	}
+	reftx, err := uv.ledger.QueryTransaction(reftxid)
+	if err != nil {
+		return true, nil
+	}
+	if reftx.GetModifyBlock() != nil && reftx.ModifyBlock.Marked {
+		block, err := uv.ledger.QueryBlock(blockid)
+		if err != nil {
+			return false, err
+		}
+		if block.Height >= reftx.ModifyBlock.EffectiveHeight {
+			return false, nil
+		}
+	}
 	return true, nil
 }
