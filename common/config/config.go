@@ -293,7 +293,7 @@ func (nc *NodeConfig) defaultNodeConfig() {
 	}
 	nc.CoreConnection = false
 	nc.FailSkip = false
-	nc.ModifyBlockAddr = "dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN"
+	nc.ModifyBlockAddr = ""
 	nc.EnableXEndorser = false
 }
 
