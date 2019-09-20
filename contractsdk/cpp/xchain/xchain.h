@@ -7,6 +7,7 @@
 #include "xchain/transaction.h"
 #include "xchain/block.h"
 #include "xchain/basic_iterator.h"
+#include "xchain/account.h"
 
 namespace xchain {
 
@@ -36,6 +37,7 @@ public:
     virtual void error(const std::string& body) = 0;
     virtual Response* mutable_response() = 0;
     virtual std::unique_ptr<Iterator> new_iterator(const std::string& start, const std::string& limit) = 0;
+    virtual Account& sender() = 0;
 };
 
 class Contract {
