@@ -22,6 +22,8 @@ bool ContextImpl::init() {
         _args.insert(std::make_pair(arg_pair.key(), arg_pair.value()));
     }
     _resp.status = 200;
+    _account = Account(_call_args.initiator());
+
     return true;
 }
 
@@ -132,5 +134,7 @@ const Response& ContextImpl::get_response() { return _resp; }
 std::unique_ptr<Iterator> ContextImpl::new_iterator(const std::string& start, const std::string& limit) {
     return std::unique_ptr<Iterator>(new Iterator(start, limit, ITERATOR_BATCH_SIZE));
 }
+
+Account& ContextImpl::sender() { return _account; }
 
 }  // namespace xchain

@@ -100,8 +100,9 @@ message QueryBlockResponse {
 
 message TransferRequest {
   SyscallHeader header = 1;
-  string to = 2;
-  string amount = 3;
+  string from = 2;
+  string to = 3;
+  string amount = 4;
 }
 
 message TransferResponse {
