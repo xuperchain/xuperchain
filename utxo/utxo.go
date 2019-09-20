@@ -1190,7 +1190,7 @@ func (uv *UtxoVM) VerifyTx(tx *pb.Transaction) (bool, error) {
 			}
 		}
 		ok, err := uv.verifyRelyOnMarkedTxs(tx)
-		if err == nil || ok {
+		if err == nil && ok {
 			return ok, nil
 		}
 	}
