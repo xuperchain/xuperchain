@@ -183,3 +183,8 @@ func (xm *XChainMG) UnloadBlockChain(name string) error {
 	xc.Stop()
 	return nil
 }
+
+// GetXchainmgConfig GetXchainMg CFG
+func (xm *XChainMG) GetXchainmgConfig() *config.NodeConfig {
+	return xm.Cfg
+}

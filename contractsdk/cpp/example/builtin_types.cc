@@ -39,6 +39,19 @@ DEFINE_METHOD(BuiltinTypes, getblock) {
     }
 }
 
+DEFINE_METHOD(BuiltinTypes, transfer) {
+    xchain::Context* ctx = self.context();
+    const std::string& to = ctx->arg("to");
+    const std::string& amount = ctx->arg("amount");
+    xchain::Account account = ctx->sender();
+    printf("Account name: %s\n", account.get_name().c_str());
+    if (account.transfer(to, amount)) {
+        ctx->ok("Transfer success");
+    } else {
+        ctx->error("Transfer failed");
+    }
+}
+
 void print_block(xchain::Block b) {
     printf("[Block]:\n");
     printf("blockid: %s\n", b.blockid.c_str());    
