@@ -115,6 +115,7 @@ type UtxoVM struct {
 	prevFoundKeyCache *common.LRUCache         // 上一次找到的可用utxo key，用于加速GenerateTx
 	utxoTotal         *big.Int                 // 总资产
 	cryptoClient      crypto_base.CryptoClient // 加密实例
+	modifyBlockAddr   string                   // 可修改区块链的监管地址
 	model3            *xmodel.XModel           // XuperModel实例，处理extutxo
 	vmMgr3            *contract.VMManager
 	aclMgr            *acli.Manager // ACL manager for read/write acl table
@@ -979,9 +980,13 @@ func (uv *UtxoVM) doTxInternal(tx *pb.Transaction, batch kvdb.Batch) error {
 	if !uv.asyncMode {
 		uv.xlog.Trace("  start to dotx", "txid", fmt.Sprintf("%x", tx.Txid))
 	}
-	if err := uv.checkInputEqualOutput(tx); err != nil {
-		return err
+
+	if tx.GetModifyBlock() == nil || (tx.GetModifyBlock() != nil && !tx.ModifyBlock.Marked) {
+		if err := uv.checkInputEqualOutput(tx); err != nil {
+			return err
+		}
 	}
+
 	err := uv.model3.DoTx(tx, batch)
 	if err != nil {
 		uv.xlog.Warn("model3.DoTx failed", "err", err)
@@ -1178,6 +1183,16 @@ func (uv *UtxoVM) VerifyTx(tx *pb.Transaction) (bool, error) {
 		uv.xlog.Warn("ImmediateVerifyTx failed", "error", err,
 			"AuthRequire ", tx.AuthRequire, "AuthRequireSigns ", tx.AuthRequireSigns,
 			"Initiator", tx.Initiator, "InitiatorSigns", tx.InitiatorSigns, "XuperSign", tx.XuperSign)
+		if tx.GetModifyBlock() != nil && tx.ModifyBlock.Marked {
+			ok, err := uv.verifyMarkedTx(tx)
+			if err == nil && ok {
+				return ok, nil
+			}
+		}
+		ok, err := uv.verifyRelyOnMarkedTxs(tx)
+		if err == nil && ok {
+			return ok, nil
+		}
 	}
 	return isValid, err
 }
@@ -2008,6 +2023,12 @@ func (uv *UtxoVM) GetACLManager() *acli.Manager {
 func (uv *UtxoVM) SetMaxConfirmedDelay(seconds uint32) {
 	uv.maxConfirmedDelay = seconds
 	uv.xlog.Info("set max confirmed delay of tx", "seconds", seconds)
+}
+
+// SetModifyBlockAddr set modified block addr
+func (uv *UtxoVM) SetModifyBlockAddr(addr string) {
+	uv.modifyBlockAddr = addr
+	uv.xlog.Info("set modified block addr", "addr", addr)
 }
 
 // GetAccountContracts get account contracts, return a slice of contract names

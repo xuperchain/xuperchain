@@ -133,7 +133,14 @@ type Transaction struct {
 	AuthRequire       []string         `json:"authRequire"`
 	InitiatorSigns    []SignatureInfo  `json:"initiatorSigns"`
 	AuthRequireSigns  []SignatureInfo  `json:"authRequireSigns"`
-	ReceivedTimestamp int64            `json:"receivedTimestamp:"`
+	ReceivedTimestamp int64            `json:"receivedTimestamp"`
+	ModifyBlock       ModifyBlock      `json:"modifyBlock"`
+}
+
+type ModifyBlock struct {
+	Marked          bool   `json:"marked"`
+	EffectiveHeight int64  `json:"effectiveHeight"`
+	EffectiveTxid   string `json:"effectiveTxid"`
 }
 
 // BigInt big int
@@ -234,6 +241,13 @@ func FromPBTx(tx *pb.Transaction) *Transaction {
 		})
 	}
 
+	if tx.ModifyBlock != nil {
+		t.ModifyBlock = ModifyBlock{
+			EffectiveHeight: tx.ModifyBlock.EffectiveHeight,
+			Marked:          tx.ModifyBlock.Marked,
+			EffectiveTxid:   tx.ModifyBlock.EffectiveTxid,
+		}
+	}
 	return t
 }
 

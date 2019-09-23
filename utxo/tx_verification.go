@@ -16,6 +16,8 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/xuperchain/xuperunion/contract"
+	"github.com/xuperchain/xuperunion/crypto/client"
+	"github.com/xuperchain/xuperunion/crypto/hash"
 	"github.com/xuperchain/xuperunion/pb"
 	pm "github.com/xuperchain/xuperunion/permission"
 	"github.com/xuperchain/xuperunion/permission/acl"
@@ -460,6 +462,75 @@ func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
 	ok := xmodel.Equal(env.GetOutputs(), writeSet)
 	if !ok {
 		return false, fmt.Errorf("Verify error")
+	}
+	return true, nil
+}
+
+func (uv *UtxoVM) verifyMarkedTx(tx *pb.Transaction) (bool, error) {
+	bytespk := []byte(tx.ModifyBlock.PublicKey)
+	xcc, err := client.CreateCryptoClientFromJSONPublicKey(bytespk)
+	if err != nil {
+		return false, err
+	}
+	ecdsaKey, err := xcc.GetEcdsaPublicKeyFromJSON(bytespk)
+	if err != nil {
+		return false, err
+	}
+	isMatch, _ := xcc.VerifyAddressUsingPublicKey(uv.modifyBlockAddr, ecdsaKey)
+	if !isMatch {
+		return false, errors.New("address and public key not match")
+	}
+
+	bytesign, err := hex.DecodeString(tx.ModifyBlock.Sign)
+	if err != nil {
+		return false, fmt.Errorf("invalide arg type: sign byte")
+	}
+	digestHash := hash.DoubleSha256([]byte(tx.Txid))
+	ok, err := xcc.VerifyECDSA(ecdsaKey, bytesign, digestHash)
+	if err != nil || !ok {
+		uv.xlog.Warn("validateUpdateBlockChainData verifySignatures failed")
+		return false, err
+	}
+	return true, nil
+}
+
+// verifyRelyOnMarkedTxs
+// bool bool verify
+func (uv *UtxoVM) verifyRelyOnMarkedTxs(tx *pb.Transaction) (bool, error) {
+	for _, txInput := range tx.GetTxInputs() {
+		reftxid := txInput.RefTxid
+		ok, err := uv.checkRelyOnMarkedTxid(reftxid, tx.Blockid)
+		if !ok || err != nil {
+			return ok, err
+		}
+	}
+	for _, txIn := range tx.GetTxInputsExt() {
+		reftxid := txIn.RefTxid
+		ok, err := uv.checkRelyOnMarkedTxid(reftxid, tx.Blockid)
+		if !ok || err != nil {
+			return ok, err
+		}
+	}
+
+	return true, nil
+}
+
+func (uv *UtxoVM) checkRelyOnMarkedTxid(reftxid []byte, blockid []byte) (bool, error) {
+	if string(reftxid) == "" {
+		return false, nil
+	}
+	reftx, err := uv.ledger.QueryTransaction(reftxid)
+	if err != nil {
+		return false, nil
+	}
+	if reftx.GetModifyBlock() != nil && reftx.ModifyBlock.Marked {
+		block, err := uv.ledger.QueryBlock(blockid)
+		if err != nil {
+			return false, err
+		}
+		if block.Height >= reftx.ModifyBlock.EffectiveHeight {
+			return false, nil
+		}
 	}
 	return true, nil
 }
