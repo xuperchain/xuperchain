@@ -362,6 +362,12 @@ func (k *Kernel) validateUpdateReservedContract(desc *contract.TxDesc, name stri
 			params = append(params, param)
 		}
 
+		for _, line := range params {
+			if line.ModuleName == "" {
+				return nil, fmt.Errorf("you should maintain the format like this []")
+			}
+		}
+
 		if argName == name {
 			result = params
 		}
