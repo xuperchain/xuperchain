@@ -2676,9 +2676,23 @@ class TransferRequest :
 
   // accessors -------------------------------------------------------
 
-  // string to = 2;
+  // string from = 2;
+  void clear_from();
+  static const int kFromFieldNumber = 2;
+  const ::std::string& from() const;
+  void set_from(const ::std::string& value);
+  #if LANG_CXX11
+  void set_from(::std::string&& value);
+  #endif
+  void set_from(const char* value);
+  void set_from(const char* value, size_t size);
+  ::std::string* mutable_from();
+  ::std::string* release_from();
+  void set_allocated_from(::std::string* from);
+
+  // string to = 3;
   void clear_to();
-  static const int kToFieldNumber = 2;
+  static const int kToFieldNumber = 3;
   const ::std::string& to() const;
   void set_to(const ::std::string& value);
   #if LANG_CXX11
@@ -2690,9 +2704,9 @@ class TransferRequest :
   ::std::string* release_to();
   void set_allocated_to(::std::string* to);
 
-  // string amount = 3;
+  // string amount = 4;
   void clear_amount();
-  static const int kAmountFieldNumber = 3;
+  static const int kAmountFieldNumber = 4;
   const ::std::string& amount() const;
   void set_amount(const ::std::string& value);
   #if LANG_CXX11
@@ -2718,6 +2732,7 @@ class TransferRequest :
   class HasBitSetters;
 
   ::google::protobuf::internal::InternalMetadataWithArenaLite _internal_metadata_;
+  ::google::protobuf::internal::ArenaStringPtr from_;
   ::google::protobuf::internal::ArenaStringPtr to_;
   ::google::protobuf::internal::ArenaStringPtr amount_;
   ::xchain::contract::sdk::SyscallHeader* header_;
@@ -5835,7 +5850,60 @@ inline void TransferRequest::set_allocated_header(::xchain::contract::sdk::Sysca
   // @@protoc_insertion_point(field_set_allocated:xchain.contract.sdk.TransferRequest.header)
 }
 
-// string to = 2;
+// string from = 2;
+inline void TransferRequest::clear_from() {
+  from_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& TransferRequest::from() const {
+  // @@protoc_insertion_point(field_get:xchain.contract.sdk.TransferRequest.from)
+  return from_.GetNoArena();
+}
+inline void TransferRequest::set_from(const ::std::string& value) {
+  
+  from_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:xchain.contract.sdk.TransferRequest.from)
+}
+#if LANG_CXX11
+inline void TransferRequest::set_from(::std::string&& value) {
+  
+  from_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:xchain.contract.sdk.TransferRequest.from)
+}
+#endif
+inline void TransferRequest::set_from(const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  
+  from_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:xchain.contract.sdk.TransferRequest.from)
+}
+inline void TransferRequest::set_from(const char* value, size_t size) {
+  
+  from_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:xchain.contract.sdk.TransferRequest.from)
+}
+inline ::std::string* TransferRequest::mutable_from() {
+  
+  // @@protoc_insertion_point(field_mutable:xchain.contract.sdk.TransferRequest.from)
+  return from_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* TransferRequest::release_from() {
+  // @@protoc_insertion_point(field_release:xchain.contract.sdk.TransferRequest.from)
+  
+  return from_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void TransferRequest::set_allocated_from(::std::string* from) {
+  if (from != nullptr) {
+    
+  } else {
+    
+  }
+  from_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from);
+  // @@protoc_insertion_point(field_set_allocated:xchain.contract.sdk.TransferRequest.from)
+}
+
+// string to = 3;
 inline void TransferRequest::clear_to() {
   to_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -5888,7 +5956,7 @@ inline void TransferRequest::set_allocated_to(::std::string* to) {
   // @@protoc_insertion_point(field_set_allocated:xchain.contract.sdk.TransferRequest.to)
 }
 
-// string amount = 3;
+// string amount = 4;
 inline void TransferRequest::clear_amount() {
   amount_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
