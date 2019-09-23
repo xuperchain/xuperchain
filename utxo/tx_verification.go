@@ -499,9 +499,6 @@ func (uv *UtxoVM) verifyMarkedTx(tx *pb.Transaction) (bool, error) {
 func (uv *UtxoVM) verifyRelyOnMarkedTxs(tx *pb.Transaction) (bool, error) {
 	for _, txInput := range tx.GetTxInputs() {
 		reftxid := txInput.RefTxid
-		if string(reftxid) == "" {
-			continue
-		}
 		ok, err := uv.checkRelyOnMarkedTxid(reftxid, tx.Blockid)
 		if !ok || err != nil {
 			return ok, err
@@ -520,11 +517,11 @@ func (uv *UtxoVM) verifyRelyOnMarkedTxs(tx *pb.Transaction) (bool, error) {
 
 func (uv *UtxoVM) checkRelyOnMarkedTxid(reftxid []byte, blockid []byte) (bool, error) {
 	if string(reftxid) == "" {
-		return true, nil
+		return false, nil
 	}
 	reftx, err := uv.ledger.QueryTransaction(reftxid)
 	if err != nil {
-		return true, nil
+		return false, nil
 	}
 	if reftx.GetModifyBlock() != nil && reftx.ModifyBlock.Marked {
 		block, err := uv.ledger.QueryBlock(blockid)
