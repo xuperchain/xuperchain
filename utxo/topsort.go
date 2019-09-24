@@ -80,11 +80,11 @@ func TopSortDFS(g TxGraph) (order []string, cycle bool, childDAGsSize []int) {
 		visit(n)
 
 		currChildDAGSize = lastDAGIdx - i
-		childDAGsSize = append([]int{currChildDAGSize}, childDAGsSize...)
+		childDAGsSize = append(childDAGsSize, currChildDAGSize)
 		lastDAGIdx = i
 
 		if cycleFound {
-			return nil, true, childDAGsSize
+			return nil, true, reverse(childDAGsSize)
 		}
 	}
 	leftIdx := 0
@@ -95,12 +95,19 @@ func TopSortDFS(g TxGraph) (order []string, cycle bool, childDAGsSize []int) {
 		if degreeForTx[k] == 1 && len(g[k]) <= 0 {
 			L[leftIdx] = k
 			leftIdx++
-			childDAGsSize = append([]int{1}, childDAGsSize...)
+			childDAGsSize = append(childDAGsSize, 1)
 		}
 	}
 	// 存在环
 	if leftIdx != i {
 		return nil, true, nil
 	}
-	return L, false, childDAGsSize
+	return L, false, reverse(childDAGsSize)
+}
+
+func reverse(list []int) []int {
+	for i, j := 0, len(list)-1; i < j; i, j = i+1, j-1 {
+		list[i], list[j] = list[j], list[i]
+	}
+	return list
 }
