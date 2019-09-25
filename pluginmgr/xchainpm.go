@@ -13,12 +13,20 @@ import (
 
 // XchainPM is the plugin manager wrapper for XuperChain
 type XchainPM struct {
-	PluginMgr *PluginMgr
-	xlog      log.Logger
+	PluginMgr    *PluginMgr
+	xlog         log.Logger
+	confPath     string
+	autoloadPath string
 }
 
 var xpm *XchainPM
 var locker sync.Mutex
+
+// const for default valuess
+const (
+	DefaultConfPath     = "./conf/plugins.conf" // default config path
+	DefaultAutoloadPath = "./plugins/autoload/" // default plugin auto-load path
+)
 
 // Init is not necessary, there is a default value
 func Init(nc *config.NodeConfig) error {
@@ -28,42 +36,57 @@ func Init(nc *config.NodeConfig) error {
 
 		if xpm == nil {
 			confPath := nc.PluginConfPath
-			logConf := nc.Log
-			logConf.Filename += "_pm"
-			return createXchainPM(getXchainRoot(), confPath, &logConf)
+			autoloadPath := nc.PluginLoadPath
+			logConfig := getDefaultLogConfig()
+			return createXchainPM(getXchainRoot(), confPath, logConfig, autoloadPath)
 		}
 	}
 	return nil
 }
 
-func createXchainPM(rootFolder string, confPath string, logConf *config.LogConfig) error {
+func createXchainPM(rootFolder string, confPath string, logConf *config.LogConfig, autoloadPath string) error {
 	logger, err := log.OpenLog(logConf)
 	if err != nil {
 		fmt.Println("Init pluginmgr log failed!")
 		return err
 	}
 
-	pluginMgr, err := CreateMgr(rootFolder, confPath, logger)
+	if confPath == "" {
+		confPath = DefaultConfPath
+	}
+	if autoloadPath == "" {
+		autoloadPath = DefaultAutoloadPath
+	}
+
+	pluginMgr, err := CreateMgr(rootFolder, confPath, autoloadPath, logger)
 	if err != nil {
 		logger.Warn("Init pluginmgr failed!")
 		return err
 	}
 
 	xpm = &XchainPM{
-		xlog:      logger,
-		PluginMgr: pluginMgr,
+		xlog:         logger,
+		PluginMgr:    pluginMgr,
+		confPath:     confPath,
+		autoloadPath: autoloadPath,
 	}
 
 	return nil
 }
 
 func createDefaultXchianPM() error {
-	pluginConf := "./conf/plugins.conf"
+	pluginConf := DefaultConfPath
+	autoloadPath := DefaultAutoloadPath
+	logConfig := getDefaultLogConfig()
+
+	return createXchainPM(getXchainRoot(), pluginConf, logConfig, autoloadPath)
+}
+
+func getDefaultLogConfig() *config.LogConfig {
 	logFolder, err := makeFullPath("logs")
 	if err != nil {
 		logFolder = "./logs"
 	}
-
 	logConfig := &config.LogConfig{
 		Module:         "pluginmgr",
 		Filepath:       logFolder,
@@ -75,8 +98,7 @@ func createDefaultXchianPM() error {
 		RotateInterval: 60 * 24, // rotate every 1 day
 		RotateBackups:  7,       // keep old log files for 7 days
 	}
-
-	return createXchainPM(getXchainRoot(), pluginConf, logConfig)
+	return logConfig
 }
 
 // GetPluginMgr return plugin manager instance

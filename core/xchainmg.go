@@ -11,6 +11,7 @@ import (
 	"github.com/xuperchain/xuperunion/contract/kernel"
 	"github.com/xuperchain/xuperunion/p2pv2"
 	xuper_p2p "github.com/xuperchain/xuperunion/p2pv2/pb"
+	pm "github.com/xuperchain/xuperunion/pluginmgr"
 )
 
 // XChainMG manage all chains
@@ -42,6 +43,12 @@ func (xm *XChainMG) Init(log log.Logger, cfg *config.NodeConfig,
 	xm.Speed = probe.NewSpeedCalc("sum")
 	xm.Quit = make(chan struct{})
 	xm.nodeMode = cfg.NodeMode
+
+	// auto-load plugins here
+	if err := pm.Init(cfg); err != nil {
+		xm.Log.Error("can't initialize plugin manager", "error", err)
+		return err
+	}
 
 	dir, err := ioutil.ReadDir(xm.datapath)
 	if err != nil {
