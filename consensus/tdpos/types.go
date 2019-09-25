@@ -78,9 +78,6 @@ type TDpos struct {
 	// BFT module
 	bftPaceMaker *bft.DPoSPaceMaker
 	p2psvr       p2pv2.P2PServer
-
-	// lock for proposer map
-	sync.Mutex
 }
 
 // tdpos 共识机制的配置
