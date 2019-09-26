@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"math/big"
 	"sort"
 
 	pb "github.com/xuperchain/xuperunion/contractsdk/go/pb"
@@ -62,15 +63,15 @@ func (c *SyscallService) QueryBlock(ctx context.Context, in *pb.QueryBlockReques
 
 	blocksdk := &pb.Block{
 		Blockid:  hex.EncodeToString(block.Blockid),
-		PreHash:  block.PreHash,
+		PreHash:  hex.EncodeToString(block.PreHash),
 		Proposer: block.Proposer,
-		Sign:     block.Sign,
+		Sign:     hex.EncodeToString(block.Sign),
 		Pubkey:   block.Pubkey,
 		Height:   block.Height,
 		Txids:    txids,
 		TxCount:  block.TxCount,
 		InTrunk:  block.InTrunk,
-		NextHash: block.NextHash,
+		NextHash: hex.EncodeToString(block.NextHash),
 	}
 
 	return &pb.QueryBlockResponse{
@@ -237,10 +238,10 @@ func ConvertTxToSDKTx(tx *xchainpb.Transaction) *pb.Transaction {
 	txIns := []*pb.TxInput{}
 	for _, in := range tx.TxInputs {
 		txIn := &pb.TxInput{
-			RefTxid:      in.RefTxid,
+			RefTxid:      hex.EncodeToString(in.RefTxid),
 			RefOffset:    in.RefOffset,
 			FromAddr:     in.FromAddr,
-			Amount:       in.Amount,
+			Amount:       AmountBytesToString(in.Amount),
 			FrozenHeight: in.FrozenHeight,
 		}
 		txIns = append(txIns, txIn)
@@ -249,7 +250,7 @@ func ConvertTxToSDKTx(tx *xchainpb.Transaction) *pb.Transaction {
 	txOuts := []*pb.TxOutput{}
 	for _, out := range tx.TxOutputs {
 		txOut := &pb.TxOutput{
-			Amount:       out.Amount,
+			Amount:       AmountBytesToString(out.Amount),
 			ToAddr:       out.ToAddr,
 			FrozenHeight: out.FrozenHeight,
 		}
@@ -267,4 +268,10 @@ func ConvertTxToSDKTx(tx *xchainpb.Transaction) *pb.Transaction {
 	}
 
 	return txsdk
+}
+
+func AmountBytesToString(buf []byte) string {
+	n := new(big.Int)
+	n.SetBytes(buf)
+	return n.String()
 }

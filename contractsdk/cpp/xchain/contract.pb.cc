@@ -8528,17 +8528,18 @@ const char* TxInput::_InternalParse(const char* begin, const char* end, void* ob
     ptr = ::google::protobuf::io::Parse32(ptr, &tag);
     GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
     switch (tag >> 3) {
-      // bytes ref_txid = 1;
+      // string ref_txid = 1;
       case 1: {
         if (static_cast<::google::protobuf::uint8>(tag) != 10) goto handle_unusual;
         ptr = ::google::protobuf::io::ReadSize(ptr, &size);
         GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+        ctx->extra_parse_data().SetFieldName(nullptr);
         object = msg->mutable_ref_txid();
         if (size > end - ptr + ::google::protobuf::internal::ParseContext::kSlopBytes) {
-          parser_till_end = ::google::protobuf::internal::GreedyStringParser;
+          parser_till_end = ::google::protobuf::internal::GreedyStringParserUTF8;
           goto string_till_end;
         }
-        GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheck(ptr, size, ctx));
+        GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheckUTF8(ptr, size, ctx));
         ::google::protobuf::internal::InlineGreedyStringParser(object, ptr, size, ctx);
         ptr += size;
         break;
@@ -8565,17 +8566,18 @@ const char* TxInput::_InternalParse(const char* begin, const char* end, void* ob
         ptr += size;
         break;
       }
-      // bytes amount = 6;
+      // string amount = 6;
       case 6: {
         if (static_cast<::google::protobuf::uint8>(tag) != 50) goto handle_unusual;
         ptr = ::google::protobuf::io::ReadSize(ptr, &size);
         GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+        ctx->extra_parse_data().SetFieldName(nullptr);
         object = msg->mutable_amount();
         if (size > end - ptr + ::google::protobuf::internal::ParseContext::kSlopBytes) {
-          parser_till_end = ::google::protobuf::internal::GreedyStringParser;
+          parser_till_end = ::google::protobuf::internal::GreedyStringParserUTF8;
           goto string_till_end;
         }
-        GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheck(ptr, size, ctx));
+        GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheckUTF8(ptr, size, ctx));
         ::google::protobuf::internal::InlineGreedyStringParser(object, ptr, size, ctx);
         ptr += size;
         break;
@@ -8627,11 +8629,15 @@ bool TxInput::MergePartialFromCodedStream(
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // bytes ref_txid = 1;
+      // string ref_txid = 1;
       case 1: {
         if (static_cast< ::google::protobuf::uint8>(tag) == (10 & 0xFF)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
                 input, this->mutable_ref_txid()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->ref_txid().data(), static_cast<int>(this->ref_txid().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "xchain.contract.sdk.TxInput.ref_txid"));
         } else {
           goto handle_unusual;
         }
@@ -8662,11 +8668,15 @@ bool TxInput::MergePartialFromCodedStream(
         break;
       }
 
-      // bytes amount = 6;
+      // string amount = 6;
       case 6: {
         if (static_cast< ::google::protobuf::uint8>(tag) == (50 & 0xFF)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
                 input, this->mutable_amount()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->amount().data(), static_cast<int>(this->amount().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "xchain.contract.sdk.TxInput.amount"));
         } else {
           goto handle_unusual;
         }
@@ -8713,9 +8723,13 @@ void TxInput::SerializeWithCachedSizes(
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // bytes ref_txid = 1;
+  // string ref_txid = 1;
   if (this->ref_txid().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->ref_txid().data(), static_cast<int>(this->ref_txid().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "xchain.contract.sdk.TxInput.ref_txid");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
       1, this->ref_txid(), output);
   }
 
@@ -8730,9 +8744,13 @@ void TxInput::SerializeWithCachedSizes(
       5, this->from_addr(), output);
   }
 
-  // bytes amount = 6;
+  // string amount = 6;
   if (this->amount().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->amount().data(), static_cast<int>(this->amount().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "xchain.contract.sdk.TxInput.amount");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
       6, this->amount(), output);
   }
 
@@ -8756,10 +8774,10 @@ size_t TxInput::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // bytes ref_txid = 1;
+  // string ref_txid = 1;
   if (this->ref_txid().size() > 0) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::BytesSize(
+      ::google::protobuf::internal::WireFormatLite::StringSize(
         this->ref_txid());
   }
 
@@ -8770,10 +8788,10 @@ size_t TxInput::ByteSizeLong() const {
         this->from_addr());
   }
 
-  // bytes amount = 6;
+  // string amount = 6;
   if (this->amount().size() > 0) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::BytesSize(
+      ::google::protobuf::internal::WireFormatLite::StringSize(
         this->amount());
   }
 
@@ -8948,17 +8966,18 @@ const char* TxOutput::_InternalParse(const char* begin, const char* end, void* o
     ptr = ::google::protobuf::io::Parse32(ptr, &tag);
     GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
     switch (tag >> 3) {
-      // bytes amount = 1;
+      // string amount = 1;
       case 1: {
         if (static_cast<::google::protobuf::uint8>(tag) != 10) goto handle_unusual;
         ptr = ::google::protobuf::io::ReadSize(ptr, &size);
         GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+        ctx->extra_parse_data().SetFieldName(nullptr);
         object = msg->mutable_amount();
         if (size > end - ptr + ::google::protobuf::internal::ParseContext::kSlopBytes) {
-          parser_till_end = ::google::protobuf::internal::GreedyStringParser;
+          parser_till_end = ::google::protobuf::internal::GreedyStringParserUTF8;
           goto string_till_end;
         }
-        GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheck(ptr, size, ctx));
+        GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheckUTF8(ptr, size, ctx));
         ::google::protobuf::internal::InlineGreedyStringParser(object, ptr, size, ctx);
         ptr += size;
         break;
@@ -9025,11 +9044,15 @@ bool TxOutput::MergePartialFromCodedStream(
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // bytes amount = 1;
+      // string amount = 1;
       case 1: {
         if (static_cast< ::google::protobuf::uint8>(tag) == (10 & 0xFF)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
                 input, this->mutable_amount()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->amount().data(), static_cast<int>(this->amount().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "xchain.contract.sdk.TxOutput.amount"));
         } else {
           goto handle_unusual;
         }
@@ -9087,9 +9110,13 @@ void TxOutput::SerializeWithCachedSizes(
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // bytes amount = 1;
+  // string amount = 1;
   if (this->amount().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->amount().data(), static_cast<int>(this->amount().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "xchain.contract.sdk.TxOutput.amount");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
       1, this->amount(), output);
   }
 
@@ -9119,10 +9146,10 @@ size_t TxOutput::ByteSizeLong() const {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  // bytes amount = 1;
+  // string amount = 1;
   if (this->amount().size() > 0) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::BytesSize(
+      ::google::protobuf::internal::WireFormatLite::StringSize(
         this->amount());
   }
 
@@ -9940,17 +9967,18 @@ const char* Block::_InternalParse(const char* begin, const char* end, void* obje
         ptr += size;
         break;
       }
-      // bytes pre_hash = 4;
+      // string pre_hash = 4;
       case 4: {
         if (static_cast<::google::protobuf::uint8>(tag) != 34) goto handle_unusual;
         ptr = ::google::protobuf::io::ReadSize(ptr, &size);
         GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+        ctx->extra_parse_data().SetFieldName(nullptr);
         object = msg->mutable_pre_hash();
         if (size > end - ptr + ::google::protobuf::internal::ParseContext::kSlopBytes) {
-          parser_till_end = ::google::protobuf::internal::GreedyStringParser;
+          parser_till_end = ::google::protobuf::internal::GreedyStringParserUTF8;
           goto string_till_end;
         }
-        GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheck(ptr, size, ctx));
+        GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheckUTF8(ptr, size, ctx));
         ::google::protobuf::internal::InlineGreedyStringParser(object, ptr, size, ctx);
         ptr += size;
         break;
@@ -9970,17 +9998,18 @@ const char* Block::_InternalParse(const char* begin, const char* end, void* obje
         ptr += size;
         break;
       }
-      // bytes sign = 6;
+      // string sign = 6;
       case 6: {
         if (static_cast<::google::protobuf::uint8>(tag) != 50) goto handle_unusual;
         ptr = ::google::protobuf::io::ReadSize(ptr, &size);
         GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+        ctx->extra_parse_data().SetFieldName(nullptr);
         object = msg->mutable_sign();
         if (size > end - ptr + ::google::protobuf::internal::ParseContext::kSlopBytes) {
-          parser_till_end = ::google::protobuf::internal::GreedyStringParser;
+          parser_till_end = ::google::protobuf::internal::GreedyStringParserUTF8;
           goto string_till_end;
         }
-        GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheck(ptr, size, ctx));
+        GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheckUTF8(ptr, size, ctx));
         ::google::protobuf::internal::InlineGreedyStringParser(object, ptr, size, ctx);
         ptr += size;
         break;
@@ -10040,17 +10069,18 @@ const char* Block::_InternalParse(const char* begin, const char* end, void* obje
         GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
         break;
       }
-      // bytes next_hash = 15;
+      // string next_hash = 15;
       case 15: {
         if (static_cast<::google::protobuf::uint8>(tag) != 122) goto handle_unusual;
         ptr = ::google::protobuf::io::ReadSize(ptr, &size);
         GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+        ctx->extra_parse_data().SetFieldName(nullptr);
         object = msg->mutable_next_hash();
         if (size > end - ptr + ::google::protobuf::internal::ParseContext::kSlopBytes) {
-          parser_till_end = ::google::protobuf::internal::GreedyStringParser;
+          parser_till_end = ::google::protobuf::internal::GreedyStringParserUTF8;
           goto string_till_end;
         }
-        GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheck(ptr, size, ctx));
+        GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheckUTF8(ptr, size, ctx));
         ::google::protobuf::internal::InlineGreedyStringParser(object, ptr, size, ctx);
         ptr += size;
         break;
@@ -10110,11 +10140,15 @@ bool Block::MergePartialFromCodedStream(
         break;
       }
 
-      // bytes pre_hash = 4;
+      // string pre_hash = 4;
       case 4: {
         if (static_cast< ::google::protobuf::uint8>(tag) == (34 & 0xFF)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
                 input, this->mutable_pre_hash()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->pre_hash().data(), static_cast<int>(this->pre_hash().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "xchain.contract.sdk.Block.pre_hash"));
         } else {
           goto handle_unusual;
         }
@@ -10132,11 +10166,15 @@ bool Block::MergePartialFromCodedStream(
         break;
       }
 
-      // bytes sign = 6;
+      // string sign = 6;
       case 6: {
         if (static_cast< ::google::protobuf::uint8>(tag) == (50 & 0xFF)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
                 input, this->mutable_sign()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->sign().data(), static_cast<int>(this->sign().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "xchain.contract.sdk.Block.sign"));
         } else {
           goto handle_unusual;
         }
@@ -10209,11 +10247,15 @@ bool Block::MergePartialFromCodedStream(
         break;
       }
 
-      // bytes next_hash = 15;
+      // string next_hash = 15;
       case 15: {
         if (static_cast< ::google::protobuf::uint8>(tag) == (122 & 0xFF)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
                 input, this->mutable_next_hash()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->next_hash().data(), static_cast<int>(this->next_hash().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "xchain.contract.sdk.Block.next_hash"));
         } else {
           goto handle_unusual;
         }
@@ -10257,9 +10299,13 @@ void Block::SerializeWithCachedSizes(
       3, this->blockid(), output);
   }
 
-  // bytes pre_hash = 4;
+  // string pre_hash = 4;
   if (this->pre_hash().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->pre_hash().data(), static_cast<int>(this->pre_hash().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "xchain.contract.sdk.Block.pre_hash");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
       4, this->pre_hash(), output);
   }
 
@@ -10269,9 +10315,13 @@ void Block::SerializeWithCachedSizes(
       5, this->proposer(), output);
   }
 
-  // bytes sign = 6;
+  // string sign = 6;
   if (this->sign().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->sign().data(), static_cast<int>(this->sign().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "xchain.contract.sdk.Block.sign");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
       6, this->sign(), output);
   }
 
@@ -10306,9 +10356,13 @@ void Block::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteBool(14, this->in_trunk(), output);
   }
 
-  // bytes next_hash = 15;
+  // string next_hash = 15;
   if (this->next_hash().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->next_hash().data(), static_cast<int>(this->next_hash().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "xchain.contract.sdk.Block.next_hash");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
       15, this->next_hash(), output);
   }
 
@@ -10342,10 +10396,10 @@ size_t Block::ByteSizeLong() const {
         this->blockid());
   }
 
-  // bytes pre_hash = 4;
+  // string pre_hash = 4;
   if (this->pre_hash().size() > 0) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::BytesSize(
+      ::google::protobuf::internal::WireFormatLite::StringSize(
         this->pre_hash());
   }
 
@@ -10356,10 +10410,10 @@ size_t Block::ByteSizeLong() const {
         this->proposer());
   }
 
-  // bytes sign = 6;
+  // string sign = 6;
   if (this->sign().size() > 0) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::BytesSize(
+      ::google::protobuf::internal::WireFormatLite::StringSize(
         this->sign());
   }
 
@@ -10370,10 +10424,10 @@ size_t Block::ByteSizeLong() const {
         this->pubkey());
   }
 
-  // bytes next_hash = 15;
+  // string next_hash = 15;
   if (this->next_hash().size() > 0) {
     total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::BytesSize(
+      ::google::protobuf::internal::WireFormatLite::StringSize(
         this->next_hash());
   }
 
