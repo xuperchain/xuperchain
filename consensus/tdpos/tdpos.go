@@ -492,6 +492,9 @@ func (tp *TDpos) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock) (bool,
 		string(in.Proposer), "blockid", fmt.Sprintf("%x", in.Blockid))
 	term, pos, _ := tp.minerScheduling(in.Timestamp)
 	if tp.isProposer(term, pos, in.Proposer) {
+		// curTermProposerProduceNumCache is not thread safe, lock before use it.
+		tp.mutex.Lock()
+		defer tp.mutex.Unlock()
 		// 当不是第一轮时需要和前面的
 		if in.CurTerm != 1 {
 			// 减少矿工50%概率恶意地输入时间
