@@ -9,7 +9,7 @@ import (
 func (s *XModel) verifyInputs(tx *pb.Transaction) error {
 	//确保tx.TxInputs里面声明的版本和本地model是match的
 	for _, txIn := range tx.TxInputsExt {
-		verData, err := s.Get(txIn.Bucket, txIn.Key)
+		verData, err := s.GetUncommited(txIn.Bucket, txIn.Key) //because previous txs in the same block write into batch cache
 		if err != nil {
 			return err
 		}
