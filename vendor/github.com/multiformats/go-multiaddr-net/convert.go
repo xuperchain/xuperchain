@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 
 	ma "github.com/multiformats/go-multiaddr"
-	madns "github.com/multiformats/go-multiaddr-dns"
 )
 
 var errIncorrectNetAddr = fmt.Errorf("incorrect network addr conversion")
@@ -131,12 +130,12 @@ func DialArgs(m ma.Multiaddr) (string, string, error) {
 				network = "ip4"
 				ip = c.Value()
 				return true
-			case madns.Dns4Protocol.Code:
+			case ma.P_DNS4:
 				network = "ip4"
 				hostname = true
 				ip = c.Value()
 				return true
-			case madns.Dns6Protocol.Code:
+			case ma.P_DNS6:
 				network = "ip6"
 				hostname = true
 				ip = c.Value()

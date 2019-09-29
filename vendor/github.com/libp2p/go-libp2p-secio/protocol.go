@@ -9,11 +9,12 @@ import (
 	"net"
 	"time"
 
+	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/libp2p/go-libp2p-core/sec"
+
 	proto "github.com/gogo/protobuf/proto"
 	logging "github.com/ipfs/go-log"
-	cs "github.com/libp2p/go-conn-security"
-	ci "github.com/libp2p/go-libp2p-crypto"
-	peer "github.com/libp2p/go-libp2p-peer"
+	ci "github.com/libp2p/go-libp2p-core/crypto"
 	pb "github.com/libp2p/go-libp2p-secio/pb"
 	msgio "github.com/libp2p/go-msgio"
 	mh "github.com/multiformats/go-multihash"
@@ -50,8 +51,7 @@ const nonceSize = 16
 type secureSession struct {
 	msgio.ReadWriteCloser
 
-	insecure  net.Conn
-	insecureM msgio.ReadWriter
+	insecure net.Conn
 
 	localKey   ci.PrivKey
 	localPeer  peer.ID
@@ -63,7 +63,7 @@ type secureSession struct {
 	sharedSecret []byte
 }
 
-var _ cs.Conn = &secureSession{}
+var _ sec.SecureConn = &secureSession{}
 
 func (s *secureSession) Loggable() map[string]interface{} {
 	m := make(map[string]interface{})
@@ -88,7 +88,6 @@ func newSecureSession(ctx context.Context, local peer.ID, key ci.PrivKey, insecu
 	}
 
 	s.insecure = insecure
-	s.insecureM = msgio.NewReadWriter(insecure)
 	s.remotePeer = remotePeer
 
 	handshakeCtx, cancel := context.WithTimeout(ctx, HandshakeTimeout) // remove
@@ -126,15 +125,19 @@ func (s *secureSession) runHandshake(ctx context.Context) error {
 	var err error
 	select {
 	case <-ctx.Done():
+		err = ctx.Err()
+
 		// State unknown. We *have* to close this.
 		s.insecure.Close()
-		err = ctx.Err()
+		// Wait for the handshake to return.
+		<-result
 	case err = <-result:
 	}
 	return err
 }
 
 func (s *secureSession) runHandshakeSync() error {
+	insecureM := msgio.NewReadWriter(s.insecure)
 	// =============================================================================
 	// step 1. Propose -- propose cipher suite + send pubkeys + nonce
 
@@ -169,11 +172,11 @@ func (s *secureSession) runHandshakeSync() error {
 	}
 
 	// Send Propose packet and Receive their Propose packet
-	proposeInBytes, err := readWriteMsg(s.insecureM, proposeOutBytes)
+	proposeInBytes, err := readWriteMsg(insecureM, proposeOutBytes)
 	if err != nil {
 		return err
 	}
-	defer s.insecureM.ReleaseMsg(proposeInBytes)
+	defer insecureM.ReleaseMsg(proposeInBytes)
 
 	// Parse their propose packet
 	proposeIn := new(pb.Propose)
@@ -280,11 +283,11 @@ func (s *secureSession) runHandshakeSync() error {
 	}
 
 	// Send Exchange packet and receive their Exchange packet
-	exchangeInBytes, err := readWriteMsg(s.insecureM, exchangeOutBytes)
+	exchangeInBytes, err := readWriteMsg(insecureM, exchangeOutBytes)
 	if err != nil {
 		return err
 	}
-	defer s.insecureM.ReleaseMsg(exchangeInBytes)
+	defer insecureM.ReleaseMsg(exchangeInBytes)
 
 	// Parse their Exchange packet.
 	exchangeIn := new(pb.Exchange)

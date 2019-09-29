@@ -1,21 +1,32 @@
 os:
   - linux
-  - osx
 
 language: go
 
 go:
-    - 1.7
+  - 1.11.x
 
-install: true
+env:
+  global:
+    - GOTFLAGS="-race"
+  matrix:
+    - BUILD_DEPTYPE=gx
+    - BUILD_DEPTYPE=gomod
+
+
+# disable travis install
+install:
+  - true
 
 script:
-  - make deps
-  - go test ./...
+  - bash <(curl -s https://raw.githubusercontent.com/ipfs/ci-helpers/master/travis-ci/run-standard-tests.sh)
+
 
 cache:
-    directories:
-        - $GOPATH/src/gx
+  directories:
+    - $GOPATH/src/gx
+    - $GOPATH/pkg/mod
+    - $HOME/.cache/go-build
 
 notifications:
   email: false

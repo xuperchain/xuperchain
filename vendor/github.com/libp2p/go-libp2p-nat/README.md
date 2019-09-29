@@ -1,11 +1,11 @@
 go-libp2p-nat
 ==================
 
-[![](https://img.shields.io/badge/made%20by-Protocol%20Labs-blue.svg?style=flat-square)](http://ipn.io)
-[![](https://img.shields.io/badge/project-libp2p-blue.svg?style=flat-square)](http://libp2p.io/)
-[![](https://img.shields.io/badge/freenode-%23ipfs-blue.svg?style=flat-square)](http://webchat.freenode.net/?channels=%23ipfs)
-[![Coverage Status](https://coveralls.io/repos/github/libp2p/go-libp2p-nat/badge.svg?branch=master)](https://coveralls.io/github/libp2p/go-libp2p-nat?branch=master)
+[![](https://img.shields.io/badge/made%20by-Protocol%20Labs-blue.svg?style=flat-square)](https://protocol.ai)
+[![](https://img.shields.io/badge/project-libp2p-yellow.svg?style=flat-square)](https://libp2p.io/)
+[![](https://img.shields.io/badge/freenode-%23libp2p-yellow.svg?style=flat-square)](http://webchat.freenode.net/?channels=%23libp2p)
 [![Travis CI](https://travis-ci.org/libp2p/go-libp2p-nat.svg?branch=master)](https://travis-ci.org/libp2p/go-libp2p-nat)
+[![Discourse posts](https://img.shields.io/discourse/https/discuss.libp2p.io/posts.svg)](https://discuss.libp2p.io)
 
 > NAT port mapping library for go-libp2p.
 
@@ -40,3 +40,7 @@ Small note: If editing the Readme, please conform to the [standard-readme](https
 ## License
 
 [MIT](LICENSE) © Jeromy Johnson
+
+---
+
+The last gx published version of this module was: 0.8.13: QmRbx7DYHgw3uNn2RuU2nv9Bdh96ZdtT65CG1CGPNRQcGZ

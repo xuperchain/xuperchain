@@ -7,8 +7,7 @@ os:
 
 go:
 - tip
-- 1.11
-- 1.10
+- 1.12.x
 
 env:
 - ARCH=x86_64
@@ -22,3 +21,5 @@ matrix:
 script:
 - diff -au <(gofmt -d .) <(printf "")
 - go test -race -v ./...
+- go vet -asmdecl .
+- ./test-architectures.sh

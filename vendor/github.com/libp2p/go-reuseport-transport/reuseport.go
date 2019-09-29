@@ -39,7 +39,6 @@ func reuseErrShouldRetry(err error) bool {
 }
 
 // Dials using reuseport and then redials normally if that fails.
-// TODO(anacrolix): This shouldn't fail anymore: Remove fallback.
 func reuseDial(ctx context.Context, laddr *net.TCPAddr, network, raddr string) (con net.Conn, err error) {
 	if laddr == nil {
 		return fallbackDialer.DialContext(ctx, network, raddr)
@@ -49,15 +48,6 @@ func reuseDial(ctx context.Context, laddr *net.TCPAddr, network, raddr string) (
 		LocalAddr: laddr,
 		Control:   reuseport.Control,
 	}
-	defer func() {
-		if err != nil {
-			return
-		}
-		// This is transplanted from go-reuseport, which once set no linger on
-		// dialing and may be a requirement for desired behaviour in this
-		// package.
-		con.(*net.TCPConn).SetLinger(0)
-	}()
 
 	con, err = d.DialContext(ctx, network, raddr)
 	if err == nil {
@@ -65,6 +55,8 @@ func reuseDial(ctx context.Context, laddr *net.TCPAddr, network, raddr string) (
 	}
 
 	if reuseErrShouldRetry(err) && ctx.Err() == nil {
+		// We could have an existing socket open or we could have one
+		// stuck in TIME-WAIT.
 		log.Debugf("failed to reuse port, dialing with a random port: %s", err)
 		con, err = fallbackDialer.DialContext(ctx, network, raddr)
 	}

@@ -1,20 +1,16 @@
 package nat
 
 import (
+	"context"
 	"errors"
 	"fmt"
-	"net"
-	"strconv"
-	"strings"
 	"sync"
 	"time"
 
-	nat "github.com/fd/go-nat"
 	logging "github.com/ipfs/go-log"
 	goprocess "github.com/jbenet/goprocess"
 	periodic "github.com/jbenet/goprocess/periodic"
-	ma "github.com/multiformats/go-multiaddr"
-	manet "github.com/multiformats/go-multiaddr-net"
+	nat "github.com/libp2p/go-nat"
 )
 
 var (
@@ -33,19 +29,38 @@ const CacheTime = time.Second * 15
 
 // DiscoverNAT looks for a NAT device in the network and
 // returns an object that can manage port mappings.
-func DiscoverNAT() *NAT {
-	nat, err := nat.DiscoverGateway()
-	if err != nil {
-		log.Debug("DiscoverGateway error:", err)
-		return nil
+func DiscoverNAT(ctx context.Context) (*NAT, error) {
+	var (
+		natInstance nat.NAT
+		err         error
+	)
+
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		// This will abort in 10 seconds anyways.
+		natInstance, err = nat.DiscoverGateway()
+	}()
+
+	select {
+	case <-done:
+	case <-ctx.Done():
+		return nil, ctx.Err()
 	}
-	addr, err := nat.GetDeviceAddress()
+
+	if err != nil {
+		return nil, err
+	}
+
+	// Log the device addr.
+	addr, err := natInstance.GetDeviceAddress()
 	if err != nil {
 		log.Debug("DiscoverGateway address error:", err)
 	} else {
 		log.Debug("DiscoverGateway address:", addr)
 	}
-	return newNAT(nat)
+
+	return newNAT(natInstance), nil
 }
 
 // NAT is an object that manages address port mappings in
@@ -55,7 +70,7 @@ func DiscoverNAT() *NAT {
 type NAT struct {
 	natmu sync.Mutex
 	nat   nat.NAT
-	proc  goprocess.Process // manages nat mappings lifecycle
+	proc  goprocess.Process
 
 	mappingmu sync.RWMutex // guards mappings
 	mappings  map[*mapping]struct{}
@@ -116,66 +131,31 @@ func (nat *NAT) rmMapping(m *mapping) {
 // NAT devices may not respect our port requests, and even lie.
 // Clients should not store the mapped results, but rather always
 // poll our object for the latest mappings.
-func (nat *NAT) NewMapping(maddr ma.Multiaddr) (Mapping, error) {
+func (nat *NAT) NewMapping(protocol string, port int) (Mapping, error) {
 	if nat == nil {
 		return nil, fmt.Errorf("no nat available")
 	}
 
-	network, addr, err := manet.DialArgs(maddr)
-	if err != nil {
-		return nil, fmt.Errorf("DialArgs failed on addr: %s", maddr.String())
-	}
-
-	var ip net.IP
-	switch network {
-	case "tcp", "tcp4", "tcp6":
-		addr, err := net.ResolveTCPAddr(network, addr)
-		if err != nil {
-			return nil, err
-		}
-		ip = addr.IP
-		network = "tcp"
-	case "udp", "udp4", "udp6":
-		addr, err := net.ResolveUDPAddr(network, addr)
-		if err != nil {
-			return nil, err
-		}
-		ip = addr.IP
-		network = "udp"
+	switch protocol {
+	case "tcp", "udp":
 	default:
-		return nil, fmt.Errorf("transport not supported by NAT: %s", network)
-	}
-
-	// XXX: Known limitation: doesn't handle multiple internal addresses.
-	// If this applies to you, you can figure it out yourself. Ideally, the
-	// NAT library would allow us to handle this case but the "go way"
-	// appears to be to just "shrug" at edge-cases.
-	if !ip.IsUnspecified() {
-		internalAddr, err := nat.nat.GetInternalAddress()
-		if err != nil {
-			return nil, fmt.Errorf("failed to discover address on nat: %s", err)
-		}
-		if !ip.Equal(internalAddr) {
-			return nil, fmt.Errorf("nat address is %s, refusing to map %s", internalAddr, ip)
-		}
-	}
-
-	intports := strings.Split(addr, ":")[1]
-	intport, err := strconv.Atoi(intports)
-	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("invalid protocol: %s", protocol)
 	}
 
 	m := &mapping{
+		intport: port,
 		nat:     nat,
-		proto:   network,
-		intport: intport,
-		intaddr: maddr,
+		proto:   protocol,
 	}
+
 	m.proc = goprocess.WithTeardown(func() error {
 		nat.rmMapping(m)
+		nat.natmu.Lock()
+		defer nat.natmu.Unlock()
+		nat.nat.DeletePortMapping(m.Protocol(), m.InternalPort())
 		return nil
 	})
+
 	nat.addMapping(m)
 
 	m.proc.AddChild(periodic.Every(MappingDuration/3, func(worker goprocess.Process) {
@@ -193,9 +173,6 @@ func (nat *NAT) establishMapping(m *mapping) {
 
 	log.Debugf("Attempting port map: %s/%d", m.Protocol(), m.InternalPort())
 	comment := "libp2p"
-	if m.comment != "" {
-		comment = "libp2p-" + m.comment
-	}
 
 	nat.natmu.Lock()
 	newport, err := nat.nat.AddPortMapping(m.Protocol(), m.InternalPort(), comment, MappingDuration)
@@ -205,7 +182,7 @@ func (nat *NAT) establishMapping(m *mapping) {
 	}
 	nat.natmu.Unlock()
 
-	failure := func() {
+	if err != nil || newport == 0 {
 		m.setExternalPort(0) // clear mapping
 		// TODO: log.Event
 		log.Warningf("failed to establish port mapping: %s", err)
@@ -215,22 +192,11 @@ func (nat *NAT) establishMapping(m *mapping) {
 
 		// we do not close if the mapping failed,
 		// because it may work again next time.
-	}
-
-	if err != nil || newport == 0 {
-		failure()
 		return
 	}
 
 	m.setExternalPort(newport)
-	ext, err := m.ExternalAddr()
-	if err != nil {
-		log.Debugf("NAT Mapping addr error: %s %s", m.InternalAddr(), err)
-		failure()
-		return
-	}
-
-	log.Debugf("NAT Mapping: %s --> %s", m.InternalAddr(), ext)
+	log.Debugf("NAT Mapping: %s --> %s (%s)", m.ExternalPort(), m.InternalPort(), m.Protocol())
 	if oldport != 0 && newport != oldport {
 		log.Debugf("failed to renew same port mapping: ch %d -> %d", oldport, newport)
 		nat.Notifier.notifyAll(func(n Notifiee) {
@@ -241,74 +207,4 @@ func (nat *NAT) establishMapping(m *mapping) {
 	nat.Notifier.notifyAll(func(n Notifiee) {
 		n.MappingSuccess(nat, m)
 	})
-}
-
-// PortMapAddrs attempts to open (and continue to keep open)
-// port mappings for given addrs. This function blocks until
-// all  addresses have been tried. This allows clients to
-// retrieve results immediately after:
-//
-//   nat.PortMapAddrs(addrs)
-//   mapped := nat.ExternalAddrs()
-//
-// Some may not succeed, and mappings may change over time;
-// NAT devices may not respect our port requests, and even lie.
-// Clients should not store the mapped results, but rather always
-// poll our object for the latest mappings.
-func (nat *NAT) PortMapAddrs(addrs []ma.Multiaddr) {
-	// spin off addr mappings independently.
-	var wg sync.WaitGroup
-	for _, addr := range addrs {
-		// do all of them concurrently
-		wg.Add(1)
-		go func(addr ma.Multiaddr) {
-			defer wg.Done()
-			nat.NewMapping(addr)
-		}(addr)
-	}
-	wg.Wait()
-}
-
-// MappedAddrs returns address mappings NAT believes have been
-// successfully established. Unsuccessful mappings are nil. This is:
-//
-// 		map[internalAddr]externalAddr
-//
-// This set of mappings _may not_ be correct, as NAT devices are finicky.
-// Consider this with _best effort_ semantics.
-func (nat *NAT) MappedAddrs() map[ma.Multiaddr]ma.Multiaddr {
-
-	mappings := nat.Mappings()
-	addrmap := make(map[ma.Multiaddr]ma.Multiaddr, len(mappings))
-
-	for _, m := range mappings {
-		i := m.InternalAddr()
-		e, err := m.ExternalAddr()
-		if err != nil {
-			addrmap[i] = nil
-		} else {
-			addrmap[i] = e
-		}
-	}
-	return addrmap
-}
-
-// ExternalAddrs returns a list of addresses that NAT believes have
-// been successfully established. Unsuccessful mappings are omitted,
-// so nat.ExternalAddrs() may return less addresses than nat.InternalAddrs().
-// To see which addresses are mapped, use nat.MappedAddrs().
-//
-// This set of mappings _may not_ be correct, as NAT devices are finicky.
-// Consider this with _best effort_ semantics.
-func (nat *NAT) ExternalAddrs() []ma.Multiaddr {
-	mappings := nat.Mappings()
-	addrs := make([]ma.Multiaddr, 0, len(mappings))
-	for _, m := range mappings {
-		a, err := m.ExternalAddr()
-		if err != nil {
-			continue // this mapping not currently successful.
-		}
-		addrs = append(addrs, a)
-	}
-	return addrs
 }

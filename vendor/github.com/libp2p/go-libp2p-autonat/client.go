@@ -5,12 +5,12 @@ import (
 	"fmt"
 
 	pb "github.com/libp2p/go-libp2p-autonat/pb"
+	"github.com/libp2p/go-libp2p-core/helpers"
 
 	ggio "github.com/gogo/protobuf/io"
-	host "github.com/libp2p/go-libp2p-host"
-	inet "github.com/libp2p/go-libp2p-net"
-	peer "github.com/libp2p/go-libp2p-peer"
-	pstore "github.com/libp2p/go-libp2p-peerstore"
+	"github.com/libp2p/go-libp2p-core/host"
+	"github.com/libp2p/go-libp2p-core/network"
+	"github.com/libp2p/go-libp2p-core/peer"
 	ma "github.com/multiformats/go-multiaddr"
 )
 
@@ -49,20 +49,24 @@ func (c *client) DialBack(ctx context.Context, p peer.ID) (ma.Multiaddr, error) 
 	if err != nil {
 		return nil, err
 	}
-	defer s.Close()
+	// Might as well just reset the stream. Once we get to this point, we
+	// don't care about being nice.
+	defer helpers.FullClose(s)
 
-	r := ggio.NewDelimitedReader(s, inet.MessageSizeMax)
+	r := ggio.NewDelimitedReader(s, network.MessageSizeMax)
 	w := ggio.NewDelimitedWriter(s)
 
-	req := newDialMessage(pstore.PeerInfo{ID: c.h.ID(), Addrs: c.getAddrs()})
+	req := newDialMessage(peer.AddrInfo{ID: c.h.ID(), Addrs: c.getAddrs()})
 	err = w.WriteMsg(req)
 	if err != nil {
+		s.Reset()
 		return nil, err
 	}
 
 	var res pb.Message
 	err = r.ReadMsg(&res)
 	if err != nil {
+		s.Reset()
 		return nil, err
 	}
 

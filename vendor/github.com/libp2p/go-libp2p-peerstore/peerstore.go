@@ -2,33 +2,54 @@ package peerstore
 
 import (
 	"fmt"
-	"sync"
+	"io"
 
-	peer "github.com/libp2p/go-libp2p-peer"
+	"github.com/libp2p/go-libp2p-core/peer"
+	pstore "github.com/libp2p/go-libp2p-core/peerstore"
 )
 
-var _ Peerstore = (*peerstore)(nil)
+var _ pstore.Peerstore = (*peerstore)(nil)
 
 type peerstore struct {
-	Metrics
+	pstore.Metrics
 
-	KeyBook
-	AddrBook
-	PeerMetadata
-
-	// lock for protocol information, separate from datastore lock
-	protolock sync.Mutex
+	pstore.KeyBook
+	pstore.AddrBook
+	pstore.ProtoBook
+	pstore.PeerMetadata
 }
 
 // NewPeerstore creates a data structure that stores peer data, backed by the
 // supplied implementations of KeyBook, AddrBook and PeerMetadata.
-func NewPeerstore(kb KeyBook, ab AddrBook, md PeerMetadata) Peerstore {
+func NewPeerstore(kb pstore.KeyBook, ab pstore.AddrBook, pb pstore.ProtoBook, md pstore.PeerMetadata) pstore.Peerstore {
 	return &peerstore{
 		KeyBook:      kb,
 		AddrBook:     ab,
+		ProtoBook:    pb,
 		PeerMetadata: md,
 		Metrics:      NewMetrics(),
 	}
+}
+
+func (ps *peerstore) Close() (err error) {
+	var errs []error
+	weakClose := func(name string, c interface{}) {
+		if cl, ok := c.(io.Closer); ok {
+			if err = cl.Close(); err != nil {
+				errs = append(errs, fmt.Errorf("%s error: %s", name, err))
+			}
+		}
+	}
+
+	weakClose("keybook", ps.KeyBook)
+	weakClose("addressbook", ps.AddrBook)
+	weakClose("protobook", ps.ProtoBook)
+	weakClose("peermetadata", ps.PeerMetadata)
+
+	if len(errs) > 0 {
+		return fmt.Errorf("failed while closing peerstore; err(s): %q", errs)
+	}
+	return nil
 }
 
 func (ps *peerstore) Peers() peer.IDSlice {
@@ -47,100 +68,22 @@ func (ps *peerstore) Peers() peer.IDSlice {
 	return pps
 }
 
-func (ps *peerstore) PeerInfo(p peer.ID) PeerInfo {
-	return PeerInfo{
+func (ps *peerstore) PeerInfo(p peer.ID) peer.AddrInfo {
+	return peer.AddrInfo{
 		ID:    p,
 		Addrs: ps.AddrBook.Addrs(p),
 	}
 }
 
-func (ps *peerstore) SetProtocols(p peer.ID, protos ...string) error {
-	ps.protolock.Lock()
-	defer ps.protolock.Unlock()
-
-	protomap := make(map[string]struct{})
-	for _, proto := range protos {
-		protomap[proto] = struct{}{}
-	}
-
-	return ps.Put(p, "protocols", protomap)
-}
-
-func (ps *peerstore) AddProtocols(p peer.ID, protos ...string) error {
-	ps.protolock.Lock()
-	defer ps.protolock.Unlock()
-	protomap, err := ps.getProtocolMap(p)
-	if err != nil {
-		return err
-	}
-
-	for _, proto := range protos {
-		protomap[proto] = struct{}{}
-	}
-
-	return ps.Put(p, "protocols", protomap)
-}
-
-func (ps *peerstore) getProtocolMap(p peer.ID) (map[string]struct{}, error) {
-	iprotomap, err := ps.Get(p, "protocols")
-	switch err {
-	default:
-		return nil, err
-	case ErrNotFound:
-		return make(map[string]struct{}), nil
-	case nil:
-		cast, ok := iprotomap.(map[string]struct{})
-		if !ok {
-			return nil, fmt.Errorf("stored protocol set was not a map")
-		}
-
-		return cast, nil
-	}
-}
-
-func (ps *peerstore) GetProtocols(p peer.ID) ([]string, error) {
-	ps.protolock.Lock()
-	defer ps.protolock.Unlock()
-	pmap, err := ps.getProtocolMap(p)
-	if err != nil {
-		return nil, err
-	}
-
-	var out []string
-	for k, _ := range pmap {
-		out = append(out, k)
-	}
-
-	return out, nil
-}
-
-func (ps *peerstore) SupportsProtocols(p peer.ID, protos ...string) ([]string, error) {
-	ps.protolock.Lock()
-	defer ps.protolock.Unlock()
-	pmap, err := ps.getProtocolMap(p)
-	if err != nil {
-		return nil, err
-	}
-
-	var out []string
-	for _, proto := range protos {
-		if _, ok := pmap[proto]; ok {
-			out = append(out, proto)
-		}
-	}
-
-	return out, nil
-}
-
-func PeerInfos(ps Peerstore, peers peer.IDSlice) []PeerInfo {
-	pi := make([]PeerInfo, len(peers))
+func PeerInfos(ps pstore.Peerstore, peers peer.IDSlice) []peer.AddrInfo {
+	pi := make([]peer.AddrInfo, len(peers))
 	for i, p := range peers {
 		pi[i] = ps.PeerInfo(p)
 	}
 	return pi
 }
 
-func PeerInfoIDs(pis []PeerInfo) peer.IDSlice {
+func PeerInfoIDs(pis []peer.AddrInfo) peer.IDSlice {
 	ps := make(peer.IDSlice, len(pis))
 	for i, pi := range pis {
 		ps[i] = pi.ID

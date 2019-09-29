@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	tracer "github.com/ipfs/go-log/tracer"
+	lwriter "github.com/ipfs/go-log/writer"
 
 	colorable "github.com/mattn/go-colorable"
 	opentrace "github.com/opentracing/opentracing-go"
@@ -36,7 +37,8 @@ const (
 	envLogging    = "IPFS_LOGGING"
 	envLoggingFmt = "IPFS_LOGGING_FMT"
 
-	envLoggingFile = "GOLOG_FILE" // /path/to/file
+	envLoggingFile = "GOLOG_FILE"         // /path/to/file
+	envTracingFile = "GOLOG_TRACING_FILE" // /path/to/file
 )
 
 // ErrNoSuchLogger is returned when the util pkg is asked for a non existant logger
@@ -93,6 +95,15 @@ func SetupLogging() {
 	opentrace.SetGlobalTracer(lgblTracer)
 
 	SetAllLoggers(lvl)
+
+	if tracingfp := os.Getenv(envTracingFile); len(tracingfp) > 0 {
+		f, err := os.Create(tracingfp)
+		if err != nil {
+			log.Error("failed to create tracing file: %s", tracingfp)
+		} else {
+			lwriter.WriterGroup.AddWriter(f)
+		}
+	}
 }
 
 // SetDebugLogging calls SetAllLoggers with logging.DEBUG

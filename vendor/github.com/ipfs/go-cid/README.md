@@ -67,7 +67,7 @@ This will make sure that dependencies are rewritten to known working versions.
 
 ```go
 // Create a cid from a marshaled string
-c, err := cid.Decode("zdvgqEMYmNeH5fKciougvQcfzMcNjF3Z1tPouJ8C7pc3pe63k")
+c, err := cid.Decode("bafzbeigai3eoy2ccc7ybwjfz5r3rdxqrinwi4rwytly24tdbh6yk7zslrm")
 if err != nil {...}
 
 fmt.Println("Got CID: ", c)

@@ -4,17 +4,18 @@ import (
 	"context"
 	"time"
 
+	"github.com/libp2p/go-libp2p-core/peer"
+
 	logging "github.com/ipfs/go-log"
-	pstore "github.com/libp2p/go-libp2p-peerstore"
 )
 
 var log = logging.Logger("discovery")
 
-// FindPeers is a utility function that synchonously collects peers from a Discoverer
-func FindPeers(ctx context.Context, d Discoverer, ns string, limit int) ([]pstore.PeerInfo, error) {
-	res := make([]pstore.PeerInfo, 0, limit)
+// FindPeers is a utility function that synchronously collects peers from a Discoverer.
+func FindPeers(ctx context.Context, d Discoverer, ns string, opts ...Option) ([]peer.AddrInfo, error) {
+	var res []peer.AddrInfo
 
-	ch, err := d.FindPeers(ctx, ns, Limit(limit))
+	ch, err := d.FindPeers(ctx, ns, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -26,11 +27,11 @@ func FindPeers(ctx context.Context, d Discoverer, ns string, limit int) ([]pstor
 	return res, nil
 }
 
-// Advertise is a utility function that persistently advertises a service through an Advertiser
-func Advertise(ctx context.Context, a Advertiser, ns string) {
+// Advertise is a utility function that persistently advertises a service through an Advertiser.
+func Advertise(ctx context.Context, a Advertiser, ns string, opts ...Option) {
 	go func() {
 		for {
-			ttl, err := a.Advertise(ctx, ns)
+			ttl, err := a.Advertise(ctx, ns, opts...)
 			if err != nil {
 				log.Debugf("Error advertising %s: %s", ns, err.Error())
 				if ctx.Err() != nil {
