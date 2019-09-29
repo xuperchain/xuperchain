@@ -18,6 +18,6 @@
   "license": "MIT",
   "name": "go-multiaddr",
   "releaseCmd": "git commit -a -m \"gx publish $VERSION\"",
-  "version": "1.4.0"
+  "version": "1.4.1"
 }
 

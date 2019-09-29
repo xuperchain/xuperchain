@@ -97,8 +97,15 @@ func (pl *processLink) AddToChild() {
 	cp := pl.Child()
 
 	// is it a *process ? if not... panic.
-	c, ok := cp.(*process)
-	if !ok {
+	var c *process
+	switch cp := cp.(type) {
+	case *process:
+		c = cp
+	case *bgProcess:
+		// Background process never closes so we don't need to do
+		// anything.
+		return
+	default:
 		panic("goprocess does not yet support other process impls.")
 	}
 

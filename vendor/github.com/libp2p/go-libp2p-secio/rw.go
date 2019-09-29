@@ -167,7 +167,7 @@ func (r *etmReader) Read(buf []byte) (int, error) {
 
 	// If the destination buffer is too short, fill an internal buffer and then
 	// drain as much of that into the output buffer as will fit.
-	if cap(buf) < fullLen {
+	if len(buf) < fullLen {
 		err := r.fill()
 		if err != nil {
 			return 0, err

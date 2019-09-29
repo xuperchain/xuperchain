@@ -2,10 +2,12 @@ package multiplex
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"io"
 	"sync"
 	"time"
+
+	"github.com/libp2p/go-libp2p-core/mux"
 
 	pool "github.com/libp2p/go-buffer-pool"
 )
@@ -37,33 +39,42 @@ type Stream struct {
 	// for later memory pool freeing
 	exbuf []byte
 
-	wDeadline time.Time
-	rDeadline time.Time
+	rDeadline, wDeadline pipeDeadline
 
 	clLock       sync.Mutex
-	closedLocal  bool
 	closedRemote bool
 
 	// Closed when the connection is reset.
 	reset chan struct{}
+
+	// Closed when the writer is closed (reset will also be closed)
+	closedLocal  context.Context
+	doCloseLocal context.CancelFunc
 }
 
 func (s *Stream) Name() string {
 	return s.name
 }
 
-func (s *Stream) waitForData(ctx context.Context) error {
-	if !s.rDeadline.IsZero() {
-		dctx, cancel := context.WithDeadline(ctx, s.rDeadline)
-		defer cancel()
-		ctx = dctx
+// tries to preload pending data
+func (s *Stream) preloadData() {
+	select {
+	case read, ok := <-s.dataIn:
+		if !ok {
+			return
+		}
+		s.extra = read
+		s.exbuf = read
+	default:
 	}
+}
 
+func (s *Stream) waitForData() error {
 	select {
 	case <-s.reset:
 		// This is the only place where it's safe to return these.
 		s.returnBuffers()
-		return fmt.Errorf("stream reset")
+		return mux.ErrReset
 	case read, ok := <-s.dataIn:
 		if !ok {
 			return io.EOF
@@ -71,8 +82,8 @@ func (s *Stream) waitForData(ctx context.Context) error {
 		s.extra = read
 		s.exbuf = read
 		return nil
-	case <-ctx.Done():
-		return ctx.Err()
+	case <-s.rDeadline.wait():
+		return errTimeout
 	}
 }
 
@@ -99,21 +110,31 @@ func (s *Stream) returnBuffers() {
 }
 
 func (s *Stream) Read(b []byte) (int, error) {
+	select {
+	case <-s.reset:
+		return 0, mux.ErrReset
+	default:
+	}
 	if s.extra == nil {
-		err := s.waitForData(context.Background())
+		err := s.waitForData()
 		if err != nil {
 			return 0, err
 		}
 	}
-	n := copy(b, s.extra)
-	if n < len(s.extra) {
-		s.extra = s.extra[n:]
-	} else {
-		if s.exbuf != nil {
-			pool.Put(s.exbuf)
+	n := 0
+	for s.extra != nil && n < len(b) {
+		read := copy(b[n:], s.extra)
+		n += read
+		if read < len(s.extra) {
+			s.extra = s.extra[read:]
+		} else {
+			if s.exbuf != nil {
+				pool.Put(s.exbuf)
+			}
+			s.extra = nil
+			s.exbuf = nil
+			s.preloadData()
 		}
-		s.extra = nil
-		s.exbuf = nil
 	}
 	return n, nil
 }
@@ -139,11 +160,15 @@ func (s *Stream) Write(b []byte) (int, error) {
 
 func (s *Stream) write(b []byte) (int, error) {
 	if s.isClosed() {
-		return 0, fmt.Errorf("cannot write to closed stream")
+		return 0, errors.New("cannot write to closed stream")
 	}
 
-	err := s.mp.sendMsg(s.id.header(messageTag), b, s.wDeadline)
+	err := s.mp.sendMsg(s.wDeadline.wait(), s.id.header(messageTag), b)
+
 	if err != nil {
+		if err == context.Canceled {
+			err = errors.New("cannot write to closed stream")
+		}
 		return 0, err
 	}
 
@@ -151,28 +176,35 @@ func (s *Stream) write(b []byte) (int, error) {
 }
 
 func (s *Stream) isClosed() bool {
-	s.clLock.Lock()
-	defer s.clLock.Unlock()
-	return s.closedLocal
+	return s.closedLocal.Err() != nil
 }
 
 func (s *Stream) Close() error {
-	err := s.mp.sendMsg(s.id.header(closeTag), nil, time.Time{})
+	ctx, cancel := context.WithTimeout(context.Background(), ResetStreamTimeout)
+	defer cancel()
 
-	s.clLock.Lock()
-	if s.closedLocal {
-		s.clLock.Unlock()
+	err := s.mp.sendMsg(ctx.Done(), s.id.header(closeTag), nil)
+
+	if s.isClosed() {
 		return nil
 	}
 
+	s.clLock.Lock()
 	remote := s.closedRemote
-	s.closedLocal = true
 	s.clLock.Unlock()
 
+	s.doCloseLocal()
+
 	if remote {
+		s.cancelDeadlines()
 		s.mp.chLock.Lock()
 		delete(s.mp.channels, s.id)
 		s.mp.chLock.Unlock()
+	}
+
+	if err != nil && !s.mp.isShutdown() {
+		log.Warningf("Error closing stream: %s; killing connection", err.Error())
+		s.mp.Close()
 	}
 
 	return err
@@ -180,19 +212,27 @@ func (s *Stream) Close() error {
 
 func (s *Stream) Reset() error {
 	s.clLock.Lock()
-	if s.closedRemote && s.closedLocal {
+
+	// Don't reset when fully closed.
+	if s.closedRemote && s.isClosed() {
 		s.clLock.Unlock()
 		return nil
 	}
 
-	if !s.closedRemote {
-		close(s.reset)
-		// We generally call this to tell the other side to go away. No point in waiting around.
-		go s.mp.sendMsg(s.id.header(resetTag), nil, time.Time{})
+	// Don't reset twice.
+	select {
+	case <-s.reset:
+		s.clLock.Unlock()
+		return nil
+	default:
 	}
 
-	s.closedLocal = true
+	close(s.reset)
+	s.doCloseLocal()
 	s.closedRemote = true
+	s.cancelDeadlines()
+
+	go s.mp.sendResetMsg(s.id.header(resetTag), true)
 
 	s.clLock.Unlock()
 
@@ -203,18 +243,50 @@ func (s *Stream) Reset() error {
 	return nil
 }
 
+func (s *Stream) cancelDeadlines() {
+	s.rDeadline.set(time.Time{})
+	s.wDeadline.set(time.Time{})
+}
+
 func (s *Stream) SetDeadline(t time.Time) error {
-	s.rDeadline = t
-	s.wDeadline = t
+	s.clLock.Lock()
+	defer s.clLock.Unlock()
+
+	if s.closedRemote && s.isClosed() {
+		return errStreamClosed
+	}
+
+	if !s.closedRemote {
+		s.rDeadline.set(t)
+	}
+
+	if !s.isClosed() {
+		s.wDeadline.set(t)
+	}
+
 	return nil
 }
 
 func (s *Stream) SetReadDeadline(t time.Time) error {
-	s.rDeadline = t
+	s.clLock.Lock()
+	defer s.clLock.Unlock()
+
+	if s.closedRemote {
+		return errStreamClosed
+	}
+
+	s.rDeadline.set(t)
 	return nil
 }
 
 func (s *Stream) SetWriteDeadline(t time.Time) error {
-	s.wDeadline = t
+	s.clLock.Lock()
+	defer s.clLock.Unlock()
+
+	if s.isClosed() {
+		return errStreamClosed
+	}
+
+	s.wDeadline.set(t)
 	return nil
 }

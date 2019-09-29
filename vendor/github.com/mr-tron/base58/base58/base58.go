@@ -39,24 +39,30 @@ func FastBase58EncodingAlphabet(bin []byte, alphabet *Alphabet) string {
 		zcount++
 	}
 
-	size := (binsz-zcount)*138/100 + 1
-	var buf = make([]byte, size)
+	size := ((binsz-zcount)*138/100 + 1)
+
+	// allocate one big buffer up front
+	buf := make([]byte, size*2+zcount)
+
+	// use the second half for the temporary buffer
+	tmp := buf[size+zcount:]
 
 	high = size - 1
 	for i = zcount; i < binsz; i++ {
 		j = size - 1
 		for carry = uint32(bin[i]); j > high || carry != 0; j-- {
-			carry = carry + 256*uint32(buf[j])
-			buf[j] = byte(carry % 58)
+			carry = carry + 256*uint32(tmp[j])
+			tmp[j] = byte(carry % 58)
 			carry /= 58
 		}
 		high = j
 	}
 
-	for j = 0; j < size && buf[j] == 0; j++ {
+	for j = 0; j < size && tmp[j] == 0; j++ {
 	}
 
-	var b58 = make([]byte, size-j+zcount)
+	// Use the first half for the result
+	b58 := buf[:size-j+zcount]
 
 	if zcount != 0 {
 		for i = 0; i < zcount; i++ {
@@ -65,7 +71,7 @@ func FastBase58EncodingAlphabet(bin []byte, alphabet *Alphabet) string {
 	}
 
 	for i = zcount; j < size; i++ {
-		b58[i] = alphabet.encode[buf[j]]
+		b58[i] = alphabet.encode[tmp[j]]
 		j++
 	}
 

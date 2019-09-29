@@ -38,9 +38,6 @@ func (s *Chan) ReadFromWithPool(r io.Reader, p *pool.BufferPool) {
 // ReadFrom wraps the given io.Reader with a msgio.Reader, reads all
 // messages, ands sends them down the channel.
 func (s *Chan) readFrom(mr Reader) {
-	// single reader, no need for Mutex
-	mr.(*reader).lock = new(nullLocker)
-
 Loop:
 	for {
 		buf, err := mr.ReadMsg()
@@ -74,8 +71,6 @@ func (s *Chan) WriteTo(w io.Writer) {
 	// if bottleneck, cycle around a set of buffers
 	mw := NewWriter(w)
 
-	// single writer, no need for Mutex
-	mw.(*writer).lock = new(nullLocker)
 Loop:
 	for {
 		select {

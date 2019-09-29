@@ -4,26 +4,22 @@ import (
 	"context"
 	"fmt"
 
-	host "github.com/libp2p/go-libp2p-host"
-	tpt "github.com/libp2p/go-libp2p-transport"
+	"github.com/libp2p/go-libp2p-core/host"
+	"github.com/libp2p/go-libp2p-core/transport"
+
 	tptu "github.com/libp2p/go-libp2p-transport-upgrader"
 	ma "github.com/multiformats/go-multiaddr"
 )
 
-const P_CIRCUIT = 290
+// Deprecated: use ma.P_CIRCUIT
+const P_CIRCUIT = ma.P_CIRCUIT
 
-var Protocol = ma.Protocol{
-	Code:  P_CIRCUIT,
-	Size:  0,
-	Name:  "p2p-circuit",
-	VCode: ma.CodeToVarint(P_CIRCUIT),
-}
+// Deprecated: use ma.ProtocolWithCode(P_CIRCUIT)
+var Protocol = ma.ProtocolWithCode(P_CIRCUIT)
 
-func init() {
-	ma.AddProtocol(Protocol)
-}
+var circuitAddr = ma.Cast(Protocol.VCode)
 
-var _ tpt.Transport = (*RelayTransport)(nil)
+var _ transport.Transport = (*RelayTransport)(nil)
 
 type RelayTransport Relay
 
@@ -35,7 +31,7 @@ func (r *Relay) Transport() *RelayTransport {
 	return (*RelayTransport)(r)
 }
 
-func (t *RelayTransport) Listen(laddr ma.Multiaddr) (tpt.Listener, error) {
+func (t *RelayTransport) Listen(laddr ma.Multiaddr) (transport.Listener, error) {
 	// TODO: Ensure we have a connection to the relay, if specified. Also,
 	// make sure the multiaddr makes sense.
 	if !t.Relay().Matches(laddr) {
@@ -58,7 +54,7 @@ func (t *RelayTransport) Protocols() []int {
 
 // AddRelayTransport constructs a relay and adds it as a transport to the host network.
 func AddRelayTransport(ctx context.Context, h host.Host, upgrader *tptu.Upgrader, opts ...RelayOpt) error {
-	n, ok := h.Network().(tpt.Network)
+	n, ok := h.Network().(transport.TransportNetwork)
 	if !ok {
 		return fmt.Errorf("%v is not a transport network", h.Network())
 	}

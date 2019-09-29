@@ -15,9 +15,9 @@
     },
     {
       "author": "whyrusleeping",
-      "hash": "QmY9JXR3FupnYAYJWK9aMr9bCpqWKcToQ1tz8DVGTrHpHw",
+      "hash": "QmVtV1y2e8W4eQgzsP6qfSpCCZ6zWYE4m6NzJjB7iswwrT",
       "name": "go-stream-muxer",
-      "version": "3.0.0"
+      "version": "3.1.0"
     }
   ],
   "gxVersion": "0.7.0",
@@ -25,6 +25,6 @@
   "license": "",
   "name": "go-smux-yamux",
   "releaseCmd": "git commit -a -m \"gx publish $VERSION\"",
-  "version": "2.0.8"
+  "version": "2.0.9"
 }
 

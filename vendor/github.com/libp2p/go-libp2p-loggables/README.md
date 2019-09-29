@@ -1,9 +1,9 @@
 # go-libp2p-loggables
 
-[![](https://img.shields.io/badge/made%20by-Protocol%20Labs-blue.svg?style=flat-square)](http://ipn.io)
-[![](https://img.shields.io/badge/project-libp2p-blue.svg?style=flat-square)](http://github.com/libp2p/libp2p)
-[![](https://img.shields.io/badge/freenode-%23ipfs-blue.svg?style=flat-square)](http://webchat.freenode.net/?channels=%23ipfs)
-[![standard-readme compliant](https://img.shields.io/badge/standard--readme-OK-green.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
+[![](https://img.shields.io/badge/made%20by-Protocol%20Labs-blue.svg?style=flat-square)](https://protocol.ai)
+[![](https://img.shields.io/badge/project-libp2p-yellow.svg?style=flat-square)](https://libp2p.io)
+[![](https://img.shields.io/badge/freenode-%23libp2p-yellpw.svg?style=flat-square)](http://webchat.freenode.net/?channels=%23libp2p)
+[![Discourse posts](https://img.shields.io/discourse/https/discuss.libp2p.io/posts.svg)](https://discuss.libp2p.io)
 
 > logging helpers for go-libp2p
 
@@ -28,3 +28,7 @@ Small note: If editing the README, please conform to the [standard-readme](https
 ## License
 
 [MIT](LICENSE) © 2016 Jeromy Johnson.
+
+---
+
+The last gx published version of this module was: 1.1.33: QmUbSLukzZYZvEYxynj9Dtd1WrGLxxg9R4U68vCMPWHmRU

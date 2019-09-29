@@ -19,6 +19,6 @@
   "license": "",
   "name": "yamux",
   "releaseCmd": "git commit -a -m \"gx publish $VERSION\"",
-  "version": "1.1.2"
+  "version": "1.1.5"
 }
 

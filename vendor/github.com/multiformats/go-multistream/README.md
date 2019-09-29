@@ -70,7 +70,7 @@ import (
 )
 
 // This example creates a multistream muxer, adds handlers for the protocols
-// "/cats" and "/docs" and exposes it on a localhost:8765. It then opens connections
+// "/cats" and "/dogs" and exposes it on a localhost:8765. It then opens connections
 // to that port, selects the protocols and tests that the handlers are working.
 func main() {
 	mux := ms.NewMultistreamMuxer()
@@ -134,11 +134,6 @@ func main() {
 	conn.Close()
 }
 ```
-
-
-## Maintainers
-
-Captain: [@whyrusleeping](https://github.com/whyrusleeping).
 
 ## Contribute
 

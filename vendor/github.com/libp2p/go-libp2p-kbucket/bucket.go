@@ -1,22 +1,43 @@
+//go:generate go run ./generate
+
 package kbucket
 
 import (
 	"container/list"
 	"sync"
+	"time"
 
-	peer "github.com/libp2p/go-libp2p-peer"
+	"github.com/libp2p/go-libp2p-core/peer"
 )
 
 // Bucket holds a list of peers.
 type Bucket struct {
 	lk   sync.RWMutex
 	list *list.List
+
+	lastRefreshedAtLk sync.RWMutex
+	lastRefreshedAt   time.Time // the last time we looked up a key in the bucket
 }
 
 func newBucket() *Bucket {
 	b := new(Bucket)
 	b.list = list.New()
+	b.lastRefreshedAt = time.Now()
 	return b
+}
+
+func (b *Bucket) RefreshedAt() time.Time {
+	b.lastRefreshedAtLk.RLock()
+	defer b.lastRefreshedAtLk.RUnlock()
+
+	return b.lastRefreshedAt
+}
+
+func (b *Bucket) ResetRefreshedAt(newTime time.Time) {
+	b.lastRefreshedAtLk.Lock()
+	defer b.lastRefreshedAtLk.Unlock()
+
+	b.lastRefreshedAt = newTime
 }
 
 func (b *Bucket) Peers() []peer.ID {
@@ -41,14 +62,16 @@ func (b *Bucket) Has(id peer.ID) bool {
 	return false
 }
 
-func (b *Bucket) Remove(id peer.ID) {
+func (b *Bucket) Remove(id peer.ID) bool {
 	b.lk.Lock()
 	defer b.lk.Unlock()
 	for e := b.list.Front(); e != nil; e = e.Next() {
 		if e.Value.(peer.ID) == id {
 			b.list.Remove(e)
+			return true
 		}
 	}
+	return false
 }
 
 func (b *Bucket) MoveToFront(id peer.ID) {
@@ -94,7 +117,7 @@ func (b *Bucket) Split(cpl int, target ID) *Bucket {
 	e := b.list.Front()
 	for e != nil {
 		peerID := ConvertPeerID(e.Value.(peer.ID))
-		peerCPL := commonPrefixLen(peerID, target)
+		peerCPL := CommonPrefixLen(peerID, target)
 		if peerCPL > cpl {
 			cur := e
 			out.PushBack(e.Value)

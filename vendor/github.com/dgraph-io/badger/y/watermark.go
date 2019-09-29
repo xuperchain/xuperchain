@@ -26,10 +26,10 @@ import (
 
 type uint64Heap []uint64
 
-func (u uint64Heap) Len() int               { return len(u) }
-func (u uint64Heap) Less(i int, j int) bool { return u[i] < u[j] }
-func (u uint64Heap) Swap(i int, j int)      { u[i], u[j] = u[j], u[i] }
-func (u *uint64Heap) Push(x interface{})    { *u = append(*u, x.(uint64)) }
+func (u uint64Heap) Len() int            { return len(u) }
+func (u uint64Heap) Less(i, j int) bool  { return u[i] < u[j] }
+func (u uint64Heap) Swap(i, j int)       { u[i], u[j] = u[j], u[i] }
+func (u *uint64Heap) Push(x interface{}) { *u = append(*u, x.(uint64)) }
 func (u *uint64Heap) Pop() interface{} {
 	old := *u
 	n := len(old)
@@ -164,8 +164,8 @@ func (w *WaterMark) process(closer *Closer) {
 		loop++
 		if len(indices) > 0 && loop%10000 == 0 {
 			min := indices[0]
-			w.elog.Printf("WaterMark %s: Done entry %4d. Size: %4d Watermark: %-4d Looking for: %-4d. Value: %d\n",
-				w.Name, index, len(indices), w.DoneUntil(), min, pending[min])
+			w.elog.Printf("WaterMark %s: Done entry %4d. Size: %4d Watermark: %-4d Looking for: "+
+				"%-4d. Value: %d\n", w.Name, index, len(indices), w.DoneUntil(), min, pending[min])
 		}
 
 		// Update mark by going through all indices in order; and checking if they have

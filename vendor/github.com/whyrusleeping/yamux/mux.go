@@ -3,6 +3,7 @@ package yamux
 import (
 	"fmt"
 	"io"
+	"net"
 	"os"
 	"time"
 )
@@ -37,6 +38,15 @@ type Config struct {
 	//
 	// Set to 0 to disable it.
 	ReadBufSize int
+
+	// WriteCoalesceDelay is the maximum amount of time we'll delay
+	// coalescing a packet before sending it. This should be on the order of
+	// micro-milliseconds.
+	WriteCoalesceDelay time.Duration
+
+	// MaxMessageSize is the maximum size of a message that we'll send on a
+	// stream. This ensures that a single stream doesn't hog a connection.
+	MaxMessageSize uint32
 }
 
 // DefaultConfig is used to return a default configuration
@@ -49,6 +59,8 @@ func DefaultConfig() *Config {
 		MaxStreamWindowSize:    initialStreamWindow,
 		LogOutput:              os.Stderr,
 		ReadBufSize:            4096,
+		MaxMessageSize:         64 * 1024, // Means 64KiB/10s = 52kbps minimum speed.
+		WriteCoalesceDelay:     100 * time.Microsecond,
 	}
 }
 
@@ -63,13 +75,19 @@ func VerifyConfig(config *Config) error {
 	if config.MaxStreamWindowSize < initialStreamWindow {
 		return fmt.Errorf("MaxStreamWindowSize must be larger than %d", initialStreamWindow)
 	}
+	if config.MaxMessageSize < 1024 {
+		return fmt.Errorf("MaxMessageSize must be greater than a kilobyte")
+	}
+	if config.WriteCoalesceDelay < 0 {
+		return fmt.Errorf("WriteCoalesceDelay must be >= 0")
+	}
 	return nil
 }
 
 // Server is used to initialize a new server-side connection.
 // There must be at most one server-side connection. If a nil config is
 // provided, the DefaultConfiguration will be used.
-func Server(conn io.ReadWriteCloser, config *Config) (*Session, error) {
+func Server(conn net.Conn, config *Config) (*Session, error) {
 	if config == nil {
 		config = DefaultConfig()
 	}
@@ -81,7 +99,7 @@ func Server(conn io.ReadWriteCloser, config *Config) (*Session, error) {
 
 // Client is used to initialize a new client-side connection.
 // There must be at most one client-side connection.
-func Client(conn io.ReadWriteCloser, config *Config) (*Session, error) {
+func Client(conn net.Conn, config *Config) (*Session, error) {
 	if config == nil {
 		config = DefaultConfig()
 	}

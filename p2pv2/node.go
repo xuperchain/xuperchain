@@ -19,7 +19,7 @@ import (
 	pstore "github.com/libp2p/go-libp2p-peerstore"
 	"github.com/multiformats/go-multiaddr"
 	"github.com/pkg/errors"
-	dht "github.com/xuperchain/go-libp2p-kad-dht"
+	dht "github.com/libp2p/go-libp2p-kad-dht"
 	log "github.com/xuperchain/log15"
 
 	"github.com/xuperchain/xuperunion/common/config"

@@ -3,15 +3,16 @@ package autonat
 import (
 	pb "github.com/libp2p/go-libp2p-autonat/pb"
 
+	"github.com/libp2p/go-libp2p-core/peer"
+
 	logging "github.com/ipfs/go-log"
-	pstore "github.com/libp2p/go-libp2p-peerstore"
 )
 
 const AutoNATProto = "/libp2p/autonat/1.0.0"
 
 var log = logging.Logger("autonat")
 
-func newDialMessage(pi pstore.PeerInfo) *pb.Message {
+func newDialMessage(pi peer.AddrInfo) *pb.Message {
 	msg := new(pb.Message)
 	msg.Type = pb.Message_DIAL.Enum()
 	msg.Dial = new(pb.Message_Dial)

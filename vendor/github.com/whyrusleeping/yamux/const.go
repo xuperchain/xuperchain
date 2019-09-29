@@ -6,59 +6,68 @@ import (
 )
 
 type YamuxError struct {
-	msg string
+	msg                string
+	timeout, temporary bool
 }
 
 func (ye YamuxError) Error() string {
 	return ye.msg
 }
 
+func (ye YamuxError) Timeout() bool {
+	return ye.timeout
+}
+
+func (ye YamuxError) Temporary() bool {
+	return ye.temporary
+}
+
 var (
 	// ErrInvalidVersion means we received a frame with an
 	// invalid version
-	ErrInvalidVersion = &YamuxError{"invalid protocol version"}
+	ErrInvalidVersion = &YamuxError{msg: "invalid protocol version"}
 
 	// ErrInvalidMsgType means we received a frame with an
 	// invalid message type
-	ErrInvalidMsgType = &YamuxError{"invalid msg type"}
+	ErrInvalidMsgType = &YamuxError{msg: "invalid msg type"}
 
 	// ErrSessionShutdown is used if there is a shutdown during
 	// an operation
-	ErrSessionShutdown = &YamuxError{"session shutdown"}
+	ErrSessionShutdown = &YamuxError{msg: "session shutdown"}
 
 	// ErrStreamsExhausted is returned if we have no more
 	// stream ids to issue
-	ErrStreamsExhausted = &YamuxError{"streams exhausted"}
+	ErrStreamsExhausted = &YamuxError{msg: "streams exhausted"}
 
 	// ErrDuplicateStream is used if a duplicate stream is
 	// opened inbound
-	ErrDuplicateStream = &YamuxError{"duplicate stream initiated"}
+	ErrDuplicateStream = &YamuxError{msg: "duplicate stream initiated"}
 
 	// ErrReceiveWindowExceeded indicates the window was exceeded
-	ErrRecvWindowExceeded = &YamuxError{"recv window exceeded"}
+	ErrRecvWindowExceeded = &YamuxError{msg: "recv window exceeded"}
 
 	// ErrTimeout is used when we reach an IO deadline
-	ErrTimeout = &YamuxError{"i/o deadline reached"}
+	ErrTimeout = &YamuxError{msg: "i/o deadline reached", timeout: true, temporary: true}
 
 	// ErrStreamClosed is returned when using a closed stream
-	ErrStreamClosed = &YamuxError{"stream closed"}
+	ErrStreamClosed = &YamuxError{msg: "stream closed"}
 
 	// ErrUnexpectedFlag is set when we get an unexpected flag
-	ErrUnexpectedFlag = &YamuxError{"unexpected flag"}
+	ErrUnexpectedFlag = &YamuxError{msg: "unexpected flag"}
 
 	// ErrRemoteGoAway is used when we get a go away from the other side
-	ErrRemoteGoAway = &YamuxError{"remote end is not accepting connections"}
+	ErrRemoteGoAway = &YamuxError{msg: "remote end is not accepting connections"}
 
 	// ErrConnectionReset is sent if a stream is reset. This can happen
 	// if the backlog is exceeded, or if there was a remote GoAway.
-	ErrConnectionReset = &YamuxError{"stream reset"}
+	ErrConnectionReset = &YamuxError{msg: "stream reset"}
 
 	// ErrConnectionWriteTimeout indicates that we hit the "safety valve"
 	// timeout writing to the underlying stream connection.
-	ErrConnectionWriteTimeout = &YamuxError{"connection write timeout"}
+	ErrConnectionWriteTimeout = &YamuxError{msg: "connection write timeout", timeout: true}
 
 	// ErrKeepAliveTimeout is sent if a missed keepalive caused the stream close
-	ErrKeepAliveTimeout = &YamuxError{"keepalive timeout"}
+	ErrKeepAliveTimeout = &YamuxError{msg: "keepalive timeout", timeout: true}
 )
 
 const (
@@ -129,7 +138,7 @@ const (
 		sizeOfStreamID + sizeOfLength
 )
 
-type header []byte
+type header [headerSize]byte
 
 func (h header) Version() uint8 {
 	return h[0]
@@ -156,10 +165,12 @@ func (h header) String() string {
 		h.Version(), h.MsgType(), h.Flags(), h.StreamID(), h.Length())
 }
 
-func (h header) encode(msgType uint8, flags uint16, streamID uint32, length uint32) {
+func encode(msgType uint8, flags uint16, streamID uint32, length uint32) header {
+	var h header
 	h[0] = protoVersion
 	h[1] = msgType
 	binary.BigEndian.PutUint16(h[2:4], flags)
 	binary.BigEndian.PutUint32(h[4:8], streamID)
 	binary.BigEndian.PutUint32(h[8:12], length)
+	return h
 }

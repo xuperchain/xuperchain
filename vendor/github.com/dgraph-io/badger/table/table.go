@@ -87,7 +87,9 @@ func (t *Table) DecrRef() error {
 
 		// It's necessary to delete windows files
 		if t.loadingMode == options.MemoryMap {
-			y.Munmap(t.mmap)
+			if err := y.Munmap(t.mmap); err != nil {
+				return err
+			}
 		}
 		if err := t.fd.Truncate(0); err != nil {
 			// This is very important to let the FS know that the file is deleted.
@@ -178,7 +180,7 @@ func OpenTable(fd *os.File, mode options.FileLoadingMode, cksum []byte) (*Table,
 		t.mmap, err = y.Mmap(fd, false, fileInfo.Size())
 		if err != nil {
 			_ = fd.Close()
-			return nil, y.Wrapf(err, "Unable to map file")
+			return nil, y.Wrapf(err, "Unable to map file: %q", fileInfo.Name())
 		}
 	case options.FileIO:
 		t.mmap = nil
@@ -191,13 +193,15 @@ func OpenTable(fd *os.File, mode options.FileLoadingMode, cksum []byte) (*Table,
 // Close closes the open table.  (Releases resources back to the OS.)
 func (t *Table) Close() error {
 	if t.loadingMode == options.MemoryMap {
-		y.Munmap(t.mmap)
+		if err := y.Munmap(t.mmap); err != nil {
+			return err
+		}
 	}
 
 	return t.fd.Close()
 }
 
-func (t *Table) read(off int, sz int) ([]byte, error) {
+func (t *Table) read(off, sz int) ([]byte, error) {
 	if len(t.mmap) > 0 {
 		if len(t.mmap[off:]) < sz {
 			return nil, y.ErrEOF
@@ -212,7 +216,7 @@ func (t *Table) read(off int, sz int) ([]byte, error) {
 	return res, err
 }
 
-func (t *Table) readNoFail(off int, sz int) []byte {
+func (t *Table) readNoFail(off, sz int) []byte {
 	res, err := t.read(off, sz)
 	y.Check(err)
 	return res

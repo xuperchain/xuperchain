@@ -36,7 +36,7 @@ type Notifiee interface {
 
 	// Called when mapping a port succeeds, but the mapping is
 	// with a different port than an earlier success.
-	MappingChanged(nat *NAT, m Mapping, oldport int, newport int)
+	MappingChanged(nat *NAT, m Mapping, oldport, newport int)
 
 	// Called when a port mapping fails. NAT will continue attempting after
 	// the next period. To stop trying, use: mapping.Close(). After this failure,

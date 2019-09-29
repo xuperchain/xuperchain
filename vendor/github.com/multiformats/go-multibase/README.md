@@ -36,10 +36,6 @@ gx-go --rewrite
 
 Please check [Gx](https://github.com/whyrusleeping/gx) and [Gx-go](https://github.com/whyrusleeping/gx-go) documentation for more information.
 
-## Maintainers
-
-Captain: [@whyrusleeping](https://github.com/whyrusleeping).
-
 ## Contribute
 
 Contributions welcome. Please check out [the issues](https://github.com/multiformats/go-multibase/issues).

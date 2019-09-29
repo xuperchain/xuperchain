@@ -1,9 +1,9 @@
 package protocol
 
-// ID is an identifier used to write protocol headers in streams.
-type ID string
+import core "github.com/libp2p/go-libp2p-core/protocol"
 
-// These are reserved protocol.IDs.
-const (
-	TestingID ID = "/p2p/_testing"
-)
+// Deprecated: use github.com/libp2p/go-libp2p-core/protocol.ID instead.
+type ID = core.ID
+
+// Deprecated: use github.com/libp2p/go-libp2p-core/protocol.TestingID instead.
+const TestingID = core.TestingID

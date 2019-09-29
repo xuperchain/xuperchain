@@ -1,7 +1,6 @@
 package datastore
 
 import (
-	"io"
 	"log"
 
 	dsq "github.com/ipfs/go-datastore/query"
@@ -14,7 +13,9 @@ type MapDatastore struct {
 	values map[Key][]byte
 }
 
-// NewMapDatastore constructs a MapDatastore
+// NewMapDatastore constructs a MapDatastore. It is _not_ thread-safe by
+// default, wrap using sync.MutexWrap if you need thread safety (the answer here
+// is usually yes).
 func NewMapDatastore() (d *MapDatastore) {
 	return &MapDatastore{
 		values: make(map[Key][]byte),
@@ -42,11 +43,16 @@ func (d *MapDatastore) Has(key Key) (exists bool, err error) {
 	return found, nil
 }
 
+// GetSize implements Datastore.GetSize
+func (d *MapDatastore) GetSize(key Key) (size int, err error) {
+	if v, found := d.values[key]; found {
+		return len(v), nil
+	}
+	return -1, ErrNotFound
+}
+
 // Delete implements Datastore.Delete
 func (d *MapDatastore) Delete(key Key) (err error) {
-	if _, found := d.values[key]; !found {
-		return ErrNotFound
-	}
 	delete(d.values, key)
 	return nil
 }
@@ -55,7 +61,11 @@ func (d *MapDatastore) Delete(key Key) (err error) {
 func (d *MapDatastore) Query(q dsq.Query) (dsq.Results, error) {
 	re := make([]dsq.Entry, 0, len(d.values))
 	for k, v := range d.values {
-		re = append(re, dsq.Entry{Key: k.String(), Value: v})
+		e := dsq.Entry{Key: k.String()}
+		if !q.KeysOnly {
+			e.Value = v
+		}
+		re = append(re, e)
 	}
 	r := dsq.ResultsWithEntries(q, re)
 	r = dsq.NaiveQueryApply(q, r)
@@ -93,6 +103,11 @@ func (d *NullDatastore) Get(key Key) (value []byte, err error) {
 // Has implements Datastore.Has
 func (d *NullDatastore) Has(key Key) (exists bool, err error) {
 	return false, nil
+}
+
+// Has implements Datastore.GetSize
+func (d *NullDatastore) GetSize(key Key) (size int, err error) {
+	return -1, ErrNotFound
 }
 
 // Delete implements Datastore.Delete
@@ -156,6 +171,12 @@ func (d *LogDatastore) Get(key Key) (value []byte, err error) {
 func (d *LogDatastore) Has(key Key) (exists bool, err error) {
 	log.Printf("%s: Has %s\n", d.Name, key)
 	return d.child.Has(key)
+}
+
+// GetSize implements Datastore.GetSize
+func (d *LogDatastore) GetSize(key Key) (size int, err error) {
+	log.Printf("%s: GetSize %s\n", d.Name, key)
+	return d.child.GetSize(key)
 }
 
 // Delete implements Datastore.Delete
@@ -225,10 +246,7 @@ func (d *LogBatch) Commit() (err error) {
 
 func (d *LogDatastore) Close() error {
 	log.Printf("%s: Close\n", d.Name)
-	if cds, ok := d.child.(io.Closer); ok {
-		return cds.Close()
-	}
-	return nil
+	return d.child.Close()
 }
 
 func (d *LogDatastore) Check() error {
