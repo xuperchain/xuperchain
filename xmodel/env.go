@@ -21,7 +21,7 @@ func (s *XModel) PrepareEnv(tx *pb.Transaction) (*Env, error) {
 	env := &Env{}
 	s.logger.Trace("PrepareEnv", "tx.TxInputsExt", tx.TxInputsExt, "tx.TxOutputsExt", tx.TxOutputsExt)
 	for _, txIn := range tx.TxInputsExt {
-		verData, err := s.Get(txIn.Bucket, txIn.Key)
+		verData, err := s.GetUncommited(txIn.Bucket, txIn.Key)
 		if err != nil {
 			return nil, err
 		}
