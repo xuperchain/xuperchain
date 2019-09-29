@@ -76,13 +76,20 @@ type ReadWriteCloser interface {
 type writer struct {
 	W io.Writer
 
-	lock sync.Locker
+	pool *pool.BufferPool
+	lock sync.Mutex
 }
 
 // NewWriter wraps an io.Writer with a msgio framed writer. The msgio.Writer
 // will write the length prefix of every message written.
 func NewWriter(w io.Writer) WriteCloser {
-	return &writer{W: w, lock: new(sync.Mutex)}
+	return NewWriterWithPool(w, pool.GlobalPool)
+}
+
+// NewWriterWithPool is identical to NewWriter but allows the user to pass a
+// custom buffer pool.
+func NewWriterWithPool(w io.Writer, p *pool.BufferPool) WriteCloser {
+	return &writer{W: w, pool: p}
 }
 
 func (s *writer) Write(msg []byte) (int, error) {
@@ -96,10 +103,13 @@ func (s *writer) Write(msg []byte) (int, error) {
 func (s *writer) WriteMsg(msg []byte) (err error) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
-	if err := WriteLen(s.W, len(msg)); err != nil {
-		return err
-	}
-	_, err = s.W.Write(msg)
+
+	buf := s.pool.Get(len(msg) + lengthSize)
+	NBO.PutUint32(buf, uint32(len(msg)))
+	copy(buf[lengthSize:], msg)
+	_, err = s.W.Write(buf)
+	s.pool.Put(buf)
+
 	return err
 }
 
@@ -114,10 +124,10 @@ func (s *writer) Close() error {
 type reader struct {
 	R io.Reader
 
-	lbuf []byte
+	lbuf [lengthSize]byte
 	next int
 	pool *pool.BufferPool
-	lock sync.Locker
+	lock sync.Mutex
 	max  int // the maximal message size (in bytes) this reader handles
 }
 
@@ -128,20 +138,29 @@ func NewReader(r io.Reader) ReadCloser {
 	return NewReaderWithPool(r, pool.GlobalPool)
 }
 
-// NewReaderWithPool wraps an io.Reader with a msgio framed reader. The msgio.Reader
-// will read whole messages at a time (using the length). Assumes an equivalent
-// writer on the other side.  It uses a given pool.BufferPool
+// NewReaderSize is equivalent to NewReader but allows one to
+// specify a max message size.
+func NewReaderSize(r io.Reader, maxMessageSize int) ReadCloser {
+	return NewReaderSizeWithPool(r, maxMessageSize, pool.GlobalPool)
+}
+
+// NewReaderWithPool is the same as NewReader but allows one to specify a buffer
+// pool.
 func NewReaderWithPool(r io.Reader, p *pool.BufferPool) ReadCloser {
+	return NewReaderSizeWithPool(r, defaultMaxSize, p)
+}
+
+// NewReaderWithPool is the same as NewReader but allows one to specify a buffer
+// pool and a max message size.
+func NewReaderSizeWithPool(r io.Reader, maxMessageSize int, p *pool.BufferPool) ReadCloser {
 	if p == nil {
 		panic("nil pool")
 	}
 	return &reader{
 		R:    r,
-		lbuf: make([]byte, lengthSize),
 		next: -1,
 		pool: p,
-		lock: new(sync.Mutex),
-		max:  defaultMaxSize,
+		max:  maxMessageSize,
 	}
 }
 
@@ -156,7 +175,7 @@ func (s *reader) NextMsgLen() (int, error) {
 
 func (s *reader) nextMsgLen() (int, error) {
 	if s.next == -1 {
-		n, err := ReadLen(s.R, s.lbuf)
+		n, err := ReadLen(s.R, s.lbuf[:])
 		if err != nil {
 			return 0, err
 		}
@@ -179,9 +198,13 @@ func (s *reader) Read(msg []byte) (int, error) {
 		return 0, io.ErrShortBuffer
 	}
 
-	_, err = io.ReadFull(s.R, msg[:length])
-	s.next = -1 // signal we've consumed this msg
-	return length, err
+	read, err := io.ReadFull(s.R, msg[:length])
+	if read < length {
+		s.next = length - read // we only partially consumed the message.
+	} else {
+		s.next = -1 // signal we've consumed this msg
+	}
+	return read, err
 }
 
 func (s *reader) ReadMsg() ([]byte, error) {
@@ -203,9 +226,13 @@ func (s *reader) ReadMsg() ([]byte, error) {
 	}
 
 	msg := s.pool.Get(length)
-	_, err = io.ReadFull(s.R, msg)
-	s.next = -1 // signal we've consumed this msg
-	return msg, err
+	read, err := io.ReadFull(s.R, msg)
+	if read < length {
+		s.next = length - read // we only partially consumed the message.
+	} else {
+		s.next = -1 // signal we've consumed this msg
+	}
+	return msg[:read], err
 }
 
 func (s *reader) ReleaseMsg(msg []byte) {

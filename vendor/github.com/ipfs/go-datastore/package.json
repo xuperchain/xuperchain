@@ -21,9 +21,9 @@
     },
     {
       "author": "hsanjuan",
-      "hash": "QmRJVNatYJwTAHgdSM1Xef9QVQ1Ch3XHdmcrykjP5Y4soL",
+      "hash": "QmUe1WCHkQaz4UeNKiHDUBV2T6i9prc3DniqyHPXyfGaUq",
       "name": "go-ipfs-delay",
-      "version": "0.0.1"
+      "version": "0.1.0"
     },
     {
       "author": "google",
@@ -37,6 +37,6 @@
   "license": "MIT",
   "name": "go-datastore",
   "releaseCmd": "git commit -a -m \"gx publish $VERSION\"",
-  "version": "3.2.0"
+  "version": "3.6.1"
 }
 

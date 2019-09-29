@@ -9,9 +9,9 @@ import (
 
 	u "github.com/ipfs/go-ipfs-util"
 	logging "github.com/ipfs/go-log"
-	host "github.com/libp2p/go-libp2p-host"
-	inet "github.com/libp2p/go-libp2p-net"
-	peer "github.com/libp2p/go-libp2p-peer"
+	"github.com/libp2p/go-libp2p-core/host"
+	"github.com/libp2p/go-libp2p-core/network"
+	"github.com/libp2p/go-libp2p-core/peer"
 )
 
 var log = logging.Logger("ping")
@@ -32,7 +32,7 @@ func NewPingService(h host.Host) *PingService {
 	return ps
 }
 
-func (p *PingService) PingHandler(s inet.Stream) {
+func (p *PingService) PingHandler(s network.Stream) {
 	buf := make([]byte, PingSize)
 
 	errCh := make(chan error, 1)
@@ -71,45 +71,65 @@ func (p *PingService) PingHandler(s inet.Stream) {
 	}
 }
 
-func (ps *PingService) Ping(ctx context.Context, p peer.ID) (<-chan time.Duration, error) {
+// Result is a result of a ping attempt, either an RTT or an error.
+type Result struct {
+	RTT   time.Duration
+	Error error
+}
+
+func (ps *PingService) Ping(ctx context.Context, p peer.ID) <-chan Result {
 	return Ping(ctx, ps.Host, p)
 }
 
-func Ping(ctx context.Context, h host.Host, p peer.ID) (<-chan time.Duration, error) {
+// Ping pings the remote peer until the context is canceled, returning a stream
+// of RTTs or errors.
+func Ping(ctx context.Context, h host.Host, p peer.ID) <-chan Result {
 	s, err := h.NewStream(ctx, p, ID)
 	if err != nil {
-		return nil, err
+		ch := make(chan Result, 1)
+		ch <- Result{Error: err}
+		close(ch)
+		return ch
 	}
 
-	out := make(chan time.Duration)
+	ctx, cancel := context.WithCancel(ctx)
+
+	out := make(chan Result)
 	go func() {
 		defer close(out)
-		defer s.Reset()
-		for {
+		defer cancel()
+
+		for ctx.Err() == nil {
+			var res Result
+			res.RTT, res.Error = ping(s)
+
+			// canceled, ignore everything.
+			if ctx.Err() != nil {
+				return
+			}
+
+			// No error, record the RTT.
+			if res.Error == nil {
+				h.Peerstore().RecordLatency(p, res.RTT)
+			}
+
 			select {
+			case out <- res:
 			case <-ctx.Done():
 				return
-			default:
-				t, err := ping(s)
-				if err != nil {
-					log.Debugf("ping error: %s", err)
-					return
-				}
-
-				h.Peerstore().RecordLatency(p, t)
-				select {
-				case out <- t:
-				case <-ctx.Done():
-					return
-				}
 			}
 		}
 	}()
+	go func() {
+		// forces the ping to abort.
+		<-ctx.Done()
+		s.Reset()
+	}()
 
-	return out, nil
+	return out
 }
 
-func ping(s inet.Stream) (time.Duration, error) {
+func ping(s network.Stream) (time.Duration, error) {
 	buf := make([]byte, PingSize)
 	u.NewTimeSeededRand().Read(buf)
 

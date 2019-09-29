@@ -7,21 +7,22 @@ import (
 
 	pb "github.com/libp2p/go-libp2p-circuit/pb"
 
+	"github.com/libp2p/go-libp2p-core/peer"
+
 	ggio "github.com/gogo/protobuf/io"
 	proto "github.com/gogo/protobuf/proto"
-	peer "github.com/libp2p/go-libp2p-peer"
-	pstore "github.com/libp2p/go-libp2p-peerstore"
+	pool "github.com/libp2p/go-buffer-pool"
 	ma "github.com/multiformats/go-multiaddr"
 )
 
-func peerToPeerInfo(p *pb.CircuitRelay_Peer) (pstore.PeerInfo, error) {
+func peerToPeerInfo(p *pb.CircuitRelay_Peer) (peer.AddrInfo, error) {
 	if p == nil {
-		return pstore.PeerInfo{}, errors.New("nil peer")
+		return peer.AddrInfo{}, errors.New("nil peer")
 	}
 
 	id, err := peer.IDFromBytes(p.Id)
 	if err != nil {
-		return pstore.PeerInfo{}, err
+		return peer.AddrInfo{}, err
 	}
 
 	addrs := make([]ma.Multiaddr, 0, len(p.Addrs))
@@ -32,10 +33,10 @@ func peerToPeerInfo(p *pb.CircuitRelay_Peer) (pstore.PeerInfo, error) {
 		}
 	}
 
-	return pstore.PeerInfo{ID: id, Addrs: addrs}, nil
+	return peer.AddrInfo{ID: id, Addrs: addrs}, nil
 }
 
-func peerInfoToPeer(pi pstore.PeerInfo) *pb.CircuitRelay_Peer {
+func peerInfoToPeer(pi peer.AddrInfo) *pb.CircuitRelay_Peer {
 	addrs := make([][]byte, len(pi.Addrs))
 	for i, addr := range pi.Addrs {
 		addrs[i] = addr.Bytes()
@@ -46,6 +47,18 @@ func peerInfoToPeer(pi pstore.PeerInfo) *pb.CircuitRelay_Peer {
 	p.Addrs = addrs
 
 	return p
+}
+
+func incrementTag(v int) int {
+	return v + 1
+}
+
+func decrementTag(v int) int {
+	if v > 0 {
+		return v - 1
+	} else {
+		return v
+	}
 }
 
 type delimitedReader struct {
@@ -64,7 +77,14 @@ type delimitedReader struct {
 // - messages are small (max 4k) and the length fits in a couple of bytes,
 //   so overall we have at most three reads per message.
 func newDelimitedReader(r io.Reader, maxSize int) *delimitedReader {
-	return &delimitedReader{r: r, buf: make([]byte, maxSize)}
+	return &delimitedReader{r: r, buf: pool.Get(maxSize)}
+}
+
+func (d *delimitedReader) Close() {
+	if d.buf != nil {
+		pool.Put(d.buf)
+		d.buf = nil
+	}
 }
 
 func (d *delimitedReader) ReadByte() (byte, error) {

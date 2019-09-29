@@ -49,7 +49,7 @@ func ListenPacket(network, address string) (net.PacketConn, error) {
 }
 
 // Dial dials the given network and address. see net.Dialer.Dial
-// Returns a net.Conn created from a file discriptor for a socket
+// Returns a net.Conn created from a file descriptor for a socket
 // with SO_REUSEPORT and SO_REUSEADDR option set.
 func Dial(network, laddr, raddr string) (net.Conn, error) {
 	nla, err := ResolveAddr(network, laddr)

@@ -3,11 +3,12 @@
 
 package record_pb
 
-import proto "github.com/gogo/protobuf/proto"
-import fmt "fmt"
-import math "math"
-
-import io "io"
+import (
+	fmt "fmt"
+	proto "github.com/gogo/protobuf/proto"
+	io "io"
+	math "math"
+)
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
@@ -38,7 +39,7 @@ func (m *Record) Reset()         { *m = Record{} }
 func (m *Record) String() string { return proto.CompactTextString(m) }
 func (*Record) ProtoMessage()    {}
 func (*Record) Descriptor() ([]byte, []int) {
-	return fileDescriptor_record_4db3afde4cc8746e, []int{0}
+	return fileDescriptor_bf94fd919e302a1d, []int{0}
 }
 func (m *Record) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
@@ -55,8 +56,8 @@ func (m *Record) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 		return b[:n], nil
 	}
 }
-func (dst *Record) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Record.Merge(dst, src)
+func (m *Record) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_Record.Merge(m, src)
 }
 func (m *Record) XXX_Size() int {
 	return m.Size()
@@ -91,6 +92,21 @@ func (m *Record) GetTimeReceived() string {
 func init() {
 	proto.RegisterType((*Record)(nil), "record.pb.Record")
 }
+
+func init() { proto.RegisterFile("record.proto", fileDescriptor_bf94fd919e302a1d) }
+
+var fileDescriptor_bf94fd919e302a1d = []byte{
+	// 125 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x29, 0x4a, 0x4d, 0xce,
+	0x2f, 0x4a, 0xd1, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x84, 0xf1, 0x92, 0x94, 0x42, 0xb8,
+	0xd8, 0x82, 0xc0, 0x1c, 0x21, 0x01, 0x2e, 0xe6, 0xec, 0xd4, 0x4a, 0x09, 0x46, 0x05, 0x46, 0x0d,
+	0x9e, 0x20, 0x10, 0x53, 0x48, 0x84, 0x8b, 0xb5, 0x2c, 0x31, 0xa7, 0x34, 0x55, 0x82, 0x09, 0x2c,
+	0x06, 0xe1, 0x08, 0x29, 0x71, 0xf1, 0x94, 0x64, 0xe6, 0xa6, 0x06, 0xa5, 0x26, 0xa7, 0x66, 0x96,
+	0xa5, 0xa6, 0x48, 0xb0, 0x2a, 0x30, 0x6a, 0x70, 0x06, 0xa1, 0x88, 0x39, 0xf1, 0x9c, 0x78, 0x24,
+	0xc7, 0x78, 0xe1, 0x91, 0x1c, 0xe3, 0x83, 0x47, 0x72, 0x8c, 0x49, 0x6c, 0x60, 0x5b, 0x8d, 0x01,
+	0x01, 0x00, 0x00, 0xff, 0xff, 0x64, 0x43, 0x08, 0x1c, 0x85, 0x00, 0x00, 0x00,
+}
+
 func (m *Record) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -140,6 +156,9 @@ func encodeVarintRecord(dAtA []byte, offset int, v uint64) int {
 	return offset + 1
 }
 func (m *Record) Size() (n int) {
+	if m == nil {
+		return 0
+	}
 	var l int
 	_ = l
 	l = len(m.Key)
@@ -188,7 +207,7 @@ func (m *Record) Unmarshal(dAtA []byte) error {
 			}
 			b := dAtA[iNdEx]
 			iNdEx++
-			wire |= (uint64(b) & 0x7F) << shift
+			wire |= uint64(b&0x7F) << shift
 			if b < 0x80 {
 				break
 			}
@@ -216,7 +235,7 @@ func (m *Record) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				byteLen |= (int(b) & 0x7F) << shift
+				byteLen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -225,6 +244,9 @@ func (m *Record) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthRecord
 			}
 			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthRecord
+			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -247,7 +269,7 @@ func (m *Record) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				byteLen |= (int(b) & 0x7F) << shift
+				byteLen |= int(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -256,6 +278,9 @@ func (m *Record) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthRecord
 			}
 			postIndex := iNdEx + byteLen
+			if postIndex < 0 {
+				return ErrInvalidLengthRecord
+			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -278,7 +303,7 @@ func (m *Record) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= (uint64(b) & 0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
@@ -288,6 +313,9 @@ func (m *Record) Unmarshal(dAtA []byte) error {
 				return ErrInvalidLengthRecord
 			}
 			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthRecord
+			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
@@ -300,6 +328,9 @@ func (m *Record) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			if skippy < 0 {
+				return ErrInvalidLengthRecord
+			}
+			if (iNdEx + skippy) < 0 {
 				return ErrInvalidLengthRecord
 			}
 			if (iNdEx + skippy) > l {
@@ -369,8 +400,11 @@ func skipRecord(dAtA []byte) (n int, err error) {
 					break
 				}
 			}
-			iNdEx += length
 			if length < 0 {
+				return 0, ErrInvalidLengthRecord
+			}
+			iNdEx += length
+			if iNdEx < 0 {
 				return 0, ErrInvalidLengthRecord
 			}
 			return iNdEx, nil
@@ -401,6 +435,9 @@ func skipRecord(dAtA []byte) (n int, err error) {
 					return 0, err
 				}
 				iNdEx = start + next
+				if iNdEx < 0 {
+					return 0, ErrInvalidLengthRecord
+				}
 			}
 			return iNdEx, nil
 		case 4:
@@ -419,17 +456,3 @@ var (
 	ErrInvalidLengthRecord = fmt.Errorf("proto: negative length found during unmarshaling")
 	ErrIntOverflowRecord   = fmt.Errorf("proto: integer overflow")
 )
-
-func init() { proto.RegisterFile("record.proto", fileDescriptor_record_4db3afde4cc8746e) }
-
-var fileDescriptor_record_4db3afde4cc8746e = []byte{
-	// 125 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0xe2, 0x29, 0x4a, 0x4d, 0xce,
-	0x2f, 0x4a, 0xd1, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0xe2, 0x84, 0xf1, 0x92, 0x94, 0x42, 0xb8,
-	0xd8, 0x82, 0xc0, 0x1c, 0x21, 0x01, 0x2e, 0xe6, 0xec, 0xd4, 0x4a, 0x09, 0x46, 0x05, 0x46, 0x0d,
-	0x9e, 0x20, 0x10, 0x53, 0x48, 0x84, 0x8b, 0xb5, 0x2c, 0x31, 0xa7, 0x34, 0x55, 0x82, 0x09, 0x2c,
-	0x06, 0xe1, 0x08, 0x29, 0x71, 0xf1, 0x94, 0x64, 0xe6, 0xa6, 0x06, 0xa5, 0x26, 0xa7, 0x66, 0x96,
-	0xa5, 0xa6, 0x48, 0xb0, 0x2a, 0x30, 0x6a, 0x70, 0x06, 0xa1, 0x88, 0x39, 0xf1, 0x9c, 0x78, 0x24,
-	0xc7, 0x78, 0xe1, 0x91, 0x1c, 0xe3, 0x83, 0x47, 0x72, 0x8c, 0x49, 0x6c, 0x60, 0x5b, 0x8d, 0x01,
-	0x01, 0x00, 0x00, 0xff, 0xff, 0x64, 0x43, 0x08, 0x1c, 0x85, 0x00, 0x00, 0x00,
-}

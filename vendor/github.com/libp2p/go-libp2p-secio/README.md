@@ -1,11 +1,10 @@
 # go-libp2p-secio
 
-[![](https://img.shields.io/badge/made%20by-Protocol%20Labs-blue.svg?style=flat-square)](http://ipn.io)
-[![](https://img.shields.io/badge/freenode-%23ipfs-blue.svg?style=flat-square)](http://webchat.freenode.net/?channels=%23ipfs)
-[![](https://img.shields.io/badge/project-IPFS-blue.svg?style=flat-square)](http://ipfs.io/)
-[![standard-readme compliant](https://img.shields.io/badge/standard--readme-OK-green.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
+[![](https://img.shields.io/badge/made%20by-Protocol%20Labs-blue.svg?style=flat-square)](https://protocol.ai)
+[![](https://img.shields.io/badge/project-libp2p-yellow.svg?style=flat-square)](https://libp2p.io/)
+[![](https://img.shields.io/badge/freenode-%23libp2p-yellow.svg?style=flat-square)](http://webchat.freenode.net/?channels=%23libp2p)
+[![Discourse posts](https://img.shields.io/discourse/https/discuss.libp2p.io/posts.svg)](https://discuss.libp2p.io)
 [![GoDoc](https://godoc.org/github.com/libp2p/go-libp2p-secio?status.svg)](https://godoc.org/github.com/libp2p/go-libp2p-secio)
-[![Coverage Status](https://coveralls.io/repos/github/libp2p/go-libp2p-secio/badge.svg?branch=master)](https://coveralls.io/github/libp2p/go-libp2p-secio?branch=master)
 [![Build Status](https://travis-ci.org/libp2p/go-libp2p-secio.svg?branch=master)](https://travis-ci.org/libp2p/go-libp2p-secio)
 
 > go-libp2p's secio encrypted transport
@@ -20,23 +19,12 @@ Package `go-libp2p-secio` is a libp2p [stream security transport](https://github
 go get github.com/libp2p/go-libp2p-secio
 ```
 
-Note that `go-libp2p-secio` is packaged with Gx, so it is recommended to use Gx to install and use it (see the Usage section).
+This repo is [gomod](https://github.com/golang/go/wiki/Modules)-compatible, and users of
+go 1.11 and later with modules enabled will automatically pull the latest tagged release
+by referencing this package. Upgrades to future releases can be managed using `go get`,
+or by editing your `go.mod` file as [described by the gomod documentation](https://github.com/golang/go/wiki/Modules#how-to-upgrade-and-downgrade-dependencies).
 
 ## Usage
-
-This module is packaged with [Gx](https://github.com/whyrusleeping/gx). In order to use it in your own project it is recommended that you:
-
-```sh
-go get -u github.com/whyrusleeping/gx
-go get -u github.com/whyrusleeping/gx-go
-cd <your-project-repository>
-gx init
-gx import github.com/libp2p/go-libp2p-secio
-gx install --global
-gx-go --rewrite
-```
-
-Please check [Gx](https://github.com/whyrusleeping/gx) and [Gx-go](https://github.com/whyrusleeping/gx-go) documentation for more information.
 
 For more information about how `go-libp2p-secio` is used in the libp2p context, you can see the [go-libp2p-conn](https://github.com/libp2p/go-libp2p-conn) module.
 
@@ -53,3 +41,7 @@ This repository falls under the IPFS [Code of Conduct](https://github.com/libp2p
 ## License
 
 MIT
+
+---
+
+The last gx published version of this module was: 2.0.30: QmSVaJe1aRjc78cZARTtf4pqvXERYwihyYhZWoVWceHnsK

@@ -56,15 +56,17 @@ func CloseAfterContext(p goprocess.Process, ctx context.Context) {
 		panic("nil Context")
 	}
 
-	// context.Background(). if ctx.Done() is nil, it will never be done.
-	// we check for this to avoid wasting a goroutine forever.
-	if ctx.Done() == nil {
+	// Avoid a goroutine for both context.Background() and goprocess.Background().
+	if ctx.Done() == nil || p.Closed() == nil {
 		return
 	}
 
 	go func() {
-		<-ctx.Done()
-		p.Close()
+		select {
+		case <-ctx.Done():
+			p.Close()
+		case <-p.Closed():
+		}
 	}()
 }
 
@@ -82,10 +84,10 @@ func CloseAfterContext(p goprocess.Process, ctx context.Context) {
 //
 func WithProcessClosing(ctx context.Context, p goprocess.Process) context.Context {
 	ctx, cancel := context.WithCancel(ctx)
-	go func() {
-		<-p.Closing()
+	p.AddChildNoWait(goprocess.WithTeardown(func() error {
 		cancel()
-	}()
+		return nil
+	}))
 	return ctx
 }
 
@@ -103,9 +105,13 @@ func WithProcessClosing(ctx context.Context, p goprocess.Process) context.Contex
 //
 func WithProcessClosed(ctx context.Context, p goprocess.Process) context.Context {
 	ctx, cancel := context.WithCancel(ctx)
-	go func() {
-		<-p.Closed()
+	p.AddChildNoWait(goprocess.WithTeardown(func() error {
+		select {
+		case <-p.Closed():
+		case <-ctx.Done():
+		}
 		cancel()
-	}()
+		return nil
+	}))
 	return ctx
 }

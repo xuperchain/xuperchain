@@ -21,6 +21,7 @@ package cid
 
 import (
 	"bytes"
+	"encoding"
 	"encoding/binary"
 	"encoding/json"
 	"errors"
@@ -61,6 +62,7 @@ const (
 
 	DagProtobuf = 0x70
 	DagCBOR     = 0x71
+	Libp2pKey   = 0x72
 
 	GitRaw = 0x78
 
@@ -79,6 +81,8 @@ const (
 	ZcashTx            = 0xc1
 	DecredBlock        = 0xe0
 	DecredTx           = 0xe1
+	DashBlock          = 0xf0
+	DashTx             = 0xf1
 )
 
 // Codecs maps the name of a codec to its type
@@ -87,6 +91,7 @@ var Codecs = map[string]uint64{
 	"raw":                  Raw,
 	"protobuf":             DagProtobuf,
 	"cbor":                 DagCBOR,
+	"libp2p-key":           Libp2pKey,
 	"git-raw":              GitRaw,
 	"eth-block":            EthBlock,
 	"eth-block-list":       EthBlockList,
@@ -103,6 +108,8 @@ var Codecs = map[string]uint64{
 	"zcash-tx":             ZcashTx,
 	"decred-block":         DecredBlock,
 	"decred-tx":            DecredTx,
+	"dash-block":           DashBlock,
+	"dash-tx":              DashTx,
 }
 
 // CodecToStr maps the numeric codec to its name
@@ -126,6 +133,8 @@ var CodecToStr = map[uint64]string{
 	ZcashTx:            "zcash-tx",
 	DecredBlock:        "decred-block",
 	DecredTx:           "decred-tx",
+	DashBlock:          "dash-block",
+	DashTx:             "dash-tx",
 }
 
 // NewCidV0 returns a Cid-wrapped multihash.
@@ -161,7 +170,12 @@ func NewCidV1(codecType uint64, mhash mh.Multihash) Cid {
 	return Cid{string(buf[:n+hashlen])}
 }
 
-// Cid represents a self-describing content adressed
+var _ encoding.BinaryMarshaler = Cid{}
+var _ encoding.BinaryUnmarshaler = (*Cid)(nil)
+var _ encoding.TextMarshaler = Cid{}
+var _ encoding.TextUnmarshaler = (*Cid)(nil)
+
+// Cid represents a self-describing content addressed
 // identifier. It is formed by a Version, a Codec (which indicates
 // a multicodec-packed content type) and a Multihash.
 type Cid struct{ str string }
@@ -308,6 +322,28 @@ func Cast(data []byte) (Cid, error) {
 	return Cid{string(data[0 : n+cn+len(h)])}, nil
 }
 
+// UnmarshalBinary is equivalent to Cast(). It implements the
+// encoding.BinaryUnmarshaler interface.
+func (c *Cid) UnmarshalBinary(data []byte) error {
+	casted, err := Cast(data)
+	if err != nil {
+		return err
+	}
+	c.str = casted.str
+	return nil
+}
+
+// UnmarshalText is equivalent to Decode(). It implements the
+// encoding.TextUnmarshaler interface.
+func (c *Cid) UnmarshalText(text []byte) error {
+	decodedCid, err := Decode(string(text))
+	if err != nil {
+		return err
+	}
+	c.str = decodedCid.str
+	return nil
+}
+
 // Version returns the Cid version.
 func (c Cid) Version() uint64 {
 	if len(c.str) == 34 && c.str[0] == 18 && c.str[1] == 32 {
@@ -334,7 +370,7 @@ func (c Cid) String() string {
 	case 0:
 		return c.Hash().B58String()
 	case 1:
-		mbstr, err := mbase.Encode(mbase.Base58BTC, c.Bytes())
+		mbstr, err := mbase.Encode(mbase.Base32, c.Bytes())
 		if err != nil {
 			panic("should not error with hardcoded mbase: " + err.Error())
 		}
@@ -396,6 +432,18 @@ func (c Cid) Hash() mh.Multihash {
 // with Cast().
 func (c Cid) Bytes() []byte {
 	return []byte(c.str)
+}
+
+// MarshalBinary is equivalent to Bytes(). It implements the
+// encoding.BinaryMarshaler interface.
+func (c Cid) MarshalBinary() ([]byte, error) {
+	return c.Bytes(), nil
+}
+
+// MarshalText is equivalent to String(). It implements the
+// encoding.TextMarshaler interface.
+func (c Cid) MarshalText() ([]byte, error) {
+	return []byte(c.String()), nil
 }
 
 // Equals checks that two Cids are the same.
@@ -490,7 +538,12 @@ type Prefix struct {
 // Sum uses the information in a prefix to perform a multihash.Sum()
 // and return a newly constructed Cid with the resulting multihash.
 func (p Prefix) Sum(data []byte) (Cid, error) {
-	hash, err := mh.Sum(data, p.MhType, p.MhLength)
+	length := p.MhLength
+	if p.MhType == mh.ID {
+		length = -1
+	}
+
+	hash, err := mh.Sum(data, p.MhType, length)
 	if err != nil {
 		return Undef, err
 	}

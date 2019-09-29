@@ -174,6 +174,9 @@ func (r *Resolver) resolveDnsaddr(ctx context.Context, maddr ma.Multiaddr) ([]ma
 // XXX probably insecure
 func matchDnsaddr(maddr ma.Multiaddr, trailer []ma.Multiaddr) bool {
 	parts := ma.Split(maddr)
+	if len(trailer) > len(parts) {
+		return false
+	}
 	if ma.Join(parts[len(parts)-len(trailer):]...).Equal(ma.Join(trailer...)) {
 		return true
 	}

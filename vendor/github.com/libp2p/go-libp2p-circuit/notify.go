@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	inet "github.com/libp2p/go-libp2p-net"
-	peer "github.com/libp2p/go-libp2p-peer"
+	inet "github.com/libp2p/go-libp2p-core/network"
+	peer "github.com/libp2p/go-libp2p-core/peer"
 	ma "github.com/multiformats/go-multiaddr"
 )
 
@@ -13,7 +13,7 @@ var _ inet.Notifiee = (*RelayNotifiee)(nil)
 
 type RelayNotifiee Relay
 
-func (r *Relay) Notifiee() inet.Notifiee {
+func (r *Relay) notifiee() inet.Notifiee {
 	return (*RelayNotifiee)(r)
 }
 

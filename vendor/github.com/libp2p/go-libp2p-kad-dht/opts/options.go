@@ -5,13 +5,18 @@ import (
 
 	ds "github.com/ipfs/go-datastore"
 	dssync "github.com/ipfs/go-datastore/sync"
-	"github.com/libp2p/go-libp2p-protocol"
+	protocol "github.com/libp2p/go-libp2p-core/protocol"
 	record "github.com/libp2p/go-libp2p-record"
 )
 
-var ProtocolDHT protocol.ID = "/ipfs/kad/1.0.0"
-var ProtocolDHTOld protocol.ID = "/ipfs/dht"
-var DefaultProtocols = []protocol.ID{ProtocolDHT, ProtocolDHTOld}
+// Deprecated: The old format did not support more than one message per stream, and is not supported
+// or relevant with stream pooling. ProtocolDHT should be used instead.
+const ProtocolDHTOld protocol.ID = "/ipfs/dht"
+
+var (
+	ProtocolDHT      protocol.ID = "/ipfs/kad/1.0.0"
+	DefaultProtocols             = []protocol.ID{ProtocolDHT}
+)
 
 // Options is a structure containing all the options that can be used when constructing a DHT.
 type Options struct {

@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	b58 "github.com/mr-tron/base58/base58"
-	b32 "github.com/whyrusleeping/base32"
+	b32 "github.com/multiformats/go-base32"
 )
 
 // Encoding identifies the type of base-encoding that a multibase is carrying.
@@ -38,10 +38,11 @@ const (
 	Base64urlPad      = 'U'
 )
 
-// Encodigs is a map of the supported encoding, unsupported encoding
+// Encodings is a map of the supported encoding, unsupported encoding
 // specified in standard are left out
 var Encodings = map[string]Encoding{
 	"identity":          0x00,
+	"base2":             '0',
 	"base16":            'f',
 	"base16upper":       'F',
 	"base32":            'b',
@@ -62,6 +63,7 @@ var Encodings = map[string]Encoding{
 
 var EncodingToStr = map[Encoding]string{
 	0x00: "identity",
+	'0':  "base2",
 	'f':  "base16",
 	'F':  "base16upper",
 	'b':  "base32",
@@ -92,6 +94,8 @@ func Encode(base Encoding, data []byte) (string, error) {
 	case Identity:
 		// 0x00 inside a string is OK in golang and causes no problems with the length calculation.
 		return string(Identity) + string(data), nil
+	case Base2:
+		return string(Base2) + binaryEncodeToString(data), nil
 	case Base16:
 		return string(Base16) + hex.EncodeToString(data), nil
 	case Base16Upper:
@@ -141,6 +145,9 @@ func Decode(data string) (Encoding, []byte, error) {
 	switch enc {
 	case Identity:
 		return Identity, []byte(data[1:]), nil
+	case Base2:
+		bytes, err := decodeBinaryString(data[1:])
+		return enc, bytes, err
 	case Base16, Base16Upper:
 		bytes, err := hex.DecodeString(data[1:])
 		return enc, bytes, err

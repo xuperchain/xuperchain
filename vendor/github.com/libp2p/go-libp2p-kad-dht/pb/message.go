@@ -1,10 +1,10 @@
 package dht_pb
 
 import (
+	"github.com/libp2p/go-libp2p-core/network"
+	"github.com/libp2p/go-libp2p-core/peer"
+
 	logging "github.com/ipfs/go-log"
-	inet "github.com/libp2p/go-libp2p-net"
-	peer "github.com/libp2p/go-libp2p-peer"
-	pstore "github.com/libp2p/go-libp2p-peerstore"
 	b58 "github.com/mr-tron/base58/base58"
 	ma "github.com/multiformats/go-multiaddr"
 )
@@ -12,8 +12,8 @@ import (
 var log = logging.Logger("dht.pb")
 
 type PeerRoutingInfo struct {
-	pstore.PeerInfo
-	inet.Connectedness
+	peer.AddrInfo
+	network.Connectedness
 }
 
 // NewMessage constructs a new dht message with given type, key, and level
@@ -40,7 +40,7 @@ func peerRoutingInfoToPBPeer(p PeerRoutingInfo) *Message_Peer {
 	return pbp
 }
 
-func peerInfoToPBPeer(p pstore.PeerInfo) *Message_Peer {
+func peerInfoToPBPeer(p peer.AddrInfo) *Message_Peer {
 	pbp := new(Message_Peer)
 
 	pbp.Addrs = make([][]byte, len(p.Addrs))
@@ -51,9 +51,9 @@ func peerInfoToPBPeer(p pstore.PeerInfo) *Message_Peer {
 	return pbp
 }
 
-// PBPeerToPeer turns a *Message_Peer into its pstore.PeerInfo counterpart
-func PBPeerToPeerInfo(pbp *Message_Peer) *pstore.PeerInfo {
-	return &pstore.PeerInfo{
+// PBPeerToPeer turns a *Message_Peer into its peer.AddrInfo counterpart
+func PBPeerToPeerInfo(pbp *Message_Peer) *peer.AddrInfo {
+	return &peer.AddrInfo{
 		ID:    peer.ID(pbp.GetId()),
 		Addrs: pbp.Addresses(),
 	}
@@ -61,7 +61,7 @@ func PBPeerToPeerInfo(pbp *Message_Peer) *pstore.PeerInfo {
 
 // RawPeerInfosToPBPeers converts a slice of Peers into a slice of *Message_Peers,
 // ready to go out on the wire.
-func RawPeerInfosToPBPeers(peers []pstore.PeerInfo) []*Message_Peer {
+func RawPeerInfosToPBPeers(peers []peer.AddrInfo) []*Message_Peer {
 	pbpeers := make([]*Message_Peer, len(peers))
 	for i, p := range peers {
 		pbpeers[i] = peerInfoToPBPeer(p)
@@ -72,8 +72,8 @@ func RawPeerInfosToPBPeers(peers []pstore.PeerInfo) []*Message_Peer {
 // PeersToPBPeers converts given []peer.Peer into a set of []*Message_Peer,
 // which can be written to a message and sent out. the key thing this function
 // does (in addition to PeersToPBPeers) is set the ConnectionType with
-// information from the given inet.Network.
-func PeerInfosToPBPeers(n inet.Network, peers []pstore.PeerInfo) []*Message_Peer {
+// information from the given network.Network.
+func PeerInfosToPBPeers(n network.Network, peers []peer.AddrInfo) []*Message_Peer {
 	pbps := RawPeerInfosToPBPeers(peers)
 	for i, pbp := range pbps {
 		c := ConnectionType(n.Connectedness(peers[i].ID))
@@ -90,10 +90,10 @@ func PeerRoutingInfosToPBPeers(peers []PeerRoutingInfo) []*Message_Peer {
 	return pbpeers
 }
 
-// PBPeersToPeerInfos converts given []*Message_Peer into []pstore.PeerInfo
+// PBPeersToPeerInfos converts given []*Message_Peer into []peer.AddrInfo
 // Invalid addresses will be silently omitted.
-func PBPeersToPeerInfos(pbps []*Message_Peer) []*pstore.PeerInfo {
-	peers := make([]*pstore.PeerInfo, 0, len(pbps))
+func PBPeersToPeerInfos(pbps []*Message_Peer) []*peer.AddrInfo {
+	peers := make([]*peer.AddrInfo, 0, len(pbps))
 	for _, pbp := range pbps {
 		peers = append(peers, PBPeerToPeerInfo(pbp))
 	}
@@ -149,35 +149,35 @@ func (m *Message) Loggable() map[string]interface{} {
 }
 
 // ConnectionType returns a Message_ConnectionType associated with the
-// inet.Connectedness.
-func ConnectionType(c inet.Connectedness) Message_ConnectionType {
+// network.Connectedness.
+func ConnectionType(c network.Connectedness) Message_ConnectionType {
 	switch c {
 	default:
 		return Message_NOT_CONNECTED
-	case inet.NotConnected:
+	case network.NotConnected:
 		return Message_NOT_CONNECTED
-	case inet.Connected:
+	case network.Connected:
 		return Message_CONNECTED
-	case inet.CanConnect:
+	case network.CanConnect:
 		return Message_CAN_CONNECT
-	case inet.CannotConnect:
+	case network.CannotConnect:
 		return Message_CANNOT_CONNECT
 	}
 }
 
-// Connectedness returns an inet.Connectedness associated with the
+// Connectedness returns an network.Connectedness associated with the
 // Message_ConnectionType.
-func Connectedness(c Message_ConnectionType) inet.Connectedness {
+func Connectedness(c Message_ConnectionType) network.Connectedness {
 	switch c {
 	default:
-		return inet.NotConnected
+		return network.NotConnected
 	case Message_NOT_CONNECTED:
-		return inet.NotConnected
+		return network.NotConnected
 	case Message_CONNECTED:
-		return inet.Connected
+		return network.Connected
 	case Message_CAN_CONNECT:
-		return inet.CanConnect
+		return network.CanConnect
 	case Message_CANNOT_CONNECT:
-		return inet.CannotConnect
+		return network.CannotConnect
 	}
 }

@@ -24,6 +24,7 @@ type sweeper struct {
 	sweepOnce       sync.Once
 	meters          []*Meter
 	mutex           sync.RWMutex
+	lastUpdateTime  time.Time
 	registerChannel chan *Meter
 }
 
@@ -49,6 +50,8 @@ func (sw *sweeper) register(m *Meter) {
 func (sw *sweeper) runActive() {
 	ticker := time.NewTicker(time.Second)
 	defer ticker.Stop()
+
+	sw.lastUpdateTime = time.Now()
 	for len(sw.meters) > 0 {
 		// Scale back allocation.
 		if len(sw.meters)*2 < cap(sw.meters) {
@@ -58,8 +61,8 @@ func (sw *sweeper) runActive() {
 		}
 
 		select {
-		case t := <-ticker.C:
-			sw.update(t)
+		case <-ticker.C:
+			sw.update()
 		case m := <-sw.registerChannel:
 			sw.register(m)
 		}
@@ -68,18 +71,28 @@ func (sw *sweeper) runActive() {
 	// Till next time.
 }
 
-func (sw *sweeper) update(t time.Time) {
+func (sw *sweeper) update() {
 	sw.mutex.Lock()
 	defer sw.mutex.Unlock()
-	for i := 0; i < len(sw.meters); i++ {
-		m := sw.meters[i]
+
+	now := time.Now()
+	tdiff := now.Sub(sw.lastUpdateTime)
+	if tdiff <= 0 {
+		return
+	}
+	sw.lastUpdateTime = now
+	timeMultiplier := float64(time.Second) / float64(tdiff)
+
+	newLen := len(sw.meters)
+
+	for i, m := range sw.meters {
 		total := atomic.LoadUint64(&m.accumulator)
-		diff := total - m.snapshot.Total
+		instant := timeMultiplier * float64(total-m.snapshot.Total)
 
 		if m.snapshot.Rate == 0 {
-			m.snapshot.Rate = float64(diff)
+			m.snapshot.Rate = instant
 		} else {
-			m.snapshot.Rate += alpha * (float64(diff) - m.snapshot.Rate)
+			m.snapshot.Rate += alpha * (instant - m.snapshot.Rate)
 		}
 		m.snapshot.Total = total
 
@@ -115,7 +128,7 @@ func (sw *sweeper) update(t time.Time) {
 			// Remove the snapshot total, it'll get added back on
 			// registration.
 			//
-			// `^uint64(total - 1)` is the two's compliment of
+			// `^uint64(total - 1)` is the two's complement of
 			// `total`. It's the "correct" way to subtract
 			// atomically in go.
 			atomic.AddUint64(&m.accumulator, ^uint64(m.snapshot.Total-1))
@@ -123,13 +136,15 @@ func (sw *sweeper) update(t time.Time) {
 
 		// Reset the rate, keep the total.
 		m.snapshot.Rate = 0
-
-		// remove it and repeat `i`
-		sw.meters[i] = sw.meters[len(sw.meters)-1]
-		sw.meters[len(sw.meters)-1] = nil
-		sw.meters = sw.meters[:len(sw.meters)-1]
-		i--
+		newLen--
+		sw.meters[i] = sw.meters[newLen]
 	}
+
+	// trim the meter list
+	for i := newLen; i < len(sw.meters); i++ {
+		sw.meters[i] = nil
+	}
+	sw.meters = sw.meters[:newLen]
 }
 
 func (sw *sweeper) Register(m *Meter) {
