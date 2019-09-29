@@ -3,10 +3,6 @@ github.com/AndreasBriese/bbloom
 # github.com/Microsoft/go-winio v0.4.14
 github.com/Microsoft/go-winio
 github.com/Microsoft/go-winio/pkg/guid
-# github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412
-github.com/agl/ed25519/edwards25519
-github.com/agl/ed25519
-github.com/agl/ed25519/extra25519
 # github.com/beorn7/perks v1.0.1
 github.com/beorn7/perks/quantile
 # github.com/btcsuite/btcd v0.0.0-20190824003749-130ea5bddde3
@@ -15,12 +11,6 @@ github.com/btcsuite/btcd/btcec
 github.com/btcsuite/btcutil/base58
 # github.com/coreos/go-semver v0.3.0
 github.com/coreos/go-semver/semver
-# github.com/dgraph-io/badger v1.6.0-rc1
-github.com/dgraph-io/badger/options
-github.com/dgraph-io/badger/pb
-github.com/dgraph-io/badger/skl
-github.com/dgraph-io/badger/table
-github.com/dgraph-io/badger/y
 # github.com/dgraph-io/badger/v2 v2.0.0-rc.2
 github.com/dgraph-io/badger/v2
 github.com/dgraph-io/badger/v2/options
@@ -31,10 +21,12 @@ github.com/dgraph-io/badger/v2/y
 # github.com/dgryski/go-farm v0.0.0-20190423205320-6a90982ecee2
 github.com/dgryski/go-farm
 # github.com/docker/distribution v2.7.1+incompatible
-github.com/docker/distribution/digestset
 github.com/docker/distribution/reference
+github.com/docker/distribution/digestset
 # github.com/docker/docker v0.7.3-0.20190115220918-5ec31380a5d3
+github.com/docker/docker/api/types
 github.com/docker/docker/api/types/container
+github.com/docker/docker/client
 github.com/docker/docker/api/types/filters
 github.com/docker/docker/api/types/mount
 github.com/docker/docker/api/types/network
@@ -42,46 +34,42 @@ github.com/docker/docker/api/types/registry
 github.com/docker/docker/api/types/swarm
 github.com/docker/docker/api/types/blkiodev
 github.com/docker/docker/api/types/strslice
-github.com/docker/docker/api/types/versions
-github.com/docker/docker/errdefs
-github.com/docker/docker/api/types/swarm/runtime
-github.com/docker/docker/api/types
 github.com/docker/docker/api
 github.com/docker/docker/api/types/events
 github.com/docker/docker/api/types/image
 github.com/docker/docker/api/types/time
+github.com/docker/docker/api/types/versions
 github.com/docker/docker/api/types/volume
-github.com/docker/docker/client
+github.com/docker/docker/errdefs
+github.com/docker/docker/api/types/swarm/runtime
 # github.com/docker/go-connections v0.4.1-0.20180821093606-97c2040d34df
-github.com/docker/go-connections/nat
 github.com/docker/go-connections/sockets
+github.com/docker/go-connections/nat
 github.com/docker/go-connections/tlsconfig
 # github.com/docker/go-units v0.4.0
 github.com/docker/go-units
 # github.com/dustin/go-humanize v1.0.0
 github.com/dustin/go-humanize
-# github.com/fd/go-nat v1.0.0
-github.com/fd/go-nat
 # github.com/fsnotify/fsnotify v1.4.7
 github.com/fsnotify/fsnotify
 # github.com/go-stack/stack v1.8.0
 github.com/go-stack/stack
 # github.com/gogo/protobuf v1.3.0
-github.com/gogo/protobuf/proto
 github.com/gogo/protobuf/io
+github.com/gogo/protobuf/proto
 # github.com/golang/protobuf v1.3.2
+github.com/golang/protobuf/jsonpb
 github.com/golang/protobuf/proto
 github.com/golang/protobuf/ptypes/struct
-github.com/golang/protobuf/protoc-gen-go/descriptor
-github.com/golang/protobuf/protoc-gen-go/generator/internal/remap
-github.com/golang/protobuf/protoc-gen-go/plugin
+github.com/golang/protobuf/protoc-gen-go/generator
 github.com/golang/protobuf/ptypes/any
 github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/timestamp
-github.com/golang/protobuf/jsonpb
-github.com/golang/protobuf/protoc-gen-go/generator
 github.com/golang/protobuf/ptypes/wrappers
+github.com/golang/protobuf/protoc-gen-go/descriptor
 github.com/golang/protobuf/ptypes
+github.com/golang/protobuf/protoc-gen-go/generator/internal/remap
+github.com/golang/protobuf/protoc-gen-go/plugin
 # github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db
 github.com/golang/snappy
 # github.com/google/uuid v1.1.1
@@ -91,13 +79,10 @@ github.com/gorilla/websocket
 # github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 github.com/grpc-ecosystem/go-grpc-prometheus
 # github.com/grpc-ecosystem/grpc-gateway v1.9.2
-github.com/grpc-ecosystem/grpc-gateway/internal
-github.com/grpc-ecosystem/grpc-gateway/utilities
 github.com/grpc-ecosystem/grpc-gateway/runtime
-# github.com/gxed/hashland/keccakpg v0.0.1
-github.com/gxed/hashland/keccakpg
+github.com/grpc-ecosystem/grpc-gateway/utilities
+github.com/grpc-ecosystem/grpc-gateway/internal
 # github.com/hashicorp/golang-lru v0.5.3
-github.com/hashicorp/golang-lru
 github.com/hashicorp/golang-lru/simplelru
 # github.com/hashicorp/hcl v1.0.0
 github.com/hashicorp/hcl
@@ -111,20 +96,20 @@ github.com/hashicorp/hcl/hcl/strconv
 github.com/hashicorp/hcl/json/scanner
 github.com/hashicorp/hcl/json/token
 # github.com/huin/goupnp v1.0.0
+github.com/huin/goupnp
+github.com/huin/goupnp/dcps/internetgateway1
+github.com/huin/goupnp/dcps/internetgateway2
 github.com/huin/goupnp/httpu
 github.com/huin/goupnp/scpd
 github.com/huin/goupnp/soap
 github.com/huin/goupnp/ssdp
-github.com/huin/goupnp
-github.com/huin/goupnp/dcps/internetgateway1
-github.com/huin/goupnp/dcps/internetgateway2
 # github.com/inconshreveable/mousetrap v1.0.0
 github.com/inconshreveable/mousetrap
 # github.com/ipfs/go-cid v0.0.3
 github.com/ipfs/go-cid
 # github.com/ipfs/go-datastore v0.1.0
-github.com/ipfs/go-datastore/query
 github.com/ipfs/go-datastore
+github.com/ipfs/go-datastore/query
 github.com/ipfs/go-datastore/sync
 github.com/ipfs/go-datastore/autobatch
 # github.com/ipfs/go-ipfs-addr v0.0.1
@@ -142,8 +127,6 @@ github.com/ipfs/go-todocounter
 github.com/jackpal/gateway
 # github.com/jackpal/go-nat-pmp v1.0.1
 github.com/jackpal/go-nat-pmp
-# github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99
-github.com/jbenet/go-context/io
 # github.com/jbenet/go-temp-err-catcher v0.0.0-20150120210811-aac704a3f4f2
 github.com/jbenet/go-temp-err-catcher
 # github.com/jbenet/goprocess v0.1.3
@@ -157,9 +140,6 @@ github.com/koron/go-ssdp
 github.com/libp2p/go-addr-util
 # github.com/libp2p/go-buffer-pool v0.0.2
 github.com/libp2p/go-buffer-pool
-# github.com/libp2p/go-conn-security v0.1.0
-github.com/libp2p/go-conn-security
-github.com/libp2p/go-conn-security/insecure
 # github.com/libp2p/go-conn-security-multistream v0.1.0
 github.com/libp2p/go-conn-security-multistream
 # github.com/libp2p/go-eventbus v0.1.0
@@ -167,6 +147,7 @@ github.com/libp2p/go-eventbus
 # github.com/libp2p/go-flow-metrics v0.0.1
 github.com/libp2p/go-flow-metrics
 # github.com/libp2p/go-libp2p v0.4.0
+github.com/libp2p/go-libp2p
 github.com/libp2p/go-libp2p/config
 github.com/libp2p/go-libp2p/p2p/host/basic
 github.com/libp2p/go-libp2p/p2p/host/relay
@@ -174,7 +155,6 @@ github.com/libp2p/go-libp2p/p2p/host/routed
 github.com/libp2p/go-libp2p/p2p/protocol/identify
 github.com/libp2p/go-libp2p/p2p/protocol/ping
 github.com/libp2p/go-libp2p/p2p/protocol/identify/pb
-github.com/libp2p/go-libp2p
 # github.com/libp2p/go-libp2p-autonat v0.1.0
 github.com/libp2p/go-libp2p-autonat
 github.com/libp2p/go-libp2p-autonat/pb
@@ -182,49 +162,42 @@ github.com/libp2p/go-libp2p-autonat/pb
 github.com/libp2p/go-libp2p-circuit
 github.com/libp2p/go-libp2p-circuit/pb
 # github.com/libp2p/go-libp2p-core v0.2.3
-github.com/libp2p/go-libp2p-core/peer
-github.com/libp2p/go-libp2p-core/helpers
-github.com/libp2p/go-libp2p-core/network
-github.com/libp2p/go-libp2p-core/sec
+github.com/libp2p/go-libp2p-core/connmgr
 github.com/libp2p/go-libp2p-core/crypto
 github.com/libp2p/go-libp2p-core/host
+github.com/libp2p/go-libp2p-core/metrics
 github.com/libp2p/go-libp2p-core/peerstore
+github.com/libp2p/go-libp2p-core/pnet
+github.com/libp2p/go-libp2p-core/helpers
+github.com/libp2p/go-libp2p-core/network
+github.com/libp2p/go-libp2p-core/peer
 github.com/libp2p/go-libp2p-core/transport
 github.com/libp2p/go-libp2p-core/protocol
-github.com/libp2p/go-libp2p-core/connmgr
-github.com/libp2p/go-libp2p-core/pnet
-github.com/libp2p/go-libp2p-core/metrics
-github.com/libp2p/go-libp2p-core/mux
 github.com/libp2p/go-libp2p-core/routing
-github.com/libp2p/go-libp2p-core/sec/insecure
-github.com/libp2p/go-libp2p-core/event
-github.com/libp2p/go-libp2p-core/discovery
 github.com/libp2p/go-libp2p-core/crypto/pb
+github.com/libp2p/go-libp2p-core/event
+github.com/libp2p/go-libp2p-core/mux
+github.com/libp2p/go-libp2p-core/sec
+github.com/libp2p/go-libp2p-core/sec/insecure
 github.com/libp2p/go-libp2p-core/sec/insecure/pb
+github.com/libp2p/go-libp2p-core/discovery
 # github.com/libp2p/go-libp2p-crypto v0.1.0
 github.com/libp2p/go-libp2p-crypto
-github.com/libp2p/go-libp2p-crypto/pb
 # github.com/libp2p/go-libp2p-discovery v0.1.0
 github.com/libp2p/go-libp2p-discovery
 # github.com/libp2p/go-libp2p-host v0.1.0
 github.com/libp2p/go-libp2p-host
-# github.com/libp2p/go-libp2p-interface-connmgr v0.1.0
-github.com/libp2p/go-libp2p-interface-connmgr
-# github.com/libp2p/go-libp2p-interface-pnet v0.1.0
-github.com/libp2p/go-libp2p-interface-pnet
 # github.com/libp2p/go-libp2p-kad-dht v0.2.1
+github.com/libp2p/go-libp2p-kad-dht
+github.com/libp2p/go-libp2p-kad-dht/metrics
 github.com/libp2p/go-libp2p-kad-dht/opts
 github.com/libp2p/go-libp2p-kad-dht/pb
 github.com/libp2p/go-libp2p-kad-dht/providers
-github.com/libp2p/go-libp2p-kad-dht
-github.com/libp2p/go-libp2p-kad-dht/metrics
 # github.com/libp2p/go-libp2p-kbucket v0.2.1
-github.com/libp2p/go-libp2p-kbucket/keyspace
 github.com/libp2p/go-libp2p-kbucket
+github.com/libp2p/go-libp2p-kbucket/keyspace
 # github.com/libp2p/go-libp2p-loggables v0.1.0
 github.com/libp2p/go-libp2p-loggables
-# github.com/libp2p/go-libp2p-metrics v0.1.0
-github.com/libp2p/go-libp2p-metrics
 # github.com/libp2p/go-libp2p-mplex v0.2.1
 github.com/libp2p/go-libp2p-mplex
 # github.com/libp2p/go-libp2p-nat v0.0.4
@@ -233,28 +206,21 @@ github.com/libp2p/go-libp2p-nat
 github.com/libp2p/go-libp2p-net
 # github.com/libp2p/go-libp2p-peer v0.2.0
 github.com/libp2p/go-libp2p-peer
-github.com/libp2p/go-libp2p-peer/peerset
 # github.com/libp2p/go-libp2p-peerstore v0.1.3
 github.com/libp2p/go-libp2p-peerstore
 github.com/libp2p/go-libp2p-peerstore/pstoremem
-github.com/libp2p/go-libp2p-peerstore/addr
 github.com/libp2p/go-libp2p-peerstore/queue
-# github.com/libp2p/go-libp2p-protocol v0.1.0
-github.com/libp2p/go-libp2p-protocol
+github.com/libp2p/go-libp2p-peerstore/addr
 # github.com/libp2p/go-libp2p-record v0.1.1
 github.com/libp2p/go-libp2p-record
 github.com/libp2p/go-libp2p-record/pb
 # github.com/libp2p/go-libp2p-routing v0.1.0
-github.com/libp2p/go-libp2p-routing
-github.com/libp2p/go-libp2p-routing/options
 github.com/libp2p/go-libp2p-routing/notifications
 # github.com/libp2p/go-libp2p-secio v0.2.0
 github.com/libp2p/go-libp2p-secio
 github.com/libp2p/go-libp2p-secio/pb
 # github.com/libp2p/go-libp2p-swarm v0.2.2
 github.com/libp2p/go-libp2p-swarm
-# github.com/libp2p/go-libp2p-transport v0.1.0
-github.com/libp2p/go-libp2p-transport
 # github.com/libp2p/go-libp2p-transport-upgrader v0.1.1
 github.com/libp2p/go-libp2p-transport-upgrader
 # github.com/libp2p/go-libp2p-yamux v0.2.1
@@ -274,8 +240,6 @@ github.com/libp2p/go-openssl/utils
 github.com/libp2p/go-reuseport
 # github.com/libp2p/go-reuseport-transport v0.0.2
 github.com/libp2p/go-reuseport-transport
-# github.com/libp2p/go-stream-muxer v0.1.0
-github.com/libp2p/go-stream-muxer
 # github.com/libp2p/go-stream-muxer-multistream v0.2.0
 github.com/libp2p/go-stream-muxer-multistream
 # github.com/libp2p/go-tcp-transport v0.1.1
@@ -332,9 +296,9 @@ github.com/pelletier/go-toml
 # github.com/pkg/errors v0.8.1
 github.com/pkg/errors
 # github.com/prometheus/client_golang v1.1.0
+github.com/prometheus/client_golang/prometheus/promhttp
 github.com/prometheus/client_golang/prometheus
 github.com/prometheus/client_golang/prometheus/internal
-github.com/prometheus/client_golang/prometheus/promhttp
 # github.com/prometheus/client_model v0.0.0-20190129233127-fd36f4220a90
 github.com/prometheus/client_model/go
 # github.com/prometheus/common v0.6.0
@@ -362,18 +326,18 @@ github.com/spf13/pflag
 # github.com/spf13/viper v1.4.0
 github.com/spf13/viper
 # github.com/syndtr/goleveldb v1.0.0
-github.com/syndtr/goleveldb/leveldb/cache
-github.com/syndtr/goleveldb/leveldb/comparer
 github.com/syndtr/goleveldb/leveldb/errors
-github.com/syndtr/goleveldb/leveldb/filter
-github.com/syndtr/goleveldb/leveldb/iterator
-github.com/syndtr/goleveldb/leveldb/journal
-github.com/syndtr/goleveldb/leveldb/memdb
-github.com/syndtr/goleveldb/leveldb/opt
-github.com/syndtr/goleveldb/leveldb/storage
-github.com/syndtr/goleveldb/leveldb/table
 github.com/syndtr/goleveldb/leveldb/util
 github.com/syndtr/goleveldb/leveldb
+github.com/syndtr/goleveldb/leveldb/filter
+github.com/syndtr/goleveldb/leveldb/opt
+github.com/syndtr/goleveldb/leveldb/storage
+github.com/syndtr/goleveldb/leveldb/comparer
+github.com/syndtr/goleveldb/leveldb/iterator
+github.com/syndtr/goleveldb/leveldb/memdb
+github.com/syndtr/goleveldb/leveldb/cache
+github.com/syndtr/goleveldb/leveldb/journal
+github.com/syndtr/goleveldb/leveldb/table
 # github.com/whyrusleeping/base32 v0.0.0-20170828182744-c30ac30633cc
 github.com/whyrusleeping/base32
 # github.com/whyrusleeping/go-keyspace v0.0.0-20160322163242-5b898ac5add1
@@ -382,18 +346,10 @@ github.com/whyrusleeping/go-keyspace
 github.com/whyrusleeping/go-logging
 # github.com/whyrusleeping/go-notifier v0.0.0-20170827234753-097c5d47330f
 github.com/whyrusleeping/go-notifier
-# github.com/whyrusleeping/go-smux-multiplex v3.0.16+incompatible
-github.com/whyrusleeping/go-smux-multiplex
-# github.com/whyrusleeping/go-smux-multistream v2.0.2+incompatible
-github.com/whyrusleeping/go-smux-multistream
-# github.com/whyrusleeping/go-smux-yamux v2.0.9+incompatible
-github.com/whyrusleeping/go-smux-yamux
 # github.com/whyrusleeping/mafmt v1.2.8
 github.com/whyrusleeping/mafmt
 # github.com/whyrusleeping/multiaddr-filter v0.0.0-20160516205228-e903e4adabd7
 github.com/whyrusleeping/multiaddr-filter
-# github.com/whyrusleeping/yamux v1.2.0
-github.com/whyrusleeping/yamux
 # github.com/xuperchain/log15 v0.0.0-20190620081506-bc88a9198230
 github.com/xuperchain/log15
 # go.opencensus.io v0.22.1
@@ -406,42 +362,41 @@ go.opencensus.io/internal/tagencoding
 go.opencensus.io/metric/metricproducer
 go.opencensus.io/resource
 # golang.org/x/crypto v0.0.0-20190927123631-a832865fa7ad
-golang.org/x/crypto/blowfish
-golang.org/x/crypto/blake2s
-golang.org/x/crypto/sha3
 golang.org/x/crypto/ripemd160
 golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/ed25519
+golang.org/x/crypto/blake2s
+golang.org/x/crypto/sha3
 golang.org/x/crypto/ed25519/internal/edwards25519
 # golang.org/x/net v0.0.0-20190926025831-c00fd9afed17
+golang.org/x/net/context
 golang.org/x/net/trace
 golang.org/x/net/proxy
-golang.org/x/net/context
-golang.org/x/net/html/charset
-golang.org/x/net/html/atom
-golang.org/x/net/html
-golang.org/x/net/idna
-golang.org/x/net/http/httpguts
-golang.org/x/net/http2/hpack
-golang.org/x/net/internal/socks
 golang.org/x/net/internal/timeseries
 golang.org/x/net/http2
+golang.org/x/net/http2/hpack
+golang.org/x/net/internal/socks
+golang.org/x/net/http/httpguts
+golang.org/x/net/idna
+golang.org/x/net/html/charset
 golang.org/x/net/ipv4
+golang.org/x/net/html
 golang.org/x/net/bpf
 golang.org/x/net/internal/iana
 golang.org/x/net/internal/socket
+golang.org/x/net/html/atom
 # golang.org/x/sys v0.0.0-20190922100055-0a153f010e69
-golang.org/x/sys/windows
 golang.org/x/sys/unix
+golang.org/x/sys/windows
 golang.org/x/sys/cpu
 # golang.org/x/text v0.3.2
+golang.org/x/text/transform
+golang.org/x/text/unicode/norm
+golang.org/x/text/secure/bidirule
+golang.org/x/text/unicode/bidi
 golang.org/x/text/encoding
 golang.org/x/text/encoding/charmap
 golang.org/x/text/encoding/htmlindex
-golang.org/x/text/transform
-golang.org/x/text/secure/bidirule
-golang.org/x/text/unicode/bidi
-golang.org/x/text/unicode/norm
 golang.org/x/text/encoding/internal/identifier
 golang.org/x/text/encoding/internal
 golang.org/x/text/encoding/japanese
@@ -452,24 +407,23 @@ golang.org/x/text/encoding/unicode
 golang.org/x/text/language
 golang.org/x/text/internal/utf8internal
 golang.org/x/text/runes
-golang.org/x/text/internal/tag
 golang.org/x/text/internal/language
 golang.org/x/text/internal/language/compact
+golang.org/x/text/internal/tag
 # golang.org/x/xerrors v0.0.0-20190717185122-a985d3407aa7
 golang.org/x/xerrors
 golang.org/x/xerrors/internal
 # google.golang.org/genproto v0.0.0-20190927181202-20e1ac93f88c
+google.golang.org/genproto/googleapis/api/annotations
 google.golang.org/genproto/googleapis/api/httpbody
 google.golang.org/genproto/protobuf/field_mask
-google.golang.org/genproto/googleapis/api/annotations
 google.golang.org/genproto/googleapis/rpc/status
 # google.golang.org/grpc v1.24.0
 google.golang.org/grpc
-google.golang.org/grpc/codes
-google.golang.org/grpc/status
-google.golang.org/grpc/grpclog
-google.golang.org/grpc/metadata
 google.golang.org/grpc/credentials
+google.golang.org/grpc/codes
+google.golang.org/grpc/grpclog
+google.golang.org/grpc/status
 google.golang.org/grpc/reflection
 google.golang.org/grpc/balancer
 google.golang.org/grpc/balancer/roundrobin
@@ -486,6 +440,7 @@ google.golang.org/grpc/internal/grpcrand
 google.golang.org/grpc/internal/grpcsync
 google.golang.org/grpc/internal/transport
 google.golang.org/grpc/keepalive
+google.golang.org/grpc/metadata
 google.golang.org/grpc/naming
 google.golang.org/grpc/peer
 google.golang.org/grpc/resolver
