@@ -445,7 +445,8 @@ func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, priv
 			return nil, findTotalErr
 		}
 		//说明是1.1.1版本，没有utxo total字段, 估算一个
-		utxoVM.utxoTotal = ledger.GetEstimatedTotal()
+		//utxoVM.utxoTotal = ledger.GetEstimatedTotal()
+		utxoVM.utxoTotal = big.NewInt(0)
 		xlog.Info("utxo total is estimated", "total", utxoVM.utxoTotal)
 	}
 	loadErr := utxoVM.loadUnconfirmedTxFromDisk()
@@ -1414,7 +1415,7 @@ func (uv *UtxoVM) PlayAndRepost(blockid []byte, needRepost bool, isRootTx bool) 
 		return err
 	}
 
-	ctx := &contract.TxContext{UtxoBatch: batch, Block: block, LedgerObj: uv.ledger} // 将batch赋值到合约机的上下文
+	ctx := &contract.TxContext{UtxoBatch: batch, Block: block, LedgerObj: uv.ledger, UtxoMeta: uv} // 将batch赋值到合约机的上下文
 	uv.smartContract.SetContext(ctx)
 	autoGenTxList, genErr := uv.GetVATList(block.Height, -1, block.Timestamp)
 	if genErr != nil {
@@ -1607,7 +1608,7 @@ func (uv *UtxoVM) Walk(blockid []byte) error {
 	for _, undoBlk := range undoBlocks {
 		batch := uv.ldb.NewBatch()
 		uv.xlog.Info("start undo block", "blockid", fmt.Sprintf("%x", undoBlk.Blockid))
-		ctx := &contract.TxContext{UtxoBatch: batch, Block: undoBlk, IsUndo: true, LedgerObj: uv.ledger} // 将batch赋值到合约机的上下文
+		ctx := &contract.TxContext{UtxoBatch: batch, Block: undoBlk, IsUndo: true, LedgerObj: uv.ledger, UtxoMeta: uv} // 将batch赋值到合约机的上下文
 		uv.smartContract.SetContext(ctx)
 		for i := len(undoBlk.Transactions) - 1; i >= 0; i-- {
 			tx := undoBlk.Transactions[i]
@@ -1645,7 +1646,7 @@ func (uv *UtxoVM) Walk(blockid []byte) error {
 		todoBlk := todoBlocks[i]
 		// 区块加解密有效性检查
 		batch := uv.ldb.NewBatch()
-		ctx := &contract.TxContext{UtxoBatch: batch, Block: todoBlk, LedgerObj: uv.ledger} // 将batch赋值到合约机的上下文
+		ctx := &contract.TxContext{UtxoBatch: batch, Block: todoBlk, LedgerObj: uv.ledger, UtxoMeta: uv} // 将batch赋值到合约机的上下文
 		uv.smartContract.SetContext(ctx)
 		uv.xlog.Info("start do block", "blockid", fmt.Sprintf("%x", todoBlk.Blockid))
 		autoGenTxList, genErr := uv.GetVATList(todoBlk.Height, -1, todoBlk.Timestamp)
@@ -1998,6 +1999,9 @@ func (uv *UtxoVM) GetMeta() *pb.UtxoMeta {
 	meta.UtxoTotal = uv.utxoTotal.String() // pb没有bigint，所以转换为字符串
 	meta.AvgDelay = uv.avgDelay
 	meta.UnconfirmTxAmount = uv.unconfirmTxAmount
+	meta.MaxBlockSize = uv.meta.GetMaxBlockSize()
+	meta.ReservedContracts = uv.meta.GetReservedContracts()
+	meta.ForbiddenContract = uv.meta.GetForbiddenContract()
 	return meta
 }
 

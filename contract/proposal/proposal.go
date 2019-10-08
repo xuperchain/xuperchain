@@ -283,7 +283,7 @@ func (prp *Proposal) IsVoteOk(proposalTx *pb.Transaction) bool {
 	prp.log.Debug("vote result", "need", voteNeeded, "got", curVoteAmount)
 	voteOK := curVoteAmount.Cmp(voteNeeded) >= 0
 	if !voteOK {
-		prp.log.Warn("no enough vote collected", "txid", proposalTx.HexTxid())
+		prp.log.Warn("no enough vote collected", "txid", proposalTx.HexTxid(), "needed", voteNeeded.String(), "currgot", curVoteAmount.String())
 	}
 	return voteOK
 }

@@ -351,6 +351,12 @@ type UtxoMeta struct {
 	AvgDelay int64 `json:"avgDelay"`
 	// Current unconfirmed tx amount
 	UnconfirmTxAmount int64 `json:"unconfirmed"`
+	// MaxBlockSize MaxBlockSize
+	MaxBlockSize int64 `json:"maxBlockSize"`
+	// ReservedContracts ReservedContracts
+	ReservedContracts []InvokeRequest `json:"reservedContracts"`
+	// ForbiddenContract forbidden contract
+	ForbiddenContract InvokeRequest `json:"forbiddenContract"`
 }
 
 // ChainStatus proto.ChainStatus
@@ -373,7 +379,33 @@ func FromSystemStatusPB(statuspb *pb.SystemsStatus) *SystemStatus {
 	for _, chain := range statuspb.GetBcsStatus() {
 		ledgerMeta := chain.GetMeta()
 		utxoMeta := chain.GetUtxoMeta()
-
+		ReservedContracts := utxoMeta.GetReservedContracts()
+		rcs := []InvokeRequest{}
+		for _, rcpb := range ReservedContracts {
+			args := map[string]string{}
+			for k, v := range rcpb.GetArgs() {
+				args[k] = string(v)
+			}
+			rc := InvokeRequest{
+				ModuleName:   rcpb.GetModuleName(),
+				ContractName: rcpb.GetContractName(),
+				MethodName:   rcpb.GetMethodName(),
+				Args:         args,
+			}
+			rcs = append(rcs, rc)
+		}
+		forbiddenContract := utxoMeta.GetForbiddenContract()
+		args := forbiddenContract.GetArgs()
+		originalArgs := map[string]string{}
+		for key, value := range args {
+			originalArgs[key] = string(value)
+		}
+		forbiddenContractMap := InvokeRequest{
+			ModuleName:   forbiddenContract.GetModuleName(),
+			ContractName: forbiddenContract.GetContractName(),
+			MethodName:   forbiddenContract.GetMethodName(),
+			Args:         originalArgs,
+		}
 		status.ChainStatus = append(status.ChainStatus, ChainStatus{
 			Name: chain.GetBcname(),
 			LedgerMeta: LedgerMeta{
@@ -388,6 +420,9 @@ func FromSystemStatusPB(statuspb *pb.SystemsStatus) *SystemStatus {
 				UtxoTotal:         utxoMeta.GetUtxoTotal(),
 				AvgDelay:          utxoMeta.GetAvgDelay(),
 				UnconfirmTxAmount: utxoMeta.GetUnconfirmTxAmount(),
+				MaxBlockSize:      utxoMeta.GetMaxBlockSize(),
+				ReservedContracts: rcs,
+				ForbiddenContract: forbiddenContractMap,
 			},
 		})
 	}
