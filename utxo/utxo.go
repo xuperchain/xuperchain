@@ -945,15 +945,18 @@ func (uv *UtxoVM) payFee(tx *pb.Transaction, batch kvdb.Batch, block *pb.Interna
 		if !bytes.Equal(addr, []byte(FeePlaceholder)) {
 			continue
 		}
-		addr = block.Proposer // 占位符替换为矿工
-		utxoKey := GenUtxoKeyWithPrefix(addr, tx.Txid, int32(offset))
 		uItem := &UtxoItem{}
 		uItem.Amount = big.NewInt(0)
 		uItem.Amount.SetBytes(txOutput.Amount)
+		if uItem.Amount.Cmp(big.NewInt(0)) == 0 {
+			continue
+		}
 		uItemBinary, uErr := uItem.Dumps()
 		if uErr != nil {
 			return uErr
 		}
+		addr = block.Proposer // 占位符替换为矿工
+		utxoKey := GenUtxoKeyWithPrefix(addr, tx.Txid, int32(offset))
 		batch.Put([]byte(utxoKey), uItemBinary) // 插入本交易产生的utxo
 		uv.addBalance(addr, uItem.Amount)
 		uv.utxoCache.Insert(string(addr), utxoKey, uItem)
@@ -967,6 +970,9 @@ func (uv *UtxoVM) undoPayFee(tx *pb.Transaction, batch kvdb.Batch, block *pb.Int
 	for offset, txOutput := range tx.TxOutputs {
 		addr := txOutput.ToAddr
 		if !bytes.Equal(addr, []byte(FeePlaceholder)) {
+			continue
+		}
+		if txOutput.Amount.Cmp(big.NewInt(0)) == 0 {
 			continue
 		}
 		addr = block.Proposer
@@ -1019,6 +1025,10 @@ func (uv *UtxoVM) doTxInternal(tx *pb.Transaction, batch kvdb.Batch) error {
 		uItem := &UtxoItem{}
 		uItem.Amount = big.NewInt(0)
 		uItem.Amount.SetBytes(txOutput.Amount)
+		// 输出是0,忽略
+		if uItem.Amount.Cmp(big.NewInt(0)) == 0 {
+			continue
+		}
 		uItem.FrozenHeight = txOutput.FrozenHeight
 		uItemBinary, uErr := uItem.Dumps()
 		if uErr != nil {
