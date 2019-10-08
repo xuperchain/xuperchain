@@ -1077,6 +1077,9 @@ func (uv *UtxoVM) undoTxInternal(tx *pb.Transaction, batch kvdb.Batch) error {
 		if bytes.Equal(addr, []byte(FeePlaceholder)) {
 			continue
 		}
+		if txOutput.Amount.Cmp(big.NewInt(0)) == 0 {
+			continue
+		}
 		utxoKey := GenUtxoKeyWithPrefix(addr, tx.Txid, int32(offset))
 		batch.Delete([]byte(utxoKey)) // 删除产生的UTXO
 		uv.utxoCache.Remove(string(addr), utxoKey)
