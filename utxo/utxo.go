@@ -96,6 +96,9 @@ const (
 
 // UtxoVM UTXO VM
 type UtxoVM struct {
+	meta              *pb.UtxoMeta // utxo meta
+	metaTmp           *pb.UtxoMeta // tmp utxo meta
+	mutexMeta         *sync.Mutex  // access control for meta
 	ldb               kvdb.Database
 	mutex             *sync.RWMutex // utxo leveldb表读写锁
 	mutexMem          *sync.Mutex   // 内存锁定状态互斥锁
@@ -375,6 +378,9 @@ func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, priv
 	}
 	utxoMutex := &sync.RWMutex{}
 	utxoVM := &UtxoVM{
+		meta:                 &pb.UtxoMeta{},
+		metaTmp:              &pb.UtxoMeta{},
+		mutexMeta:            &sync.Mutex{},
 		ldb:                  baseDB,
 		mutex:                utxoMutex,
 		mutexMem:             &sync.Mutex{},
@@ -447,6 +453,23 @@ func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, priv
 		xlog.Warn("faile to load unconfirmed tx from disk", "loadErr", loadErr)
 		return nil, loadErr
 	}
+	// load consensus parameters
+	utxoVM.meta.MaxBlockSize, loadErr = utxoVM.LoadMaxBlockSize()
+	if loadErr != nil {
+		xlog.Warn("failed to load maxBlockSize from disk", "loadErr", loadErr)
+		return nil, loadErr
+	}
+	utxoVM.meta.ForbiddenContract, loadErr = utxoVM.LoadForbiddenContract()
+	if loadErr != nil {
+		xlog.Warn("failed to load forbiddenContract from disk", "loadErr", loadErr)
+		return nil, loadErr
+	}
+	utxoVM.meta.ReservedContracts, loadErr = utxoVM.LoadReservedContracts()
+	if loadErr != nil {
+		xlog.Warn("failed to load reservedContracts from disk", "loadErr", loadErr)
+		return nil, loadErr
+	}
+	utxoVM.metaTmp = utxoVM.meta
 	return utxoVM, nil
 }
 
@@ -544,11 +567,12 @@ func (uv *UtxoVM) GenerateEmptyTx(desc []byte) (*pb.Transaction, error) {
 }
 
 // GenerateRootTx 通过json内容生成创世区块的交易
-func (uv *UtxoVM) GenerateRootTx(js []byte) (*pb.Transaction, error) {
+//func (uv *UtxoVM) GenerateRootTx(js []byte) (*pb.Transaction, error) {
+func GenerateRootTx(js []byte) (*pb.Transaction, error) {
 	jsObj := &RootJSON{}
 	jsErr := json.Unmarshal(js, jsObj)
 	if jsErr != nil {
-		uv.xlog.Warn("failed to parse json", "js", string(js), "jsErr", jsErr)
+		//uv.xlog.Warn("failed to parse json", "js", string(js), "jsErr", jsErr)
 		return nil, jsErr
 	}
 	utxoTx := &pb.Transaction{Version: RootTxVersion}
@@ -1449,6 +1473,10 @@ func (uv *UtxoVM) PlayAndRepost(blockid []byte, needRepost bool, isRootTx bool) 
 	for txid := range undoDone {
 		uv.unconfirmTxInMem.Delete(txid)
 	}
+	// 内存级别更新UtxoMeta信息
+	uv.mutexMeta.Lock()
+	defer uv.mutexMeta.Unlock()
+	uv.meta = uv.metaTmp
 	return nil
 }
 
@@ -1504,6 +1532,10 @@ func (uv *UtxoVM) PlayForMiner(blockid []byte, batch kvdb.Batch) error {
 	for _, tx := range block.Transactions {
 		uv.unconfirmTxInMem.Delete(string(tx.Txid))
 	}
+	// 内存级别更新UtxoMeta信息
+	uv.mutexMeta.Lock()
+	defer uv.mutexMeta.Unlock()
+	uv.meta = uv.metaTmp
 	return nil
 }
 
@@ -1604,6 +1636,10 @@ func (uv *UtxoVM) Walk(blockid []byte) error {
 		if updateErr != nil {
 			return updateErr
 		}
+		// 内存级别更新UtxoMeta信息
+		uv.mutexMeta.Lock()
+		uv.meta = uv.metaTmp
+		uv.mutexMeta.Unlock()
 	}
 	for i := len(todoBlocks) - 1; i >= 0; i-- {
 		todoBlk := todoBlocks[i]
@@ -1651,6 +1687,10 @@ func (uv *UtxoVM) Walk(blockid []byte) error {
 		if updateErr != nil {
 			return updateErr
 		}
+		// 内存级别更新UtxoMeta信息
+		//uv.mutexMeta.Lock()
+		//defer uv.mutexMeta.Unlock()
+		uv.meta = uv.metaTmp
 	}
 	return nil
 }

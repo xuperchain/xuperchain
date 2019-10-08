@@ -1,19 +1,16 @@
 package proposal
 
 import (
-	"fmt"
+	//"fmt"
 	"io/ioutil"
-	"os"
-	"testing"
-
-	log "github.com/xuperchain/log15"
-	"github.com/xuperchain/xuperunion/utxo"
-
-	"encoding/json"
-
-	"github.com/xuperchain/xuperunion/contract"
-	"github.com/xuperchain/xuperunion/global"
-	"github.com/xuperchain/xuperunion/pb"
+	//"os"
+	//"testing"
+	//log "github.com/xuperchain/log15"
+	//"github.com/xuperchain/xuperunion/utxo"
+	//"encoding/json"
+	//"github.com/xuperchain/xuperunion/contract"
+	//"github.com/xuperchain/xuperunion/global"
+	//"github.com/xuperchain/xuperunion/pb"
 )
 
 var workspace, workSpaceErr = ioutil.TempDir("/tmp", "")
@@ -49,6 +46,7 @@ var proposeJSON = `
 }
 `
 
+/*
 func getLogger() log.Logger {
 	ylog := log.New("module", "proposal_test")
 	ylog.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
@@ -114,7 +112,6 @@ func TestPropose(t *testing.T) {
 		utxoObj.U.Play(utxoObj.L.GetMeta().TipBlockid)
 	}
 }
-
 func TestParseTriggerKey(t *testing.T) {
 	prp := NewProposal(nil, nil, nil)
 	height := int64(20)
@@ -224,7 +221,6 @@ func TestSaveTrigger(t *testing.T) {
 		t.Error("remove trigger error ", err.Error())
 	}
 }
-
 func TestGetTxidFromArgs(t *testing.T) {
 	prp := NewProposal(nil, nil, nil)
 	txDesc := &contract.TxDesc{
@@ -408,3 +404,4 @@ func TestRunThaw(t *testing.T) {
 	}
 
 }
+*/

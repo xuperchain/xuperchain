@@ -405,10 +405,11 @@ func InitCreateBlockChain(t *testing.T) {
 	kLogger.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
 	kl.Init(workSpace, kLogger, nil, "xuper")
 	kl.SetNewChainWhiteList(map[string]bool{BobAddress: true})
-	utxoVM, _ := utxo.MakeUtxoVM("xuper", ledger, workSpace, "", "", []byte(""), nil, 5000, 60, 500, nil, false, DefaultKvEngine, crypto_client.CryptoTypeDefault)
-	utxoVM.RegisterVM("kernel", kl, global.VMPrivRing0)
+	/*
+		utxoVM, _ := utxo.MakeUtxoVM("xuper", ledger, workSpace, "", "", []byte(""), nil, 5000, 60, 500, nil, false, DefaultKvEngine, crypto_client.CryptoTypeDefault)
+		utxoVM.RegisterVM("kernel", kl, global.VMPrivRing0)*/
 	//创建链的时候分配财富
-	tx, err2 := utxoVM.GenerateRootTx([]byte(`
+	tx, err2 := utxo.GenerateRootTx([]byte(`
         {
             "version" : "1"
             , "consensus" : {
@@ -434,12 +435,16 @@ func InitCreateBlockChain(t *testing.T) {
 	if err2 != nil {
 		t.Fatal(err2)
 	}
-	defer utxoVM.Close()
+	//defer utxoVM.Close()
 	block, _ := ledger.FormatRootBlock([]*pb.Transaction{tx})
 	confirmStatus := ledger.ConfirmBlock(block, true)
 	if !confirmStatus.Succ {
 		t.Fatal("confirm block fail")
 	}
+
+	utxoVM, _ := utxo.MakeUtxoVM("xuper", ledger, workSpace, "", "", []byte(""), nil, 5000, 60, 500, nil, false, DefaultKvEngine, crypto_client.CryptoTypeDefault)
+	utxoVM.RegisterVM("kernel", kl, global.VMPrivRing0)
+	defer utxoVM.Close()
 	playErr := utxoVM.Play(block.Blockid)
 	if playErr != nil {
 		t.Fatal(playErr)

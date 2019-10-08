@@ -98,10 +98,8 @@ func TestCreateBlockChain(t *testing.T) {
 	kl.Init(workspace, kLogger, nil, "xuper")
 	kl.SetNewChainWhiteList(map[string]bool{BobAddress: true})
 	kl.SetMinNewChainAmount("0")
-	utxovm, _ := utxo.MakeUtxoVM("xuper", ledger, workspace+"xuper", "", "", []byte(""), nil, 5000, 60, 500, nil, false, defaultKVEngine, crypto_client.CryptoTypeDefault)
-	utxovm.RegisterVM("kernel", kl, global.VMPrivRing0)
 	//创建链的时候分配财富
-	tx, err := utxovm.GenerateRootTx([]byte(`
+	tx, err := utxo.GenerateRootTx([]byte(`
        {
         "version" : "1"
         , "consensus" : {
@@ -132,6 +130,8 @@ func TestCreateBlockChain(t *testing.T) {
 	if !confirmStatus.Succ {
 		t.Fatal("confirm block fail")
 	}
+	utxovm, _ := utxo.MakeUtxoVM("xuper", ledger, workspace+"xuper", "", "", []byte(""), nil, 5000, 60, 500, nil, false, defaultKVEngine, crypto_client.CryptoTypeDefault)
+	utxovm.RegisterVM("kernel", kl, global.VMPrivRing0)
 	err = utxovm.Play(block.Blockid)
 	if err != nil {
 		t.Fatal(err)
@@ -191,10 +191,8 @@ func TestCreateBlockChainPermission(t *testing.T) {
 	kLogger.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
 	kl.Init(workspace, kLogger, nil, chainName)
 	kl.SetNewChainWhiteList(map[string]bool{BobAddress: true})
-	utxovm, _ := utxo.MakeUtxoVM(chainName, ledger, workspace+chainName, "", "", []byte(""), nil, 5000, 60, 500, nil, false, defaultKVEngine, crypto_client.CryptoTypeDefault)
-	utxovm.RegisterVM("kernel", kl, global.VMPrivRing0)
 	//创建链的时候分配财富
-	tx, err := utxovm.GenerateRootTx([]byte(`
+	tx, err := utxo.GenerateRootTx([]byte(`
        {
         "version" : "1"
         , "consensus" : {
@@ -225,6 +223,8 @@ func TestCreateBlockChainPermission(t *testing.T) {
 	if !confirmStatus.Succ {
 		t.Fatal("confirm block fail")
 	}
+	utxovm, _ := utxo.MakeUtxoVM(chainName, ledger, workspace+chainName, "", "", []byte(""), nil, 5000, 60, 500, nil, false, defaultKVEngine, crypto_client.CryptoTypeDefault)
+	utxovm.RegisterVM("kernel", kl, global.VMPrivRing0)
 	err = utxovm.Play(block.Blockid)
 	if err != nil {
 		t.Fatal(err)
@@ -285,8 +285,7 @@ func TestRunUpdateMaxBlockSize(t *testing.T) {
 	if err != nil {
 		t.Error("new ledger error ", err.Error())
 	}
-	utxovm, _ := utxo.MakeUtxoVM("xuper", L, workspace+"xuper", "", "", []byte(""), nil, 5000, 60, 500, nil, false, defaultKVEngine, crypto_client.CryptoTypeDefault)
-	tx, generateRootErr := utxovm.GenerateRootTx([]byte(`
+	tx, generateRootErr := utxo.GenerateRootTx([]byte(`
     {
         "version" : "1"
         , "consensus" : {
@@ -316,6 +315,7 @@ func TestRunUpdateMaxBlockSize(t *testing.T) {
 	if !confirmStatus.Succ {
 		t.Error("confirm block fail")
 	}
+	utxovm, _ := utxo.MakeUtxoVM("xuper", L, workspace+"xuper", "", "", []byte(""), nil, 5000, 60, 500, nil, false, defaultKVEngine, crypto_client.CryptoTypeDefault)
 	playErr := utxovm.Play(block.Blockid)
 	if playErr != nil {
 		t.Error(playErr)
@@ -324,6 +324,7 @@ func TestRunUpdateMaxBlockSize(t *testing.T) {
 	context := &contract.TxContext{
 		LedgerObj: L,
 		UtxoBatch: L.GetBaseDB().NewBatch(),
+		UtxoMeta:  utxovm,
 	}
 	kl := &Kernel{}
 	kLogger := log.New("module", "kernel")
@@ -353,8 +354,7 @@ func TestRunUpdateReservedContracts(t *testing.T) {
 	if err != nil {
 		t.Error("new ledger error ", err.Error())
 	}
-	utxovm, _ := utxo.MakeUtxoVM("xuper", L, workspace+"xuper", "", "", []byte(""), nil, 5000, 60, 500, nil, false, defaultKVEngine, crypto_client.CryptoTypeDefault)
-	tx, generateRootErr := utxovm.GenerateRootTx([]byte(`
+	tx, generateRootErr := utxo.GenerateRootTx([]byte(`
     {
         "version" : "1"
         , "consensus" : {
@@ -394,6 +394,7 @@ func TestRunUpdateReservedContracts(t *testing.T) {
 	if !confirmStatus.Succ {
 		t.Error("confirm block fail")
 	}
+	utxovm, _ := utxo.MakeUtxoVM("xuper", L, workspace+"xuper", "", "", []byte(""), nil, 5000, 60, 500, nil, false, defaultKVEngine, crypto_client.CryptoTypeDefault)
 	playErr := utxovm.Play(block.Blockid)
 	if playErr != nil {
 		t.Error(playErr)
@@ -403,7 +404,8 @@ func TestRunUpdateReservedContracts(t *testing.T) {
 	if err != nil {
 		t.Error("originalReservedContracts ", originalReservedContracts)
 	}
-	MetaReservedContracts := L.GetMeta().ReservedContracts
+	//MetaReservedContracts := L.GetMeta().ReservedContracts
+	MetaReservedContracts, _ := utxovm.GetReservedContracts()
 	t.Log("MetaReservedContracts: ", MetaReservedContracts)
 	if MetaReservedContracts != nil {
 		reservedContracts = MetaReservedContracts
@@ -414,6 +416,7 @@ func TestRunUpdateReservedContracts(t *testing.T) {
 	context := &contract.TxContext{
 		LedgerObj: L,
 		UtxoBatch: L.GetBaseDB().NewBatch(),
+		UtxoMeta:  utxovm,
 	}
 	kl := &Kernel{}
 	kLogger := log.New("module", "kernel")
@@ -469,8 +472,7 @@ func TestRunUpdateForbiddenContract(t *testing.T) {
 		t.Error("new ledger error", ledgerErr.Error())
 	}
 
-	utxovm, _ := utxo.MakeUtxoVM("xuper", L, workSpace+"xuper", "", "", []byte(""), nil, 5000, 60, 500, nil, false, defaultKVEngine, crypto_client.CryptoTypeDefault)
-	tx, generateRootErr := utxovm.GenerateRootTx([]byte(`
+	tx, generateRootErr := utxo.GenerateRootTx([]byte(`
 	{
 		"version" : "1"
 		, "consensus" : {
@@ -507,6 +509,7 @@ func TestRunUpdateForbiddenContract(t *testing.T) {
 	if !confirmStatus.Succ {
 		t.Error("confirm block fail")
 	}
+	utxovm, _ := utxo.MakeUtxoVM("xuper", L, workSpace+"xuper", "", "", []byte(""), nil, 5000, 60, 500, nil, false, defaultKVEngine, crypto_client.CryptoTypeDefault)
 	playErr := utxovm.Play(block.Blockid)
 	if playErr != nil {
 		t.Error(playErr)
@@ -516,7 +519,8 @@ func TestRunUpdateForbiddenContract(t *testing.T) {
 	if err != nil {
 		t.Error("get originalForbiddenContract error->", err)
 	}
-	MetaForbiddenContract := L.GetMeta().ForbiddenContract
+	//MetaForbiddenContract := L.GetMeta().ForbiddenContract
+	MetaForbiddenContract, _ := utxovm.GetForbiddenContract()
 	t.Log("MetaForbiddenContract:", MetaForbiddenContract)
 	if MetaForbiddenContract != nil {
 		forbiddenContract = MetaForbiddenContract
@@ -527,6 +531,7 @@ func TestRunUpdateForbiddenContract(t *testing.T) {
 	context := &contract.TxContext{
 		LedgerObj: L,
 		UtxoBatch: L.GetBaseDB().NewBatch(),
+		UtxoMeta:  utxovm,
 	}
 	kl := &Kernel{}
 	kLogger := log.New("module", "kernel")

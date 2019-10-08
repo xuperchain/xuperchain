@@ -412,12 +412,6 @@ message LedgerMeta {
   bytes tip_blockid = 2;
   // the height of the trunk
   int64 trunk_height = 3;
-  // max block size
-  int64 max_block_size = 4;
-  // preset contracts
-  repeated InvokeRequest reserved_contracts = 5;
-  // reset forbidden contract configuration
-  InvokeRequest forbidden_contract = 6;
   // the resource amount of creating an account
   int64 new_account_resource_amount = 7;
 }
@@ -429,6 +423,9 @@ message UtxoMeta {
   string utxo_total = 3;       // 当前utxo vm上的总资产
   int64 avgDelay = 4;          // 平均上链延时
   int64 unconfirmTxAmount = 5; // 待确认交易量
+  int64 max_block_size = 6;    // max block size
+  repeated InvokeRequest reserved_contracts = 7;       // preset contracts
+  InvokeRequest forbidden_contract = 8;        // reset forbidden contract configuration
 }
 
 // The internal block struct
