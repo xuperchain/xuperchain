@@ -106,7 +106,7 @@ func main() {
 
 	file := strings.TrimSpace(os.Args[1])
 	var syscalls io.Reader
-	if strings.HasPrefix(file, "http://") {
+	if strings.HasPrefix(file, "https://") || strings.HasPrefix(file, "http://") {
 		// Download syscalls.master file
 		syscalls = fetchFile(file)
 	} else {
@@ -139,7 +139,7 @@ func main() {
 				text += format(name, num, proto)
 			}
 		case "freebsd":
-			if t.Match(`^([0-9]+)\s+\S+\s+(?:NO)?STD\s+({ \S+\s+(\w+).*)$`) {
+			if t.Match(`^([0-9]+)\s+\S+\s+(?:(?:NO)?STD|COMPAT10)\s+({ \S+\s+(\w+).*)$`) {
 				num, proto := t.sub[1], t.sub[2]
 				name := fmt.Sprintf("SYS_%s", t.sub[3])
 				text += format(name, num, proto)

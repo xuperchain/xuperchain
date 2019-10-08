@@ -1,66 +1,74 @@
 package query
 
 import (
+	"bytes"
 	"sort"
+	"strings"
 )
 
 // Order is an object used to order objects
 type Order interface {
-
-	// Sort sorts the Entry slice according to
-	// the Order criteria.
-	Sort([]Entry)
+	Compare(a, b Entry) int
 }
 
-// OrderByValue is used to signal to datastores they
-// should apply internal orderings. unfortunately, there
-// is no way to apply order comparisons to interface{} types
-// in Go, so if the datastore doesnt have a special way to
-// handle these comparisons, you must provide an Order
-// implementation that casts to the correct type.
-type OrderByValue struct {
-	TypedOrder Order
+// OrderByFunction orders the results based on the result of the given function.
+type OrderByFunction func(a, b Entry) int
+
+func (o OrderByFunction) Compare(a, b Entry) int {
+	return o(a, b)
 }
 
-func (o OrderByValue) Sort(res []Entry) {
-	if o.TypedOrder == nil {
-		panic("cannot order interface{} by value. see query docs.")
-	}
-	o.TypedOrder.Sort(res)
+// OrderByValue is used to signal to datastores they should apply internal
+// orderings.
+type OrderByValue struct{}
+
+func (o OrderByValue) Compare(a, b Entry) int {
+	return bytes.Compare(a.Value, b.Value)
 }
 
 // OrderByValueDescending is used to signal to datastores they
-// should apply internal orderings. unfortunately, there
-// is no way to apply order comparisons to interface{} types
-// in Go, so if the datastore doesnt have a special way to
-// handle these comparisons, you are SOL.
-type OrderByValueDescending struct {
-	TypedOrder Order
-}
+// should apply internal orderings.
+type OrderByValueDescending struct{}
 
-func (o OrderByValueDescending) Sort(res []Entry) {
-	if o.TypedOrder == nil {
-		panic("cannot order interface{} by value. see query docs.")
-	}
-	o.TypedOrder.Sort(res)
+func (o OrderByValueDescending) Compare(a, b Entry) int {
+	return -bytes.Compare(a.Value, b.Value)
 }
 
 // OrderByKey
 type OrderByKey struct{}
 
-func (o OrderByKey) Sort(res []Entry) {
-	sort.Stable(reByKey(res))
+func (o OrderByKey) Compare(a, b Entry) int {
+	return strings.Compare(a.Key, b.Key)
 }
 
 // OrderByKeyDescending
 type OrderByKeyDescending struct{}
 
-func (o OrderByKeyDescending) Sort(res []Entry) {
-	sort.Stable(sort.Reverse(reByKey(res)))
+func (o OrderByKeyDescending) Compare(a, b Entry) int {
+	return -strings.Compare(a.Key, b.Key)
 }
 
-type reByKey []Entry
+// Less returns true if a comes before b with the requested orderings.
+func Less(orders []Order, a, b Entry) bool {
+	for _, cmp := range orders {
+		switch cmp.Compare(a, b) {
+		case 0:
+		case -1:
+			return true
+		case 1:
+			return false
+		}
+	}
 
-func (s reByKey) Len() int           { return len(s) }
-func (s reByKey) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
-func (s reByKey) Less(i, j int) bool { return s[i].Key < s[j].Key }
+	// This gives us a *stable* sort for free. We don't care
+	// preserving the order from the underlying datastore
+	// because it's undefined.
+	return a.Key < b.Key
+}
+
+// Sort sorts the given entries using the given orders.
+func Sort(orders []Order, entries []Entry) {
+	sort.Slice(entries, func(i int, j int) bool {
+		return Less(orders, entries[i], entries[j])
+	})
+}

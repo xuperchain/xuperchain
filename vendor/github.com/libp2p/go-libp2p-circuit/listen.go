@@ -25,16 +25,17 @@ func (r *Relay) Listener() *RelayListener {
 func (l *RelayListener) Accept() (manet.Conn, error) {
 	select {
 	case c := <-l.incoming:
-		err := l.Relay().writeResponse(c.Stream, pb.CircuitRelay_SUCCESS)
+		err := l.Relay().writeResponse(c.stream, pb.CircuitRelay_SUCCESS)
 		if err != nil {
 			log.Debugf("error writing relay response: %s", err.Error())
-			c.Stream.Reset()
+			c.stream.Reset()
 			return nil, err
 		}
 
 		// TODO: Pretty print.
-		log.Infof("accepted relay connection: %s", c)
+		log.Infof("accepted relay connection: %q", c)
 
+		c.tagHop()
 		return c, nil
 	case <-l.ctx.Done():
 		return nil, l.ctx.Err()
@@ -49,7 +50,7 @@ func (l *RelayListener) Addr() net.Addr {
 }
 
 func (l *RelayListener) Multiaddr() ma.Multiaddr {
-	return ma.Cast(ma.CodeToVarint(P_CIRCUIT))
+	return circuitAddr
 }
 
 func (l *RelayListener) Close() error {

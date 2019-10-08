@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"sync"
 
-	ic "github.com/libp2p/go-libp2p-crypto"
-	inet "github.com/libp2p/go-libp2p-net"
-	peer "github.com/libp2p/go-libp2p-peer"
-	transport "github.com/libp2p/go-libp2p-transport"
-	smux "github.com/libp2p/go-stream-muxer"
+	ic "github.com/libp2p/go-libp2p-core/crypto"
+	"github.com/libp2p/go-libp2p-core/mux"
+	"github.com/libp2p/go-libp2p-core/network"
+	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/libp2p/go-libp2p-core/transport"
+
 	ma "github.com/multiformats/go-multiaddr"
 )
 
@@ -21,7 +22,7 @@ var ErrConnClosed = errors.New("connection closed")
 // Conn is the connection type used by swarm. In general, you won't use this
 // type directly.
 type Conn struct {
-	conn  transport.Conn
+	conn  transport.CapableConn
 	swarm *Swarm
 
 	closeOnce sync.Once
@@ -34,7 +35,7 @@ type Conn struct {
 		m map[*Stream]struct{}
 	}
 
-	stat inet.Stat
+	stat network.Stat
 }
 
 // Close closes this connection.
@@ -71,7 +72,7 @@ func (c *Conn) doClose() {
 		c.notifyLk.Lock()
 		defer c.notifyLk.Unlock()
 
-		c.swarm.notifyAll(func(f inet.Notifiee) {
+		c.swarm.notifyAll(func(f network.Notifiee) {
 			f.Disconnected(c.swarm, c)
 		})
 		c.swarm.refs.Done() // taken in Swarm.addConn
@@ -100,7 +101,7 @@ func (c *Conn) start() {
 			}
 			c.swarm.refs.Add(1)
 			go func() {
-				s, err := c.addStream(ts, inet.DirInbound)
+				s, err := c.addStream(ts, network.DirInbound)
 
 				// Don't defer this. We don't want to block
 				// swarm shutdown on the connection handler.
@@ -121,7 +122,7 @@ func (c *Conn) start() {
 
 func (c *Conn) String() string {
 	return fmt.Sprintf(
-		"<swarm.Conn[%s] %s (%s) <-> %s (%s)>",
+		"<swarm.Conn[%T] %s (%s) <-> %s (%s)>",
 		c.conn.Transport(),
 		c.conn.LocalMultiaddr(),
 		c.conn.LocalPeer().Pretty(),
@@ -161,20 +162,20 @@ func (c *Conn) RemotePublicKey() ic.PubKey {
 }
 
 // Stat returns metadata pertaining to this connection
-func (c *Conn) Stat() inet.Stat {
+func (c *Conn) Stat() network.Stat {
 	return c.stat
 }
 
 // NewStream returns a new Stream from this connection
-func (c *Conn) NewStream() (inet.Stream, error) {
+func (c *Conn) NewStream() (network.Stream, error) {
 	ts, err := c.conn.OpenStream()
 	if err != nil {
 		return nil, err
 	}
-	return c.addStream(ts, inet.DirOutbound)
+	return c.addStream(ts, network.DirOutbound)
 }
 
-func (c *Conn) addStream(ts smux.Stream, dir inet.Direction) (*Stream, error) {
+func (c *Conn) addStream(ts mux.MuxedStream, dir network.Direction) (*Stream, error) {
 	c.streams.Lock()
 	// Are we still online?
 	if c.streams.m == nil {
@@ -184,7 +185,7 @@ func (c *Conn) addStream(ts smux.Stream, dir inet.Direction) (*Stream, error) {
 	}
 
 	// Wrap and register the stream.
-	stat := inet.Stat{Direction: dir}
+	stat := network.Stat{Direction: dir}
 	s := &Stream{
 		stream: ts,
 		conn:   c,
@@ -202,7 +203,7 @@ func (c *Conn) addStream(ts smux.Stream, dir inet.Direction) (*Stream, error) {
 	s.notifyLk.Lock()
 	c.streams.Unlock()
 
-	c.swarm.notifyAll(func(f inet.Notifiee) {
+	c.swarm.notifyAll(func(f network.Notifiee) {
 		f.OpenedStream(c.swarm, s)
 	})
 	s.notifyLk.Unlock()
@@ -211,10 +212,10 @@ func (c *Conn) addStream(ts smux.Stream, dir inet.Direction) (*Stream, error) {
 }
 
 // GetStreams returns the streams associated with this connection.
-func (c *Conn) GetStreams() []inet.Stream {
+func (c *Conn) GetStreams() []network.Stream {
 	c.streams.Lock()
 	defer c.streams.Unlock()
-	streams := make([]inet.Stream, 0, len(c.streams.m))
+	streams := make([]network.Stream, 0, len(c.streams.m))
 	for s := range c.streams.m {
 		streams = append(streams, s)
 	}

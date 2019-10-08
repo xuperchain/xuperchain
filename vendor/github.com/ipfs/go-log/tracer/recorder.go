@@ -93,7 +93,6 @@ func (r *LoggableSpanRecorder) RecordSpan(span RawSpan) {
 	var buf bytes.Buffer
 	encoder := json.NewEncoder(&buf)
 	encoder.SetEscapeHTML(false)
-	encoder.SetIndent("", "  ")
 	err := encoder.Encode(spanlog)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "ERROR FORMATTING SPAN ENTRY: %s\n", err)

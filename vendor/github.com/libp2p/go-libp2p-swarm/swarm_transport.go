@@ -4,7 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	transport "github.com/libp2p/go-libp2p-transport"
+	"github.com/libp2p/go-libp2p-core/transport"
+
 	ma "github.com/multiformats/go-multiaddr"
 )
 
@@ -69,6 +70,10 @@ func (s *Swarm) TransportForListening(a ma.Multiaddr) transport.Transport {
 // Satisfies the Network interface from go-libp2p-transport.
 func (s *Swarm) AddTransport(t transport.Transport) error {
 	protocols := t.Protocols()
+
+	if len(protocols) == 0 {
+		return fmt.Errorf("useless transport handles no protocols: %T", t)
+	}
 
 	s.transports.Lock()
 	defer s.transports.Unlock()

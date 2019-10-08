@@ -39,7 +39,7 @@ func parseWindowsRoutePrint(output []byte) (net.IP, error) {
 	return nil, errNoGateway
 }
 
-func parseLinuxIPRoute(output []byte) (net.IP, error) {
+func parseLinuxIPRouteShow(output []byte) (net.IP, error) {
 	// Linux '/usr/bin/ip route show' format looks like this:
 	// default via 192.168.178.1 dev wlp3s0  metric 303
 	// 192.168.178.0/24 dev wlp3s0  proto kernel  scope link  src 192.168.178.76  metric 303
@@ -47,6 +47,23 @@ func parseLinuxIPRoute(output []byte) (net.IP, error) {
 	for _, line := range lines {
 		fields := strings.Fields(line)
 		if len(fields) >= 3 && fields[0] == "default" {
+			ip := net.ParseIP(fields[2])
+			if ip != nil {
+				return ip, nil
+			}
+		}
+	}
+
+	return nil, errNoGateway
+}
+
+func parseLinuxIPRouteGet(output []byte) (net.IP, error) {
+	// Linux '/usr/bin/ip route get 8.8.8.8' format looks like this:
+	// 8.8.8.8 via 10.0.1.1 dev eth0  src 10.0.1.36  uid 2000
+	lines := strings.Split(string(output), "\n")
+	for _, line := range lines {
+		fields := strings.Fields(line)
+		if len(fields) >= 2 && fields[1] == "via" {
 			ip := net.ParseIP(fields[2])
 			if ip != nil {
 				return ip, nil

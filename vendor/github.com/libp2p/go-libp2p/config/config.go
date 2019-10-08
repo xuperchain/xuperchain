@@ -4,24 +4,26 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/libp2p/go-libp2p-core/connmgr"
+	"github.com/libp2p/go-libp2p-core/crypto"
+	"github.com/libp2p/go-libp2p-core/host"
+	"github.com/libp2p/go-libp2p-core/metrics"
+	"github.com/libp2p/go-libp2p-core/network"
+	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/libp2p/go-libp2p-core/peerstore"
+	"github.com/libp2p/go-libp2p-core/pnet"
+	"github.com/libp2p/go-libp2p-core/routing"
+
 	bhost "github.com/libp2p/go-libp2p/p2p/host/basic"
 	relay "github.com/libp2p/go-libp2p/p2p/host/relay"
 	routed "github.com/libp2p/go-libp2p/p2p/host/routed"
 
-	logging "github.com/ipfs/go-log"
 	circuit "github.com/libp2p/go-libp2p-circuit"
-	crypto "github.com/libp2p/go-libp2p-crypto"
 	discovery "github.com/libp2p/go-libp2p-discovery"
-	host "github.com/libp2p/go-libp2p-host"
-	ifconnmgr "github.com/libp2p/go-libp2p-interface-connmgr"
-	pnet "github.com/libp2p/go-libp2p-interface-pnet"
-	metrics "github.com/libp2p/go-libp2p-metrics"
-	inet "github.com/libp2p/go-libp2p-net"
-	peer "github.com/libp2p/go-libp2p-peer"
-	pstore "github.com/libp2p/go-libp2p-peerstore"
-	routing "github.com/libp2p/go-libp2p-routing"
 	swarm "github.com/libp2p/go-libp2p-swarm"
 	tptu "github.com/libp2p/go-libp2p-transport-upgrader"
+
+	logging "github.com/ipfs/go-log"
 	filter "github.com/libp2p/go-maddr-filter"
 	ma "github.com/multiformats/go-multiaddr"
 )
@@ -33,7 +35,7 @@ var log = logging.Logger("p2p-config")
 type AddrsFactory = bhost.AddrsFactory
 
 // NATManagerC is a NATManager constructor.
-type NATManagerC func(inet.Network) bhost.NATManager
+type NATManagerC func(network.Network) bhost.NATManager
 
 type RoutingC func(host.Host) (routing.PeerRouting, error)
 
@@ -42,6 +44,12 @@ type RoutingC func(host.Host) (routing.PeerRouting, error)
 // This is *not* a stable interface. Use the options defined in the root
 // package.
 type Config struct {
+	// UserAgent is the identifier this node will send to other peers when
+	// identifying itself, e.g. via the identify protocol.
+	//
+	// Set it via the UserAgent option function.
+	UserAgent string
+
 	PeerKey crypto.PrivKey
 
 	Transports         []TptC
@@ -58,9 +66,9 @@ type Config struct {
 	AddrsFactory bhost.AddrsFactory
 	Filters      *filter.Filters
 
-	ConnManager ifconnmgr.ConnManager
+	ConnManager connmgr.ConnManager
 	NATManager  NATManagerC
-	Peerstore   pstore.Peerstore
+	Peerstore   peerstore.Peerstore
 	Reporter    metrics.Reporter
 
 	DisablePing bool
@@ -98,9 +106,11 @@ func (cfg *Config) NewNode(ctx context.Context) (host.Host, error) {
 		return nil, fmt.Errorf("no peerstore specified")
 	}
 
-	if !cfg.Insecure {
-		cfg.Peerstore.AddPrivKey(pid, cfg.PeerKey)
-		cfg.Peerstore.AddPubKey(pid, cfg.PeerKey.GetPublic())
+	if err := cfg.Peerstore.AddPrivKey(pid, cfg.PeerKey); err != nil {
+		return nil, err
+	}
+	if err := cfg.Peerstore.AddPubKey(pid, cfg.PeerKey.GetPublic()); err != nil {
+		return nil, err
 	}
 
 	// TODO: Make the swarm implementation configurable.
@@ -109,23 +119,35 @@ func (cfg *Config) NewNode(ctx context.Context) (host.Host, error) {
 		swrm.Filters = cfg.Filters
 	}
 
-	var h host.Host
-	h, err = bhost.NewHost(ctx, swrm, &bhost.HostOpts{
+	h, err := bhost.NewHost(ctx, swrm, &bhost.HostOpts{
 		ConnManager:  cfg.ConnManager,
 		AddrsFactory: cfg.AddrsFactory,
 		NATManager:   cfg.NATManager,
 		EnablePing:   !cfg.DisablePing,
+		UserAgent:    cfg.UserAgent,
 	})
+
 	if err != nil {
 		swrm.Close()
 		return nil, err
+	}
+
+	if cfg.Relay {
+		// If we've enabled the relay, we should filter out relay
+		// addresses by default.
+		//
+		// TODO: We shouldn't be doing this here.
+		oldFactory := h.AddrsFactory
+		h.AddrsFactory = func(addrs []ma.Multiaddr) []ma.Multiaddr {
+			return oldFactory(relay.Filter(addrs))
+		}
 	}
 
 	upgrader := new(tptu.Upgrader)
 	upgrader.Protector = cfg.Protector
 	upgrader.Filters = swrm.Filters
 	if cfg.Insecure {
-		upgrader.Secure = makeInsecureTransport(pid)
+		upgrader.Secure = makeInsecureTransport(pid, cfg.PeerKey)
 	} else {
 		upgrader.Secure, err = makeSecurityTransport(h, cfg.SecurityTransports)
 		if err != nil {
@@ -206,18 +228,19 @@ func (cfg *Config) NewNode(ctx context.Context) (host.Host, error) {
 		}
 
 		if hop {
-			h = relay.NewRelayHost(swrm.Context(), h.(*bhost.BasicHost), discovery)
+			// advertise ourselves
+			relay.Advertise(ctx, discovery)
 		} else {
-			h = relay.NewAutoRelayHost(swrm.Context(), h.(*bhost.BasicHost), discovery)
+			_ = relay.NewAutoRelay(swrm.Context(), h, discovery, router)
 		}
 	}
 
+	// start the host background tasks
+	h.Start()
+
 	if router != nil {
-		h = routed.Wrap(h, router)
+		return routed.Wrap(h, router), nil
 	}
-
-	// TODO: Bootstrapping.
-
 	return h, nil
 }
 
@@ -229,6 +252,9 @@ type Option func(cfg *Config) error
 // encountered (if any).
 func (cfg *Config) Apply(opts ...Option) error {
 	for _, opt := range opts {
+		if opt == nil {
+			continue
+		}
 		if err := opt(cfg); err != nil {
 			return err
 		}

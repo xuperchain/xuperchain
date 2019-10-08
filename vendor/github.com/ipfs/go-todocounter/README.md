@@ -13,7 +13,7 @@ See https://godoc.org/github.com/ipfs/go-todocounter.
 
 ## Contribute
 
-Feel free to join in. All welcome. Open an [issue](https://github.com/ipfs/todocounter/issues)!
+Feel free to join in. All welcome. Open an [issue](https://github.com/ipfs/go-todocounter/issues)!
 
 This repository falls under the IPFS [Code of Conduct](https://github.com/ipfs/community/blob/master/code-of-conduct.md).
 

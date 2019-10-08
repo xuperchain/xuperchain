@@ -1,4 +1,4 @@
-//+build !noasm
+//+build !noasm,!appengine
 
 /*
  * Minio Cloud Storage, (C) 2017 Minio, Inc.
@@ -28,20 +28,21 @@ import (
 )
 
 //go:noescape
-func sha256_x16_avx512(digests *[512]byte, scratch *[512]byte, table *[512]uint64, mask []uint64, inputs [16][]byte)
+func sha256X16Avx512(digests *[512]byte, scratch *[512]byte, table *[512]uint64, mask []uint64, inputs [16][]byte)
 
-// Do not start at 0 but next multiple of 16 so as to be able to
+// Avx512ServerUID - Do not start at 0 but next multiple of 16 so as to be able to
 // differentiate with default initialiation value of 0
-const Avx512ServerUid = 16
+const Avx512ServerUID = 16
 
 var uidCounter uint64
 
+// NewAvx512 - initialize sha256 Avx512 implementation.
 func NewAvx512(a512srv *Avx512Server) hash.Hash {
 	uid := atomic.AddUint64(&uidCounter, 1)
 	return &Avx512Digest{uid: uid, a512srv: a512srv}
 }
 
-// Type for computing SHA256 using AVX51
+// Avx512Digest - Type for computing SHA256 using Avx512
 type Avx512Digest struct {
 	uid     uint64
 	a512srv *Avx512Server
@@ -52,12 +53,13 @@ type Avx512Digest struct {
 	result  [Size]byte
 }
 
-// Return size of checksum
+// Size - Return size of checksum
 func (d *Avx512Digest) Size() int { return Size }
 
-// Return blocksize of checksum
+// BlockSize - Return blocksize of checksum
 func (d Avx512Digest) BlockSize() int { return BlockSize }
 
+// Reset - reset sha digest to its initial values
 func (d *Avx512Digest) Reset() {
 	d.a512srv.blocksCh <- blockInput{uid: d.uid, reset: true}
 	d.nx = 0
@@ -69,7 +71,7 @@ func (d *Avx512Digest) Reset() {
 func (d *Avx512Digest) Write(p []byte) (nn int, err error) {
 
 	if d.final {
-		return 0, errors.New("Avx512Digest already finalized. Reset first before writing again.")
+		return 0, errors.New("Avx512Digest already finalized. Reset first before writing again")
 	}
 
 	nn = len(p)
@@ -94,7 +96,7 @@ func (d *Avx512Digest) Write(p []byte) (nn int, err error) {
 	return
 }
 
-// Return sha256 sum in bytes
+// Sum - Return sha256 sum in bytes
 func (d *Avx512Digest) Sum(in []byte) (result []byte) {
 
 	if d.final {
@@ -102,15 +104,16 @@ func (d *Avx512Digest) Sum(in []byte) (result []byte) {
 	}
 
 	trail := make([]byte, 0, 128)
+	trail = append(trail, d.x[:d.nx]...)
 
 	len := d.len
 	// Padding.  Add a 1 bit and 0 bits until 56 bytes mod 64.
 	var tmp [64]byte
 	tmp[0] = 0x80
 	if len%64 < 56 {
-		trail = append(d.x[:d.nx], tmp[0:56-len%64]...)
+		trail = append(trail, tmp[0:56-len%64]...)
 	} else {
-		trail = append(d.x[:d.nx], tmp[0:64+56-len%64]...)
+		trail = append(trail, tmp[0:64+56-len%64]...)
 	}
 	d.nx = 0
 
@@ -262,7 +265,7 @@ var table = [512]uint64{
 func blockAvx512(digests *[512]byte, input [16][]byte, mask []uint64) [16][Size]byte {
 
 	scratch := [512]byte{}
-	sha256_x16_avx512(digests, &scratch, &table, mask, input)
+	sha256X16Avx512(digests, &scratch, &table, mask, input)
 
 	output := [16][Size]byte{}
 	for i := 0; i < 16; i++ {
@@ -290,7 +293,7 @@ type blockInput struct {
 	sumCh chan [Size]byte
 }
 
-// Type to implement 16x parallel handling of SHA256 invocations
+// Avx512Server - Type to implement 16x parallel handling of SHA256 invocations
 type Avx512Server struct {
 	blocksCh chan blockInput       // Input channel
 	totalIn  int                   // Total number of inputs waiting to be processed
@@ -298,14 +301,14 @@ type Avx512Server struct {
 	digests  map[uint64][Size]byte // Map of uids to (interim) digest results
 }
 
-// Info for each lane
+// Avx512LaneInfo - Info for each lane
 type Avx512LaneInfo struct {
 	uid      uint64          // unique identification for this SHA processing
 	block    []byte          // input block to be processed
 	outputCh chan [Size]byte // channel for output result
 }
 
-// Create new object for parallel processing handling
+// NewAvx512Server - Create new object for parallel processing handling
 func NewAvx512Server() *Avx512Server {
 	a512srv := &Avx512Server{}
 	a512srv.digests = make(map[uint64][Size]byte)
@@ -316,7 +319,7 @@ func NewAvx512Server() *Avx512Server {
 	return a512srv
 }
 
-// Sole handler for reading from the input channel
+// Process - Sole handler for reading from the input channel
 func (a512srv *Avx512Server) Process() {
 	for {
 		select {
@@ -363,7 +366,7 @@ func (a512srv *Avx512Server) reset(uid uint64) {
 		if lane.uid == uid {
 			if lane.block != nil {
 				a512srv.lanes[i] = Avx512LaneInfo{} // clear message
-				a512srv.totalIn -= 1
+				a512srv.totalIn--
 			}
 		}
 	}
@@ -373,7 +376,7 @@ func (a512srv *Avx512Server) reset(uid uint64) {
 }
 
 // Invoke assembly and send results back
-func (a512srv *Avx512Server) blocks() (err error) {
+func (a512srv *Avx512Server) blocks() {
 
 	inputs := [16][]byte{}
 	for i := range inputs {
@@ -395,7 +398,6 @@ func (a512srv *Avx512Server) blocks() (err error) {
 			delete(a512srv.digests, uid) // Delete entry from hashmap
 		}
 	}
-	return
 }
 
 func (a512srv *Avx512Server) Write(uid uint64, p []byte) (nn int, err error) {
@@ -403,6 +405,7 @@ func (a512srv *Avx512Server) Write(uid uint64, p []byte) (nn int, err error) {
 	return len(p), nil
 }
 
+// Sum - return sha256 sum in bytes for a given sum id.
 func (a512srv *Avx512Server) Sum(uid uint64, p []byte) [32]byte {
 	sumCh := make(chan [32]byte)
 	a512srv.blocksCh <- blockInput{uid: uid, msg: p, final: true, sumCh: sumCh}

@@ -21,6 +21,7 @@
 package pool
 
 import (
+	"math"
 	"math/bits"
 	"sync"
 )
@@ -29,7 +30,7 @@ import (
 var GlobalPool = new(BufferPool)
 
 // MaxLength is the maximum length of an element that can be added to the Pool.
-const MaxLength = 1 << 32
+const MaxLength = math.MaxInt32
 
 // BufferPool is a pool to handle cases of reusing elements of varying sizes. It
 // maintains 32 internal pools, for each power of 2 in 0-32.
@@ -40,6 +41,11 @@ const MaxLength = 1 << 32
 // You MUST NOT copy Pool after using.
 type BufferPool struct {
 	pools [32]sync.Pool // a list of singlePools
+	ptrs  sync.Pool
+}
+
+type bufp struct {
+	buf []byte
 }
 
 // Get retrieves a buffer of the appropriate length from the buffer pool or
@@ -56,8 +62,12 @@ func (p *BufferPool) Get(length int) []byte {
 		return make([]byte, length)
 	}
 	idx := nextLogBase2(uint32(length))
-	if buf := p.pools[idx].Get(); buf != nil {
-		return buf.([]byte)[:uint32(length)]
+	if ptr := p.pools[idx].Get(); ptr != nil {
+		bp := ptr.(*bufp)
+		buf := bp.buf[:uint32(length)]
+		bp.buf = nil
+		p.ptrs.Put(ptr)
+		return buf
 	}
 	return make([]byte, 1<<idx)[:uint32(length)]
 }
@@ -69,7 +79,14 @@ func (p *BufferPool) Put(buf []byte) {
 		return // drop it
 	}
 	idx := prevLogBase2(uint32(capacity))
-	p.pools[idx].Put(buf)
+	var bp *bufp
+	if ptr := p.ptrs.Get(); ptr != nil {
+		bp = ptr.(*bufp)
+	} else {
+		bp = new(bufp)
+	}
+	bp.buf = buf
+	p.pools[idx].Put(bp)
 }
 
 // Get retrieves a buffer of the appropriate length from the global buffer pool

@@ -1,11 +1,32 @@
+os:
+  - linux
+
 language: go
+
 go:
-- 'tip'
+  - 1.11.x
+
+env:
+  global:
+    - GOTFLAGS="-race"
+  matrix:
+    - BUILD_DEPTYPE=gx
+    - BUILD_DEPTYPE=gomod
+
+
+# disable travis install
 install:
-  - go get github.com/whyrusleeping/gx
-  - go get github.com/whyrusleeping/gx-go
-  - gx install --global
-  - gx-go rewrite
+  - true
+
 script:
-  - go test -v
-  
+  - bash <(curl -s https://raw.githubusercontent.com/ipfs/ci-helpers/master/travis-ci/run-standard-tests.sh)
+
+
+cache:
+  directories:
+    - $GOPATH/src/gx
+    - $GOPATH/pkg/mod
+    - $HOME/.cache/go-build
+
+notifications:
+  email: false

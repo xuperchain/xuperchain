@@ -2,8 +2,10 @@ package swarm
 
 import (
 	"fmt"
+	"time"
 
-	inet "github.com/libp2p/go-libp2p-net"
+	"github.com/libp2p/go-libp2p-core/network"
+
 	ma "github.com/multiformats/go-multiaddr"
 )
 
@@ -54,12 +56,13 @@ func (s *Swarm) AddListenAddr(a ma.Multiaddr) error {
 	}
 	s.refs.Add(1)
 	s.listeners.m[list] = struct{}{}
+	s.listeners.cacheEOL = time.Time{}
 	s.listeners.Unlock()
 
 	maddr := list.Multiaddr()
 
 	// signal to our notifiees on successful conn.
-	s.notifyAll(func(n inet.Notifiee) {
+	s.notifyAll(func(n network.Notifiee) {
 		n.Listen(s, maddr)
 	})
 
@@ -68,23 +71,31 @@ func (s *Swarm) AddListenAddr(a ma.Multiaddr) error {
 			list.Close()
 			s.listeners.Lock()
 			delete(s.listeners.m, list)
+			s.listeners.cacheEOL = time.Time{}
 			s.listeners.Unlock()
 			s.refs.Done()
 		}()
 		for {
 			c, err := list.Accept()
 			if err != nil {
-				log.Warningf("swarm listener accept error: %s", err)
+				if s.ctx.Err() == nil {
+					// only log if the swarm is still running.
+					log.Errorf("swarm listener accept error: %s", err)
+				}
 				return
 			}
 			log.Debugf("swarm listener accepted connection: %s", c)
 			s.refs.Add(1)
 			go func() {
 				defer s.refs.Done()
-				_, err := s.addConn(c, inet.DirInbound)
-				if err != nil {
-					// Probably just means that the swarm has been closed.
-					log.Warningf("add conn failed: ", err)
+				_, err := s.addConn(c, network.DirInbound)
+				switch err {
+				case nil:
+				case ErrSwarmClosed:
+					// ignore.
+					return
+				default:
+					log.Warningf("add conn %s failed: ", err)
 					return
 				}
 			}()

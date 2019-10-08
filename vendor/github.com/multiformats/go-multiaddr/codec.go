@@ -7,7 +7,6 @@ import (
 )
 
 func stringToBytes(s string) ([]byte, error) {
-
 	// consume trailing slashes
 	s = strings.TrimRight(s, "/")
 
@@ -15,16 +14,21 @@ func stringToBytes(s string) ([]byte, error) {
 	sp := strings.Split(s, "/")
 
 	if sp[0] != "" {
-		return nil, fmt.Errorf("invalid multiaddr, must begin with /")
+		return nil, fmt.Errorf("failed to parse multiaddr %q: must begin with /", s)
 	}
 
 	// consume first empty elem
 	sp = sp[1:]
 
+	if len(sp) == 0 {
+		return nil, fmt.Errorf("failed to parse multiaddr %q: empty multiaddr", s)
+	}
+
 	for len(sp) > 0 {
-		p := ProtocolWithName(sp[0])
+		name := sp[0]
+		p := ProtocolWithName(name)
 		if p.Code == 0 {
-			return nil, fmt.Errorf("no protocol with name %s", sp[0])
+			return nil, fmt.Errorf("failed to parse multiaddr %q: unknown protocol %s", s, sp[0])
 		}
 		_, _ = b.Write(CodeToVarint(p.Code))
 		sp = sp[1:]
@@ -34,7 +38,7 @@ func stringToBytes(s string) ([]byte, error) {
 		}
 
 		if len(sp) < 1 {
-			return nil, fmt.Errorf("protocol requires address, none given: %s", p.Name)
+			return nil, fmt.Errorf("failed to parse multiaddr %q: unexpected end of multiaddr", s)
 		}
 
 		if p.Path {
@@ -45,7 +49,7 @@ func stringToBytes(s string) ([]byte, error) {
 
 		a, err := p.Transcoder.StringToBytes(sp[0])
 		if err != nil {
-			return nil, fmt.Errorf("failed to parse %s: %s %s", p.Name, sp[0], err)
+			return nil, fmt.Errorf("failed to parse multiaddr %q: invalid value %q for protocol %s: %s", s, sp[0], p.Name, err)
 		}
 		if p.Size < 0 { // varint size.
 			_, _ = b.Write(CodeToVarint(len(a)))
@@ -58,6 +62,9 @@ func stringToBytes(s string) ([]byte, error) {
 }
 
 func validateBytes(b []byte) (err error) {
+	if len(b) == 0 {
+		return fmt.Errorf("empty multiaddr")
+	}
 	for len(b) > 0 {
 		code, n, err := ReadVarintCode(b)
 		if err != nil {
@@ -82,7 +89,7 @@ func validateBytes(b []byte) (err error) {
 		b = b[n:]
 
 		if len(b) < size || size < 0 {
-			return fmt.Errorf("invalid value for size")
+			return fmt.Errorf("invalid value for size %d", len(b))
 		}
 
 		err = p.Transcoder.ValidateBytes(b[:size])
@@ -125,7 +132,7 @@ func readComponent(b []byte) (int, Component, error) {
 	offset += n
 
 	if len(b[offset:]) < size || size < 0 {
-		return 0, Component{}, fmt.Errorf("invalid value for size")
+		return 0, Component{}, fmt.Errorf("invalid value for size %d", len(b[offset:]))
 	}
 
 	return offset + size, Component{
@@ -136,6 +143,9 @@ func readComponent(b []byte) (int, Component, error) {
 }
 
 func bytesToString(b []byte) (ret string, err error) {
+	if len(b) == 0 {
+		return "", fmt.Errorf("empty multiaddr")
+	}
 	var buf strings.Builder
 
 	for len(b) > 0 {

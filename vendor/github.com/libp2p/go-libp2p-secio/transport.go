@@ -6,9 +6,9 @@ import (
 	"net"
 	"time"
 
-	cs "github.com/libp2p/go-conn-security"
-	ci "github.com/libp2p/go-libp2p-crypto"
-	peer "github.com/libp2p/go-libp2p-peer"
+	ci "github.com/libp2p/go-libp2p-core/crypto"
+	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/libp2p/go-libp2p-core/sec"
 )
 
 // ID is secio's protocol ID (used when negotiating with multistream)
@@ -31,12 +31,12 @@ func New(sk ci.PrivKey) (*Transport, error) {
 	}, nil
 }
 
-var _ cs.Transport = (*Transport)(nil)
+var _ sec.SecureTransport = (*Transport)(nil)
 
-func (sg *Transport) SecureInbound(ctx context.Context, insecure net.Conn) (cs.Conn, error) {
+func (sg *Transport) SecureInbound(ctx context.Context, insecure net.Conn) (sec.SecureConn, error) {
 	return newSecureSession(ctx, sg.LocalID, sg.PrivateKey, insecure, "")
 }
-func (sg *Transport) SecureOutbound(ctx context.Context, insecure net.Conn, p peer.ID) (cs.Conn, error) {
+func (sg *Transport) SecureOutbound(ctx context.Context, insecure net.Conn, p peer.ID) (sec.SecureConn, error) {
 	return newSecureSession(ctx, sg.LocalID, sg.PrivateKey, insecure, p)
 }
 

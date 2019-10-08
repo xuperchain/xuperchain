@@ -63,6 +63,8 @@ type Counter interface {
 	//  }
 	//
 	Done() <-chan struct{}
+
+	Remaining() int32
 }
 
 type todoCounter struct {
@@ -115,4 +117,11 @@ func (c *todoCounter) Decrement(i uint32) {
 
 func (c *todoCounter) Done() <-chan struct{} {
 	return c.done
+}
+
+func (c *todoCounter) Remaining() int32 {
+	c.RLock()
+	defer c.RUnlock()
+
+	return c.count
 }

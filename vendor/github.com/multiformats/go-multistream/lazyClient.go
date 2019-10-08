@@ -1,7 +1,6 @@
 package multistream
 
 import (
-	"bufio"
 	"fmt"
 	"io"
 	"sync"
@@ -98,7 +97,9 @@ func (l *lazyClientConn) doWriteHandshake() {
 
 // Perform the write handshake but *also* write some extra data.
 func (l *lazyClientConn) doWriteHandshakeWithData(extra []byte) int {
-	buf := bufio.NewWriter(l.con)
+	buf := getWriter(l.con)
+	defer putWriter(buf)
+
 	for _, proto := range l.protos {
 		l.werr = delimWrite(buf, []byte(proto))
 		if l.werr != nil {

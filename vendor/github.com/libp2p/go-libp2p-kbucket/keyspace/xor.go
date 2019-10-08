@@ -2,11 +2,11 @@ package keyspace
 
 import (
 	"bytes"
-	"crypto/sha256"
 	"math/big"
 	"math/bits"
 
 	u "github.com/ipfs/go-ipfs-util"
+	sha256 "github.com/minio/sha256-simd"
 )
 
 // XORKeySpace is a KeySpace which:

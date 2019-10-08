@@ -4,30 +4,31 @@ import (
 	"fmt"
 	"reflect"
 
-	security "github.com/libp2p/go-conn-security"
-	crypto "github.com/libp2p/go-libp2p-crypto"
-	host "github.com/libp2p/go-libp2p-host"
-	pnet "github.com/libp2p/go-libp2p-interface-pnet"
-	inet "github.com/libp2p/go-libp2p-net"
-	peer "github.com/libp2p/go-libp2p-peer"
-	pstore "github.com/libp2p/go-libp2p-peerstore"
-	transport "github.com/libp2p/go-libp2p-transport"
+	"github.com/libp2p/go-libp2p-core/crypto"
+	"github.com/libp2p/go-libp2p-core/host"
+	"github.com/libp2p/go-libp2p-core/mux"
+	"github.com/libp2p/go-libp2p-core/network"
+	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/libp2p/go-libp2p-core/peerstore"
+	"github.com/libp2p/go-libp2p-core/pnet"
+	"github.com/libp2p/go-libp2p-core/sec"
+	"github.com/libp2p/go-libp2p-core/transport"
+
 	tptu "github.com/libp2p/go-libp2p-transport-upgrader"
 	filter "github.com/libp2p/go-maddr-filter"
-	mux "github.com/libp2p/go-stream-muxer"
 )
 
 var (
 	// interfaces
 	hostType      = reflect.TypeOf((*host.Host)(nil)).Elem()
-	networkType   = reflect.TypeOf((*inet.Network)(nil)).Elem()
+	networkType   = reflect.TypeOf((*network.Network)(nil)).Elem()
 	transportType = reflect.TypeOf((*transport.Transport)(nil)).Elem()
-	muxType       = reflect.TypeOf((*mux.Transport)(nil)).Elem()
-	securityType  = reflect.TypeOf((*security.Transport)(nil)).Elem()
+	muxType       = reflect.TypeOf((*mux.Multiplexer)(nil)).Elem()
+	securityType  = reflect.TypeOf((*sec.SecureTransport)(nil)).Elem()
 	protectorType = reflect.TypeOf((*pnet.Protector)(nil)).Elem()
 	privKeyType   = reflect.TypeOf((*crypto.PrivKey)(nil)).Elem()
 	pubKeyType    = reflect.TypeOf((*crypto.PubKey)(nil)).Elem()
-	pstoreType    = reflect.TypeOf((*pstore.Peerstore)(nil)).Elem()
+	pstoreType    = reflect.TypeOf((*peerstore.Peerstore)(nil)).Elem()
 
 	// concrete types
 	peerIDType   = reflect.TypeOf((peer.ID)(""))

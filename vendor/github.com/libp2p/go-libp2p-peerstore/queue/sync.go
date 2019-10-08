@@ -4,7 +4,7 @@ import (
 	"context"
 
 	logging "github.com/ipfs/go-log"
-	"github.com/libp2p/go-libp2p-peer"
+	"github.com/libp2p/go-libp2p-core/peer"
 )
 
 var log = logging.Logger("peerqueue")
