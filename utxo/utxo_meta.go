@@ -17,6 +17,47 @@ var (
 	TxSizePercent = 0.8
 )
 
+// GetNewAccountResourceAmount get account for creating an account
+func (uv *UtxoVM) GetNewAccountResourceAmount() (int64, error) {
+	uv.mutexMeta.Lock()
+	defer uv.mutexMeta.Unlock()
+	return uv.meta.GetNewAccountResourceAmount(), nil
+}
+
+// LoadNewAccountResourceAmount load newAccountResourceAmount into memory
+func (uv *UtxoVM) LoadNewAccountResourceAmount() (int64, error) {
+	newAccountResourceAmountBuf, findErr := uv.metaTable.Get([]byte(ledger_pkg.NewAccountResourceAmountKey))
+	if findErr == nil {
+		utxoMeta := &pb.UtxoMeta{}
+		err := proto.Unmarshal(newAccountResourceAmountBuf, utxoMeta)
+		return utxoMeta.GetNewAccountResourceAmount(), err
+	} else if common.NormalizedKVError(findErr) == common.ErrKVNotFound {
+		return uv.ledger.GetNewAccountResourceAmount(), nil
+	}
+
+	return int64(0), findErr
+}
+
+// UpdateNewAccountResourceAmount ...
+func (uv *UtxoVM) UpdateNewAccountResourceAmount(newAccountResourceAmount int64, batch kvdb.Batch) error {
+	tmpMeta := &pb.UtxoMeta{}
+	newMeta := proto.Clone(tmpMeta).(*pb.UtxoMeta)
+	newMeta.NewAccountResourceAmount = newAccountResourceAmount
+	newAccountResourceAmountBuf, pbErr := proto.Marshal(newMeta)
+	if pbErr != nil {
+		uv.xlog.Warn("failed to marshal pb meta")
+		return pbErr
+	}
+	err := batch.Put([]byte(pb.MetaTablePrefix+ledger_pkg.NewAccountResourceAmountKey), newAccountResourceAmountBuf)
+	if err == nil {
+		uv.xlog.Info("Update newAccountResourceAmount succeed")
+	}
+	uv.mutexMeta.Lock()
+	defer uv.mutexMeta.Unlock()
+	uv.metaTmp.NewAccountResourceAmount = newAccountResourceAmount
+	return err
+}
+
 // GetMaxBlockSize get max block size effective in Utxo
 func (uv *UtxoVM) GetMaxBlockSize() (int64, error) {
 	uv.mutexMeta.Lock()
@@ -51,6 +92,7 @@ func (uv *UtxoVM) UpdateMaxBlockSize(maxBlockSize int64, batch kvdb.Batch) error
 	if pbErr != nil {
 		uv.xlog.Warn("failed to marshal pb meta")
 		return pbErr
+
 	}
 	err := batch.Put([]byte(pb.MetaTablePrefix+ledger_pkg.MaxBlockSizeKey), maxBlockSizeBuf)
 	if err == nil {

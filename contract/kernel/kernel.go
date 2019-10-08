@@ -553,11 +553,14 @@ func (k *Kernel) runUpdateNewAccountResourceAmount(desc *contract.TxDesc) error 
 	newNewAccountResourceAmount := int64(desc.Args["new_new_account_resource_amount"].(float64))
 	oldNewAccountResourceAmount := int64(desc.Args["old_new_account_resource_amount"].(float64))
 	k.log.Info("update newAccountResourceAmount", "old", oldNewAccountResourceAmount, "new", newNewAccountResourceAmount)
-	curNewAccountResourceAmount := k.context.LedgerObj.GetNewAccountResourceAmount()
+	curNewAccountResourceAmount, curNewAccountResourceAmountErr := k.context.UtxoMeta.GetNewAccountResourceAmount()
+	if curNewAccountResourceAmountErr != nil {
+		return curNewAccountResourceAmountErr
+	}
 	if oldNewAccountResourceAmount != curNewAccountResourceAmount {
 		fmt.Errorf("unexpected old newAccountResourceAmount, got %v, expected: %v", oldNewAccountResourceAmount, curNewAccountResourceAmount)
 	}
-	err := k.context.LedgerObj.UpdateNewAccountResourceAmount(newNewAccountResourceAmount, k.context.UtxoBatch)
+	err := k.context.UtxoMeta.UpdateNewAccountResourceAmount(newNewAccountResourceAmount, k.context.UtxoBatch)
 	return err
 }
 
@@ -583,7 +586,7 @@ func (k *Kernel) rollbackUpdateNewAccountResourceAmount(desc *contract.TxDesc) e
 		return vErr
 	}
 	oldNewAccountResourceAmount := int64(desc.Args["old_new_account_resource_amount"].(float64))
-	err := k.context.LedgerObj.UpdateNewAccountResourceAmount(oldNewAccountResourceAmount, k.context.UtxoBatch)
+	err := k.context.UtxoMeta.UpdateNewAccountResourceAmount(oldNewAccountResourceAmount, k.context.UtxoBatch)
 	return err
 }
 

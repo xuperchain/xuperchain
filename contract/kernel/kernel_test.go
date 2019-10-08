@@ -577,24 +577,27 @@ func TestRunUpdateForbiddenContract(t *testing.T) {
 	}
 	`)
 	json.Unmarshal(args2, txDesc)
-	t.Log("original newAccountResourceAmount->", L.GetMeta().NewAccountResourceAmount)
-	if L.GetMeta().NewAccountResourceAmount != 1000 {
-		t.Error("expect 1000, but got ", L.GetMeta().NewAccountResourceAmount)
+	originalNewAccountResourceAmount, _ := utxovm.GetNewAccountResourceAmount()
+	t.Log("original newAccountResourceAmount->", originalNewAccountResourceAmount)
+	if originalNewAccountResourceAmount != 1000 {
+		t.Error("expect 1000, but got ", originalNewAccountResourceAmount)
 	}
 	runUpadteNewAccountResourceAmountErr := kl.runUpdateNewAccountResourceAmount(txDesc)
 	if runUpadteNewAccountResourceAmountErr != nil {
 		t.Error("runUpadteNewAccountResourceAmount error:->", runUpadteNewAccountResourceAmountErr.Error())
 	}
-	t.Log("new newAccountResourceAmount->", L.GetMeta().NewAccountResourceAmount)
-	if L.GetMeta().NewAccountResourceAmount != 100 {
-		t.Error("expect 100, but got ", L.GetMeta().NewAccountResourceAmount)
+	currentNewAccountResourceAmount, _ := utxovm.GetNewAccountResourceAmount()
+	t.Log("new newAccountResourceAmount->", currentNewAccountResourceAmount)
+	if currentNewAccountResourceAmount != 100 {
+		t.Error("expect 100, but got ", currentNewAccountResourceAmount)
 	}
 	rollbackUpdateNewAccountResourceAmountErr := kl.rollbackUpdateNewAccountResourceAmount(txDesc)
 	if rollbackUpdateNewAccountResourceAmountErr != nil {
 		t.Error("rollbackUpdateNewAccountResourceAmount error:->", rollbackUpdateNewAccountResourceAmountErr.Error())
 	}
-	t.Log("rollback newAccountResourceAmount->", L.GetMeta().NewAccountResourceAmount)
-	if L.GetMeta().NewAccountResourceAmount != 1000 {
-		t.Error("expect 1000, but got ", L.GetMeta().NewAccountResourceAmount)
+	rollbackNewAccountResourceAmount, _ := utxovm.GetNewAccountResourceAmount()
+	t.Log("rollback newAccountResourceAmount->", rollbackNewAccountResourceAmount)
+	if rollbackNewAccountResourceAmount != 1000 {
+		t.Error("expect 1000, but got ", rollbackNewAccountResourceAmount)
 	}
 }

@@ -470,6 +470,11 @@ func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, priv
 		xlog.Warn("failed to load reservedContracts from disk", "loadErr", loadErr)
 		return nil, loadErr
 	}
+	utxoVM.meta.NewAccountResourceAmount, loadErr = utxoVM.LoadNewAccountResourceAmount()
+	if loadErr != nil {
+		xlog.Warn("failed to load newAccountResourceAmount from disk", "loadErr", loadErr)
+		return nil, loadErr
+	}
 	utxoVM.metaTmp = utxoVM.meta
 	return utxoVM, nil
 }
@@ -752,7 +757,7 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 		Initiator:   req.GetInitiator(),
 		AuthRequire: req.GetAuthRequire(),
 		// NewAccountResourceAmount the amount of creating an account
-		NewAccountResourceAmount: uv.ledger.GetMeta().GetNewAccountResourceAmount(),
+		NewAccountResourceAmount: uv.meta.GetNewAccountResourceAmount(),
 		ContractName:             "",
 		ResourceLimits:           contract.MaxLimits,
 	}

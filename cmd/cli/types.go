@@ -335,8 +335,6 @@ type LedgerMeta struct {
 	TipBlockid HexID `json:"tipBlockid"`
 	// TrunkHeight TrunkHeight
 	TrunkHeight int64 `json:"trunkHeight"`
-	// NewAccountResourceAmount resource amount of creating an account
-	NewAccountResourceAmount int64 `json:"newAccountResourceAmount"`
 }
 
 // UtxoMeta proto.UtxoMeta
@@ -357,6 +355,8 @@ type UtxoMeta struct {
 	ReservedContracts []InvokeRequest `json:"reservedContracts"`
 	// ForbiddenContract forbidden contract
 	ForbiddenContract InvokeRequest `json:"forbiddenContract"`
+	// NewAccountResourceAmount resource amount of creating an account
+	NewAccountResourceAmount int64 `json:"newAccountResourceAmount"`
 }
 
 // ChainStatus proto.ChainStatus
@@ -409,20 +409,20 @@ func FromSystemStatusPB(statuspb *pb.SystemsStatus) *SystemStatus {
 		status.ChainStatus = append(status.ChainStatus, ChainStatus{
 			Name: chain.GetBcname(),
 			LedgerMeta: LedgerMeta{
-				RootBlockid:              ledgerMeta.GetRootBlockid(),
-				TipBlockid:               ledgerMeta.GetTipBlockid(),
-				TrunkHeight:              ledgerMeta.GetTrunkHeight(),
-				NewAccountResourceAmount: ledgerMeta.GetNewAccountResourceAmount(),
+				RootBlockid: ledgerMeta.GetRootBlockid(),
+				TipBlockid:  ledgerMeta.GetTipBlockid(),
+				TrunkHeight: ledgerMeta.GetTrunkHeight(),
 			},
 			UtxoMeta: UtxoMeta{
-				LatestBlockid:     utxoMeta.GetLatestBlockid(),
-				LockKeyList:       utxoMeta.GetLockKeyList(),
-				UtxoTotal:         utxoMeta.GetUtxoTotal(),
-				AvgDelay:          utxoMeta.GetAvgDelay(),
-				UnconfirmTxAmount: utxoMeta.GetUnconfirmTxAmount(),
-				MaxBlockSize:      utxoMeta.GetMaxBlockSize(),
-				ReservedContracts: rcs,
-				ForbiddenContract: forbiddenContractMap,
+				LatestBlockid:            utxoMeta.GetLatestBlockid(),
+				LockKeyList:              utxoMeta.GetLockKeyList(),
+				UtxoTotal:                utxoMeta.GetUtxoTotal(),
+				AvgDelay:                 utxoMeta.GetAvgDelay(),
+				UnconfirmTxAmount:        utxoMeta.GetUnconfirmTxAmount(),
+				MaxBlockSize:             utxoMeta.GetMaxBlockSize(),
+				NewAccountResourceAmount: utxoMeta.GetNewAccountResourceAmount(),
+				ReservedContracts:        rcs,
+				ForbiddenContract:        forbiddenContractMap,
 			},
 		})
 	}

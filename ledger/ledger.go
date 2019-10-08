@@ -52,10 +52,11 @@ const (
 	// BlockVersion for version 1
 	BlockVersion = 1
 	// BlockCacheSize block counts in lru cache
-	BlockCacheSize       = 100 //block counts in lru cache
-	MaxBlockSizeKey      = "MaxBlockSize"
-	ReservedContractsKey = "ReservedContracts"
-	ForbiddenContractKey = "ForbiddenContract"
+	BlockCacheSize              = 100 //block counts in lru cache
+	MaxBlockSizeKey             = "MaxBlockSize"
+	ReservedContractsKey        = "ReservedContracts"
+	ForbiddenContractKey        = "ForbiddenContract"
+	NewAccountResourceAmountKey = "NewAccountResourceAmount"
 )
 
 // Ledger define data structure of Ledger
@@ -193,9 +194,6 @@ func (l *Ledger) loadGenesisBlock() error {
 		return gErr
 	}
 	l.GenesisBlock = gb
-	if l.meta.NewAccountResourceAmount == 0 {
-		l.meta.NewAccountResourceAmount = l.GenesisBlock.GetConfig().GetNewAccountResourceAmount()
-	}
 	return nil
 }
 
@@ -454,26 +452,6 @@ func (l *Ledger) IsValidTx(idx int, tx *pb.Transaction, block *pb.InternalBlock)
 	}
 	//TODO
 	return true
-}
-
-// UpdateNewAccountResourceAmount update the resource amount of new an account
-func (l *Ledger) UpdateNewAccountResourceAmount(newAccountResourceAmount int64, batch kvdb.Batch) error {
-	if newAccountResourceAmount <= 0 {
-		return fmt.Errorf("invalid newAccountResourceAmount: %d", newAccountResourceAmount)
-	}
-	l.mutex.Lock()
-	defer l.mutex.Unlock()
-	newMeta := proto.Clone(l.meta).(*pb.LedgerMeta)
-	newMeta.NewAccountResourceAmount = newAccountResourceAmount
-	metaBuf, pbErr := proto.Marshal(newMeta)
-	if pbErr != nil {
-		l.xlog.Warn("failed to marshal pb meta")
-		return pbErr
-	}
-	batch.Put([]byte(pb.MetaTablePrefix), metaBuf)
-	l.meta = newMeta
-	l.xlog.Info("update newAccountResource succeed")
-	return nil
 }
 
 // UpdateBlockChainData modify tx which txid is txid
@@ -959,9 +937,8 @@ func (l *Ledger) GetMaxBlockSize() int64 {
 
 // GetNewAccountResourceAmount return the resource amount of new an account
 func (l *Ledger) GetNewAccountResourceAmount() int64 {
-	//defaultNewAccountResourceAmount := l.GenesisBlock.GetConfig().GetNewAccountResourceAmount()
-	newAccountResourceAmountUpdated := l.meta.NewAccountResourceAmount
-	return newAccountResourceAmountUpdated
+	defaultNewAccountResourceAmount := l.GenesisBlock.GetConfig().GetNewAccountResourceAmount()
+	return defaultNewAccountResourceAmount
 }
 
 func (l *Ledger) GetReservedContracts() ([]*pb.InvokeRequest, error) {

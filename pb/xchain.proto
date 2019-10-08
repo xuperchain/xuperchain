@@ -412,8 +412,6 @@ message LedgerMeta {
   bytes tip_blockid = 2;
   // the height of the trunk
   int64 trunk_height = 3;
-  // the resource amount of creating an account
-  int64 new_account_resource_amount = 7;
 }
 
 // Utxo metadata
@@ -426,6 +424,7 @@ message UtxoMeta {
   int64 max_block_size = 6;    // max block size
   repeated InvokeRequest reserved_contracts = 7;       // preset contracts
   InvokeRequest forbidden_contract = 8;        // reset forbidden contract configuration
+  int64 new_account_resource_amount = 9;	// the resource amount of creating an account
 }
 
 // The internal block struct
