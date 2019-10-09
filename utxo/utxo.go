@@ -1077,13 +1077,14 @@ func (uv *UtxoVM) undoTxInternal(tx *pb.Transaction, batch kvdb.Batch) error {
 		if bytes.Equal(addr, []byte(FeePlaceholder)) {
 			continue
 		}
-		if big.NewInt(0).SetBytes(txOutput.Amount).Cmp(big.NewInt(0)) == 0 {
+		txOutputAmount := big.NewInt(0).SetBytes(txOutput.Amount)
+		if txOutputAmount.Cmp(big.NewInt(0)) == 0 {
 			continue
 		}
 		utxoKey := GenUtxoKeyWithPrefix(addr, tx.Txid, int32(offset))
 		batch.Delete([]byte(utxoKey)) // 删除产生的UTXO
 		uv.utxoCache.Remove(string(addr), utxoKey)
-		uv.subBalance(addr, big.NewInt(0).SetBytes(txOutput.Amount))
+		uv.subBalance(addr, txOutputAmount)
 		uv.xlog.Trace("    undo delete utxo key", "utxoKey", utxoKey)
 		if tx.Coinbase {
 			// coinbase交易（包括创始块和挖矿奖励), 回滚会导致系统总资产缩水
