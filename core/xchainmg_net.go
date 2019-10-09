@@ -160,7 +160,6 @@ func (xm *XChainMG) HandleSendBlock(msg *xuper_p2p.XuperMessage) {
 		return
 	}
 	err := proto.Unmarshal(srcBlock, block)
-	//err := proto.Unmarshal(msg.GetData().GetMsgInfo(), block)
 	if err != nil {
 		xm.Log.Error("HandleSendBlock Unmarshal msg to block error", "logid", msg.GetHeader().GetLogid())
 		return
