@@ -196,13 +196,13 @@ func (k *Kernel) CreateBlockChain(name string, data []byte) error {
 	}
 	ledger, err := ledger.NewLedger(fullpath, k.log, nil, kvEngineType, cryptoType)
 	if err != nil {
-		k.log.Warn("NewLedger error", "fullpath", fullpath)
+		k.log.Warn("NewLedger error", "fullpath", fullpath, "err", err)
 		os.RemoveAll(fullpath)
 		return err
 	}
 	tx, err := utxo.GenerateRootTx(data)
 	if err != nil {
-		k.log.Warn("GenerateRootTx error", "fullpath", fullpath)
+		k.log.Warn("GenerateRootTx error", "fullpath", fullpath, "err", err)
 		os.RemoveAll(fullpath)
 		return err
 	}
@@ -210,7 +210,7 @@ func (k *Kernel) CreateBlockChain(name string, data []byte) error {
 	k.log.Trace("Start to ConfirmBlock")
 	b, err := ledger.FormatRootBlock(txlist)
 	if err != nil {
-		k.log.Warn("format block error")
+		k.log.Warn("format block error", "err", err)
 		os.RemoveAll(fullpath)
 		return ErrCreateBlockChain
 	}
@@ -219,7 +219,7 @@ func (k *Kernel) CreateBlockChain(name string, data []byte) error {
 	//TODO 因为是创建创世块，所以这里不填写publicKey和address, 后果是如果存在合约的话，肯定是执行失败
 	utxovm, err := utxo.NewUtxoVM(name, ledger, fullpath, "", "", nil, k.log, false, kvEngineType, cryptoType)
 	if err != nil {
-		k.log.Warn("NewUtxoVM error", "fullpath", fullpath)
+		k.log.Warn("NewUtxoVM error", "fullpath", fullpath, "err", err)
 		os.RemoveAll(fullpath)
 		return err
 	}
