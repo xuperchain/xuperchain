@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/golang/snappy"
 	log "github.com/xuperchain/log15"
 
 	"github.com/xuperchain/xuperunion/common"
@@ -660,13 +661,19 @@ func (xc *XChainCore) doMiner() {
 
 	go func() {
 		// broadcast block
+		if err != nil {
+			xc.log.Warn("failed to broadcast, Marshal error", "error", err)
+			return
+		}
 		block := &pb.Block{
 			Bcname:  xc.bcname,
 			Blockid: freshBlock.Blockid,
-			Block:   freshBlock,
+			// 压缩一下
+			Block: freshBlock,
 		}
 		msgInfo, _ := proto.Marshal(block)
-		msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, xc.bcname, "", xuper_p2p.XuperMessage_SENDBLOCK, msgInfo, xuper_p2p.XuperMessage_NONE)
+		got := snappy.Encode(nil, msgInfo)
+		msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, xc.bcname, "", xuper_p2p.XuperMessage_SENDBLOCK, got, xuper_p2p.XuperMessage_NONE)
 		filters := []p2pv2.FilterStrategy{p2pv2.DefaultStrategy}
 		if xc.NeedCoreConnection() {
 			filters = append(filters, p2pv2.CorePeersStrategy)

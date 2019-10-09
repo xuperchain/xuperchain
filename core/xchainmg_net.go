@@ -7,6 +7,7 @@ import (
 	"net"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/golang/snappy"
 
 	"github.com/xuperchain/xuperunion/common/config"
 	"github.com/xuperchain/xuperunion/global"
@@ -151,7 +152,15 @@ func (xm *XChainMG) HandleSendBlock(msg *xuper_p2p.XuperMessage) {
 	block := &pb.Block{}
 	xm.Log.Trace("Start to HandleSendBlock", "logid", msg.GetHeader().GetLogid(), "checksum", msg.GetHeader().GetDataCheckSum())
 	// Unmarshal msg
-	err := proto.Unmarshal(msg.GetData().GetMsgInfo(), block)
+	compressedBlock := msg.GetData().GetMsgInfo()
+	// 解压缩区块内容
+	srcBlock, decodeErr := snappy.Decode(nil, compressedBlock)
+	if decodeErr != nil {
+		xm.Log.Error("HandleSendBlock snappy decode error", "error", decodeErr.Error())
+		return
+	}
+	err := proto.Unmarshal(srcBlock, block)
+	//err := proto.Unmarshal(msg.GetData().GetMsgInfo(), block)
 	if err != nil {
 		xm.Log.Error("HandleSendBlock Unmarshal msg to block error", "logid", msg.GetHeader().GetLogid())
 		return
