@@ -661,10 +661,6 @@ func (xc *XChainCore) doMiner() {
 
 	go func() {
 		// broadcast block
-		if err != nil {
-			xc.log.Warn("failed to broadcast, Marshal error", "error", err)
-			return
-		}
 		block := &pb.Block{
 			Bcname:  xc.bcname,
 			Blockid: freshBlock.Blockid,

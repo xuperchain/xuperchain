@@ -300,8 +300,9 @@ func (xm *XChainMG) handleGetBlock(ctx context.Context, msg *xuper_p2p.XuperMess
 	}
 
 	resBuf, _ := proto.Marshal(block)
+	got := snappy.Encode(nil, resBuf)
 	res, err := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, bcname, logid,
-		xuper_p2p.XuperMessage_GET_BLOCK_RES, resBuf, xuper_p2p.XuperMessage_SUCCESS)
+		xuper_p2p.XuperMessage_GET_BLOCK_RES, got, xuper_p2p.XuperMessage_SUCCESS)
 	return res, err
 }
 
