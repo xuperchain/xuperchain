@@ -92,9 +92,14 @@ func (xm *XChainMG) handleReceivedMsg(msg *xuper_p2p.XuperMessage) {
 
 func (xm *XChainMG) handlePostTx(msg *xuper_p2p.XuperMessage) {
 	txStatus := &pb.TxStatus{}
-
+	compressedTxStatus := msg.GetData().GetMsgInfo()
+	srcTxStatus, decodeErr := snappy.Decode(nil, compressedTxStatus)
+	if decodeErr != nil {
+		xm.Log.Error("handlePostTx snappy decode error", "err", decodeErr)
+		return
+	}
 	// Unmarshal msg
-	err := proto.Unmarshal(msg.GetData().GetMsgInfo(), txStatus)
+	err := proto.Unmarshal(srcTxStatus, txStatus)
 	if err != nil {
 		xm.Log.Error("handlePostTx Unmarshal msg to tx error", "logid", msg.GetHeader().GetLogid())
 		return
@@ -213,8 +218,14 @@ func (xm *XChainMG) ProcessBlock(block *pb.Block) error {
 
 func (xm *XChainMG) handleBatchPostTx(msg *xuper_p2p.XuperMessage) {
 	batchTxs := &pb.BatchTxs{}
+	compressedBatchTxs := msg.GetData().GetMsgInfo()
+	srcBatchTxs, decodeErr := snappy.Decode(nil, compressedBatchTxs)
+	if decodeErr != nil {
+		xm.Log.Error("handleBatchPostTx snappy decode error", "err", decodeErr)
+		return
+	}
 	// Unmarshal msg
-	err := proto.Unmarshal(msg.GetData().GetMsgInfo(), batchTxs)
+	err := proto.Unmarshal(srcBatchTxs, batchTxs)
 	if err != nil {
 		xm.Log.Error("handleBatchPostTx Unmarshal msg to BatchTxs error", "logid", msg.GetHeader().GetLogid())
 		return

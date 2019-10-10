@@ -312,7 +312,8 @@ func (xc *XChainCore) repostOfflineTx() {
 		}
 		xc.log.Debug("repost batch tx list", "size", len(batchTxMsg.Txs))
 		msgInfo, _ := proto.Marshal(batchTxMsg)
-		msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, xc.bcname, header.GetLogid(), xuper_p2p.XuperMessage_BATCHPOSTTX, msgInfo, xuper_p2p.XuperMessage_SUCCESS)
+		got := snappy.Encode(nil, msgInfo)
+		msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, xc.bcname, header.GetLogid(), xuper_p2p.XuperMessage_BATCHPOSTTX, got, xuper_p2p.XuperMessage_SUCCESS)
 
 		filters := []p2pv2.FilterStrategy{p2pv2.DefaultStrategy}
 		if xc.NeedCoreConnection() {
