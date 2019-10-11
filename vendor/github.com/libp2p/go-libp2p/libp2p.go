@@ -5,7 +5,7 @@ import (
 
 	config "github.com/libp2p/go-libp2p/config"
 
-	host "github.com/libp2p/go-libp2p-host"
+	"github.com/libp2p/go-libp2p-core/host"
 )
 
 // Config describes a set of settings for a libp2p node
@@ -19,6 +19,9 @@ type Option = config.Option
 func ChainOptions(opts ...Option) Option {
 	return func(cfg *Config) error {
 		for _, opt := range opts {
+			if opt == nil {
+				continue
+			}
 			if err := opt(cfg); err != nil {
 				return err
 			}

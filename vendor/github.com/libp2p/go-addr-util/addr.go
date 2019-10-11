@@ -11,8 +11,8 @@ import (
 
 var log = logging.Logger("addrutil")
 
-// FilterAddrs is a filter that removes certain addresses, according the given filters.
-// if all filters return true, the address is kept.
+// FilterAddrs is a filter that removes certain addresses, according to the given filters.
+// If all filters return true, the address is kept.
 func FilterAddrs(a []ma.Multiaddr, filters ...func(ma.Multiaddr) bool) []ma.Multiaddr {
 	b := make([]ma.Multiaddr, 0, len(a))
 	for _, addr := range a {

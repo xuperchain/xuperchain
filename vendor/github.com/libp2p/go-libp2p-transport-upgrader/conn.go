@@ -3,15 +3,15 @@ package stream
 import (
 	"fmt"
 
-	inet "github.com/libp2p/go-libp2p-net"
-	transport "github.com/libp2p/go-libp2p-transport"
-	smux "github.com/libp2p/go-stream-muxer"
+	"github.com/libp2p/go-libp2p-core/mux"
+	"github.com/libp2p/go-libp2p-core/network"
+	"github.com/libp2p/go-libp2p-core/transport"
 )
 
 type transportConn struct {
-	smux.Conn
-	inet.ConnMultiaddrs
-	inet.ConnSecurity
+	mux.MuxedConn
+	network.ConnMultiaddrs
+	network.ConnSecurity
 	transport transport.Transport
 }
 

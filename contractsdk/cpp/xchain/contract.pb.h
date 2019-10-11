@@ -3684,7 +3684,7 @@ class TxInput :
 
   // accessors -------------------------------------------------------
 
-  // bytes ref_txid = 1;
+  // string ref_txid = 1;
   void clear_ref_txid();
   static const int kRefTxidFieldNumber = 1;
   const ::std::string& ref_txid() const;
@@ -3693,7 +3693,7 @@ class TxInput :
   void set_ref_txid(::std::string&& value);
   #endif
   void set_ref_txid(const char* value);
-  void set_ref_txid(const void* value, size_t size);
+  void set_ref_txid(const char* value, size_t size);
   ::std::string* mutable_ref_txid();
   ::std::string* release_ref_txid();
   void set_allocated_ref_txid(::std::string* ref_txid);
@@ -3712,7 +3712,7 @@ class TxInput :
   ::std::string* release_from_addr();
   void set_allocated_from_addr(::std::string* from_addr);
 
-  // bytes amount = 6;
+  // string amount = 6;
   void clear_amount();
   static const int kAmountFieldNumber = 6;
   const ::std::string& amount() const;
@@ -3721,7 +3721,7 @@ class TxInput :
   void set_amount(::std::string&& value);
   #endif
   void set_amount(const char* value);
-  void set_amount(const void* value, size_t size);
+  void set_amount(const char* value, size_t size);
   ::std::string* mutable_amount();
   ::std::string* release_amount();
   void set_allocated_amount(::std::string* amount);
@@ -3844,7 +3844,7 @@ class TxOutput :
 
   // accessors -------------------------------------------------------
 
-  // bytes amount = 1;
+  // string amount = 1;
   void clear_amount();
   static const int kAmountFieldNumber = 1;
   const ::std::string& amount() const;
@@ -3853,7 +3853,7 @@ class TxOutput :
   void set_amount(::std::string&& value);
   #endif
   void set_amount(const char* value);
-  void set_amount(const void* value, size_t size);
+  void set_amount(const char* value, size_t size);
   ::std::string* mutable_amount();
   ::std::string* release_amount();
   void set_allocated_amount(::std::string* amount);
@@ -4228,7 +4228,7 @@ class Block :
   ::std::string* release_blockid();
   void set_allocated_blockid(::std::string* blockid);
 
-  // bytes pre_hash = 4;
+  // string pre_hash = 4;
   void clear_pre_hash();
   static const int kPreHashFieldNumber = 4;
   const ::std::string& pre_hash() const;
@@ -4237,7 +4237,7 @@ class Block :
   void set_pre_hash(::std::string&& value);
   #endif
   void set_pre_hash(const char* value);
-  void set_pre_hash(const void* value, size_t size);
+  void set_pre_hash(const char* value, size_t size);
   ::std::string* mutable_pre_hash();
   ::std::string* release_pre_hash();
   void set_allocated_pre_hash(::std::string* pre_hash);
@@ -4256,7 +4256,7 @@ class Block :
   ::std::string* release_proposer();
   void set_allocated_proposer(::std::string* proposer);
 
-  // bytes sign = 6;
+  // string sign = 6;
   void clear_sign();
   static const int kSignFieldNumber = 6;
   const ::std::string& sign() const;
@@ -4265,7 +4265,7 @@ class Block :
   void set_sign(::std::string&& value);
   #endif
   void set_sign(const char* value);
-  void set_sign(const void* value, size_t size);
+  void set_sign(const char* value, size_t size);
   ::std::string* mutable_sign();
   ::std::string* release_sign();
   void set_allocated_sign(::std::string* sign);
@@ -4284,7 +4284,7 @@ class Block :
   ::std::string* release_pubkey();
   void set_allocated_pubkey(::std::string* pubkey);
 
-  // bytes next_hash = 15;
+  // string next_hash = 15;
   void clear_next_hash();
   static const int kNextHashFieldNumber = 15;
   const ::std::string& next_hash() const;
@@ -4293,7 +4293,7 @@ class Block :
   void set_next_hash(::std::string&& value);
   #endif
   void set_next_hash(const char* value);
-  void set_next_hash(const void* value, size_t size);
+  void set_next_hash(const char* value, size_t size);
   ::std::string* mutable_next_hash();
   ::std::string* release_next_hash();
   void set_allocated_next_hash(::std::string* next_hash);
@@ -6605,7 +6605,7 @@ inline void GetCallArgsRequest::set_allocated_header(::xchain::contract::sdk::Sy
 
 // TxInput
 
-// bytes ref_txid = 1;
+// string ref_txid = 1;
 inline void TxInput::clear_ref_txid() {
   ref_txid_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -6632,7 +6632,7 @@ inline void TxInput::set_ref_txid(const char* value) {
   ref_txid_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
   // @@protoc_insertion_point(field_set_char:xchain.contract.sdk.TxInput.ref_txid)
 }
-inline void TxInput::set_ref_txid(const void* value, size_t size) {
+inline void TxInput::set_ref_txid(const char* value, size_t size) {
   
   ref_txid_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
@@ -6725,7 +6725,7 @@ inline void TxInput::set_allocated_from_addr(::std::string* from_addr) {
   // @@protoc_insertion_point(field_set_allocated:xchain.contract.sdk.TxInput.from_addr)
 }
 
-// bytes amount = 6;
+// string amount = 6;
 inline void TxInput::clear_amount() {
   amount_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -6752,7 +6752,7 @@ inline void TxInput::set_amount(const char* value) {
   amount_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
   // @@protoc_insertion_point(field_set_char:xchain.contract.sdk.TxInput.amount)
 }
-inline void TxInput::set_amount(const void* value, size_t size) {
+inline void TxInput::set_amount(const char* value, size_t size) {
   
   amount_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
@@ -6796,7 +6796,7 @@ inline void TxInput::set_frozen_height(::google::protobuf::int64 value) {
 
 // TxOutput
 
-// bytes amount = 1;
+// string amount = 1;
 inline void TxOutput::clear_amount() {
   amount_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -6823,7 +6823,7 @@ inline void TxOutput::set_amount(const char* value) {
   amount_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
   // @@protoc_insertion_point(field_set_char:xchain.contract.sdk.TxOutput.amount)
 }
-inline void TxOutput::set_amount(const void* value, size_t size) {
+inline void TxOutput::set_amount(const char* value, size_t size) {
   
   amount_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
@@ -7318,7 +7318,7 @@ inline void Block::set_allocated_blockid(::std::string* blockid) {
   // @@protoc_insertion_point(field_set_allocated:xchain.contract.sdk.Block.blockid)
 }
 
-// bytes pre_hash = 4;
+// string pre_hash = 4;
 inline void Block::clear_pre_hash() {
   pre_hash_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -7345,7 +7345,7 @@ inline void Block::set_pre_hash(const char* value) {
   pre_hash_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
   // @@protoc_insertion_point(field_set_char:xchain.contract.sdk.Block.pre_hash)
 }
-inline void Block::set_pre_hash(const void* value, size_t size) {
+inline void Block::set_pre_hash(const char* value, size_t size) {
   
   pre_hash_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
@@ -7424,7 +7424,7 @@ inline void Block::set_allocated_proposer(::std::string* proposer) {
   // @@protoc_insertion_point(field_set_allocated:xchain.contract.sdk.Block.proposer)
 }
 
-// bytes sign = 6;
+// string sign = 6;
 inline void Block::clear_sign() {
   sign_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -7451,7 +7451,7 @@ inline void Block::set_sign(const char* value) {
   sign_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
   // @@protoc_insertion_point(field_set_char:xchain.contract.sdk.Block.sign)
 }
-inline void Block::set_sign(const void* value, size_t size) {
+inline void Block::set_sign(const char* value, size_t size) {
   
   sign_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));
@@ -7641,7 +7641,7 @@ inline void Block::set_in_trunk(bool value) {
   // @@protoc_insertion_point(field_set:xchain.contract.sdk.Block.in_trunk)
 }
 
-// bytes next_hash = 15;
+// string next_hash = 15;
 inline void Block::clear_next_hash() {
   next_hash_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -7668,7 +7668,7 @@ inline void Block::set_next_hash(const char* value) {
   next_hash_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
   // @@protoc_insertion_point(field_set_char:xchain.contract.sdk.Block.next_hash)
 }
-inline void Block::set_next_hash(const void* value, size_t size) {
+inline void Block::set_next_hash(const char* value, size_t size) {
   
   next_hash_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(reinterpret_cast<const char*>(value), size));

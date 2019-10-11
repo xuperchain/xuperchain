@@ -11,7 +11,6 @@ type process struct {
 	waiters  []*processLink            // processes that wait for us. for gc.
 
 	teardown TeardownFunc  // called to run the teardown logic.
-	waiting  chan struct{} // closed when CloseAfterChildrenClosed is called.
 	closing  chan struct{} // closed once close starts.
 	closed   chan struct{} // closed once close is done.
 	closeErr error         // error to return to clients of Close()
@@ -40,6 +39,7 @@ func (p *process) WaitFor(q Process) {
 	}
 
 	p.Lock()
+	defer p.Unlock()
 
 	select {
 	case <-p.Closed():
@@ -48,8 +48,12 @@ func (p *process) WaitFor(q Process) {
 	}
 
 	pl := newProcessLink(p, q)
+	if p.waitfors == nil {
+		// This may be nil when we're closing. In close, we'll keep
+		// reading this map till it stays nil.
+		p.waitfors = make(map[*processLink]struct{}, 1)
+	}
 	p.waitfors[pl] = struct{}{}
-	p.Unlock()
 	go pl.AddToChild()
 }
 
@@ -59,18 +63,22 @@ func (p *process) AddChildNoWait(child Process) {
 	}
 
 	p.Lock()
+	defer p.Unlock()
 
 	select {
-	case <-p.Closed():
-		panic("Process cannot add children after being closed")
 	case <-p.Closing():
+		// Either closed or closing, close child immediately. This is
+		// correct because we aren't asked to _wait_ on this child.
 		go child.Close()
+		// Wait for the child to start closing so the child is in the
+		// "correct" state after this function finishes (see #17).
+		<-child.Closing()
+		return
 	default:
 	}
 
 	pl := newProcessLink(p, child)
 	p.children[pl] = struct{}{}
-	p.Unlock()
 	go pl.AddToChild()
 }
 
@@ -80,23 +88,37 @@ func (p *process) AddChild(child Process) {
 	}
 
 	p.Lock()
+	defer p.Unlock()
+
+	pl := newProcessLink(p, child)
 
 	select {
 	case <-p.Closed():
+		// AddChild must not be called on a dead process. Maybe that's
+		// too strict?
 		panic("Process cannot add children after being closed")
-	case <-p.Closing():
-		go child.Close()
 	default:
 	}
 
-	pl := newProcessLink(p, child)
-	if p.waitfors != nil { // if p.waitfors hasn't been set nil
-		p.waitfors[pl] = struct{}{}
-	}
-	if p.children != nil { // if p.children hasn't been set nil
+	select {
+	case <-p.Closing():
+		// Already closing, close child in background.
+		go child.Close()
+		// Wait for the child to start closing so the child is in the
+		// "correct" state after this function finishes (see #17).
+		<-child.Closing()
+	default:
+		// Only add the child when not closing. When closing, just add
+		// it to the "waitfors" list.
 		p.children[pl] = struct{}{}
 	}
-	p.Unlock()
+
+	if p.waitfors == nil {
+		// This may be be nil when we're closing. In close, we'll keep
+		// reading this map till it stays nil.
+		p.waitfors = make(map[*processLink]struct{}, 1)
+	}
+	p.waitfors[pl] = struct{}{}
 	go pl.AddToChild()
 }
 
@@ -175,16 +197,22 @@ func (p *process) doClose() {
 
 	close(p.closing) // signal that we're shutting down (Closing)
 
-	for len(p.children) > 0 || len(p.waitfors) > 0 {
-		for plc, _ := range p.children {
-			child := plc.Child()
-			if child != nil { // check because child may already have been removed.
-				go child.Close() // force all children to shut down
-			}
-			plc.ParentClear()
+	// We won't add any children after we start closing so we can do this
+	// once.
+	for plc, _ := range p.children {
+		child := plc.Child()
+		if child != nil { // check because child may already have been removed.
+			go child.Close() // force all children to shut down
 		}
-		p.children = nil // clear them. release memory.
 
+		// safe to call multiple times per link
+		plc.ParentClear()
+	}
+	p.children = nil // clear them. release memory.
+
+	// We may repeatedly continue to add waiters while we wait to close so
+	// we have to do this in a loop.
+	for len(p.waitfors) > 0 {
 		// we must be careful not to iterate over waitfors directly, as it may
 		// change under our feet.
 		wf := p.waitfors
@@ -195,6 +223,8 @@ func (p *process) doClose() {
 			p.Unlock()
 			<-w.ChildClosed() // wait till all waitfors are fully closed (before teardown)
 			p.Lock()
+
+			// safe to call multiple times per link
 			w.ParentClear()
 		}
 	}
@@ -230,10 +260,6 @@ func (p *process) CloseAfterChildren() error {
 	select {
 	case <-p.Closed():
 		p.Unlock()
-		return p.Close() // get error. safe, after p.Closed()
-	case <-p.waiting: // already called it.
-		p.Unlock()
-		<-p.Closed()
 		return p.Close() // get error. safe, after p.Closed()
 	default:
 	}

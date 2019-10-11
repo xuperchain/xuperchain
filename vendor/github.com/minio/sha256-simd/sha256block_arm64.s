@@ -1,4 +1,4 @@
-//+build !noasm !appengine
+//+build !noasm,!appengine
 
 // ARM64 version of SHA256
 
@@ -28,7 +28,7 @@
 TEXT ·blockArm(SB), 7, $0
 	MOVD h+0(FP), R0
 	MOVD message+24(FP), R1
-	MOVD lenmessage+32(FP), R2 // length of message
+	MOVD message_len+32(FP), R2 // length of message
 	SUBS $64, R2
 	BMI  complete
 
@@ -153,7 +153,6 @@ loop:
 
 complete:
 	RET
-
 
 // Constants table
 DATA ·constants+0x0(SB)/8, $0x71374491428a2f98

@@ -5,7 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	u "github.com/ipfs/go-ipfs-util"
+	"github.com/libp2p/go-libp2p-core/crypto"
+	"github.com/libp2p/go-libp2p-core/peer"
 	mh "github.com/multiformats/go-multihash"
 )
 
@@ -30,8 +31,15 @@ func (pkv PublicKeyValidator) Validate(key string, value []byte) error {
 		return fmt.Errorf("key did not contain valid multihash: %s", err)
 	}
 
-	pkh := u.Hash(value)
-	if !bytes.Equal(keyhash, pkh) {
+	pk, err := crypto.UnmarshalPublicKey(value)
+	if err != nil {
+		return err
+	}
+	id, err := peer.IDFromPublicKey(pk)
+	if err != nil {
+		return err
+	}
+	if !bytes.Equal(keyhash, []byte(id)) {
 		return errors.New("public key does not match storage key")
 	}
 	return nil

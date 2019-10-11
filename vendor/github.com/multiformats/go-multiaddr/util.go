@@ -21,7 +21,7 @@ func Join(ms ...Multiaddr) Multiaddr {
 	case 0:
 		// empty multiaddr, unfortunately, we have callers that rely on
 		// this contract.
-		return multiaddr{}
+		return &multiaddr{}
 	case 1:
 		return ms[0]
 	}
@@ -38,7 +38,7 @@ func Join(ms ...Multiaddr) Multiaddr {
 	for _, mb := range bs {
 		bidx += copy(b[bidx:], mb)
 	}
-	return multiaddr{bytes: b}
+	return &multiaddr{bytes: b}
 }
 
 // Cast re-casts a byte slice as a multiaddr. will panic if it fails to parse.
@@ -77,7 +77,7 @@ func SplitFirst(m Multiaddr) (*Component, Multiaddr) {
 	if len(b) == n {
 		return &c, nil
 	}
-	return &c, multiaddr{b[n:]}
+	return &c, &multiaddr{b[n:]}
 }
 
 // SplitLast returns the rest of the multiaddr and the last component.
@@ -109,7 +109,7 @@ func SplitLast(m Multiaddr) (Multiaddr, *Component) {
 				// Only one component
 				return nil, &c
 			}
-			return multiaddr{b[:offset]}, &c
+			return &multiaddr{b[:offset]}, &c
 		}
 		offset += n
 	}
@@ -152,7 +152,7 @@ func SplitFunc(m Multiaddr, cb func(Component) bool) (Multiaddr, Multiaddr) {
 	case len(b):
 		return m, nil
 	default:
-		return multiaddr{b[:offset]}, multiaddr{b[offset:]}
+		return &multiaddr{b[:offset]}, &multiaddr{b[offset:]}
 	}
 }
 

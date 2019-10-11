@@ -310,14 +310,12 @@ func WrapNetListener(nl net.Listener) (Listener, error) {
 // A PacketConn is a generic packet oriented network connection which uses an
 // underlying net.PacketConn, wrapped with the locally bound Multiaddr.
 type PacketConn interface {
-	Connection() net.PacketConn
+	net.PacketConn
 
-	Multiaddr() ma.Multiaddr
+	LocalMultiaddr() ma.Multiaddr
 
-	ReadFrom(b []byte) (int, ma.Multiaddr, error)
-	WriteTo(b []byte, maddr ma.Multiaddr) (int, error)
-
-	Close() error
+	ReadFromMultiaddr(b []byte) (int, ma.Multiaddr, error)
+	WriteToMultiaddr(b []byte, maddr ma.Multiaddr) (int, error)
 }
 
 // maPacketConn implements PacketConn
@@ -326,28 +324,25 @@ type maPacketConn struct {
 	laddr ma.Multiaddr
 }
 
-// Connection returns the embedded net.PacketConn.
-func (l *maPacketConn) Connection() net.PacketConn {
-	return l.PacketConn
-}
+var _ PacketConn = (*maPacketConn)(nil)
 
-// Multiaddr returns the bound local Multiaddr.
-func (l *maPacketConn) Multiaddr() ma.Multiaddr {
+// LocalMultiaddr returns the bound local Multiaddr.
+func (l *maPacketConn) LocalMultiaddr() ma.Multiaddr {
 	return l.laddr
 }
 
-func (l *maPacketConn) ReadFrom(b []byte) (int, ma.Multiaddr, error) {
-	n, addr, err := l.PacketConn.ReadFrom(b)
+func (l *maPacketConn) ReadFromMultiaddr(b []byte) (int, ma.Multiaddr, error) {
+	n, addr, err := l.ReadFrom(b)
 	maddr, _ := FromNetAddr(addr)
 	return n, maddr, err
 }
 
-func (l *maPacketConn) WriteTo(b []byte, maddr ma.Multiaddr) (int, error) {
+func (l *maPacketConn) WriteToMultiaddr(b []byte, maddr ma.Multiaddr) (int, error) {
 	addr, err := ToNetAddr(maddr)
 	if err != nil {
 		return 0, err
 	}
-	return l.PacketConn.WriteTo(b, addr)
+	return l.WriteTo(b, addr)
 }
 
 // ListenPacket announces on the local network address laddr.

@@ -7,5 +7,6 @@ func NewPeerstore() pstore.Peerstore {
 	return pstore.NewPeerstore(
 		NewKeyBook(),
 		NewAddrBook(),
+		NewProtoBook(),
 		NewPeerMetadata())
 }

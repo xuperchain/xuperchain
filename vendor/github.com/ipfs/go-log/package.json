@@ -26,9 +26,9 @@
     },
     {
       "author": "whyrusleeping",
-      "hash": "QmdxUuburamoF6zF9qjeQC4WYcWGbWuRmdLacMEsW8ioD8",
+      "hash": "QmddjPSGZb3ieihSseFeCfVRpZzcqczPNsD2DvarSwnjJB",
       "name": "gogo-protobuf",
-      "version": "0.0.0"
+      "version": "1.2.1"
     }
   ],
   "gxVersion": "0.12.1",
@@ -36,6 +36,6 @@
   "license": "",
   "name": "go-log",
   "releaseCmd": "git commit -a -m \"gx publish $VERSION\"",
-  "version": "1.5.7"
+  "version": "1.5.9"
 }
 

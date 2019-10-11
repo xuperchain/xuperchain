@@ -12,9 +12,8 @@ import (
 	"crypto/sha512"
 	"hash"
 
-	ci "github.com/libp2p/go-libp2p-crypto"
+	ci "github.com/libp2p/go-libp2p-core/crypto"
 	sha256 "github.com/minio/sha256-simd"
-	bfish "golang.org/x/crypto/blowfish"
 )
 
 // SupportedExchanges is the list of supported ECDH curves
@@ -25,7 +24,7 @@ const DefaultSupportedExchanges = "P-256,P-384,P-521"
 // SupportedCiphers is the list of supported Ciphers
 var SupportedCiphers = DefaultSupportedCiphers
 
-const DefaultSupportedCiphers = "AES-256,AES-128,Blowfish"
+const DefaultSupportedCiphers = "AES-256,AES-128"
 
 // SupportedHashes is the list of supported Hashes
 var SupportedHashes = DefaultSupportedHashes
@@ -88,8 +87,6 @@ func newBlockCipher(cipherT string, key []byte) (cipher.Block, error) {
 	switch cipherT {
 	case "AES-128", "AES-256":
 		return aes.NewCipher(key)
-	case "Blowfish":
-		return bfish.NewCipher(key)
 	default:
 		return nil, fmt.Errorf("Unrecognized cipher type: %s", cipherT)
 	}

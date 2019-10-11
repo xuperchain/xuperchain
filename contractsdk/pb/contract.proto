@@ -141,13 +141,13 @@ message GetCallArgsRequest {
 message TxInput
 {
     // The transaction id referenced to
-    bytes ref_txid = 1;
+    string ref_txid = 1;
     // The output offset of the transaction referenced to
     int32 ref_offset = 2;
     // The address of the launcher
     bytes from_addr = 5;
     // The amount of the transaction
-    bytes amount = 6;
+    string amount = 6;
     // Frozen height
     int64 frozen_height = 7;
 }
@@ -156,7 +156,7 @@ message TxInput
 message TxOutput
 {
     // The amount of the transaction
-    bytes amount = 1;
+    string amount = 1;
     // The address of the launcher
     bytes to_addr = 2;
     // Fronzen height
@@ -190,11 +190,11 @@ message Block
     // blockid generate the hash sign of the block used by sha256
     string blockid = 3;
     // pre_hash is the parent blockid of the block
-    bytes pre_hash = 4;
+    string pre_hash = 4;
     // The miner id
     bytes proposer = 5;
     // The sign which miner signed: blockid + nonce + timestamp
-    bytes sign = 6;
+    string sign = 6;
     // The pk of the miner
     bytes pubkey =  7;
     // The height of the blockchain
@@ -207,7 +207,7 @@ message Block
     // If the block is on the trunk
     bool in_trunk = 14;
     // Next next block which on trunk
-    bytes next_hash = 15;
+    string next_hash = 15;
 }
 
 

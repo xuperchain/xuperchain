@@ -1,6 +1,6 @@
 # go-multiaddr-net
 
-[![](https://img.shields.io/badge/made%20by-Protocol%20Labs-blue.svg?style=flat-square)](http://ipn.io)
+[![](https://img.shields.io/badge/made%20by-Protocol%20Labs-blue.svg?style=flat-square)](https://protocol.ai)
 [![](https://img.shields.io/badge/project-multiformats-blue.svg?style=flat-square)](https://github.com/multiformats/multiformats)
 [![](https://img.shields.io/badge/freenode-%23ipfs-blue.svg?style=flat-square)](https://webchat.freenode.net/?channels=%23ipfs)
 [![](https://img.shields.io/badge/readme%20style-standard-brightgreen.svg?style=flat-square)](https://github.com/RichardLitt/standard-readme)
@@ -35,28 +35,10 @@ Note that `go-multiaddr-net` is packaged with Gx, so it is recommended to use Gx
 
 ## Usage
 
-This module is packaged with [Gx](https://github.com/whyrusleeping/gx). In order to use it in your own project do:
-
-```sh
-go get -u github.com/whyrusleeping/gx
-go get -u github.com/whyrusleeping/gx-go
-cd <your-project-repository>
-gx init
-gx import github.com/multiformats/go-multiaddr-net
-gx install --global
-gx-go --rewrite
-```
-
-Please check [Gx](https://github.com/whyrusleeping/gx) and [Gx-go](https://github.com/whyrusleeping/gx-go) documentation for more information.
-
-For further usage, see the docs:
+See the docs:
 
 - `multiaddr/net`: https://godoc.org/github.com/multiformats/go-multiaddr-net
 - `multiaddr`: https://godoc.org/github.com/multiformats/go-multiaddr
-
-## Maintainers
-
-Captain: [@whyrusleeping](https://github.com/whyrusleeping).
 
 ## Contribute
 

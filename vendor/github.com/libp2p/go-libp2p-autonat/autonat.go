@@ -7,10 +7,10 @@ import (
 	"sync"
 	"time"
 
-	host "github.com/libp2p/go-libp2p-host"
-	inet "github.com/libp2p/go-libp2p-net"
-	peer "github.com/libp2p/go-libp2p-peer"
-	pstore "github.com/libp2p/go-libp2p-peerstore"
+	"github.com/libp2p/go-libp2p-core/host"
+	"github.com/libp2p/go-libp2p-core/network"
+	"github.com/libp2p/go-libp2p-core/peer"
+	"github.com/libp2p/go-libp2p-core/peerstore"
 	ma "github.com/multiformats/go-multiaddr"
 )
 
@@ -32,7 +32,7 @@ var (
 	AutoNATBootDelay       = 15 * time.Second
 	AutoNATRetryInterval   = 90 * time.Second
 	AutoNATRefreshInterval = 15 * time.Minute
-	AutoNATRequestTimeout  = 60 * time.Second
+	AutoNATRequestTimeout  = 30 * time.Second
 )
 
 // AutoNAT is the interface for ambient NAT autodiscovery
@@ -85,6 +85,8 @@ func NewAutoNAT(ctx context.Context, h host.Host, getAddrs GetAddrs) AutoNAT {
 }
 
 func (as *AmbientAutoNAT) Status() NATStatus {
+	as.mx.Lock()
+	defer as.mx.Unlock()
 	return as.status
 }
 
@@ -133,55 +135,89 @@ func (as *AmbientAutoNAT) autodetect() {
 	}
 
 	cli := NewAutoNATClient(as.host, as.getAddrs)
-	failures := 0
+	ctx, cancel := context.WithTimeout(as.ctx, AutoNATRequestTimeout)
+	defer cancel()
 
-	for _, pi := range peers {
-		ctx, cancel := context.WithTimeout(as.ctx, AutoNATRequestTimeout)
-		as.host.Peerstore().AddAddrs(pi.ID, pi.Addrs, pstore.TempAddrTTL)
-		a, err := cli.DialBack(ctx, pi.ID)
-		cancel()
-
-		switch {
-		case err == nil:
-			log.Debugf("NAT status is public; address through %s: %s", pi.ID.Pretty(), a.String())
-			as.mx.Lock()
-			as.addr = a
-			as.status = NATStatusPublic
-			as.confidence = 0
-			as.mx.Unlock()
-			return
-
-		case IsDialError(err):
-			log.Debugf("dial error through %s: %s", pi.ID.Pretty(), err.Error())
-			failures++
-			if failures >= 3 || as.confidence >= 3 { // 3 times is enemy action
-				log.Debugf("NAT status is private")
-				as.mx.Lock()
-				as.status = NATStatusPrivate
-				as.confidence = 3
-				as.mx.Unlock()
-				return
-			}
-
-		default:
-			log.Debugf("Error dialing through %s: %s", pi.ID.Pretty(), err.Error())
-		}
+	var result struct {
+		sync.Mutex
+		private int
+		public  int
+		pubaddr ma.Multiaddr
 	}
 
+	probe := 3 - as.confidence
+	if probe == 0 {
+		probe = 1
+	}
+	if probe > len(peers) {
+		probe = len(peers)
+	}
+
+	var wg sync.WaitGroup
+
+	for _, pi := range peers[:probe] {
+		wg.Add(1)
+		go func(pi peer.AddrInfo) {
+			defer wg.Done()
+
+			as.host.Peerstore().AddAddrs(pi.ID, pi.Addrs, peerstore.TempAddrTTL)
+			a, err := cli.DialBack(ctx, pi.ID)
+
+			switch {
+			case err == nil:
+				log.Debugf("Dialback through %s successful; public address is %s", pi.ID.Pretty(), a.String())
+				result.Lock()
+				result.public++
+				result.pubaddr = a
+				result.Unlock()
+
+			case IsDialError(err):
+				log.Debugf("Dialback through %s failed", pi.ID.Pretty())
+				result.Lock()
+				result.private++
+				result.Unlock()
+
+			default:
+				log.Debugf("Dialback error through %s: %s", pi.ID.Pretty(), err)
+			}
+		}(pi)
+	}
+
+	wg.Wait()
+
 	as.mx.Lock()
-	if failures > 0 {
-		as.status = NATStatusPrivate
-		as.confidence++
+	if result.public > 0 {
+		log.Debugf("NAT status is public")
+		if as.status == NATStatusPrivate {
+			// we are flipping our NATStatus, so confidence drops to 0
+			as.confidence = 0
+		} else if as.confidence < 3 {
+			as.confidence++
+		}
+		as.status = NATStatusPublic
+		as.addr = result.pubaddr
+	} else if result.private > 0 {
 		log.Debugf("NAT status is private")
+		if as.status == NATStatusPublic {
+			// we are flipping our NATStatus, so confidence drops to 0
+			as.confidence = 0
+		} else if as.confidence < 3 {
+			as.confidence++
+		}
+		as.status = NATStatusPrivate
+		as.addr = nil
+	} else if as.confidence > 0 {
+		// don't just flip to unknown, reduce confidence first
+		as.confidence--
 	} else {
-		as.status = NATStatusUnknown
-		as.confidence = 0
 		log.Debugf("NAT status is unknown")
+		as.status = NATStatusUnknown
+		as.addr = nil
 	}
 	as.mx.Unlock()
 }
 
-func (as *AmbientAutoNAT) getPeers() []pstore.PeerInfo {
+func (as *AmbientAutoNAT) getPeers() []peer.AddrInfo {
 	as.mx.Lock()
 	defer as.mx.Unlock()
 
@@ -189,13 +225,13 @@ func (as *AmbientAutoNAT) getPeers() []pstore.PeerInfo {
 		return nil
 	}
 
-	var connected, others []pstore.PeerInfo
+	var connected, others []peer.AddrInfo
 
 	for p, addrs := range as.peers {
-		if as.host.Network().Connectedness(p) == inet.Connected {
-			connected = append(connected, pstore.PeerInfo{ID: p, Addrs: addrs})
+		if as.host.Network().Connectedness(p) == network.Connected {
+			connected = append(connected, peer.AddrInfo{ID: p, Addrs: addrs})
 		} else {
-			others = append(others, pstore.PeerInfo{ID: p, Addrs: addrs})
+			others = append(others, peer.AddrInfo{ID: p, Addrs: addrs})
 		}
 	}
 
@@ -209,7 +245,7 @@ func (as *AmbientAutoNAT) getPeers() []pstore.PeerInfo {
 	}
 }
 
-func shufflePeers(peers []pstore.PeerInfo) {
+func shufflePeers(peers []peer.AddrInfo) {
 	for i := range peers {
 		j := rand.Intn(i + 1)
 		peers[i], peers[j] = peers[j], peers[i]
