@@ -24,6 +24,7 @@ import (
 	aclu "github.com/xuperchain/xuperunion/permission/acl/utils"
 	"github.com/xuperchain/xuperunion/utxo/txhash"
 	"github.com/xuperchain/xuperunion/xmodel"
+	xmodel_pb "github.com/xuperchain/xuperunion/xmodel/pb"
 )
 
 // ImmediateVerifyTx verify tx Immediately
@@ -276,11 +277,10 @@ func (uv *UtxoVM) verifyRWSetPermission(tx *pb.Transaction, verifiedID map[strin
 	if req == nil {
 		return true, nil
 	}
-	env, err := uv.model3.PrepareEnv(tx)
-	if err != nil {
-		return false, err
+	writeSet := []*xmodel_pb.PureData{}
+	for _, txOut := range tx.TxOutputsExt {
+		writeSet = append(writeSet, &xmodel_pb.PureData{Bucket: txOut.Bucket, Key: txOut.Key, Value: txOut.Value})
 	}
-	writeSet := env.GetOutputs()
 	for _, ele := range writeSet {
 		bucket := ele.GetBucket()
 		key := ele.GetKey()
@@ -309,7 +309,7 @@ func (uv *UtxoVM) verifyRWSetPermission(tx *pb.Transaction, verifiedID map[strin
 			ok, contractErr := uv.verifyContractOwnerPermission(contractName, tx, verifiedID)
 			if !ok {
 				uv.xlog.Warn("verifyRWSetPermission check contract bucket failed",
-					"contract", contractName, "AuthRequire ", tx.AuthRequire, "error", err)
+					"contract", contractName, "AuthRequire ", tx.AuthRequire, "err", contractErr)
 				return ok, contractErr
 			}
 		case aclu.GetContract2AccountBucket():
@@ -326,7 +326,7 @@ func (uv *UtxoVM) verifyRWSetPermission(tx *pb.Transaction, verifiedID map[strin
 			ok, accountErr := pm.IdentifyAccount(accountName, tx.AuthRequire, uv.aclMgr)
 			if !ok {
 				uv.xlog.Warn("verifyRWSetPermission check contract2account bucket failed",
-					"account", accountName, "AuthRequire ", tx.AuthRequire, "error", err)
+					"account", accountName, "AuthRequire ", tx.AuthRequire, "error", accountErr)
 				return ok, accountErr
 			}
 			verifiedID[accountName] = true

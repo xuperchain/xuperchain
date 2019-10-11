@@ -52,14 +52,16 @@ func (s *server) PostTx(ctx context.Context, in *pb.TxStatus) (*pb.CommonReply, 
 
 	out, needRepost, err := s.mg.ProcessTx(in)
 	if needRepost {
-		msgInfo, _ := proto.Marshal(in)
-		got := snappy.Encode(nil, msgInfo)
-		msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, in.GetBcname(), in.GetHeader().GetLogid(), xuper_p2p.XuperMessage_POSTTX, got, xuper_p2p.XuperMessage_NONE)
-		opts := []p2pv2.MessageOption{
-			p2pv2.WithFilters([]p2pv2.FilterStrategy{p2pv2.DefaultStrategy}),
-			p2pv2.WithBcName(in.GetBcname()),
-		}
-		go s.mg.P2pv2.SendMessage(context.Background(), msg, opts...)
+		go func() {
+			msgInfo, _ := proto.Marshal(in)
+			got := snappy.Encode(nil, msgInfo)
+			msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, in.GetBcname(), in.GetHeader().GetLogid(), xuper_p2p.XuperMessage_POSTTX, got, xuper_p2p.XuperMessage_NONE)
+			opts := []p2pv2.MessageOption{
+				p2pv2.WithFilters([]p2pv2.FilterStrategy{p2pv2.DefaultStrategy}),
+				p2pv2.WithBcName(in.GetBcname()),
+			}
+			s.mg.P2pv2.SendMessage(context.Background(), msg, opts...)
+		}()
 	}
 	return out, err
 }
