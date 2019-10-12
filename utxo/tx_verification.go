@@ -167,7 +167,6 @@ func (uv *UtxoVM) verifySignatures(tx *pb.Transaction, digestHash []byte) (bool,
 			verifiedAddr[addr] = true
 			initiatorAddr = append(initiatorAddr, tx.Initiator+"/"+addr)
 		}
-		// check initator ACL here, this part should be removed after initiator is address.
 		ok, err := pm.IdentifyAccount(tx.Initiator, initiatorAddr, uv.aclMgr)
 		if !ok {
 			uv.xlog.Warn("verifySignatures initiator permission check failed",
