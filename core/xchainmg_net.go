@@ -161,6 +161,10 @@ func (xm *XChainMG) HandleSendBlock(msg *xuper_p2p.XuperMessage) {
 		block.Header = global.GHeader()
 	}
 	if err := xm.ProcessBlock(block); err != nil {
+		if err == ErrBlockExist {
+			xm.Log.Debug("ProcessBlock SendBlock block exists")
+			return
+		}
 		xm.Log.Error("HandleSendBlock ProcessBlock error", "error", err.Error())
 		return
 	}
