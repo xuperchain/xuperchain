@@ -206,6 +206,7 @@ type NodeConfig struct {
 	FailSkip        bool       `yaml:"failSkip,omitempty"`
 	ModifyBlockAddr string     `yaml:"modifyBlockAddr,omitempty"`
 	EnableXEndorser bool       `yaml:"enableXEndorser,omitempty"`
+	TxidCacheSize   int        `yaml:"txidCacheSize,omitempty"`
 }
 
 // KernelConfig kernel config

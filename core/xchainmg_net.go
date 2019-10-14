@@ -193,6 +193,10 @@ func (xm *XChainMG) ProcessBlock(block *pb.Block) error {
 	}
 	hd := &global.XContext{Timer: global.NewXTimer()}
 	if err := bc.SendBlock(block, hd); err != nil {
+		if err == ErrBlockExist {
+			xm.Log.Debug("ProcessBlock SendBlock block exists")
+			return err
+		}
 		xm.Log.Error("ProcessBlock SendBlock error", "err", err)
 		return err
 	}
