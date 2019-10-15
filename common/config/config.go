@@ -206,9 +206,8 @@ type NodeConfig struct {
 	FailSkip        bool       `yaml:"failSkip,omitempty"`
 	ModifyBlockAddr string     `yaml:"modifyBlockAddr,omitempty"`
 	EnableXEndorser bool       `yaml:"enableXEndorser,omitempty"`
-	//
-	ExpiredTime int `yaml:"expiredTime,omitempty"`
-	GcTime      int `yaml:"gcTime,omitempty"`
+	// TxCacheExpiredTime expired time for tx cache
+	TxidCacheExpiredTime int `yaml:"txidCacheExpiredTime,omitempty"`
 }
 
 // KernelConfig kernel config
