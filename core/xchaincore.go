@@ -138,7 +138,7 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	xc.stopFlag = false
 	xc.coreConnection = cfg.CoreConnection
 	xc.failSkip = cfg.FailSkip
-	xc.txidCache = cache.New(time.Duration(5)*time.Second, 10*time.Second)
+	xc.txidCache = cache.New(time.Duration(10)*time.Second, 180*time.Second)
 	ledger.MemCacheSize = cfg.DBCache.MemCacheSize
 	ledger.FileHandlersCacheSize = cfg.DBCache.FdCacheSize
 	datapath := cfg.Datapath + "/" + bcname
@@ -791,7 +791,7 @@ func (xc *XChainCore) PostTx(in *pb.TxStatus, hd *global.XContext) (*pb.CommonRe
 		xc.log.Debug("refused to accept a repeated transaction recently")
 		return out, false
 	}
-	xc.txidCache.Set(string(txid), true, time.Duration(5)*time.Second)
+	xc.txidCache.Set(string(txid), true, time.Duration(10)*time.Second)
 	// 对Tx进行的签名, 1 如果utxo属于用户，则走原来的验证逻辑 2 如果utxo属于账户，则走账户acl验证逻辑
 	txValid, validErr := xc.Utxovm.VerifyTx(in.Tx)
 	if !txValid {
