@@ -196,16 +196,17 @@ type NodeConfig struct {
 	// 节点模式: NORMAL | FAST_SYNC 两种模式
 	// NORMAL: 为普通的全节点模式
 	// FAST_SYNC 模式下:节点需要连接一个可信的全节点; 拒绝事务提交; 同步区块时跳过块验证和tx验证; 去掉load未确认事务;
-	NodeMode         string     `yaml:"nodeMode,omitempty"`
-	PluginConfPath   string     `yaml:"pluginConfPath,omitempty"`
-	EtcdClusterAddr  string     `yaml:"etcdClusterAddr,omitempty"`
-	GatewaySwitch    bool       `yaml:"gatewaySwitch,omitempty"`
-	Wasm             WasmConfig `yaml:"wasm,omitempty"`
-	CoreConnection   bool       `yaml:"coreConnection,omitempty"`
-	FailSkip         bool       `yaml:"failSkip,omitempty"`
-	ModifyBlockAddr  string     `yaml:"modifyBlockAddr,omitempty"`
-	EnableXEndorser  bool       `yaml:"enableXEndorser,omitempty"`
-	EnableCompressed bool       `yaml:"enableCompressed,omitempty"`
+	NodeMode        string     `yaml:"nodeMode,omitempty"`
+	PluginConfPath  string     `yaml:"pluginConfPath,omitempty"`
+	EtcdClusterAddr string     `yaml:"etcdClusterAddr,omitempty"`
+	GatewaySwitch   bool       `yaml:"gatewaySwitch,omitempty"`
+	Wasm            WasmConfig `yaml:"wasm,omitempty"`
+	CoreConnection  bool       `yaml:"coreConnection,omitempty"`
+	FailSkip        bool       `yaml:"failSkip,omitempty"`
+	ModifyBlockAddr string     `yaml:"modifyBlockAddr,omitempty"`
+	EnableXEndorser bool       `yaml:"enableXEndorser,omitempty"`
+	// Open the switch of compressed
+	EnableCompressed bool `yaml:"enableCompressed,omitempty"`
 }
 
 // KernelConfig kernel config
