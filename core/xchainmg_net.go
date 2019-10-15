@@ -91,17 +91,9 @@ func (xm *XChainMG) handleReceivedMsg(msg *xuper_p2p.XuperMessage) {
 }
 
 func (xm *XChainMG) handlePostTx(msg *xuper_p2p.XuperMessage) {
-	txStatus := &pb.TxStatus{}
-	compressedTxStatus := msg.GetData().GetMsgInfo()
-	srcTxStatus, decodeErr := snappy.Decode(nil, compressedTxStatus)
-	if decodeErr != nil {
-		xm.Log.Error("handlePostTx snappy decode error", "err", decodeErr)
-		return
-	}
-	// Unmarshal msg
-	err := proto.Unmarshal(srcTxStatus, txStatus)
-	if err != nil {
-		xm.Log.Error("handlePostTx Unmarshal msg to tx error", "logid", msg.GetHeader().GetLogid())
+	txStatus, err := handlePostTxMsgFromRemoteNode(msg)
+	if txStatus == nil || err != nil {
+		xm.Log.Warn("handlePostTx error", "logid", msg.GetHeader().GetLogid(), "error", err.Error())
 		return
 	}
 
@@ -156,19 +148,13 @@ func (xm *XChainMG) ProcessTx(in *pb.TxStatus) (*pb.CommonReply, bool, error) {
 func (xm *XChainMG) HandleSendBlock(msg *xuper_p2p.XuperMessage) {
 	block := &pb.Block{}
 	xm.Log.Trace("Start to HandleSendBlock", "logid", msg.GetHeader().GetLogid(), "checksum", msg.GetHeader().GetDataCheckSum())
-	// Unmarshal msg
-	compressedBlock := msg.GetData().GetMsgInfo()
-	// 解压缩区块内容
-	srcBlock, decodeErr := snappy.Decode(nil, compressedBlock)
-	if decodeErr != nil {
-		xm.Log.Error("HandleSendBlock snappy decode error", "error", decodeErr.Error())
+
+	block, err := handleSendBlockMsgFromRemoteNode(msg)
+	if block == nil || err != nil {
+		xm.Log.Warn("HandleSendBlock handleSendBlockMsgFromRemoteNode error", "err", err)
 		return
 	}
-	err := proto.Unmarshal(srcBlock, block)
-	if err != nil {
-		xm.Log.Error("HandleSendBlock Unmarshal msg to block error", "logid", msg.GetHeader().GetLogid())
-		return
-	}
+
 	// process block
 	if block.Header == nil {
 		block.Header = global.GHeader()
@@ -217,17 +203,9 @@ func (xm *XChainMG) ProcessBlock(block *pb.Block) error {
 }
 
 func (xm *XChainMG) handleBatchPostTx(msg *xuper_p2p.XuperMessage) {
-	batchTxs := &pb.BatchTxs{}
-	compressedBatchTxs := msg.GetData().GetMsgInfo()
-	srcBatchTxs, decodeErr := snappy.Decode(nil, compressedBatchTxs)
-	if decodeErr != nil {
-		xm.Log.Error("handleBatchPostTx snappy decode error", "err", decodeErr)
-		return
-	}
-	// Unmarshal msg
-	err := proto.Unmarshal(srcBatchTxs, batchTxs)
-	if err != nil {
-		xm.Log.Error("handleBatchPostTx Unmarshal msg to BatchTxs error", "logid", msg.GetHeader().GetLogid())
+	batchTxs, err := handleBatchPostTxMsgFromRemoteNode(msg)
+	if batchTxs == nil || err != nil {
+		xm.Log.Warn("handleBatchPostTx handleBatchPostTxMsgFromRemoteNode error", "err", err)
 		return
 	}
 
@@ -243,7 +221,8 @@ func (xm *XChainMG) handleBatchPostTx(msg *xuper_p2p.XuperMessage) {
 			xm.Log.Error("handleBatchPostTx Marshal txs error", "error", err)
 			return
 		}
-		msg.Data.MsgInfo = txsData
+		got := snappy.Encode(nil, txsData)
+		msg.Data.MsgInfo = got
 		msg.Header.DataCheckSum = xuper_p2p.CalDataCheckSum(msg)
 		opts := []p2pv2.MessageOption{
 			p2pv2.WithFilters([]p2pv2.FilterStrategy{p2pv2.DefaultStrategy}),
