@@ -2,10 +2,10 @@ package config
 
 import (
 	"fmt"
-
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb/errors"
+	"time"
 )
 
 // default settings
@@ -204,6 +204,8 @@ type NodeConfig struct {
 	CoreConnection  bool       `yaml:"coreConnection,omitempty"`
 	FailSkip        bool       `yaml:"failSkip,omitempty"`
 	EnableXEndorser bool       `yaml:"enableXEndorser,omitempty"`
+	// TxCacheExpiredTime expired time for tx cache
+	TxidCacheExpiredTime time.Duration `yaml:"txidCacheExpiredTime,omitempty"`
 }
 
 // KernelConfig kernel config
