@@ -7,10 +7,12 @@ import (
 
 	"github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperunion/common/config"
+	"github.com/xuperchain/xuperunion/common/events"
 	"github.com/xuperchain/xuperunion/common/probe"
 	"github.com/xuperchain/xuperunion/contract/kernel"
 	"github.com/xuperchain/xuperunion/p2pv2"
 	xuper_p2p "github.com/xuperchain/xuperunion/p2pv2/pb"
+	pm "github.com/xuperchain/xuperunion/pluginmgr"
 )
 
 // XChainMG manage all chains
@@ -42,6 +44,12 @@ func (xm *XChainMG) Init(log log.Logger, cfg *config.NodeConfig,
 	xm.Speed = probe.NewSpeedCalc("sum")
 	xm.Quit = make(chan struct{})
 	xm.nodeMode = cfg.NodeMode
+
+	// auto-load plugins here
+	if err := pm.Init(cfg); err != nil {
+		xm.Log.Error("can't initialize plugin manager", "error", err)
+		return err
+	}
 
 	dir, err := ioutil.ReadDir(xm.datapath)
 	if err != nil {
@@ -78,6 +86,7 @@ func (xm *XChainMG) Init(log log.Logger, cfg *config.NodeConfig,
 		return err
 	}
 	go xm.Speed.ShowLoop(xm.Log)
+	xm.notifyInitialized()
 	return nil
 }
 
@@ -120,6 +129,7 @@ func (xm *XChainMG) Start() {
 
 // Stop stop all blockchain instances
 func (xm *XChainMG) Stop() {
+	xm.notifyStopping()
 	xm.chains.Range(func(k, v interface{}) bool {
 		xc := v.(*XChainCore)
 		xm.Log.Trace("stop chain " + k.(string))
@@ -187,4 +197,32 @@ func (xm *XChainMG) UnloadBlockChain(name string) error {
 // GetXchainmgConfig GetXchainMg CFG
 func (xm *XChainMG) GetXchainmgConfig() *config.NodeConfig {
 	return xm.Cfg
+}
+
+func (xm *XChainMG) notifyInitialized() {
+	em := &events.EventMessage{
+		BcName:   "",
+		Type:     events.SystemInitialized,
+		Priority: 0,
+		Sender:   xm,
+		Message:  "System Started",
+	}
+	_, err := events.GetEventBus().FireEventAsync(em)
+	if err != nil {
+		xm.Log.Warn("xchainmg notifyInitialized failed", "error", err)
+	}
+}
+
+func (xm *XChainMG) notifyStopping() {
+	em := &events.EventMessage{
+		BcName:   "",
+		Type:     events.SystemStopping,
+		Priority: 0,
+		Sender:   xm,
+		Message:  "System Stopping",
+	}
+	_, err := events.GetEventBus().FireEventAsync(em)
+	if err != nil {
+		xm.Log.Warn("xchainmg notifyStopping failed", "error", err)
+	}
 }

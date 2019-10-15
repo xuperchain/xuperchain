@@ -8,7 +8,9 @@ import (
 	"errors"
 	"os"
 	"path"
+	"path/filepath"
 	"plugin"
+	"sync"
 
 	"github.com/xuperchain/log15"
 )
@@ -18,6 +20,7 @@ type PluginMgr struct {
 	pluginConf map[string]map[string]confNode
 	xlog       log.Logger
 	rootFolder string
+	sync.Mutex
 }
 
 type confNode struct {
@@ -27,10 +30,18 @@ type confNode struct {
 	OnDemand bool   `json:"ondemand"`
 }
 
+// PluginMeta is the meta info for plugins
+type PluginMeta struct {
+	PluginID string `json:"pluginid"`
+	Type     string `json:"type"`
+	SubType  string `json:"subtype"`
+	Version  string `json:"version"`
+}
+
 // public functions start from here
 
 // CreateMgr returns instance of PluginMgr
-func CreateMgr(rootFolder string, confPath string, logger log.Logger) (pm *PluginMgr, err error) {
+func CreateMgr(rootFolder string, confPath string, autoloadPath string, logger log.Logger) (pm *PluginMgr, err error) {
 	pm = new(PluginMgr)
 	// init config struct
 	pm.pluginConf = make(map[string]map[string]confNode)
@@ -39,7 +50,11 @@ func CreateMgr(rootFolder string, confPath string, logger log.Logger) (pm *Plugi
 
 	// Read conf file to get all plugins
 	err = pm.readPluginConfig(confPath)
+	if err != nil {
+		return
+	}
 
+	err = pm.autoloadPlugins(autoloadPath)
 	return
 }
 
@@ -118,4 +133,51 @@ func (pm *PluginMgr) loadOnePlugin(name string, subtype string) (pi interface{},
 	// TODO: verify the plugin's signature, make sure it's authorized by us
 
 	return
+}
+
+// auto-load plugins in given path
+func (pm *PluginMgr) autoloadPlugins(autoloadPath string) error {
+	pluginPath := path.Join(pm.rootFolder, autoloadPath)
+	pm.xlog.Trace("start autoloadPlugins", "pluginPath", pluginPath)
+	err := filepath.Walk(pluginPath, func(path string, info os.FileInfo, err error) error {
+		if info == nil || info.IsDir() {
+			return nil
+		}
+		pg, err := plugin.Open(path)
+		if err != nil {
+			pm.xlog.Warn("found file in autoload folder but not a plugin", "name", info.Name(), "path", path)
+			return nil
+		}
+		getmetaFunc, err := pg.Lookup("GetMeta")
+		if err != nil {
+			pm.xlog.Warn("plugin not support GetMeta, ignore it", "name", info.Name(), "path", path)
+			return nil
+		}
+
+		meta := &PluginMeta{}
+		metaStr := getmetaFunc.(func() string)()
+		err = json.Unmarshal([]byte(metaStr), meta)
+		if err != nil {
+			pm.xlog.Warn("plugin meta unmarshal failed, ignore it", "name", info.Name(), "path", path, "meta", metaStr)
+			return nil
+		}
+
+		pm.Lock()
+		defer pm.Unlock()
+
+		pm.pluginConf[meta.Type][meta.SubType] = confNode{
+			SubType: meta.SubType,
+			Path:    path,
+			Version: meta.Version,
+		}
+		pm.xlog.Warn("Found one autoload plugin", "name", info.Name(), "path", path, "meta", metaStr)
+
+		return nil
+	})
+
+	if err != nil {
+		pm.xlog.Warn("auto load plugin failed", "error", err)
+		return err
+	}
+	return nil
 }

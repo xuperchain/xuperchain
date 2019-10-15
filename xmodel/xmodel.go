@@ -142,8 +142,8 @@ func (s *XModel) fetchVersionedData(version string) (*xmodel_pb.VersionedData, e
 	}, nil
 }
 
-// Get get value for specific key, return value with version
-func (s *XModel) Get(bucket string, key []byte) (*xmodel_pb.VersionedData, error) {
+// GetUncommited get value for specific key, return the value with version, even it is in batch cache
+func (s *XModel) GetUncommited(bucket string, key []byte) (*xmodel_pb.VersionedData, error) {
 	rawKey := makeRawKey(bucket, key)
 	cacheObj, cacheHit := s.batchCache.Load(string(rawKey))
 	if cacheHit {
@@ -153,6 +153,12 @@ func (s *XModel) Get(bucket string, key []byte) (*xmodel_pb.VersionedData, error
 		}
 		return s.fetchVersionedData(version)
 	}
+	return s.Get(bucket, key)
+}
+
+// Get get value for specific key, return value with version
+func (s *XModel) Get(bucket string, key []byte) (*xmodel_pb.VersionedData, error) {
+	rawKey := makeRawKey(bucket, key)
 	version, err := s.extUtxoTable.Get(rawKey)
 	if err != nil {
 		if kvdb.ErrNotFound(err) {

@@ -70,11 +70,6 @@ func (uv *UtxoVM) ImmediateVerifyTx(tx *pb.Transaction, isRootTx bool) (bool, er
 			return false, fmt.Errorf("Txid verify failed")
 		}
 
-		// verify initiator type
-		if akType := acl.IsAccount(tx.Initiator); akType != 0 {
-			return false, ErrInitiatorType
-		}
-
 		// get digestHash
 		digestHash, err := txhash.MakeTxDigestHash(tx)
 		if err != nil {
@@ -145,13 +140,47 @@ func (uv *UtxoVM) verifySignatures(tx *pb.Transaction, digestHash []byte) (bool,
 	}
 
 	// verify initiator
-	// check initiator address signature, initiator could only be address after verify initiator type check
-	ok, err := pm.IdentifyAK(tx.Initiator, tx.InitiatorSigns[0], digestHash)
-	if err != nil || !ok {
-		uv.xlog.Warn("verifySignatures failed", "address", tx.Initiator, "error", err)
-		return false, nil, err
+	akType := acl.IsAccount(tx.Initiator)
+	if akType == 0 {
+		// check initiator address signature
+		ok, err := pm.IdentifyAK(tx.Initiator, tx.InitiatorSigns[0], digestHash)
+		if err != nil || !ok {
+			uv.xlog.Warn("verifySignatures failed", "address", tx.Initiator, "error", err)
+			return false, nil, err
+		}
+		verifiedAddr[tx.Initiator] = true
+	} else if akType == 1 {
+		initiatorAddr := make([]string, 0)
+		// check initiator account signatures
+		for _, sign := range tx.InitiatorSigns {
+			ak, err := uv.cryptoClient.GetEcdsaPublicKeyFromJSON([]byte(sign.PublicKey))
+			if err != nil {
+				uv.xlog.Warn("verifySignatures failed", "address", tx.Initiator, "error", err)
+				return false, nil, err
+			}
+			addr, err := uv.cryptoClient.GetAddressFromPublicKey(ak)
+			if err != nil {
+				uv.xlog.Warn("verifySignatures failed", "address", tx.Initiator, "error", err)
+				return false, nil, err
+			}
+			ok, err := pm.IdentifyAK(addr, sign, digestHash)
+			if !ok {
+				uv.xlog.Warn("verifySignatures failed", "address", tx.Initiator, "error", err)
+				return ok, nil, err
+			}
+			verifiedAddr[addr] = true
+			initiatorAddr = append(initiatorAddr, tx.Initiator+"/"+addr)
+		}
+		ok, err := pm.IdentifyAccount(tx.Initiator, initiatorAddr, uv.aclMgr)
+		if !ok {
+			uv.xlog.Warn("verifySignatures initiator permission check failed",
+				"account", tx.Initiator, "error", err)
+			return false, nil, err
+		}
+	} else {
+		uv.xlog.Warn("verifySignatures failed, invalid address", "address", tx.Initiator)
+		return false, nil, ErrInvalidSignature
 	}
-	verifiedAddr[tx.GetInitiator()] = true
 
 	// verify authRequire
 	for idx, authReq := range tx.AuthRequire {

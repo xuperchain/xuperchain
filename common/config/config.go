@@ -2,10 +2,10 @@ package config
 
 import (
 	"fmt"
-
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb/errors"
+	"time"
 )
 
 // default settings
@@ -197,7 +197,8 @@ type NodeConfig struct {
 	// NORMAL: 为普通的全节点模式
 	// FAST_SYNC 模式下:节点需要连接一个可信的全节点; 拒绝事务提交; 同步区块时跳过块验证和tx验证; 去掉load未确认事务;
 	NodeMode        string     `yaml:"nodeMode,omitempty"`
-	PluginConfPath  string     `yaml:"pluginConfPath,omitempty"`
+	PluginConfPath  string     `yaml:"pluginConfPath,omitempty"` // plugin config file path
+	PluginLoadPath  string     `yaml:"pluginLoadPath,omitempty"` // plugin auto-load path
 	EtcdClusterAddr string     `yaml:"etcdClusterAddr,omitempty"`
 	GatewaySwitch   bool       `yaml:"gatewaySwitch,omitempty"`
 	Wasm            WasmConfig `yaml:"wasm,omitempty"`
@@ -205,6 +206,8 @@ type NodeConfig struct {
 	FailSkip        bool       `yaml:"failSkip,omitempty"`
 	ModifyBlockAddr string     `yaml:"modifyBlockAddr,omitempty"`
 	EnableXEndorser bool       `yaml:"enableXEndorser,omitempty"`
+	// TxCacheExpiredTime expired time for tx cache
+	TxidCacheExpiredTime time.Duration `yaml:"txidCacheExpiredTime,omitempty"`
 }
 
 // KernelConfig kernel config
@@ -251,6 +254,7 @@ func (nc *NodeConfig) defaultNodeConfig() {
 		Keypath: "./data/keys",
 	}
 	nc.PluginConfPath = "./conf/plugins.conf"
+	nc.PluginLoadPath = "./plugins/autoload/"
 	nc.Datapath = "./data/blockchain"
 	nc.Utxo = UtxoConfig{
 		NonUtxo:               false,

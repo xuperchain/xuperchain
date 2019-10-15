@@ -66,7 +66,6 @@ var (
 	ErrRWSetInvalid            = errors.New("RWSet of transaction invalid")
 	ErrACLNotEnough            = errors.New("ACL not enough")
 	ErrInvalidSignature        = errors.New("the signature is invalid or not match the address")
-	ErrInitiatorType           = errors.New("the initiator type is invalid, need AK")
 
 	ErrGasNotEnough   = errors.New("Gas not enough")
 	ErrInvalidAccount = errors.New("Invalid account")
@@ -732,11 +731,6 @@ func (uv *UtxoVM) SelectUtxos(fromAddr string, fromPubKey string, totalNeed *big
 
 // PreExec the Xuper3 contract model uses previous execution to generate RWSets
 func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.InvokeResponse, error) {
-	// verify initiator type
-	if akType := acl.IsAccount(req.GetInitiator()); akType != 0 {
-		return nil, ErrInitiatorType
-	}
-
 	// get reserved contracts from chain config
 	reservedRequests, err := uv.getReservedContractRequests(req.GetRequests(), true)
 	if err != nil {
@@ -1049,6 +1043,10 @@ func (uv *UtxoVM) doTxInternal(tx *pb.Transaction, batch kvdb.Batch) error {
 		uItem := &UtxoItem{}
 		uItem.Amount = big.NewInt(0)
 		uItem.Amount.SetBytes(txOutput.Amount)
+		// 输出是0,忽略
+		if uItem.Amount.Cmp(big.NewInt(0)) == 0 {
+			continue
+		}
 		uItem.FrozenHeight = txOutput.FrozenHeight
 		uItemBinary, uErr := uItem.Dumps()
 		if uErr != nil {
@@ -1103,10 +1101,14 @@ func (uv *UtxoVM) undoTxInternal(tx *pb.Transaction, batch kvdb.Batch) error {
 		if bytes.Equal(addr, []byte(FeePlaceholder)) {
 			continue
 		}
+		txOutputAmount := big.NewInt(0).SetBytes(txOutput.Amount)
+		if txOutputAmount.Cmp(big.NewInt(0)) == 0 {
+			continue
+		}
 		utxoKey := GenUtxoKeyWithPrefix(addr, tx.Txid, int32(offset))
 		batch.Delete([]byte(utxoKey)) // 删除产生的UTXO
 		uv.utxoCache.Remove(string(addr), utxoKey)
-		uv.subBalance(addr, big.NewInt(0).SetBytes(txOutput.Amount))
+		uv.subBalance(addr, txOutputAmount)
 		uv.xlog.Trace("    undo delete utxo key", "utxoKey", utxoKey)
 		if tx.Coinbase {
 			// coinbase交易（包括创始块和挖矿奖励), 回滚会导致系统总资产缩水
