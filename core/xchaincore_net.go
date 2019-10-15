@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/golang/snappy"
 
 	"github.com/xuperchain/xuperunion/p2pv2"
 	xuper_p2p "github.com/xuperchain/xuperunion/p2pv2/pb"
@@ -37,23 +36,12 @@ func (xc *XChainCore) BroadCastGetBlock(bid *pb.BlockID) *pb.Block {
 			continue
 		}
 
-		block := &pb.Block{}
-		compressedBlock := v.GetData().GetMsgInfo()
-		// 解压缩区块内容
-		srcBlock, decodeErr := snappy.Decode(nil, compressedBlock)
-		if decodeErr != nil {
-			xc.log.Warn("BroadCastGetBlock snappy decode error", "error", decodeErr)
-		}
-		err = proto.Unmarshal(srcBlock, block)
-		if err != nil {
-			xc.log.Warn("BroadCastGetBlock unmarshal error", "error", err)
+		block, err := handleSendBlockMsgFromRemoteNode(v)
+		if block == nil || block.GetBlock() == nil || err != nil {
+			xc.log.Warn("BroadCastGetBlock handleSendBlockMsgFromRemoteNode error", "err", err)
 			continue
-		} else {
-			if block.Block == nil {
-				continue
-			}
-			return block
 		}
+		return block
 	}
 	return nil
 }
