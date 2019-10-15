@@ -75,7 +75,7 @@ const (
 	MaxReposting = 300 // tx重试广播的最大并发，过多容易打爆对方的grpc连接数
 	// RepostingInterval repost retry interval, ms
 	RepostingInterval = 50 // 重试广播间隔ms
-	TxidCacheGcTime   = time.Duration(180)
+	TxidCacheGcTime   = 180 * time.Second
 )
 
 // XChainCore is the core struct of a chain
