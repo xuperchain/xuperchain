@@ -19,14 +19,15 @@ type XChainMG struct {
 	Cfg   *config.NodeConfig
 	P2pv2 p2pv2.P2PServer
 	// msgChan is the message subscribe from net
-	msgChan          chan *xuper_p2p.XuperMessage
-	chains           *sync.Map
-	rootKernel       *kernel.Kernel
-	datapath         string
-	Ukeys            *sync.Map //address -> scrkey
-	Speed            *probe.SpeedCalc
-	Quit             chan struct{}
-	nodeMode         string
+	msgChan    chan *xuper_p2p.XuperMessage
+	chains     *sync.Map
+	rootKernel *kernel.Kernel
+	datapath   string
+	Ukeys      *sync.Map //address -> scrkey
+	Speed      *probe.SpeedCalc
+	Quit       chan struct{}
+	nodeMode   string
+	// the switch of compressed
 	enableCompressed bool
 }
 

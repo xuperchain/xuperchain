@@ -676,8 +676,12 @@ func (xc *XChainCore) doMiner() {
 			Block: freshBlock,
 		}
 		msgInfo, _ := proto.Marshal(block)
-		got := snappy.Encode(nil, msgInfo)
-		msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, xc.bcname, "", xuper_p2p.XuperMessage_SENDBLOCK, got, xuper_p2p.XuperMessage_NONE)
+		msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, xc.bcname, "", xuper_p2p.XuperMessage_SENDBLOCK, msgInfo, xuper_p2p.XuperMessage_NONE)
+		if xc.enableCompressed {
+			got := snappy.Encode(nil, msgInfo)
+			msg.Data.MsgInfo = got
+			msg.Header.Compressed = true
+		}
 		filters := []p2pv2.FilterStrategy{p2pv2.DefaultStrategy}
 		if xc.NeedCoreConnection() {
 			filters = append(filters, p2pv2.CorePeersStrategy)
