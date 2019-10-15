@@ -75,7 +75,7 @@ const (
 	MaxReposting = 300 // tx重试广播的最大并发，过多容易打爆对方的grpc连接数
 	// RepostingInterval repost retry interval, ms
 	RepostingInterval = 50 // 重试广播间隔ms
-	TxidCacheGcTime   = 180
+	TxidCacheGcTime   = time.Duration(180)
 )
 
 // XChainCore is the core struct of a chain
@@ -110,7 +110,7 @@ type XChainCore struct {
 	failSkip bool
 	// add a lru cache of tx gotten for xchaincore
 	txidCache            *cache.Cache
-	txidCacheExpiredTime int
+	txidCacheExpiredTime time.Duration
 }
 
 // Status return the status of the chain
@@ -141,7 +141,7 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	xc.coreConnection = cfg.CoreConnection
 	xc.failSkip = cfg.FailSkip
 	xc.txidCacheExpiredTime = cfg.TxidCacheExpiredTime
-	xc.txidCache = cache.New(time.Duration(xc.txidCacheExpiredTime)*time.Second, TxidCacheGcTime*time.Second)
+	xc.txidCache = cache.New(xc.txidCacheExpiredTime, TxidCacheGcTime)
 	ledger.MemCacheSize = cfg.DBCache.MemCacheSize
 	ledger.FileHandlersCacheSize = cfg.DBCache.FdCacheSize
 	datapath := cfg.Datapath + "/" + bcname
@@ -795,7 +795,7 @@ func (xc *XChainCore) PostTx(in *pb.TxStatus, hd *global.XContext) (*pb.CommonRe
 		xc.log.Debug("refused to accept a repeated transaction recently")
 		return out, false
 	}
-	xc.txidCache.Set(txidStr, true, time.Duration(xc.txidCacheExpiredTime)*time.Second)
+	xc.txidCache.Set(txidStr, true, xc.txidCacheExpiredTime)
 	// 对Tx进行的签名, 1 如果utxo属于用户，则走原来的验证逻辑 2 如果utxo属于账户，则走账户acl验证逻辑
 	txValid, validErr := xc.Utxovm.VerifyTx(in.Tx)
 	if !txValid {

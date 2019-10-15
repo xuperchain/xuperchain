@@ -85,4 +85,4 @@ pluginConfPath: "./conf/plugins.conf"
 # 是否启用p2p核心节点直连
 coreConnection : false
 
-txidCacheExpiredTime : 10
+txidCacheExpiredTime : "10s"
