@@ -107,6 +107,8 @@ type XChainCore struct {
 	coreConnection bool
 	// if failSkip is false, you will execute loop of walk, or just only once walk
 	failSkip bool
+	// open the switch of enableCompressed
+	enableCompressed bool
 }
 
 // Status return the status of the chain
@@ -136,6 +138,7 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	xc.stopFlag = false
 	xc.coreConnection = cfg.CoreConnection
 	xc.failSkip = cfg.FailSkip
+	xc.enableCompressed = cfg.EnableCompressed
 	ledger.MemCacheSize = cfg.DBCache.MemCacheSize
 	ledger.FileHandlersCacheSize = cfg.DBCache.FdCacheSize
 	datapath := cfg.Datapath + "/" + bcname
@@ -312,8 +315,12 @@ func (xc *XChainCore) repostOfflineTx() {
 		}
 		xc.log.Debug("repost batch tx list", "size", len(batchTxMsg.Txs))
 		msgInfo, _ := proto.Marshal(batchTxMsg)
-		got := snappy.Encode(nil, msgInfo)
-		msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, xc.bcname, header.GetLogid(), xuper_p2p.XuperMessage_BATCHPOSTTX, got, xuper_p2p.XuperMessage_SUCCESS)
+		msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, xc.bcname, header.GetLogid(), xuper_p2p.XuperMessage_BATCHPOSTTX, msgInfo, xuper_p2p.XuperMessage_SUCCESS)
+		if xc.enableCompressed {
+			got := snappy.Encode(nil, msgInfo)
+			msg.Data.MsgInfo = got
+			msg.Header.Compressed = true
+		}
 
 		filters := []p2pv2.FilterStrategy{p2pv2.DefaultStrategy}
 		if xc.NeedCoreConnection() {
