@@ -19,14 +19,15 @@ type XChainMG struct {
 	Cfg   *config.NodeConfig
 	P2pv2 p2pv2.P2PServer
 	// msgChan is the message subscribe from net
-	msgChan    chan *xuper_p2p.XuperMessage
-	chains     *sync.Map
-	rootKernel *kernel.Kernel
-	datapath   string
-	Ukeys      *sync.Map //address -> scrkey
-	Speed      *probe.SpeedCalc
-	Quit       chan struct{}
-	nodeMode   string
+	msgChan          chan *xuper_p2p.XuperMessage
+	chains           *sync.Map
+	rootKernel       *kernel.Kernel
+	datapath         string
+	Ukeys            *sync.Map //address -> scrkey
+	Speed            *probe.SpeedCalc
+	Quit             chan struct{}
+	nodeMode         string
+	enableCompressed bool
 }
 
 // Init init instance of XChainMG
@@ -42,6 +43,7 @@ func (xm *XChainMG) Init(log log.Logger, cfg *config.NodeConfig,
 	xm.Speed = probe.NewSpeedCalc("sum")
 	xm.Quit = make(chan struct{})
 	xm.nodeMode = cfg.NodeMode
+	xm.enableCompressed = cfg.EnableCompressed
 
 	dir, err := ioutil.ReadDir(xm.datapath)
 	if err != nil {

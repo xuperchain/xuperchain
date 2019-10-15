@@ -7,7 +7,6 @@ import (
 	"net"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/golang/snappy"
 
 	"github.com/xuperchain/xuperunion/common/config"
 	"github.com/xuperchain/xuperunion/global"
@@ -106,6 +105,9 @@ func (xm *XChainMG) handlePostTx(msg *xuper_p2p.XuperMessage) {
 			p2pv2.WithFilters([]p2pv2.FilterStrategy{p2pv2.DefaultStrategy}),
 			p2pv2.WithBcName(msg.GetHeader().GetBcname()),
 		}
+		got, compressed := xm.processMsgToBeBroadcasted(msg.GetData().GetMsgInfo(), msg.GetHeader().GetCompressed())
+		msg.Header.Compressed = compressed
+		msg.Data.MsgInfo = got
 		go xm.P2pv2.SendMessage(context.Background(), msg, opts...)
 	}
 	return
@@ -173,6 +175,9 @@ func (xm *XChainMG) HandleSendBlock(msg *xuper_p2p.XuperMessage) {
 		p2pv2.WithFilters(filters),
 		p2pv2.WithBcName(bcname),
 	}
+	got, compressed := xm.processMsgToBeBroadcasted(msg.GetData().GetMsgInfo(), msg.GetHeader().GetCompressed())
+	msg.Header.Compressed = compressed
+	msg.Data.MsgInfo = got
 	go xm.P2pv2.SendMessage(context.Background(), msg, opts...)
 	return
 }
@@ -221,13 +226,14 @@ func (xm *XChainMG) handleBatchPostTx(msg *xuper_p2p.XuperMessage) {
 			xm.Log.Error("handleBatchPostTx Marshal txs error", "error", err)
 			return
 		}
-		got := snappy.Encode(nil, txsData)
-		msg.Data.MsgInfo = got
 		msg.Header.DataCheckSum = xuper_p2p.CalDataCheckSum(msg)
 		opts := []p2pv2.MessageOption{
 			p2pv2.WithFilters([]p2pv2.FilterStrategy{p2pv2.DefaultStrategy}),
 			p2pv2.WithBcName(msg.GetHeader().GetBcname()),
 		}
+		got, compressed := xm.processMsgToBeBroadcasted(txsData, msg.GetHeader().GetCompressed())
+		msg.Header.Compressed = compressed
+		msg.Data.MsgInfo = got
 		go xm.P2pv2.SendMessage(context.Background(), msg, opts...)
 	}
 	return
@@ -290,9 +296,11 @@ func (xm *XChainMG) handleGetBlock(ctx context.Context, msg *xuper_p2p.XuperMess
 	}
 
 	resBuf, _ := proto.Marshal(block)
-	got := snappy.Encode(nil, resBuf)
+	got, compressed := xm.processMsgToBeBroadcasted(resBuf, false)
 	res, err := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, bcname, logid,
-		xuper_p2p.XuperMessage_GET_BLOCK_RES, got, xuper_p2p.XuperMessage_SUCCESS)
+		xuper_p2p.XuperMessage_GET_BLOCK_RES, nil, xuper_p2p.XuperMessage_SUCCESS)
+	msg.Data.MsgInfo = got
+	res.Header.Compressed = compressed
 	return res, err
 }
 
