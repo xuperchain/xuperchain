@@ -138,7 +138,7 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	xc.stopFlag = false
 	xc.coreConnection = cfg.CoreConnection
 	xc.failSkip = cfg.FailSkip
-	xc.txidCache = cache.New(time.Duration(10)*time.Second, 180*time.Second)
+	xc.txidCache = cache.New(time.Duration(cfg.ExpiredTime)*time.Second, time.Duration(cfg.GcTime)*time.Second)
 	ledger.MemCacheSize = cfg.DBCache.MemCacheSize
 	ledger.FileHandlersCacheSize = cfg.DBCache.FdCacheSize
 	datapath := cfg.Datapath + "/" + bcname
