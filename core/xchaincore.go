@@ -786,12 +786,13 @@ func (xc *XChainCore) PostTx(in *pb.TxStatus, hd *global.XContext) (*pb.CommonRe
 		xc.log.Debug("refused a tx with the txid being nil", "logid", in.GetHeader().GetLogid())
 		return out, false
 	}
-	if _, exist := xc.txidCache.Get(string(txid)); exist {
+	txidStr := string(txid)
+	if _, exist := xc.txidCache.Get(txidStr); exist {
 		out.Header.Error = pb.XChainErrorEnum_TX_DUPLICATE_ERROR // tx重复
 		xc.log.Debug("refused to accept a repeated transaction recently")
 		return out, false
 	}
-	xc.txidCache.Set(string(txid), true, time.Duration(10)*time.Second)
+	xc.txidCache.Set(txidStr, true, time.Duration(cfg.ExpiredTime)*time.Second)
 	// 对Tx进行的签名, 1 如果utxo属于用户，则走原来的验证逻辑 2 如果utxo属于账户，则走账户acl验证逻辑
 	txValid, validErr := xc.Utxovm.VerifyTx(in.Tx)
 	if !txValid {
