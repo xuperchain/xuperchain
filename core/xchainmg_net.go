@@ -161,6 +161,10 @@ func (xm *XChainMG) HandleSendBlock(msg *xuper_p2p.XuperMessage) {
 		block.Header = global.GHeader()
 	}
 	if err := xm.ProcessBlock(block); err != nil {
+		if err == ErrBlockExist {
+			xm.Log.Debug("ProcessBlock SendBlock block exists")
+			return
+		}
 		xm.Log.Error("HandleSendBlock ProcessBlock error", "error", err.Error())
 		return
 	}
@@ -193,6 +197,10 @@ func (xm *XChainMG) ProcessBlock(block *pb.Block) error {
 	}
 	hd := &global.XContext{Timer: global.NewXTimer()}
 	if err := bc.SendBlock(block, hd); err != nil {
+		if err == ErrBlockExist {
+			xm.Log.Debug("ProcessBlock SendBlock block exists")
+			return err
+		}
 		xm.Log.Error("ProcessBlock SendBlock error", "err", err)
 		return err
 	}

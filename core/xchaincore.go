@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/patrickmn/go-cache"
 	log "github.com/xuperchain/log15"
 
 	"github.com/xuperchain/xuperunion/common"
@@ -74,6 +75,7 @@ const (
 	MaxReposting = 300 // tx重试广播的最大并发，过多容易打爆对方的grpc连接数
 	// RepostingInterval repost retry interval, ms
 	RepostingInterval = 50 // 重试广播间隔ms
+	TxidCacheGcTime   = 180 * time.Second
 )
 
 // XChainCore is the core struct of a chain
@@ -106,6 +108,9 @@ type XChainCore struct {
 	coreConnection bool
 	// if failSkip is false, you will execute loop of walk, or just only once walk
 	failSkip bool
+	// add a lru cache of tx gotten for xchaincore
+	txidCache            *cache.Cache
+	txidCacheExpiredTime time.Duration
 }
 
 // Status return the status of the chain
@@ -135,6 +140,8 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	xc.stopFlag = false
 	xc.coreConnection = cfg.CoreConnection
 	xc.failSkip = cfg.FailSkip
+	xc.txidCacheExpiredTime = cfg.TxidCacheExpiredTime
+	xc.txidCache = cache.New(xc.txidCacheExpiredTime, TxidCacheGcTime)
 	ledger.MemCacheSize = cfg.DBCache.MemCacheSize
 	ledger.FileHandlersCacheSize = cfg.DBCache.FdCacheSize
 	datapath := cfg.Datapath + "/" + bcname
@@ -775,7 +782,19 @@ func (xc *XChainCore) PostTx(in *pb.TxStatus, hd *global.XContext) (*pb.CommonRe
 		xc.log.Debug("refused a connection at function call GenerateTx", "logid", in.Header.Logid)
 		return out, false
 	}
-
+	txid := in.GetTxid()
+	if txid == nil {
+		out.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
+		xc.log.Debug("refused a tx with the txid being nil", "logid", in.GetHeader().GetLogid())
+		return out, false
+	}
+	txidStr := string(txid)
+	if _, exist := xc.txidCache.Get(txidStr); exist {
+		out.Header.Error = pb.XChainErrorEnum_TX_DUPLICATE_ERROR // tx重复
+		xc.log.Debug("refused to accept a repeated transaction recently")
+		return out, false
+	}
+	xc.txidCache.Set(txidStr, true, xc.txidCacheExpiredTime)
 	// 对Tx进行的签名, 1 如果utxo属于用户，则走原来的验证逻辑 2 如果utxo属于账户，则走账户acl验证逻辑
 	txValid, validErr := xc.Utxovm.VerifyTx(in.Tx)
 	if !txValid {
