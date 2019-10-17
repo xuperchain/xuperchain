@@ -62,7 +62,7 @@ message XuperMessage {
         MessageType type = 5;
         uint32 dataCheckSum = 6;
         ErrorType errorType = 7;
-		bool enableCompressed = 8;
+        bool enableCompressed = 8;
     }
 
     // MessageData is the message data of Xuper p2p server
