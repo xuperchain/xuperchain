@@ -46,6 +46,7 @@ func (xm *XChainMG) Init(log log.Logger, cfg *config.NodeConfig,
 	xm.Speed = probe.NewSpeedCalc("sum")
 	xm.Quit = make(chan struct{})
 	xm.nodeMode = cfg.NodeMode
+	xm.enableCompressed = cfg.EnableCompressed
 
 	// auto-load plugins here
 	if err := pm.Init(cfg); err != nil {
