@@ -318,6 +318,9 @@ func (xm *XChainMG) handleGetBlock(ctx context.Context, msg *xuper_p2p.XuperMess
 	resBuf, _ := proto.Marshal(block)
 	res, err := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, bcname, logid,
 		xuper_p2p.XuperMessage_GET_BLOCK_RES, resBuf, xuper_p2p.XuperMessage_SUCCESS)
+	if xm.enableCompressed {
+		res = xuper_p2p.Compressed(res)
+	}
 	return res, err
 }
 
