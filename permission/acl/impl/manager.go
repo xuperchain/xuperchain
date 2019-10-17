@@ -48,7 +48,7 @@ func (mgr *Manager) GetContractMethodACL(contractName string, methodName string)
 
 // GetAccountACLWithConfirmed implements reading ACL of an account with confirmed state
 func (mgr *Manager) GetAccountACLWithConfirmed(accountName string) (*pb.Acl, bool, error) {
-	versionData, err := mgr.model3.Get(utils.GetAccountBucket(), []byte(accountName))
+	versionData, confirmed, err := mgr.model3.GetWithTxStatus(utils.GetAccountBucket(), []byte(accountName))
 	if err != nil || versionData == nil {
 		return nil, false, err
 	}
@@ -65,14 +65,13 @@ func (mgr *Manager) GetAccountACLWithConfirmed(accountName string) (*pb.Acl, boo
 	}
 	json.Unmarshal(jsonBuf, acl)
 
-	confirmed := versionData.GetConfirmed()
 	return acl, confirmed, nil
 }
 
 // GetContractMethodACLWithConfirmed implements reading ACL of a contract method with confirmed state
 func (mgr *Manager) GetContractMethodACLWithConfirmed(contractName string, methodName string) (*pb.Acl, bool, error) {
 	key := utils.MakeContractMethodKey(contractName, methodName)
-	versionData, err := mgr.model3.Get(utils.GetContractBucket(), []byte(key))
+	versionData, confirmed, err := mgr.model3.GetWithTxStatus(utils.GetContractBucket(), []byte(key))
 	if err != nil || versionData == nil {
 		return nil, false, err
 	}
@@ -90,6 +89,5 @@ func (mgr *Manager) GetContractMethodACLWithConfirmed(contractName string, metho
 	}
 	json.Unmarshal(jsonBuf, acl)
 
-	confirmed := versionData.GetConfirmed()
 	return acl, confirmed, nil
 }
