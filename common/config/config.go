@@ -2,10 +2,10 @@ package config
 
 import (
 	"fmt"
-
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb/errors"
+	"time"
 )
 
 // default settings
@@ -208,6 +208,8 @@ type NodeConfig struct {
 	EnableXEndorser bool       `yaml:"enableXEndorser,omitempty"`
 	// Open the switch of compressed
 	EnableCompressed bool `yaml:"enableCompressed,omitempty"`
+	// TxCacheExpiredTime expired time for tx cache
+	TxidCacheExpiredTime time.Duration `yaml:"txidCacheExpiredTime,omitempty"`
 }
 
 // KernelConfig kernel config
