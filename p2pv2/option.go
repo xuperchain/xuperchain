@@ -5,6 +5,8 @@ type msgOptions struct {
 	bcname          string
 	targetPeerAddrs []string
 	percentage      float32 //percentage wait for return
+	// compressed
+	compressed bool
 }
 
 // MessageOption define single option function
@@ -21,6 +23,13 @@ func WithFilters(filter []FilterStrategy) MessageOption {
 func WithBcName(bcname string) MessageOption {
 	return func(o *msgOptions) {
 		o.bcname = bcname
+	}
+}
+
+// WithCompressed set compredded to message option
+func WithCompressed(compressed bool) MessageOption {
+	return func(o *msgOptions) {
+		o.compressed = compressed
 	}
 }
 

@@ -29,6 +29,8 @@ type XChainMG struct {
 	Speed      *probe.SpeedCalc
 	Quit       chan struct{}
 	nodeMode   string
+	// the switch of compressed
+	enableCompressed bool
 }
 
 // Init init instance of XChainMG

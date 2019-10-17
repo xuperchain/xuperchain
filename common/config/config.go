@@ -208,6 +208,8 @@ type NodeConfig struct {
 	EnableXEndorser bool       `yaml:"enableXEndorser,omitempty"`
 	// TxCacheExpiredTime expired time for tx cache
 	TxidCacheExpiredTime time.Duration `yaml:"txidCacheExpiredTime,omitempty"`
+	// local switch of compressed
+	EnableCompressed bool `yaml:"enableCompressed,omitempty"`
 }
 
 // KernelConfig kernel config
