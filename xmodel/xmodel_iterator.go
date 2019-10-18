@@ -3,20 +3,21 @@ package xmodel
 import (
 	"github.com/xuperchain/xuperunion/kv/kvdb"
 	"github.com/xuperchain/xuperunion/pb"
-	"github.com/xuperchain/xuperunion/xmodel/pb"
+	xmodel_pb "github.com/xuperchain/xuperunion/xmodel/pb"
 )
 
 // XMIterator data structure for XModel Iterator
 type XMIterator struct {
-	iter  kvdb.Iterator
-	model *XModel
-	err   error
+	bucket string
+	iter   kvdb.Iterator
+	model  *XModel
+	err    error
 }
 
 // Data get data pointer to VersionedData for XMIterator
 func (di *XMIterator) Data() *xmodel_pb.VersionedData {
 	version := di.iter.Value()
-	verData, err := di.model.fetchVersionedData(string(version))
+	verData, err := di.model.fetchVersionedData(di.bucket, string(version))
 	di.err = err
 	return verData
 }
