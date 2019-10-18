@@ -114,10 +114,7 @@ func (e *elecCert) Save(ctx code.Context) code.Response {
 		return code.Errors("Invoke method PutObject error")
 	}
 
-	return code.Response{
-		Status:  200,
-		Message: string(userJSON),
-	}
+	return code.OK(userJSON)
 }
 
 func (e *elecCert) Query(ctx code.Context) code.Response {
@@ -138,10 +135,7 @@ func (e *elecCert) Query(ctx code.Context) code.Response {
 	}
 
 	userFileJSON, _ := json.Marshal(userFile)
-	return code.Response{
-		Status:  200,
-		Message: string(userFileJSON),
-	}
+	return code.OK(userFileJSON)
 }
 
 func main() {
