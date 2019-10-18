@@ -391,10 +391,9 @@ func (e *erc721) total(ctx code.Context) code.Response {
 	}
 	log.Printf("totalSupply: vals: %v", bvals)
 
-	return code.Response{
-		Status:  200,
-		Message: strconv.Itoa(len(*bvals)),
-	}
+	resVal := strconv.Itoa(len(*bvals))
+
+	return code.OK([]byte(resVal))
 }
 
 func (e *erc721) balance(ctx code.Context) code.Response {
@@ -417,10 +416,8 @@ func (e *erc721) balance(ctx code.Context) code.Response {
 	}
 	log.Printf("balance: from: %v, vals: %v", from, bvals)
 
-	return code.Response{
-		Status:  200,
-		Message: strconv.Itoa(len(*bvals)),
-	}
+	resVal := strconv.Itoa(len(*bvals))
+	return code.OK([]byte(resVal))
 }
 
 func (e *erc721) approval(ctx code.Context) code.Response {
@@ -447,10 +444,8 @@ func (e *erc721) approval(ctx code.Context) code.Response {
 	}
 	log.Printf("approvalOf: key: %v_%v, vals: %v", from, caller, avals)
 
-	return code.Response{
-		Status:  200,
-		Message: strconv.Itoa(len(*avals)),
-	}
+	resVal := strconv.Itoa(len(*avals))
+	return code.OK([]byte(resVal))
 }
 
 func main() {
