@@ -36,9 +36,9 @@ func (xc *XChainCore) BroadCastGetBlock(bid *pb.BlockID) *pb.Block {
 		}
 
 		block := &pb.Block{}
-		blockBuf, err := xuper_p2p.Uncompressed(v)
+		blockBuf, err := xuper_p2p.Uncompress(v)
 		if blockBuf == nil || err != nil {
-			xc.log.Warn("BroadCastGetBlock xuper_p2p Uncompressed error", "error", err)
+			xc.log.Warn("BroadCastGetBlock xuper_p2p Uncompress error", "error", err)
 			continue
 		}
 		err = proto.Unmarshal(blockBuf, block)

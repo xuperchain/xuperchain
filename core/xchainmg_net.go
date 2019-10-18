@@ -92,7 +92,7 @@ func (xm *XChainMG) handleReceivedMsg(msg *xuper_p2p.XuperMessage) {
 func (xm *XChainMG) handlePostTx(msg *xuper_p2p.XuperMessage) {
 	txStatus := &pb.TxStatus{}
 
-	txStatusBuf, err := xuper_p2p.Uncompressed(msg)
+	txStatusBuf, err := xuper_p2p.Uncompress(msg)
 	if txStatusBuf == nil || err != nil {
 		xm.Log.Error("handlePostTx xuper_p2p uncompressed error", "error", err)
 		return
@@ -154,7 +154,7 @@ func (xm *XChainMG) ProcessTx(in *pb.TxStatus) (*pb.CommonReply, bool, error) {
 // HandleSendBlock handle SENDBLOCK type msg
 func (xm *XChainMG) HandleSendBlock(msg *xuper_p2p.XuperMessage) {
 	block := &pb.Block{}
-	blockBuf, err := xuper_p2p.Uncompressed(msg)
+	blockBuf, err := xuper_p2p.Uncompress(msg)
 	if blockBuf == nil || err != nil {
 		xm.Log.Error("HandleSendBlock xuper_p2p uncompressed error", "error", err)
 		return
@@ -223,7 +223,7 @@ func (xm *XChainMG) ProcessBlock(block *pb.Block) error {
 
 func (xm *XChainMG) handleBatchPostTx(msg *xuper_p2p.XuperMessage) {
 	batchTxs := &pb.BatchTxs{}
-	batchTxsBuf, err := xuper_p2p.Uncompressed(msg)
+	batchTxsBuf, err := xuper_p2p.Uncompress(msg)
 	if batchTxsBuf == nil || err != nil {
 		xm.Log.Error("handleBatchPostTx xuper_p2p uncompressed error", "error", err)
 		return
@@ -252,7 +252,7 @@ func (xm *XChainMG) handleBatchPostTx(msg *xuper_p2p.XuperMessage) {
 		opts := []p2pv2.MessageOption{
 			p2pv2.WithFilters([]p2pv2.FilterStrategy{p2pv2.DefaultStrategy}),
 			p2pv2.WithBcName(msg.GetHeader().GetBcname()),
-			p2pv2.WithCompressed(xm.enableCompressed),
+			p2pv2.WithCompress(xm.enableCompress),
 		}
 		go xm.P2pv2.SendMessage(context.Background(), msg, opts...)
 	}
@@ -318,8 +318,8 @@ func (xm *XChainMG) handleGetBlock(ctx context.Context, msg *xuper_p2p.XuperMess
 	resBuf, _ := proto.Marshal(block)
 	res, err := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, bcname, logid,
 		xuper_p2p.XuperMessage_GET_BLOCK_RES, resBuf, xuper_p2p.XuperMessage_SUCCESS)
-	if xm.enableCompressed {
-		res = xuper_p2p.Compressed(res)
+	if xm.enableCompress {
+		res = xuper_p2p.Compress(res)
 	}
 	return res, err
 }

@@ -99,13 +99,13 @@ func (p *P2PServerV2) SendMessage(ctx context.Context, msg *p2pPb.XuperMessage,
 	filter := p.getFilter(msgOpts)
 	peers, _ := filter.Filter()
 	// 是否需要经过压缩,针对由本节点产生的消息以及grpc获取的信息
-	if needCompressed := p.getCompressed(msgOpts); needCompressed {
+	if needCompress := p.getCompress(msgOpts); needCompress {
 		// 更新MsgInfo & Header.enableCompress
 		// 重新计算CheckSum
-		enableCompressed := msg.Header.EnableCompressed
+		enableCompress := msg.Header.EnableCompress
 		// msg原本没有被压缩
-		if !enableCompressed {
-			msg = p2pPb.Compressed(msg)
+		if !enableCompress {
+			msg = p2pPb.Compress(msg)
 		}
 	}
 	p.log.Trace("Server SendMessage", "logid", msg.GetHeader().GetLogid(), "msgType", msg.GetHeader().GetType(), "checksum", msg.GetHeader().GetDataCheckSum())
@@ -140,11 +140,11 @@ func (p *P2PServerV2) GetNetURL() string {
 	return fmt.Sprintf("/ip4/127.0.0.1/tcp/%v/p2p/%s", p.config.Port, p.node.id.Pretty())
 }
 
-func (p *P2PServerV2) getCompressed(opts *msgOptions) bool {
+func (p *P2PServerV2) getCompress(opts *msgOptions) bool {
 	if opts == nil {
 		return false
 	}
-	return opts.compressed
+	return opts.compress
 }
 
 func (p *P2PServerV2) getFilter(opts *msgOptions) PeersFilter {

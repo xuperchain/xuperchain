@@ -5,8 +5,8 @@ type msgOptions struct {
 	bcname          string
 	targetPeerAddrs []string
 	percentage      float32 //percentage wait for return
-	// compressed
-	compressed bool
+	// compress
+	compress bool
 }
 
 // MessageOption define single option function
@@ -26,10 +26,10 @@ func WithBcName(bcname string) MessageOption {
 	}
 }
 
-// WithCompressed set compredded to message option
-func WithCompressed(compressed bool) MessageOption {
+// WithCompress set compredded to message option
+func WithCompress(compress bool) MessageOption {
 	return func(o *msgOptions) {
-		o.compressed = compressed
+		o.compress = compress
 	}
 }
 

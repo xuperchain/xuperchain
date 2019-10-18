@@ -42,24 +42,24 @@ func CalDataCheckSum(msg *XuperMessage) uint32 {
 }
 
 // Compressed compress msg
-func Compressed(msg *XuperMessage) *XuperMessage {
-	if msg == nil || msg.GetHeader().GetEnableCompressed() {
+func Compress(msg *XuperMessage) *XuperMessage {
+	if msg == nil || msg.GetHeader().GetEnableCompress() {
 		return msg
 	}
 	msg.Data.MsgInfo = snappy.Encode(nil, msg.Data.MsgInfo)
-	msg.Header.EnableCompressed = true
+	msg.Header.EnableCompress = true
 	msg.Header.DataCheckSum = CalDataCheckSum(msg)
 
 	return msg
 }
 
 // Uncompressed get uncompressed msg
-func Uncompressed(msg *XuperMessage) ([]byte, error) {
+func Uncompress(msg *XuperMessage) ([]byte, error) {
 	originalMsg := msg.GetData().GetMsgInfo()
 	var uncompressedMsg []byte
 	var decodeErr error
 	msgHeader := msg.GetHeader()
-	if msgHeader != nil && msgHeader.GetEnableCompressed() {
+	if msgHeader != nil && msgHeader.GetEnableCompress() {
 		uncompressedMsg, decodeErr = snappy.Decode(nil, originalMsg)
 		if decodeErr != nil {
 			return nil, decodeErr

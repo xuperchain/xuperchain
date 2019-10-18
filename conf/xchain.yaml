@@ -88,4 +88,4 @@ coreConnection : false
 txidCacheExpiredTime : "10s"
 
 # 是否压缩交易/区块
-enableCompressed : true
+enableCompress : true
