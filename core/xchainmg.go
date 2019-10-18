@@ -29,6 +29,8 @@ type XChainMG struct {
 	Speed      *probe.SpeedCalc
 	Quit       chan struct{}
 	nodeMode   string
+	// the switch of compressed
+	enableCompress bool
 }
 
 // Init init instance of XChainMG
@@ -44,6 +46,7 @@ func (xm *XChainMG) Init(log log.Logger, cfg *config.NodeConfig,
 	xm.Speed = probe.NewSpeedCalc("sum")
 	xm.Quit = make(chan struct{})
 	xm.nodeMode = cfg.NodeMode
+	xm.enableCompress = cfg.EnableCompress
 
 	// auto-load plugins here
 	if err := pm.Init(cfg); err != nil {
