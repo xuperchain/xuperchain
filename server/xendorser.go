@@ -4,8 +4,11 @@ import (
 	"encoding/json"
 	"errors"
 	context "golang.org/x/net/context"
+	"io/ioutil"
 
+	crypto_client "github.com/xuperchain/xuperunion/crypto/client"
 	"github.com/xuperchain/xuperunion/pb"
+	"github.com/xuperchain/xuperunion/utxo/txhash"
 )
 
 // XEndorser is the interface for endorser service
@@ -60,14 +63,31 @@ func (dxe *DefaultXEndorser) EndorserCall(ctx context.Context, req *pb.EndorserR
 			resHeader.Error = errcode
 			return dxe.generateErrorResponse(req, resHeader, err)
 		}
-		return dxe.generateSuccessResponse(req, []byte(""), resHeader)
+		addr, sign, err := dxe.generateSign(ctx, req)
+		if err != nil {
+			resHeader.Error = pb.XChainErrorEnum_SERVICE_REFUSED_ERROR
+			return dxe.generateErrorResponse(req, resHeader, err)
+		}
+
+		reply := &pb.CommonReply{
+			Header: &pb.Header{
+				Error: pb.XChainErrorEnum_SUCCESS,
+			},
+		}
+		resData, err := json.Marshal(reply)
+		if err != nil {
+			resHeader.Error = pb.XChainErrorEnum_SERVICE_REFUSED_ERROR
+			return dxe.generateErrorResponse(req, resHeader, err)
+		}
+		return dxe.generateSuccessResponse(req, resData, addr, sign, resHeader)
+
 	case "PreExecWithFee":
 		resData, errcode, err := dxe.getPreExecResult(ctx, req)
 		if err != nil {
 			resHeader.Error = errcode
 			return dxe.generateErrorResponse(req, resHeader, err)
 		}
-		return dxe.generateSuccessResponse(req, resData, resHeader)
+		return dxe.generateSuccessResponse(req, resData, nil, nil, resHeader)
 	}
 
 	return nil, nil
@@ -114,6 +134,49 @@ func (dxe *DefaultXEndorser) processFee(ctx context.Context, req *pb.EndorserReq
 	return true, pb.XChainErrorEnum_SUCCESS, nil
 }
 
+func (dxe *DefaultXEndorser) generateSign(ctx context.Context, req *pb.EndorserRequest) ([]byte, *pb.SignatureInfo, error) {
+	if req.GetRequestData() == nil {
+		return nil, nil, errors.New("request data is empty")
+	}
+
+	addr, jsonSKey, jsonAKey, err := dxe.getEndorserKey()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	cryptoClient, err := crypto_client.CreateCryptoClientFromJSONPrivateKey(jsonSKey)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	privateKey, err := cryptoClient.GetEcdsaPrivateKeyFromJSON(jsonSKey)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	txStatus := &pb.TxStatus{}
+	err = json.Unmarshal(req.GetRequestData(), txStatus)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	digest, err := txhash.MakeTxDigestHash(txStatus.GetTx())
+	if err != nil {
+		return nil, nil, err
+	}
+
+	sign, err := cryptoClient.SignECDSA(privateKey, digest)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	signInfo := &pb.SignatureInfo{
+		PublicKey: string(jsonAKey),
+		Sign:      sign,
+	}
+	return addr, signInfo, nil
+}
+
 func (dxe *DefaultXEndorser) generateErrorResponse(req *pb.EndorserRequest, header *pb.Header,
 	err error) (*pb.EndorserResponse, error) {
 	res := &pb.EndorserResponse{
@@ -124,11 +187,29 @@ func (dxe *DefaultXEndorser) generateErrorResponse(req *pb.EndorserRequest, head
 }
 
 func (dxe *DefaultXEndorser) generateSuccessResponse(req *pb.EndorserRequest, resData []byte,
-	header *pb.Header) (*pb.EndorserResponse, error) {
+	addr []byte, sign *pb.SignatureInfo, header *pb.Header) (*pb.EndorserResponse, error) {
 	res := &pb.EndorserResponse{
-		Header:       header,
-		ResponseName: req.GetRequestName(),
-		ResponseData: resData,
+		Header:          header,
+		ResponseName:    req.GetRequestName(),
+		ResponseData:    resData,
+		EndorserAddress: string(addr),
+		EndorserSign:    sign,
 	}
 	return res, nil
+}
+
+func (dxe *DefaultXEndorser) getEndorserKey() ([]byte, []byte, []byte, error) {
+	defaultPath := "./data/endorser/keys/"
+	sk, err := ioutil.ReadFile(defaultPath + "private.key")
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	ak, err := ioutil.ReadFile(defaultPath + "public.key")
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	addr, err := ioutil.ReadFile(defaultPath + "address")
+	return addr, sk, ak, err
 }
