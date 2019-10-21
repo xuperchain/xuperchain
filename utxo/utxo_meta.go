@@ -231,10 +231,14 @@ func (uv *UtxoVM) LoadIrreversibleSlideWindow() (int64, error) {
 }
 
 func (uv *UtxoVM) GetIrreversibleBlockHeight() int64 {
+	uv.mutexMeta.Lock()
+	defer uv.mutexMeta.Unlock()
 	return uv.meta.IrreversibleBlockHeight
 }
 
 func (uv *UtxoVM) GetIrreversibleSlideWindow() int64 {
+	uv.mutexMeta.Lock()
+	defer uv.mutexMeta.Unlock()
 	return uv.meta.IrreversibleSlideWindow
 }
 

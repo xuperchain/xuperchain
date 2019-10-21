@@ -1484,8 +1484,9 @@ func (uv *UtxoVM) PlayAndRepost(blockid []byte, needRepost bool, isRootTx bool) 
 	// 判断是否应该调整不可逆区块的高度
 	// IrreversibleSlideWindow同时作为开关
 	nextIrreversibleBlockHeight := int64(0)
-	if uv.meta.IrreversibleSlideWindow > 0 {
-		nextIrreversibleBlockHeight = block.Height - uv.meta.IrreversibleSlideWindow
+	curIrreversibleSlideWindow := uv.GetIrreversibleSlideWindow()
+	if curIrreversibleSlideWindow > 0 {
+		nextIrreversibleBlockHeight = block.Height - curIrreversibleSlideWindow
 		if nextIrreversibleBlockHeight < 0 {
 			nextIrreversibleBlockHeight = 0
 		}
@@ -1557,8 +1558,9 @@ func (uv *UtxoVM) PlayForMiner(blockid []byte, batch kvdb.Batch) error {
 		return err
 	}
 	nextIrreversibleBlockHeight := int64(0)
-	if uv.meta.IrreversibleSlideWindow > 0 {
-		nextIrreversibleBlockHeight = block.Height - uv.meta.IrreversibleSlideWindow
+	curIrreversibleSlideWindow := uv.GetIrreversibleSlideWindow()
+	if curIrreversibleSlideWindow > 0 {
+		nextIrreversibleBlockHeight = block.Height - curIrreversibleSlideWindow
 		if nextIrreversibleBlockHeight < 0 {
 			nextIrreversibleBlockHeight = 0
 		}
@@ -1652,8 +1654,9 @@ func (uv *UtxoVM) Walk(blockid []byte) error {
 		// 加一个(共识)开关来判定是否需要采用不可逆
 		// 不需要更新IrreversibleBlockHeight以及SlideWindow，因为共识层面的回滚不会回滚到IrreversibleBlockHeight
 		// 只有账本裁剪才需要更新IrreversibleBlockHeight以及SlideWindow
-		if undoBlk.Height <= uv.meta.IrreversibleBlockHeight {
-			uv.xlog.Warn("undo failed, block to be undo is older than irreversibleBlockHeight", "irreversibleBlockHeight", uv.meta.IrreversibleBlockHeight, "undo block height", undoBlk.Height)
+		curIrreversibleBlockHeight := uv.GetIrreversibleBlockHeight()
+		if undoBlk.Height <= curIrreversibleBlockHeight {
+			uv.xlog.Warn("undo failed, block to be undo is older than irreversibleBlockHeight", "irreversibleBlockHeight", curIrreversibleBlockHeight, "undo block height", undoBlk.Height)
 			return errors.New("undo error")
 		}
 		batch := uv.ldb.NewBatch()
