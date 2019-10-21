@@ -282,6 +282,21 @@ func (k *Kernel) validateCreateBC(desc *contract.TxDesc) (string, string, error)
 	return bcName, bcData, nil
 }
 
+func (k *Kernel) validateUpdateIrreversibleSlideWindow(desc *contract.TxDesc) error {
+	for _, argName := range []string{"new_irreversible_slide_window", "old_irreversible_slide_window"} {
+		if desc.Args[argName] == nil {
+			return fmt.Errorf("miss argument in contact: %s", argName)
+		}
+		switch tp := desc.Args[argName].(type) {
+		case float64:
+			return nil
+		default:
+			return fmt.Errorf("invalid arg type: %s, %v", argName, tp)
+		}
+	}
+	return nil
+}
+
 func (k *Kernel) validateUpdateMaxBlockSize(desc *contract.TxDesc) error {
 	for _, argName := range []string{"new_block_size", "old_block_size"} {
 		if desc.Args[argName] == nil {
@@ -548,11 +563,10 @@ func (k *Kernel) runUpdateIrreversibleSlideWindow(desc *contract.TxDesc) error {
 	if k.context == nil || k.context.LedgerObj == nil {
 		return fmt.Errorf("failed to update irreversible slide window, because no ledger object in context")
 	}
-	/*
-		vErr := k.validateUpdateIrreversibleSlideWindow(desc)
-		if vErr != nil {
-			return vErr
-		}*/
+	vErr := k.validateUpdateIrreversibleSlideWindow(desc)
+	if vErr != nil {
+		return vErr
+	}
 	newIrreversibleSlideWindow := int64(desc.Args["new_irreversible_slide_window"].(float64))
 	oldIrreversibleSlideWindow := int64(desc.Args["old_irreversible_slide_window"].(float64))
 	k.log.Info("update irreversible slide window", "old", oldIrreversibleSlideWindow, "new", newIrreversibleSlideWindow)
@@ -568,11 +582,10 @@ func (k *Kernel) rollbackUpdateIrreversibleSlideWindow(desc *contract.TxDesc) er
 	if k.context == nil || k.context.LedgerObj == nil {
 		return fmt.Errorf("failed to update block size, becuase no ledger object in context")
 	}
-	/*
-		vErr := k.validateUpdateIrreversibleSlideWindow(desc)
-		if vErr != nil {
-			return vErr
-		}*/
+	vErr := k.validateUpdateIrreversibleSlideWindow(desc)
+	if vErr != nil {
+		return vErr
+	}
 	oldIrreversibleSlideWindow := int64(desc.Args["old_irreversible_slide_window"].(float64))
 	err := k.context.UtxoMeta.UpdateIrreversibleSlideWindow(oldIrreversibleSlideWindow, k.context.UtxoBatch)
 	return err
