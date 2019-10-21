@@ -147,7 +147,6 @@ std::unique_ptr<TableIterator<T>> Table<T>::scan(std::initializer_list<PairType>
         return std::move(it);
     }
     idx = make_key(PREFIX_INDEX, make_index(input, false));
-    std::cout << "scan key: " << idx << std::endl;
     return std::unique_ptr<TableIterator<T>>(new TableIterator<T>(_ctx, idx));
 }
 
