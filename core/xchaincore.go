@@ -584,7 +584,10 @@ func (xc *XChainCore) doMiner() {
 	}
 	meta := xc.Ledger.GetMeta()
 	accumulatedTxSize := 0
-	txSizeTotalLimit := xc.Ledger.MaxTxSizePerBlock()
+	txSizeTotalLimit, txSizeTotalLimitErr := xc.Utxovm.MaxTxSizePerBlock()
+	if txSizeTotalLimitErr != nil {
+		return
+	}
 	var freshBlock *pb.InternalBlock
 	var freshBatch kvdb.Batch
 	txs := []*pb.Transaction{}

@@ -52,6 +52,7 @@ func (uv *UtxoVM) TxOfRunningContractGenerate(txlist []*pb.Transaction, pendingB
 		Block:     pendingBlock,
 		UtxoBatch: batch,
 		LedgerObj: uv.ledger,
+		UtxoMeta:  uv,
 	}
 	if ctxInit {
 		for am := range allowedModules {

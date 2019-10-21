@@ -49,7 +49,11 @@ func (uv *UtxoVM) ImmediateVerifyTx(tx *pb.Transaction, isRootTx bool) (bool, er
 	if tx.Autogen {
 		return false, ErrInvalidAutogenTx
 	}
-	if proto.Size(tx) > uv.ledger.MaxTxSizePerBlock() {
+	MaxTxSizePerBlock, MaxTxSizePerBlockErr := uv.MaxTxSizePerBlock()
+	if MaxTxSizePerBlockErr != nil {
+		return false, MaxTxSizePerBlockErr
+	}
+	if proto.Size(tx) > MaxTxSizePerBlock {
 		uv.xlog.Warn("tx too large, should not be greater than half of max blocksize", "size", proto.Size(tx))
 		return false, ErrTxTooLarge
 	}

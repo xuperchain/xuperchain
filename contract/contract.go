@@ -21,6 +21,18 @@ var AutoGenWhiteList = map[string]bool{
 	"kernel.UpdateMaxBlockSize":  true,
 }
 
+// UtxoMetaRegister in avoid to being refered in a cycle way
+type UtxoMetaRegister interface {
+	GetMaxBlockSize() (int64, error)
+	UpdateMaxBlockSize(int64, kvdb.Batch) error
+	GetReservedContracts() ([]*pb.InvokeRequest, error)
+	UpdateReservedContracts([]*pb.InvokeRequest, kvdb.Batch) error
+	GetForbiddenContract() (*pb.InvokeRequest, error)
+	UpdateForbiddenContract(*pb.InvokeRequest, kvdb.Batch) error
+	GetNewAccountResourceAmount() (int64, error)
+	UpdateNewAccountResourceAmount(int64, kvdb.Batch) error
+}
+
 // TxDesc is the description to running a contract
 type TxDesc struct {
 	Module string                 `json:"module"`
@@ -46,6 +58,7 @@ type TxContext struct {
 	UtxoBatch kvdb.Batch //如果合约机和UtxoVM共用DB, 可以将修改打包到这个batch确保原子性
 	//... 其他的需要UtxoVM与合约机共享的也可以放到这里
 	Block     *pb.InternalBlock
+	UtxoMeta  UtxoMetaRegister
 	LedgerObj *ledger.Ledger
 	IsUndo    bool
 }

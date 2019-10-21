@@ -129,14 +129,16 @@ func TestBasicFunc(t *testing.T) {
 	if maxBlockSize != (128 << 20) {
 		t.Fatalf("maxBlockSize unexpected: %v", maxBlockSize)
 	}
-	upErr := ledger.UpdateMaxBlockSize(0, ledger.baseDB.NewBatch())
-	if upErr == nil {
-		t.Fatal("unexpected")
-	}
-	ledger.UpdateMaxBlockSize(123, ledger.baseDB.NewBatch())
-	if ledger.GetMaxBlockSize() != 123 {
-		t.Fatalf("unexpected block size, %d", ledger.GetMeta().MaxBlockSize)
-	}
+	/*
+		upErr := ledger.UpdateMaxBlockSize(0, ledger.baseDB.NewBatch())
+
+		if upErr == nil {
+			t.Fatal("unexpected")
+		}
+		ledger.UpdateMaxBlockSize(123, ledger.baseDB.NewBatch())
+		if ledger.GetMaxBlockSize() != 123 {
+			t.Fatalf("unexpected block size, %d", ledger.GetMeta().MaxBlockSize)
+		}*/
 
 	// coinbase txs > 1
 	t1 = &pb.Transaction{}

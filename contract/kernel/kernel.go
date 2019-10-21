@@ -196,14 +196,30 @@ func (k *Kernel) CreateBlockChain(name string, data []byte) error {
 	}
 	ledger, err := ledger.NewLedger(fullpath, k.log, nil, kvEngineType, cryptoType)
 	if err != nil {
-		k.log.Warn("NewLedger error", "fullpath", fullpath)
+		k.log.Warn("NewLedger error", "fullpath", fullpath, "err", err)
 		os.RemoveAll(fullpath)
 		return err
 	}
+	tx, err := utxo.GenerateRootTx(data)
+	if err != nil {
+		k.log.Warn("GenerateRootTx error", "fullpath", fullpath, "err", err)
+		os.RemoveAll(fullpath)
+		return err
+	}
+	txlist := []*pb.Transaction{tx}
+	k.log.Trace("Start to ConfirmBlock")
+	b, err := ledger.FormatRootBlock(txlist)
+	if err != nil {
+		k.log.Warn("format block error", "err", err)
+		os.RemoveAll(fullpath)
+		return ErrCreateBlockChain
+	}
+	ledger.ConfirmBlock(b, true)
+	k.log.Info("ConfirmBlock Success", "Height", 1)
 	//TODO 因为是创建创世块，所以这里不填写publicKey和address, 后果是如果存在合约的话，肯定是执行失败
 	utxovm, err := utxo.NewUtxoVM(name, ledger, fullpath, "", "", nil, k.log, false, kvEngineType, cryptoType)
 	if err != nil {
-		k.log.Warn("NewUtxoVM error", "fullpath", fullpath)
+		k.log.Warn("NewUtxoVM error", "fullpath", fullpath, "err", err)
 		os.RemoveAll(fullpath)
 		return err
 	}
@@ -215,24 +231,7 @@ func (k *Kernel) CreateBlockChain(name string, data []byte) error {
 		k.log.Warn("Init permission  model error", "err", err)
 		return err
 	}
-	tx, err := utxovm.GenerateRootTx(data)
-	if err != nil {
-		k.log.Warn("GenerateRootTx error", "fullpath", fullpath)
-		os.RemoveAll(fullpath)
-		return err
-	}
 	utxovm.DebugTx(tx)
-	txlist := []*pb.Transaction{tx}
-	//b, err := ledger.FormatBlock(txlist, nil, nil, 0, nil)
-	b, err := ledger.FormatRootBlock(txlist)
-	if err != nil {
-		k.log.Warn("format block error")
-		os.RemoveAll(fullpath)
-		return ErrCreateBlockChain
-	}
-	k.log.Trace("Start to ConfirmBlock")
-	ledger.ConfirmBlock(b, true)
-	k.log.Info("ConfirmBlock Success", "Height", 1)
 	err = utxovm.Play(b.Blockid)
 	if err != nil {
 		k.log.Warn("utxo play error ", "error", err, "blockid", b.Blockid)
@@ -532,11 +531,14 @@ func (k *Kernel) runUpdateMaxBlockSize(desc *contract.TxDesc) error {
 	newBlockSize := int64(desc.Args["new_block_size"].(float64))
 	oldBlockSize := int64(desc.Args["old_block_size"].(float64))
 	k.log.Info("update max block size", "old", oldBlockSize, "new", newBlockSize)
-	curMaxBlockSize := k.context.LedgerObj.GetMaxBlockSize()
+	curMaxBlockSize, curMaxBlockSizeErr := k.context.UtxoMeta.GetMaxBlockSize()
+	if curMaxBlockSizeErr != nil {
+		return curMaxBlockSizeErr
+	}
 	if oldBlockSize != curMaxBlockSize {
 		return fmt.Errorf("unexpected old block size, got %v, expected: %v", oldBlockSize, curMaxBlockSize)
 	}
-	err := k.context.LedgerObj.UpdateMaxBlockSize(newBlockSize, k.context.UtxoBatch)
+	err := k.context.UtxoMeta.UpdateMaxBlockSize(newBlockSize, k.context.UtxoBatch)
 	return err
 }
 
@@ -551,11 +553,14 @@ func (k *Kernel) runUpdateNewAccountResourceAmount(desc *contract.TxDesc) error 
 	newNewAccountResourceAmount := int64(desc.Args["new_new_account_resource_amount"].(float64))
 	oldNewAccountResourceAmount := int64(desc.Args["old_new_account_resource_amount"].(float64))
 	k.log.Info("update newAccountResourceAmount", "old", oldNewAccountResourceAmount, "new", newNewAccountResourceAmount)
-	curNewAccountResourceAmount := k.context.LedgerObj.GetNewAccountResourceAmount()
+	curNewAccountResourceAmount, curNewAccountResourceAmountErr := k.context.UtxoMeta.GetNewAccountResourceAmount()
+	if curNewAccountResourceAmountErr != nil {
+		return curNewAccountResourceAmountErr
+	}
 	if oldNewAccountResourceAmount != curNewAccountResourceAmount {
 		fmt.Errorf("unexpected old newAccountResourceAmount, got %v, expected: %v", oldNewAccountResourceAmount, curNewAccountResourceAmount)
 	}
-	err := k.context.LedgerObj.UpdateNewAccountResourceAmount(newNewAccountResourceAmount, k.context.UtxoBatch)
+	err := k.context.UtxoMeta.UpdateNewAccountResourceAmount(newNewAccountResourceAmount, k.context.UtxoBatch)
 	return err
 }
 
@@ -568,7 +573,7 @@ func (k *Kernel) rollbackUpdateMaxBlockSize(desc *contract.TxDesc) error {
 		return vErr
 	}
 	oldBlockSize := int64(desc.Args["old_block_size"].(float64))
-	err := k.context.LedgerObj.UpdateMaxBlockSize(oldBlockSize, k.context.UtxoBatch)
+	err := k.context.UtxoMeta.UpdateMaxBlockSize(oldBlockSize, k.context.UtxoBatch)
 	return err
 }
 
@@ -581,7 +586,7 @@ func (k *Kernel) rollbackUpdateNewAccountResourceAmount(desc *contract.TxDesc) e
 		return vErr
 	}
 	oldNewAccountResourceAmount := int64(desc.Args["old_new_account_resource_amount"].(float64))
-	err := k.context.LedgerObj.UpdateNewAccountResourceAmount(oldNewAccountResourceAmount, k.context.UtxoBatch)
+	err := k.context.UtxoMeta.UpdateNewAccountResourceAmount(oldNewAccountResourceAmount, k.context.UtxoBatch)
 	return err
 }
 
@@ -596,7 +601,10 @@ func (k *Kernel) runUpdateForbiddenContract(desc *contract.TxDesc) error {
 	}
 	k.log.Info("run update forbidden contract, params", "oldParams", oldParams)
 
-	originalForbiddenContract := k.context.LedgerObj.GetMeta().ForbiddenContract
+	originalForbiddenContract, originalForbiddenContractErr := k.context.UtxoMeta.GetForbiddenContract()
+	if originalForbiddenContractErr != nil {
+		return originalForbiddenContractErr
+	}
 
 	originalModuleName := originalForbiddenContract.GetModuleName()
 	originalContractName := originalForbiddenContract.GetContractName()
@@ -623,7 +631,7 @@ func (k *Kernel) runUpdateForbiddenContract(desc *contract.TxDesc) error {
 		return err
 	}
 	k.log.Info("update reservered contract", "params", params)
-	err = k.context.LedgerObj.UpdateForbiddenContract(params, k.context.UtxoBatch)
+	err = k.context.UtxoMeta.UpdateForbiddenContract(params, k.context.UtxoBatch)
 
 	return err
 }
@@ -637,7 +645,7 @@ func (k *Kernel) rollbackUpdateForbiddenContract(desc *contract.TxDesc) error {
 		return err
 	}
 	k.log.Info("rollback forbidden contract: params", "params", params)
-	err = k.context.LedgerObj.UpdateForbiddenContract(params, k.context.UtxoBatch)
+	err = k.context.UtxoMeta.UpdateForbiddenContract(params, k.context.UtxoBatch)
 
 	return err
 }
@@ -653,7 +661,10 @@ func (k *Kernel) runUpdateReservedContract(desc *contract.TxDesc) error {
 	}
 	k.log.Info("run update reservered contract, params", "oldParams", oldParams)
 
-	originalReservedContracts := k.context.LedgerObj.GetMeta().GetReservedContracts()
+	originalReservedContracts, originalReservedContractsErr := k.context.UtxoMeta.GetReservedContracts()
+	if originalReservedContractsErr != nil {
+		return originalReservedContractsErr
+	}
 
 	for i, vold := range oldParams {
 		for j, vorig := range originalReservedContracts {
@@ -677,7 +688,7 @@ func (k *Kernel) runUpdateReservedContract(desc *contract.TxDesc) error {
 		return err
 	}
 	k.log.Info("update reservered contract", "params", params)
-	err = k.context.LedgerObj.UpdateReservedContract(params, k.context.UtxoBatch)
+	err = k.context.UtxoMeta.UpdateReservedContracts(params, k.context.UtxoBatch)
 	return err
 }
 
@@ -694,7 +705,7 @@ func (k *Kernel) rollbackUpdateReservedContract(desc *contract.TxDesc) error {
 		return err
 	}
 	k.log.Info("rollback reservered contract")
-	err = k.context.LedgerObj.UpdateReservedContract(params, k.context.UtxoBatch)
+	err = k.context.UtxoMeta.UpdateReservedContracts(params, k.context.UtxoBatch)
 	return err
 }
 
