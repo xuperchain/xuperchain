@@ -60,6 +60,7 @@ bool Table<T>::write_index(const std::string& rowkey, const std::string& index_s
     if (no < 0) {
         return false;
     }
+    
     std::string idx = make_key(PREFIX_INDEX, index_str + std::to_string(no));
     if (!_ctx->put_object(idx, all_key)) {
         return false;
@@ -68,7 +69,7 @@ bool Table<T>::write_index(const std::string& rowkey, const std::string& index_s
     if (!_ctx->put_object(idx_key, idx)) {
         return false;
     }
-
+    
     return inc_index_no(no + 1);
 }
 
@@ -129,7 +130,7 @@ std::string Table<T>::make_index(std::initializer_list<PairType> input, bool key
         if (key) {
             oss << (*p).first << ",";
         } else {
-            oss << (*p).second << ",";
+            oss << (*p).first << "," << (*p).second << ",";
         }
     }
     auto raw = oss.str();
@@ -146,6 +147,7 @@ std::unique_ptr<TableIterator<T>> Table<T>::scan(std::initializer_list<PairType>
         return std::move(it);
     }
     idx = make_key(PREFIX_INDEX, make_index(input, false));
+    std::cout << "scan key: " << idx << std::endl;
     return std::unique_ptr<TableIterator<T>>(new TableIterator<T>(_ctx, idx));
 }
 
@@ -188,6 +190,43 @@ bool Table<T>::put(T t) {
     }
     return true;
 }
+
+template <typename T>
+bool Table<T>::update(T t) {
+    const std::string& key = t.rowkey();
+    const std::string& all_key = make_key(PREFIX_ROWKEY,key);
+    std::string value;
+    if (!_ctx->get_object(all_key, &value)) {
+        std::cout << "value not found: " << std::endl;
+        return false;
+    }
+
+    value.clear();
+    if (!_ctx->delete_object(all_key)) {
+        return false;
+    }
+    for (int i = 0; i < t.index_size(); i ++) {
+        std::string idx;
+        if(!delete_index(key, t.index(i), i)) {
+            return false;
+        }
+    }
+
+    if (!t.SerializeToString(&value)) {
+        return false;
+    }
+    if (!_ctx->put_object(all_key, value)) {
+        return false;
+    }
+    for (int i = 0; i < t.index_size(); i ++) {
+        if (!write_index(key, t.index(i), i)) {
+            return false;
+        }
+    }
+    return true;
+}
+
+
 
 template <typename T>
 TableIterator<T>::TableIterator(xchain::Context* ctx, std::string idx)

@@ -149,6 +149,46 @@ var resolver = exec.MapResolver(map[string]interface{}{
 		exec.Throw(exec.NewTrap("assert_fail"))
 		return 0
 	},
+	"env._llvm_stackrestore": func(ctx *exec.Context, x uint32) uint32 {
+		return 0
+	},
+	"env._llvm_stacksave": func(ctx *exec.Context) uint32 {
+		return 0
+	},
+
+	"env._getenv": func(ctx *exec.Context, x uint32) uint32 {
+		return 0
+	},
+
+	"env._strftime_l": func(ctx *exec.Context, x, y, w, z, f uint32) uint32 {
+		exec.Throw(exec.NewTrap("assert_fail"))
+		return 0
+	},
+
+	"env._pthread_cond_wait": func(ctx *exec.Context, x, y uint32) uint32 {
+		exec.Throw(exec.NewTrap("assert_fail"))
+		return 0
+	},
+
+	"env.___syscall91": func(ctx *exec.Context, x, y uint32) uint32 {
+		exec.Throw(exec.NewTrap("assert_fail"))
+		return 0
+	},
+
+	"env.___syscall145": func(ctx *exec.Context, x, y uint32) uint32 {
+		exec.Throw(exec.NewTrap("assert_fail"))
+		return 0
+	},
+
+	"env.___map_file": func(ctx *exec.Context, x, y uint32) uint32 {
+		exec.Throw(exec.NewTrap("assert_fail"))
+		return 0
+	},
+
+	"env.___cxa_uncaught_exception": func(ctx *exec.Context) uint32 {
+		exec.Throw(exec.NewTrap("assert_fail"))
+		return 0
+	},
 
 	"env.__table_base":   float64(0),
 	"env.tableBase":      float64(0),
