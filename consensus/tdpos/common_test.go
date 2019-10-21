@@ -104,8 +104,7 @@ func TestValidateRevokeVote(t *testing.T) {
 	if err != nil {
 		t.Error("NewLedger error ", err.Error())
 	}
-	utxoVM, _ := utxo.NewUtxoVM("xuper", ledger, workspace, minerPrivateKey, minerPublicKey, []byte(minerAddress), nil, false, kvengine, tCryptoType)
-	tx, gensisErr := utxoVM.GenerateRootTx([]byte(`
+	tx, gensisErr := utxo.GenerateRootTx([]byte(`
     {
         "version" : "1" 
         , "consensus" : { 
@@ -137,6 +136,7 @@ func TestValidateRevokeVote(t *testing.T) {
 	if !confirmStatus.Succ {
 		t.Error("ConfirmBlock error ")
 	}
+	utxoVM, _ := utxo.NewUtxoVM("xuper", ledger, workspace, minerPrivateKey, minerPublicKey, []byte(minerAddress), nil, false, kvengine, tCryptoType)
 	playErr := utxoVM.Play(block.Blockid)
 	if playErr != nil {
 		t.Error("utxo vm paly error ", playErr.Error())
@@ -236,8 +236,7 @@ func TestTermProposerBasic(t *testing.T) {
 	if err != nil {
 		t.Error("NewLedger error ", err.Error())
 	}
-	utxoVM, _ := utxo.NewUtxoVM("xuper", ledger, workspace, minerPrivateKey, minerPublicKey, []byte(minerAddress), nil, false, kvengine, tCryptoType)
-	tx, gensisErr := utxoVM.GenerateRootTx([]byte(`
+	tx, gensisErr := utxo.GenerateRootTx([]byte(`
     {
         "version" : "1"
         , "consensus" : {
@@ -269,6 +268,7 @@ func TestTermProposerBasic(t *testing.T) {
 	if !confirmStatus.Succ {
 		t.Error("ledger confirm block error ")
 	}
+	utxoVM, _ := utxo.NewUtxoVM("xuper", ledger, workspace, minerPrivateKey, minerPublicKey, []byte(minerAddress), nil, false, kvengine, tCryptoType)
 	playErr := utxoVM.Play(block.Blockid)
 	if playErr != nil {
 		t.Error("utxo play error ", playErr.Error())
