@@ -149,6 +149,8 @@ var resolver = exec.MapResolver(map[string]interface{}{
 		exec.Throw(exec.NewTrap("assert_fail"))
 		return 0
 	},
+
+	// TODO: zq @icex need to implement soon, from _llvm_stackrestore to ___cxa_uncaught_exception
 	"env._llvm_stackrestore": func(ctx *exec.Context, x uint32) uint32 {
 		return 0
 	},
