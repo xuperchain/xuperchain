@@ -33,6 +33,12 @@ func ValidPowBlock(block *pb.Block, xcore *XChainCore) bool {
 		// a valid new block shows up, let's interrupt the process of the miner to welcome it.
 		xcore.Ledger.AbortPowMinning()
 	}
+	// 拒绝被动接收区块高度低于不可逆区块的区块
+	irreversibleBlockHeight := xcore.Utxovm.GetIrreversibleBlockHeight()
+	if newBlockHeight <= irreversibleBlockHeight {
+		log.Warn("receive an older block", "irreversibleBlockHeight", irreversibleBlockHeight, "newBlockHeight", newBlockHeight)
+		return false
+	}
 
 	return true
 }

@@ -425,6 +425,8 @@ message UtxoMeta {
   repeated InvokeRequest reserved_contracts = 7;       // preset contracts
   InvokeRequest forbidden_contract = 8;        // reset forbidden contract configuration
   int64 new_account_resource_amount = 9;	// the resource amount of creating an account
+  int64 irreversibleBlockHeight = 10;	// 当前不可逆区块高度，与utxo对齐
+  int64 irreversibleSlideWindow = 11;	// 当前不可逆区块高度调整窗口
 }
 
 // The internal block struct

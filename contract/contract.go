@@ -31,6 +31,10 @@ type UtxoMetaRegister interface {
 	UpdateForbiddenContract(*pb.InvokeRequest, kvdb.Batch) error
 	GetNewAccountResourceAmount() (int64, error)
 	UpdateNewAccountResourceAmount(int64, kvdb.Batch) error
+	// Get irreversible slide window
+	GetIrreversibleSlideWindow() int64
+	// Update irreversible slide window
+	UpdateIrreversibleSlideWindow(nextIrreversibleSlideWindow int64, batch kvdb.Batch) error
 }
 
 // TxDesc is the description to running a contract

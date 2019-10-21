@@ -187,3 +187,73 @@ func (uv *UtxoVM) UpdateForbiddenContract(param *pb.InvokeRequest, batch kvdb.Ba
 	uv.metaTmp.ForbiddenContract = param
 	return err
 }
+
+func (uv *UtxoVM) UpdateIrreversibleSlideWindow(nextIrreversibleSlideWindow int64, batch kvdb.Batch) error {
+	tmpMeta := &pb.UtxoMeta{}
+	newMeta := proto.Clone(tmpMeta).(*pb.UtxoMeta)
+	newMeta.IrreversibleSlideWindow = nextIrreversibleSlideWindow
+	irreversibleSlideWindowBuf, pbErr := proto.Marshal(newMeta)
+	if pbErr != nil {
+		uv.xlog.Warn("failed to marshal pb meta")
+		return pbErr
+	}
+	err := batch.Put([]byte(pb.MetaTablePrefix+ledger_pkg.IrreversibleSlideWindowKey), irreversibleSlideWindowBuf)
+	if err != nil {
+		return err
+	}
+	uv.xlog.Info("Update irreversibleSlideWindow succeed")
+	uv.mutexMeta.Lock()
+	defer uv.mutexMeta.Unlock()
+	uv.metaTmp.IrreversibleSlideWindow = nextIrreversibleSlideWindow
+	return nil
+}
+
+func (uv *UtxoVM) LoadIrreversibleBlockHeight() (int64, error) {
+	irreversibleBlockHeightBuf, findErr := uv.metaTable.Get([]byte(ledger_pkg.IrreversibleBlockHeightKey))
+	if findErr == nil {
+		utxoMeta := &pb.UtxoMeta{}
+		err := proto.Unmarshal(irreversibleBlockHeightBuf, utxoMeta)
+		return utxoMeta.GetIrreversibleBlockHeight(), err
+	}
+	return int64(0), nil
+}
+
+func (uv *UtxoVM) LoadIrreversibleSlideWindow() (int64, error) {
+	irreversibleSlideWindowBuf, findErr := uv.metaTable.Get([]byte(ledger_pkg.IrreversibleSlideWindowKey))
+	if findErr == nil {
+		utxoMeta := &pb.UtxoMeta{}
+		err := proto.Unmarshal(irreversibleSlideWindowBuf, utxoMeta)
+		return utxoMeta.GetIrreversibleSlideWindow(), err
+	} else if common.NormalizedKVError(findErr) == common.ErrKVNotFound {
+		return uv.ledger.GetIrreversibleSlideWindow(), nil
+	}
+	return int64(10), nil
+}
+
+func (uv *UtxoVM) GetIrreversibleBlockHeight() int64 {
+	return uv.meta.IrreversibleBlockHeight
+}
+
+func (uv *UtxoVM) GetIrreversibleSlideWindow() int64 {
+	return uv.meta.IrreversibleSlideWindow
+}
+
+func (uv *UtxoVM) UpdateIrreversibleBlockHeight(nextIrreversibleBlockHeight int64, batch kvdb.Batch) error {
+	tmpMeta := &pb.UtxoMeta{}
+	newMeta := proto.Clone(tmpMeta).(*pb.UtxoMeta)
+	newMeta.IrreversibleBlockHeight = nextIrreversibleBlockHeight
+	irreversibleBlockHeightBuf, pbErr := proto.Marshal(newMeta)
+	if pbErr != nil {
+		uv.xlog.Warn("failed to marshal pb meta")
+		return pbErr
+	}
+	err := batch.Put([]byte(pb.MetaTablePrefix+ledger_pkg.IrreversibleBlockHeightKey), irreversibleBlockHeightBuf)
+	if err != nil {
+		return err
+	}
+	uv.xlog.Info("Update irreversibleBlockHeight succeed")
+	uv.mutexMeta.Lock()
+	defer uv.mutexMeta.Unlock()
+	uv.metaTmp.IrreversibleBlockHeight = nextIrreversibleBlockHeight
+	return nil
+}
