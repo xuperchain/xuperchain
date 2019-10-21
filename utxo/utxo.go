@@ -2055,6 +2055,9 @@ func (uv *UtxoVM) GetMeta() *pb.UtxoMeta {
 	meta.MaxBlockSize = uv.meta.GetMaxBlockSize()
 	meta.ReservedContracts = uv.meta.GetReservedContracts()
 	meta.ForbiddenContract = uv.meta.GetForbiddenContract()
+	meta.NewAccountResourceAmount = uv.meta.GetNewAccountResourceAmount()
+	meta.IrreversibleBlockHeight = uv.meta.GetIrreversibleBlockHeight()
+	meta.IrreversibleSlideWindow = uv.meta.GetIrreversibleSlideWindow()
 	return meta
 }
 
