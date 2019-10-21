@@ -41,7 +41,7 @@ DEFINE_METHOD(Move, initialize) {
         ctx->error("missing totalSupply");
         return;
     }
-    int64_t total;
+    int64_t total = 0;
     if (string2num(totalSupply, &total) != RET_SUCCESS) {
         ctx->error("totalSupply is not valid");
     }
