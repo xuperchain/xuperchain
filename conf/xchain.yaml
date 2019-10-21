@@ -86,3 +86,6 @@ pluginConfPath: "./conf/plugins.conf"
 coreConnection : false
 
 txidCacheExpiredTime : "10s"
+
+# 是否压缩交易/区块
+enableCompress : true

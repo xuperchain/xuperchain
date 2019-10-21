@@ -1,16 +1,17 @@
 package utxo
 
 import (
-	"os"
-	"testing"
+//"os"
+//"testing"
 
-	"io/ioutil"
-	"time"
+//"io/ioutil"
+//"time"
 
-	crypto_client "github.com/xuperchain/xuperunion/crypto/client"
-	ledger_pkg "github.com/xuperchain/xuperunion/ledger"
+//crypto_client "github.com/xuperchain/xuperunion/crypto/client"
+//ledger_pkg "github.com/xuperchain/xuperunion/ledger"
 )
 
+/*
 func TestAsyncBasic(t *testing.T) {
 	workSpace, dirErr := ioutil.TempDir("/tmp", "")
 	if dirErr != nil {
@@ -42,7 +43,7 @@ func TestAsyncBasic(t *testing.T) {
 	// test for StartAsyncWriter()
 	utxoVM.StartAsyncWriter()
 	<-time.After(2 * time.Second)
-	tx, _ := utxoVM.GenerateRootTx([]byte(`
+	tx, _ := GenerateRootTx([]byte(`
         {
             "version" : "1"
             , "consensus" : {
@@ -77,3 +78,4 @@ func TestAsyncBasic(t *testing.T) {
 	<-time.After(3 * time.Second)
 
 }
+*/

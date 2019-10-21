@@ -6,15 +6,14 @@ import (
 	"github.com/xuperchain/xuperunion/pb"
 )
 
-// GetConfirmedValue get the confirmed value of a specific key
+// GetNearestConfirmedValue get the confirmed value of a specific key
 // step1: get the value rewritten by the tx executed recently and successfully
 // step2: check if the tx has been confirmed, and if not, check the reftix recursively
-func (s *XModel) GetConfirmedValue(bucket string, key []byte) ([]byte, bool, error) {
-	versionData, err := s.Get(bucket, key)
+func (s *XModel) GetNearestConfirmedValue(bucket string, key []byte) ([]byte, bool, error) {
+	versionData, confirmed, err := s.GetWithTxStatus(bucket, key)
 	if err != nil {
 		return nil, false, err
 	}
-	confirmed := versionData.GetConfirmed()
 	// 从xmodel拿到的数据直接已经confirmed, 那么直接返回
 	if confirmed {
 		return versionData.GetPureData().GetValue(), confirmed, nil
