@@ -111,6 +111,7 @@ type XChainCore struct {
 	// add a lru cache of tx gotten for xchaincore
 	txidCache            *cache.Cache
 	txidCacheExpiredTime time.Duration
+	enableCompress       bool
 }
 
 // Status return the status of the chain
@@ -142,6 +143,7 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	xc.failSkip = cfg.FailSkip
 	xc.txidCacheExpiredTime = cfg.TxidCacheExpiredTime
 	xc.txidCache = cache.New(xc.txidCacheExpiredTime, TxidCacheGcTime)
+	xc.enableCompress = cfg.EnableCompress
 	ledger.MemCacheSize = cfg.DBCache.MemCacheSize
 	ledger.FileHandlersCacheSize = cfg.DBCache.FdCacheSize
 	datapath := cfg.Datapath + "/" + bcname
@@ -327,6 +329,7 @@ func (xc *XChainCore) repostOfflineTx() {
 		opts := []p2pv2.MessageOption{
 			p2pv2.WithFilters(filters),
 			p2pv2.WithBcName(xc.bcname),
+			p2pv2.WithCompress(xc.enableCompress),
 		}
 		go xc.P2pv2.SendMessage(context.Background(), msg, opts...) //p2p广播出去
 	}
@@ -684,6 +687,7 @@ func (xc *XChainCore) doMiner() {
 		opts := []p2pv2.MessageOption{
 			p2pv2.WithFilters(filters),
 			p2pv2.WithBcName(xc.bcname),
+			p2pv2.WithCompress(xc.enableCompress),
 		}
 		xc.P2pv2.SendMessage(context.Background(), msg, opts...)
 	}()

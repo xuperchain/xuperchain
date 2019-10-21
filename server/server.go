@@ -56,6 +56,7 @@ func (s *server) PostTx(ctx context.Context, in *pb.TxStatus) (*pb.CommonReply, 
 		opts := []p2pv2.MessageOption{
 			p2pv2.WithFilters([]p2pv2.FilterStrategy{p2pv2.DefaultStrategy}),
 			p2pv2.WithBcName(in.GetBcname()),
+			p2pv2.WithCompress(s.mg.GetXchainmgConfig().EnableCompress),
 		}
 		go s.mg.P2pv2.SendMessage(context.Background(), msg, opts...)
 	}

@@ -1817,7 +1817,10 @@ func (uv *UtxoVM) queryTxFromForbiddenWithConfirmed(txid []byte) (bool, bool, er
 		return false, false, nil
 	}
 	versionData = inputs[1]
-	confirmed := versionData.GetConfirmed()
+	confirmed, err := uv.ledger.HasTransaction(versionData.RefTxid)
+	if err != nil {
+		return false, false, err
+	}
 	return true, confirmed, nil
 }
 

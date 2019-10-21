@@ -283,12 +283,11 @@ func (uv *UtxoVM) verifyUTXOPermission(tx *pb.Transaction, verifiedID map[string
 // this usually happens in account management operations.
 func (uv *UtxoVM) verifyContractOwnerPermission(contractName string, tx *pb.Transaction,
 	verifiedID map[string]bool) (bool, error) {
-	versionData, err := uv.model3.Get(aclu.GetContract2AccountBucket(), []byte(contractName))
+	versionData, confirmed, err := uv.model3.GetWithTxStatus(aclu.GetContract2AccountBucket(), []byte(contractName))
 	if err != nil || versionData == nil {
 		return false, err
 	}
 	pureData := versionData.GetPureData()
-	confirmed := versionData.GetConfirmed()
 	if pureData == nil || confirmed == false {
 		return false, errors.New("pure data is nil or unconfirmed")
 	}
