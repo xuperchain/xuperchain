@@ -196,7 +196,6 @@ bool Table<T>::update(T t) {
     const std::string& all_key = make_key(PREFIX_ROWKEY,key);
     std::string value;
     if (!_ctx->get_object(all_key, &value)) {
-        std::cout << "value not found: " << std::endl;
         return false;
     }
 
