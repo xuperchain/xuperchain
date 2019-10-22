@@ -241,3 +241,21 @@ func (uv *UtxoVM) UpdateIrreversibleBlockHeight(nextIrreversibleBlockHeight int6
 	uv.metaTmp.IrreversibleBlockHeight = nextIrreversibleBlockHeight
 	return nil
 }
+
+func (uv *UtxoVM) updateNextIrreversibleBlockHeight(blockHeight int64, curIrreversibleBlockHeight int64, curIrreversibleSlideWindow int64, batch kvdb.Batch) error {
+	if curIrreversibleSlideWindow <= 0 {
+		return nil
+	}
+	nextIrreversibleBlockHeight := blockHeight - curIrreversibleSlideWindow
+	// case1: slideWindow不变或变小
+	if nextIrreversibleBlockHeight >= 0 {
+		err := uv.UpdateIrreversibleBlockHeight(nextIrreversibleBlockHeight, batch)
+		return err
+	}
+	// case2: slide变大或区块发生回滚
+	if curIrreversibleBlockHeight < 0 {
+		uv.xlog.Warn("update irreversible block height error, should be here")
+		return errors.New("curIrreversibleBlockHeight is less than 0")
+	}
+	return nil
+}

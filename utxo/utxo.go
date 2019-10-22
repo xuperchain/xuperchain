@@ -1481,31 +1481,11 @@ func (uv *UtxoVM) PlayAndRepost(blockid []byte, needRepost bool, isRootTx bool) 
 		return err
 	}
 	// 更新不可逆区块高度
-	// 判断是否应该调整不可逆区块的高度
-	// IrreversibleSlideWindow同时作为开关
 	curIrreversibleBlockHeight := uv.GetIrreversibleBlockHeight()
 	curIrreversibleSlideWindow := uv.GetIrreversibleSlideWindow()
-	nextIrreversibleBlockHeight := int64(0)
-	if curIrreversibleSlideWindow > 0 {
-		nextIrreversibleBlockHeight = block.Height - curIrreversibleSlideWindow
-		// case1: 当前区块高度与不可逆高度的差距小于slideWindow
-		// 按照状态机原理，只有一个原因，就是区块发生了回滚或者slide变大了
-		if nextIrreversibleBlockHeight < 0 {
-			if curIrreversibleBlockHeight >= 0 {
-				// do nothing
-			} else if curIrreversibleBlockHeight < 0 {
-				// should not be here, throw an exception
-				uv.xlog.Warn("update irreversible block height error, should be here")
-				return errors.New("update irreversible block height error, curIrreversibleBlockHeight is less than 0")
-			}
-			// case2: slideWindow变小或者slideWindow不变
-		} else if nextIrreversibleBlockHeight >= 0 {
-			// update with nextIrreversibleBlockHeight
-			err := uv.UpdateIrreversibleBlockHeight(nextIrreversibleBlockHeight, batch)
-			if err != nil {
-				return err
-			}
-		}
+	updateErr := uv.updateNextIrreversibleBlockHeight(block.Height, curIrreversibleBlockHeight, curIrreversibleSlideWindow, batch)
+	if updateErr != nil {
+		return updateErr
 	}
 	//更新latestBlockid
 	persistErr := uv.updateLatestBlockid(block.Blockid, batch, "failed to save block")
@@ -1570,31 +1550,11 @@ func (uv *UtxoVM) PlayForMiner(blockid []byte, batch kvdb.Batch) error {
 		return err
 	}
 	// 更新不可逆区块高度
-	// 判断是否应该调整不可逆区块的高度
-	// IrreversibleSlideWindow同时作为开关
 	curIrreversibleBlockHeight := uv.GetIrreversibleBlockHeight()
 	curIrreversibleSlideWindow := uv.GetIrreversibleSlideWindow()
-	nextIrreversibleBlockHeight := int64(0)
-	if curIrreversibleSlideWindow > 0 {
-		nextIrreversibleBlockHeight = block.Height - curIrreversibleSlideWindow
-		// case1: 当前区块高度与不可逆高度的差距小于slideWindow
-		// 按照状态机原理，只有一个原因，就是区块发生了回滚或者slide变大了
-		if nextIrreversibleBlockHeight < 0 {
-			if curIrreversibleBlockHeight >= 0 {
-				// do nothing
-			} else if curIrreversibleBlockHeight < 0 {
-				// should not be here, throw an exception
-				uv.xlog.Warn("update irreversible block height error, should be here")
-				return errors.New("update irreversible block height error, curIrreversibleBlockHeight is less than 0")
-			}
-			// case2: slideWindow变小或者slideWindow不变
-		} else if nextIrreversibleBlockHeight >= 0 {
-			// update with nextIrreversibleBlockHeight
-			err := uv.UpdateIrreversibleBlockHeight(nextIrreversibleBlockHeight, batch)
-			if err != nil {
-				return err
-			}
-		}
+	updateErr := uv.updateNextIrreversibleBlockHeight(block.Height, curIrreversibleBlockHeight, curIrreversibleSlideWindow, batch)
+	if updateErr != nil {
+		return updateErr
 	}
 	//更新latestBlockid
 	err = uv.updateLatestBlockid(block.Blockid, batch, "failed to save block")
@@ -1764,14 +1724,21 @@ func (uv *UtxoVM) Walk(blockid []byte) error {
 			uv.xlog.Error("smart contract fianlize failed", "blockid", fmt.Sprintf("%x", todoBlk.Blockid))
 			return err
 		}
-		updateErr := uv.updateLatestBlockid(todoBlk.Blockid, batch, "error occurs when do blocks") // 每do一个block,是一个原子batch写
+		// 更新不可逆区块高度
+		curIrreversibleBlockHeight := uv.GetIrreversibleBlockHeight()
+		curIrreversibleSlideWindow := uv.GetIrreversibleSlideWindow()
+		updateErr := uv.updateNextIrreversibleBlockHeight(todoBlk.Height, curIrreversibleBlockHeight, curIrreversibleSlideWindow, batch)
+		if updateErr != nil {
+			return updateErr
+		}
+		updateErr = uv.updateLatestBlockid(todoBlk.Blockid, batch, "error occurs when do blocks") // 每do一个block,是一个原子batch写
 		if updateErr != nil {
 			return updateErr
 		}
 		// 内存级别更新UtxoMeta信息
-		//uv.mutexMeta.Lock()
-		//defer uv.mutexMeta.Unlock()
+		uv.mutexMeta.Lock()
 		uv.meta = uv.metaTmp
+		uv.mutexMeta.Unlock()
 	}
 	return nil
 }
