@@ -129,7 +129,7 @@ DEFINE_METHOD(Move, transfer) {
     }
   
     from_balance = from_balance - token;
-    if (LLONG_MAX - to_balance > token) {
+    if (LLONG_MAX - to_balance < token) {
         ctx->error("If to is added the token, his amount will overflow");
         return;
     }
