@@ -10,21 +10,30 @@ const std::string BALANCEPRE = "balanceOf_";
 enum ret_t {
     RET_SUCCESS = 0,  
     RET_ERROR_INVALID_NUM,
-    RET_ERROR_OVERFLOW
+    RET_ERROR_OVERFLOW,
+    RET_ERROR_NEGATIVE
 };
 
 ret_t string2num(const std::string& from, int64_t *to) {
     long long temp;
-    temp = std::stoll(from.c_str(), NULL, 10);
-    if (temp <= 0) {
-        return RET_ERROR_INVALID_NUM;
-    }
+    char* p = nullptr;
+    temp = std::strtoll(from.c_str(), &p, 10);
 
-    if (temp >= LLONG_MAX) {
+    if (temp >= LLONG_MAX || temp <= LLONG_MIN) {
         return RET_ERROR_OVERFLOW;
     }
 
-    *to = static_cast<int64_t> (temp);
+    if (temp < 0) {
+        printf("The num is negtive: %lld\n", temp);
+        return RET_ERROR_NEGATIVE;
+    }
+
+    if (p && *p) {
+        return RET_ERROR_INVALID_NUM;
+    }
+
+    *to = (int64_t) (temp);
+
     printf("The num:  %lld\n", *to);
     return RET_SUCCESS;
 }
@@ -44,6 +53,7 @@ DEFINE_METHOD(Move, initialize) {
     int64_t total = 0;
     if (string2num(totalSupply, &total) != RET_SUCCESS) {
         ctx->error("totalSupply is not valid");
+        return;
     }
 
     std::string key = BALANCEPRE + caller;
@@ -89,6 +99,7 @@ DEFINE_METHOD(Move, transfer) {
     int64_t token = 0;
     if (string2num(token_str, &token) != RET_SUCCESS) {
         ctx->error("token is not valid");
+        return;
     }
 
     std::string from_key = BALANCEPRE + from;
@@ -120,6 +131,7 @@ DEFINE_METHOD(Move, transfer) {
     from_balance = from_balance - token;
     if (LLONG_MAX - to_balance > token) {
         ctx->error("If to is added the token, his amount will overflow");
+        return;
     }
     to_balance = to_balance + token;
    
