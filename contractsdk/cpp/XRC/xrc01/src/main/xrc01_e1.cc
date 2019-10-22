@@ -68,8 +68,8 @@ DEFINE_METHOD(XRC01_E1, authorization) {
     xchain::Context* ctx = self.context();
     XRC01 xrc01(ctx);
     const std::string& to = ctx->arg("to");
-    uint64_t token_id = std::stoll(ctx->arg("token_id"));
-    uint64_t amount = std::stoll(ctx->arg("amount"));
+    uint64_t token_id = std::stoull(ctx->arg("token_id"));
+    uint64_t amount = std::stoull(ctx->arg("amount"));
 
     if (!xrc01.authorization(to, token_id, amount)) {
         printf("authorization token failed!");
@@ -84,8 +84,8 @@ DEFINE_METHOD(XRC01_E1, withdraw_authorization) {
     XRC01 xrc01(ctx);
 
     const std::string& from = ctx->arg("from");
-    uint64_t token_id = std::stoll(ctx->arg("token_id"));
-    uint64_t amount = std::stoll(ctx->arg("amount"));
+    uint64_t token_id = std::stoull(ctx->arg("token_id"));
+    uint64_t amount = std::stoull(ctx->arg("amount"));
 
     if (!xrc01.withdraw_authorization(from, token_id, amount)) {
         printf("withdraw_authorization token failed!");
@@ -100,8 +100,8 @@ DEFINE_METHOD(XRC01_E1, transfer) {
     XRC01 xrc01(ctx);
 
     const std::string& to = ctx->arg("to");
-    uint64_t token_id = std::stoll(ctx->arg("token_id"));
-    uint64_t amount = std::stoll(ctx->arg("amount"));
+    uint64_t token_id = std::stoull(ctx->arg("token_id"));
+    uint64_t amount = std::stoull(ctx->arg("amount"));
 
     if (!xrc01.transfer(to, token_id, amount)) {
         printf("transfer token failed!");
@@ -117,8 +117,8 @@ DEFINE_METHOD(XRC01_E1, authorize_transfer) {
 
     const std::string& from = ctx->arg("from");
     const std::string& to = ctx->arg("to");
-    uint64_t token_id = std::stoll(ctx->arg("token_id"));
-    uint64_t amount = std::stoll(ctx->arg("amount"));
+    uint64_t token_id = std::stoull(ctx->arg("token_id"));
+    uint64_t amount = std::stoull(ctx->arg("amount"));
 
     if (!xrc01.transfer_from(from, to, token_id, amount)) {
         printf("authorize_transfer token failed!");
@@ -134,7 +134,7 @@ DEFINE_METHOD(XRC01_E1, get_balance) {
     XRC01 xrc01(ctx);
 
     const std::string& account = ctx->arg("account");
-    uint64_t token_id = std::stoll(ctx->arg("token_id"));
+    uint64_t token_id = std::stoull(ctx->arg("token_id"));
     uint64_t balance;
 
     if (!xrc01.get_balance( account, token_id, &balance)) {
@@ -150,7 +150,7 @@ DEFINE_METHOD(XRC01_E1, get_authorized) {
     XRC01 xrc01(ctx);
 
     const std::string& account = ctx->arg("account");
-    uint64_t token_id = std::stoll(ctx->arg("token_id"));
+    uint64_t token_id = std::stoull(ctx->arg("token_id"));
     uint64_t authorized;
 
     if (!xrc01.get_authorized( account, token_id, &authorized)) {
@@ -165,7 +165,7 @@ DEFINE_METHOD(XRC01_E1, get_owner_of) {
     xchain::Context* ctx = self.context();
     XRC01 xrc01(ctx);
 
-    uint64_t token_id = std::stoll(ctx->arg("token_id"));
+    uint64_t token_id = std::stoull(ctx->arg("token_id"));
     std::string owner;
 
     if (!xrc01.owner_of(token_id, &owner)) {
@@ -181,7 +181,7 @@ DEFINE_METHOD(XRC01_E1, get_authorize_infos) {
     XRC01 xrc01(ctx);
 
     const std::string& account = ctx->arg("account");
-    uint64_t token_id = std::stoll(ctx->arg("token_id"));
+    uint64_t token_id = std::stoull(ctx->arg("token_id"));
     std::vector<XRC01::authorize_info> authorize_infos;
 
 
@@ -202,7 +202,7 @@ DEFINE_METHOD(XRC01_E1, get_authorized_infos) {
     XRC01 xrc01(ctx);
 
     const std::string& account = ctx->arg("account");
-    uint64_t token_id = std::stoll(ctx->arg("token_id"));
+    uint64_t token_id = std::stoull(ctx->arg("token_id"));
     std::vector<XRC01::authorize_info> authorized_infos;
 
 
