@@ -194,8 +194,10 @@ func (uv *UtxoVM) LoadIrreversibleBlockHeight() (int64, error) {
 		utxoMeta := &pb.UtxoMeta{}
 		err := proto.Unmarshal(irreversibleBlockHeightBuf, utxoMeta)
 		return utxoMeta.GetIrreversibleBlockHeight(), err
+	} else if common.NormalizedKVError(findErr) == common.ErrKVNotFound {
+		return int64(0), nil
 	}
-	return int64(0), nil
+	return int64(0), findErr
 }
 
 func (uv *UtxoVM) LoadIrreversibleSlideWindow() (int64, error) {
@@ -207,7 +209,7 @@ func (uv *UtxoVM) LoadIrreversibleSlideWindow() (int64, error) {
 	} else if common.NormalizedKVError(findErr) == common.ErrKVNotFound {
 		return uv.ledger.GetIrreversibleSlideWindow(), nil
 	}
-	return int64(10), nil
+	return int64(0), findErr
 }
 
 func (uv *UtxoVM) GetIrreversibleBlockHeight() int64 {
