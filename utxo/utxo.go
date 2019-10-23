@@ -1232,16 +1232,6 @@ func (uv *UtxoVM) VerifyTx(tx *pb.Transaction) (bool, error) {
 		uv.xlog.Warn("ImmediateVerifyTx failed", "error", err,
 			"AuthRequire ", tx.AuthRequire, "AuthRequireSigns ", tx.AuthRequireSigns,
 			"Initiator", tx.Initiator, "InitiatorSigns", tx.InitiatorSigns, "XuperSign", tx.XuperSign)
-		if tx.GetModifyBlock() != nil && tx.ModifyBlock.Marked {
-			ok, err := uv.verifyMarkedTx(tx)
-			if err == nil && ok {
-				return ok, nil
-			}
-		}
-		ok, err := uv.verifyRelyOnMarkedTxs(tx)
-		if err == nil && ok {
-			return ok, nil
-		}
 	}
 	return isValid, err
 }
