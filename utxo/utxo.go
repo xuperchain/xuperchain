@@ -76,6 +76,7 @@ var (
 	ErrGetReservedContracts = errors.New("Get reserved contracts error")
 	ErrInvokeReqParams      = errors.New("Invalid invoke request params")
 	ErrParseContractUtxos   = errors.New("Parse contract utxos error")
+	ErrContractTxAmout      = errors.New("Contract transfer amount error")
 )
 
 // package constants

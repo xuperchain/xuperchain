@@ -101,6 +101,13 @@ func (uv *UtxoVM) ImmediateVerifyTx(tx *pb.Transaction, isRootTx bool) (bool, er
 			return ok, ErrACLNotEnough
 		}
 
+		// verify amount of transfer within contract
+		ok, err = uv.verifyContractTxAmount(tx)
+		if !ok {
+			uv.xlog.Warn("ImmediateVerifyTx: verifyContractPermission failed", "error", err)
+			return ok, ErrContractTxAmout
+		}
+
 		// verify the permission of RWSet using ACL
 		ok, err = uv.verifyRWSetPermission(tx, verifiedID)
 		if !ok {
@@ -404,22 +411,8 @@ func (uv *UtxoVM) verifyContractPermission(tx *pb.Transaction) (bool, error) {
 		return true, nil
 	}
 
-	// af is the flag of whether the contract already carries the amount parameter
-	af := false
 	for i := 0; i < len(req); i++ {
 		tmpReq := req[i]
-		if af {
-			return false, ErrInvokeReqParams
-		}
-		if tmpReq.GetAmount() != "" {
-			amount, ok := new(big.Int).SetString(tmpReq.GetAmount(), 10)
-			if !ok {
-				return false, ErrInvokeReqParams
-			}
-			if amount.Cmp(new(big.Int).SetInt64(0)) == 1 {
-				af = true
-			}
-		}
 		contractName := tmpReq.GetContractName()
 		methodName := tmpReq.GetMethodName()
 
@@ -446,6 +439,47 @@ func getGasLimitFromTx(tx *pb.Transaction) (int64, error) {
 		return gasLimit, nil
 	}
 	return 0, nil
+}
+
+// verifyContractTxAmount verify
+func (uv *UtxoVM) verifyContractTxAmount(tx *pb.Transaction) (bool, error) {
+	req := tx.GetContractRequests()
+	// af is the flag of whether the contract already carries the amount parameter
+	af := false
+	amountCon := new(big.Int).SetInt64(0)
+	amountOut := new(big.Int).SetInt64(0)
+	var contractName string
+	for i := 0; i < len(req); i++ {
+		tmpReq := req[i]
+		if af {
+			return false, ErrInvokeReqParams
+		}
+		if tmpReq.GetAmount() != "" {
+			amountCon, ok := amountCon.SetString(tmpReq.GetAmount(), 10)
+			if !ok {
+				return false, ErrInvokeReqParams
+			}
+			if amountCon.Cmp(new(big.Int).SetInt64(0)) == 1 {
+				af = true
+				contractName = tmpReq.GetContractName()
+			}
+		}
+	}
+
+	for _, txOutput := range tx.GetTxOutputs() {
+		if string(txOutput.GetToAddr()) == contractName {
+			tmpAmount, ok := new(big.Int).SetString(string(txOutput.GetAmount()), 10)
+			if !ok {
+				return false, ErrInvokeReqParams
+			}
+			amountOut.Add(tmpAmount, amountOut)
+		}
+	}
+
+	if amountOut.Cmp(amountCon) != 0 {
+		return false, ErrContractTxAmout
+	}
+	return true, nil
 }
 
 // verifyTxRWSets verify tx read sets and write sets
