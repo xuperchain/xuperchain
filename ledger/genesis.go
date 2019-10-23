@@ -42,6 +42,8 @@ type RootConfig struct {
 	ForbiddenContract InvokeRequest `json:"forbidden_contract"`
 	// NewAccountResourceAmount the amount of creating a new contract account
 	NewAccountResourceAmount int64 `json:"new_account_resource_amount"`
+	// IrreversibleSlideWindow
+	IrreversibleSlideWindow string `json:"irreversibleslidewindow"`
 }
 
 // InvokeRequest define genesis reserved_contracts configure
@@ -67,6 +69,12 @@ func InvokeRequestFromJSON2Pb(jsonRequest []InvokeRequest) ([]*pb.InvokeRequest,
 		requestsWithPb = append(requestsWithPb, tmpReqWithPB)
 	}
 	return requestsWithPb, nil
+}
+
+// GetIrreversibleSlideWindow get irreversible slide window
+func (rc *RootConfig) GetIrreversibleSlideWindow() int64 {
+	irreversibleSlideWindow, _ := strconv.Atoi(rc.IrreversibleSlideWindow)
+	return int64(irreversibleSlideWindow)
 }
 
 // GetMaxBlockSizeInByte get max block size in Byte

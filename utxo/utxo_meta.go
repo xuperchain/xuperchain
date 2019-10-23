@@ -187,3 +187,85 @@ func (uv *UtxoVM) UpdateForbiddenContract(param *pb.InvokeRequest, batch kvdb.Ba
 	uv.metaTmp.ForbiddenContract = param
 	return err
 }
+
+func (uv *UtxoVM) LoadIrreversibleBlockHeight() (int64, error) {
+	irreversibleBlockHeightBuf, findErr := uv.metaTable.Get([]byte(ledger_pkg.IrreversibleBlockHeightKey))
+	if findErr == nil {
+		utxoMeta := &pb.UtxoMeta{}
+		err := proto.Unmarshal(irreversibleBlockHeightBuf, utxoMeta)
+		return utxoMeta.GetIrreversibleBlockHeight(), err
+	} else if common.NormalizedKVError(findErr) == common.ErrKVNotFound {
+		return int64(0), nil
+	}
+	return int64(0), findErr
+}
+
+func (uv *UtxoVM) LoadIrreversibleSlideWindow() (int64, error) {
+	irreversibleSlideWindowBuf, findErr := uv.metaTable.Get([]byte(ledger_pkg.IrreversibleSlideWindowKey))
+	if findErr == nil {
+		utxoMeta := &pb.UtxoMeta{}
+		err := proto.Unmarshal(irreversibleSlideWindowBuf, utxoMeta)
+		return utxoMeta.GetIrreversibleSlideWindow(), err
+	} else if common.NormalizedKVError(findErr) == common.ErrKVNotFound {
+		return uv.ledger.GetIrreversibleSlideWindow(), nil
+	}
+	return int64(0), findErr
+}
+
+func (uv *UtxoVM) GetIrreversibleBlockHeight() int64 {
+	uv.mutexMeta.Lock()
+	defer uv.mutexMeta.Unlock()
+	return uv.meta.IrreversibleBlockHeight
+}
+
+func (uv *UtxoVM) GetIrreversibleSlideWindow() int64 {
+	uv.mutexMeta.Lock()
+	defer uv.mutexMeta.Unlock()
+	return uv.meta.IrreversibleSlideWindow
+}
+
+func (uv *UtxoVM) UpdateIrreversibleBlockHeight(nextIrreversibleBlockHeight int64, batch kvdb.Batch) error {
+	tmpMeta := &pb.UtxoMeta{}
+	newMeta := proto.Clone(tmpMeta).(*pb.UtxoMeta)
+	newMeta.IrreversibleBlockHeight = nextIrreversibleBlockHeight
+	irreversibleBlockHeightBuf, pbErr := proto.Marshal(newMeta)
+	if pbErr != nil {
+		uv.xlog.Warn("failed to marshal pb meta")
+		return pbErr
+	}
+	err := batch.Put([]byte(pb.MetaTablePrefix+ledger_pkg.IrreversibleBlockHeightKey), irreversibleBlockHeightBuf)
+	if err != nil {
+		return err
+	}
+	uv.xlog.Info("Update irreversibleBlockHeight succeed")
+	uv.mutexMeta.Lock()
+	defer uv.mutexMeta.Unlock()
+	uv.metaTmp.IrreversibleBlockHeight = nextIrreversibleBlockHeight
+	return nil
+}
+
+func (uv *UtxoVM) updateNextIrreversibleBlockHeight(blockHeight int64, curIrreversibleBlockHeight int64, curIrreversibleSlideWindow int64, batch kvdb.Batch) error {
+	// slideWindow为开启,不需要更新IrreversibleBlockHeight
+	if curIrreversibleSlideWindow <= 0 {
+		return nil
+	}
+	// curIrreversibleBlockHeight小于0, 不符合预期，报警
+	if curIrreversibleBlockHeight < 0 {
+		uv.xlog.Warn("update irreversible block height error, should be here")
+		return errors.New("curIrreversibleBlockHeight is less than 0")
+	}
+	nextIrreversibleBlockHeight := blockHeight - curIrreversibleSlideWindow
+	// 下一个不可逆高度小于当前不可逆高度，直接返回
+	// slideWindow变大或者发生区块回滚
+	if nextIrreversibleBlockHeight <= curIrreversibleBlockHeight {
+		return nil
+	}
+	// 正常升级
+	// slideWindow不变或变小
+	if nextIrreversibleBlockHeight > curIrreversibleBlockHeight {
+		err := uv.UpdateIrreversibleBlockHeight(nextIrreversibleBlockHeight, batch)
+		return err
+	}
+
+	return errors.New("unexpected error")
+}
