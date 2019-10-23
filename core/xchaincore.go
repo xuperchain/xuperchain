@@ -617,7 +617,7 @@ func (xc *XChainCore) doMiner() {
 		txs = append(txs, ucTx)
 	}
 	fakeBlock, err := xc.Ledger.FormatFakeBlock(txs, xc.address, xc.privateKey,
-		t.UnixNano(), curTerm, curBlockNum, xc.Utxovm.GetLatestBlockid(), xc.Utxovm.GetTotal())
+		t.UnixNano(), curTerm, curBlockNum, xc.Utxovm.GetLatestBlockid(), xc.Utxovm.GetTotal(), xc.Ledger.GetMeta().TrunkHeight+1)
 	if err != nil {
 		xc.log.Warn("[Minning] format fake block error", "logid")
 		return
@@ -638,7 +638,7 @@ func (xc *XChainCore) doMiner() {
 	txs = append(txs, awardtx)
 	freshBlock, err = xc.Ledger.FormatMinerBlock(txs, xc.address, xc.privateKey,
 		t.UnixNano(), curTerm, curBlockNum, xc.Utxovm.GetLatestBlockid(), targetBits,
-		xc.Utxovm.GetTotal(), qc, fakeBlock.FailedTxs)
+		xc.Utxovm.GetTotal(), qc, fakeBlock.FailedTxs, xc.Ledger.GetMeta().TrunkHeight+1)
 	if err != nil {
 		xc.log.Warn("[Minning] format block error", "logid", header.Logid, "err", err)
 		return
