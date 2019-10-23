@@ -57,6 +57,9 @@ const (
 	ReservedContractsKey        = "ReservedContracts"
 	ForbiddenContractKey        = "ForbiddenContract"
 	NewAccountResourceAmountKey = "NewAccountResourceAmount"
+	// Irreversible block height & slide window
+	IrreversibleBlockHeightKey = "IrreversibleBlockHeight"
+	IrreversibleSlideWindowKey = "IrreversibleSlideWindow"
 )
 
 // Ledger define data structure of Ledger
@@ -928,6 +931,12 @@ func (l *Ledger) GetGenesisBlock() *GenesisBlock {
 		return l.GenesisBlock
 	}
 	return nil
+}
+
+// GetIrreversibleSlideWindow return irreversible slide window
+func (l *Ledger) GetIrreversibleSlideWindow() int64 {
+	defaultIrreversibleSlideWindow := l.GenesisBlock.GetConfig().GetIrreversibleSlideWindow()
+	return defaultIrreversibleSlideWindow
 }
 
 // GetMaxBlockSize return max block size

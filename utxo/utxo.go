@@ -474,6 +474,17 @@ func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, priv
 		xlog.Warn("failed to load newAccountResourceAmount from disk", "loadErr", loadErr)
 		return nil, loadErr
 	}
+	// load irreversible block height & slide window parameters
+	utxoVM.meta.IrreversibleBlockHeight, loadErr = utxoVM.LoadIrreversibleBlockHeight()
+	if loadErr != nil {
+		xlog.Warn("failed to load irreversible block height from disk", "loadErr", loadErr)
+		return nil, loadErr
+	}
+	utxoVM.meta.IrreversibleSlideWindow, loadErr = utxoVM.LoadIrreversibleSlideWindow()
+	if loadErr != nil {
+		xlog.Warn("failed to load irreversibleSlide window from disk", "loadErr", loadErr)
+		return nil, loadErr
+	}
 	utxoVM.metaTmp = utxoVM.meta
 	return utxoVM, nil
 }
@@ -1469,6 +1480,13 @@ func (uv *UtxoVM) PlayAndRepost(blockid []byte, needRepost bool, isRootTx bool) 
 		// 合约执行失败，不影响签发块
 		return err
 	}
+	// 更新不可逆区块高度
+	curIrreversibleBlockHeight := uv.GetIrreversibleBlockHeight()
+	curIrreversibleSlideWindow := uv.GetIrreversibleSlideWindow()
+	updateErr := uv.updateNextIrreversibleBlockHeight(block.Height, curIrreversibleBlockHeight, curIrreversibleSlideWindow, batch)
+	if updateErr != nil {
+		return updateErr
+	}
 	//更新latestBlockid
 	persistErr := uv.updateLatestBlockid(block.Blockid, batch, "failed to save block")
 	if persistErr != nil {
@@ -1530,6 +1548,13 @@ func (uv *UtxoVM) PlayForMiner(blockid []byte, batch kvdb.Batch) error {
 	if err = uv.smartContract.Finalize(block.Blockid); err != nil {
 		uv.xlog.Warn("smart contract.finalize failed", "blockid", fmt.Sprintf("%x", block.Blockid))
 		return err
+	}
+	// 更新不可逆区块高度
+	curIrreversibleBlockHeight := uv.GetIrreversibleBlockHeight()
+	curIrreversibleSlideWindow := uv.GetIrreversibleSlideWindow()
+	updateErr := uv.updateNextIrreversibleBlockHeight(block.Height, curIrreversibleBlockHeight, curIrreversibleSlideWindow, batch)
+	if updateErr != nil {
+		return updateErr
 	}
 	//更新latestBlockid
 	err = uv.updateLatestBlockid(block.Blockid, batch, "failed to save block")
@@ -1613,6 +1638,14 @@ func (uv *UtxoVM) Walk(blockid []byte) error {
 		return findErr
 	}
 	for _, undoBlk := range undoBlocks {
+		// 加一个(共识)开关来判定是否需要采用不可逆
+		// 不需要更新IrreversibleBlockHeight以及SlideWindow，因为共识层面的回滚不会回滚到IrreversibleBlockHeight
+		// 只有账本裁剪才需要更新IrreversibleBlockHeight以及SlideWindow
+		curIrreversibleBlockHeight := uv.GetIrreversibleBlockHeight()
+		if undoBlk.Height <= curIrreversibleBlockHeight {
+			uv.xlog.Warn("undo failed, block to be undo is older than irreversibleBlockHeight", "irreversibleBlockHeight", curIrreversibleBlockHeight, "undo block height", undoBlk.Height)
+			return errors.New("undo error")
+		}
 		batch := uv.ldb.NewBatch()
 		uv.xlog.Info("start undo block", "blockid", fmt.Sprintf("%x", undoBlk.Blockid))
 		ctx := &contract.TxContext{UtxoBatch: batch, Block: undoBlk, IsUndo: true, LedgerObj: uv.ledger, UtxoMeta: uv} // 将batch赋值到合约机的上下文
@@ -1691,14 +1724,21 @@ func (uv *UtxoVM) Walk(blockid []byte) error {
 			uv.xlog.Error("smart contract fianlize failed", "blockid", fmt.Sprintf("%x", todoBlk.Blockid))
 			return err
 		}
-		updateErr := uv.updateLatestBlockid(todoBlk.Blockid, batch, "error occurs when do blocks") // 每do一个block,是一个原子batch写
+		// 更新不可逆区块高度
+		curIrreversibleBlockHeight := uv.GetIrreversibleBlockHeight()
+		curIrreversibleSlideWindow := uv.GetIrreversibleSlideWindow()
+		updateErr := uv.updateNextIrreversibleBlockHeight(todoBlk.Height, curIrreversibleBlockHeight, curIrreversibleSlideWindow, batch)
+		if updateErr != nil {
+			return updateErr
+		}
+		updateErr = uv.updateLatestBlockid(todoBlk.Blockid, batch, "error occurs when do blocks") // 每do一个block,是一个原子batch写
 		if updateErr != nil {
 			return updateErr
 		}
 		// 内存级别更新UtxoMeta信息
-		//uv.mutexMeta.Lock()
-		//defer uv.mutexMeta.Unlock()
+		uv.mutexMeta.Lock()
 		uv.meta = uv.metaTmp
+		uv.mutexMeta.Unlock()
 	}
 	return nil
 }
@@ -2015,6 +2055,9 @@ func (uv *UtxoVM) GetMeta() *pb.UtxoMeta {
 	meta.MaxBlockSize = uv.meta.GetMaxBlockSize()
 	meta.ReservedContracts = uv.meta.GetReservedContracts()
 	meta.ForbiddenContract = uv.meta.GetForbiddenContract()
+	meta.NewAccountResourceAmount = uv.meta.GetNewAccountResourceAmount()
+	meta.IrreversibleBlockHeight = uv.meta.GetIrreversibleBlockHeight()
+	meta.IrreversibleSlideWindow = uv.meta.GetIrreversibleSlideWindow()
 	return meta
 }
 
