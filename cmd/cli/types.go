@@ -357,6 +357,10 @@ type UtxoMeta struct {
 	ForbiddenContract InvokeRequest `json:"forbiddenContract"`
 	// NewAccountResourceAmount resource amount of creating an account
 	NewAccountResourceAmount int64 `json:"newAccountResourceAmount"`
+	// IrreversibleBlockHeight irreversible block height
+	IrreversibleBlockHeight int64 `json:"irreversibleBlockHeight"`
+	// IrreversibleSlideWindow irreversible slide window
+	IrreversibleSlideWindow int64 `json:"irreversibleSlideWindow"`
 }
 
 // ChainStatus proto.ChainStatus
@@ -423,6 +427,9 @@ func FromSystemStatusPB(statuspb *pb.SystemsStatus) *SystemStatus {
 				NewAccountResourceAmount: utxoMeta.GetNewAccountResourceAmount(),
 				ReservedContracts:        rcs,
 				ForbiddenContract:        forbiddenContractMap,
+				// Irreversible block height & slide window
+				IrreversibleBlockHeight: utxoMeta.GetIrreversibleBlockHeight(),
+				IrreversibleSlideWindow: utxoMeta.GetIrreversibleSlideWindow(),
 			},
 		})
 	}
