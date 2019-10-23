@@ -17,7 +17,6 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/xuperchain/xuperunion/contract"
 	"github.com/xuperchain/xuperunion/crypto/client"
-	"github.com/xuperchain/xuperunion/crypto/hash"
 	"github.com/xuperchain/xuperunion/pb"
 	pm "github.com/xuperchain/xuperunion/permission"
 	"github.com/xuperchain/xuperunion/permission/acl"
@@ -498,71 +497,100 @@ func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
 	return true, nil
 }
 
-func (uv *UtxoVM) verifyMarkedTx(tx *pb.Transaction) (bool, error) {
+func (uv *UtxoVM) verifyMarked(tx *pb.Transaction) (bool, bool, error) {
+	isRelyOnMarkedTx := false
+	if tx.GetModifyBlock() != nil && tx.ModifyBlock.Marked {
+		isRelyOnMarkedTx := true
+		err := uv.verifyMarkedTx(tx)
+		if err != nil {
+			return false, isRelyOnMarkedTx, err
+		}
+		return true, isRelyOnMarkedTx, nil
+	}
+	ok, isRelyOnMarkedTx, err := uv.verifyRelyOnMarkedTxs(tx)
+	return ok, isRelyOnMarkedTx, err
+}
+
+func (uv *UtxoVM) verifyMarkedTx(tx *pb.Transaction) error {
 	bytespk := []byte(tx.ModifyBlock.PublicKey)
 	xcc, err := client.CreateCryptoClientFromJSONPublicKey(bytespk)
 	if err != nil {
-		return false, err
+		return err
 	}
 	ecdsaKey, err := xcc.GetEcdsaPublicKeyFromJSON(bytespk)
 	if err != nil {
-		return false, err
+		return err
 	}
 	isMatch, _ := xcc.VerifyAddressUsingPublicKey(uv.modifyBlockAddr, ecdsaKey)
 	if !isMatch {
-		return false, errors.New("address and public key not match")
+		return errors.New("address and public key not match")
 	}
 
 	bytesign, err := hex.DecodeString(tx.ModifyBlock.Sign)
 	if err != nil {
-		return false, fmt.Errorf("invalide arg type: sign byte")
+		return errors.New("invalide arg type: sign byte")
 	}
-	digestHash := hash.DoubleSha256([]byte(tx.Txid))
+	digestHash, err := txhash.MakeTxDigestHash(tx)
+	if err != nil {
+		uv.xlog.Warn("verifyMarkedTx call MakeTxDigestHash failed", "error", err)
+		return err
+	}
 	ok, err := xcc.VerifyECDSA(ecdsaKey, bytesign, digestHash)
 	if err != nil || !ok {
 		uv.xlog.Warn("validateUpdateBlockChainData verifySignatures failed")
-		return false, err
+		return err
 	}
-	return true, nil
+	return nil
 }
 
 // verifyRelyOnMarkedTxs
-// bool bool verify
-func (uv *UtxoVM) verifyRelyOnMarkedTxs(tx *pb.Transaction) (bool, error) {
+// bool Pass verification or not
+// bool isRelyOnMarkedTx
+// err
+func (uv *UtxoVM) verifyRelyOnMarkedTxs(tx *pb.Transaction) (bool, bool, error) {
+	isRelyOnMarkedTx := false
 	for _, txInput := range tx.GetTxInputs() {
 		reftxid := txInput.RefTxid
-		ok, err := uv.checkRelyOnMarkedTxid(reftxid, tx.Blockid)
-		if !ok || err != nil {
-			return ok, err
+		if string(reftxid) == "" {
+			continue
+		}
+		ok, isRelyOnMarkedTx, err := uv.checkRelyOnMarkedTxid(reftxid, tx.Blockid)
+		if err != nil || !ok {
+			return ok, isRelyOnMarkedTx, err
 		}
 	}
 	for _, txIn := range tx.GetTxInputsExt() {
 		reftxid := txIn.RefTxid
-		ok, err := uv.checkRelyOnMarkedTxid(reftxid, tx.Blockid)
+		if string(reftxid) == "" {
+			continue
+		}
+		ok, isRelyOnMarkedTx, err := uv.checkRelyOnMarkedTxid(reftxid, tx.Blockid)
 		if !ok || err != nil {
-			return ok, err
+			return ok, isRelyOnMarkedTx, err
 		}
 	}
 
-	return true, nil
+	return true, isRelyOnMarkedTx, nil
 }
 
-func (uv *UtxoVM) checkRelyOnMarkedTxid(reftxid []byte, blockid []byte) (bool, error) {
-	if string(reftxid) == "" {
-		return false, nil
-	}
+// bool Pass verification or not
+// bool isRely
+// err
+func (uv *UtxoVM) checkRelyOnMarkedTxid(reftxid []byte, blockid []byte) (bool, bool, error) {
+	isRely := false
 	reftx, err := uv.ledger.QueryTransaction(reftxid)
 	if err != nil {
-		return false, nil
+		return true, isRely, nil
 	}
 	if reftx.GetModifyBlock() != nil && reftx.ModifyBlock.Marked {
+		isRely = true
 		block, err := uv.ledger.QueryBlock(blockid)
 		if err != nil {
-			return false, err
+			return false, isRely, err
 		}
 		if block.Height >= reftx.ModifyBlock.EffectiveHeight {
-			return false, nil
+			return false, isRely, nil
 		}
 	}
-	return true, nil
+	return true, isRely, nil
 }
