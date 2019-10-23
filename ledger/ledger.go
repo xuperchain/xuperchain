@@ -482,7 +482,6 @@ func (l *Ledger) UpdateBlockChainData(txid string, ptxid string, publickey strin
 		PublicKey:       publickey,
 		Sign:            sign,
 	}
-	tx.TxOutputs = []*pb.TxOutput{}
 	tx.Desc = []byte("")
 	tx.TxOutputsExt = []*pb.TxOutputExt{}
 
