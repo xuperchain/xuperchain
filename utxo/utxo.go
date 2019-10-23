@@ -74,6 +74,8 @@ var (
 	ErrTxTooLarge     = errors.New("Tx size is too large")
 
 	ErrGetReservedContracts = errors.New("Get reserved contracts error")
+	ErrInvokeReqParams      = errors.New("Invalid invoke request params")
+	ErrParseContractUtxos   = errors.New("Parse contract utxos error")
 )
 
 // package constants
@@ -760,12 +762,27 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 
 	var requests []*pb.InvokeRequest
 	var responses []*pb.ContractResponse
+	// af is the flag of whether the contract already carries the amount parameter
+	af := false
 	for i, tmpReq := range req.Requests {
+		if af {
+			return nil, ErrInvokeReqParams
+		}
 		if tmpReq == nil {
 			continue
 		}
 		if tmpReq.GetModuleName() == "" && tmpReq.GetContractName() == "" && tmpReq.GetMethodName() == "" {
 			continue
+		}
+
+		if tmpReq.GetAmount() != "" {
+			amount, ok := new(big.Int).SetString(tmpReq.GetAmount(), 10)
+			if !ok {
+				return nil, ErrInvokeReqParams
+			}
+			if amount.Cmp(new(big.Int).SetInt64(0)) == 1 {
+				af = true
+			}
 		}
 		moduleName := tmpReq.GetModuleName()
 		vm, err := uv.vmMgr3.GetVM(moduleName)

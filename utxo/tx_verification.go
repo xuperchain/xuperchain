@@ -30,12 +30,14 @@ import (
 // ImmediateVerifyTx verify tx Immediately
 // Transaction verification workflow:
 //   1. verify transaction ID is the same with data hash
-//   2. verify initiator type, should be ak
-//   3. verify all signatures of initiator and auth requires
-//   4. verify the account ACL of utxo input
-//   5. verify the contract requests' permission
-//   6. verify the permission of contract RWSet (WriteSet could including unauthorized data change)
-//   7. run contract requests and verify if the RWSet result is the same with preExed RWSet (heavy
+//   2. verify all signatures of initiator and auth requires
+//   3. verify the utxo input, there are three kinds of input validation
+//		1). PKI technology for transferring from address
+//		2). Account ACL for transferring from account
+//		3). Contract logic transferring from contract
+//   4. verify the contract requests' permission
+//   5. verify the permission of contract RWSet (WriteSet could including unauthorized data change)
+//   6. run contract requests and verify if the RWSet result is the same with preExed RWSet (heavy
 //      operation, keep it at last)
 func (uv *UtxoVM) ImmediateVerifyTx(tx *pb.Transaction, isRootTx bool) (bool, error) {
 	// Pre processing of tx data
@@ -244,10 +246,37 @@ func (uv *UtxoVM) verifyXuperSign(tx *pb.Transaction, digestHash []byte) (bool, 
 	return ok, uniqueAddrs, nil
 }
 
-// verify UTXO input permission in transaction using ACL
+// verify utxo inputs, there are three kinds of input validation
+//	1). PKI technology for transferring from address
+//	2). Account ACL for transferring from account
+//	3). Contract logic transferring from contract
 func (uv *UtxoVM) verifyUTXOPermission(tx *pb.Transaction, verifiedID map[string]bool) (bool, error) {
-	// verify tx input ACL
+	// verify tx input
+	conUtxoInputs, _, err := xmodel.ParseContractUtxo(tx)
+	if err != nil {
+		uv.xlog.Warn("verifyUTXOPermission error, parseContractUtxo ")
+		return false, ErrParseContractUtxos
+	}
+	conUtxoInputsMap := map[string]bool{}
+	for _, conUtxoInput := range conUtxoInputs {
+		addr := conUtxoInput.GetFromAddr()
+		txid := conUtxoInput.GetRefTxid()
+		offset := conUtxoInput.GetRefOffset()
+		utxoKey := genUtxoKey(addr, txid, offset)
+		conUtxoInputsMap[utxoKey] = true
+	}
+
 	for _, txInput := range tx.TxInputs {
+		// if transfer from contract
+		addr := txInput.GetFromAddr()
+		txid := txInput.GetRefTxid()
+		offset := txInput.GetRefOffset()
+		utxoKey := genUtxoKey(addr, txid, offset)
+		if conUtxoInputsMap[utxoKey] {
+			// this utxo transfer from contract, will verify in rwset verify
+			continue
+		}
+
 		name := string(txInput.FromAddr)
 		if verifiedID[name] {
 			// this ID(either AK or Account) is verified before
@@ -375,8 +404,22 @@ func (uv *UtxoVM) verifyContractPermission(tx *pb.Transaction) (bool, error) {
 		return true, nil
 	}
 
+	// af is the flag of whether the contract already carries the amount parameter
+	af := false
 	for i := 0; i < len(req); i++ {
 		tmpReq := req[i]
+		if af {
+			return false, ErrInvokeReqParams
+		}
+		if tmpReq.GetAmount() != "" {
+			amount, ok := new(big.Int).SetString(tmpReq.GetAmount(), 10)
+			if !ok {
+				return false, ErrInvokeReqParams
+			}
+			if amount.Cmp(new(big.Int).SetInt64(0)) == 1 {
+				af = true
+			}
+		}
 		contractName := tmpReq.GetContractName()
 		methodName := tmpReq.GetMethodName()
 
