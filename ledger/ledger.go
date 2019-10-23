@@ -223,7 +223,7 @@ func (l *Ledger) FormatBlock(txList []*pb.Transaction,
 	proposer []byte, ecdsaPk *ecdsa.PrivateKey, /*矿工的公钥私钥*/
 	timestamp int64, curTerm int64, curBlockNum int64,
 	preHash []byte, utxoTotal *big.Int) (*pb.InternalBlock, error) {
-	return l.formatBlock(txList, proposer, ecdsaPk, timestamp, curTerm, curBlockNum, preHash, 0, utxoTotal, true, nil, nil)
+	return l.formatBlock(txList, proposer, ecdsaPk, timestamp, curTerm, curBlockNum, preHash, 0, utxoTotal, true, nil, nil, 0)
 }
 
 // FormatMinerBlock format block for miner
@@ -232,7 +232,7 @@ func (l *Ledger) FormatMinerBlock(txList []*pb.Transaction,
 	timestamp int64, curTerm int64, curBlockNum int64,
 	preHash []byte, targetBits int32, utxoTotal *big.Int,
 	qc *pb.QuorumCert, failedTxs map[string]string) (*pb.InternalBlock, error) {
-	return l.formatBlock(txList, proposer, ecdsaPk, timestamp, curTerm, curBlockNum, preHash, targetBits, utxoTotal, true, qc, failedTxs)
+	return l.formatBlock(txList, proposer, ecdsaPk, timestamp, curTerm, curBlockNum, preHash, targetBits, utxoTotal, true, qc, failedTxs, 0)
 }
 
 // IsProofed check workload proof
@@ -251,8 +251,8 @@ func IsProofed(blockID []byte, targetBits int32) bool {
 func (l *Ledger) FormatFakeBlock(txList []*pb.Transaction,
 	proposer []byte, ecdsaPk *ecdsa.PrivateKey, /*矿工的公钥私钥*/
 	timestamp int64, curTerm int64, curBlockNum int64,
-	preHash []byte, utxoTotal *big.Int) (*pb.InternalBlock, error) {
-	return l.formatBlock(txList, proposer, ecdsaPk, timestamp, curTerm, curBlockNum, preHash, 0, utxoTotal, false, nil, nil)
+	preHash []byte, utxoTotal *big.Int, blockHeight int64) (*pb.InternalBlock, error) {
+	return l.formatBlock(txList, proposer, ecdsaPk, timestamp, curTerm, curBlockNum, preHash, 0, utxoTotal, false, nil, nil, blockHeight)
 }
 
 /*
@@ -262,7 +262,7 @@ func (l *Ledger) formatBlock(txList []*pb.Transaction,
 	proposer []byte, ecdsaPk *ecdsa.PrivateKey, /*矿工的公钥私钥*/
 	timestamp int64, curTerm int64, curBlockNum int64,
 	preHash []byte, targetBits int32, utxoTotal *big.Int, needSign bool,
-	qc *pb.QuorumCert, failedTxs map[string]string) (*pb.InternalBlock, error) {
+	qc *pb.QuorumCert, failedTxs map[string]string, blockHeight int64) (*pb.InternalBlock, error) {
 	l.xlog.Info("begin format block", "preHash", fmt.Sprintf("%x", preHash))
 	//编译的环境变量指定
 	block := &pb.InternalBlock{Version: BlockVersion}
@@ -274,6 +274,7 @@ func (l *Ledger) formatBlock(txList []*pb.Transaction,
 	block.CurBlockNum = curBlockNum
 	block.TargetBits = targetBits
 	block.Justify = qc
+	block.Height = blockHeight
 	jsPk, pkErr := l.cryptoClient.GetEcdsaPublicKeyJSONFormat(ecdsaPk)
 	if pkErr != nil {
 		return nil, pkErr
