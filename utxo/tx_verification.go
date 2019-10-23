@@ -17,7 +17,6 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/xuperchain/xuperunion/contract"
 	"github.com/xuperchain/xuperunion/crypto/client"
-	"github.com/xuperchain/xuperunion/crypto/hash"
 	"github.com/xuperchain/xuperunion/pb"
 	pm "github.com/xuperchain/xuperunion/permission"
 	"github.com/xuperchain/xuperunion/permission/acl"
@@ -531,7 +530,11 @@ func (uv *UtxoVM) verifyMarkedTx(tx *pb.Transaction) error {
 	if err != nil {
 		return errors.New("invalide arg type: sign byte")
 	}
-	digestHash := hash.DoubleSha256([]byte(tx.Txid))
+	digestHash, err := txhash.MakeTxDigestHash(tx)
+	if err != nil {
+		uv.xlog.Warn("verifyMarkedTx call MakeTxDigestHash failed", "error", err)
+		return err
+	}
 	ok, err := xcc.VerifyECDSA(ecdsaKey, bytesign, digestHash)
 	if err != nil || !ok {
 		uv.xlog.Warn("validateUpdateBlockChainData verifySignatures failed")
