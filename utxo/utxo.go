@@ -1771,7 +1771,10 @@ func (uv *UtxoVM) queryAccountContainAK(address string) ([]string, error) {
 
 func (uv *UtxoVM) queryTxFromForbiddenWithConfirmed(txid []byte) (bool, bool, error) {
 	// 如果配置文件配置了封禁tx监管合约，那么继续下面的执行。否则，直接返回.
-	forbiddenContract := uv.ledger.GenesisBlock.GetConfig().ForbiddenContract
+	forbiddenContract, err := uv.GetForbiddenContract()
+	if forbiddenContract == nil || err != nil {
+		return false, false, err
+	}
 
 	// 这里不针对ModuleName/ContractName/MethodName做特殊化处理
 	moduleNameForForbidden := forbiddenContract.ModuleName
