@@ -1,6 +1,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <climits>
+#include <cassert>
 #include "xchain/xchain.h"
 
 struct Move : public xchain::Contract {};
@@ -9,9 +10,7 @@ const std::string BALANCEPRE = "balanceOf_";
 
 enum ret_t {
     RET_SUCCESS = 0,  
-    RET_ERROR_INVALID_NUM,
-    RET_ERROR_OVERFLOW,
-    RET_ERROR_NEGATIVE
+    RET_ERROR_INVALID_NUM
 };
 
 ret_t string2num(const std::string& from, int64_t *to) {
@@ -20,12 +19,12 @@ ret_t string2num(const std::string& from, int64_t *to) {
     temp = std::strtoll(from.c_str(), &p, 10);
 
     if (temp >= LLONG_MAX || temp <= LLONG_MIN) {
-        return RET_ERROR_OVERFLOW;
+        return RET_ERROR_INVALID_NUM;
     }
 
     if (temp < 0) {
         printf("The num is negtive: %lld\n", temp);
-        return RET_ERROR_NEGATIVE;
+        return RET_ERROR_INVALID_NUM;
     }
 
     if (p && *p) {
@@ -33,7 +32,8 @@ ret_t string2num(const std::string& from, int64_t *to) {
     }
 
     *to = (int64_t) (temp);
-
+    assert(sizeof(*to) == sizeof(temp));
+    
     printf("The num:  %lld\n", *to);
     return RET_SUCCESS;
 }
@@ -58,23 +58,30 @@ DEFINE_METHOD(Move, initialize) {
 
     std::string key = BALANCEPRE + caller;
     ctx->put_object(key, totalSupply);
+    
+    ctx->ok("initialize success");
 }
 
 DEFINE_METHOD(Move, balance) {
     xchain::Context* ctx = self.context();
     const std::string& caller = ctx->arg("caller");
+    std::string key;
     if (caller.empty()) {
-        ctx->error("missing caller");
-        return;
+        const std::string& myself = ctx->initiator();
+        key = BALANCEPRE + myself;
+        if (myself.empty()) {
+            ctx->error("missing caller");
+            return;
+        }
+    } else {
+        key = BALANCEPRE + caller;
     }
     
-    std::string key = BALANCEPRE + caller;
     std::string value;
-    if (ctx->get_object(key, &value)) {
-        ctx->ok(value);
-    } else {
+    if (!ctx->get_object(key, &value)) {
         ctx->error("caller not found");
     }
+    ctx->ok(value);
 }
 
 DEFINE_METHOD(Move, transfer) {
@@ -105,20 +112,19 @@ DEFINE_METHOD(Move, transfer) {
     std::string from_key = BALANCEPRE + from;
     std::string value;
     int64_t from_balance = 0;
-    if (ctx->get_object(from_key, &value)) {
-        if (string2num(value.c_str(), &from_balance) != RET_SUCCESS) { 
-            ctx->error("The balance format of from is wrong");
-            return;
-        }
-        if (from_balance < token) {
-            ctx->error("The balance of from is not enough");
-            return;
-        }  
-    } else {
+    if (!ctx->get_object(from_key, &value)) {
         ctx->error("key not found");
         return;
     }
-
+    if (string2num(value.c_str(), &from_balance) != RET_SUCCESS) { 
+        ctx->error("The balance format of from is wrong");
+        return;
+    }
+    if (from_balance < token) {
+        ctx->error("The balance of from is not enough");
+        return;
+    }  
+    
     std::string to_key = BALANCEPRE + to;
     int64_t to_balance = 0;
     if (ctx->get_object(to_key, &value)) {
