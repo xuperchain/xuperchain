@@ -57,7 +57,9 @@ DEFINE_METHOD(Move, initialize) {
     }
 
     std::string key = BALANCEPRE + caller;
-    ctx->put_object(key, totalSupply);
+    if (!ctx->put_object(key, totalSupply)) {
+        ctx->error("initialize failed");
+    }
     
     ctx->ok("initialize success");
 }
@@ -143,9 +145,13 @@ DEFINE_METHOD(Move, transfer) {
    
     char buf[64]; 
     snprintf(buf, 64, "%lld", from_balance);
-    ctx->put_object(from_key, buf);
+    if (!ctx->put_object(from_key, buf)) {
+        ctx->error("update from failed");
+    }
     snprintf(buf, 64, "%lld", to_balance);
-    ctx->put_object(to_key, buf);
+    if (!ctx->put_object(to_key, buf)) {
+        ctx->error("update to failed");
+    }
 
     ctx->ok("transfer success");
 }
