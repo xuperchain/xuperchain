@@ -113,7 +113,9 @@ func (cp *CorePeersFilter) SetRouteName(name string) {
 // half from current and half from next
 func (cp *CorePeersFilter) Filter() ([]peer.ID, error) {
 	peerids := make([]peer.ID, 0)
+	cp.node.routeLock.Lock()
 	bcRoute, ok := cp.node.coreRoute[cp.name]
+	cp.node.routeLock.Unlock()
 	if !ok {
 		return peerids, nil
 	}
