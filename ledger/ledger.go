@@ -1036,6 +1036,10 @@ func (l *Ledger) GetBaseDB() kvdb.Database {
 	return l.baseDB
 }
 
+func (l *Ledger) RemoveBlocks(fromBlockid []byte, toBlockid []byte, batch kvdb.Batch) error {
+	return l.removeBlocks(fromBlockid, toBlockid, batch)
+}
+
 func (l *Ledger) removeBlocks(fromBlockid []byte, toBlockid []byte, batch kvdb.Batch) error {
 	fromBlock, findErr := l.fetchBlock(fromBlockid)
 	if findErr != nil {
