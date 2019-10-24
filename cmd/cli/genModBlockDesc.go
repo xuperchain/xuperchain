@@ -16,7 +16,9 @@ import (
 
 	"github.com/xuperchain/xuperunion/contract"
 	crypto_client "github.com/xuperchain/xuperunion/crypto/client"
-	"github.com/xuperchain/xuperunion/crypto/hash"
+	"github.com/xuperchain/xuperunion/global"
+	"github.com/xuperchain/xuperunion/pb"
+	"github.com/xuperchain/xuperunion/utxo/txhash"
 )
 
 // GenModBlockDescCommand modify blockchain data desc file only by regulatory address
@@ -60,7 +62,17 @@ func (g *GenModBlockDescCommand) genDesc(ctx context.Context, txid string) error
 	if err != nil {
 		return err
 	}
-	digestHash := hash.DoubleSha256([]byte(txid))
+
+	tx, err := g.queryTx(ctx, txid)
+	if err != nil {
+		return err
+	}
+	tx.Desc = []byte("")
+	tx.TxOutputsExt = []*pb.TxOutputExt{}
+	digestHash, err := txhash.MakeTxDigestHash(tx)
+	if err != nil {
+		return err
+	}
 	sign, sErr := cryptoClient.SignECDSA(privateKey, digestHash)
 	if sErr != nil {
 		return sErr
@@ -93,6 +105,35 @@ func (g *GenModBlockDescCommand) genDesc(ctx context.Context, txid string) error
 	}
 
 	return nil
+}
+
+func (g *GenModBlockDescCommand) queryTx(ctx context.Context, txid string) (*pb.Transaction, error) {
+	client := g.cli.XchainClient()
+	rawTxid, err := hex.DecodeString(txid)
+	if err != nil {
+		return nil, fmt.Errorf("bad txid:%s", txid)
+	}
+	txstatus := &pb.TxStatus{
+		Header: &pb.Header{
+			Logid: global.Glogid(),
+		},
+		Bcname: g.cli.RootOptions.Name,
+		Txid:   rawTxid,
+	}
+	reply, err := client.QueryTx(ctx, txstatus)
+	if err != nil {
+		return nil, err
+	}
+	if reply.Header.Error != pb.XChainErrorEnum_SUCCESS {
+		return nil, errors.New(reply.Header.Error.String())
+	}
+	if reply.Tx == nil {
+		return nil, errors.New("tx not found")
+	}
+	if reply.Status != pb.TransactionStatus_CONFIRM {
+		return nil, errors.New("tx is not in block")
+	}
+	return reply.Tx, nil
 }
 
 func (g *GenModBlockDescCommand) addFlags() {
