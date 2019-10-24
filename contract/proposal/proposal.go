@@ -56,7 +56,7 @@ func (prp *Proposal) Run(desc *contract.TxDesc) error {
 	case proposeMethod:
 		return prp.runPropose(desc)
 	case voteMethod:
-		return prp.runVote(desc)
+		return prp.runVote(desc, prp.context.Block)
 	case createTriggerMethod:
 		return prp.saveTrigger(desc.Tx.Txid, desc.Trigger)
 	case thawMethod:
@@ -201,7 +201,7 @@ func (prp *Proposal) IsPropose(proposalTx *pb.Transaction) bool {
 	return proposalDesc.Method == proposeMethod
 }
 
-func (prp *Proposal) runVote(desc *contract.TxDesc) error {
+func (prp *Proposal) runVote(desc *contract.TxDesc, block *pb.InternalBlock) error {
 	prp.log.Debug("start run vote")
 	proposalTxid, err := prp.getTxidFromArgs(desc)
 	if err != nil {
@@ -220,7 +220,8 @@ func (prp *Proposal) runVote(desc *contract.TxDesc) error {
 		return err
 	}
 	stopVoteHeight := int64(argValue)
-	ledgerHeight := prp.ledger.GetMeta().TrunkHeight
+	//ledgerHeight := prp.ledger.GetMeta().TrunkHeight
+	ledgerHeight := block.Height
 	if ledgerHeight > stopVoteHeight {
 		prp.log.Warn(fmt.Sprintf("this propposal is expired for voting, %d > %d", ledgerHeight, stopVoteHeight))
 		return nil
