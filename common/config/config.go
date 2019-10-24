@@ -210,6 +210,8 @@ type NodeConfig struct {
 	TxidCacheExpiredTime time.Duration `yaml:"txidCacheExpiredTime,omitempty"`
 	// local switch of compressed
 	EnableCompress bool `yaml:"enableCompress,omitempty"`
+	// BlockBroadcaseMode Full_BroadCast_Mode = 0, Interactive_BroadCast_Mode = 1.
+	BlockBroadcaseMode uint8 `yaml:"blockBroadcaseMode,omitempty"`
 }
 
 // KernelConfig kernel config
@@ -301,6 +303,7 @@ func (nc *NodeConfig) defaultNodeConfig() {
 	nc.FailSkip = false
 	nc.ModifyBlockAddr = ""
 	nc.EnableXEndorser = false
+	nc.BlockBroadcaseMode = 0
 }
 
 // NewNodeConfig returns a config of a node

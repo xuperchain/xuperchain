@@ -672,7 +672,12 @@ func (xc *XChainCore) doMiner() {
 	xc.log.Debug("[Minning] Start to BroadCast", "logid", header.Logid)
 
 	go func() {
-		// broadcast block
+		// 这里提出两种块传播模式：
+		//  1. 一种是完全块广播模式(Full_BroadCast_Mode)，即直接广播原始块给所有相邻节点，
+		//     适用于出块矿工在知道周围节点都不具备该块的情况下；
+		//  2. 一种是问询式块广播模式(Interactive_BroadCast_Mode)，即先广播新块的头部给相邻节点，
+		//     相邻节点在没有相同块的情况下通过GetBlock主动获取块数据。
+		// broadcast block in Full_BroadCast_Mode since it's the original miner
 		block := &pb.Block{
 			Bcname:  xc.bcname,
 			Blockid: freshBlock.Blockid,

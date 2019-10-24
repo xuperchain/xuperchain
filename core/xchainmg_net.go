@@ -178,17 +178,43 @@ func (xm *XChainMG) HandleSendBlock(msg *xuper_p2p.XuperMessage) {
 		xm.Log.Error("HandleSendBlock ProcessBlock error", "error", err.Error())
 		return
 	}
+
+	// send block to peers
 	bcname := block.GetBcname()
 	bc := xm.Get(bcname)
-	filters := []p2pv2.FilterStrategy{p2pv2.DefaultStrategy}
-	if bc.NeedCoreConnection() {
-		filters = append(filters, p2pv2.CorePeersStrategy)
+	if xm.Cfg.BlockBroadcaseMode == 1 {
+		//  we could use Interactive_BroadCast_Mode to avoid duplicate messages
+		blockidMsg := &pb.Block{
+			Bcname:  bcname,
+			Blockid: block.Blockid,
+		}
+		msgInfo, err := proto.Marshal(blockidMsg)
+		if err != nil {
+			xm.Log.Error("HandleSendBlock marshal NEW_BLOCKID message failed", "logid", msg.GetHeader().GetLogid())
+			return
+		}
+		msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, bcname, "", xuper_p2p.XuperMessage_NEW_BLOCKID, msgInfo, xuper_p2p.XuperMessage_NONE)
+		filters := []p2pv2.FilterStrategy{p2pv2.DefaultStrategy}
+		if bc.NeedCoreConnection() {
+			filters = append(filters, p2pv2.CorePeersStrategy)
+		}
+		opts := []p2pv2.MessageOption{
+			p2pv2.WithFilters(filters),
+			p2pv2.WithBcName(bcname),
+		}
+		go xm.P2pv2.SendMessage(context.Background(), msg, opts...)
+	} else {
+		// default to Full_BroadCast_Mode
+		filters := []p2pv2.FilterStrategy{p2pv2.DefaultStrategy}
+		if bc.NeedCoreConnection() {
+			filters = append(filters, p2pv2.CorePeersStrategy)
+		}
+		opts := []p2pv2.MessageOption{
+			p2pv2.WithFilters(filters),
+			p2pv2.WithBcName(bcname),
+		}
+		go xm.P2pv2.SendMessage(context.Background(), msg, opts...)
 	}
-	opts := []p2pv2.MessageOption{
-		p2pv2.WithFilters(filters),
-		p2pv2.WithBcName(bcname),
-	}
-	go xm.P2pv2.SendMessage(context.Background(), msg, opts...)
 	return
 }
 
