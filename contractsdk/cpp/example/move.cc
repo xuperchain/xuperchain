@@ -113,7 +113,7 @@ DEFINE_METHOD(Move, transfer) {
     std::string value;
     int64_t from_balance = 0;
     if (!ctx->get_object(from_key, &value)) {
-        ctx->error("the money you own is 0");
+        ctx->error("the token you own is 0");
         return;
     }
     if (string2num(value.c_str(), &from_balance) != RET_SUCCESS) { 
