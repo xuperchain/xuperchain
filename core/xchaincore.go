@@ -296,6 +296,16 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 
 	go xc.Speed.ShowLoop(xc.log)
 	go xc.repostOfflineTx()
+	go func() {
+		for {
+			time.Sleep(3 * time.Second)
+			result, _ := xc.Ledger.GetBranchInfo(xc.Ledger.GetMeta().TipBlockid, xc.Ledger.GetMeta().TrunkHeight)
+			for _, v := range result {
+				fmt.Println("---------->>>>>>", fmt.Sprintf("%x", []byte(v)))
+			}
+			fmt.Println("---------->>>>>> over")
+		}
+	}()
 	return nil
 }
 

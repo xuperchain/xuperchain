@@ -631,6 +631,13 @@ func (l *Ledger) ConfirmBlock(block *pb.InternalBlock, isRoot bool) ConfirmStatu
 		l.xlog.Warn("save current block fail", "saveErr", saveErr)
 		return confirmStatus
 	}
+	// update branch head
+	updateBranchErr := l.updateBranchInfo(block.Blockid, block.PreHash, block.Height, batchWrite)
+	if updateBranchErr != nil {
+		confirmStatus.Succ = false
+		l.xlog.Warn("update branch info fail", "updateBranchErr", updateBranchErr)
+		return confirmStatus
+	}
 	txExist, txData := l.parallelCheckTx(realTransactions, block)
 	cbNum := 0
 	for _, tx := range realTransactions {
@@ -1072,6 +1079,7 @@ func (l *Ledger) Truncate(utxovmLastID []byte) error {
 		l.xlog.Warn("failed to find utxovm last block", "findErr", findErr)
 		return findErr
 	}
+	deletedBlockid := l.meta.TipBlockid
 	rmErr := l.removeBlocks(l.meta.TipBlockid, block.Blockid, batchWrite)
 	if rmErr != nil {
 		l.xlog.Warn("failed to remove garbage blocks", "from", global.F(l.meta.TipBlockid), "to", global.F(block.Blockid))
@@ -1084,6 +1092,12 @@ func (l *Ledger) Truncate(utxovmLastID []byte) error {
 		return pbErr
 	}
 	batchWrite.Put([]byte(pb.MetaTablePrefix), metaBuf)
+	// update branch head
+	updateBranchErr := l.updateBranchInfo(block.Blockid, deletedBlockid, block.Height, batchWrite)
+	if updateBranchErr != nil {
+		l.xlog.Warn("Truncated failed when calling updateBranchInfo", "updateBranchErr", updateBranchErr)
+		return updateBranchErr
+	}
 	kvErr := batchWrite.Write()
 	if kvErr != nil {
 		l.xlog.Warn("batch write failed when Truncate", "kvErr", kvErr)
