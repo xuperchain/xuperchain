@@ -32,7 +32,7 @@ void (*wasm_rt_trap)(wasm_rt_trap_t code) = NULL;
 
 static void* xvm_malloc(size_t size);
 static void* xvm_realloc(void* ptr, size_t size);
-static void* xvm_free(void* ptr);
+static void xvm_free(void* ptr);
 
 static void _wasm_rt_trap(wasm_rt_trap_t code) {
   fprintf(stderr, "panic:%d\n", code);
@@ -328,6 +328,6 @@ static void* xvm_realloc(void* ptr, size_t size) {
   return new_ptr;
 }
 
-static void* xvm_free(void* ptr) {
+static void xvm_free(void* ptr) {
   free(ptr);
 }
