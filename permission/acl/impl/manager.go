@@ -91,3 +91,33 @@ func (mgr *Manager) GetContractMethodACLWithConfirmed(contractName string, metho
 
 	return acl, confirmed, nil
 }
+
+// GetAccountAddresses get the addresses belongs to contract account
+func (mgr *Manager) GetAccountAddresses(accountName string) ([]string, error) {
+	acl, err := mgr.GetAccountACL(accountName)
+	if err != nil {
+		return nil, err
+	}
+
+	return mgr.getAddressesByACL(acl)
+}
+
+func (mgr *Manager) getAddressesByACL(acl *pb.Acl) ([]string, error) {
+	addresses := make([]string, 0)
+
+	switch acl.GetPm().GetRule() {
+	case pb.PermissionRule_SIGN_THRESHOLD:
+		for ak := range acl.GetAksWeight() {
+			addresses = append(addresses, ak)
+		}
+	case pb.PermissionRule_SIGN_AKSET:
+		for _, set := range acl.GetAkSets().GetSets() {
+			aks := set.GetAks()
+			addresses = append(addresses, aks...)
+		}
+	default:
+		return nil, errors.New("Unknown permission rule")
+	}
+
+	return addresses, nil
+}
