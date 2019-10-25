@@ -57,12 +57,28 @@ std::string string_last(const std::string& source,
 // verify if initiator and auth_require are in identify list
 // return 0 if check pass, otherwise check fail
 int verify_identity(xchain::Context* ctx) {
-    std::string value;
-    // TODO: initiator could be contract account, need add contract
-    // SDK method to support get all aks from a contact account @zhangmiao
-    std::string initiator = PREFIX_IDENTITY + ctx->initiator();
-    if (!ctx->get_object(initiator, &value) || value != "true") {
-        return -1;
+    // verify initiator
+    xchain::Account initiator(ctx->initiator());
+    if (initiator.type() == xchain::ADDRESS) {
+        // initiator is address
+        std::string value;
+        std::string initiatorKey = PREFIX_IDENTITY + initiator.get_name();
+        if (!ctx->get_object(initiatorKey, &value) || value != "true") {
+            return -1;
+        }
+    } else {
+        // initiator is account
+        std::vector<std::string> addresses;
+        if (!initiator.get_addresses(&addresses)) {
+            return -1;
+        }
+        for (int i = 0; i < addresses.size(); i++) {
+            std::string value;
+            std::string initiatorKey = PREFIX_IDENTITY + addresses[i];
+            if (!ctx->get_object(initiatorKey, &value) || value != "true") {
+                return -1;
+            }
+        }
     }
 
     int auth_require_size = ctx->auth_require_size();
