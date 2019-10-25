@@ -24,6 +24,7 @@ var (
 		"-Os",
 		"-I/usr/local/include",
 		"-Isrc",
+		"-Werror=vla",
 	}
 	defaultLDFlags = []string{
 		"-Oz",
