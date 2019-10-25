@@ -1,0 +1,31 @@
+syntax = "proto3";
+option optimize_for = LITE_RUNTIME;
+
+package xrc01;
+
+message token {
+    uint64 id = 1;
+    string name = 2;
+    bool fungible = 3;
+    uint64 supply = 4;
+    string issue_account = 5;
+    string profile_desc = 6; 
+}
+
+message asset_info {
+    // id = account + string(token_id)
+    string id = 1;
+    string account = 2;
+    uint64 token_id = 3;
+    uint64 amount = 4;
+    uint64 authorized = 5;
+}
+
+message authorize_info {
+    // id = from + to + string(token_id)
+    string id = 1;
+    string from = 2;
+    string to = 3;
+    uint64 token_id = 4;
+    uint64 amount = 5;    
+}

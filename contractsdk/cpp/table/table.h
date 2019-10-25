@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include "xchain/xchain.h"
 #include "table/types.h"
 #include "xchain/basic_iterator.h"
@@ -41,6 +42,8 @@ public:
     bool del(T t);
     // put insert a new row.
     bool put(T t);
+    // update a row.
+    bool update(T t);    
 
 private:
     std::string _table_name;

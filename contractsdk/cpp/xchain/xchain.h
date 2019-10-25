@@ -4,6 +4,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <memory>
 #include "xchain/transaction.h"
 #include "xchain/block.h"
 #include "xchain/basic_iterator.h"
