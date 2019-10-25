@@ -44,8 +44,6 @@ var (
 	FileHandlersCacheSize = 1024 //how many opened files-handlers cached
 	// DisableTxDedup ...
 	DisableTxDedup = false //whether disable dedup tx beform confirm
-	// TxSizePercent max percent of txs' size in one block
-	TxSizePercent = 0.8
 )
 
 const (
@@ -54,7 +52,14 @@ const (
 	// BlockVersion for version 1
 	BlockVersion = 1
 	// BlockCacheSize block counts in lru cache
-	BlockCacheSize = 100 //block counts in lru cache
+	BlockCacheSize              = 100 //block counts in lru cache
+	MaxBlockSizeKey             = "MaxBlockSize"
+	ReservedContractsKey        = "ReservedContracts"
+	ForbiddenContractKey        = "ForbiddenContract"
+	NewAccountResourceAmountKey = "NewAccountResourceAmount"
+	// Irreversible block height & slide window
+	IrreversibleBlockHeightKey = "IrreversibleBlockHeight"
+	IrreversibleSlideWindowKey = "IrreversibleSlideWindow"
 )
 
 // Ledger define data structure of Ledger
@@ -192,25 +197,6 @@ func (l *Ledger) loadGenesisBlock() error {
 		return gErr
 	}
 	l.GenesisBlock = gb
-	if l.meta.MaxBlockSize == 0 {
-		l.meta.MaxBlockSize = l.GenesisBlock.GetConfig().GetMaxBlockSizeInByte()
-	}
-	if l.meta.NewAccountResourceAmount == 0 {
-		l.meta.NewAccountResourceAmount = l.GenesisBlock.GetConfig().GetNewAccountResourceAmount()
-	}
-	if l.meta.ReservedContracts == nil {
-		l.meta.ReservedContracts, gErr = l.GenesisBlock.GetConfig().GetReservedContract()
-		if gErr != nil {
-			return gErr
-		}
-	}
-	if l.meta.ForbiddenContract == nil {
-		forbiddenContractArr, gErr := l.GenesisBlock.GetConfig().GetForbiddenContract()
-		if gErr != nil || len(forbiddenContractArr) <= 0 {
-			return gErr
-		}
-		l.meta.ForbiddenContract = forbiddenContractArr[0]
-	}
 	return nil
 }
 
@@ -237,7 +223,7 @@ func (l *Ledger) FormatBlock(txList []*pb.Transaction,
 	proposer []byte, ecdsaPk *ecdsa.PrivateKey, /*矿工的公钥私钥*/
 	timestamp int64, curTerm int64, curBlockNum int64,
 	preHash []byte, utxoTotal *big.Int) (*pb.InternalBlock, error) {
-	return l.formatBlock(txList, proposer, ecdsaPk, timestamp, curTerm, curBlockNum, preHash, 0, utxoTotal, true, nil, nil)
+	return l.formatBlock(txList, proposer, ecdsaPk, timestamp, curTerm, curBlockNum, preHash, 0, utxoTotal, true, nil, nil, 0)
 }
 
 // FormatMinerBlock format block for miner
@@ -245,8 +231,8 @@ func (l *Ledger) FormatMinerBlock(txList []*pb.Transaction,
 	proposer []byte, ecdsaPk *ecdsa.PrivateKey, /*矿工的公钥私钥*/
 	timestamp int64, curTerm int64, curBlockNum int64,
 	preHash []byte, targetBits int32, utxoTotal *big.Int,
-	qc *pb.QuorumCert, failedTxs map[string]string) (*pb.InternalBlock, error) {
-	return l.formatBlock(txList, proposer, ecdsaPk, timestamp, curTerm, curBlockNum, preHash, targetBits, utxoTotal, true, qc, failedTxs)
+	qc *pb.QuorumCert, failedTxs map[string]string, blockHeight int64) (*pb.InternalBlock, error) {
+	return l.formatBlock(txList, proposer, ecdsaPk, timestamp, curTerm, curBlockNum, preHash, targetBits, utxoTotal, true, qc, failedTxs, blockHeight)
 }
 
 // IsProofed check workload proof
@@ -265,8 +251,8 @@ func IsProofed(blockID []byte, targetBits int32) bool {
 func (l *Ledger) FormatFakeBlock(txList []*pb.Transaction,
 	proposer []byte, ecdsaPk *ecdsa.PrivateKey, /*矿工的公钥私钥*/
 	timestamp int64, curTerm int64, curBlockNum int64,
-	preHash []byte, utxoTotal *big.Int) (*pb.InternalBlock, error) {
-	return l.formatBlock(txList, proposer, ecdsaPk, timestamp, curTerm, curBlockNum, preHash, 0, utxoTotal, false, nil, nil)
+	preHash []byte, utxoTotal *big.Int, blockHeight int64) (*pb.InternalBlock, error) {
+	return l.formatBlock(txList, proposer, ecdsaPk, timestamp, curTerm, curBlockNum, preHash, 0, utxoTotal, false, nil, nil, blockHeight)
 }
 
 /*
@@ -276,7 +262,7 @@ func (l *Ledger) formatBlock(txList []*pb.Transaction,
 	proposer []byte, ecdsaPk *ecdsa.PrivateKey, /*矿工的公钥私钥*/
 	timestamp int64, curTerm int64, curBlockNum int64,
 	preHash []byte, targetBits int32, utxoTotal *big.Int, needSign bool,
-	qc *pb.QuorumCert, failedTxs map[string]string) (*pb.InternalBlock, error) {
+	qc *pb.QuorumCert, failedTxs map[string]string, blockHeight int64) (*pb.InternalBlock, error) {
 	l.xlog.Info("begin format block", "preHash", fmt.Sprintf("%x", preHash))
 	//编译的环境变量指定
 	block := &pb.InternalBlock{Version: BlockVersion}
@@ -288,6 +274,7 @@ func (l *Ledger) formatBlock(txList []*pb.Transaction,
 	block.CurBlockNum = curBlockNum
 	block.TargetBits = targetBits
 	block.Justify = qc
+	block.Height = blockHeight
 	jsPk, pkErr := l.cryptoClient.GetEcdsaPublicKeyJSONFormat(ecdsaPk)
 	if pkErr != nil {
 		return nil, pkErr
@@ -471,71 +458,6 @@ func (l *Ledger) IsValidTx(idx int, tx *pb.Transaction, block *pb.InternalBlock)
 	return true
 }
 
-// UpdateMaxBlockSize update block max size
-func (l *Ledger) UpdateMaxBlockSize(maxBlockSize int64, batch kvdb.Batch) error {
-	if maxBlockSize <= 0 {
-		return fmt.Errorf("invalid block size: %d", maxBlockSize)
-	}
-	l.mutex.Lock()
-	defer l.mutex.Unlock()
-	newMeta := proto.Clone(l.meta).(*pb.LedgerMeta)
-	newMeta.MaxBlockSize = maxBlockSize
-	metaBuf, pbErr := proto.Marshal(newMeta)
-	if pbErr != nil {
-		l.xlog.Warn("failed to marshal pb meta")
-		return pbErr
-	}
-	batch.Put([]byte(pb.MetaTablePrefix), metaBuf)
-	l.meta = newMeta
-	l.xlog.Info("update max block size succeed")
-	return nil
-}
-
-// UpdateNewAccountResourceAmount update the resource amount of new an account
-func (l *Ledger) UpdateNewAccountResourceAmount(newAccountResourceAmount int64, batch kvdb.Batch) error {
-	if newAccountResourceAmount <= 0 {
-		return fmt.Errorf("invalid newAccountResourceAmount: %d", newAccountResourceAmount)
-	}
-	l.mutex.Lock()
-	defer l.mutex.Unlock()
-	newMeta := proto.Clone(l.meta).(*pb.LedgerMeta)
-	newMeta.NewAccountResourceAmount = newAccountResourceAmount
-	metaBuf, pbErr := proto.Marshal(newMeta)
-	if pbErr != nil {
-		l.xlog.Warn("failed to marshal pb meta")
-		return pbErr
-	}
-	batch.Put([]byte(pb.MetaTablePrefix), metaBuf)
-	l.meta = newMeta
-	l.xlog.Info("update newAccountResource succeed")
-	return nil
-}
-
-// UpdateReserveredContract update reservered contract
-func (l *Ledger) UpdateReservedContract(params []*pb.InvokeRequest, batch kvdb.Batch) error {
-	if params == nil {
-		return fmt.Errorf("invalid reservered contract requests")
-	}
-
-	l.mutex.Lock()
-	defer l.mutex.Unlock()
-
-	newMeta := proto.Clone(l.meta).(*pb.LedgerMeta)
-	newMeta.ReservedContracts = params
-
-	metaBuf, pbErr := proto.Marshal(newMeta)
-	if pbErr != nil {
-		l.xlog.Warn("failed to marshal pb meta")
-		return pbErr
-	}
-
-	batch.Put([]byte(pb.MetaTablePrefix), metaBuf)
-
-	l.meta = newMeta
-	l.xlog.Info("Update reservered contract", "reservedContracts", l.meta.ReservedContracts)
-	return nil
-}
-
 // UpdateBlockChainData modify tx which txid is txid
 func (l *Ledger) UpdateBlockChainData(txid string, ptxid string, publickey string, sign string) error {
 	if txid == "" || ptxid == "" {
@@ -560,7 +482,6 @@ func (l *Ledger) UpdateBlockChainData(txid string, ptxid string, publickey strin
 		PublicKey:       publickey,
 		Sign:            sign,
 	}
-	tx.TxOutputs = []*pb.TxOutput{}
 	tx.Desc = []byte("")
 	tx.TxOutputsExt = []*pb.TxOutputExt{}
 
@@ -572,30 +493,6 @@ func (l *Ledger) UpdateBlockChainData(txid string, ptxid string, publickey strin
 	l.confirmedTable.Put(tx.Txid, pbTxBuf)
 
 	l.xlog.Info("Update BlockChainData success", "txid", hex.EncodeToString(tx.Txid))
-	return nil
-}
-
-// UpdateForbiddenContract update forbidden contract param
-func (l *Ledger) UpdateForbiddenContract(param *pb.InvokeRequest, batch kvdb.Batch) error {
-	if param == nil {
-		return fmt.Errorf("invalid forbidden contract request")
-	}
-
-	l.mutex.Lock()
-	defer l.mutex.Unlock()
-
-	newMeta := proto.Clone(l.meta).(*pb.LedgerMeta)
-	newMeta.ForbiddenContract = param
-
-	metaBuf, pbErr := proto.Marshal(newMeta)
-	if pbErr != nil {
-		l.xlog.Warn("failed to marshal pb meta")
-		return pbErr
-	}
-	batch.Put([]byte(pb.MetaTablePrefix), metaBuf)
-
-	l.meta = newMeta
-	l.xlog.Info("Update forbidden contract", "forbiddenContract", l.meta.ForbiddenContract)
 	return nil
 }
 
@@ -732,6 +629,13 @@ func (l *Ledger) ConfirmBlock(block *pb.InternalBlock, isRoot bool) ConfirmStatu
 	if saveErr != nil {
 		confirmStatus.Succ = false
 		l.xlog.Warn("save current block fail", "saveErr", saveErr)
+		return confirmStatus
+	}
+	// update branch head
+	updateBranchErr := l.updateBranchInfo(block.Blockid, block.PreHash, block.Height, batchWrite)
+	if updateBranchErr != nil {
+		confirmStatus.Succ = false
+		l.xlog.Warn("update branch info fail", "updateBranchErr", updateBranchErr)
 		return confirmStatus
 	}
 	txExist, txData := l.parallelCheckTx(realTransactions, block)
@@ -1035,21 +939,30 @@ func (l *Ledger) GetGenesisBlock() *GenesisBlock {
 	return nil
 }
 
+// GetIrreversibleSlideWindow return irreversible slide window
+func (l *Ledger) GetIrreversibleSlideWindow() int64 {
+	defaultIrreversibleSlideWindow := l.GenesisBlock.GetConfig().GetIrreversibleSlideWindow()
+	return defaultIrreversibleSlideWindow
+}
+
 // GetMaxBlockSize return max block size
 func (l *Ledger) GetMaxBlockSize() int64 {
 	defaultBlockSize := l.GenesisBlock.GetConfig().GetMaxBlockSizeInByte()
-	blockSizeUpdated := l.meta.MaxBlockSize
-	if blockSizeUpdated != 0 {
-		return blockSizeUpdated
-	}
 	return defaultBlockSize
 }
 
 // GetNewAccountResourceAmount return the resource amount of new an account
 func (l *Ledger) GetNewAccountResourceAmount() int64 {
-	//defaultNewAccountResourceAmount := l.GenesisBlock.GetConfig().GetNewAccountResourceAmount()
-	newAccountResourceAmountUpdated := l.meta.NewAccountResourceAmount
-	return newAccountResourceAmountUpdated
+	defaultNewAccountResourceAmount := l.GenesisBlock.GetConfig().GetNewAccountResourceAmount()
+	return defaultNewAccountResourceAmount
+}
+
+func (l *Ledger) GetReservedContracts() ([]*pb.InvokeRequest, error) {
+	return l.GenesisBlock.GetConfig().GetReservedContract()
+}
+
+func (l *Ledger) GetForbiddenContract() ([]*pb.InvokeRequest, error) {
+	return l.GenesisBlock.GetConfig().GetForbiddenContract()
 }
 
 // SavePendingBlock put block into pending table
@@ -1118,12 +1031,6 @@ func (l *Ledger) QueryBlockByHeight(height int64) (*pb.InternalBlock, error) {
 	return l.QueryBlock(blockID)
 }
 
-// MaxTxSizePerBlock max total size of all txs in one block
-func (l *Ledger) MaxTxSizePerBlock() int {
-	maxBlkSize := float64(l.GetMaxBlockSize())
-	return int(maxBlkSize * TxSizePercent)
-}
-
 // GetBaseDB get internal db instance
 func (l *Ledger) GetBaseDB() kvdb.Database {
 	return l.baseDB
@@ -1172,6 +1079,7 @@ func (l *Ledger) Truncate(utxovmLastID []byte) error {
 		l.xlog.Warn("failed to find utxovm last block", "findErr", findErr)
 		return findErr
 	}
+	deletedBlockid := l.meta.TipBlockid
 	rmErr := l.removeBlocks(l.meta.TipBlockid, block.Blockid, batchWrite)
 	if rmErr != nil {
 		l.xlog.Warn("failed to remove garbage blocks", "from", global.F(l.meta.TipBlockid), "to", global.F(block.Blockid))
@@ -1184,6 +1092,12 @@ func (l *Ledger) Truncate(utxovmLastID []byte) error {
 		return pbErr
 	}
 	batchWrite.Put([]byte(pb.MetaTablePrefix), metaBuf)
+	// update branch head
+	updateBranchErr := l.updateBranchInfo(block.Blockid, deletedBlockid, block.Height, batchWrite)
+	if updateBranchErr != nil {
+		l.xlog.Warn("Truncated failed when calling updateBranchInfo", "updateBranchErr", updateBranchErr)
+		return updateBranchErr
+	}
 	kvErr := batchWrite.Write()
 	if kvErr != nil {
 		l.xlog.Warn("batch write failed when Truncate", "kvErr", kvErr)

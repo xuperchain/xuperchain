@@ -412,14 +412,6 @@ message LedgerMeta {
   bytes tip_blockid = 2;
   // the height of the trunk
   int64 trunk_height = 3;
-  // max block size
-  int64 max_block_size = 4;
-  // preset contracts
-  repeated InvokeRequest reserved_contracts = 5;
-  // reset forbidden contract configuration
-  InvokeRequest forbidden_contract = 6;
-  // the resource amount of creating an account
-  int64 new_account_resource_amount = 7;
 }
 
 // Utxo metadata
@@ -429,6 +421,12 @@ message UtxoMeta {
   string utxo_total = 3;       // 当前utxo vm上的总资产
   int64 avgDelay = 4;          // 平均上链延时
   int64 unconfirmTxAmount = 5; // 待确认交易量
+  int64 max_block_size = 6;    // max block size
+  repeated InvokeRequest reserved_contracts = 7;       // preset contracts
+  InvokeRequest forbidden_contract = 8;        // reset forbidden contract configuration
+  int64 new_account_resource_amount = 9;	// the resource amount of creating an account
+  int64 irreversibleBlockHeight = 10;	// 当前不可逆区块高度，与utxo对齐
+  int64 irreversibleSlideWindow = 11;	// 当前不可逆区块高度调整窗口
 }
 
 // The internal block struct
@@ -754,6 +752,9 @@ message InvokeRequest {
   string method_name = 3;
   map<string, bytes> args = 4;
   repeated ResourceLimit resource_limits = 5;
+  // amount is the amount transfer to the contract
+  // attention: In one transaction, transfer to only one contract is allowed
+  string amount = 6;
 }
 
 // 预执行的返回结构
@@ -764,6 +765,8 @@ message InvokeResponse {
   int64 gas_used = 4;
   repeated InvokeRequest requests = 5;
   repeated ContractResponse responses = 6;
+  repeated TxInput utxoInputs = 7;
+  repeated TxOutput utxoOutputs = 8;
 }
 
 // 扩展输入

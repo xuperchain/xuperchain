@@ -23,7 +23,7 @@ func BenchmarkPerformance(t *testing.B) {
 	utxoVM, _ := MakeUtxoVM("xuper", ledger, workspace, minerPrivateKey, minerPublicKey, []byte(minerAddress), nil, 5000,
 		60, 500, nil, false, DefaultKVEngine, crypto_client.CryptoTypeDefault)
 	//创建链的时候分配财富
-	tx, err := utxoVM.GenerateRootTx([]byte(`
+	tx, err := GenerateRootTx([]byte(`
        {
         "version" : "1"
         , "consensus" : {

@@ -84,3 +84,8 @@ pluginConfPath: "./conf/plugins.conf"
 
 # 是否启用p2p核心节点直连
 coreConnection : false
+
+txidCacheExpiredTime : "10s"
+
+# 是否压缩交易/区块
+enableCompress : true

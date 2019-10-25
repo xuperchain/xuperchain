@@ -5,10 +5,15 @@ import (
 	"sync"
 
 	log "github.com/xuperchain/log15"
+	"github.com/xuperchain/xuperunion/common"
 	"github.com/xuperchain/xuperunion/kv/kvdb"
 	"github.com/xuperchain/xuperunion/ledger"
 	"github.com/xuperchain/xuperunion/pb"
 	xmodel_pb "github.com/xuperchain/xuperunion/xmodel/pb"
+)
+
+const (
+	bucketExtUTXOCacheSize = 1024
 )
 
 // XModel xmodel data structure
@@ -22,6 +27,8 @@ type XModel struct {
 	logger          log.Logger
 	batchCache      *sync.Map
 	lastBatch       kvdb.Batch
+	// extUtxoCache caches per bucket key-values using version as key
+	extUtxoCache sync.Map // map[string]*LRUCache
 }
 
 // NewXuperModel new an instance of XModel
@@ -55,6 +62,15 @@ func (s *XModel) updateExtUtxo(tx *pb.Transaction, batch kvdb.Batch) error {
 			s.logger.Trace("    xmodel put", "putkey", string(putKey), "version", valueVersion)
 		}
 		s.batchCache.Store(string(bucketAndKey), valueVersion)
+		s.bucketCacheStore(txOut.Bucket, valueVersion, &xmodel_pb.VersionedData{
+			RefTxid:   tx.Txid,
+			RefOffset: int32(offset),
+			PureData: &xmodel_pb.PureData{
+				Key:    txOut.Key,
+				Value:  txOut.Value,
+				Bucket: txOut.Bucket,
+			},
+		})
 	}
 	return nil
 }
@@ -95,7 +111,7 @@ func (s *XModel) UndoTx(tx *pb.Transaction, batch kvdb.Batch) error {
 			s.logger.Trace("    undo xmodel del", "delkey", string(delKey))
 			s.batchCache.Store(string(bucketAndKey), "")
 		} else {
-			verData, err := s.fetchVersionedData(previousVersion)
+			verData, err := s.fetchVersionedData(txOut.Bucket, previousVersion)
 			if err != nil {
 				return err
 			}
@@ -117,12 +133,16 @@ func (s *XModel) UndoTx(tx *pb.Transaction, batch kvdb.Batch) error {
 	return nil
 }
 
-func (s *XModel) fetchVersionedData(version string) (*xmodel_pb.VersionedData, error) {
+func (s *XModel) fetchVersionedData(bucket, version string) (*xmodel_pb.VersionedData, error) {
+	value, ok := s.bucketCacheGet(bucket, version)
+	if ok {
+		return value, nil
+	}
 	txid, offset, err := parseVersion(version)
 	if err != nil {
 		return nil, err
 	}
-	tx, confirmed, err := s.queryTx(txid)
+	tx, _, err := s.queryTx(txid)
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +150,7 @@ func (s *XModel) fetchVersionedData(version string) (*xmodel_pb.VersionedData, e
 		return nil, fmt.Errorf("xmodel.Get failed, offset overflow: %d, %d", offset, len(tx.TxOutputsExt))
 	}
 	txOutputs := tx.TxOutputsExt[offset]
-	return &xmodel_pb.VersionedData{
+	value = &xmodel_pb.VersionedData{
 		RefTxid:   txid,
 		RefOffset: int32(offset),
 		PureData: &xmodel_pb.PureData{
@@ -138,8 +158,9 @@ func (s *XModel) fetchVersionedData(version string) (*xmodel_pb.VersionedData, e
 			Value:  txOutputs.Value,
 			Bucket: txOutputs.Bucket,
 		},
-		Confirmed: confirmed,
-	}, nil
+	}
+	s.bucketCacheStore(bucket, version, value)
+	return value, nil
 }
 
 // GetUncommited get value for specific key, return the value with version, even it is in batch cache
@@ -151,7 +172,7 @@ func (s *XModel) GetUncommited(bucket string, key []byte) (*xmodel_pb.VersionedD
 		if version == "" {
 			return s.makeEmptyVersionedData(bucket, key), nil
 		}
-		return s.fetchVersionedData(version)
+		return s.fetchVersionedData(bucket, version)
 	}
 	return s.Get(bucket, key)
 }
@@ -170,11 +191,24 @@ func (s *XModel) Get(bucket string, key []byte) (*xmodel_pb.VersionedData, error
 				}
 				return nil, err
 			}
-			return s.fetchVersionedData(string(version))
+			return s.fetchVersionedData(bucket, string(version))
 		}
 		return nil, err
 	}
-	return s.fetchVersionedData(string(version))
+	return s.fetchVersionedData(bucket, string(version))
+}
+
+// GetWithTxStatus likes Get but also return tx status information
+func (s *XModel) GetWithTxStatus(bucket string, key []byte) (*xmodel_pb.VersionedData, bool, error) {
+	data, err := s.Get(bucket, key)
+	if err != nil {
+		return nil, false, err
+	}
+	exists, err := s.ledger.HasTransaction(data.RefTxid)
+	if err != nil {
+		return nil, false, err
+	}
+	return data, exists, nil
 }
 
 // Select select all kv from a bucket, can set key range, left closed, right opend
@@ -182,8 +216,9 @@ func (s *XModel) Select(bucket string, startKey []byte, endKey []byte) (Iterator
 	rawStartKey := makeRawKey(bucket, startKey)
 	rawEndKey := makeRawKey(bucket, endKey)
 	iter := &XMIterator{
-		iter:  s.extUtxoTable.NewIteratorWithRange(rawStartKey, rawEndKey),
-		model: s,
+		bucket: bucket,
+		iter:   s.extUtxoTable.NewIteratorWithRange(rawStartKey, rawEndKey),
+		model:  s,
 	}
 	return iter, nil
 }
@@ -232,4 +267,28 @@ func (s *XModel) cleanCache(newBatch kvdb.Batch) {
 		s.batchCache = &sync.Map{}
 		s.lastBatch = newBatch
 	}
+}
+
+func (s *XModel) bucketCache(bucket string) *common.LRUCache {
+	icache, ok := s.extUtxoCache.Load(bucket)
+	if ok {
+		return icache.(*common.LRUCache)
+	}
+	cache := common.NewLRUCache(bucketExtUTXOCacheSize)
+	s.extUtxoCache.Store(bucket, cache)
+	return cache
+}
+
+func (s *XModel) bucketCacheStore(bucket, version string, value *xmodel_pb.VersionedData) {
+	cache := s.bucketCache(bucket)
+	cache.Add(version, value)
+}
+
+func (s *XModel) bucketCacheGet(bucket, version string) (*xmodel_pb.VersionedData, bool) {
+	cache := s.bucketCache(bucket)
+	value, ok := cache.Get(version)
+	if !ok {
+		return nil, false
+	}
+	return value.(*xmodel_pb.VersionedData), true
 }

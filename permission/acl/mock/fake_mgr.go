@@ -51,3 +51,8 @@ func (fm *FakeACLManager) GetContractMethodACL(contractName string, methodName s
 func (fm *FakeACLManager) GetContractMethodACLWithConfirmed(contractName string, methodName string) (*pb.Acl, bool, error) {
 	return nil, true, nil
 }
+
+// GetAccountAddresses not used in this mockup
+func (fm *FakeACLManager) GetAccountAddresses(accountName string) ([]string, error) {
+	return nil, nil
+}

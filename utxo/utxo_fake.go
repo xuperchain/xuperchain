@@ -177,7 +177,7 @@ func (f *FakeUtxoVM) Transfer(from string, to string, t *testing.T, amount strin
 func (f *FakeUtxoVM) UtxoWorkWithLedgerBasic(t *testing.T) {
 	utxoVM, ledger := f.U, f.L
 	//创建链的时候分配财富
-	tx, err := utxoVM.GenerateRootTx([]byte(`
+	tx, err := GenerateRootTx([]byte(`
        {
         "version" : "1"
         , "consensus" : {

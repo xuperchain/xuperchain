@@ -56,7 +56,7 @@ func (prp *Proposal) Run(desc *contract.TxDesc) error {
 	case proposeMethod:
 		return prp.runPropose(desc)
 	case voteMethod:
-		return prp.runVote(desc)
+		return prp.runVote(desc, prp.context.Block)
 	case createTriggerMethod:
 		return prp.saveTrigger(desc.Tx.Txid, desc.Trigger)
 	case thawMethod:
@@ -201,7 +201,7 @@ func (prp *Proposal) IsPropose(proposalTx *pb.Transaction) bool {
 	return proposalDesc.Method == proposeMethod
 }
 
-func (prp *Proposal) runVote(desc *contract.TxDesc) error {
+func (prp *Proposal) runVote(desc *contract.TxDesc, block *pb.InternalBlock) error {
 	prp.log.Debug("start run vote")
 	proposalTxid, err := prp.getTxidFromArgs(desc)
 	if err != nil {
@@ -220,7 +220,8 @@ func (prp *Proposal) runVote(desc *contract.TxDesc) error {
 		return err
 	}
 	stopVoteHeight := int64(argValue)
-	ledgerHeight := prp.ledger.GetMeta().TrunkHeight
+	//ledgerHeight := prp.ledger.GetMeta().TrunkHeight
+	ledgerHeight := block.Height
 	if ledgerHeight > stopVoteHeight {
 		prp.log.Warn(fmt.Sprintf("this propposal is expired for voting, %d > %d", ledgerHeight, stopVoteHeight))
 		return nil
@@ -283,7 +284,7 @@ func (prp *Proposal) IsVoteOk(proposalTx *pb.Transaction) bool {
 	prp.log.Debug("vote result", "need", voteNeeded, "got", curVoteAmount)
 	voteOK := curVoteAmount.Cmp(voteNeeded) >= 0
 	if !voteOK {
-		prp.log.Warn("no enough vote collected", "txid", proposalTx.HexTxid())
+		prp.log.Warn("no enough vote collected", "txid", proposalTx.HexTxid(), "needed", voteNeeded.String(), "currgot", curVoteAmount.String())
 	}
 	return voteOK
 }
@@ -300,14 +301,22 @@ func (prp *Proposal) fillOldState(desc []byte) ([]byte, error) {
 	switch contractKey {
 	case "kernel.UpdateMaxBlockSize":
 		prp.log.Trace("contract desc need to process", "contractKey", "kernel.UpdateMaxBlockSize")
-		descObj.Args["old_block_size"] = prp.ledger.GetMaxBlockSize()
+		oldMaxBlockSize, err := prp.utxoVM.GetMaxBlockSize()
+		if err != nil {
+			return nil, err
+		}
+		descObj.Args["old_block_size"] = oldMaxBlockSize
 	case "kernel.UpdateNewAccountResourceAmount":
 		prp.log.Trace("contract desc need to process", "contractKey", "kernel.UpdateNewAccountResourceAmount")
 		descObj.Args["old_new_account_resource_amount"] = prp.ledger.GetNewAccountResourceAmount()
 	case "kernel.UpdateReservedContract":
 		prp.log.Trace("contract desc need to process", "contractKey", "kernel.UpdateReservedContract")
 		reservedContracts := []ledger.InvokeRequest{}
-		for _, rc := range prp.ledger.GetMeta().GetReservedContracts() {
+		metaReservedContracts, metaReservedContractsErr := prp.utxoVM.GetReservedContracts()
+		if metaReservedContractsErr != nil {
+			return nil, metaReservedContractsErr
+		}
+		for _, rc := range metaReservedContracts {
 			args := map[string]string{}
 			for k, v := range rc.GetArgs() {
 				args[k] = string(v)
@@ -323,7 +332,11 @@ func (prp *Proposal) fillOldState(desc []byte) ([]byte, error) {
 		descObj.Args["old_reserved_contracts"] = reservedContracts
 	case "kernel.UpdateForbiddenContract":
 		prp.log.Trace("contract desc need to process", "contractKey", "kernel.UpdateForbiddenContract")
-		forbiddenContract := prp.ledger.GetMeta().GetForbiddenContract()
+		forbiddenContract, forbiddenContractErr := prp.utxoVM.GetForbiddenContract()
+		if forbiddenContractErr != nil {
+			prp.log.Warn("failed to get forbidden contract when call kernel.UpdateForbiddenContract", "err", forbiddenContractErr)
+			return nil, forbiddenContractErr
+		}
 		forbiddenContractMap := map[string]interface{}{}
 		forbiddenContractMap["module_name"] = forbiddenContract.GetModuleName()
 		forbiddenContractMap["contract_name"] = forbiddenContract.GetContractName()

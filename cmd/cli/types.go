@@ -335,14 +335,6 @@ type LedgerMeta struct {
 	TipBlockid HexID `json:"tipBlockid"`
 	// TrunkHeight TrunkHeight
 	TrunkHeight int64 `json:"trunkHeight"`
-	// MaxBlockSize MaxBlockSize
-	MaxBlockSize int64 `json:"maxBlockSize"`
-	// ReservedContracts ReservedContracts
-	ReservedContracts []InvokeRequest `json:"reservedContracts"`
-	// ForbiddenContract forbidden contract
-	ForbiddenContract InvokeRequest `json:"forbiddenContract"`
-	// NewAccountResourceAmount resource amount of creating an account
-	NewAccountResourceAmount int64 `json:"newAccountResourceAmount"`
 }
 
 // UtxoMeta proto.UtxoMeta
@@ -357,6 +349,18 @@ type UtxoMeta struct {
 	AvgDelay int64 `json:"avgDelay"`
 	// Current unconfirmed tx amount
 	UnconfirmTxAmount int64 `json:"unconfirmed"`
+	// MaxBlockSize MaxBlockSize
+	MaxBlockSize int64 `json:"maxBlockSize"`
+	// ReservedContracts ReservedContracts
+	ReservedContracts []InvokeRequest `json:"reservedContracts"`
+	// ForbiddenContract forbidden contract
+	ForbiddenContract InvokeRequest `json:"forbiddenContract"`
+	// NewAccountResourceAmount resource amount of creating an account
+	NewAccountResourceAmount int64 `json:"newAccountResourceAmount"`
+	// IrreversibleBlockHeight irreversible block height
+	IrreversibleBlockHeight int64 `json:"irreversibleBlockHeight"`
+	// IrreversibleSlideWindow irreversible slide window
+	IrreversibleSlideWindow int64 `json:"irreversibleSlideWindow"`
 }
 
 // ChainStatus proto.ChainStatus
@@ -379,7 +383,7 @@ func FromSystemStatusPB(statuspb *pb.SystemsStatus) *SystemStatus {
 	for _, chain := range statuspb.GetBcsStatus() {
 		ledgerMeta := chain.GetMeta()
 		utxoMeta := chain.GetUtxoMeta()
-		ReservedContracts := ledgerMeta.GetReservedContracts()
+		ReservedContracts := utxoMeta.GetReservedContracts()
 		rcs := []InvokeRequest{}
 		for _, rcpb := range ReservedContracts {
 			args := map[string]string{}
@@ -394,8 +398,7 @@ func FromSystemStatusPB(statuspb *pb.SystemsStatus) *SystemStatus {
 			}
 			rcs = append(rcs, rc)
 		}
-
-		forbiddenContract := ledgerMeta.GetForbiddenContract()
+		forbiddenContract := utxoMeta.GetForbiddenContract()
 		args := forbiddenContract.GetArgs()
 		originalArgs := map[string]string{}
 		for key, value := range args {
@@ -407,24 +410,26 @@ func FromSystemStatusPB(statuspb *pb.SystemsStatus) *SystemStatus {
 			MethodName:   forbiddenContract.GetMethodName(),
 			Args:         originalArgs,
 		}
-
 		status.ChainStatus = append(status.ChainStatus, ChainStatus{
 			Name: chain.GetBcname(),
 			LedgerMeta: LedgerMeta{
-				RootBlockid:              ledgerMeta.GetRootBlockid(),
-				TipBlockid:               ledgerMeta.GetTipBlockid(),
-				TrunkHeight:              ledgerMeta.GetTrunkHeight(),
-				MaxBlockSize:             ledgerMeta.GetMaxBlockSize(),
-				NewAccountResourceAmount: ledgerMeta.GetNewAccountResourceAmount(),
-				ReservedContracts:        rcs,
-				ForbiddenContract:        forbiddenContractMap,
+				RootBlockid: ledgerMeta.GetRootBlockid(),
+				TipBlockid:  ledgerMeta.GetTipBlockid(),
+				TrunkHeight: ledgerMeta.GetTrunkHeight(),
 			},
 			UtxoMeta: UtxoMeta{
-				LatestBlockid:     utxoMeta.GetLatestBlockid(),
-				LockKeyList:       utxoMeta.GetLockKeyList(),
-				UtxoTotal:         utxoMeta.GetUtxoTotal(),
-				AvgDelay:          utxoMeta.GetAvgDelay(),
-				UnconfirmTxAmount: utxoMeta.GetUnconfirmTxAmount(),
+				LatestBlockid:            utxoMeta.GetLatestBlockid(),
+				LockKeyList:              utxoMeta.GetLockKeyList(),
+				UtxoTotal:                utxoMeta.GetUtxoTotal(),
+				AvgDelay:                 utxoMeta.GetAvgDelay(),
+				UnconfirmTxAmount:        utxoMeta.GetUnconfirmTxAmount(),
+				MaxBlockSize:             utxoMeta.GetMaxBlockSize(),
+				NewAccountResourceAmount: utxoMeta.GetNewAccountResourceAmount(),
+				ReservedContracts:        rcs,
+				ForbiddenContract:        forbiddenContractMap,
+				// Irreversible block height & slide window
+				IrreversibleBlockHeight: utxoMeta.GetIrreversibleBlockHeight(),
+				IrreversibleSlideWindow: utxoMeta.GetIrreversibleSlideWindow(),
 			},
 		})
 	}
