@@ -4,11 +4,11 @@
 #include "xrc01.h"
 
 bool str2bool(const std::string var, bool& var_bool) {
-    if (var == "true" || var == "TRUE") {
-        var_bool = true;
-        return true;
-    } else if (var == "false" || var == "FALSE") {
+    if (var == "1") {
         var_bool = false;
+        return true;
+    } else if (var == "0") {
+        var_bool = true;
         return true;
     }
     return false;
@@ -77,7 +77,7 @@ DEFINE_METHOD(XRC01_E1, issue) {
     token.set_issue_account(issue_account);
     token.set_profile_desc(profile_desc);
 
-    if (!xrc01.issue(token)) {
+    if (!xrc01.issue(&token)) {
         printf("issue token failed! \n");
         ctx->error("issue token failed!");
         return;

@@ -49,7 +49,7 @@ private:
 public:
     // following interfaces declare the main interfaces of XRC01 multi token
     // standard issue a token
-    bool issue(XRC01::token token);
+    bool issue(XRC01::token* token);
     // authorization token to someone
     bool authorization(const std::string& to, uint64_t token_id,
                        uint64_t amount);

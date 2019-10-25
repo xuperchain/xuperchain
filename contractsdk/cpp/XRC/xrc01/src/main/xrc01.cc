@@ -16,37 +16,36 @@ std::string make_authorize_info_id(const std::string from, const std::string to,
     return from + to + std::to_string(token_id);
 }
 
-bool XRC01::issue(XRC01::token token) {
-    uint64_t token_id = token.id();
+bool XRC01::issue(XRC01::token* token) {
+    uint64_t token_id = token->id();
     XRC01::token token_get;
     if (_token.find({{"id", std::to_string(token_id)}}, &token_get)) {
         printf("Issued failed, the token with id %llu has been created! \n",
                token_id);
         return false;
     }
-    if (!token.fungible() && token.supply() != 1) {
+    if (!token->fungible() && token->supply() != 1) {
         printf("Issued failed, non-Fungible token need supply only one \n");
         return false;
     }
-    if (!_token.put(token)) {
+    if (!_token.put(*token)) {
         printf("Issued failed, store token failed, token id %llu \n", token_id);
         return false;
     }
 
     XRC01::asset_info asset_info;
     std::string asset_info_id =
-        make_asset_info_id(token.issue_account(), token_id);
+        make_asset_info_id(token->issue_account(), token_id);
     asset_info.set_id(asset_info_id);
-    asset_info.set_account(token.issue_account());
+    asset_info.set_account(token->issue_account());
     asset_info.set_token_id(token_id);
-    asset_info.set_amount(token.supply());
+    asset_info.set_amount(token->supply());
     asset_info.set_authorized(0);
     if (!_asset_info.put(asset_info)) {
         printf("Issued failed, store asset info failed, token id %llu \n ",
                token_id);
         return false;
     }
-    printf("Issued success, token id %llu \n", token_id);
     return true;
 }
 
@@ -137,10 +136,6 @@ bool XRC01::authorization(const std::string& to, uint64_t token_id,
             return false;
         }
     }
-
-    printf(
-        "Authorization success, from=%s, to=%s, token_id=%llu, amount=%llu \n",
-        caller.c_str(), to.c_str(), token_id, amount);
     return true;
 }
 
@@ -295,7 +290,6 @@ bool XRC01::transfer(const std::string& to, uint64_t token_id,
             return false;
         }
     }
-    printf("Transfer successed! \n");
     return true;
 }
 
@@ -405,7 +399,6 @@ bool XRC01::transfer_from(const std::string& from, const std::string& to,
             return false;
         }
     }
-    printf("Transfer_from successed! \n");
     return true;
 }
 
@@ -461,10 +454,9 @@ bool XRC01::owner_of(const uint64_t token_id, std::string* owner) {
     XRC01::asset_info asset_info;
     auto it = _asset_info.scan({{"token_id", std::to_string(token_id)}});
     while (it->next()) {
-        if (it->get(&asset_info)) {
-            break;
-        } else {
-            std::cout << "get authorize_infos error" << std::endl;
+        if (!it->get(&asset_info)) {
+            std::cout << "get owner_of error" << std::endl;
+            return false;
         }
     }
     *owner = asset_info.account();
@@ -484,11 +476,11 @@ bool XRC01::authorize_infos(
         {{"from", account}, {"token_id", std::to_string(token_id)}});
     while (it->next()) {
         XRC01::authorize_info authorize_info;
-        if (it->get(&authorize_info)) {
-            authorize_infos.push_back(authorize_info);
-        } else {
+        if (!it->get(&authorize_info)) {
             std::cout << "get authorize_infos error" << std::endl;
+            continue;
         }
+        authorize_infos.push_back(authorize_info);
     }
     return true;
 }
