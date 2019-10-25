@@ -57,6 +57,9 @@ const (
 	ReservedContractsKey        = "ReservedContracts"
 	ForbiddenContractKey        = "ForbiddenContract"
 	NewAccountResourceAmountKey = "NewAccountResourceAmount"
+	// Irreversible block height & slide window
+	IrreversibleBlockHeightKey = "IrreversibleBlockHeight"
+	IrreversibleSlideWindowKey = "IrreversibleSlideWindow"
 )
 
 // Ledger define data structure of Ledger
@@ -220,7 +223,7 @@ func (l *Ledger) FormatBlock(txList []*pb.Transaction,
 	proposer []byte, ecdsaPk *ecdsa.PrivateKey, /*矿工的公钥私钥*/
 	timestamp int64, curTerm int64, curBlockNum int64,
 	preHash []byte, utxoTotal *big.Int) (*pb.InternalBlock, error) {
-	return l.formatBlock(txList, proposer, ecdsaPk, timestamp, curTerm, curBlockNum, preHash, 0, utxoTotal, true, nil, nil)
+	return l.formatBlock(txList, proposer, ecdsaPk, timestamp, curTerm, curBlockNum, preHash, 0, utxoTotal, true, nil, nil, 0)
 }
 
 // FormatMinerBlock format block for miner
@@ -228,8 +231,8 @@ func (l *Ledger) FormatMinerBlock(txList []*pb.Transaction,
 	proposer []byte, ecdsaPk *ecdsa.PrivateKey, /*矿工的公钥私钥*/
 	timestamp int64, curTerm int64, curBlockNum int64,
 	preHash []byte, targetBits int32, utxoTotal *big.Int,
-	qc *pb.QuorumCert, failedTxs map[string]string) (*pb.InternalBlock, error) {
-	return l.formatBlock(txList, proposer, ecdsaPk, timestamp, curTerm, curBlockNum, preHash, targetBits, utxoTotal, true, qc, failedTxs)
+	qc *pb.QuorumCert, failedTxs map[string]string, blockHeight int64) (*pb.InternalBlock, error) {
+	return l.formatBlock(txList, proposer, ecdsaPk, timestamp, curTerm, curBlockNum, preHash, targetBits, utxoTotal, true, qc, failedTxs, blockHeight)
 }
 
 // IsProofed check workload proof
@@ -248,8 +251,8 @@ func IsProofed(blockID []byte, targetBits int32) bool {
 func (l *Ledger) FormatFakeBlock(txList []*pb.Transaction,
 	proposer []byte, ecdsaPk *ecdsa.PrivateKey, /*矿工的公钥私钥*/
 	timestamp int64, curTerm int64, curBlockNum int64,
-	preHash []byte, utxoTotal *big.Int) (*pb.InternalBlock, error) {
-	return l.formatBlock(txList, proposer, ecdsaPk, timestamp, curTerm, curBlockNum, preHash, 0, utxoTotal, false, nil, nil)
+	preHash []byte, utxoTotal *big.Int, blockHeight int64) (*pb.InternalBlock, error) {
+	return l.formatBlock(txList, proposer, ecdsaPk, timestamp, curTerm, curBlockNum, preHash, 0, utxoTotal, false, nil, nil, blockHeight)
 }
 
 /*
@@ -259,7 +262,7 @@ func (l *Ledger) formatBlock(txList []*pb.Transaction,
 	proposer []byte, ecdsaPk *ecdsa.PrivateKey, /*矿工的公钥私钥*/
 	timestamp int64, curTerm int64, curBlockNum int64,
 	preHash []byte, targetBits int32, utxoTotal *big.Int, needSign bool,
-	qc *pb.QuorumCert, failedTxs map[string]string) (*pb.InternalBlock, error) {
+	qc *pb.QuorumCert, failedTxs map[string]string, blockHeight int64) (*pb.InternalBlock, error) {
 	l.xlog.Info("begin format block", "preHash", fmt.Sprintf("%x", preHash))
 	//编译的环境变量指定
 	block := &pb.InternalBlock{Version: BlockVersion}
@@ -271,6 +274,7 @@ func (l *Ledger) formatBlock(txList []*pb.Transaction,
 	block.CurBlockNum = curBlockNum
 	block.TargetBits = targetBits
 	block.Justify = qc
+	block.Height = blockHeight
 	jsPk, pkErr := l.cryptoClient.GetEcdsaPublicKeyJSONFormat(ecdsaPk)
 	if pkErr != nil {
 		return nil, pkErr
@@ -478,7 +482,6 @@ func (l *Ledger) UpdateBlockChainData(txid string, ptxid string, publickey strin
 		PublicKey:       publickey,
 		Sign:            sign,
 	}
-	tx.TxOutputs = []*pb.TxOutput{}
 	tx.Desc = []byte("")
 	tx.TxOutputsExt = []*pb.TxOutputExt{}
 
@@ -626,6 +629,13 @@ func (l *Ledger) ConfirmBlock(block *pb.InternalBlock, isRoot bool) ConfirmStatu
 	if saveErr != nil {
 		confirmStatus.Succ = false
 		l.xlog.Warn("save current block fail", "saveErr", saveErr)
+		return confirmStatus
+	}
+	// update branch head
+	updateBranchErr := l.updateBranchInfo(block.Blockid, block.PreHash, block.Height, batchWrite)
+	if updateBranchErr != nil {
+		confirmStatus.Succ = false
+		l.xlog.Warn("update branch info fail", "updateBranchErr", updateBranchErr)
 		return confirmStatus
 	}
 	txExist, txData := l.parallelCheckTx(realTransactions, block)
@@ -929,6 +939,12 @@ func (l *Ledger) GetGenesisBlock() *GenesisBlock {
 	return nil
 }
 
+// GetIrreversibleSlideWindow return irreversible slide window
+func (l *Ledger) GetIrreversibleSlideWindow() int64 {
+	defaultIrreversibleSlideWindow := l.GenesisBlock.GetConfig().GetIrreversibleSlideWindow()
+	return defaultIrreversibleSlideWindow
+}
+
 // GetMaxBlockSize return max block size
 func (l *Ledger) GetMaxBlockSize() int64 {
 	defaultBlockSize := l.GenesisBlock.GetConfig().GetMaxBlockSizeInByte()
@@ -1063,6 +1079,7 @@ func (l *Ledger) Truncate(utxovmLastID []byte) error {
 		l.xlog.Warn("failed to find utxovm last block", "findErr", findErr)
 		return findErr
 	}
+	deletedBlockid := l.meta.TipBlockid
 	rmErr := l.removeBlocks(l.meta.TipBlockid, block.Blockid, batchWrite)
 	if rmErr != nil {
 		l.xlog.Warn("failed to remove garbage blocks", "from", global.F(l.meta.TipBlockid), "to", global.F(block.Blockid))
@@ -1075,6 +1092,12 @@ func (l *Ledger) Truncate(utxovmLastID []byte) error {
 		return pbErr
 	}
 	batchWrite.Put([]byte(pb.MetaTablePrefix), metaBuf)
+	// update branch head
+	updateBranchErr := l.updateBranchInfo(block.Blockid, deletedBlockid, block.Height, batchWrite)
+	if updateBranchErr != nil {
+		l.xlog.Warn("Truncated failed when calling updateBranchInfo", "updateBranchErr", updateBranchErr)
+		return updateBranchErr
+	}
 	kvErr := batchWrite.Write()
 	if kvErr != nil {
 		l.xlog.Warn("batch write failed when Truncate", "kvErr", kvErr)
