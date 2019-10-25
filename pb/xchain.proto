@@ -752,6 +752,9 @@ message InvokeRequest {
   string method_name = 3;
   map<string, bytes> args = 4;
   repeated ResourceLimit resource_limits = 5;
+  // amount is the amount transfer to the contract
+  // attention: In one transaction, transfer to only one contract is allowed
+  string amount = 6;
 }
 
 // 预执行的返回结构
@@ -762,6 +765,8 @@ message InvokeResponse {
   int64 gas_used = 4;
   repeated InvokeRequest requests = 5;
   repeated ContractResponse responses = 6;
+  repeated TxInput utxoInputs = 7;
+  repeated TxOutput utxoOutputs = 8;
 }
 
 // 扩展输入
