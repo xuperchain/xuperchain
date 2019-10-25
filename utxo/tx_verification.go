@@ -517,6 +517,9 @@ func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
 		Initiator:    tx.GetInitiator(),
 		AuthRequire:  tx.GetAuthRequire(),
 		ContractName: "",
+		Core: contractChainCore{
+			Manager: uv.aclMgr,
+		},
 	}
 	gasLimit, err := getGasLimitFromTx(tx)
 	if err != nil {
