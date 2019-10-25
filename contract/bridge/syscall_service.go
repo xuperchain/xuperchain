@@ -234,6 +234,20 @@ func (c *SyscallService) SetOutput(ctx context.Context, in *pb.SetOutputRequest)
 	return new(pb.SetOutputResponse), nil
 }
 
+func (c *SyscallService) GetAccountAddresses(ctx context.Context, in *pb.GetAccountAddressesRequest) (*pb.GetAccountAddressesResponse, error) {
+	nctx, ok := c.ctxmgr.Context(in.GetHeader().Ctxid)
+	if !ok {
+		return nil, fmt.Errorf("bad ctx id:%d", in.Header.Ctxid)
+	}
+	addresses, err := nctx.Core.GetAccountAddresses(in.GetAccount())
+	if err != nil {
+		return nil, err
+	}
+	return &pb.GetAccountAddressesResponse{
+		Addresses: addresses,
+	}, nil
+}
+
 func ConvertTxToSDKTx(tx *xchainpb.Transaction) *pb.Transaction {
 	txIns := []*pb.TxInput{}
 	for _, in := range tx.TxInputs {

@@ -17,7 +17,6 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/xuperchain/xuperunion/contract"
 	"github.com/xuperchain/xuperunion/crypto/client"
-	"github.com/xuperchain/xuperunion/crypto/hash"
 	"github.com/xuperchain/xuperunion/pb"
 	pm "github.com/xuperchain/xuperunion/permission"
 	"github.com/xuperchain/xuperunion/permission/acl"
@@ -30,12 +29,14 @@ import (
 // ImmediateVerifyTx verify tx Immediately
 // Transaction verification workflow:
 //   1. verify transaction ID is the same with data hash
-//   2. verify initiator type, should be ak
-//   3. verify all signatures of initiator and auth requires
-//   4. verify the account ACL of utxo input
-//   5. verify the contract requests' permission
-//   6. verify the permission of contract RWSet (WriteSet could including unauthorized data change)
-//   7. run contract requests and verify if the RWSet result is the same with preExed RWSet (heavy
+//   2. verify all signatures of initiator and auth requires
+//   3. verify the utxo input, there are three kinds of input validation
+//		1). PKI technology for transferring from address
+//		2). Account ACL for transferring from account
+//		3). Contract logic transferring from contract
+//   4. verify the contract requests' permission
+//   5. verify the permission of contract RWSet (WriteSet could including unauthorized data change)
+//   6. run contract requests and verify if the RWSet result is the same with preExed RWSet (heavy
 //      operation, keep it at last)
 func (uv *UtxoVM) ImmediateVerifyTx(tx *pb.Transaction, isRootTx bool) (bool, error) {
 	// Pre processing of tx data
@@ -97,6 +98,13 @@ func (uv *UtxoVM) ImmediateVerifyTx(tx *pb.Transaction, isRootTx bool) (bool, er
 		if !ok {
 			uv.xlog.Warn("ImmediateVerifyTx: verifyContractPermission failed", "error", err)
 			return ok, ErrACLNotEnough
+		}
+
+		// verify amount of transfer within contract
+		ok, err = uv.verifyContractTxAmount(tx)
+		if !ok {
+			uv.xlog.Warn("ImmediateVerifyTx: verifyContractPermission failed", "error", err)
+			return ok, ErrContractTxAmout
 		}
 
 		// verify the permission of RWSet using ACL
@@ -244,10 +252,37 @@ func (uv *UtxoVM) verifyXuperSign(tx *pb.Transaction, digestHash []byte) (bool, 
 	return ok, uniqueAddrs, nil
 }
 
-// verify UTXO input permission in transaction using ACL
+// verify utxo inputs, there are three kinds of input validation
+//	1). PKI technology for transferring from address
+//	2). Account ACL for transferring from account
+//	3). Contract logic transferring from contract
 func (uv *UtxoVM) verifyUTXOPermission(tx *pb.Transaction, verifiedID map[string]bool) (bool, error) {
-	// verify tx input ACL
+	// verify tx input
+	conUtxoInputs, _, err := xmodel.ParseContractUtxo(tx)
+	if err != nil {
+		uv.xlog.Warn("verifyUTXOPermission error, parseContractUtxo ")
+		return false, ErrParseContractUtxos
+	}
+	conUtxoInputsMap := map[string]bool{}
+	for _, conUtxoInput := range conUtxoInputs {
+		addr := conUtxoInput.GetFromAddr()
+		txid := conUtxoInput.GetRefTxid()
+		offset := conUtxoInput.GetRefOffset()
+		utxoKey := genUtxoKey(addr, txid, offset)
+		conUtxoInputsMap[utxoKey] = true
+	}
+
 	for _, txInput := range tx.TxInputs {
+		// if transfer from contract
+		addr := txInput.GetFromAddr()
+		txid := txInput.GetRefTxid()
+		offset := txInput.GetRefOffset()
+		utxoKey := genUtxoKey(addr, txid, offset)
+		if conUtxoInputsMap[utxoKey] {
+			// this utxo transfer from contract, will verify in rwset verify
+			continue
+		}
+
 		name := string(txInput.FromAddr)
 		if verifiedID[name] {
 			// this ID(either AK or Account) is verified before
@@ -405,6 +440,47 @@ func getGasLimitFromTx(tx *pb.Transaction) (int64, error) {
 	return 0, nil
 }
 
+// verifyContractTxAmount verify
+func (uv *UtxoVM) verifyContractTxAmount(tx *pb.Transaction) (bool, error) {
+	req := tx.GetContractRequests()
+	// af is the flag of whether the contract already carries the amount parameter
+	af := false
+	amountCon := new(big.Int).SetInt64(0)
+	amountOut := new(big.Int).SetInt64(0)
+	var contractName string
+	for i := 0; i < len(req); i++ {
+		tmpReq := req[i]
+		if af {
+			return false, ErrInvokeReqParams
+		}
+		if tmpReq.GetAmount() != "" {
+			amountCon, ok := amountCon.SetString(tmpReq.GetAmount(), 10)
+			if !ok {
+				return false, ErrInvokeReqParams
+			}
+			if amountCon.Cmp(new(big.Int).SetInt64(0)) == 1 {
+				af = true
+				contractName = tmpReq.GetContractName()
+			}
+		}
+	}
+
+	for _, txOutput := range tx.GetTxOutputs() {
+		if string(txOutput.GetToAddr()) == contractName {
+			tmpAmount, ok := new(big.Int).SetString(string(txOutput.GetAmount()), 10)
+			if !ok {
+				return false, ErrInvokeReqParams
+			}
+			amountOut.Add(tmpAmount, amountOut)
+		}
+	}
+
+	if amountOut.Cmp(amountCon) != 0 {
+		return false, ErrContractTxAmout
+	}
+	return true, nil
+}
+
 // verifyTxRWSets verify tx read sets and write sets
 func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
 	if uv.verifyReservedWhitelist(tx) {
@@ -441,6 +517,9 @@ func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
 		Initiator:    tx.GetInitiator(),
 		AuthRequire:  tx.GetAuthRequire(),
 		ContractName: "",
+		Core: contractChainCore{
+			Manager: uv.aclMgr,
+		},
 	}
 	gasLimit, err := getGasLimitFromTx(tx)
 	if err != nil {
@@ -498,71 +577,100 @@ func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
 	return true, nil
 }
 
-func (uv *UtxoVM) verifyMarkedTx(tx *pb.Transaction) (bool, error) {
+func (uv *UtxoVM) verifyMarked(tx *pb.Transaction) (bool, bool, error) {
+	isRelyOnMarkedTx := false
+	if tx.GetModifyBlock() != nil && tx.ModifyBlock.Marked {
+		isRelyOnMarkedTx := true
+		err := uv.verifyMarkedTx(tx)
+		if err != nil {
+			return false, isRelyOnMarkedTx, err
+		}
+		return true, isRelyOnMarkedTx, nil
+	}
+	ok, isRelyOnMarkedTx, err := uv.verifyRelyOnMarkedTxs(tx)
+	return ok, isRelyOnMarkedTx, err
+}
+
+func (uv *UtxoVM) verifyMarkedTx(tx *pb.Transaction) error {
 	bytespk := []byte(tx.ModifyBlock.PublicKey)
 	xcc, err := client.CreateCryptoClientFromJSONPublicKey(bytespk)
 	if err != nil {
-		return false, err
+		return err
 	}
 	ecdsaKey, err := xcc.GetEcdsaPublicKeyFromJSON(bytespk)
 	if err != nil {
-		return false, err
+		return err
 	}
 	isMatch, _ := xcc.VerifyAddressUsingPublicKey(uv.modifyBlockAddr, ecdsaKey)
 	if !isMatch {
-		return false, errors.New("address and public key not match")
+		return errors.New("address and public key not match")
 	}
 
 	bytesign, err := hex.DecodeString(tx.ModifyBlock.Sign)
 	if err != nil {
-		return false, fmt.Errorf("invalide arg type: sign byte")
+		return errors.New("invalide arg type: sign byte")
 	}
-	digestHash := hash.DoubleSha256([]byte(tx.Txid))
+	digestHash, err := txhash.MakeTxDigestHash(tx)
+	if err != nil {
+		uv.xlog.Warn("verifyMarkedTx call MakeTxDigestHash failed", "error", err)
+		return err
+	}
 	ok, err := xcc.VerifyECDSA(ecdsaKey, bytesign, digestHash)
 	if err != nil || !ok {
 		uv.xlog.Warn("validateUpdateBlockChainData verifySignatures failed")
-		return false, err
+		return err
 	}
-	return true, nil
+	return nil
 }
 
 // verifyRelyOnMarkedTxs
-// bool bool verify
-func (uv *UtxoVM) verifyRelyOnMarkedTxs(tx *pb.Transaction) (bool, error) {
+// bool Pass verification or not
+// bool isRelyOnMarkedTx
+// err
+func (uv *UtxoVM) verifyRelyOnMarkedTxs(tx *pb.Transaction) (bool, bool, error) {
+	isRelyOnMarkedTx := false
 	for _, txInput := range tx.GetTxInputs() {
 		reftxid := txInput.RefTxid
-		ok, err := uv.checkRelyOnMarkedTxid(reftxid, tx.Blockid)
-		if !ok || err != nil {
-			return ok, err
+		if string(reftxid) == "" {
+			continue
+		}
+		ok, isRelyOnMarkedTx, err := uv.checkRelyOnMarkedTxid(reftxid, tx.Blockid)
+		if err != nil || !ok {
+			return ok, isRelyOnMarkedTx, err
 		}
 	}
 	for _, txIn := range tx.GetTxInputsExt() {
 		reftxid := txIn.RefTxid
-		ok, err := uv.checkRelyOnMarkedTxid(reftxid, tx.Blockid)
+		if string(reftxid) == "" {
+			continue
+		}
+		ok, isRelyOnMarkedTx, err := uv.checkRelyOnMarkedTxid(reftxid, tx.Blockid)
 		if !ok || err != nil {
-			return ok, err
+			return ok, isRelyOnMarkedTx, err
 		}
 	}
 
-	return true, nil
+	return true, isRelyOnMarkedTx, nil
 }
 
-func (uv *UtxoVM) checkRelyOnMarkedTxid(reftxid []byte, blockid []byte) (bool, error) {
-	if string(reftxid) == "" {
-		return false, nil
-	}
+// bool Pass verification or not
+// bool isRely
+// err
+func (uv *UtxoVM) checkRelyOnMarkedTxid(reftxid []byte, blockid []byte) (bool, bool, error) {
+	isRely := false
 	reftx, err := uv.ledger.QueryTransaction(reftxid)
 	if err != nil {
-		return false, nil
+		return true, isRely, nil
 	}
 	if reftx.GetModifyBlock() != nil && reftx.ModifyBlock.Marked {
+		isRely = true
 		block, err := uv.ledger.QueryBlock(blockid)
 		if err != nil {
-			return false, err
+			return false, isRely, err
 		}
 		if block.Height >= reftx.ModifyBlock.EffectiveHeight {
-			return false, nil
+			return false, isRely, nil
 		}
 	}
-	return true, nil
+	return true, isRely, nil
 }

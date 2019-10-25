@@ -210,4 +210,11 @@ message Block
     string next_hash = 15;
 }
 
+message GetAccountAddressesRequest{
+  SyscallHeader header = 1;
+  string account = 2;
+}
 
+message GetAccountAddressesResponse {
+  repeated string addresses = 1;
+}

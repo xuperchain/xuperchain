@@ -1,7 +1,7 @@
 #include <inttypes.h>
 #include "xchain/xchain.h"
 #include "table/types.h"
-#include "table/table.cc"
+#include "table/table.tpl.h"
 #include "pb/anchor.pb.h"
 
 //data anchoring

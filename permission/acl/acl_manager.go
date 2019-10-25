@@ -8,6 +8,7 @@ import (
 type AccountACL interface {
 	GetAccountACL(accountName string) (*pb.Acl, error)
 	GetAccountACLWithConfirmed(accountName string) (*pb.Acl, bool, error)
+	GetAccountAddresses(accountName string) ([]string, error)
 }
 
 // ContractACL is interface to read/write contracts' ACL

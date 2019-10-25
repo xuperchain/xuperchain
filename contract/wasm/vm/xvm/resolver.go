@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 
+	"github.com/xuperchain/xuperunion/common/log"
 	"github.com/xuperchain/xuperunion/contract/bridge"
 	"github.com/xuperchain/xuperunion/contract/bridge/memrpc"
 	"github.com/xuperchain/xuperunion/xvm/exec"
@@ -99,6 +100,7 @@ func (s *syscallResolver) cCallMethod(ctx *exec.Context, methodAddr, methodLen, 
 	responseBuf, err := s.rpcserver.CallMethod(context.TODO(), ctxid, method, requestBuf)
 	var responseDesc responseDesc
 	if err != nil {
+		log.Error("contract syscall error", "ctxid", ctxid, "method", method, "error", err)
 		responseDesc.Error = true
 		responseDesc.Body = []byte(err.Error())
 	} else {

@@ -19,4 +19,5 @@ const (
 	ExtUtxoTablePrefix       = "ZU"
 	ExtUtxoDelTablePrefix    = "ZD"
 	BlockHeightPrefix        = "ZH"
+	BranchInfoPrefix         = "ZI"
 )

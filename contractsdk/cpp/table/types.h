@@ -49,25 +49,25 @@ private:                                                                        
 
 #define DEFINE_INDEX_ADD_1(id, _1)                                                      \
         { xchain_concat(#_1) ,                                                          \
-            [&]() -> std::string { return xchain_concat(_1()); } },                     \
+            [&]() -> std::string { return xchain_concat(#_1, _1()); } },                \
         { #id ,                                                                         \
             [&]() -> std::string { return xchain_concat(#_1); } },
 
 #define DEFINE_INDEX_ADD_2(id, _1, _2)                                                  \
         { xchain_concat(#_1, #_2) ,                                                     \
-            [&]() -> std::string { return xchain_concat(_1(), _2()); } },               \
+            [&]() -> std::string { return xchain_concat(#_1, _1(), #_2, _2()); } },     \
         { #id ,                                                                         \
             [&]() -> std::string { return xchain_concat(#_1, #_2); } },
 
 #define DEFINE_INDEX_ADD_3(id, _1, _2, _3)                                              \
         { xchain_concat(#_1, #_2, #_3),                                                 \
-            [&]() -> std::string { return xchain_concat(_1(), _2(), _3()); } },         \
+            [&]() -> std::string { return xchain_concat(#_1, _1(), #_2, _2(), #_3, _3()); } },\
         { #id ,                                                                         \
             [&]() -> std::string { return xchain_concat(#_1, #_2, #_3); } },
 
 #define DEFINE_INDEX_ADD_4(id, _1, _2, _3, _4)                                          \
         { xchain_concat(#_1, #_2, #_3, #_4),                                            \
-            [&]() -> std::string { return xchain_concat(_1(), _2(), _3(), _4()); } },   \
+            [&]() -> std::string { return xchain_concat(#_1, _1(), #_2, _2(), #_3, _3(), #_4, _4()); } },\
         { #id ,                                                                         \
             [&]() -> std::string { return xchain_concat(#_1, #_2, #_3, #_4); } },
 

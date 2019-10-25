@@ -63,6 +63,15 @@ func (uv *UtxoVM) verifyDAGTxs(txs []*pb.Transaction, isRootTx bool, unconfirmTo
 			if !tx.Autogen && !tx.Coinbase {
 				if ok, err := uv.ImmediateVerifyTx(tx, isRootTx); !ok {
 					uv.xlog.Warn("dotx failed to ImmediateVerifyTx", "txid", fmt.Sprintf("%x", tx.Txid), "err", err)
+					ok, isRelyOnMarkedTx, err := uv.verifyMarked(tx)
+					if isRelyOnMarkedTx {
+						if !ok || err != nil {
+							uv.xlog.Warn("tx verification failed because it is blocked tx", "err", err)
+						} else {
+							uv.xlog.Trace("blocked tx verification succeed")
+						}
+						return err
+					}
 					return errors.New("dotx failed to ImmediateVerifyTx error")
 				}
 			}
