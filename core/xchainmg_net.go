@@ -440,3 +440,7 @@ func (xm *XChainMG) handleGetRPCPort(ctx context.Context, msg *xuper_p2p.XuperMe
 	}
 	return xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, "", msg.GetHeader().GetLogid(), xuper_p2p.XuperMessage_GET_RPC_PORT_RES, []byte(":"+port), xuper_p2p.XuperMessage_NONE)
 }
+
+func (xm *XChainMG) handleNewBlockID(ctx context.Context, msg *xuper_p2p.XuperMessage) (*xuper_p2p.XuperMessage, error) {
+	return nil, nil
+}
