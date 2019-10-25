@@ -172,6 +172,10 @@ type UtxoLockItem struct {
 	holder    *list.Element
 }
 
+type contractChainCore struct {
+	*acli.Manager // ACL manager for read/write acl table
+}
+
 func genUtxoKey(addr []byte, txid []byte, offset int32) string {
 	return fmt.Sprintf("%s_%x_%d", addr, txid, offset)
 }
@@ -768,6 +772,9 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 		NewAccountResourceAmount: uv.meta.GetNewAccountResourceAmount(),
 		ContractName:             "",
 		ResourceLimits:           contract.MaxLimits,
+		Core: contractChainCore{
+			Manager: uv.aclMgr,
+		},
 	}
 	gasUesdTotal := int64(0)
 	response := [][]byte{}
