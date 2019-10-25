@@ -65,3 +65,8 @@ func (e *Env) GetOutputs() []*xmodel_pb.PureData {
 	}
 	return nil
 }
+
+// ParseContractUtxo parse contract utxos from tx write sets
+func ParseContractUtxo(tx *pb.Transaction) ([]*pb.TxInput, []*pb.TxOutput, error) {
+	return nil, nil, nil
+}

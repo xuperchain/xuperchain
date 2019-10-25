@@ -342,7 +342,12 @@ func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
 		return ErrServiceRefused
 	}
 	blockSize := int64(proto.Size(in.Block))
-	if blockSize > xc.Ledger.GetMaxBlockSize() {
+	maxBlockSize, sizeErr := xc.Utxovm.GetMaxBlockSize()
+	if sizeErr != nil {
+		xc.log.Warn("failed to GetMaxBlockSize", "sizeErr", sizeErr)
+		return ErrServiceRefused
+	}
+	if blockSize > maxBlockSize {
 		xc.log.Debug("refused a connection because block is too large", "logid", in.Header.Logid, "cost", hd.Timer.Print(), "size", blockSize)
 		return ErrServiceRefused
 	}
@@ -419,7 +424,12 @@ func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
 					return ErrCannotSyncBlock
 				}
 				ibSize := int64(proto.Size(ib.Block))
-				if ibSize > xc.Ledger.GetMaxBlockSize() {
+				maxSize, sizeErr := xc.Utxovm.GetMaxBlockSize()
+				if sizeErr != nil {
+					xc.log.Warn("failed to GetMaxBlockSize", "sizeErr", sizeErr)
+					return sizeErr
+				}
+				if ibSize > maxSize {
 					xc.log.Warn("too large block", "size", ibSize, "blockid", global.F(ib.Block.Blockid))
 					return ErrBlockTooLarge
 				}
@@ -617,7 +627,7 @@ func (xc *XChainCore) doMiner() {
 		txs = append(txs, ucTx)
 	}
 	fakeBlock, err := xc.Ledger.FormatFakeBlock(txs, xc.address, xc.privateKey,
-		t.UnixNano(), curTerm, curBlockNum, xc.Utxovm.GetLatestBlockid(), xc.Utxovm.GetTotal())
+		t.UnixNano(), curTerm, curBlockNum, xc.Utxovm.GetLatestBlockid(), xc.Utxovm.GetTotal(), xc.Ledger.GetMeta().TrunkHeight+1)
 	if err != nil {
 		xc.log.Warn("[Minning] format fake block error", "logid")
 		return
@@ -638,7 +648,7 @@ func (xc *XChainCore) doMiner() {
 	txs = append(txs, awardtx)
 	freshBlock, err = xc.Ledger.FormatMinerBlock(txs, xc.address, xc.privateKey,
 		t.UnixNano(), curTerm, curBlockNum, xc.Utxovm.GetLatestBlockid(), targetBits,
-		xc.Utxovm.GetTotal(), qc, fakeBlock.FailedTxs)
+		xc.Utxovm.GetTotal(), qc, fakeBlock.FailedTxs, xc.Ledger.GetMeta().TrunkHeight+1)
 	if err != nil {
 		xc.log.Warn("[Minning] format block error", "logid", header.Logid, "err", err)
 		return

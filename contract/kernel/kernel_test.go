@@ -320,7 +320,8 @@ func TestRunUpdateMaxBlockSize(t *testing.T) {
 	if playErr != nil {
 		t.Error(playErr)
 	}
-	t.Log("L.GetMaxBlockSize:", L.GetMaxBlockSize())
+	maxSize, _ := utxovm.GetMaxBlockSize()
+	t.Log("UtxoVM.GetMaxBlockSize:", maxSize)
 	context := &contract.TxContext{
 		LedgerObj: L,
 		UtxoBatch: L.GetBaseDB().NewBatch(),

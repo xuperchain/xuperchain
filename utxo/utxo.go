@@ -74,6 +74,9 @@ var (
 	ErrTxTooLarge     = errors.New("Tx size is too large")
 
 	ErrGetReservedContracts = errors.New("Get reserved contracts error")
+	ErrInvokeReqParams      = errors.New("Invalid invoke request params")
+	ErrParseContractUtxos   = errors.New("Parse contract utxos error")
+	ErrContractTxAmout      = errors.New("Contract transfer amount error")
 )
 
 // package constants
@@ -167,6 +170,10 @@ type RootJSON struct {
 type UtxoLockItem struct {
 	timestamp int64
 	holder    *list.Element
+}
+
+type contractChainCore struct {
+	*acli.Manager // ACL manager for read/write acl table
 }
 
 func genUtxoKey(addr []byte, txid []byte, offset int32) string {
@@ -474,6 +481,17 @@ func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, priv
 		xlog.Warn("failed to load newAccountResourceAmount from disk", "loadErr", loadErr)
 		return nil, loadErr
 	}
+	// load irreversible block height & slide window parameters
+	utxoVM.meta.IrreversibleBlockHeight, loadErr = utxoVM.LoadIrreversibleBlockHeight()
+	if loadErr != nil {
+		xlog.Warn("failed to load irreversible block height from disk", "loadErr", loadErr)
+		return nil, loadErr
+	}
+	utxoVM.meta.IrreversibleSlideWindow, loadErr = utxoVM.LoadIrreversibleSlideWindow()
+	if loadErr != nil {
+		xlog.Warn("failed to load irreversibleSlide window from disk", "loadErr", loadErr)
+		return nil, loadErr
+	}
 	utxoVM.metaTmp = utxoVM.meta
 	return utxoVM, nil
 }
@@ -754,18 +772,36 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 		NewAccountResourceAmount: uv.meta.GetNewAccountResourceAmount(),
 		ContractName:             "",
 		ResourceLimits:           contract.MaxLimits,
+		Core: contractChainCore{
+			Manager: uv.aclMgr,
+		},
 	}
 	gasUesdTotal := int64(0)
 	response := [][]byte{}
 
 	var requests []*pb.InvokeRequest
 	var responses []*pb.ContractResponse
+	// af is the flag of whether the contract already carries the amount parameter
+	af := false
 	for i, tmpReq := range req.Requests {
+		if af {
+			return nil, ErrInvokeReqParams
+		}
 		if tmpReq == nil {
 			continue
 		}
 		if tmpReq.GetModuleName() == "" && tmpReq.GetContractName() == "" && tmpReq.GetMethodName() == "" {
 			continue
+		}
+
+		if tmpReq.GetAmount() != "" {
+			amount, ok := new(big.Int).SetString(tmpReq.GetAmount(), 10)
+			if !ok {
+				return nil, ErrInvokeReqParams
+			}
+			if amount.Cmp(new(big.Int).SetInt64(0)) == 1 {
+				af = true
+			}
 		}
 		moduleName := tmpReq.GetModuleName()
 		vm, err := uv.vmMgr3.GetVM(moduleName)
@@ -1221,16 +1257,6 @@ func (uv *UtxoVM) VerifyTx(tx *pb.Transaction) (bool, error) {
 		uv.xlog.Warn("ImmediateVerifyTx failed", "error", err,
 			"AuthRequire ", tx.AuthRequire, "AuthRequireSigns ", tx.AuthRequireSigns,
 			"Initiator", tx.Initiator, "InitiatorSigns", tx.InitiatorSigns, "XuperSign", tx.XuperSign)
-		if tx.GetModifyBlock() != nil && tx.ModifyBlock.Marked {
-			ok, err := uv.verifyMarkedTx(tx)
-			if err == nil && ok {
-				return ok, nil
-			}
-		}
-		ok, err := uv.verifyRelyOnMarkedTxs(tx)
-		if err == nil && ok {
-			return ok, nil
-		}
 	}
 	return isValid, err
 }
@@ -1469,6 +1495,13 @@ func (uv *UtxoVM) PlayAndRepost(blockid []byte, needRepost bool, isRootTx bool) 
 		// 合约执行失败，不影响签发块
 		return err
 	}
+	// 更新不可逆区块高度
+	curIrreversibleBlockHeight := uv.GetIrreversibleBlockHeight()
+	curIrreversibleSlideWindow := uv.GetIrreversibleSlideWindow()
+	updateErr := uv.updateNextIrreversibleBlockHeight(block.Height, curIrreversibleBlockHeight, curIrreversibleSlideWindow, batch)
+	if updateErr != nil {
+		return updateErr
+	}
 	//更新latestBlockid
 	persistErr := uv.updateLatestBlockid(block.Blockid, batch, "failed to save block")
 	if persistErr != nil {
@@ -1530,6 +1563,13 @@ func (uv *UtxoVM) PlayForMiner(blockid []byte, batch kvdb.Batch) error {
 	if err = uv.smartContract.Finalize(block.Blockid); err != nil {
 		uv.xlog.Warn("smart contract.finalize failed", "blockid", fmt.Sprintf("%x", block.Blockid))
 		return err
+	}
+	// 更新不可逆区块高度
+	curIrreversibleBlockHeight := uv.GetIrreversibleBlockHeight()
+	curIrreversibleSlideWindow := uv.GetIrreversibleSlideWindow()
+	updateErr := uv.updateNextIrreversibleBlockHeight(block.Height, curIrreversibleBlockHeight, curIrreversibleSlideWindow, batch)
+	if updateErr != nil {
+		return updateErr
 	}
 	//更新latestBlockid
 	err = uv.updateLatestBlockid(block.Blockid, batch, "failed to save block")
@@ -1613,6 +1653,14 @@ func (uv *UtxoVM) Walk(blockid []byte) error {
 		return findErr
 	}
 	for _, undoBlk := range undoBlocks {
+		// 加一个(共识)开关来判定是否需要采用不可逆
+		// 不需要更新IrreversibleBlockHeight以及SlideWindow，因为共识层面的回滚不会回滚到IrreversibleBlockHeight
+		// 只有账本裁剪才需要更新IrreversibleBlockHeight以及SlideWindow
+		curIrreversibleBlockHeight := uv.GetIrreversibleBlockHeight()
+		if undoBlk.Height <= curIrreversibleBlockHeight {
+			uv.xlog.Warn("undo failed, block to be undo is older than irreversibleBlockHeight", "irreversibleBlockHeight", curIrreversibleBlockHeight, "undo block height", undoBlk.Height)
+			return errors.New("undo error")
+		}
 		batch := uv.ldb.NewBatch()
 		uv.xlog.Info("start undo block", "blockid", fmt.Sprintf("%x", undoBlk.Blockid))
 		ctx := &contract.TxContext{UtxoBatch: batch, Block: undoBlk, IsUndo: true, LedgerObj: uv.ledger, UtxoMeta: uv} // 将batch赋值到合约机的上下文
@@ -1691,14 +1739,21 @@ func (uv *UtxoVM) Walk(blockid []byte) error {
 			uv.xlog.Error("smart contract fianlize failed", "blockid", fmt.Sprintf("%x", todoBlk.Blockid))
 			return err
 		}
-		updateErr := uv.updateLatestBlockid(todoBlk.Blockid, batch, "error occurs when do blocks") // 每do一个block,是一个原子batch写
+		// 更新不可逆区块高度
+		curIrreversibleBlockHeight := uv.GetIrreversibleBlockHeight()
+		curIrreversibleSlideWindow := uv.GetIrreversibleSlideWindow()
+		updateErr := uv.updateNextIrreversibleBlockHeight(todoBlk.Height, curIrreversibleBlockHeight, curIrreversibleSlideWindow, batch)
+		if updateErr != nil {
+			return updateErr
+		}
+		updateErr = uv.updateLatestBlockid(todoBlk.Blockid, batch, "error occurs when do blocks") // 每do一个block,是一个原子batch写
 		if updateErr != nil {
 			return updateErr
 		}
 		// 内存级别更新UtxoMeta信息
-		//uv.mutexMeta.Lock()
-		//defer uv.mutexMeta.Unlock()
+		uv.mutexMeta.Lock()
 		uv.meta = uv.metaTmp
+		uv.mutexMeta.Unlock()
 	}
 	return nil
 }
@@ -1771,7 +1826,10 @@ func (uv *UtxoVM) queryAccountContainAK(address string) ([]string, error) {
 
 func (uv *UtxoVM) queryTxFromForbiddenWithConfirmed(txid []byte) (bool, bool, error) {
 	// 如果配置文件配置了封禁tx监管合约，那么继续下面的执行。否则，直接返回.
-	forbiddenContract := uv.ledger.GenesisBlock.GetConfig().ForbiddenContract
+	forbiddenContract, err := uv.GetForbiddenContract()
+	if forbiddenContract == nil || err != nil {
+		return false, false, err
+	}
 
 	// 这里不针对ModuleName/ContractName/MethodName做特殊化处理
 	moduleNameForForbidden := forbiddenContract.ModuleName
@@ -2012,6 +2070,9 @@ func (uv *UtxoVM) GetMeta() *pb.UtxoMeta {
 	meta.MaxBlockSize = uv.meta.GetMaxBlockSize()
 	meta.ReservedContracts = uv.meta.GetReservedContracts()
 	meta.ForbiddenContract = uv.meta.GetForbiddenContract()
+	meta.NewAccountResourceAmount = uv.meta.GetNewAccountResourceAmount()
+	meta.IrreversibleBlockHeight = uv.meta.GetIrreversibleBlockHeight()
+	meta.IrreversibleSlideWindow = uv.meta.GetIrreversibleSlideWindow()
 	return meta
 }
 
