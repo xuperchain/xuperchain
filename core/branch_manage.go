@@ -16,7 +16,7 @@ func (xc *XChainCore) pruneLedger(targetBlockid []byte) error {
 		return err
 	}
 	// utxo 主干切换
-	walkErr := xc.Utxovm.Walk(targetBlockid)
+	walkErr := xc.Utxovm.Walk(targetBlockid, true)
 	if walkErr != nil {
 		xc.log.Warn("pruneLedger walk targetBlockid error", "walkErr", walkErr)
 		return walkErr

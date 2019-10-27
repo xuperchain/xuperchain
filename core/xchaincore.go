@@ -521,7 +521,7 @@ func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
 			}
 			return nil
 		}
-		err := xc.Utxovm.Walk(block0.Blockid)
+		err := xc.Utxovm.Walk(block0.Blockid, false)
 		xc.log.Debug("Walk Time", "logid", in.Header.Logid, "cost", hd.Timer.Print())
 		if err != nil {
 			xc.log.Warn("Walk error", "logid", in.Header.Logid, "err", err)
@@ -551,7 +551,7 @@ func (xc *XChainCore) doMiner() {
 
 	if !bytes.Equal(ledgerLastID, utxovmLastID) {
 		xc.log.Warn("ledger last blockid is not equal utxovm last id")
-		err := xc.Utxovm.Walk(ledgerLastID)
+		err := xc.Utxovm.Walk(ledgerLastID, false)
 		// if xc.failSkip = false, then keep logic, if not equal, retry
 		if err != nil {
 			if !xc.failSkip {
@@ -726,7 +726,7 @@ func (xc *XChainCore) Miner() int {
 	utxovmLastID := xc.Utxovm.GetLatestBlockid()
 	if !bytes.Equal(ledgerLastID, utxovmLastID) {
 		xc.log.Warn("ledger last blockid is not equal utxovm last id")
-		xc.Utxovm.Walk(ledgerLastID)
+		xc.Utxovm.Walk(ledgerLastID, false)
 	}
 	// 2 FAST_SYNC模式下需要回滚掉本地所有的未确认交易
 	if xc.nodeMode == config.NodeModeFastSync {
