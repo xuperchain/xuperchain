@@ -2,7 +2,6 @@ package ledger
 
 import (
 	"bytes"
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -56,7 +55,6 @@ func (l *Ledger) HandleFork(oldTip []byte, newTip []byte, batchWrite kvdb.Batch)
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("------------- step GetCommonParentBlockid success", fmt.Sprintf("%x", commonParentBlockid))
 	// 将老分支剪一下
 	for !bytes.Equal(oldTip, commonParentBlockid) {
 		oldBlock, oldBlockErr := l.fetchBlock(oldTip)
@@ -71,7 +69,6 @@ func (l *Ledger) HandleFork(oldTip []byte, newTip []byte, batchWrite kvdb.Batch)
 			return nil, saveErr
 		}
 	}
-	fmt.Println("------------ step update old tip success")
 	// 将新分支修一下
 	newBlock, newBlockErr := l.fetchBlock(newTip)
 	if newBlockErr != nil {
@@ -97,7 +94,6 @@ func (l *Ledger) HandleFork(oldTip []byte, newTip []byte, batchWrite kvdb.Batch)
 		}
 		newTip = nextHash
 	}
-	fmt.Println("------------ step update new tip success")
 	return l.fetchBlock(newPreBlockid)
 }
 

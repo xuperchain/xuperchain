@@ -1,8 +1,6 @@
 package xchaincore
 
 import (
-	"fmt"
-
 	"github.com/golang/protobuf/proto"
 
 	"github.com/xuperchain/xuperunion/common"
@@ -17,21 +15,18 @@ func (xc *XChainCore) pruneLedger(targetBlockid []byte) error {
 		xc.log.Warn("pruneLedger syncTargetBlock error", "err", err, "blockid", string(targetBlockid))
 		return err
 	}
-	fmt.Println("------------- step1 syncTargetBlock succeed")
 	// utxo 主干切换
 	walkErr := xc.Utxovm.Walk(targetBlockid)
 	if walkErr != nil {
 		xc.log.Warn("pruneLedger walk targetBlockid error", "walkErr", walkErr)
 		return walkErr
 	}
-	fmt.Println("------------- step2 utxo walk succeed")
 	// ledger 主干切换
 	batch := xc.Ledger.GetLDB().NewBatch()
 	_, splitErr := xc.Ledger.HandleFork(xc.Ledger.GetMeta().TipBlockid, targetBlockid, batch)
 	if splitErr != nil {
 		return splitErr
 	}
-	fmt.Println("------------- step3 handle fork succeed")
 	// ledger主干切换的扫尾工作
 	newMeta := proto.Clone(xc.Ledger.GetMeta()).(*pb.LedgerMeta)
 	newMeta.TrunkHeight = targetBlock.Height
@@ -48,7 +43,6 @@ func (xc *XChainCore) pruneLedger(targetBlockid []byte) error {
 		xc.log.Warn("pruneLedger GetTargetRangeBranchInfo error", "branchErr", branchErr)
 		return branchErr
 	}
-	fmt.Println("------------- step4 get branch info succeed")
 	// step2: 将无效分支剪掉
 	for _, v := range branchHeadArr {
 		// get common parent from higher to lower and truncate all of them
@@ -60,9 +54,7 @@ func (xc *XChainCore) pruneLedger(targetBlockid []byte) error {
 		if err != nil && common.NormalizedKVError(err) != common.ErrKVNotFound {
 			return err
 		}
-		fmt.Println("--------- before step5", fmt.Sprintf("%x", v))
 	}
-	fmt.Println("------------- step5 remove blocks succeed")
 	kvErr := batch.Write()
 	if kvErr != nil {
 		return kvErr
