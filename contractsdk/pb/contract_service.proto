@@ -25,6 +25,7 @@ service Syscall {
   rpc QueryBlock(xchain.contract.sdk.QueryBlockRequest) returns (xchain.contract.sdk.QueryBlockResponse);
   rpc Transfer(xchain.contract.sdk.TransferRequest) returns (xchain.contract.sdk.TransferResponse);
   rpc ContractCall(xchain.contract.sdk.ContractCallRequest) returns (xchain.contract.sdk.ContractCallResponse);
+  rpc GetAccountAddresses(xchain.contract.sdk.GetAccountAddressesRequest) returns (xchain.contract.sdk.GetAccountAddressesResponse);
 
   // Heartbeat
   rpc Ping(xchain.contract.sdk.PingRequest) returns (xchain.contract.sdk.PingResponse);

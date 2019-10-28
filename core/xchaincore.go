@@ -342,7 +342,12 @@ func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
 		return ErrServiceRefused
 	}
 	blockSize := int64(proto.Size(in.Block))
-	if blockSize > xc.Ledger.GetMaxBlockSize() {
+	maxBlockSize, sizeErr := xc.Utxovm.GetMaxBlockSize()
+	if sizeErr != nil {
+		xc.log.Warn("failed to GetMaxBlockSize", "sizeErr", sizeErr)
+		return ErrServiceRefused
+	}
+	if blockSize > maxBlockSize {
 		xc.log.Debug("refused a connection because block is too large", "logid", in.Header.Logid, "cost", hd.Timer.Print(), "size", blockSize)
 		return ErrServiceRefused
 	}
@@ -419,7 +424,12 @@ func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
 					return ErrCannotSyncBlock
 				}
 				ibSize := int64(proto.Size(ib.Block))
-				if ibSize > xc.Ledger.GetMaxBlockSize() {
+				maxSize, sizeErr := xc.Utxovm.GetMaxBlockSize()
+				if sizeErr != nil {
+					xc.log.Warn("failed to GetMaxBlockSize", "sizeErr", sizeErr)
+					return sizeErr
+				}
+				if ibSize > maxSize {
 					xc.log.Warn("too large block", "size", ibSize, "blockid", global.F(ib.Block.Blockid))
 					return ErrBlockTooLarge
 				}
