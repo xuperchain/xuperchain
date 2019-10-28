@@ -893,6 +893,20 @@ class CallArgs :
   ::std::string* release_initiator();
   void set_allocated_initiator(::std::string* initiator);
 
+  // string transfer_amount = 5;
+  void clear_transfer_amount();
+  static const int kTransferAmountFieldNumber = 5;
+  const ::std::string& transfer_amount() const;
+  void set_transfer_amount(const ::std::string& value);
+  #if LANG_CXX11
+  void set_transfer_amount(::std::string&& value);
+  #endif
+  void set_transfer_amount(const char* value);
+  void set_transfer_amount(const char* value, size_t size);
+  ::std::string* mutable_transfer_amount();
+  ::std::string* release_transfer_amount();
+  void set_allocated_transfer_amount(::std::string* transfer_amount);
+
   // @@protoc_insertion_point(class_scope:xchain.contract.sdk.CallArgs)
  private:
   class HasBitSetters;
@@ -902,6 +916,7 @@ class CallArgs :
   ::google::protobuf::RepeatedPtrField<::std::string> auth_require_;
   ::google::protobuf::internal::ArenaStringPtr method_;
   ::google::protobuf::internal::ArenaStringPtr initiator_;
+  ::google::protobuf::internal::ArenaStringPtr transfer_amount_;
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_contract_2eproto;
 };
@@ -4946,6 +4961,59 @@ inline ::google::protobuf::RepeatedPtrField<::std::string>*
 CallArgs::mutable_auth_require() {
   // @@protoc_insertion_point(field_mutable_list:xchain.contract.sdk.CallArgs.auth_require)
   return &auth_require_;
+}
+
+// string transfer_amount = 5;
+inline void CallArgs::clear_transfer_amount() {
+  transfer_amount_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& CallArgs::transfer_amount() const {
+  // @@protoc_insertion_point(field_get:xchain.contract.sdk.CallArgs.transfer_amount)
+  return transfer_amount_.GetNoArena();
+}
+inline void CallArgs::set_transfer_amount(const ::std::string& value) {
+  
+  transfer_amount_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:xchain.contract.sdk.CallArgs.transfer_amount)
+}
+#if LANG_CXX11
+inline void CallArgs::set_transfer_amount(::std::string&& value) {
+  
+  transfer_amount_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:xchain.contract.sdk.CallArgs.transfer_amount)
+}
+#endif
+inline void CallArgs::set_transfer_amount(const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  
+  transfer_amount_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:xchain.contract.sdk.CallArgs.transfer_amount)
+}
+inline void CallArgs::set_transfer_amount(const char* value, size_t size) {
+  
+  transfer_amount_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:xchain.contract.sdk.CallArgs.transfer_amount)
+}
+inline ::std::string* CallArgs::mutable_transfer_amount() {
+  
+  // @@protoc_insertion_point(field_mutable:xchain.contract.sdk.CallArgs.transfer_amount)
+  return transfer_amount_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* CallArgs::release_transfer_amount() {
+  // @@protoc_insertion_point(field_release:xchain.contract.sdk.CallArgs.transfer_amount)
+  
+  return transfer_amount_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void CallArgs::set_allocated_transfer_amount(::std::string* transfer_amount) {
+  if (transfer_amount != nullptr) {
+    
+  } else {
+    
+  }
+  transfer_amount_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), transfer_amount);
+  // @@protoc_insertion_point(field_set_allocated:xchain.contract.sdk.CallArgs.transfer_amount)
 }
 
 // -------------------------------------------------------------------

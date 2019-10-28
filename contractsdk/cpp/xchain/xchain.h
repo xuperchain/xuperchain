@@ -39,6 +39,7 @@ public:
     virtual Response* mutable_response() = 0;
     virtual std::unique_ptr<Iterator> new_iterator(const std::string& start, const std::string& limit) = 0;
     virtual Account& sender() = 0;
+    virtual const std::string& transfer_amount() const = 0;
 };
 
 class Contract {

@@ -90,6 +90,7 @@ func (v *vmImpl) NewContext(ctxCfg *contract.ContextConfig) (contract.Context, e
 	ctx.ResourceLimits = ctxCfg.ResourceLimits
 	ctx.CanInitialize = ctxCfg.CanInitialize
 	ctx.Core = ctxCfg.Core
+	ctx.TransferAmount = ctxCfg.TransferAmount
 	release := func() {
 		v.ctxmgr.DestroyContext(ctx)
 	}

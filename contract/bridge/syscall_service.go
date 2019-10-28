@@ -109,6 +109,21 @@ func (c *SyscallService) QueryTx(ctx context.Context, in *pb.QueryTxRequest) (*p
 
 // Transfer implements Syscall interface
 func (c *SyscallService) Transfer(ctx context.Context, in *pb.TransferRequest) (*pb.TransferResponse, error) {
+	nctx, ok := c.ctxmgr.Context(in.GetHeader().Ctxid)
+	if !ok {
+		return nil, fmt.Errorf("bad ctx id:%d", in.Header.Ctxid)
+	}
+	amount, ok := new(big.Int).SetString(in.GetAmount(), 10)
+	if !ok {
+		return nil, errors.New("parse amount error")
+	}
+	if in.GetTo() == "" {
+		return nil, errors.New("empty to address")
+	}
+	err := nctx.Cache.Transfer(nctx.ContractName, in.GetTo(), amount)
+	if err != nil {
+		return nil, err
+	}
 	resp := &pb.TransferResponse{}
 	return resp, nil
 }
@@ -217,10 +232,11 @@ func (c *SyscallService) GetCallArgs(ctx context.Context, in *pb.GetCallArgsRequ
 		return args[i].Key < args[j].Key
 	})
 	return &pb.CallArgs{
-		Method:      nctx.Method,
-		Args:        args,
-		Initiator:   nctx.Initiator,
-		AuthRequire: nctx.AuthRequire,
+		Method:         nctx.Method,
+		Args:           args,
+		Initiator:      nctx.Initiator,
+		AuthRequire:    nctx.AuthRequire,
+		TransferAmount: nctx.TransferAmount,
 	}, nil
 }
 

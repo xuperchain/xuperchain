@@ -1,7 +1,9 @@
 package xmodel
 
 import (
+	"bytes"
 	"errors"
+	"math/big"
 
 	"github.com/syndtr/goleveldb/leveldb/comparer"
 	"github.com/syndtr/goleveldb/leveldb/util"
@@ -24,6 +26,16 @@ var (
 	ErrNotFound = errors.New("Key not found")
 )
 
+var (
+	contractUtxoInputKey  = []byte("ContractUtxo.Inputs")
+	contractUtxoOutputKey = []byte("ContractUtxo.Outputs")
+)
+
+// UtxoVM manages utxos
+type UtxoVM interface {
+	SelectUtxos(fromAddr string, fromPubKey string, totalNeed *big.Int, needLock, excludeUnconfirmed bool) ([]*pb.TxInput, [][]byte, *big.Int, error)
+}
+
 // XMCache data structure for XModel Cache
 type XMCache struct {
 	// Key: bucket_key; Value: VersionedData
@@ -33,16 +45,35 @@ type XMCache struct {
 	// 是否穿透到model层
 	isPenetrate bool
 	model       *XModel
+	utxoCache   *UtxoCache
 }
 
 // NewXModelCache new an instance of XModel Cache
-func NewXModelCache(model *XModel, isPenetrate bool) (*XMCache, error) {
+func NewXModelCache(model *XModel, utxovm UtxoVM) (*XMCache, error) {
 	return &XMCache{
-		isPenetrate:  isPenetrate,
+		isPenetrate:  true,
 		model:        model,
 		inputsCache:  memdb.New(comparer.DefaultComparer, DefaultMemDBSize),
 		outputsCache: memdb.New(comparer.DefaultComparer, DefaultMemDBSize),
+		utxoCache:    NewUtxoCache(utxovm),
 	}, nil
+}
+
+func NewXModelCacheWithInputs(vdatas []*xmodel_pb.VersionedData, utxoInputs []*pb.TxInput) *XMCache {
+	xc := &XMCache{
+		isPenetrate:  false,
+		inputsCache:  memdb.New(comparer.DefaultComparer, DefaultMemDBSize),
+		outputsCache: memdb.New(comparer.DefaultComparer, DefaultMemDBSize),
+	}
+	for _, vd := range vdatas {
+		bucket := vd.GetPureData().GetBucket()
+		key := vd.GetPureData().GetKey()
+		rawKey := makeRawKey(bucket, key)
+		valBuf, _ := proto.Marshal(vd)
+		xc.inputsCache.Put(rawKey, valBuf)
+	}
+	xc.utxoCache = NewUtxoCacheWithInputs(utxoInputs)
+	return xc
 }
 
 // Get 读取一个key的值，返回的value就是有版本的data
@@ -149,8 +180,10 @@ func (xc *XMCache) Put(bucket string, key []byte, value []byte) error {
 	if err != nil {
 		return err
 	}
-	// put 前先强制get一下
-	xc.Get(bucket, key)
+	if bucket != TransientBucket {
+		// put 前先强制get一下
+		xc.Get(bucket, key)
+	}
 	return xc.outputsCache.Put(buKey, valBuf)
 }
 
@@ -243,7 +276,99 @@ func (xc *XMCache) fill(vd *xmodel_pb.VersionedData) error {
 	return xc.inputsCache.Put(rawKey, valBuf)
 }
 
-// GetBcname 返回bcname
-func (xc *XMCache) GetBcname() string {
-	return xc.model.bcname
+// Transfer transfer tokens using utxo
+func (xc *XMCache) Transfer(from, to string, amount *big.Int) error {
+	return xc.utxoCache.Transfer(from, to, amount)
+}
+
+// GetUtxoRWSets returns the inputs and outputs of utxo
+func (xc *XMCache) GetUtxoRWSets() ([]*pb.TxInput, []*pb.TxOutput) {
+	return xc.utxoCache.GetRWSets()
+}
+
+func (xc *XMCache) PutUtxos(inputs []*pb.TxInput, outputs []*pb.TxOutput) error {
+	var in, out []byte
+	var err error
+	if len(inputs) != 0 {
+		in, err = marshalMessages(inputs)
+		if err != nil {
+			return err
+		}
+	}
+	if len(outputs) != 0 {
+		out, err = marshalMessages(outputs)
+		if err != nil {
+			return err
+		}
+	}
+	if in != nil {
+		err = xc.Put(TransientBucket, contractUtxoInputKey, in)
+		if err != nil {
+			return err
+		}
+	}
+	if out != nil {
+		err = xc.Put(TransientBucket, contractUtxoOutputKey, out)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// ParseContractUtxo parse contract utxo inputs from tx write sets
+func ParseContractUtxoInputs(tx *pb.Transaction) ([]*pb.TxInput, error) {
+	var (
+		utxoInputs []*pb.TxInput
+		extInput   []byte
+	)
+	for _, out := range tx.GetTxOutputsExt() {
+		if out.GetBucket() != TransientBucket {
+			continue
+		}
+		if bytes.Equal(out.GetKey(), contractUtxoInputKey) {
+			extInput = out.GetValue()
+		}
+	}
+	if extInput != nil {
+		err := unmsarshalMessages(extInput, &utxoInputs)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return utxoInputs, nil
+}
+
+// ParseContractUtxo parse contract utxos from tx write sets
+func ParseContractUtxo(tx *pb.Transaction) ([]*pb.TxInput, []*pb.TxOutput, error) {
+	var (
+		utxoInputs  []*pb.TxInput
+		utxoOutputs []*pb.TxOutput
+		extInput    []byte
+		extOutput   []byte
+	)
+	for _, out := range tx.GetTxOutputsExt() {
+		if out.GetBucket() != TransientBucket {
+			continue
+		}
+		if bytes.Equal(out.GetKey(), contractUtxoInputKey) {
+			extInput = out.GetValue()
+		}
+		if bytes.Equal(out.GetKey(), contractUtxoOutputKey) {
+			extOutput = out.GetValue()
+		}
+	}
+	if extInput != nil {
+		err := unmsarshalMessages(extInput, &utxoInputs)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+	if extOutput != nil {
+		err := unmsarshalMessages(extOutput, &utxoOutputs)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+	return utxoInputs, utxoOutputs, nil
 }
