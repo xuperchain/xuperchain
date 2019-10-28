@@ -150,6 +150,7 @@ func (c *SyscallService) PutObject(ctx context.Context, in *pb.PutRequest) (*pb.
 	}
 
 	if nctx.ExceedDiskLimit() {
+		nctx.Instance.Abort(ErrOutOfDiskLimit.Error())
 		return nil, ErrOutOfDiskLimit
 	}
 	return &pb.PutResponse{}, nil

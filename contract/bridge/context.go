@@ -33,6 +33,8 @@ type Context struct {
 
 	TransferAmount string
 
+	Instance Instance
+
 	// Write by contract
 	Output *pb.Response
 }

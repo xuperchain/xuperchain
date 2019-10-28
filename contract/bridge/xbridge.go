@@ -21,6 +21,8 @@ type Instance interface {
 	ResourceUsed() contract.Limits
 	// Release releases contract instance
 	Release()
+	// Abort terminates running contract with error message
+	Abort(msg string)
 }
 
 // XBridge 用于注册用户虚拟机以及向Xchain Core注册可被识别的vm.VirtualMachine
