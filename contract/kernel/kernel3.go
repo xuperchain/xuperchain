@@ -23,7 +23,6 @@ type XuperKernel struct {
 
 // KContext define kernel contract context type
 type KContext struct {
-	BcName        string
 	xk            *XuperKernel
 	resourceUsed  contract.Limits
 	ResourceLimit contract.Limits
