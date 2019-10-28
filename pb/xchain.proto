@@ -427,6 +427,14 @@ message UtxoMeta {
   int64 new_account_resource_amount = 9;	// the resource amount of creating an account
   int64 irreversibleBlockHeight = 10;	// 当前不可逆区块高度，与utxo对齐
   int64 irreversibleSlideWindow = 11;	// 当前不可逆区块高度调整窗口
+  GasPrice gasPrice = 12;
+}
+
+message GasPrice {
+  int64 cpu_rate = 1;
+  int64 mem_rate = 2;
+  int64 disk_rate = 3;
+  int64 xfee_rate = 4;
 }
 
 // The internal block struct

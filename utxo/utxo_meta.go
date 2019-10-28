@@ -269,3 +269,23 @@ func (uv *UtxoVM) updateNextIrreversibleBlockHeight(blockHeight int64, curIrreve
 
 	return errors.New("unexpected error")
 }
+
+// GetGasPrice get gas price
+func (uv *UtxoVM) GetGasPrice() (*pb.GasPrice, error) {
+	uv.mutexMeta.Lock()
+	defer uv.mutexMeta.Unlock()
+	return uv.meta.GetGasPrice(), nil
+}
+
+// LoadGasPrice load gas price
+func (uv *UtxoVM) LoadGasPrice() (*pb.GasPrice, error) {
+	gasPriceBuf, findErr := uv.metaTable.Get([]byte(ledger_pkg.GasPriceKey))
+	if findErr == nil {
+		utxoMeta := &pb.UtxoMeta{}
+		err := proto.Unmarshal(gasPriceBuf, utxoMeta)
+		return utxoMeta.GetGasPrice(), err
+	} else if common.NormalizedKVError(findErr) == common.ErrKVNotFound {
+		return uv.ledger.GetGasPrice(), nil
+	}
+	return nil, findErr
+}

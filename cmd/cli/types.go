@@ -64,6 +64,13 @@ type InvokeRequest struct {
 	ResouceLimits []ResourceLimit   `json:"resource_limits"`
 }
 
+type GasPrice struct {
+	CpuRate  int64 `json:"cpu_rate"`
+	MemRate  int64 `json:"mem_rate"`
+	DiskRate int64 `json:"disk_rate"`
+	XfeeRate int64 `json:"xfee_rate"`
+}
+
 // SignatureInfo proto.SignatureInfo
 type SignatureInfo struct {
 	PublicKey string `json:"publickey"`
@@ -360,7 +367,8 @@ type UtxoMeta struct {
 	// IrreversibleBlockHeight irreversible block height
 	IrreversibleBlockHeight int64 `json:"irreversibleBlockHeight"`
 	// IrreversibleSlideWindow irreversible slide window
-	IrreversibleSlideWindow int64 `json:"irreversibleSlideWindow"`
+	IrreversibleSlideWindow int64    `json:"irreversibleSlideWindow"`
+	GasPrice                GasPrice `json:"gasPrice"`
 }
 
 // ChainStatus proto.ChainStatus
@@ -410,6 +418,13 @@ func FromSystemStatusPB(statuspb *pb.SystemsStatus) *SystemStatus {
 			MethodName:   forbiddenContract.GetMethodName(),
 			Args:         originalArgs,
 		}
+		gasPricePB := utxoMeta.GetGasPrice()
+		gasPrice := GasPrice{
+			CpuRate:  gasPricePB.GetCpuRate(),
+			MemRate:  gasPricePB.GetMemRate(),
+			DiskRate: gasPricePB.GetDiskRate(),
+			XfeeRate: gasPricePB.GetXfeeRate(),
+		}
 		status.ChainStatus = append(status.ChainStatus, ChainStatus{
 			Name: chain.GetBcname(),
 			LedgerMeta: LedgerMeta{
@@ -430,6 +445,7 @@ func FromSystemStatusPB(statuspb *pb.SystemsStatus) *SystemStatus {
 				// Irreversible block height & slide window
 				IrreversibleBlockHeight: utxoMeta.GetIrreversibleBlockHeight(),
 				IrreversibleSlideWindow: utxoMeta.GetIrreversibleSlideWindow(),
+				GasPrice:                gasPrice,
 			},
 		})
 	}

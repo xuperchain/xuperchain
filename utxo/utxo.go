@@ -492,6 +492,12 @@ func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, priv
 		xlog.Warn("failed to load irreversibleSlide window from disk", "loadErr", loadErr)
 		return nil, loadErr
 	}
+	// load gas price
+	utxoVM.meta.GasPrice, loadErr = utxoVM.LoadGasPrice()
+	if loadErr != nil {
+		xlog.Warn("failed to load gas price from disk", "loadErr", loadErr)
+		return nil, loadErr
+	}
 	utxoVM.metaTmp = utxoVM.meta
 	return utxoVM, nil
 }
@@ -778,6 +784,10 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 	}
 	gasUesdTotal := int64(0)
 	response := [][]byte{}
+	gasPrice, gasPriceErr := uv.GetGasPrice()
+	if gasPriceErr != nil {
+		return nil, gasPriceErr
+	}
 
 	var requests []*pb.InvokeRequest
 	var responses []*pb.ContractResponse
@@ -833,7 +843,7 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 
 		resourceUsed := ctx.ResourceUsed()
 		if i >= len(reservedRequests) {
-			gasUesdTotal += resourceUsed.TotalGas()
+			gasUesdTotal += resourceUsed.TotalGas(gasPrice)
 		}
 		request := *tmpReq
 		request.ResourceLimits = contract.ToPbLimits(resourceUsed)
@@ -2073,6 +2083,7 @@ func (uv *UtxoVM) GetMeta() *pb.UtxoMeta {
 	meta.NewAccountResourceAmount = uv.meta.GetNewAccountResourceAmount()
 	meta.IrreversibleBlockHeight = uv.meta.GetIrreversibleBlockHeight()
 	meta.IrreversibleSlideWindow = uv.meta.GetIrreversibleSlideWindow()
+	meta.GasPrice = uv.meta.GetGasPrice()
 	return meta
 }
 
