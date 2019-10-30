@@ -136,6 +136,17 @@ func (cp *CorePeersFilter) Filter() ([]peer.ID, error) {
 	return peerids, nil
 }
 
+// StaticNodeStrategy a peer filter that contains strategy nodes
+type StaticNodeStrategy struct {
+	bcname string
+	node   *Node
+}
+
+// Filter return static nodes peers
+func (ss *StaticNodeStrategy) Filter() ([]peer.ID, error) {
+	return ss.node.staticNodes[ss.bcname], nil
+}
+
 // MultiStrategy a peer filter that contains multiple filters
 type MultiStrategy struct {
 	node       *Node
@@ -176,6 +187,5 @@ func (cp *MultiStrategy) Filter() ([]peer.ID, error) {
 			res = append(res, peer)
 		}
 	}
-
 	return res, nil
 }

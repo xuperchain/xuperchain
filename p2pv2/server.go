@@ -148,6 +148,10 @@ func (p *P2PServerV2) getCompress(opts *msgOptions) bool {
 }
 
 func (p *P2PServerV2) getFilter(opts *msgOptions) PeersFilter {
+	// All filtering strategies will invalid if
+	if len(p.node.staticNodes[opts.bcname]) != 0 {
+		return &StaticNodeStrategy{node: p.node, bcname: opts.bcname}
+	}
 	fs := opts.filters
 	bcname := opts.bcname
 	peerids := make([]peer.ID, 0)
