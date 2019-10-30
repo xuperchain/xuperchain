@@ -2203,8 +2203,8 @@ func (uv *UtxoVM) GetContractStatus(contractName string) (*pb.ContractStatus, er
 func (uv *UtxoVM) queryContractBannedStatus(contractName string) (bool, error) {
 	request := &pb.InvokeRequest{
 		ModuleName:   "wasm",
-		ContractName: "banned",
-		MethodName:   "verify",
+		ContractName: "unified_check",
+		MethodName:   "banned_check",
 		Args: map[string][]byte{
 			"contract": []byte(contractName),
 		},
