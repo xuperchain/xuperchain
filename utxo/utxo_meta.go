@@ -269,3 +269,21 @@ func (uv *UtxoVM) updateNextIrreversibleBlockHeight(blockHeight int64, curIrreve
 
 	return errors.New("unexpected error")
 }
+
+func (uv *UtxoVM) updateNextIrreversibleBlockHeightForPrune(blockHeight int64, curIrreversibleBlockHeight int64, curIrreversibleSlideWindow int64, batch kvdb.Batch) error {
+	// slideWindow为开启,不需要更新IrreversibleBlockHeight
+	if curIrreversibleSlideWindow <= 0 {
+		return nil
+	}
+	// curIrreversibleBlockHeight小于0, 不符合预期，报警
+	if curIrreversibleBlockHeight < 0 {
+		uv.xlog.Warn("update irreversible block height error, should be here")
+		return errors.New("curIrreversibleBlockHeight is less than 0")
+	}
+	nextIrreversibleBlockHeight := blockHeight - curIrreversibleSlideWindow
+	if nextIrreversibleBlockHeight <= 0 {
+		nextIrreversibleBlockHeight = 0
+	}
+	err := uv.UpdateIrreversibleBlockHeight(nextIrreversibleBlockHeight, batch)
+	return err
+}

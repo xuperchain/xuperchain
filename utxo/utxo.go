@@ -1636,7 +1636,7 @@ func (uv *UtxoVM) RollBackUnconfirmedTx() (map[string]bool, error) {
 
 // Walk 从当前的latestBlockid 游走到 blockid, 会触发utxo状态的回滚。
 //  执行后会更新latestBlockid
-func (uv *UtxoVM) Walk(blockid []byte) error {
+func (uv *UtxoVM) Walk(blockid []byte, ledgerPrune bool) error {
 	uv.mutex.Lock()
 	defer uv.mutex.Unlock() // lock guard
 	// 首先先把所有的unconfirm回滚了。
@@ -1657,7 +1657,7 @@ func (uv *UtxoVM) Walk(blockid []byte) error {
 		// 不需要更新IrreversibleBlockHeight以及SlideWindow，因为共识层面的回滚不会回滚到IrreversibleBlockHeight
 		// 只有账本裁剪才需要更新IrreversibleBlockHeight以及SlideWindow
 		curIrreversibleBlockHeight := uv.GetIrreversibleBlockHeight()
-		if undoBlk.Height <= curIrreversibleBlockHeight {
+		if !ledgerPrune && undoBlk.Height <= curIrreversibleBlockHeight {
 			uv.xlog.Warn("undo failed, block to be undo is older than irreversibleBlockHeight", "irreversibleBlockHeight", curIrreversibleBlockHeight, "undo block height", undoBlk.Height)
 			return errors.New("undo error")
 		}
@@ -1687,6 +1687,15 @@ func (uv *UtxoVM) Walk(blockid []byte) error {
 		if err := uv.smartContract.Finalize(undoBlk.PreHash); err != nil {
 			uv.xlog.Error("smart contract fianlize failed", "blockid", fmt.Sprintf("%x", undoBlk.Blockid))
 			return err
+		}
+		// 账本裁剪时，无视区块不可逆原则
+		if ledgerPrune {
+			curIrreversibleBlockHeight := uv.GetIrreversibleBlockHeight()
+			curIrreversibleSlideWindow := uv.GetIrreversibleSlideWindow()
+			updateErr := uv.updateNextIrreversibleBlockHeightForPrune(undoBlk.Height, curIrreversibleBlockHeight, curIrreversibleSlideWindow, batch)
+			if updateErr != nil {
+				return updateErr
+			}
 		}
 		updateErr := uv.updateLatestBlockid(undoBlk.PreHash, batch, "error occurs when undo blocks")
 		if updateErr != nil {
