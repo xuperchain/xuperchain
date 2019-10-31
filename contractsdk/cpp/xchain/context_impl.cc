@@ -137,4 +137,8 @@ std::unique_ptr<Iterator> ContextImpl::new_iterator(const std::string& start, co
 
 Account& ContextImpl::sender() { return _account; }
 
+const std::string& ContextImpl::transfer_amount() const {
+    return _call_args.transfer_amount();
+}
+
 }  // namespace xchain

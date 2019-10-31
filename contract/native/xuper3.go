@@ -86,3 +86,6 @@ func (n *nativeInstance) Exec() error {
 
 	return nil
 }
+
+func (n *nativeInstance) Abort(msg string) {
+}

@@ -31,6 +31,10 @@ type Context struct {
 
 	Core contract.ChainCore
 
+	TransferAmount string
+
+	Instance Instance
+
 	// Write by contract
 	Output *pb.Response
 }

@@ -35,6 +35,7 @@ import (
 	"github.com/xuperchain/xuperunion/permission/acl"
 	acli "github.com/xuperchain/xuperunion/permission/acl/impl"
 	"github.com/xuperchain/xuperunion/permission/acl/utils"
+	"github.com/xuperchain/xuperunion/txn"
 	"github.com/xuperchain/xuperunion/utxo/txhash"
 	"github.com/xuperchain/xuperunion/vat"
 	"github.com/xuperchain/xuperunion/xmodel"
@@ -147,6 +148,7 @@ type UtxoVM struct {
 	maxConfirmedDelay    uint32    // 交易处于unconfirm状态的最长时间，超过后会被回滚
 	unconfirmTxAmount    int64     // 未确认的Tx数目，用于监控
 	avgDelay             int64     // 平均上链延时
+	bcname               string
 }
 
 // InboundTx is tx wrapper
@@ -364,7 +366,7 @@ func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, priv
 	}
 
 	// create model3
-	model3, mErr := xmodel.NewXuperModel(bcname, ledger, baseDB, xlog)
+	model3, mErr := xmodel.NewXuperModel(ledger, baseDB, xlog)
 	if mErr != nil {
 		xlog.Warn("failed to init xuper model", "err", mErr)
 		return nil, mErr
@@ -426,6 +428,7 @@ func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, priv
 		vmMgr3:               vmManager,
 		aclMgr:               aclManager,
 		maxConfirmedDelay:    DefaultMaxConfirmedDelay,
+		bcname:               bcname,
 	}
 	if iBeta {
 		utxoVM.defaultTxVersion = BetaTxVersion
@@ -758,8 +761,14 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 	// contract request with reservedRequests
 	req.Requests = append(reservedRequests, req.Requests...)
 	uv.xlog.Trace("PreExec requests after merge", "requests", req.Requests)
+
+	// transfer in contract
+	transContractName, transAmount, err := txn.ParseContractTransferRequest(req.Requests)
+	if err != nil {
+		return nil, err
+	}
 	// init modelCache
-	modelCache, err := xmodel.NewXModelCache(uv.GetXModel(), true)
+	modelCache, err := xmodel.NewXModelCache(uv.GetXModel(), uv)
 	if err != nil {
 		return nil, err
 	}
@@ -775,6 +784,7 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 		Core: contractChainCore{
 			Manager: uv.aclMgr,
 		},
+		BCName: uv.bcname,
 	}
 	gasUesdTotal := int64(0)
 	response := [][]byte{}
@@ -810,6 +820,11 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 		}
 
 		contextConfig.ContractName = tmpReq.GetContractName()
+		if transContractName == tmpReq.GetContractName() {
+			contextConfig.TransferAmount = transAmount.String()
+		} else {
+			contextConfig.TransferAmount = ""
+		}
 		ctx, err := vm.NewContext(contextConfig)
 		if err != nil {
 			// FIXME zq @icexin need to return contract not found error
@@ -840,18 +855,25 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 		requests = append(requests, &request)
 		ctx.Release()
 	}
+	utxoInputs, utxoOutputs := modelCache.GetUtxoRWSets()
+	err = modelCache.PutUtxos(utxoInputs, utxoOutputs)
+	if err != nil {
+		return nil, err
+	}
 
 	inputs, outputs, err := modelCache.GetRWSets()
 	if err != nil {
 		return nil, err
 	}
 	rsps := &pb.InvokeResponse{
-		Inputs:    xmodel.GetTxInputs(inputs),
-		Outputs:   xmodel.GetTxOutputs(outputs),
-		Response:  response,
-		Requests:  requests,
-		GasUsed:   gasUesdTotal,
-		Responses: responses,
+		Inputs:      xmodel.GetTxInputs(inputs),
+		Outputs:     xmodel.GetTxOutputs(outputs),
+		Response:    response,
+		Requests:    requests,
+		GasUsed:     gasUesdTotal,
+		Responses:   responses,
+		UtxoInputs:  utxoInputs,
+		UtxoOutputs: utxoOutputs,
 	}
 	return rsps, nil
 }
@@ -1853,7 +1875,7 @@ func (uv *UtxoVM) queryTxFromForbiddenWithConfirmed(txid []byte) (bool, bool, er
 			"txid": []byte(fmt.Sprintf("%x", txid)),
 		},
 	}
-	modelCache, err := xmodel.NewXModelCache(uv.GetXModel(), true)
+	modelCache, err := xmodel.NewXModelCache(uv.GetXModel(), uv)
 	if err != nil {
 		return false, false, err
 	}
@@ -2219,7 +2241,7 @@ func (uv *UtxoVM) queryContractBannedStatus(contractName string) (bool, error) {
 		},
 	}
 
-	modelCache, err := xmodel.NewXModelCache(uv.GetXModel(), true)
+	modelCache, err := xmodel.NewXModelCache(uv.GetXModel(), uv)
 	if err != nil {
 		uv.xlog.Warn("queryContractBannedStatus new model cache error", "error", err)
 		return false, err
