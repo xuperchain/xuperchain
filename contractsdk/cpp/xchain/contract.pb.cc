@@ -1742,6 +1742,7 @@ const int CallArgs::kMethodFieldNumber;
 const int CallArgs::kArgsFieldNumber;
 const int CallArgs::kInitiatorFieldNumber;
 const int CallArgs::kAuthRequireFieldNumber;
+const int CallArgs::kTransferAmountFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 CallArgs::CallArgs()
@@ -1763,6 +1764,10 @@ CallArgs::CallArgs(const CallArgs& from)
   if (from.initiator().size() > 0) {
     initiator_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.initiator_);
   }
+  transfer_amount_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.transfer_amount().size() > 0) {
+    transfer_amount_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.transfer_amount_);
+  }
   // @@protoc_insertion_point(copy_constructor:xchain.contract.sdk.CallArgs)
 }
 
@@ -1771,6 +1776,7 @@ void CallArgs::SharedCtor() {
       &scc_info_CallArgs_contract_2eproto.base);
   method_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   initiator_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  transfer_amount_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 
 CallArgs::~CallArgs() {
@@ -1781,6 +1787,7 @@ CallArgs::~CallArgs() {
 void CallArgs::SharedDtor() {
   method_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   initiator_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  transfer_amount_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 
 void CallArgs::SetCachedSize(int size) const {
@@ -1802,6 +1809,7 @@ void CallArgs::Clear() {
   auth_require_.Clear();
   method_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   initiator_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  transfer_amount_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   _internal_metadata_.Clear();
 }
 
@@ -1883,6 +1891,22 @@ const char* CallArgs::_InternalParse(const char* begin, const char* end, void* o
           ptr += size;
           if (ptr >= end) break;
         } while ((::google::protobuf::io::UnalignedLoad<::google::protobuf::uint64>(ptr) & 255) == 34 && (ptr += 1));
+        break;
+      }
+      // string transfer_amount = 5;
+      case 5: {
+        if (static_cast<::google::protobuf::uint8>(tag) != 42) goto handle_unusual;
+        ptr = ::google::protobuf::io::ReadSize(ptr, &size);
+        GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+        ctx->extra_parse_data().SetFieldName(nullptr);
+        object = msg->mutable_transfer_amount();
+        if (size > end - ptr + ::google::protobuf::internal::ParseContext::kSlopBytes) {
+          parser_till_end = ::google::protobuf::internal::GreedyStringParserUTF8;
+          goto string_till_end;
+        }
+        GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheckUTF8(ptr, size, ctx));
+        ::google::protobuf::internal::InlineGreedyStringParser(object, ptr, size, ctx);
+        ptr += size;
         break;
       }
       default: {
@@ -1982,6 +2006,21 @@ bool CallArgs::MergePartialFromCodedStream(
         break;
       }
 
+      // string transfer_amount = 5;
+      case 5: {
+        if (static_cast< ::google::protobuf::uint8>(tag) == (42 & 0xFF)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_transfer_amount()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->transfer_amount().data(), static_cast<int>(this->transfer_amount().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "xchain.contract.sdk.CallArgs.transfer_amount"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
       default: {
       handle_unusual:
         if (tag == 0) {
@@ -2048,6 +2087,16 @@ void CallArgs::SerializeWithCachedSizes(
       4, this->auth_require(i), output);
   }
 
+  // string transfer_amount = 5;
+  if (this->transfer_amount().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->transfer_amount().data(), static_cast<int>(this->transfer_amount().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "xchain.contract.sdk.CallArgs.transfer_amount");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      5, this->transfer_amount(), output);
+  }
+
   output->WriteRaw(_internal_metadata_.unknown_fields().data(),
                    static_cast<int>(_internal_metadata_.unknown_fields().size()));
   // @@protoc_insertion_point(serialize_end:xchain.contract.sdk.CallArgs)
@@ -2096,6 +2145,13 @@ size_t CallArgs::ByteSizeLong() const {
         this->initiator());
   }
 
+  // string transfer_amount = 5;
+  if (this->transfer_amount().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::StringSize(
+        this->transfer_amount());
+  }
+
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
   SetCachedSize(cached_size);
   return total_size;
@@ -2123,6 +2179,10 @@ void CallArgs::MergeFrom(const CallArgs& from) {
 
     initiator_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.initiator_);
   }
+  if (from.transfer_amount().size() > 0) {
+
+    transfer_amount_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.transfer_amount_);
+  }
 }
 
 void CallArgs::CopyFrom(const CallArgs& from) {
@@ -2148,6 +2208,8 @@ void CallArgs::InternalSwap(CallArgs* other) {
   method_.Swap(&other->method_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
     GetArenaNoVirtual());
   initiator_.Swap(&other->initiator_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+    GetArenaNoVirtual());
+  transfer_amount_.Swap(&other->transfer_amount_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
     GetArenaNoVirtual());
 }
 

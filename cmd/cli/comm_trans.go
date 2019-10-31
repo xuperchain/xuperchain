@@ -52,6 +52,9 @@ type CommTrans struct {
 	Keys         string
 	XchainClient pb.XchainClient
 	CryptoType   string
+
+	// DebugTx if enabled, tx will be printed instead of being posted
+	DebugTx bool
 }
 
 // GenerateTx generate raw tx
@@ -79,12 +82,17 @@ func (c *CommTrans) GenPreExeRes(ctx context.Context) (
 				Args:       c.Args,
 			})
 		} else {
-			preExeReqs = append(preExeReqs, &pb.InvokeRequest{
+			invokeReq := &pb.InvokeRequest{
 				ModuleName:   c.ModuleName,
 				ContractName: c.ContractName,
 				MethodName:   c.MethodName,
 				Args:         c.Args,
-			})
+			}
+			// transfer to contract
+			if c.To == c.ContractName {
+				invokeReq.Amount = c.Amount
+			}
+			preExeReqs = append(preExeReqs, invokeReq)
 		}
 	} else {
 		tmpReq, err := c.GetInvokeRequestFromDesc()
@@ -190,18 +198,26 @@ func (c *CommTrans) GenRawTx(ctx context.Context, desc []byte, preExeRes *pb.Inv
 		gasUsed = preExeRes.GasUsed
 		fmt.Printf("The gas you cousume is: %v\n", gasUsed)
 	}
+
+	if preExeRes.GetUtxoInputs() != nil {
+		tx.TxInputs = append(tx.TxInputs, preExeRes.GetUtxoInputs()...)
+	}
+	if preExeRes.GetUtxoOutputs() != nil {
+		tx.TxOutputs = append(tx.TxOutputs, preExeRes.GetUtxoOutputs()...)
+	}
+
 	txOutputs, totalNeed, err := c.GenTxOutputs(gasUsed)
 	if err != nil {
 		return nil, err
 	}
-	tx.TxOutputs = txOutputs
+	tx.TxOutputs = append(tx.TxOutputs, txOutputs...)
 
 	txInputs, deltaTxOutput, err := c.GenTxInputs(ctx, totalNeed)
 	if err != nil {
 		return nil, err
 	}
 
-	tx.TxInputs = txInputs
+	tx.TxInputs = append(tx.TxInputs, txInputs...)
 	if deltaTxOutput != nil {
 		tx.TxOutputs = append(tx.TxOutputs, deltaTxOutput)
 	}
@@ -358,6 +374,12 @@ func (c *CommTrans) Transfer(ctx context.Context) error {
 	tx, err := c.GenerateTx(ctx)
 	if err != nil {
 		return err
+	}
+	if c.DebugTx {
+		ttx := FromPBTx(tx)
+		out, _ := json.MarshalIndent(ttx, "", "  ")
+		fmt.Println(string(out))
+		return nil
 	}
 
 	return c.SendTx(ctx, tx)

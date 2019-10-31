@@ -28,6 +28,7 @@ message CallArgs {
   repeated ArgPair args = 2;
   string initiator = 3;
   repeated string auth_require = 4;
+  string transfer_amount = 5;
 }
 
 message SyscallHeader {

@@ -32,6 +32,9 @@ func (s *XModel) verifyOutputs(tx *pb.Transaction) error {
 		inputKeys[rawKey] = true
 	}
 	for _, txOut := range tx.TxOutputsExt {
+		if txOut.Bucket == TransientBucket {
+			continue
+		}
 		rawKey := string(makeRawKey(txOut.Bucket, txOut.Key))
 		if !inputKeys[rawKey] {
 			return fmt.Errorf("verifyOutputs failed, not such key in txInputsExt: %s", rawKey)
