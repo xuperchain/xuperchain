@@ -319,7 +319,7 @@ func TestUtxoWorkWithLedgerBasic(t *testing.T) {
 		t.Fatal(dummyErr)
 	}
 	utxoVM2.Play(dummyBlockid)
-	utxoVM2.Walk(ledger2.GetMeta().TipBlockid) //再游走到末端 ,预期会导致dummmy block回滚
+	utxoVM2.Walk(ledger2.GetMeta().TipBlockid, false) //再游走到末端 ,预期会导致dummmy block回滚
 	bobBalance, _ = utxoVM2.GetBalance(BobAddress)
 	aliceBalance, _ = utxoVM2.GetBalance(AliceAddress)
 	minerBalance, _ := utxoVM2.GetBalance("miner-1")
@@ -329,7 +329,7 @@ func TestUtxoWorkWithLedgerBasic(t *testing.T) {
 	}
 	transfer("bob", "alice", t, utxoVM2, ledger2, "7", ledger2.GetMeta().TipBlockid, "", 0)
 	transfer("bob", "alice", t, utxoVM2, ledger2, "7", ledger2.GetMeta().TipBlockid, "", 0)
-	utxoVM2.Walk(ledger2.GetMeta().TipBlockid)
+	utxoVM2.Walk(ledger2.GetMeta().TipBlockid, false)
 	bobBalance, _ = utxoVM2.GetBalance(BobAddress)
 	aliceBalance, _ = utxoVM2.GetBalance(AliceAddress)
 	minerBalance, _ = utxoVM2.GetBalance("miner-1")

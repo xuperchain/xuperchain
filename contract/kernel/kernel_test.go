@@ -148,7 +148,7 @@ func TestCreateBlockChain(t *testing.T) {
 		t.Fatal(err)
 	}
 	//强行walk到根节点，触发createblockchain的回滚测试
-	err = utxovm.Walk(ledger.GetMeta().RootBlockid)
+	err = utxovm.Walk(ledger.GetMeta().RootBlockid, false)
 	if err != nil {
 		t.Fatal(err)
 	}
