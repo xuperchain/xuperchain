@@ -89,3 +89,9 @@ txidCacheExpiredTime : "10s"
 
 # 是否压缩交易/区块
 enableCompress : true
+
+# 剪枝配置
+prune:
+  switch: false
+  bcname: "xuper"
+  targetBlockid: "xxx"

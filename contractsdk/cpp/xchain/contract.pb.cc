@@ -152,6 +152,14 @@ class BlockDefaultTypeInternal {
  public:
   ::google::protobuf::internal::ExplicitlyConstructed<Block> _instance;
 } _Block_default_instance_;
+class GetAccountAddressesRequestDefaultTypeInternal {
+ public:
+  ::google::protobuf::internal::ExplicitlyConstructed<GetAccountAddressesRequest> _instance;
+} _GetAccountAddressesRequest_default_instance_;
+class GetAccountAddressesResponseDefaultTypeInternal {
+ public:
+  ::google::protobuf::internal::ExplicitlyConstructed<GetAccountAddressesResponse> _instance;
+} _GetAccountAddressesResponse_default_instance_;
 }  // namespace sdk
 }  // namespace contract
 }  // namespace xchain
@@ -621,6 +629,35 @@ static void InitDefaultsBlock_contract_2eproto() {
 
 ::google::protobuf::internal::SCCInfo<0> scc_info_Block_contract_2eproto =
     {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsBlock_contract_2eproto}, {}};
+
+static void InitDefaultsGetAccountAddressesRequest_contract_2eproto() {
+  GOOGLE_PROTOBUF_VERIFY_VERSION;
+
+  {
+    void* ptr = &::xchain::contract::sdk::_GetAccountAddressesRequest_default_instance_;
+    new (ptr) ::xchain::contract::sdk::GetAccountAddressesRequest();
+    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
+  }
+  ::xchain::contract::sdk::GetAccountAddressesRequest::InitAsDefaultInstance();
+}
+
+::google::protobuf::internal::SCCInfo<1> scc_info_GetAccountAddressesRequest_contract_2eproto =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 1, InitDefaultsGetAccountAddressesRequest_contract_2eproto}, {
+      &scc_info_SyscallHeader_contract_2eproto.base,}};
+
+static void InitDefaultsGetAccountAddressesResponse_contract_2eproto() {
+  GOOGLE_PROTOBUF_VERIFY_VERSION;
+
+  {
+    void* ptr = &::xchain::contract::sdk::_GetAccountAddressesResponse_default_instance_;
+    new (ptr) ::xchain::contract::sdk::GetAccountAddressesResponse();
+    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
+  }
+  ::xchain::contract::sdk::GetAccountAddressesResponse::InitAsDefaultInstance();
+}
+
+::google::protobuf::internal::SCCInfo<0> scc_info_GetAccountAddressesResponse_contract_2eproto =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsGetAccountAddressesResponse_contract_2eproto}, {}};
 
 namespace xchain {
 namespace contract {
@@ -1705,6 +1742,7 @@ const int CallArgs::kMethodFieldNumber;
 const int CallArgs::kArgsFieldNumber;
 const int CallArgs::kInitiatorFieldNumber;
 const int CallArgs::kAuthRequireFieldNumber;
+const int CallArgs::kTransferAmountFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 CallArgs::CallArgs()
@@ -1726,6 +1764,10 @@ CallArgs::CallArgs(const CallArgs& from)
   if (from.initiator().size() > 0) {
     initiator_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.initiator_);
   }
+  transfer_amount_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.transfer_amount().size() > 0) {
+    transfer_amount_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.transfer_amount_);
+  }
   // @@protoc_insertion_point(copy_constructor:xchain.contract.sdk.CallArgs)
 }
 
@@ -1734,6 +1776,7 @@ void CallArgs::SharedCtor() {
       &scc_info_CallArgs_contract_2eproto.base);
   method_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   initiator_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  transfer_amount_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 
 CallArgs::~CallArgs() {
@@ -1744,6 +1787,7 @@ CallArgs::~CallArgs() {
 void CallArgs::SharedDtor() {
   method_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   initiator_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  transfer_amount_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 
 void CallArgs::SetCachedSize(int size) const {
@@ -1765,6 +1809,7 @@ void CallArgs::Clear() {
   auth_require_.Clear();
   method_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   initiator_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  transfer_amount_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   _internal_metadata_.Clear();
 }
 
@@ -1846,6 +1891,22 @@ const char* CallArgs::_InternalParse(const char* begin, const char* end, void* o
           ptr += size;
           if (ptr >= end) break;
         } while ((::google::protobuf::io::UnalignedLoad<::google::protobuf::uint64>(ptr) & 255) == 34 && (ptr += 1));
+        break;
+      }
+      // string transfer_amount = 5;
+      case 5: {
+        if (static_cast<::google::protobuf::uint8>(tag) != 42) goto handle_unusual;
+        ptr = ::google::protobuf::io::ReadSize(ptr, &size);
+        GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+        ctx->extra_parse_data().SetFieldName(nullptr);
+        object = msg->mutable_transfer_amount();
+        if (size > end - ptr + ::google::protobuf::internal::ParseContext::kSlopBytes) {
+          parser_till_end = ::google::protobuf::internal::GreedyStringParserUTF8;
+          goto string_till_end;
+        }
+        GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheckUTF8(ptr, size, ctx));
+        ::google::protobuf::internal::InlineGreedyStringParser(object, ptr, size, ctx);
+        ptr += size;
         break;
       }
       default: {
@@ -1945,6 +2006,21 @@ bool CallArgs::MergePartialFromCodedStream(
         break;
       }
 
+      // string transfer_amount = 5;
+      case 5: {
+        if (static_cast< ::google::protobuf::uint8>(tag) == (42 & 0xFF)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_transfer_amount()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->transfer_amount().data(), static_cast<int>(this->transfer_amount().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "xchain.contract.sdk.CallArgs.transfer_amount"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
       default: {
       handle_unusual:
         if (tag == 0) {
@@ -2011,6 +2087,16 @@ void CallArgs::SerializeWithCachedSizes(
       4, this->auth_require(i), output);
   }
 
+  // string transfer_amount = 5;
+  if (this->transfer_amount().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->transfer_amount().data(), static_cast<int>(this->transfer_amount().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "xchain.contract.sdk.CallArgs.transfer_amount");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      5, this->transfer_amount(), output);
+  }
+
   output->WriteRaw(_internal_metadata_.unknown_fields().data(),
                    static_cast<int>(_internal_metadata_.unknown_fields().size()));
   // @@protoc_insertion_point(serialize_end:xchain.contract.sdk.CallArgs)
@@ -2059,6 +2145,13 @@ size_t CallArgs::ByteSizeLong() const {
         this->initiator());
   }
 
+  // string transfer_amount = 5;
+  if (this->transfer_amount().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::StringSize(
+        this->transfer_amount());
+  }
+
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
   SetCachedSize(cached_size);
   return total_size;
@@ -2086,6 +2179,10 @@ void CallArgs::MergeFrom(const CallArgs& from) {
 
     initiator_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.initiator_);
   }
+  if (from.transfer_amount().size() > 0) {
+
+    transfer_amount_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.transfer_amount_);
+  }
 }
 
 void CallArgs::CopyFrom(const CallArgs& from) {
@@ -2111,6 +2208,8 @@ void CallArgs::InternalSwap(CallArgs* other) {
   method_.Swap(&other->method_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
     GetArenaNoVirtual());
   initiator_.Swap(&other->initiator_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+    GetArenaNoVirtual());
+  transfer_amount_.Swap(&other->transfer_amount_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
     GetArenaNoVirtual());
 }
 
@@ -10544,6 +10643,572 @@ void Block::InternalSwap(Block* other) {
 }
 
 
+// ===================================================================
+
+void GetAccountAddressesRequest::InitAsDefaultInstance() {
+  ::xchain::contract::sdk::_GetAccountAddressesRequest_default_instance_._instance.get_mutable()->header_ = const_cast< ::xchain::contract::sdk::SyscallHeader*>(
+      ::xchain::contract::sdk::SyscallHeader::internal_default_instance());
+}
+class GetAccountAddressesRequest::HasBitSetters {
+ public:
+  static const ::xchain::contract::sdk::SyscallHeader& header(const GetAccountAddressesRequest* msg);
+};
+
+const ::xchain::contract::sdk::SyscallHeader&
+GetAccountAddressesRequest::HasBitSetters::header(const GetAccountAddressesRequest* msg) {
+  return *msg->header_;
+}
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
+const int GetAccountAddressesRequest::kHeaderFieldNumber;
+const int GetAccountAddressesRequest::kAccountFieldNumber;
+#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+
+GetAccountAddressesRequest::GetAccountAddressesRequest()
+  : ::google::protobuf::MessageLite(), _internal_metadata_(nullptr) {
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:xchain.contract.sdk.GetAccountAddressesRequest)
+}
+GetAccountAddressesRequest::GetAccountAddressesRequest(const GetAccountAddressesRequest& from)
+  : ::google::protobuf::MessageLite(),
+      _internal_metadata_(nullptr) {
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  account_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.account().size() > 0) {
+    account_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.account_);
+  }
+  if (from.has_header()) {
+    header_ = new ::xchain::contract::sdk::SyscallHeader(*from.header_);
+  } else {
+    header_ = nullptr;
+  }
+  // @@protoc_insertion_point(copy_constructor:xchain.contract.sdk.GetAccountAddressesRequest)
+}
+
+void GetAccountAddressesRequest::SharedCtor() {
+  ::google::protobuf::internal::InitSCC(
+      &scc_info_GetAccountAddressesRequest_contract_2eproto.base);
+  account_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  header_ = nullptr;
+}
+
+GetAccountAddressesRequest::~GetAccountAddressesRequest() {
+  // @@protoc_insertion_point(destructor:xchain.contract.sdk.GetAccountAddressesRequest)
+  SharedDtor();
+}
+
+void GetAccountAddressesRequest::SharedDtor() {
+  account_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (this != internal_default_instance()) delete header_;
+}
+
+void GetAccountAddressesRequest::SetCachedSize(int size) const {
+  _cached_size_.Set(size);
+}
+const GetAccountAddressesRequest& GetAccountAddressesRequest::default_instance() {
+  ::google::protobuf::internal::InitSCC(&::scc_info_GetAccountAddressesRequest_contract_2eproto.base);
+  return *internal_default_instance();
+}
+
+
+void GetAccountAddressesRequest::Clear() {
+// @@protoc_insertion_point(message_clear_start:xchain.contract.sdk.GetAccountAddressesRequest)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  account_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (GetArenaNoVirtual() == nullptr && header_ != nullptr) {
+    delete header_;
+  }
+  header_ = nullptr;
+  _internal_metadata_.Clear();
+}
+
+#if GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+const char* GetAccountAddressesRequest::_InternalParse(const char* begin, const char* end, void* object,
+                  ::google::protobuf::internal::ParseContext* ctx) {
+  auto msg = static_cast<GetAccountAddressesRequest*>(object);
+  ::google::protobuf::int32 size; (void)size;
+  int depth; (void)depth;
+  ::google::protobuf::uint32 tag;
+  ::google::protobuf::internal::ParseFunc parser_till_end; (void)parser_till_end;
+  auto ptr = begin;
+  while (ptr < end) {
+    ptr = ::google::protobuf::io::Parse32(ptr, &tag);
+    GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+    switch (tag >> 3) {
+      // .xchain.contract.sdk.SyscallHeader header = 1;
+      case 1: {
+        if (static_cast<::google::protobuf::uint8>(tag) != 10) goto handle_unusual;
+        ptr = ::google::protobuf::io::ReadSize(ptr, &size);
+        GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+        parser_till_end = ::xchain::contract::sdk::SyscallHeader::_InternalParse;
+        object = msg->mutable_header();
+        if (size > end - ptr) goto len_delim_till_end;
+        ptr += size;
+        GOOGLE_PROTOBUF_PARSER_ASSERT(ctx->ParseExactRange(
+            {parser_till_end, object}, ptr - size, ptr));
+        break;
+      }
+      // string account = 2;
+      case 2: {
+        if (static_cast<::google::protobuf::uint8>(tag) != 18) goto handle_unusual;
+        ptr = ::google::protobuf::io::ReadSize(ptr, &size);
+        GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+        ctx->extra_parse_data().SetFieldName(nullptr);
+        object = msg->mutable_account();
+        if (size > end - ptr + ::google::protobuf::internal::ParseContext::kSlopBytes) {
+          parser_till_end = ::google::protobuf::internal::GreedyStringParserUTF8;
+          goto string_till_end;
+        }
+        GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheckUTF8(ptr, size, ctx));
+        ::google::protobuf::internal::InlineGreedyStringParser(object, ptr, size, ctx);
+        ptr += size;
+        break;
+      }
+      default: {
+      handle_unusual:
+        if ((tag & 7) == 4 || tag == 0) {
+          ctx->EndGroup(tag);
+          return ptr;
+        }
+        auto res = UnknownFieldParse(tag, {_InternalParse, msg},
+          ptr, end, msg->_internal_metadata_.mutable_unknown_fields(), ctx);
+        ptr = res.first;
+        GOOGLE_PROTOBUF_PARSER_ASSERT(ptr != nullptr);
+        if (res.second) return ptr;
+      }
+    }  // switch
+  }  // while
+  return ptr;
+string_till_end:
+  static_cast<::std::string*>(object)->clear();
+  static_cast<::std::string*>(object)->reserve(size);
+  goto len_delim_till_end;
+len_delim_till_end:
+  return ctx->StoreAndTailCall(ptr, end, {_InternalParse, msg},
+                               {parser_till_end, object}, size);
+}
+#else  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+bool GetAccountAddressesRequest::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!PROTOBUF_PREDICT_TRUE(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  ::google::protobuf::internal::LiteUnknownFieldSetter unknown_fields_setter(
+      &_internal_metadata_);
+  ::google::protobuf::io::StringOutputStream unknown_fields_output(
+      unknown_fields_setter.buffer());
+  ::google::protobuf::io::CodedOutputStream unknown_fields_stream(
+      &unknown_fields_output, false);
+  // @@protoc_insertion_point(parse_start:xchain.contract.sdk.GetAccountAddressesRequest)
+  for (;;) {
+    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // .xchain.contract.sdk.SyscallHeader header = 1;
+      case 1: {
+        if (static_cast< ::google::protobuf::uint8>(tag) == (10 & 0xFF)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
+               input, mutable_header()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // string account = 2;
+      case 2: {
+        if (static_cast< ::google::protobuf::uint8>(tag) == (18 & 0xFF)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_account()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->account().data(), static_cast<int>(this->account().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "xchain.contract.sdk.GetAccountAddressesRequest.account"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormatLite::SkipField(
+            input, tag, &unknown_fields_stream));
+        break;
+      }
+    }
+  }
+success:
+  // @@protoc_insertion_point(parse_success:xchain.contract.sdk.GetAccountAddressesRequest)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:xchain.contract.sdk.GetAccountAddressesRequest)
+  return false;
+#undef DO_
+}
+#endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+
+void GetAccountAddressesRequest::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:xchain.contract.sdk.GetAccountAddressesRequest)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // .xchain.contract.sdk.SyscallHeader header = 1;
+  if (this->has_header()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessage(
+      1, HasBitSetters::header(this), output);
+  }
+
+  // string account = 2;
+  if (this->account().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->account().data(), static_cast<int>(this->account().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "xchain.contract.sdk.GetAccountAddressesRequest.account");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      2, this->account(), output);
+  }
+
+  output->WriteRaw(_internal_metadata_.unknown_fields().data(),
+                   static_cast<int>(_internal_metadata_.unknown_fields().size()));
+  // @@protoc_insertion_point(serialize_end:xchain.contract.sdk.GetAccountAddressesRequest)
+}
+
+size_t GetAccountAddressesRequest::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:xchain.contract.sdk.GetAccountAddressesRequest)
+  size_t total_size = 0;
+
+  total_size += _internal_metadata_.unknown_fields().size();
+
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  // string account = 2;
+  if (this->account().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::StringSize(
+        this->account());
+  }
+
+  // .xchain.contract.sdk.SyscallHeader header = 1;
+  if (this->has_header()) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::MessageSize(
+        *header_);
+  }
+
+  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  SetCachedSize(cached_size);
+  return total_size;
+}
+
+void GetAccountAddressesRequest::CheckTypeAndMergeFrom(
+    const ::google::protobuf::MessageLite& from) {
+  MergeFrom(*::google::protobuf::down_cast<const GetAccountAddressesRequest*>(&from));
+}
+
+void GetAccountAddressesRequest::MergeFrom(const GetAccountAddressesRequest& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:xchain.contract.sdk.GetAccountAddressesRequest)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from.account().size() > 0) {
+
+    account_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.account_);
+  }
+  if (from.has_header()) {
+    mutable_header()->::xchain::contract::sdk::SyscallHeader::MergeFrom(from.header());
+  }
+}
+
+void GetAccountAddressesRequest::CopyFrom(const GetAccountAddressesRequest& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:xchain.contract.sdk.GetAccountAddressesRequest)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool GetAccountAddressesRequest::IsInitialized() const {
+  return true;
+}
+
+void GetAccountAddressesRequest::Swap(GetAccountAddressesRequest* other) {
+  if (other == this) return;
+  InternalSwap(other);
+}
+void GetAccountAddressesRequest::InternalSwap(GetAccountAddressesRequest* other) {
+  using std::swap;
+  _internal_metadata_.Swap(&other->_internal_metadata_);
+  account_.Swap(&other->account_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+    GetArenaNoVirtual());
+  swap(header_, other->header_);
+}
+
+::std::string GetAccountAddressesRequest::GetTypeName() const {
+  return "xchain.contract.sdk.GetAccountAddressesRequest";
+}
+
+
+// ===================================================================
+
+void GetAccountAddressesResponse::InitAsDefaultInstance() {
+}
+class GetAccountAddressesResponse::HasBitSetters {
+ public:
+};
+
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
+const int GetAccountAddressesResponse::kAddressesFieldNumber;
+#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+
+GetAccountAddressesResponse::GetAccountAddressesResponse()
+  : ::google::protobuf::MessageLite(), _internal_metadata_(nullptr) {
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:xchain.contract.sdk.GetAccountAddressesResponse)
+}
+GetAccountAddressesResponse::GetAccountAddressesResponse(const GetAccountAddressesResponse& from)
+  : ::google::protobuf::MessageLite(),
+      _internal_metadata_(nullptr),
+      addresses_(from.addresses_) {
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  // @@protoc_insertion_point(copy_constructor:xchain.contract.sdk.GetAccountAddressesResponse)
+}
+
+void GetAccountAddressesResponse::SharedCtor() {
+  ::google::protobuf::internal::InitSCC(
+      &scc_info_GetAccountAddressesResponse_contract_2eproto.base);
+}
+
+GetAccountAddressesResponse::~GetAccountAddressesResponse() {
+  // @@protoc_insertion_point(destructor:xchain.contract.sdk.GetAccountAddressesResponse)
+  SharedDtor();
+}
+
+void GetAccountAddressesResponse::SharedDtor() {
+}
+
+void GetAccountAddressesResponse::SetCachedSize(int size) const {
+  _cached_size_.Set(size);
+}
+const GetAccountAddressesResponse& GetAccountAddressesResponse::default_instance() {
+  ::google::protobuf::internal::InitSCC(&::scc_info_GetAccountAddressesResponse_contract_2eproto.base);
+  return *internal_default_instance();
+}
+
+
+void GetAccountAddressesResponse::Clear() {
+// @@protoc_insertion_point(message_clear_start:xchain.contract.sdk.GetAccountAddressesResponse)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  addresses_.Clear();
+  _internal_metadata_.Clear();
+}
+
+#if GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+const char* GetAccountAddressesResponse::_InternalParse(const char* begin, const char* end, void* object,
+                  ::google::protobuf::internal::ParseContext* ctx) {
+  auto msg = static_cast<GetAccountAddressesResponse*>(object);
+  ::google::protobuf::int32 size; (void)size;
+  int depth; (void)depth;
+  ::google::protobuf::uint32 tag;
+  ::google::protobuf::internal::ParseFunc parser_till_end; (void)parser_till_end;
+  auto ptr = begin;
+  while (ptr < end) {
+    ptr = ::google::protobuf::io::Parse32(ptr, &tag);
+    GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+    switch (tag >> 3) {
+      // repeated string addresses = 1;
+      case 1: {
+        if (static_cast<::google::protobuf::uint8>(tag) != 10) goto handle_unusual;
+        do {
+          ptr = ::google::protobuf::io::ReadSize(ptr, &size);
+          GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+          ctx->extra_parse_data().SetFieldName(nullptr);
+          object = msg->add_addresses();
+          if (size > end - ptr + ::google::protobuf::internal::ParseContext::kSlopBytes) {
+            parser_till_end = ::google::protobuf::internal::GreedyStringParserUTF8;
+            goto string_till_end;
+          }
+          GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheckUTF8(ptr, size, ctx));
+          ::google::protobuf::internal::InlineGreedyStringParser(object, ptr, size, ctx);
+          ptr += size;
+          if (ptr >= end) break;
+        } while ((::google::protobuf::io::UnalignedLoad<::google::protobuf::uint64>(ptr) & 255) == 10 && (ptr += 1));
+        break;
+      }
+      default: {
+      handle_unusual:
+        if ((tag & 7) == 4 || tag == 0) {
+          ctx->EndGroup(tag);
+          return ptr;
+        }
+        auto res = UnknownFieldParse(tag, {_InternalParse, msg},
+          ptr, end, msg->_internal_metadata_.mutable_unknown_fields(), ctx);
+        ptr = res.first;
+        GOOGLE_PROTOBUF_PARSER_ASSERT(ptr != nullptr);
+        if (res.second) return ptr;
+      }
+    }  // switch
+  }  // while
+  return ptr;
+string_till_end:
+  static_cast<::std::string*>(object)->clear();
+  static_cast<::std::string*>(object)->reserve(size);
+  goto len_delim_till_end;
+len_delim_till_end:
+  return ctx->StoreAndTailCall(ptr, end, {_InternalParse, msg},
+                               {parser_till_end, object}, size);
+}
+#else  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+bool GetAccountAddressesResponse::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!PROTOBUF_PREDICT_TRUE(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  ::google::protobuf::internal::LiteUnknownFieldSetter unknown_fields_setter(
+      &_internal_metadata_);
+  ::google::protobuf::io::StringOutputStream unknown_fields_output(
+      unknown_fields_setter.buffer());
+  ::google::protobuf::io::CodedOutputStream unknown_fields_stream(
+      &unknown_fields_output, false);
+  // @@protoc_insertion_point(parse_start:xchain.contract.sdk.GetAccountAddressesResponse)
+  for (;;) {
+    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // repeated string addresses = 1;
+      case 1: {
+        if (static_cast< ::google::protobuf::uint8>(tag) == (10 & 0xFF)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->add_addresses()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->addresses(this->addresses_size() - 1).data(),
+            static_cast<int>(this->addresses(this->addresses_size() - 1).length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "xchain.contract.sdk.GetAccountAddressesResponse.addresses"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormatLite::SkipField(
+            input, tag, &unknown_fields_stream));
+        break;
+      }
+    }
+  }
+success:
+  // @@protoc_insertion_point(parse_success:xchain.contract.sdk.GetAccountAddressesResponse)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:xchain.contract.sdk.GetAccountAddressesResponse)
+  return false;
+#undef DO_
+}
+#endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+
+void GetAccountAddressesResponse::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:xchain.contract.sdk.GetAccountAddressesResponse)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // repeated string addresses = 1;
+  for (int i = 0, n = this->addresses_size(); i < n; i++) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->addresses(i).data(), static_cast<int>(this->addresses(i).length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "xchain.contract.sdk.GetAccountAddressesResponse.addresses");
+    ::google::protobuf::internal::WireFormatLite::WriteString(
+      1, this->addresses(i), output);
+  }
+
+  output->WriteRaw(_internal_metadata_.unknown_fields().data(),
+                   static_cast<int>(_internal_metadata_.unknown_fields().size()));
+  // @@protoc_insertion_point(serialize_end:xchain.contract.sdk.GetAccountAddressesResponse)
+}
+
+size_t GetAccountAddressesResponse::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:xchain.contract.sdk.GetAccountAddressesResponse)
+  size_t total_size = 0;
+
+  total_size += _internal_metadata_.unknown_fields().size();
+
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  // repeated string addresses = 1;
+  total_size += 1 *
+      ::google::protobuf::internal::FromIntSize(this->addresses_size());
+  for (int i = 0, n = this->addresses_size(); i < n; i++) {
+    total_size += ::google::protobuf::internal::WireFormatLite::StringSize(
+      this->addresses(i));
+  }
+
+  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  SetCachedSize(cached_size);
+  return total_size;
+}
+
+void GetAccountAddressesResponse::CheckTypeAndMergeFrom(
+    const ::google::protobuf::MessageLite& from) {
+  MergeFrom(*::google::protobuf::down_cast<const GetAccountAddressesResponse*>(&from));
+}
+
+void GetAccountAddressesResponse::MergeFrom(const GetAccountAddressesResponse& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:xchain.contract.sdk.GetAccountAddressesResponse)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  addresses_.MergeFrom(from.addresses_);
+}
+
+void GetAccountAddressesResponse::CopyFrom(const GetAccountAddressesResponse& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:xchain.contract.sdk.GetAccountAddressesResponse)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool GetAccountAddressesResponse::IsInitialized() const {
+  return true;
+}
+
+void GetAccountAddressesResponse::Swap(GetAccountAddressesResponse* other) {
+  if (other == this) return;
+  InternalSwap(other);
+}
+void GetAccountAddressesResponse::InternalSwap(GetAccountAddressesResponse* other) {
+  using std::swap;
+  _internal_metadata_.Swap(&other->_internal_metadata_);
+  addresses_.InternalSwap(CastToBase(&other->addresses_));
+}
+
+::std::string GetAccountAddressesResponse::GetTypeName() const {
+  return "xchain.contract.sdk.GetAccountAddressesResponse";
+}
+
+
 // @@protoc_insertion_point(namespace_scope)
 }  // namespace sdk
 }  // namespace contract
@@ -10645,6 +11310,12 @@ template<> PROTOBUF_NOINLINE ::xchain::contract::sdk::Transaction* Arena::Create
 }
 template<> PROTOBUF_NOINLINE ::xchain::contract::sdk::Block* Arena::CreateMaybeMessage< ::xchain::contract::sdk::Block >(Arena* arena) {
   return Arena::CreateInternal< ::xchain::contract::sdk::Block >(arena);
+}
+template<> PROTOBUF_NOINLINE ::xchain::contract::sdk::GetAccountAddressesRequest* Arena::CreateMaybeMessage< ::xchain::contract::sdk::GetAccountAddressesRequest >(Arena* arena) {
+  return Arena::CreateInternal< ::xchain::contract::sdk::GetAccountAddressesRequest >(arena);
+}
+template<> PROTOBUF_NOINLINE ::xchain::contract::sdk::GetAccountAddressesResponse* Arena::CreateMaybeMessage< ::xchain::contract::sdk::GetAccountAddressesResponse >(Arena* arena) {
+  return Arena::CreateInternal< ::xchain::contract::sdk::GetAccountAddressesResponse >(arena);
 }
 }  // namespace protobuf
 }  // namespace google

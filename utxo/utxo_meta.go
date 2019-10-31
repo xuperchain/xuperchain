@@ -270,22 +270,20 @@ func (uv *UtxoVM) updateNextIrreversibleBlockHeight(blockHeight int64, curIrreve
 	return errors.New("unexpected error")
 }
 
-func (uv *UtxoVM) UpdateIrreversibleSlideWindow(nextIrreversibleSlideWindow int64, batch kvdb.Batch) error {
-	tmpMeta := &pb.UtxoMeta{}
-	newMeta := proto.Clone(tmpMeta).(*pb.UtxoMeta)
-	newMeta.IrreversibleSlideWindow = nextIrreversibleSlideWindow
-	irreversibleSlideWindowBuf, pbErr := proto.Marshal(newMeta)
-	if pbErr != nil {
-		uv.xlog.Warn("failed to marshal pb meta")
-		return pbErr
+func (uv *UtxoVM) updateNextIrreversibleBlockHeightForPrune(blockHeight int64, curIrreversibleBlockHeight int64, curIrreversibleSlideWindow int64, batch kvdb.Batch) error {
+	// slideWindow为开启,不需要更新IrreversibleBlockHeight
+	if curIrreversibleSlideWindow <= 0 {
+		return nil
 	}
-	err := batch.Put([]byte(pb.MetaTablePrefix+ledger_pkg.IrreversibleSlideWindowKey), irreversibleSlideWindowBuf)
-	if err != nil {
-		return err
+	// curIrreversibleBlockHeight小于0, 不符合预期，报警
+	if curIrreversibleBlockHeight < 0 {
+		uv.xlog.Warn("update irreversible block height error, should be here")
+		return errors.New("curIrreversibleBlockHeight is less than 0")
 	}
-	uv.xlog.Info("Update irreversibleSlideWindow succeed")
-	uv.mutexMeta.Lock()
-	defer uv.mutexMeta.Unlock()
-	uv.metaTmp.IrreversibleSlideWindow = nextIrreversibleSlideWindow
-	return nil
+	nextIrreversibleBlockHeight := blockHeight - curIrreversibleSlideWindow
+	if nextIrreversibleBlockHeight <= 0 {
+		nextIrreversibleBlockHeight = 0
+	}
+	err := uv.UpdateIrreversibleBlockHeight(nextIrreversibleBlockHeight, batch)
+	return err
 }

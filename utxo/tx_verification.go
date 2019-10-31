@@ -21,6 +21,7 @@ import (
 	pm "github.com/xuperchain/xuperunion/permission"
 	"github.com/xuperchain/xuperunion/permission/acl"
 	aclu "github.com/xuperchain/xuperunion/permission/acl/utils"
+	"github.com/xuperchain/xuperunion/txn"
 	"github.com/xuperchain/xuperunion/utxo/txhash"
 	"github.com/xuperchain/xuperunion/xmodel"
 	xmodel_pb "github.com/xuperchain/xuperunion/xmodel/pb"
@@ -29,12 +30,14 @@ import (
 // ImmediateVerifyTx verify tx Immediately
 // Transaction verification workflow:
 //   1. verify transaction ID is the same with data hash
-//   2. verify initiator type, should be ak
-//   3. verify all signatures of initiator and auth requires
-//   4. verify the account ACL of utxo input
-//   5. verify the contract requests' permission
-//   6. verify the permission of contract RWSet (WriteSet could including unauthorized data change)
-//   7. run contract requests and verify if the RWSet result is the same with preExed RWSet (heavy
+//   2. verify all signatures of initiator and auth requires
+//   3. verify the utxo input, there are three kinds of input validation
+//		1). PKI technology for transferring from address
+//		2). Account ACL for transferring from account
+//		3). Contract logic transferring from contract
+//   4. verify the contract requests' permission
+//   5. verify the permission of contract RWSet (WriteSet could including unauthorized data change)
+//   6. run contract requests and verify if the RWSet result is the same with preExed RWSet (heavy
 //      operation, keep it at last)
 func (uv *UtxoVM) ImmediateVerifyTx(tx *pb.Transaction, isRootTx bool) (bool, error) {
 	// Pre processing of tx data
@@ -96,6 +99,13 @@ func (uv *UtxoVM) ImmediateVerifyTx(tx *pb.Transaction, isRootTx bool) (bool, er
 		if !ok {
 			uv.xlog.Warn("ImmediateVerifyTx: verifyContractPermission failed", "error", err)
 			return ok, ErrACLNotEnough
+		}
+
+		// verify amount of transfer within contract
+		ok, err = uv.verifyContractTxAmount(tx)
+		if !ok {
+			uv.xlog.Warn("ImmediateVerifyTx: verifyContractTxAmount failed", "error", err)
+			return ok, ErrContractTxAmout
 		}
 
 		// verify the permission of RWSet using ACL
@@ -243,10 +253,37 @@ func (uv *UtxoVM) verifyXuperSign(tx *pb.Transaction, digestHash []byte) (bool, 
 	return ok, uniqueAddrs, nil
 }
 
-// verify UTXO input permission in transaction using ACL
+// verify utxo inputs, there are three kinds of input validation
+//	1). PKI technology for transferring from address
+//	2). Account ACL for transferring from account
+//	3). Contract logic transferring from contract
 func (uv *UtxoVM) verifyUTXOPermission(tx *pb.Transaction, verifiedID map[string]bool) (bool, error) {
-	// verify tx input ACL
+	// verify tx input
+	conUtxoInputs, err := xmodel.ParseContractUtxoInputs(tx)
+	if err != nil {
+		uv.xlog.Warn("verifyUTXOPermission error, parseContractUtxo ")
+		return false, ErrParseContractUtxos
+	}
+	conUtxoInputsMap := map[string]bool{}
+	for _, conUtxoInput := range conUtxoInputs {
+		addr := conUtxoInput.GetFromAddr()
+		txid := conUtxoInput.GetRefTxid()
+		offset := conUtxoInput.GetRefOffset()
+		utxoKey := genUtxoKey(addr, txid, offset)
+		conUtxoInputsMap[utxoKey] = true
+	}
+
 	for _, txInput := range tx.TxInputs {
+		// if transfer from contract
+		addr := txInput.GetFromAddr()
+		txid := txInput.GetRefTxid()
+		offset := txInput.GetRefOffset()
+		utxoKey := genUtxoKey(addr, txid, offset)
+		if conUtxoInputsMap[utxoKey] {
+			// this utxo transfer from contract, will verify in rwset verify
+			continue
+		}
+
 		name := string(txInput.FromAddr)
 		if verifiedID[name] {
 			// this ID(either AK or Account) is verified before
@@ -404,6 +441,27 @@ func getGasLimitFromTx(tx *pb.Transaction) (int64, error) {
 	return 0, nil
 }
 
+// verifyContractTxAmount verify
+func (uv *UtxoVM) verifyContractTxAmount(tx *pb.Transaction) (bool, error) {
+	amountOut := new(big.Int).SetInt64(0)
+	req := tx.GetContractRequests()
+	contractName, amountCon, err := txn.ParseContractTransferRequest(req)
+	if err != nil {
+		return false, err
+	}
+	for _, txOutput := range tx.GetTxOutputs() {
+		if string(txOutput.GetToAddr()) == contractName {
+			tmpAmount := new(big.Int).SetBytes(txOutput.GetAmount())
+			amountOut.Add(tmpAmount, amountOut)
+		}
+	}
+
+	if amountOut.Cmp(amountCon) != 0 {
+		return false, ErrContractTxAmout
+	}
+	return true, nil
+}
+
 // verifyTxRWSets verify tx read sets and write sets
 func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
 	if uv.verifyReservedWhitelist(tx) {
@@ -430,6 +488,11 @@ func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
 		}
 		return true, nil
 	}
+	// transfer in contract
+	transContractName, transAmount, err := txn.ParseContractTransferRequest(req)
+	if err != nil {
+		return false, err
+	}
 
 	env, err := uv.model3.PrepareEnv(tx)
 	if err != nil {
@@ -440,6 +503,10 @@ func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
 		Initiator:    tx.GetInitiator(),
 		AuthRequire:  tx.GetAuthRequire(),
 		ContractName: "",
+		Core: contractChainCore{
+			Manager: uv.aclMgr,
+		},
+		BCName: uv.bcname,
 	}
 	gasLimit, err := getGasLimitFromTx(tx)
 	if err != nil {
@@ -465,6 +532,12 @@ func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
 		}
 		contextConfig.ResourceLimits = limits
 		contextConfig.ContractName = tmpReq.GetContractName()
+		if transContractName == tmpReq.GetContractName() {
+			contextConfig.TransferAmount = transAmount.String()
+		} else {
+			contextConfig.TransferAmount = ""
+		}
+
 		ctx, err := vm.NewContext(contextConfig)
 		if err != nil {
 			// FIXME zq @icexin: need to return contract not found
@@ -484,6 +557,11 @@ func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
 
 		ctx.Release()
 	}
+	utxoInputs, utxoOutputs := env.GetModelCache().GetUtxoRWSets()
+	err = env.GetModelCache().PutUtxos(utxoInputs, utxoOutputs)
+	if err != nil {
+		return false, err
+	}
 
 	_, writeSet, err := env.GetModelCache().GetRWSets()
 	if err != nil {
@@ -492,7 +570,7 @@ func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
 	uv.xlog.Trace("verifyTxRWSets", "env.output", env.GetOutputs(), "writeSet", writeSet)
 	ok := xmodel.Equal(env.GetOutputs(), writeSet)
 	if !ok {
-		return false, fmt.Errorf("Verify error")
+		return false, fmt.Errorf("write set not equal")
 	}
 	return true, nil
 }

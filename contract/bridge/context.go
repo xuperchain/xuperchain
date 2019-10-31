@@ -29,6 +29,12 @@ type Context struct {
 
 	CanInitialize bool
 
+	Core contract.ChainCore
+
+	TransferAmount string
+
+	Instance Instance
+
 	// Write by contract
 	Output *pb.Response
 }

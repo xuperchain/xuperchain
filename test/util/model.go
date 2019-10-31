@@ -70,7 +70,7 @@ func (x *XModelContext) CommitCache() error {
 
 // NewCache create model cache instance
 func (x *XModelContext) NewCache() error {
-	cache, err := xmodel.NewXModelCache(x.Model, true)
+	cache, err := xmodel.NewXModelCache(x.Model, nil)
 	if err != nil {
 		return err
 	}
@@ -125,11 +125,11 @@ func WithXModelContext(t testing.TB, callback func(x *XModelContext)) {
 		t.Fatal(err)
 	}
 	defer stateDB.Close()
-	model, err := xmodel.NewXuperModel("xuper", ledger, stateDB, logger)
+	model, err := xmodel.NewXuperModel(ledger, stateDB, logger)
 	if err != nil {
 		t.Fatal(err)
 	}
-	cache, err := xmodel.NewXModelCache(model, true)
+	cache, err := xmodel.NewXModelCache(model, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

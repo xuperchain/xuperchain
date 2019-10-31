@@ -148,7 +148,7 @@ func TestCreateBlockChain(t *testing.T) {
 		t.Fatal(err)
 	}
 	//强行walk到根节点，触发createblockchain的回滚测试
-	err = utxovm.Walk(ledger.GetMeta().RootBlockid)
+	err = utxovm.Walk(ledger.GetMeta().RootBlockid, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -320,7 +320,8 @@ func TestRunUpdateMaxBlockSize(t *testing.T) {
 	if playErr != nil {
 		t.Error(playErr)
 	}
-	t.Log("L.GetMaxBlockSize:", L.GetMaxBlockSize())
+	maxSize, _ := utxovm.GetMaxBlockSize()
+	t.Log("UtxoVM.GetMaxBlockSize:", maxSize)
 	context := &contract.TxContext{
 		LedgerObj: L,
 		UtxoBatch: L.GetBaseDB().NewBatch(),

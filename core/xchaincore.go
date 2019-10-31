@@ -112,6 +112,7 @@ type XChainCore struct {
 	txidCache            *cache.Cache
 	txidCacheExpiredTime time.Duration
 	enableCompress       bool
+	pruneOption          config.PruneOption
 }
 
 // Status return the status of the chain
@@ -144,6 +145,7 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	xc.txidCacheExpiredTime = cfg.TxidCacheExpiredTime
 	xc.txidCache = cache.New(xc.txidCacheExpiredTime, TxidCacheGcTime)
 	xc.enableCompress = cfg.EnableCompress
+	xc.pruneOption = cfg.Prune
 	ledger.MemCacheSize = cfg.DBCache.MemCacheSize
 	ledger.FileHandlersCacheSize = cfg.DBCache.FdCacheSize
 	datapath := cfg.Datapath + "/" + bcname
@@ -335,6 +337,13 @@ func (xc *XChainCore) repostOfflineTx() {
 	}
 }
 
+func (xc *XChainCore) ProcessSendBlock(in *pb.Block, hd *global.XContext) error {
+	if xc.pruneOption.Switch && xc.pruneOption.Bcname == xc.bcname {
+		return errors.New("the chain is dong ledger pruning")
+	}
+	return xc.SendBlock(in, hd)
+}
+
 // SendBlock send block
 func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
 	if xc.Status() != global.Normal {
@@ -342,7 +351,12 @@ func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
 		return ErrServiceRefused
 	}
 	blockSize := int64(proto.Size(in.Block))
-	if blockSize > xc.Ledger.GetMaxBlockSize() {
+	maxBlockSize, sizeErr := xc.Utxovm.GetMaxBlockSize()
+	if sizeErr != nil {
+		xc.log.Warn("failed to GetMaxBlockSize", "sizeErr", sizeErr)
+		return ErrServiceRefused
+	}
+	if blockSize > maxBlockSize {
 		xc.log.Debug("refused a connection because block is too large", "logid", in.Header.Logid, "cost", hd.Timer.Print(), "size", blockSize)
 		return ErrServiceRefused
 	}
@@ -419,7 +433,12 @@ func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
 					return ErrCannotSyncBlock
 				}
 				ibSize := int64(proto.Size(ib.Block))
-				if ibSize > xc.Ledger.GetMaxBlockSize() {
+				maxSize, sizeErr := xc.Utxovm.GetMaxBlockSize()
+				if sizeErr != nil {
+					xc.log.Warn("failed to GetMaxBlockSize", "sizeErr", sizeErr)
+					return sizeErr
+				}
+				if ibSize > maxSize {
 					xc.log.Warn("too large block", "size", ibSize, "blockid", global.F(ib.Block.Blockid))
 					return ErrBlockTooLarge
 				}
@@ -502,7 +521,7 @@ func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
 			}
 			return nil
 		}
-		err := xc.Utxovm.Walk(block0.Blockid)
+		err := xc.Utxovm.Walk(block0.Blockid, false)
 		xc.log.Debug("Walk Time", "logid", in.Header.Logid, "cost", hd.Timer.Print())
 		if err != nil {
 			xc.log.Warn("Walk error", "logid", in.Header.Logid, "err", err)
@@ -532,7 +551,7 @@ func (xc *XChainCore) doMiner() {
 
 	if !bytes.Equal(ledgerLastID, utxovmLastID) {
 		xc.log.Warn("ledger last blockid is not equal utxovm last id")
-		err := xc.Utxovm.Walk(ledgerLastID)
+		err := xc.Utxovm.Walk(ledgerLastID, false)
 		// if xc.failSkip = false, then keep logic, if not equal, retry
 		if err != nil {
 			if !xc.failSkip {
@@ -707,7 +726,7 @@ func (xc *XChainCore) Miner() int {
 	utxovmLastID := xc.Utxovm.GetLatestBlockid()
 	if !bytes.Equal(ledgerLastID, utxovmLastID) {
 		xc.log.Warn("ledger last blockid is not equal utxovm last id")
-		xc.Utxovm.Walk(ledgerLastID)
+		xc.Utxovm.Walk(ledgerLastID, false)
 	}
 	// 2 FAST_SYNC模式下需要回滚掉本地所有的未确认交易
 	if xc.nodeMode == config.NodeModeFastSync {
@@ -725,6 +744,20 @@ func (xc *XChainCore) Miner() int {
 		b, s := xc.con.CompeteMaster(xc.Ledger.GetMeta().TrunkHeight + 1)
 		xc.log.Debug("competemaster", "blockchain", xc.bcname, "master", b, "needSync", s)
 		xc.updateIsCoreMiner()
+		// 账本裁剪入口
+		if xc.pruneOption.Switch && xc.pruneOption.Bcname == xc.bcname {
+			rawBlockid, err := hex.DecodeString(xc.pruneOption.TargetBlockid)
+			if err != nil {
+				return -1
+			}
+			err = xc.pruneLedger(rawBlockid)
+			if err != nil {
+				xc.log.Warn("pruning ledger failed", "err", err)
+				return -1
+			}
+			xc.log.Trace("pruning ledger success")
+			xc.pruneOption.Switch = false
+		}
 		if b {
 			// todo 首次切换为矿工时SyncBlcok, Bug: 可能会导致第一次出块失败
 			if s {

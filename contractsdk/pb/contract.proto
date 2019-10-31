@@ -28,6 +28,7 @@ message CallArgs {
   repeated ArgPair args = 2;
   string initiator = 3;
   repeated string auth_require = 4;
+  string transfer_amount = 5;
 }
 
 message SyscallHeader {
@@ -210,4 +211,11 @@ message Block
     string next_hash = 15;
 }
 
+message GetAccountAddressesRequest{
+  SyscallHeader header = 1;
+  string account = 2;
+}
 
+message GetAccountAddressesResponse {
+  repeated string addresses = 1;
+}
