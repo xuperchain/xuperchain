@@ -30,6 +30,7 @@ public:
     virtual Response* mutable_response();
     virtual std::unique_ptr<Iterator> new_iterator(const std::string& start, const std::string& limit);
     virtual Account& sender();
+    virtual const std::string& transfer_amount() const;
 
 private:
     pb::CallArgs _call_args;

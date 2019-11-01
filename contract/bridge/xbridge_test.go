@@ -54,6 +54,9 @@ func (c *codeInstance) ResourceUsed() contract.Limits {
 func (c *codeInstance) Release() {
 }
 
+func (c *codeInstance) Abort(msg string) {
+}
+
 func (c *codeInstance) testPut(args map[string][]byte) ([]byte, error) {
 	{
 		_, err := c.syscall.PutObject(context.TODO(), &pb.PutRequest{

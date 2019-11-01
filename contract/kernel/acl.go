@@ -80,7 +80,7 @@ func (na *NewAccountMethod) Invoke(ctx *KContext, args map[string][]byte) (*cont
 		return nil, validErr
 	}
 
-	bcname := ctx.ModelCache.GetBcname()
+	bcname := ctx.ContextConfig.BCName
 	if bcname == "" {
 		return nil, fmt.Errorf("block name is empty")
 	}

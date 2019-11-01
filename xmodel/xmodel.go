@@ -14,11 +14,14 @@ import (
 
 const (
 	bucketExtUTXOCacheSize = 1024
+
+	// TransientBucket is the name of bucket that only appears in tx output set
+	// but does't persists in xmodel
+	TransientBucket = "$transient"
 )
 
 // XModel xmodel data structure
 type XModel struct {
-	bcname          string
 	ledger          *ledger.Ledger
 	stateDB         kvdb.Database
 	unconfirmTable  kvdb.Database
@@ -32,9 +35,8 @@ type XModel struct {
 }
 
 // NewXuperModel new an instance of XModel
-func NewXuperModel(bcname string, ledger *ledger.Ledger, stateDB kvdb.Database, logger log.Logger) (*XModel, error) {
+func NewXuperModel(ledger *ledger.Ledger, stateDB kvdb.Database, logger log.Logger) (*XModel, error) {
 	return &XModel{
-		bcname:          bcname,
 		ledger:          ledger,
 		stateDB:         stateDB,
 		unconfirmTable:  kvdb.NewTable(stateDB, pb.UnconfirmedTablePrefix),
@@ -47,6 +49,9 @@ func NewXuperModel(bcname string, ledger *ledger.Ledger, stateDB kvdb.Database, 
 
 func (s *XModel) updateExtUtxo(tx *pb.Transaction, batch kvdb.Batch) error {
 	for offset, txOut := range tx.TxOutputsExt {
+		if txOut.Bucket == TransientBucket {
+			continue
+		}
 		bucketAndKey := makeRawKey(txOut.Bucket, txOut.Key)
 		valueVersion := MakeVersion(tx.Txid, int32(offset))
 		if isDelFlag(txOut.Value) {
@@ -103,6 +108,9 @@ func (s *XModel) UndoTx(tx *pb.Transaction, batch kvdb.Batch) error {
 		inputVersionMap[rawKey] = version
 	}
 	for _, txOut := range tx.TxOutputsExt {
+		if txOut.Bucket == TransientBucket {
+			continue
+		}
 		bucketAndKey := makeRawKey(txOut.Bucket, txOut.Key)
 		previousVersion := inputVersionMap[string(bucketAndKey)]
 		if previousVersion == "" {

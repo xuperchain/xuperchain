@@ -80,6 +80,9 @@ func (m *memoryInstance) ResourceUsed() contract.Limits {
 func (m *memoryInstance) Release() {
 }
 
+func (m *memoryInstance) Abort(msg string) {
+}
+
 func init() {
 	vm.Register("memory", newMemoryInstanceCreator)
 }
