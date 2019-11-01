@@ -270,7 +270,6 @@ func (uv *UtxoVM) updateNextIrreversibleBlockHeight(blockHeight int64, curIrreve
 	return errors.New("unexpected error")
 }
 
-
 // GetGasPrice get gas price
 func (uv *UtxoVM) GetGasPrice() (*pb.GasPrice, error) {
 	uv.mutexMeta.Lock()
