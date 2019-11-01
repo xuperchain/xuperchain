@@ -53,7 +53,7 @@ body5 = {
         "ratio": 1
     },
     "gas_price": {
-        "cpu_rate": "cpu_rate": 1000,
+        "cpu_rate": 1000,
         "mem_rate": 1000000,
         "disk_rate": 1,
         "xfee_rate": 1
