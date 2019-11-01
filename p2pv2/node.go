@@ -130,7 +130,6 @@ func NewNode(cfg config.P2PConfig, log log.Logger) (*Node, error) {
 
 	// initialize StreamLimit, set limit size
 	no.streamLimit.Init(cfg.StreamIPLimitSize, log)
-	ho.SetStreamHandler(XuperProtocolID, no.handlerNewStream)
 
 	if no.kdht, err = dht.New(ctx, ho); err != nil {
 		return nil, ErrCreateKadDht
@@ -213,6 +212,7 @@ func genHostOption(cfg config.P2PConfig) ([]libp2p.Option, error) {
 // Start start the node
 func (no *Node) Start() {
 	no.log.Trace("Start node")
+	no.host.SetStreamHandler(XuperProtocolID, no.handlerNewStream)
 	t := time.NewTicker(time.Duration(time.Second * 30))
 	defer t.Stop()
 	for {
