@@ -287,3 +287,23 @@ func (uv *UtxoVM) updateNextIrreversibleBlockHeightForPrune(blockHeight int64, c
 	err := uv.UpdateIrreversibleBlockHeight(nextIrreversibleBlockHeight, batch)
 	return err
 }
+
+func (uv *UtxoVM) UpdateIrreversibleSlideWindow(nextIrreversibleSlideWindow int64, batch kvdb.Batch) error {
+	tmpMeta := &pb.UtxoMeta{}
+	newMeta := proto.Clone(tmpMeta).(*pb.UtxoMeta)
+	newMeta.IrreversibleSlideWindow = nextIrreversibleSlideWindow
+	irreversibleSlideWindowBuf, pbErr := proto.Marshal(newMeta)
+	if pbErr != nil {
+		uv.xlog.Warn("failed to marshal pb meta")
+		return pbErr
+	}
+	err := batch.Put([]byte(pb.MetaTablePrefix+ledger_pkg.IrreversibleSlideWindowKey), irreversibleSlideWindowBuf)
+	if err != nil {
+		return err
+	}
+	uv.xlog.Info("Update irreversibleSlideWindow succeed")
+	uv.mutexMeta.Lock()
+	defer uv.mutexMeta.Unlock()
+	uv.metaTmp.IrreversibleSlideWindow = nextIrreversibleSlideWindow
+	return nil
+}
