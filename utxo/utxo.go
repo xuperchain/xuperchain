@@ -843,6 +843,11 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 				"contractName", tmpReq.GetContractName())
 			return nil, err
 		}
+		if res.Status >= 400 && i < len(reservedRequests) {
+			ctx.Release()
+			uv.xlog.Error("PreExec Invoke error", "status", res.Status, "contractName", tmpReq.GetContractName())
+			return nil, errors.New(res.Message)
+		}
 		response = append(response, res.Body)
 		responses = append(responses, contract.ToPBContractResponse(res))
 
