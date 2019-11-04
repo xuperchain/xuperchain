@@ -431,7 +431,6 @@ func (k *Kernel) validateUpdateBlockChainData(desc *contract.TxDesc) error {
 	for i, txOutputExt := range tx.GetTxOutputsExt() {
 		bucket := txOutputExt.Bucket
 		version := xmodel.MakeVersion(tx.Txid, int32(i))
-		k.log.Warn("miao delete bucketCache", "bucket", bucket, "version", version)
 		k.context.UtxoMeta.GetXModel().BucketCacheDelete(bucket, version)
 	}
 
@@ -447,7 +446,6 @@ func (k *Kernel) validateUpdateBlockChainData(desc *contract.TxDesc) error {
 		return err
 	}
 
-	k.log.Warn("miao validateUpdateBlockChainData verifySignatures success ")
 	return nil
 }
 
@@ -742,7 +740,6 @@ func (k *Kernel) runUpdateBlockChainData(desc *contract.TxDesc) error {
 		return err
 	}
 
-	k.log.Warn("miao validate success")
 	txid, _ := desc.Args["txid"].(string)
 	publicKey, _ := desc.Args["publicKey"].(string)
 	sign, _ := desc.Args["sign"].(string)

@@ -676,6 +676,5 @@ func (uv *UtxoVM) checkRelyOnMarkedTxid(reftxid []byte, blockid []byte) (bool, b
 		}
 		return false, isRely, nil
 	}
-	uv.xlog.Warn("miao checkRelyOnMarkedTxid")
 	return true, isRely, nil
 }
