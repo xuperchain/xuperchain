@@ -37,4 +37,5 @@ type Instance interface {
 	Exec(function string) error
 	ResourceUsed() contract.Limits
 	Release()
+	Abort(msg string)
 }

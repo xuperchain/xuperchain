@@ -554,7 +554,7 @@ func (tp *TDpos) ProcessBeforeMiner(timestamp int64) (map[string]interface{}, bo
 					tp.log.Warn("ProcessBeforeMiner tip block query failed", "error", err)
 					return nil, false
 				}
-				err = tp.utxoVM.Walk(lastBlock.GetPreHash())
+				err = tp.utxoVM.Walk(lastBlock.GetPreHash(), false)
 				if err != nil {
 					tp.log.Warn("ProcessBeforeMiner utxo walk failed", "error", err)
 					return nil, false

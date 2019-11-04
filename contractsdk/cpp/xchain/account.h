@@ -19,7 +19,7 @@ public:
     const std::string& get_name();
     AccountType type() const;
     bool get_addresses(std::vector<std::string>* out);
-    bool transfer(const std::string& to, const std::string& amount);
+    bool transfer(const std::string& amount);
 
 private:
     std::string _name;

@@ -114,7 +114,7 @@ func prepareXmodel(t *testing.T) *XModel {
 	if err != nil {
 		t.Fatal(err)
 	}
-	xModel, err := NewXuperModel("xuper", leg, stateDB, logger)
+	xModel, err := NewXuperModel(leg, stateDB, logger)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -128,7 +128,7 @@ func remove(path string) {
 
 func prepareXModelCache(t *testing.T) *XMCache {
 	xmodel := prepareXmodel(t)
-	mc, err := NewXModelCache(xmodel, true)
+	mc, err := NewXModelCache(xmodel, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -138,12 +138,12 @@ func prepareXModelCache(t *testing.T) *XMCache {
 func TestNewXModelCache(t *testing.T) {
 	defer remove(pathDB)
 	xmodel := prepareXmodel(t)
-	_, err := NewXModelCache(xmodel, true)
+	_, err := NewXModelCache(xmodel, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	_, err = NewXModelCache(xmodel, false)
+	_, err = NewXModelCache(xmodel, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

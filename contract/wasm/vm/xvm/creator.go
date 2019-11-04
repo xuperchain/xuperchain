@@ -182,6 +182,10 @@ func (x *xvmInstance) Release() {
 	x.execCtx.Release()
 }
 
+func (x *xvmInstance) Abort(msg string) {
+	exec.Throw(exec.NewTrap(msg))
+}
+
 func (x *xvmInstance) InitDebugWriter(logger *log.Logger) {
 	if logger == nil {
 		return

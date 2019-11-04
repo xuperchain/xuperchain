@@ -45,3 +45,7 @@ func (v *bridgeInstance) ResourceUsed() contract.Limits {
 func (v *bridgeInstance) Release() {
 	v.vmInstance.Release()
 }
+
+func (v *bridgeInstance) Abort(msg string) {
+	v.vmInstance.Abort(msg)
+}

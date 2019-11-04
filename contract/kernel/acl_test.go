@@ -58,7 +58,7 @@ func getXmodel(t *testing.T) *xmodel.XModel {
 	if errDB != nil {
 		t.Fatal(err)
 	}
-	xModel, errModel := xmodel.NewXuperModel("xuper", ledger, stateDB, logger)
+	xModel, errModel := xmodel.NewXuperModel(ledger, stateDB, logger)
 	if errModel != nil {
 		t.Fatal(errModel)
 	}
@@ -109,13 +109,16 @@ func TestNewAccountMethod(t *testing.T) {
 			expect:      nil,
 		},
 	}
-	modelCache, err := xmodel.NewXModelCache(xModel, true)
+	modelCache, err := xmodel.NewXModelCache(xModel, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 	ctx := &KContext{
 		ModelCache:    modelCache,
 		ResourceLimit: contract.MaxLimits,
+		ContextConfig: &contract.ContextConfig{
+			BCName: "xuper",
+		},
 	}
 	arr := [2]string{"1", "2"}
 	for _, value := range arr {
@@ -169,7 +172,7 @@ func TestSetContractMethodAclMethod(t *testing.T) {
 		},
 	}
 
-	modelCache, err := xmodel.NewXModelCache(xModel, true)
+	modelCache, err := xmodel.NewXModelCache(xModel, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

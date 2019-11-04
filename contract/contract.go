@@ -34,6 +34,10 @@ type UtxoMetaRegister interface {
 	UpdateNewAccountResourceAmount(int64, kvdb.Batch) error
 	QueryTx(txid []byte) (*pb.Transaction, error)
 	GetXModel() *xmodel.XModel
+	// Get irreversible slide window
+	GetIrreversibleSlideWindow() int64
+	// Update irreversible slide window
+	UpdateIrreversibleSlideWindow(nextIrreversibleSlideWindow int64, batch kvdb.Batch) error
 }
 
 // TxDesc is the description to running a contract
