@@ -551,11 +551,17 @@ func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
 			return false, err
 		}
 
-		_, err = ctx.Invoke(tmpReq.MethodName, tmpReq.Args)
-		if err != nil {
+		ctxResponse, ctxErr := ctx.Invoke(tmpReq.MethodName, tmpReq.Args)
+		if ctxErr != nil {
 			ctx.Release()
-			uv.xlog.Error("verifyTxRWSets Invoke error", "error", err, "contractName", tmpReq.GetContractName())
-			return false, err
+			uv.xlog.Error("verifyTxRWSets Invoke error", "error", ctxErr, "contractName", tmpReq.GetContractName())
+			return false, ctxErr
+		}
+		// 判断合约调用的返回码
+		if ctxResponse.Status >= 400 && i < len(reservedRequests) {
+			ctx.Release()
+			uv.xlog.Error("verifyTxRWSets Invoke error", "status", ctxResponse.Status, "contractName", tmpReq.GetContractName())
+			return false, errors.New(ctxResponse.Message)
 		}
 
 		ctx.Release()
