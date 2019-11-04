@@ -292,3 +292,8 @@ func (s *XModel) bucketCacheGet(bucket, version string) (*xmodel_pb.VersionedDat
 	}
 	return value.(*xmodel_pb.VersionedData), true
 }
+
+func (s *XModel) BucketCacheDelete(bucket, version string) {
+	cache := s.bucketCache(bucket)
+	cache.Del(version)
+}

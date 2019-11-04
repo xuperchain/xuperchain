@@ -1253,11 +1253,23 @@ func (uv *UtxoVM) VerifyTx(tx *pb.Transaction) (bool, error) {
 		return true, nil //异步模式推迟到后面校验
 	}
 	isValid, err := uv.ImmediateVerifyTx(tx, false)
+	uv.xlog.Warn("ImmediateVerifyTx start")
 	if err != nil || !isValid {
 		uv.xlog.Warn("ImmediateVerifyTx failed", "error", err,
 			"AuthRequire ", tx.AuthRequire, "AuthRequireSigns ", tx.AuthRequireSigns,
 			"Initiator", tx.Initiator, "InitiatorSigns", tx.InitiatorSigns, "XuperSign", tx.XuperSign)
+		ok, isRelyOnMarkedTx, err := uv.verifyMarked(tx)
+		uv.xlog.Warn("miao verifyMarked", "ok", ok, "isRelyOnMarkedTx", isRelyOnMarkedTx)
+		if isRelyOnMarkedTx {
+			if !ok || err != nil {
+				uv.xlog.Warn("tx verification failed because it is blocked tx", "err", err)
+			} else {
+				uv.xlog.Trace("blocked tx verification succeed")
+			}
+			return ok, err
+		}
 	}
+	uv.xlog.Warn("ImmediateVerifyTx success")
 	return isValid, err
 }
 
