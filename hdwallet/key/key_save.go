@@ -194,7 +194,8 @@ func pkcs5Padding(ciphertext []byte, blockSize int) []byte {
 // writeFileUsingFilename 保存私钥
 func writeFileUsingFilename(filename string, content []byte) error {
 	//函数向filename指定的文件中写入数据(字节数组)。如果文件不存在将按给出的权限创建文件，否则在写入数据之前清空文件。
-	err := ioutil.WriteFile(filename, content, 0666)
+	contentStr := base64.StdEncoding.EncodeToString(content)
+	err := ioutil.WriteFile(filename, []byte(contentStr), 0666)
 	return err
 }
 

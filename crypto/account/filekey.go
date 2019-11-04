@@ -12,6 +12,7 @@ import (
 	"os"
 	"strings"
 
+	"encoding/base64"
 	"github.com/xuperchain/xuperunion/crypto/config"
 	"github.com/xuperchain/xuperunion/crypto/utils"
 	walletRand "github.com/xuperchain/xuperunion/hdwallet/rand"
@@ -83,7 +84,8 @@ func checkFileIsExist(filename string) bool {
  */
 func writeFileUsingFilename(filename string, content []byte) error {
 	//函数向filename指定的文件中写入数据(字节数组)。如果文件不存在将按给出的权限创建文件，否则在写入数据之前清空文件。
-	err := ioutil.WriteFile(filename, content, 0666)
+	contentStr := base64.StdEncoding.EncodeToString(content)
+	err := ioutil.WriteFile(filename, []byte(contentStr), 0666)
 	return err
 }
 
@@ -94,9 +96,16 @@ func readFileUsingFilename(filename string) ([]byte, error) {
 	//从filename指定的文件中读取数据并返回文件的内容。
 	//成功的调用返回的err为nil而非EOF。
 	//因为本函数定义为读取整个文件，它不会将读取返回的EOF视为应报告的错误。
-	content, err := ioutil.ReadFile(filename)
+	contentStr, err := ioutil.ReadFile(filename)
 	if os.IsNotExist(err) {
 		log.Printf("File [%v] does not exist", filename)
+	}
+	if err != nil {
+		return nil, err
+	}
+	content, err := base64.StdEncoding.DecodeString(string(contentStr))
+	if err != nil {
+		//log.Printf("File [%v] content convert failed", filename)
 	}
 	return content, err
 }
