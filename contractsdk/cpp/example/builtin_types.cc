@@ -45,7 +45,7 @@ DEFINE_METHOD(BuiltinTypes, transfer) {
     const std::string& amount = ctx->arg("amount");
     xchain::Account account = ctx->sender();
     printf("Account name: %s\n", account.get_name().c_str());
-    if (account.transfer(to, amount)) {
+    if (account.transfer(amount)) {
         ctx->ok("Transfer success");
     } else {
         ctx->error("Transfer failed");

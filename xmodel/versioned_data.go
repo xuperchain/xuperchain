@@ -49,7 +49,7 @@ func GetVersionOfTxInput(txIn *pb.TxInputExt) string {
 
 // GetTxOutputs get transaction outputs
 func GetTxOutputs(pds []*xmodel_pb.PureData) []*pb.TxOutputExt {
-	outputs := []*pb.TxOutputExt{}
+	outputs := make([]*pb.TxOutputExt, 0, len(pds))
 	for _, pd := range pds {
 		outputs = append(outputs, &pb.TxOutputExt{
 			Bucket: pd.Bucket,
@@ -62,7 +62,7 @@ func GetTxOutputs(pds []*xmodel_pb.PureData) []*pb.TxOutputExt {
 
 // GetTxInputs get transaction inputs
 func GetTxInputs(vds []*xmodel_pb.VersionedData) []*pb.TxInputExt {
-	inputs := []*pb.TxInputExt{}
+	inputs := make([]*pb.TxInputExt, 0, len(vds))
 	for _, vd := range vds {
 		inputs = append(inputs, &pb.TxInputExt{
 			Bucket:    vd.GetPureData().GetBucket(),

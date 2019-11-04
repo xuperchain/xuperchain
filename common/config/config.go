@@ -211,12 +211,21 @@ type NodeConfig struct {
 	TxidCacheExpiredTime time.Duration `yaml:"txidCacheExpiredTime,omitempty"`
 	// local switch of compressed
 	EnableCompress bool `yaml:"enableCompress,omitempty"`
+	// prune ledger option
+	Prune PruneOption `yaml:"prune,omitempty"`
 }
 
 // KernelConfig kernel config
 type KernelConfig struct {
 	MinNewChainAmount string          `yaml:"minNewChainAmount,omitempty"`
 	NewChainWhiteList map[string]bool `yaml:"newChainWhiteList,omitempty"`
+}
+
+// PruneOption ledger prune option
+type PruneOption struct {
+	Switch        bool   `yaml:"switch,omitempty"`
+	Bcname        string `yaml:"bcname,omitempty"`
+	TargetBlockid string `yaml:"targetBlockid,omitempty"`
 }
 
 // DBCacheConfig db cache config

@@ -750,7 +750,7 @@ func (s *server) PreExecWithSelectUTXO(ctx context.Context, request *pb.PreExecW
 			UserSign:  request.GetSignInfo().GetSign(),
 			NeedLock:  request.GetNeedLock(),
 		}
-		if ok := validUtxoAccess(utxoInput, s.mg.Get(utxoInput.GetBcname())); !ok {
+		if ok := validUtxoAccess(utxoInput, s.mg.Get(utxoInput.GetBcname()), request.GetTotalAmount()); !ok {
 			return nil, errors.New("validUtxoAccess failed")
 		}
 		utxoOutput, selectErr := s.SelectUTXO(ctx, utxoInput)
