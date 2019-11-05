@@ -7,6 +7,7 @@ import (
 	"github.com/xuperchain/xuperunion/kv/kvdb"
 	"github.com/xuperchain/xuperunion/ledger"
 	"github.com/xuperchain/xuperunion/pb"
+	"github.com/xuperchain/xuperunion/xmodel"
 )
 
 // KernelModuleName is the name of kernel contract
@@ -31,6 +32,8 @@ type UtxoMetaRegister interface {
 	UpdateForbiddenContract(*pb.InvokeRequest, kvdb.Batch) error
 	GetNewAccountResourceAmount() (int64, error)
 	UpdateNewAccountResourceAmount(int64, kvdb.Batch) error
+	QueryTx(txid []byte) (*pb.Transaction, error)
+	GetXModel() *xmodel.XModel
 	// Get irreversible slide window
 	GetIrreversibleSlideWindow() int64
 	// Update irreversible slide window
