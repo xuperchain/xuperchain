@@ -106,9 +106,16 @@ func readFileUsingFilename(filename string) ([]byte, error) {
 	//从filename指定的文件中读取数据并返回文件的内容。
 	//成功的调用返回的err为nil而非EOF。
 	//因为本函数定义为读取整个文件，它不会将读取返回的EOF视为应报告的错误。
-	content, err := ioutil.ReadFile(filename)
+	contentStr, err := ioutil.ReadFile(filename)
 	if os.IsNotExist(err) {
 		log.Printf("File [%v] does not exist", filename)
+	}
+	if err != nil {
+		return nil, err
+	}
+	content, err := base64.StdEncoding.DecodeString(string(contentStr))
+	if err != nil {
+		//log.Printf("File [%v] content convert failed", filename)
 	}
 	return content, err
 }
