@@ -365,10 +365,11 @@ type UtxoMeta struct {
 
 // ChainStatus proto.ChainStatus
 type ChainStatus struct {
-	Name          string     `json:"name"`
-	LedgerMeta    LedgerMeta `json:"ledger"`
-	UtxoMeta      UtxoMeta   `json:"utxo"`
-	BranchBlockid []string   `json:"branchBlockid"`
+	Name       string     `json:"name"`
+	LedgerMeta LedgerMeta `json:"ledger"`
+	UtxoMeta   UtxoMeta   `json:"utxo"`
+	// add BranchBlockid
+	BranchBlockid []string `json:"branchBlockid"`
 }
 
 // SystemStatus proto.SystemStatus
