@@ -459,7 +459,7 @@ func (l *Ledger) IsValidTx(idx int, tx *pb.Transaction, block *pb.InternalBlock)
 }
 
 // UpdateBlockChainData modify tx which txid is txid
-func (l *Ledger) UpdateBlockChainData(txid string, ptxid string, publickey string, sign string) error {
+func (l *Ledger) UpdateBlockChainData(txid string, ptxid string, publickey string, sign string, height int64) error {
 	if txid == "" || ptxid == "" {
 		return fmt.Errorf("invalid update blockchaindata requests")
 	}
@@ -475,10 +475,11 @@ func (l *Ledger) UpdateBlockChainData(txid string, ptxid string, publickey strin
 		l.xlog.Warn("ledger UpdateBlockChainData query tx error")
 		return fmt.Errorf("ledger UpdateBlockChainData query tx error")
 	}
+
 	tx.ModifyBlock = &pb.ModifyBlock{
 		Marked:          true,
 		EffectiveTxid:   ptxid,
-		EffectiveHeight: l.GetMeta().TrunkHeight + 1,
+		EffectiveHeight: height,
 		PublicKey:       publickey,
 		Sign:            sign,
 	}

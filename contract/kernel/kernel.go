@@ -17,11 +17,12 @@ import (
 	"github.com/xuperchain/xuperunion/common/config"
 	"github.com/xuperchain/xuperunion/contract"
 	"github.com/xuperchain/xuperunion/crypto/client"
-	"github.com/xuperchain/xuperunion/crypto/hash"
 	"github.com/xuperchain/xuperunion/global"
 	"github.com/xuperchain/xuperunion/ledger"
 	"github.com/xuperchain/xuperunion/pb"
 	"github.com/xuperchain/xuperunion/utxo"
+	"github.com/xuperchain/xuperunion/utxo/txhash"
+	"github.com/xuperchain/xuperunion/xmodel"
 )
 
 // ChainRegister register blockchains
@@ -434,7 +435,28 @@ func (k *Kernel) validateUpdateBlockChainData(desc *contract.TxDesc) error {
 	if err != nil {
 		return fmt.Errorf("invalide arg type: sign byte")
 	}
-	digestHash := hash.DoubleSha256([]byte(txid))
+	rawTxid, err := hex.DecodeString(txid)
+	if err != nil {
+		return fmt.Errorf("validate updateBlockChainData bad txid:%s", txid)
+	}
+	tx, err := k.context.LedgerObj.QueryTransaction(rawTxid)
+	if err != nil {
+		return fmt.Errorf("Modified tx not exist")
+	}
+
+	// When you update transaction, you'll need to update cache synchronously and clear the cache
+	for i, txOutputExt := range tx.GetTxOutputsExt() {
+		bucket := txOutputExt.Bucket
+		version := xmodel.MakeVersion(tx.Txid, int32(i))
+		k.context.UtxoMeta.GetXModel().BucketCacheDelete(bucket, version)
+	}
+
+	tx.Desc = []byte("")
+	tx.TxOutputsExt = []*pb.TxOutputExt{}
+	digestHash, err := txhash.MakeTxDigestHash(tx)
+	if err != nil {
+		return err
+	}
 	ok, err = xcc.VerifyECDSA(ecdsaKey, bytesign, digestHash)
 	if err != nil || !ok {
 		k.log.Warn("validateUpdateBlockChainData verifySignatures failed")
@@ -773,7 +795,7 @@ func (k *Kernel) runUpdateBlockChainData(desc *contract.TxDesc) error {
 	publicKey, _ := desc.Args["publicKey"].(string)
 	sign, _ := desc.Args["sign"].(string)
 	k.log.Info("runUpdateBlockChainData", "txid", txid)
-	err = k.context.LedgerObj.UpdateBlockChainData(txid, hex.EncodeToString(desc.Tx.Txid), publicKey, sign)
+	err = k.context.LedgerObj.UpdateBlockChainData(txid, hex.EncodeToString(desc.Tx.Txid), publicKey, sign, k.context.Block.Height)
 	return err
 }
 
