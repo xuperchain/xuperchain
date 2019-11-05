@@ -365,9 +365,10 @@ type UtxoMeta struct {
 
 // ChainStatus proto.ChainStatus
 type ChainStatus struct {
-	Name       string     `json:"name"`
-	LedgerMeta LedgerMeta `json:"ledger"`
-	UtxoMeta   UtxoMeta   `json:"utxo"`
+	Name          string     `json:"name"`
+	LedgerMeta    LedgerMeta `json:"ledger"`
+	UtxoMeta      UtxoMeta   `json:"utxo"`
+	BranchBlockid []string   `json:"branchBlockid"`
 }
 
 // SystemStatus proto.SystemStatus
@@ -431,6 +432,7 @@ func FromSystemStatusPB(statuspb *pb.SystemsStatus) *SystemStatus {
 				IrreversibleBlockHeight: utxoMeta.GetIrreversibleBlockHeight(),
 				IrreversibleSlideWindow: utxoMeta.GetIrreversibleSlideWindow(),
 			},
+			BranchBlockid: chain.GetBranchBlockid(),
 		})
 	}
 	status.Peers = statuspb.GetPeerUrls()
