@@ -443,6 +443,8 @@ func (k *Kernel) validateUpdateBlockChainData(desc *contract.TxDesc) error {
 	if err != nil {
 		return fmt.Errorf("Modified tx not exist")
 	}
+
+	// When you update transaction, you'll need to update cache synchronously and clear the cache
 	for i, txOutputExt := range tx.GetTxOutputsExt() {
 		bucket := txOutputExt.Bucket
 		version := xmodel.MakeVersion(tx.Txid, int32(i))
