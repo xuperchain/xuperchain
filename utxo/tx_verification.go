@@ -617,6 +617,7 @@ func (uv *UtxoVM) verifyMarkedTx(tx *pb.Transaction) error {
 	if err != nil {
 		return errors.New("invalide arg type: sign byte")
 	}
+	tx.ModifyBlock = &pb.ModifyBlock{}
 	digestHash, err := txhash.MakeTxDigestHash(tx)
 	if err != nil {
 		uv.xlog.Warn("verifyMarkedTx call MakeTxDigestHash failed", "error", err)
@@ -624,7 +625,7 @@ func (uv *UtxoVM) verifyMarkedTx(tx *pb.Transaction) error {
 	}
 	ok, err := xcc.VerifyECDSA(ecdsaKey, bytesign, digestHash)
 	if err != nil || !ok {
-		uv.xlog.Warn("validateUpdateBlockChainData verifySignatures failed")
+		uv.xlog.Warn("verifyMarkedTx validateUpdateBlockChainData verifySignatures failed")
 		return err
 	}
 	return nil
@@ -671,13 +672,16 @@ func (uv *UtxoVM) checkRelyOnMarkedTxid(reftxid []byte, blockid []byte) (bool, b
 	}
 	if reftx.GetModifyBlock() != nil && reftx.ModifyBlock.Marked {
 		isRely = true
-		block, err := uv.ledger.QueryBlock(blockid)
-		if err != nil {
-			return false, isRely, err
+		if string(blockid) != "" {
+			ib, err := uv.ledger.QueryBlock(blockid)
+			if err != nil {
+				return false, isRely, err
+			}
+			if ib.Height <= reftx.ModifyBlock.EffectiveHeight {
+				return true, isRely, nil
+			}
 		}
-		if block.Height >= reftx.ModifyBlock.EffectiveHeight {
-			return false, isRely, nil
-		}
+		return false, isRely, nil
 	}
 	return true, isRely, nil
 }
