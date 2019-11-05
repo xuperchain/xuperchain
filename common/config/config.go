@@ -2,10 +2,11 @@ package config
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb/errors"
-	"time"
 )
 
 // default settings
@@ -77,7 +78,7 @@ type P2PConfig struct {
 	// bootNodes config the bootNodes the node to connect
 	BootNodes []string `yaml:"bootNodes,omitempty"`
 	// staticNodes config the nodes which you trust
-	StaticNodes []string `yaml:"staticNodes,omitempty"`
+	StaticNodes map[string][]string `yaml:"staticNodes,omitempty"`
 	// maxStreamLimits config the max stream num
 	MaxStreamLimits int32 `yaml:"maxStreamLimits,omitempty"`
 	// maxMessageSize config the max message size
@@ -337,6 +338,7 @@ func newP2pConfigWithDefault() P2PConfig {
 		MaxBroadcastCorePeers: DefaultMaxBroadcastCorePeers,
 		IsStorePeers:          DefaultIsStorePeers,
 		P2PDataPath:           DefaultP2PDataPath,
+		StaticNodes:           make(map[string][]string),
 	}
 }
 
