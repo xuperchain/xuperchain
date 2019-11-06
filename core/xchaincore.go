@@ -986,6 +986,15 @@ func (xc *XChainCore) GetBlockChainStatus(in *pb.BCStatus) *pb.BCStatus {
 		return out
 	}
 	out.Block = ib
+	// fetch all branches info
+	branchManager, branchErr := xc.Ledger.GetBranchInfo([]byte("0"), int64(0))
+	if branchErr != nil {
+		out.Header.Error = HandlerLedgerError(branchErr)
+		return out
+	}
+	for _, branchID := range branchManager {
+		out.BranchBlockid = append(out.BranchBlockid, fmt.Sprintf("%x", branchID))
+	}
 
 	return out
 }

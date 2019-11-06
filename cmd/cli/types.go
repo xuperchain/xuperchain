@@ -368,6 +368,8 @@ type ChainStatus struct {
 	Name       string     `json:"name"`
 	LedgerMeta LedgerMeta `json:"ledger"`
 	UtxoMeta   UtxoMeta   `json:"utxo"`
+	// add BranchBlockid
+	BranchBlockid []string `json:"branchBlockid"`
 }
 
 // SystemStatus proto.SystemStatus
@@ -431,6 +433,7 @@ func FromSystemStatusPB(statuspb *pb.SystemsStatus) *SystemStatus {
 				IrreversibleBlockHeight: utxoMeta.GetIrreversibleBlockHeight(),
 				IrreversibleSlideWindow: utxoMeta.GetIrreversibleSlideWindow(),
 			},
+			BranchBlockid: chain.GetBranchBlockid(),
 		})
 	}
 	status.Peers = statuspb.GetPeerUrls()
