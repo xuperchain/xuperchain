@@ -28,9 +28,9 @@ func genArgs(req []*pb.InvokeRequest) *reservedArgs {
 // but the transaction does not contains reserved requests.
 func (uv *UtxoVM) verifyReservedWhitelist(tx *pb.Transaction) bool {
 	// verify reservedContracts len
-	reservedContracts, reservedContractsErr := uv.GetReservedContracts()
-	if len(reservedContracts) == 0 || reservedContractsErr != nil {
-		uv.xlog.Info("verifyReservedWhitelist false reservedReqs is nil", "err", reservedContractsErr)
+	reservedContracts := uv.GetReservedContracts()
+	if len(reservedContracts) == 0 {
+		uv.xlog.Info("verifyReservedWhitelist false reservedReqs is empty")
 		return false
 	}
 
@@ -116,13 +116,9 @@ func (uv *UtxoVM) verifyReservedContractRequests(reservedReqs, txReqs []*pb.Invo
 
 // geReservedContractRequest get reserved contract requests from system params, it doesn't consume gas.
 func (uv *UtxoVM) getReservedContractRequests(req []*pb.InvokeRequest, isPreExec bool) ([]*pb.InvokeRequest, error) {
-	MetaReservedContracts, MetaReservedContractsErr := uv.GetReservedContracts()
+	MetaReservedContracts := uv.GetReservedContracts()
 	if MetaReservedContracts == nil {
 		return nil, nil
-	}
-	if MetaReservedContractsErr != nil {
-		uv.xlog.Warn("GetReservedContracts error", "err", MetaReservedContractsErr)
-		return nil, MetaReservedContractsErr
 	}
 	reservedContractstpl := MetaReservedContracts
 	uv.xlog.Info("MetaReservedContracts", "reservedContracts", reservedContractstpl)

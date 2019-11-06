@@ -570,10 +570,7 @@ func (k *Kernel) runUpdateMaxBlockSize(desc *contract.TxDesc) error {
 	newBlockSize := int64(desc.Args["new_block_size"].(float64))
 	oldBlockSize := int64(desc.Args["old_block_size"].(float64))
 	k.log.Info("update max block size", "old", oldBlockSize, "new", newBlockSize)
-	curMaxBlockSize, curMaxBlockSizeErr := k.context.UtxoMeta.GetMaxBlockSize()
-	if curMaxBlockSizeErr != nil {
-		return curMaxBlockSizeErr
-	}
+	curMaxBlockSize := k.context.UtxoMeta.GetMaxBlockSize()
 	if oldBlockSize != curMaxBlockSize {
 		return fmt.Errorf("unexpected old block size, got %v, expected: %v", oldBlockSize, curMaxBlockSize)
 	}
@@ -624,10 +621,7 @@ func (k *Kernel) runUpdateNewAccountResourceAmount(desc *contract.TxDesc) error 
 	newNewAccountResourceAmount := int64(desc.Args["new_new_account_resource_amount"].(float64))
 	oldNewAccountResourceAmount := int64(desc.Args["old_new_account_resource_amount"].(float64))
 	k.log.Info("update newAccountResourceAmount", "old", oldNewAccountResourceAmount, "new", newNewAccountResourceAmount)
-	curNewAccountResourceAmount, curNewAccountResourceAmountErr := k.context.UtxoMeta.GetNewAccountResourceAmount()
-	if curNewAccountResourceAmountErr != nil {
-		return curNewAccountResourceAmountErr
-	}
+	curNewAccountResourceAmount := k.context.UtxoMeta.GetNewAccountResourceAmount()
 	if oldNewAccountResourceAmount != curNewAccountResourceAmount {
 		fmt.Errorf("unexpected old newAccountResourceAmount, got %v, expected: %v", oldNewAccountResourceAmount, curNewAccountResourceAmount)
 	}
@@ -672,10 +666,7 @@ func (k *Kernel) runUpdateForbiddenContract(desc *contract.TxDesc) error {
 	}
 	k.log.Info("run update forbidden contract, params", "oldParams", oldParams)
 
-	originalForbiddenContract, originalForbiddenContractErr := k.context.UtxoMeta.GetForbiddenContract()
-	if originalForbiddenContractErr != nil {
-		return originalForbiddenContractErr
-	}
+	originalForbiddenContract := k.context.UtxoMeta.GetForbiddenContract()
 
 	originalModuleName := originalForbiddenContract.GetModuleName()
 	originalContractName := originalForbiddenContract.GetContractName()
@@ -732,10 +723,7 @@ func (k *Kernel) runUpdateReservedContract(desc *contract.TxDesc) error {
 	}
 	k.log.Info("run update reservered contract, params", "oldParams", oldParams)
 
-	originalReservedContracts, originalReservedContractsErr := k.context.UtxoMeta.GetReservedContracts()
-	if originalReservedContractsErr != nil {
-		return originalReservedContractsErr
-	}
+	originalReservedContracts := k.context.UtxoMeta.GetReservedContracts()
 
 	for i, vold := range oldParams {
 		for j, vorig := range originalReservedContracts {
