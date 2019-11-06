@@ -24,13 +24,13 @@ var AutoGenWhiteList = map[string]bool{
 
 // UtxoMetaRegister in avoid to being refered in a cycle way
 type UtxoMetaRegister interface {
-	GetMaxBlockSize() (int64, error)
+	GetMaxBlockSize() int64
 	UpdateMaxBlockSize(int64, kvdb.Batch) error
-	GetReservedContracts() ([]*pb.InvokeRequest, error)
+	GetReservedContracts() []*pb.InvokeRequest
 	UpdateReservedContracts([]*pb.InvokeRequest, kvdb.Batch) error
-	GetForbiddenContract() (*pb.InvokeRequest, error)
+	GetForbiddenContract() *pb.InvokeRequest
 	UpdateForbiddenContract(*pb.InvokeRequest, kvdb.Batch) error
-	GetNewAccountResourceAmount() (int64, error)
+	GetNewAccountResourceAmount() int64
 	UpdateNewAccountResourceAmount(int64, kvdb.Batch) error
 	QueryTx(txid []byte) (*pb.Transaction, error)
 	GetXModel() *xmodel.XModel

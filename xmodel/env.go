@@ -40,10 +40,6 @@ func (s *XModel) PrepareEnv(tx *pb.Transaction) (*Env, error) {
 		return nil, err
 	}
 	env.modelCache = NewXModelCacheWithInputs(inputs, utxoInputs)
-
-	for _, verData := range inputs {
-		env.modelCache.fill(verData)
-	}
 	env.inputs = inputs
 	env.outputs = outputs
 	s.logger.Trace("PrepareEnv done!", "env", env)

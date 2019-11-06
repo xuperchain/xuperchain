@@ -351,11 +351,7 @@ func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
 		return ErrServiceRefused
 	}
 	blockSize := int64(proto.Size(in.Block))
-	maxBlockSize, sizeErr := xc.Utxovm.GetMaxBlockSize()
-	if sizeErr != nil {
-		xc.log.Warn("failed to GetMaxBlockSize", "sizeErr", sizeErr)
-		return ErrServiceRefused
-	}
+	maxBlockSize := xc.Utxovm.GetMaxBlockSize()
 	if blockSize > maxBlockSize {
 		xc.log.Debug("refused a connection because block is too large", "logid", in.Header.Logid, "cost", hd.Timer.Print(), "size", blockSize)
 		return ErrServiceRefused
@@ -433,11 +429,7 @@ func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
 					return ErrCannotSyncBlock
 				}
 				ibSize := int64(proto.Size(ib.Block))
-				maxSize, sizeErr := xc.Utxovm.GetMaxBlockSize()
-				if sizeErr != nil {
-					xc.log.Warn("failed to GetMaxBlockSize", "sizeErr", sizeErr)
-					return sizeErr
-				}
+				maxSize := xc.Utxovm.GetMaxBlockSize()
 				if ibSize > maxSize {
 					xc.log.Warn("too large block", "size", ibSize, "blockid", global.F(ib.Block.Blockid))
 					return ErrBlockTooLarge
@@ -994,6 +986,15 @@ func (xc *XChainCore) GetBlockChainStatus(in *pb.BCStatus) *pb.BCStatus {
 		return out
 	}
 	out.Block = ib
+	// fetch all branches info
+	branchManager, branchErr := xc.Ledger.GetBranchInfo([]byte("0"), int64(0))
+	if branchErr != nil {
+		out.Header.Error = HandlerLedgerError(branchErr)
+		return out
+	}
+	for _, branchID := range branchManager {
+		out.BranchBlockid = append(out.BranchBlockid, fmt.Sprintf("%x", branchID))
+	}
 
 	return out
 }

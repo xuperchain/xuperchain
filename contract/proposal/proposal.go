@@ -301,24 +301,18 @@ func (prp *Proposal) fillOldState(desc []byte) ([]byte, error) {
 	switch contractKey {
 	case "kernel.UpdateMaxBlockSize":
 		prp.log.Trace("contract desc need to process", "contractKey", "kernel.UpdateMaxBlockSize")
-		oldMaxBlockSize, err := prp.utxoVM.GetMaxBlockSize()
-		if err != nil {
-			return nil, err
-		}
+		oldMaxBlockSize := prp.utxoVM.GetMaxBlockSize()
 		descObj.Args["old_block_size"] = oldMaxBlockSize
 	case "kernel.UpdateNewAccountResourceAmount":
 		prp.log.Trace("contract desc need to process", "contractKey", "kernel.UpdateNewAccountResourceAmount")
-		descObj.Args["old_new_account_resource_amount"] = prp.ledger.GetNewAccountResourceAmount()
+		descObj.Args["old_new_account_resource_amount"] = prp.utxoVM.GetNewAccountResourceAmount()
 	case "kernel.UpdateIrreversibleSlideWindow":
 		prp.log.Trace("contract desc need to process", "contractKey", "kernel.UpdateIrreversibleSlideWindow")
 		descObj.Args["old_irreversible_slide_window"] = prp.utxoVM.GetIrreversibleSlideWindow()
 	case "kernel.UpdateReservedContract":
 		prp.log.Trace("contract desc need to process", "contractKey", "kernel.UpdateReservedContract")
 		reservedContracts := []ledger.InvokeRequest{}
-		metaReservedContracts, metaReservedContractsErr := prp.utxoVM.GetReservedContracts()
-		if metaReservedContractsErr != nil {
-			return nil, metaReservedContractsErr
-		}
+		metaReservedContracts := prp.utxoVM.GetReservedContracts()
 		for _, rc := range metaReservedContracts {
 			args := map[string]string{}
 			for k, v := range rc.GetArgs() {
@@ -335,11 +329,8 @@ func (prp *Proposal) fillOldState(desc []byte) ([]byte, error) {
 		descObj.Args["old_reserved_contracts"] = reservedContracts
 	case "kernel.UpdateForbiddenContract":
 		prp.log.Trace("contract desc need to process", "contractKey", "kernel.UpdateForbiddenContract")
-		forbiddenContract, forbiddenContractErr := prp.utxoVM.GetForbiddenContract()
-		if forbiddenContractErr != nil {
-			prp.log.Warn("failed to get forbidden contract when call kernel.UpdateForbiddenContract", "err", forbiddenContractErr)
-			return nil, forbiddenContractErr
-		}
+		forbiddenContract := prp.utxoVM.GetForbiddenContract()
+
 		forbiddenContractMap := map[string]interface{}{}
 		forbiddenContractMap["module_name"] = forbiddenContract.GetModuleName()
 		forbiddenContractMap["contract_name"] = forbiddenContract.GetContractName()
