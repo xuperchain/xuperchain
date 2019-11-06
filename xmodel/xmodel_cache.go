@@ -16,7 +16,7 @@ import (
 
 const (
 	// DefaultMemDBSize 默认内存db大小
-	DefaultMemDBSize = 50000
+	DefaultMemDBSize = 32
 )
 
 var (
@@ -265,15 +265,6 @@ func (xc *XMCache) isDel(rawKey []byte) bool {
 		return false
 	}
 	return isDelFlag(data.GetPureData().GetValue())
-}
-
-// fill 填充XModelCache, 当某个bucket, key已经存在的时候，会覆盖之前的值
-func (xc *XMCache) fill(vd *xmodel_pb.VersionedData) error {
-	bucket := vd.GetPureData().GetBucket()
-	key := vd.GetPureData().GetKey()
-	rawKey := makeRawKey(bucket, key)
-	valBuf, _ := proto.Marshal(vd)
-	return xc.inputsCache.Put(rawKey, valBuf)
 }
 
 // Transfer transfer tokens using utxo
