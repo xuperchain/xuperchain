@@ -494,6 +494,8 @@ message BCStatus {
   InternalBlock block = 4;
   // Utox information
   UtxoMeta utxoMeta = 5;
+  // Branch info
+  repeated string branchBlockid = 6;
 }
 
 message BCTipStatus {
