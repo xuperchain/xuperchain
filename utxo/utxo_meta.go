@@ -18,10 +18,10 @@ var (
 )
 
 // GetNewAccountResourceAmount get account for creating an account
-func (uv *UtxoVM) GetNewAccountResourceAmount() (int64, error) {
+func (uv *UtxoVM) GetNewAccountResourceAmount() int64 {
 	uv.mutexMeta.Lock()
 	defer uv.mutexMeta.Unlock()
-	return uv.meta.GetNewAccountResourceAmount(), nil
+	return uv.meta.GetNewAccountResourceAmount()
 }
 
 // LoadNewAccountResourceAmount load newAccountResourceAmount into memory
@@ -59,10 +59,10 @@ func (uv *UtxoVM) UpdateNewAccountResourceAmount(newAccountResourceAmount int64,
 }
 
 // GetMaxBlockSize get max block size effective in Utxo
-func (uv *UtxoVM) GetMaxBlockSize() (int64, error) {
+func (uv *UtxoVM) GetMaxBlockSize() int64 {
 	uv.mutexMeta.Lock()
 	defer uv.mutexMeta.Unlock()
-	return uv.meta.GetMaxBlockSize(), nil
+	return uv.meta.GetMaxBlockSize()
 }
 
 // LoadMaxBlockSize load maxBlockSize into memory
@@ -80,8 +80,8 @@ func (uv *UtxoVM) LoadMaxBlockSize() (int64, error) {
 }
 
 func (uv *UtxoVM) MaxTxSizePerBlock() (int, error) {
-	maxBlkSize, err := uv.GetMaxBlockSize()
-	return int(float64(maxBlkSize) * TxSizePercent), err
+	maxBlkSize := uv.GetMaxBlockSize()
+	return int(float64(maxBlkSize) * TxSizePercent), nil
 }
 
 func (uv *UtxoVM) UpdateMaxBlockSize(maxBlockSize int64, batch kvdb.Batch) error {
@@ -104,10 +104,10 @@ func (uv *UtxoVM) UpdateMaxBlockSize(maxBlockSize int64, batch kvdb.Batch) error
 	return err
 }
 
-func (uv *UtxoVM) GetReservedContracts() ([]*pb.InvokeRequest, error) {
+func (uv *UtxoVM) GetReservedContracts() []*pb.InvokeRequest {
 	uv.mutexMeta.Lock()
 	defer uv.mutexMeta.Unlock()
-	return uv.meta.ReservedContracts, nil
+	return uv.meta.ReservedContracts
 }
 
 func (uv *UtxoVM) LoadReservedContracts() ([]*pb.InvokeRequest, error) {
@@ -144,10 +144,10 @@ func (uv *UtxoVM) UpdateReservedContracts(params []*pb.InvokeRequest, batch kvdb
 	return err
 }
 
-func (uv *UtxoVM) GetForbiddenContract() (*pb.InvokeRequest, error) {
+func (uv *UtxoVM) GetForbiddenContract() *pb.InvokeRequest {
 	uv.mutexMeta.Lock()
 	defer uv.mutexMeta.Unlock()
-	return uv.meta.GetForbiddenContract(), nil
+	return uv.meta.GetForbiddenContract()
 }
 
 func (uv *UtxoVM) LoadForbiddenContract() (*pb.InvokeRequest, error) {
