@@ -2,10 +2,11 @@ package config
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb/errors"
-	"time"
 )
 
 // default settings
@@ -77,7 +78,7 @@ type P2PConfig struct {
 	// bootNodes config the bootNodes the node to connect
 	BootNodes []string `yaml:"bootNodes,omitempty"`
 	// staticNodes config the nodes which you trust
-	StaticNodes []string `yaml:"staticNodes,omitempty"`
+	StaticNodes map[string][]string `yaml:"staticNodes,omitempty"`
 	// maxStreamLimits config the max stream num
 	MaxStreamLimits int32 `yaml:"maxStreamLimits,omitempty"`
 	// maxMessageSize config the max message size
@@ -210,6 +211,9 @@ type NodeConfig struct {
 	TxidCacheExpiredTime time.Duration `yaml:"txidCacheExpiredTime,omitempty"`
 	// local switch of compressed
 	EnableCompress bool `yaml:"enableCompress,omitempty"`
+	// prune ledger option
+	Prune PruneOption `yaml:"prune,omitempty"`
+
 	// BlockBroadcaseMode Full_BroadCast_Mode = 0, Interactive_BroadCast_Mode = 1.
 	BlockBroadcaseMode uint8 `yaml:"blockBroadcaseMode,omitempty"`
 }
@@ -218,6 +222,13 @@ type NodeConfig struct {
 type KernelConfig struct {
 	MinNewChainAmount string          `yaml:"minNewChainAmount,omitempty"`
 	NewChainWhiteList map[string]bool `yaml:"newChainWhiteList,omitempty"`
+}
+
+// PruneOption ledger prune option
+type PruneOption struct {
+	Switch        bool   `yaml:"switch,omitempty"`
+	Bcname        string `yaml:"bcname,omitempty"`
+	TargetBlockid string `yaml:"targetBlockid,omitempty"`
 }
 
 // DBCacheConfig db cache config
@@ -331,6 +342,7 @@ func newP2pConfigWithDefault() P2PConfig {
 		MaxBroadcastCorePeers: DefaultMaxBroadcastCorePeers,
 		IsStorePeers:          DefaultIsStorePeers,
 		P2PDataPath:           DefaultP2PDataPath,
+		StaticNodes:           make(map[string][]string),
 	}
 }
 

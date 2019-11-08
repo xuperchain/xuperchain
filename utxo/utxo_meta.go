@@ -13,15 +13,17 @@ import (
 )
 
 var (
+	ErrProposalParamsIsNegativeNumber    = errors.New("negative number for proposal parameter is not allowed")
+	ErrProposalParamsIsNotPositiveNumber = errors.New("negative number of zero for proposal parameter is not allowed")
 	// TxSizePercent max percent of txs' size in one block
 	TxSizePercent = 0.8
 )
 
 // GetNewAccountResourceAmount get account for creating an account
-func (uv *UtxoVM) GetNewAccountResourceAmount() (int64, error) {
+func (uv *UtxoVM) GetNewAccountResourceAmount() int64 {
 	uv.mutexMeta.Lock()
 	defer uv.mutexMeta.Unlock()
-	return uv.meta.GetNewAccountResourceAmount(), nil
+	return uv.meta.GetNewAccountResourceAmount()
 }
 
 // LoadNewAccountResourceAmount load newAccountResourceAmount into memory
@@ -32,7 +34,11 @@ func (uv *UtxoVM) LoadNewAccountResourceAmount() (int64, error) {
 		err := proto.Unmarshal(newAccountResourceAmountBuf, utxoMeta)
 		return utxoMeta.GetNewAccountResourceAmount(), err
 	} else if common.NormalizedKVError(findErr) == common.ErrKVNotFound {
-		return uv.ledger.GetNewAccountResourceAmount(), nil
+		genesisNewAccountResourceAmount := uv.ledger.GetNewAccountResourceAmount()
+		if genesisNewAccountResourceAmount < 0 {
+			return genesisNewAccountResourceAmount, ErrProposalParamsIsNegativeNumber
+		}
+		return genesisNewAccountResourceAmount, nil
 	}
 
 	return int64(0), findErr
@@ -40,6 +46,9 @@ func (uv *UtxoVM) LoadNewAccountResourceAmount() (int64, error) {
 
 // UpdateNewAccountResourceAmount ...
 func (uv *UtxoVM) UpdateNewAccountResourceAmount(newAccountResourceAmount int64, batch kvdb.Batch) error {
+	if newAccountResourceAmount < 0 {
+		return ErrProposalParamsIsNegativeNumber
+	}
 	tmpMeta := &pb.UtxoMeta{}
 	newMeta := proto.Clone(tmpMeta).(*pb.UtxoMeta)
 	newMeta.NewAccountResourceAmount = newAccountResourceAmount
@@ -59,10 +68,10 @@ func (uv *UtxoVM) UpdateNewAccountResourceAmount(newAccountResourceAmount int64,
 }
 
 // GetMaxBlockSize get max block size effective in Utxo
-func (uv *UtxoVM) GetMaxBlockSize() (int64, error) {
+func (uv *UtxoVM) GetMaxBlockSize() int64 {
 	uv.mutexMeta.Lock()
 	defer uv.mutexMeta.Unlock()
-	return uv.meta.GetMaxBlockSize(), nil
+	return uv.meta.GetMaxBlockSize()
 }
 
 // LoadMaxBlockSize load maxBlockSize into memory
@@ -73,18 +82,25 @@ func (uv *UtxoVM) LoadMaxBlockSize() (int64, error) {
 		err := proto.Unmarshal(maxBlockSizeBuf, utxoMeta)
 		return utxoMeta.GetMaxBlockSize(), err
 	} else if common.NormalizedKVError(findErr) == common.ErrKVNotFound {
-		return uv.ledger.GetMaxBlockSize(), nil
+		genesisMaxBlockSize := uv.ledger.GetMaxBlockSize()
+		if genesisMaxBlockSize <= 0 {
+			return genesisMaxBlockSize, ErrProposalParamsIsNotPositiveNumber
+		}
+		return genesisMaxBlockSize, nil
 	}
 
 	return int64(0), findErr
 }
 
 func (uv *UtxoVM) MaxTxSizePerBlock() (int, error) {
-	maxBlkSize, err := uv.GetMaxBlockSize()
-	return int(float64(maxBlkSize) * TxSizePercent), err
+	maxBlkSize := uv.GetMaxBlockSize()
+	return int(float64(maxBlkSize) * TxSizePercent), nil
 }
 
 func (uv *UtxoVM) UpdateMaxBlockSize(maxBlockSize int64, batch kvdb.Batch) error {
+	if maxBlockSize <= 0 {
+		return ErrProposalParamsIsNotPositiveNumber
+	}
 	tmpMeta := &pb.UtxoMeta{}
 	newMeta := proto.Clone(tmpMeta).(*pb.UtxoMeta)
 	newMeta.MaxBlockSize = maxBlockSize
@@ -104,10 +120,10 @@ func (uv *UtxoVM) UpdateMaxBlockSize(maxBlockSize int64, batch kvdb.Batch) error
 	return err
 }
 
-func (uv *UtxoVM) GetReservedContracts() ([]*pb.InvokeRequest, error) {
+func (uv *UtxoVM) GetReservedContracts() []*pb.InvokeRequest {
 	uv.mutexMeta.Lock()
 	defer uv.mutexMeta.Unlock()
-	return uv.meta.ReservedContracts, nil
+	return uv.meta.ReservedContracts
 }
 
 func (uv *UtxoVM) LoadReservedContracts() ([]*pb.InvokeRequest, error) {
@@ -144,10 +160,10 @@ func (uv *UtxoVM) UpdateReservedContracts(params []*pb.InvokeRequest, batch kvdb
 	return err
 }
 
-func (uv *UtxoVM) GetForbiddenContract() (*pb.InvokeRequest, error) {
+func (uv *UtxoVM) GetForbiddenContract() *pb.InvokeRequest {
 	uv.mutexMeta.Lock()
 	defer uv.mutexMeta.Unlock()
-	return uv.meta.GetForbiddenContract(), nil
+	return uv.meta.GetForbiddenContract()
 }
 
 func (uv *UtxoVM) LoadForbiddenContract() (*pb.InvokeRequest, error) {
@@ -207,7 +223,12 @@ func (uv *UtxoVM) LoadIrreversibleSlideWindow() (int64, error) {
 		err := proto.Unmarshal(irreversibleSlideWindowBuf, utxoMeta)
 		return utxoMeta.GetIrreversibleSlideWindow(), err
 	} else if common.NormalizedKVError(findErr) == common.ErrKVNotFound {
-		return uv.ledger.GetIrreversibleSlideWindow(), nil
+		genesisSlideWindow := uv.ledger.GetIrreversibleSlideWindow()
+		// negative number is not meaningful
+		if genesisSlideWindow < 0 {
+			return genesisSlideWindow, ErrProposalParamsIsNegativeNumber
+		}
+		return genesisSlideWindow, nil
 	}
 	return int64(0), findErr
 }
@@ -245,8 +266,12 @@ func (uv *UtxoVM) UpdateIrreversibleBlockHeight(nextIrreversibleBlockHeight int6
 }
 
 func (uv *UtxoVM) updateNextIrreversibleBlockHeight(blockHeight int64, curIrreversibleBlockHeight int64, curIrreversibleSlideWindow int64, batch kvdb.Batch) error {
+	// negative number for irreversible slide window is not allowed.
+	if curIrreversibleSlideWindow < 0 {
+		return ErrProposalParamsIsNegativeNumber
+	}
 	// slideWindow为开启,不需要更新IrreversibleBlockHeight
-	if curIrreversibleSlideWindow <= 0 {
+	if curIrreversibleSlideWindow == 0 {
 		return nil
 	}
 	// curIrreversibleBlockHeight小于0, 不符合预期，报警
@@ -268,4 +293,49 @@ func (uv *UtxoVM) updateNextIrreversibleBlockHeight(blockHeight int64, curIrreve
 	}
 
 	return errors.New("unexpected error")
+}
+
+func (uv *UtxoVM) updateNextIrreversibleBlockHeightForPrune(blockHeight int64, curIrreversibleBlockHeight int64, curIrreversibleSlideWindow int64, batch kvdb.Batch) error {
+	// negative number for irreversible slide window is not allowed.
+	if curIrreversibleSlideWindow < 0 {
+		return ErrProposalParamsIsNegativeNumber
+	}
+	// slideWindow为开启,不需要更新IrreversibleBlockHeight
+	if curIrreversibleSlideWindow == 0 {
+		return nil
+	}
+	// curIrreversibleBlockHeight小于0, 不符合预期，报警
+	if curIrreversibleBlockHeight < 0 {
+		uv.xlog.Warn("update irreversible block height error, should be here")
+		return errors.New("curIrreversibleBlockHeight is less than 0")
+	}
+	nextIrreversibleBlockHeight := blockHeight - curIrreversibleSlideWindow
+	if nextIrreversibleBlockHeight <= 0 {
+		nextIrreversibleBlockHeight = 0
+	}
+	err := uv.UpdateIrreversibleBlockHeight(nextIrreversibleBlockHeight, batch)
+	return err
+}
+
+func (uv *UtxoVM) UpdateIrreversibleSlideWindow(nextIrreversibleSlideWindow int64, batch kvdb.Batch) error {
+	if nextIrreversibleSlideWindow < 0 {
+		return ErrProposalParamsIsNegativeNumber
+	}
+	tmpMeta := &pb.UtxoMeta{}
+	newMeta := proto.Clone(tmpMeta).(*pb.UtxoMeta)
+	newMeta.IrreversibleSlideWindow = nextIrreversibleSlideWindow
+	irreversibleSlideWindowBuf, pbErr := proto.Marshal(newMeta)
+	if pbErr != nil {
+		uv.xlog.Warn("failed to marshal pb meta")
+		return pbErr
+	}
+	err := batch.Put([]byte(pb.MetaTablePrefix+ledger_pkg.IrreversibleSlideWindowKey), irreversibleSlideWindowBuf)
+	if err != nil {
+		return err
+	}
+	uv.xlog.Info("Update irreversibleSlideWindow succeed")
+	uv.mutexMeta.Lock()
+	defer uv.mutexMeta.Unlock()
+	uv.metaTmp.IrreversibleSlideWindow = nextIrreversibleSlideWindow
+	return nil
 }

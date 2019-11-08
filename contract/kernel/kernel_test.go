@@ -148,7 +148,7 @@ func TestCreateBlockChain(t *testing.T) {
 		t.Fatal(err)
 	}
 	//强行walk到根节点，触发createblockchain的回滚测试
-	err = utxovm.Walk(ledger.GetMeta().RootBlockid)
+	err = utxovm.Walk(ledger.GetMeta().RootBlockid, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -320,7 +320,7 @@ func TestRunUpdateMaxBlockSize(t *testing.T) {
 	if playErr != nil {
 		t.Error(playErr)
 	}
-	maxSize, _ := utxovm.GetMaxBlockSize()
+	maxSize := utxovm.GetMaxBlockSize()
 	t.Log("UtxoVM.GetMaxBlockSize:", maxSize)
 	context := &contract.TxContext{
 		LedgerObj: L,
@@ -406,7 +406,7 @@ func TestRunUpdateReservedContracts(t *testing.T) {
 		t.Error("originalReservedContracts ", originalReservedContracts)
 	}
 	//MetaReservedContracts := L.GetMeta().ReservedContracts
-	MetaReservedContracts, _ := utxovm.GetReservedContracts()
+	MetaReservedContracts := utxovm.GetReservedContracts()
 	t.Log("MetaReservedContracts: ", MetaReservedContracts)
 	if MetaReservedContracts != nil {
 		reservedContracts = MetaReservedContracts
@@ -521,7 +521,7 @@ func TestRunUpdateForbiddenContract(t *testing.T) {
 		t.Error("get originalForbiddenContract error->", err)
 	}
 	//MetaForbiddenContract := L.GetMeta().ForbiddenContract
-	MetaForbiddenContract, _ := utxovm.GetForbiddenContract()
+	MetaForbiddenContract := utxovm.GetForbiddenContract()
 	t.Log("MetaForbiddenContract:", MetaForbiddenContract)
 	if MetaForbiddenContract != nil {
 		forbiddenContract = MetaForbiddenContract
@@ -578,7 +578,7 @@ func TestRunUpdateForbiddenContract(t *testing.T) {
 	}
 	`)
 	json.Unmarshal(args2, txDesc)
-	originalNewAccountResourceAmount, _ := utxovm.GetNewAccountResourceAmount()
+	originalNewAccountResourceAmount := utxovm.GetNewAccountResourceAmount()
 	t.Log("original newAccountResourceAmount->", originalNewAccountResourceAmount)
 	if originalNewAccountResourceAmount != 1000 {
 		t.Error("expect 1000, but got ", originalNewAccountResourceAmount)
@@ -587,7 +587,7 @@ func TestRunUpdateForbiddenContract(t *testing.T) {
 	if runUpadteNewAccountResourceAmountErr != nil {
 		t.Error("runUpadteNewAccountResourceAmount error:->", runUpadteNewAccountResourceAmountErr.Error())
 	}
-	currentNewAccountResourceAmount, _ := utxovm.GetNewAccountResourceAmount()
+	currentNewAccountResourceAmount := utxovm.GetNewAccountResourceAmount()
 	t.Log("new newAccountResourceAmount->", currentNewAccountResourceAmount)
 	if currentNewAccountResourceAmount != 100 {
 		t.Error("expect 100, but got ", currentNewAccountResourceAmount)
@@ -596,7 +596,7 @@ func TestRunUpdateForbiddenContract(t *testing.T) {
 	if rollbackUpdateNewAccountResourceAmountErr != nil {
 		t.Error("rollbackUpdateNewAccountResourceAmount error:->", rollbackUpdateNewAccountResourceAmountErr.Error())
 	}
-	rollbackNewAccountResourceAmount, _ := utxovm.GetNewAccountResourceAmount()
+	rollbackNewAccountResourceAmount := utxovm.GetNewAccountResourceAmount()
 	t.Log("rollback newAccountResourceAmount->", rollbackNewAccountResourceAmount)
 	if rollbackNewAccountResourceAmount != 1000 {
 		t.Error("expect 1000, but got ", rollbackNewAccountResourceAmount)

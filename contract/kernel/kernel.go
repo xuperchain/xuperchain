@@ -17,11 +17,12 @@ import (
 	"github.com/xuperchain/xuperunion/common/config"
 	"github.com/xuperchain/xuperunion/contract"
 	"github.com/xuperchain/xuperunion/crypto/client"
-	"github.com/xuperchain/xuperunion/crypto/hash"
 	"github.com/xuperchain/xuperunion/global"
 	"github.com/xuperchain/xuperunion/ledger"
 	"github.com/xuperchain/xuperunion/pb"
 	"github.com/xuperchain/xuperunion/utxo"
+	"github.com/xuperchain/xuperunion/utxo/txhash"
+	"github.com/xuperchain/xuperunion/xmodel"
 )
 
 // ChainRegister register blockchains
@@ -282,6 +283,21 @@ func (k *Kernel) validateCreateBC(desc *contract.TxDesc) (string, string, error)
 	return bcName, bcData, nil
 }
 
+func (k *Kernel) validateUpdateIrreversibleSlideWindow(desc *contract.TxDesc) error {
+	for _, argName := range []string{"new_irreversible_slide_window", "old_irreversible_slide_window"} {
+		if desc.Args[argName] == nil {
+			return fmt.Errorf("miss argument in contact: %s", argName)
+		}
+		switch tp := desc.Args[argName].(type) {
+		case float64:
+			return nil
+		default:
+			return fmt.Errorf("invalid arg type: %s, %v", argName, tp)
+		}
+	}
+	return nil
+}
+
 func (k *Kernel) validateUpdateMaxBlockSize(desc *contract.TxDesc) error {
 	for _, argName := range []string{"new_block_size", "old_block_size"} {
 		if desc.Args[argName] == nil {
@@ -419,7 +435,28 @@ func (k *Kernel) validateUpdateBlockChainData(desc *contract.TxDesc) error {
 	if err != nil {
 		return fmt.Errorf("invalide arg type: sign byte")
 	}
-	digestHash := hash.DoubleSha256([]byte(txid))
+	rawTxid, err := hex.DecodeString(txid)
+	if err != nil {
+		return fmt.Errorf("validate updateBlockChainData bad txid:%s", txid)
+	}
+	tx, err := k.context.LedgerObj.QueryTransaction(rawTxid)
+	if err != nil {
+		return fmt.Errorf("Modified tx not exist")
+	}
+
+	// When you update transaction, you'll need to update cache synchronously and clear the cache
+	for i, txOutputExt := range tx.GetTxOutputsExt() {
+		bucket := txOutputExt.Bucket
+		version := xmodel.MakeVersion(tx.Txid, int32(i))
+		k.context.UtxoMeta.GetXModel().BucketCacheDelete(bucket, version)
+	}
+
+	tx.Desc = []byte("")
+	tx.TxOutputsExt = []*pb.TxOutputExt{}
+	digestHash, err := txhash.MakeTxDigestHash(tx)
+	if err != nil {
+		return err
+	}
 	ok, err = xcc.VerifyECDSA(ecdsaKey, bytesign, digestHash)
 	if err != nil || !ok {
 		k.log.Warn("validateUpdateBlockChainData verifySignatures failed")
@@ -476,6 +513,8 @@ func (k *Kernel) Run(desc *contract.TxDesc) error {
 		return k.runUpdateBlockChainData(desc)
 	case "UpdateNewAccountResourceAmount":
 		return k.runUpdateNewAccountResourceAmount(desc)
+	case "UpdateIrreversibleSlideWindow":
+		return k.runUpdateIrreversibleSlideWindow(desc)
 	default:
 		k.log.Warn("method not implemented", "method", desc.Method)
 		return ErrMethodNotImplemented
@@ -531,14 +570,43 @@ func (k *Kernel) runUpdateMaxBlockSize(desc *contract.TxDesc) error {
 	newBlockSize := int64(desc.Args["new_block_size"].(float64))
 	oldBlockSize := int64(desc.Args["old_block_size"].(float64))
 	k.log.Info("update max block size", "old", oldBlockSize, "new", newBlockSize)
-	curMaxBlockSize, curMaxBlockSizeErr := k.context.UtxoMeta.GetMaxBlockSize()
-	if curMaxBlockSizeErr != nil {
-		return curMaxBlockSizeErr
-	}
+	curMaxBlockSize := k.context.UtxoMeta.GetMaxBlockSize()
 	if oldBlockSize != curMaxBlockSize {
 		return fmt.Errorf("unexpected old block size, got %v, expected: %v", oldBlockSize, curMaxBlockSize)
 	}
 	err := k.context.UtxoMeta.UpdateMaxBlockSize(newBlockSize, k.context.UtxoBatch)
+	return err
+}
+
+func (k *Kernel) runUpdateIrreversibleSlideWindow(desc *contract.TxDesc) error {
+	if k.context == nil || k.context.LedgerObj == nil {
+		return fmt.Errorf("failed to update irreversible slide window, because no ledger object in context")
+	}
+	vErr := k.validateUpdateIrreversibleSlideWindow(desc)
+	if vErr != nil {
+		return vErr
+	}
+	newIrreversibleSlideWindow := int64(desc.Args["new_irreversible_slide_window"].(float64))
+	oldIrreversibleSlideWindow := int64(desc.Args["old_irreversible_slide_window"].(float64))
+	k.log.Info("update irreversible slide window", "old", oldIrreversibleSlideWindow, "new", newIrreversibleSlideWindow)
+	curIrreversibleSlideWindow := k.context.UtxoMeta.GetIrreversibleSlideWindow()
+	if oldIrreversibleSlideWindow != curIrreversibleSlideWindow {
+		return fmt.Errorf("unexpected old block size, got %v, expected: %v", oldIrreversibleSlideWindow, curIrreversibleSlideWindow)
+	}
+	err := k.context.UtxoMeta.UpdateIrreversibleSlideWindow(newIrreversibleSlideWindow, k.context.UtxoBatch)
+	return err
+}
+
+func (k *Kernel) rollbackUpdateIrreversibleSlideWindow(desc *contract.TxDesc) error {
+	if k.context == nil || k.context.LedgerObj == nil {
+		return fmt.Errorf("failed to update block size, becuase no ledger object in context")
+	}
+	vErr := k.validateUpdateIrreversibleSlideWindow(desc)
+	if vErr != nil {
+		return vErr
+	}
+	oldIrreversibleSlideWindow := int64(desc.Args["old_irreversible_slide_window"].(float64))
+	err := k.context.UtxoMeta.UpdateIrreversibleSlideWindow(oldIrreversibleSlideWindow, k.context.UtxoBatch)
 	return err
 }
 
@@ -553,10 +621,7 @@ func (k *Kernel) runUpdateNewAccountResourceAmount(desc *contract.TxDesc) error 
 	newNewAccountResourceAmount := int64(desc.Args["new_new_account_resource_amount"].(float64))
 	oldNewAccountResourceAmount := int64(desc.Args["old_new_account_resource_amount"].(float64))
 	k.log.Info("update newAccountResourceAmount", "old", oldNewAccountResourceAmount, "new", newNewAccountResourceAmount)
-	curNewAccountResourceAmount, curNewAccountResourceAmountErr := k.context.UtxoMeta.GetNewAccountResourceAmount()
-	if curNewAccountResourceAmountErr != nil {
-		return curNewAccountResourceAmountErr
-	}
+	curNewAccountResourceAmount := k.context.UtxoMeta.GetNewAccountResourceAmount()
 	if oldNewAccountResourceAmount != curNewAccountResourceAmount {
 		fmt.Errorf("unexpected old newAccountResourceAmount, got %v, expected: %v", oldNewAccountResourceAmount, curNewAccountResourceAmount)
 	}
@@ -601,10 +666,7 @@ func (k *Kernel) runUpdateForbiddenContract(desc *contract.TxDesc) error {
 	}
 	k.log.Info("run update forbidden contract, params", "oldParams", oldParams)
 
-	originalForbiddenContract, originalForbiddenContractErr := k.context.UtxoMeta.GetForbiddenContract()
-	if originalForbiddenContractErr != nil {
-		return originalForbiddenContractErr
-	}
+	originalForbiddenContract := k.context.UtxoMeta.GetForbiddenContract()
 
 	originalModuleName := originalForbiddenContract.GetModuleName()
 	originalContractName := originalForbiddenContract.GetContractName()
@@ -661,10 +723,7 @@ func (k *Kernel) runUpdateReservedContract(desc *contract.TxDesc) error {
 	}
 	k.log.Info("run update reservered contract, params", "oldParams", oldParams)
 
-	originalReservedContracts, originalReservedContractsErr := k.context.UtxoMeta.GetReservedContracts()
-	if originalReservedContractsErr != nil {
-		return originalReservedContractsErr
-	}
+	originalReservedContracts := k.context.UtxoMeta.GetReservedContracts()
 
 	for i, vold := range oldParams {
 		for j, vorig := range originalReservedContracts {
@@ -724,7 +783,7 @@ func (k *Kernel) runUpdateBlockChainData(desc *contract.TxDesc) error {
 	publicKey, _ := desc.Args["publicKey"].(string)
 	sign, _ := desc.Args["sign"].(string)
 	k.log.Info("runUpdateBlockChainData", "txid", txid)
-	err = k.context.LedgerObj.UpdateBlockChainData(txid, hex.EncodeToString(desc.Tx.Txid), publicKey, sign)
+	err = k.context.LedgerObj.UpdateBlockChainData(txid, hex.EncodeToString(desc.Tx.Txid), publicKey, sign, k.context.Block.Height)
 	return err
 }
 

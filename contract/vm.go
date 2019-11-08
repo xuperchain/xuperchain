@@ -57,7 +57,15 @@ type ContextConfig struct {
 	ResourceLimits           Limits
 	// Whether contract can be initialized
 	CanInitialize bool
-	Core          ChainCore
+
+	// The chain service
+	Core ChainCore
+
+	// The amount transfer to contract
+	TransferAmount string
+
+	// Chain name
+	BCName string
 }
 
 // VirtualMachine define virtual machine interface

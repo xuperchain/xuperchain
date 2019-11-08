@@ -38,7 +38,7 @@ func TestBaiscFunc(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	xModel, err := NewXuperModel("xuper", ledger, stateDB, logger)
+	xModel, err := NewXuperModel(ledger, stateDB, logger)
 	if err != nil {
 		t.Fatal(err)
 	}

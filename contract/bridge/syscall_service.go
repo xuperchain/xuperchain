@@ -109,6 +109,21 @@ func (c *SyscallService) QueryTx(ctx context.Context, in *pb.QueryTxRequest) (*p
 
 // Transfer implements Syscall interface
 func (c *SyscallService) Transfer(ctx context.Context, in *pb.TransferRequest) (*pb.TransferResponse, error) {
+	nctx, ok := c.ctxmgr.Context(in.GetHeader().Ctxid)
+	if !ok {
+		return nil, fmt.Errorf("bad ctx id:%d", in.Header.Ctxid)
+	}
+	amount, ok := new(big.Int).SetString(in.GetAmount(), 10)
+	if !ok {
+		return nil, errors.New("parse amount error")
+	}
+	if in.GetTo() == "" {
+		return nil, errors.New("empty to address")
+	}
+	err := nctx.Cache.Transfer(nctx.ContractName, in.GetTo(), amount)
+	if err != nil {
+		return nil, err
+	}
 	resp := &pb.TransferResponse{}
 	return resp, nil
 }
@@ -135,6 +150,7 @@ func (c *SyscallService) PutObject(ctx context.Context, in *pb.PutRequest) (*pb.
 	}
 
 	if nctx.ExceedDiskLimit() {
+		nctx.Instance.Abort(ErrOutOfDiskLimit.Error())
 		return nil, ErrOutOfDiskLimit
 	}
 	return &pb.PutResponse{}, nil
@@ -188,8 +204,8 @@ func (c *SyscallService) NewIterator(ctx context.Context, in *pb.IteratorRequest
 	out := new(pb.IteratorResponse)
 	for iter.Next() && limit > 0 {
 		out.Items = append(out.Items, &pb.IteratorItem{
-			Key:   iter.Key(),
-			Value: iter.Data().GetPureData().GetValue(),
+			Key:   append([]byte(""), iter.Key()...), //make a copy
+			Value: append([]byte(""), iter.Data().GetPureData().GetValue()...),
 		})
 		limit -= 1
 	}
@@ -217,10 +233,11 @@ func (c *SyscallService) GetCallArgs(ctx context.Context, in *pb.GetCallArgsRequ
 		return args[i].Key < args[j].Key
 	})
 	return &pb.CallArgs{
-		Method:      nctx.Method,
-		Args:        args,
-		Initiator:   nctx.Initiator,
-		AuthRequire: nctx.AuthRequire,
+		Method:         nctx.Method,
+		Args:           args,
+		Initiator:      nctx.Initiator,
+		AuthRequire:    nctx.AuthRequire,
+		TransferAmount: nctx.TransferAmount,
 	}, nil
 }
 

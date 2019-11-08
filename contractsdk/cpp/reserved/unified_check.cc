@@ -54,6 +54,15 @@ std::string string_last(const std::string& source,
     return source;
 }
 
+int verify_address(xchain::Context* ctx, std::string address) {
+    std::string value;
+    std::string key = PREFIX_IDENTITY + address;
+    if (!ctx->get_object(key, &value) || value != "true") {
+        return -1;
+    }
+    return 0;
+}
+
 // verify if initiator and auth_require are in identify list
 // return 0 if check pass, otherwise check fail
 int verify_identity(xchain::Context* ctx) {
@@ -61,9 +70,7 @@ int verify_identity(xchain::Context* ctx) {
     xchain::Account initiator(ctx->initiator());
     if (initiator.type() == xchain::ADDRESS) {
         // initiator is address
-        std::string value;
-        std::string initiatorKey = PREFIX_IDENTITY + initiator.get_name();
-        if (!ctx->get_object(initiatorKey, &value) || value != "true") {
+        if (verify_address(ctx, initiator.get_name()) != 0) {
             return -1;
         }
     } else {
@@ -73,9 +80,7 @@ int verify_identity(xchain::Context* ctx) {
             return -1;
         }
         for (int i = 0; i < addresses.size(); i++) {
-            std::string value;
-            std::string initiatorKey = PREFIX_IDENTITY + addresses[i];
-            if (!ctx->get_object(initiatorKey, &value) || value != "true") {
+            if (verify_address(ctx, addresses[i]) != 0) {
                 return -1;
             }
         }
@@ -85,10 +90,8 @@ int verify_identity(xchain::Context* ctx) {
     std::vector<std::string> accounts;
     for (int iter = 0; iter < auth_require_size; ++iter) {
         std::string ak_name =
-            PREFIX_IDENTITY +
             string_last(ctx->auth_require(iter), DELIMITER_SLASH);
-        std::string ak_value;
-        if (!ctx->get_object(ak_name, &ak_value) || ak_value != "true") {
+        if (verify_address(ctx, ak_name) != 0) {
             return -1;
         }
     }
@@ -236,6 +239,24 @@ DEFINE_METHOD(UnifiedCheck, identity_check) {
     }
 
     ctx->ok("success");
+}
+
+// identity_query return whether address is in identity list
+// keep this method for convenience
+DEFINE_METHOD(UnifiedCheck, identity_query) {
+    xchain::Context* ctx = self.context();
+    const std::string& address = ctx->arg("address");
+    if (address.empty()) {
+        ctx->error("missing address");
+        return;
+    }
+
+    if (verify_address(ctx, address) == 0) {
+        ctx->ok("Found");
+        return;
+    }
+
+    ctx->ok("Not found");
 }
 
 // banned_check return if the contract is banned

@@ -21,6 +21,7 @@ import (
 	pm "github.com/xuperchain/xuperunion/permission"
 	"github.com/xuperchain/xuperunion/permission/acl"
 	aclu "github.com/xuperchain/xuperunion/permission/acl/utils"
+	"github.com/xuperchain/xuperunion/txn"
 	"github.com/xuperchain/xuperunion/utxo/txhash"
 	"github.com/xuperchain/xuperunion/xmodel"
 	xmodel_pb "github.com/xuperchain/xuperunion/xmodel/pb"
@@ -86,6 +87,9 @@ func (uv *UtxoVM) ImmediateVerifyTx(tx *pb.Transaction, isRootTx bool) (bool, er
 			return ok, ErrInvalidSignature
 		}
 
+		// get all authenticated users
+		authUsers := uv.removeDuplicateUser(tx)
+
 		// veify tx UTXO input permission (Account ACL)
 		ok, err = uv.verifyUTXOPermission(tx, verifiedID)
 		if !ok {
@@ -94,7 +98,7 @@ func (uv *UtxoVM) ImmediateVerifyTx(tx *pb.Transaction, isRootTx bool) (bool, er
 		}
 
 		// verify contract requests' permission using ACL
-		ok, err = uv.verifyContractPermission(tx)
+		ok, err = uv.verifyContractPermission(tx, authUsers)
 		if !ok {
 			uv.xlog.Warn("ImmediateVerifyTx: verifyContractPermission failed", "error", err)
 			return ok, ErrACLNotEnough
@@ -103,7 +107,7 @@ func (uv *UtxoVM) ImmediateVerifyTx(tx *pb.Transaction, isRootTx bool) (bool, er
 		// verify amount of transfer within contract
 		ok, err = uv.verifyContractTxAmount(tx)
 		if !ok {
-			uv.xlog.Warn("ImmediateVerifyTx: verifyContractPermission failed", "error", err)
+			uv.xlog.Warn("ImmediateVerifyTx: verifyContractTxAmount failed", "error", err)
 			return ok, ErrContractTxAmout
 		}
 
@@ -258,7 +262,7 @@ func (uv *UtxoVM) verifyXuperSign(tx *pb.Transaction, digestHash []byte) (bool, 
 //	3). Contract logic transferring from contract
 func (uv *UtxoVM) verifyUTXOPermission(tx *pb.Transaction, verifiedID map[string]bool) (bool, error) {
 	// verify tx input
-	conUtxoInputs, _, err := xmodel.ParseContractUtxo(tx)
+	conUtxoInputs, err := xmodel.ParseContractUtxoInputs(tx)
 	if err != nil {
 		uv.xlog.Warn("verifyUTXOPermission error, parseContractUtxo ")
 		return false, ErrParseContractUtxos
@@ -403,7 +407,7 @@ func (uv *UtxoVM) verifyRWSetPermission(tx *pb.Transaction, verifiedID map[strin
 }
 
 // verifyContractValid verify the permission of contract requests using ACL
-func (uv *UtxoVM) verifyContractPermission(tx *pb.Transaction) (bool, error) {
+func (uv *UtxoVM) verifyContractPermission(tx *pb.Transaction, allUsers []string) (bool, error) {
 	req := tx.GetContractRequests()
 	if req == nil {
 		// if no contract requests, no need to verify
@@ -415,7 +419,7 @@ func (uv *UtxoVM) verifyContractPermission(tx *pb.Transaction) (bool, error) {
 		contractName := tmpReq.GetContractName()
 		methodName := tmpReq.GetMethodName()
 
-		ok, err := pm.CheckContractMethodPerm(tx.AuthRequire, contractName, methodName, uv.aclMgr)
+		ok, err := pm.CheckContractMethodPerm(allUsers, contractName, methodName, uv.aclMgr)
 		if err != nil || !ok {
 			uv.xlog.Warn("verify contract method ACL failed ", "contract", contractName, "method",
 				methodName, "error", err)
@@ -442,35 +446,15 @@ func getGasLimitFromTx(tx *pb.Transaction) (int64, error) {
 
 // verifyContractTxAmount verify
 func (uv *UtxoVM) verifyContractTxAmount(tx *pb.Transaction) (bool, error) {
-	req := tx.GetContractRequests()
-	// af is the flag of whether the contract already carries the amount parameter
-	af := false
-	amountCon := new(big.Int).SetInt64(0)
 	amountOut := new(big.Int).SetInt64(0)
-	var contractName string
-	for i := 0; i < len(req); i++ {
-		tmpReq := req[i]
-		if af {
-			return false, ErrInvokeReqParams
-		}
-		if tmpReq.GetAmount() != "" {
-			amountCon, ok := amountCon.SetString(tmpReq.GetAmount(), 10)
-			if !ok {
-				return false, ErrInvokeReqParams
-			}
-			if amountCon.Cmp(new(big.Int).SetInt64(0)) == 1 {
-				af = true
-				contractName = tmpReq.GetContractName()
-			}
-		}
+	req := tx.GetContractRequests()
+	contractName, amountCon, err := txn.ParseContractTransferRequest(req)
+	if err != nil {
+		return false, err
 	}
-
 	for _, txOutput := range tx.GetTxOutputs() {
 		if string(txOutput.GetToAddr()) == contractName {
-			tmpAmount, ok := new(big.Int).SetString(string(txOutput.GetAmount()), 10)
-			if !ok {
-				return false, ErrInvokeReqParams
-			}
+			tmpAmount := new(big.Int).SetBytes(txOutput.GetAmount())
 			amountOut.Add(tmpAmount, amountOut)
 		}
 	}
@@ -507,6 +491,11 @@ func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
 		}
 		return true, nil
 	}
+	// transfer in contract
+	transContractName, transAmount, err := txn.ParseContractTransferRequest(req)
+	if err != nil {
+		return false, err
+	}
 
 	env, err := uv.model3.PrepareEnv(tx)
 	if err != nil {
@@ -520,6 +509,7 @@ func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
 		Core: contractChainCore{
 			Manager: uv.aclMgr,
 		},
+		BCName: uv.bcname,
 	}
 	gasLimit, err := getGasLimitFromTx(tx)
 	if err != nil {
@@ -545,6 +535,12 @@ func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
 		}
 		contextConfig.ResourceLimits = limits
 		contextConfig.ContractName = tmpReq.GetContractName()
+		if transContractName == tmpReq.GetContractName() {
+			contextConfig.TransferAmount = transAmount.String()
+		} else {
+			contextConfig.TransferAmount = ""
+		}
+
 		ctx, err := vm.NewContext(contextConfig)
 		if err != nil {
 			// FIXME zq @icexin: need to return contract not found
@@ -555,14 +551,25 @@ func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
 			return false, err
 		}
 
-		_, err = ctx.Invoke(tmpReq.MethodName, tmpReq.Args)
-		if err != nil {
+		ctxResponse, ctxErr := ctx.Invoke(tmpReq.MethodName, tmpReq.Args)
+		if ctxErr != nil {
 			ctx.Release()
-			uv.xlog.Error("verifyTxRWSets Invoke error", "error", err, "contractName", tmpReq.GetContractName())
-			return false, err
+			uv.xlog.Error("verifyTxRWSets Invoke error", "error", ctxErr, "contractName", tmpReq.GetContractName())
+			return false, ctxErr
+		}
+		// 判断合约调用的返回码
+		if ctxResponse.Status >= 400 && i < len(reservedRequests) {
+			ctx.Release()
+			uv.xlog.Error("verifyTxRWSets Invoke error", "status", ctxResponse.Status, "contractName", tmpReq.GetContractName())
+			return false, errors.New(ctxResponse.Message)
 		}
 
 		ctx.Release()
+	}
+	utxoInputs, utxoOutputs := env.GetModelCache().GetUtxoRWSets()
+	err = env.GetModelCache().PutUtxos(utxoInputs, utxoOutputs)
+	if err != nil {
+		return false, err
 	}
 
 	_, writeSet, err := env.GetModelCache().GetRWSets()
@@ -572,7 +579,7 @@ func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
 	uv.xlog.Trace("verifyTxRWSets", "env.output", env.GetOutputs(), "writeSet", writeSet)
 	ok := xmodel.Equal(env.GetOutputs(), writeSet)
 	if !ok {
-		return false, fmt.Errorf("Verify error")
+		return false, fmt.Errorf("write set not equal")
 	}
 	return true, nil
 }
@@ -610,6 +617,7 @@ func (uv *UtxoVM) verifyMarkedTx(tx *pb.Transaction) error {
 	if err != nil {
 		return errors.New("invalide arg type: sign byte")
 	}
+	tx.ModifyBlock = &pb.ModifyBlock{}
 	digestHash, err := txhash.MakeTxDigestHash(tx)
 	if err != nil {
 		uv.xlog.Warn("verifyMarkedTx call MakeTxDigestHash failed", "error", err)
@@ -617,7 +625,7 @@ func (uv *UtxoVM) verifyMarkedTx(tx *pb.Transaction) error {
 	}
 	ok, err := xcc.VerifyECDSA(ecdsaKey, bytesign, digestHash)
 	if err != nil || !ok {
-		uv.xlog.Warn("validateUpdateBlockChainData verifySignatures failed")
+		uv.xlog.Warn("verifyMarkedTx validateUpdateBlockChainData verifySignatures failed")
 		return err
 	}
 	return nil
@@ -664,13 +672,34 @@ func (uv *UtxoVM) checkRelyOnMarkedTxid(reftxid []byte, blockid []byte) (bool, b
 	}
 	if reftx.GetModifyBlock() != nil && reftx.ModifyBlock.Marked {
 		isRely = true
-		block, err := uv.ledger.QueryBlock(blockid)
-		if err != nil {
-			return false, isRely, err
+		if string(blockid) != "" {
+			ib, err := uv.ledger.QueryBlock(blockid)
+			if err != nil {
+				return false, isRely, err
+			}
+			if ib.Height <= reftx.ModifyBlock.EffectiveHeight {
+				return true, isRely, nil
+			}
 		}
-		if block.Height >= reftx.ModifyBlock.EffectiveHeight {
-			return false, isRely, nil
-		}
+		return false, isRely, nil
 	}
 	return true, isRely, nil
+}
+
+// removeDuplicateUser combine initiator and auth_require and remove duplicate users
+func (uv *UtxoVM) removeDuplicateUser(tx *pb.Transaction) []string {
+	dupCheck := make(map[string]bool)
+	finalUsers := make([]string, 0)
+	if acl.IsAccount(tx.Initiator) == 0 {
+		finalUsers = append(finalUsers, tx.Initiator)
+		dupCheck[tx.Initiator] = true
+	}
+	for _, user := range tx.AuthRequire {
+		if dupCheck[user] {
+			continue
+		}
+		finalUsers = append(finalUsers, user)
+		dupCheck[user] = true
+	}
+	return finalUsers
 }

@@ -232,7 +232,7 @@ func (xm *XChainMG) ProcessBlock(block *pb.Block) error {
 		return ErrBlockChainNotExist
 	}
 	hd := &global.XContext{Timer: global.NewXTimer()}
-	if err := bc.SendBlock(block, hd); err != nil {
+	if err := bc.ProcessSendBlock(block, hd); err != nil {
 		if err == ErrBlockExist {
 			xm.Log.Debug("ProcessBlock SendBlock block exists")
 			return err

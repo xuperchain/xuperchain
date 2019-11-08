@@ -27,6 +27,9 @@ p2pV2:
   port: 47101
   #bootNodes:
   #  - "/ip4/<ip>/tcp/<port>/p2p/<node_hash>"
+  #staticNodes:
+  #  xuper:
+  #    - "/ip4/<ip>/tcp/<port>/p2p/<node_hash>"
     
 miner:
 # 密钥存储路径
@@ -89,3 +92,9 @@ txidCacheExpiredTime : "10s"
 
 # 是否压缩交易/区块
 enableCompress : true
+
+# 剪枝配置
+prune:
+  switch: false
+  bcname: "xuper"
+  targetBlockid: "xxx"

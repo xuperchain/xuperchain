@@ -35,15 +35,11 @@ func (s *XModel) PrepareEnv(tx *pb.Transaction) (*Env, error) {
 	for _, txOut := range tx.TxOutputsExt {
 		outputs = append(outputs, &xmodel_pb.PureData{Bucket: txOut.Bucket, Key: txOut.Key, Value: txOut.Value})
 	}
-	modelCache, err := NewXModelCache(s, false)
+	utxoInputs, err := ParseContractUtxoInputs(tx)
 	if err != nil {
 		return nil, err
 	}
-	env.modelCache = modelCache
-
-	for _, verData := range inputs {
-		env.modelCache.fill(verData)
-	}
+	env.modelCache = NewXModelCacheWithInputs(inputs, utxoInputs)
 	env.inputs = inputs
 	env.outputs = outputs
 	s.logger.Trace("PrepareEnv done!", "env", env)
@@ -64,9 +60,4 @@ func (e *Env) GetOutputs() []*xmodel_pb.PureData {
 		return e.outputs
 	}
 	return nil
-}
-
-// ParseContractUtxo parse contract utxos from tx write sets
-func ParseContractUtxo(tx *pb.Transaction) ([]*pb.TxInput, []*pb.TxOutput, error) {
-	return nil, nil, nil
 }

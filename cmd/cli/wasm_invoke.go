@@ -25,6 +25,8 @@ type WasmInvokeCommand struct {
 	multiAddrs string
 	output     string
 	methodName string
+	amount     string
+	debug      bool
 }
 
 // NewWasmInvokeCommand new wasm invoke cmd
@@ -53,6 +55,8 @@ func (c *WasmInvokeCommand) addFlags() {
 	c.cmd.Flags().StringVarP(&c.multiAddrs, "multiAddrs", "A", "data/acl/addrs", "multiAddrs if multisig scene")
 	c.cmd.Flags().StringVarP(&c.output, "output", "o", "./tx.out", "tx draw data")
 	c.cmd.Flags().StringVarP(&c.methodName, "method", "", "invoke", "contract method name")
+	c.cmd.Flags().StringVarP(&c.amount, "amount", "", "", "the amount transfer to contract")
+	c.cmd.Flags().BoolVarP(&c.debug, "debug", "", false, "debug print tx instead of posting")
 
 }
 
@@ -79,6 +83,12 @@ func (c *WasmInvokeCommand) invoke(ctx context.Context, codeName string) error {
 		Keys:         c.cli.RootOptions.Keys,
 		XchainClient: c.cli.XchainClient(),
 		CryptoType:   c.cli.RootOptions.CryptoType,
+		DebugTx:      c.debug,
+	}
+	// transfer to contract
+	if c.amount != "" {
+		ct.To = ct.ContractName
+		ct.Amount = c.amount
 	}
 
 	// generate preExe params
