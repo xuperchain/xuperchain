@@ -11,7 +11,7 @@ public:
     XRC01(xchain::Context* ctx)
         : _token(ctx, "token"),
           _asset_info(ctx, "asset_info"),
-          _authorize_info(ctx, "_authorize_info") {
+          _authorize_info(ctx, "authorize_info") {
         _ctx = ctx;
     }
 
