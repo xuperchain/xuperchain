@@ -553,6 +553,8 @@ func (k *Kernel) Rollback(desc *contract.TxDesc) error {
 		return k.rollbackUpdateBlockChainData(desc)
 	case "UpdateNewAccountResourceAmount":
 		return k.rollbackUpdateNewAccountResourceAmount(desc)
+	case "UpdateIrreversibleSlideWindow":
+		return k.rollbackUpdateIrreversibleSlideWindow(desc)
 	default:
 		k.log.Warn("method not implemented", "method", desc.Method)
 		return ErrMethodNotImplemented
