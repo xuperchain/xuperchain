@@ -11,7 +11,7 @@ import (
 
 // Async settings
 const (
-	AsyncMaxWaitMS   = 100
+	AsyncMaxWaitMS   = 10
 	AsyncMaxWaitSize = 7000
 	AsyncQueueBuffer = 500000
 )
