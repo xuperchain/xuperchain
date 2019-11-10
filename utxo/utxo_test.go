@@ -7,6 +7,7 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"reflect"
@@ -133,6 +134,7 @@ func transfer(from string, to string, t *testing.T, utxoVM *UtxoVM, ledger *ledg
 	}
 
 	// test for asyncMode
+	utxoVM.StartAsyncWriter()
 	utxoVM.asyncMode = true
 	errDo := utxoVM.DoTx(tx)
 	timer.Mark("DoTx")
@@ -387,16 +389,19 @@ func TestCheckCylic(t *testing.T) {
 }
 
 func TestFrozenHeight(t *testing.T) {
+	fmt.Println("0000000")
 	workspace, dirErr := ioutil.TempDir("/tmp", "")
 	if dirErr != nil {
 		t.Fatal(dirErr)
 	}
+	fmt.Println("0000001")
 	os.RemoveAll(workspace)
 	defer os.RemoveAll(workspace)
 	ledger, err := ledger_pkg.NewLedger(workspace, nil, nil, DefaultKVEngine, crypto_client.CryptoTypeDefault)
 	if err != nil {
 		t.Fatal(err)
 	}
+	fmt.Println("0000002")
 	t.Log(ledger)
 	//创建链的时候分配, bob:100, alice:200
 	tx, err := GenerateRootTx([]byte(`
@@ -424,31 +429,36 @@ func TestFrozenHeight(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	fmt.Println("step0")
 	block, _ := ledger.FormatRootBlock([]*pb.Transaction{tx})
 	t.Logf("blockid %x", block.Blockid)
 	confirmStatus := ledger.ConfirmBlock(block, true)
 	if !confirmStatus.Succ {
 		t.Fatal("confirm block fail")
 	}
+	fmt.Println("step1")
 	utxoVM, _ := NewUtxoVM("xuper", ledger, workspace, minerPrivateKey, minerPublicKey, []byte(minerAddress),
 		nil, false, DefaultKVEngine, crypto_client.CryptoTypeDefault)
 	playErr := utxoVM.Play(block.Blockid)
 	if playErr != nil {
 		t.Fatal(playErr)
 	}
+	fmt.Println("step2")
 	bobBalance, _ := utxoVM.GetBalance(BobAddress)
 	aliceBalance, _ := utxoVM.GetBalance(AliceAddress)
 	if bobBalance.String() != "100" || aliceBalance.String() != "200" {
 		t.Fatal("unexpected balance", bobBalance, aliceBalance)
 	}
+	fmt.Println("step2-1")
 	//bob 给alice转100，账本高度=2的时候才能解冻
 	nextBlockid, blockErr := transfer("bob", "alice", t, utxoVM, ledger, "100", ledger.GetMeta().TipBlockid, "", 2)
+	fmt.Println("step2-2")
 	if blockErr != nil {
 		t.Fatal(blockErr)
 	} else {
 		t.Logf("next block id: %x", nextBlockid)
 	}
-
+	fmt.Println("step3")
 	// test for GetFrozenBalance
 	frozenBalance, frozenBalanceErr := utxoVM.GetFrozenBalance(AliceAddress)
 	if frozenBalanceErr != nil {
@@ -456,7 +466,7 @@ func TestFrozenHeight(t *testing.T) {
 	} else {
 		t.Log("alice frozen balance ", frozenBalance)
 	}
-
+	fmt.Println("step4")
 	//alice给bob转300, 预期失败，因为无法使用被冻住的utxo
 	nextBlockid, blockErr = transfer("alice", "bob", t, utxoVM, ledger, "300", ledger.GetMeta().TipBlockid, "", 0)
 	if blockErr != ErrNoEnoughUTXO {
@@ -467,6 +477,7 @@ func TestFrozenHeight(t *testing.T) {
 	if blockErr != nil {
 		t.Fatal(blockErr)
 	}
+	t.Log("step5")
 	//然后alice再次尝试给bob转300,预期utxo解冻可用了
 	nextBlockid, blockErr = transfer("alice", "bob", t, utxoVM, ledger, "300", ledger.GetMeta().TipBlockid, "", 0)
 	if blockErr != nil {

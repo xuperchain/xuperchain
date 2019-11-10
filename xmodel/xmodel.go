@@ -305,3 +305,12 @@ func (s *XModel) BucketCacheDelete(bucket, version string) {
 	cache := s.bucketCache(bucket)
 	cache.Del(version)
 }
+
+func GenXModelKeyWithPrefix(txInputExt *pb.TxInputExt) string {
+	bucket := txInputExt.GetBucket()
+	key := txInputExt.GetKey()
+	refTxid := txInputExt.GetRefTxid()
+	refOffset := txInputExt.GetRefOffset()
+	baseXModelKey := bucket + fmt.Sprintf("%s_%x_%d", key, refTxid, refOffset)
+	return pb.ExtUtxoTablePrefix + baseXModelKey
+}
