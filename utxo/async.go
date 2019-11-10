@@ -86,10 +86,10 @@ func (uv *UtxoVM) checkConflictTxs(txList []*pb.Transaction) map[string]bool {
 				break
 			}
 		}
-		for _, txInputExt := range tx.TxInputsExt {
-			xmodelKey := XModel.GenXModelKeyWithPrefix(txInputExt)
-			if !conflictUtxos[xmodelKey] {
-				conflictUtxos[xmodelKey] = true
+		for _, txOutputExt := range tx.TxOutputsExt {
+			writeSetKey := XModel.GenWriteKeyWithPrefix(txOutputExt)
+			if !conflictUtxos[writeSetKey] {
+				conflictUtxos[writeSetKey] = true
 			} else {
 				innerConflict = true
 				break
