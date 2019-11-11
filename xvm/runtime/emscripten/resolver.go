@@ -1,6 +1,7 @@
 package emscripten
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"unsafe"
@@ -12,11 +13,12 @@ import (
 const (
 	mutableGlobalsKey = "mutableGlobals"
 
-	bytesPage = 65536
+	// mutableGlobalsBase is the base pointer of mutableGlobals
+	// static data begin at 1024, the first 1024 bytes is not used.
+	mutableGlobalsBase = 1024 - 100
 
-	mutableGlobalsBase = 63 * bytesPage
-	stackTop           = 64 * bytesPage
-	stackMax           = 128 * bytesPage
+	// total stack size, must sync with xc
+	stackSize = 256 << 10 // 256KB
 )
 
 func unimplemented(symbol string) {
@@ -24,7 +26,7 @@ func unimplemented(symbol string) {
 }
 
 type mutableGlobals struct {
-	DynamicTop uint32
+	HeapBase uint32
 }
 
 func getMutableGlobals(ctx *exec.Context) *mutableGlobals {
@@ -32,14 +34,24 @@ func getMutableGlobals(ctx *exec.Context) *mutableGlobals {
 }
 
 // Init initialize global variables
-func Init(ctx *exec.Context) {
+func Init(ctx *exec.Context) error {
 	mem := ctx.Memory()
 	if mem == nil {
-		return
+		return errors.New("no memory")
+	}
+	if mutableGlobalsBase >= len(mem) {
+		return errors.New("bad memory size")
+	}
+
+	// align 4K boundry
+	stackBase := ctx.StaticTop()
+	if stackBase%4096 != 0 {
+		stackBase += 4096 - stackBase%4096
 	}
 	mg := (*mutableGlobals)(unsafe.Pointer(&mem[mutableGlobalsBase]))
-	mg.DynamicTop = stackMax
+	mg.HeapBase = stackBase + stackSize
 	ctx.SetUserData(mutableGlobalsKey, mg)
+	return nil
 }
 
 // NewResolver return exec.Resolver which resolves symbols needed by emscripten environment
@@ -53,6 +65,10 @@ var resolver = exec.MapResolver(map[string]interface{}{
 	},
 	"env.abortOnCannotGrowMemory": func(ctx *exec.Context, code uint32) uint32 {
 		exec.Throw(exec.NewTrap("cannot grow memory"))
+		return 0
+	},
+	"env.abortStackOverflow": func(ctx *exec.Context, code uint32) uint32 {
+		exec.Throw(exec.NewTrap("stack overflow"))
 		return 0
 	},
 	"env.getTotalMemory": func(ctx *exec.Context) uint32 {
@@ -87,7 +103,7 @@ var resolver = exec.MapResolver(map[string]interface{}{
 		exec.Throw(exec.NewTrap("abort"))
 		return 0
 	},
-	"env._abort": func(ctx *exec.Context, code uint32) uint32 {
+	"env._abort": func(ctx *exec.Context) uint32 {
 		exec.Throw(exec.NewTrap("abort"))
 		return 0
 	},
@@ -194,8 +210,7 @@ var resolver = exec.MapResolver(map[string]interface{}{
 
 	"env.__table_base":   float64(0),
 	"env.tableBase":      float64(0),
-	"env.STACKTOP":       float64(stackTop),
-	"env.DYNAMICTOP_PTR": float64(mutableGlobalsBase + uint32(unsafe.Offsetof(new(mutableGlobals).DynamicTop))),
+	"env.DYNAMICTOP_PTR": float64(mutableGlobalsBase + uint32(unsafe.Offsetof(new(mutableGlobals).HeapBase))),
 	"global.NaN":         math.NaN(),
 	"global.Infinity":    math.Inf(0),
 })
