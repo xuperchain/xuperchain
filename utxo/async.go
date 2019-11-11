@@ -53,6 +53,15 @@ func (uv *UtxoVM) StartAsyncWriter() {
 	go uv.asyncVerifiy(ctx)
 }
 
+func (uv *UtxoVM) StartAsyncBlockMode() {
+	uv.asyncBlockMode = true
+	ctx, cancel := context.WithCancel(context.Background())
+	uv.asyncCancel = cancel
+	ledger.DisableTxDedup = false
+	go uv.asyncWriter(ctx)
+	go uv.asyncVerifiy(ctx)
+}
+
 func (uv *UtxoVM) verifyTxWorker(itxlist []*InboundTx) error {
 	if len(itxlist) == 0 {
 		return nil
@@ -109,14 +118,17 @@ func (uv *UtxoVM) flushTxList(txList []*pb.Transaction) error {
 	}
 	uv.xlog.Warn("async tx list size", "size", len(txList))
 	pbTxList := make([][]byte, len(txList))
-	for i, tx := range txList {
-		pbTxBuf, pbErr := proto.Marshal(tx)
-		if pbErr != nil {
-			uv.xlog.Warn("    fail to marshal tx", "pbErr", pbErr)
-			pbTxList[i] = nil
-			continue
+	// 异步阻塞模式需要将交易数据持久化落盘
+	if uv.asyncBlockMode {
+		for i, tx := range txList {
+			pbTxBuf, pbErr := proto.Marshal(tx)
+			if pbErr != nil {
+				uv.xlog.Warn("    fail to marshal tx", "pbErr", pbErr)
+				pbTxList[i] = nil
+				continue
+			}
+			pbTxList[i] = pbTxBuf
 		}
-		pbTxList[i] = pbTxBuf
 	}
 	batch := uv.ldb.NewBatch()
 	conflictedTxs := uv.checkConflictTxs(txList)
@@ -126,7 +138,7 @@ func (uv *UtxoVM) flushTxList(txList []*pb.Transaction) error {
 		uv.asyncCond.Wait() //会临时让出锁
 	}
 	for i, tx := range txList {
-		if pbTxList[i] == nil {
+		if uv.asyncBlockMode && pbTxList[i] == nil {
 			uv.asyncResult.Send(tx.Txid, errors.New("marshal failed"))
 			continue
 		}
@@ -140,7 +152,9 @@ func (uv *UtxoVM) flushTxList(txList []*pb.Transaction) error {
 			continue
 		}
 		uv.unconfirmTxInMem.Store(string(tx.Txid), tx)
-		batch.Put(append([]byte(pb.UnconfirmedTablePrefix), tx.Txid...), pbTxList[i])
+		if uv.asyncBlockMode {
+			batch.Put(append([]byte(pb.UnconfirmedTablePrefix), tx.Txid...), pbTxList[i])
+		}
 		// uv.xlog.Debug("print tx size when DoTx", "tx_size", batch.ValueSize(), "txid", fmt.Sprintf("%x", tx.Txid))
 	}
 	writeErr := batch.Write()
@@ -148,11 +162,14 @@ func (uv *UtxoVM) flushTxList(txList []*pb.Transaction) error {
 		uv.ClearCache()
 		uv.xlog.Warn("fail to save to ldb", "writeErr", writeErr)
 	}
-	go func() {
-		for _, tx := range txList {
-			uv.asyncResult.Send(tx.Txid, nil)
-		}
-	}()
+	// 对于异步阻塞模式，有必要在执行完一个交易后同步PostTx，并将结果返回给客户端
+	if uv.asyncBlockMode {
+		go func() {
+			for _, tx := range txList {
+				uv.asyncResult.Send(tx.Txid, nil)
+			}
+		}()
+	}
 	return writeErr
 }
 
@@ -210,7 +227,7 @@ func (uv *UtxoVM) SetBlockGenEvent() {
 
 // NotifyFinishBlockGen notify to finish generating block
 func (uv *UtxoVM) NotifyFinishBlockGen() {
-	if !uv.asyncMode {
+	if !uv.asyncMode && !uv.asyncBlockMode {
 		return
 	}
 	uv.asyncTryBlockGen = false
