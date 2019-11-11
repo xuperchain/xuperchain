@@ -5,6 +5,7 @@ import (
 
 	"github.com/xuperchain/xuperunion/common"
 	"github.com/xuperchain/xuperunion/global"
+	ledger_pkg "github.com/xuperchain/xuperunion/ledger"
 	"github.com/xuperchain/xuperunion/pb"
 )
 
@@ -47,11 +48,11 @@ func (xc *XChainCore) pruneLedger(targetBlockid []byte) error {
 	for _, v := range branchHeadArr {
 		// get common parent from higher to lower and truncate all of them
 		commonParentBlockid, err := xc.Ledger.GetCommonParentBlockid(targetBlockid, []byte(v))
-		if err != nil && common.NormalizedKVError(err) != common.ErrKVNotFound {
+		if err != nil && common.NormalizedKVError(err) != common.ErrKVNotFound && err != ledger_pkg.ErrBlockNotExist {
 			return err
 		}
 		err = xc.Ledger.RemoveBlocks([]byte(v), commonParentBlockid, batch)
-		if err != nil && common.NormalizedKVError(err) != common.ErrKVNotFound {
+		if err != nil && common.NormalizedKVError(err) != common.ErrKVNotFound && err != ledger_pkg.ErrBlockNotExist {
 			return err
 		}
 	}
