@@ -1,3 +1,4 @@
+// Package eccdefault is the default crypto client of xchain
 package eccdefault
 
 import (
