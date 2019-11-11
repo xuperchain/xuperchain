@@ -1911,10 +1911,10 @@ func (uv *UtxoVM) queryTxFromForbiddenWithConfirmed(txid []byte) (bool, bool, er
 	if err != nil {
 		return false, false, err
 	}
-	invokeRes, err = ctx.Invoke(request.GetMethodName(), request.GetArgs())
-	if err != nil {
+	invokeRes, invokeErr := ctx.Invoke(request.GetMethodName(), request.GetArgs())
+	if invokeErr != nil {
 		ctx.Release()
-		return false, false, err
+		return false, false, invokeErr
 	}
 	ctx.Release()
 	// 判断forbidden合约的结果
