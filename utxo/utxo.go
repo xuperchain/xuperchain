@@ -1893,6 +1893,10 @@ func (uv *UtxoVM) queryTxFromForbiddenWithConfirmed(txid []byte) (bool, bool, er
 	contractNameForForbidden := forbiddenContract.ContractName
 	methodNameForForbidden := forbiddenContract.MethodName
 
+	if moduleNameForForbidden == "" && contractNameForForbidden == "" && methodNameForForbidden == "" {
+		return false, false, nil
+	}
+
 	request := &pb.InvokeRequest{
 		ModuleName:   moduleNameForForbidden,
 		ContractName: contractNameForForbidden,
@@ -1919,12 +1923,16 @@ func (uv *UtxoVM) queryTxFromForbiddenWithConfirmed(txid []byte) (bool, bool, er
 	if err != nil {
 		return false, false, err
 	}
-	_, err = ctx.Invoke(request.GetMethodName(), request.GetArgs())
-	if err != nil {
+	invokeRes, invokeErr := ctx.Invoke(request.GetMethodName(), request.GetArgs())
+	if invokeErr != nil {
 		ctx.Release()
-		return false, false, err
+		return false, false, invokeErr
 	}
 	ctx.Release()
+	// 判断forbidden合约的结果
+	if invokeRes.Status >= 400 {
+		return false, false, nil
+	}
 	// inputs as []*xmodel_pb.VersionedData
 	inputs, _, _ := modelCache.GetRWSets()
 	versionData := &xmodel_pb.VersionedData{}
