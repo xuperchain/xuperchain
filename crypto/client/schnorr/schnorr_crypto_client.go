@@ -1,5 +1,5 @@
-// Package main is the plugin for xuperchain crypto client with schnorr sign
-package main
+// Package schnorr is the crypto client with schnorr sign
+package schnorr
 
 import (
 	"crypto/ecdsa"
@@ -25,11 +25,6 @@ var _ base.CryptoClient = (*SchnorrCryptoClient)(nil)
 type SchnorrCryptoClient struct {
 	base.CryptoClientCommon
 	base.CryptoClientCommonMultiSig
-}
-
-// GetInstance returns the an instance of SchnorrCryptoClient
-func GetInstance() interface{} {
-	return &SchnorrCryptoClient{}
 }
 
 // GenerateKeyBySeed 通过随机数种子来生成椭圆曲线加密所需要的公钥和私钥
