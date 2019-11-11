@@ -30,6 +30,10 @@ func (xm *XChainMG) RegisterSubscriber() error {
 		return err
 	}
 
+	if _, err := xm.P2pv2.Register(p2pv2.NewSubscriber(xm.msgChan, xuper_p2p.XuperMessage_NEW_BLOCKID, nil, "")); err != nil {
+		return err
+	}
+
 	if _, err := xm.P2pv2.Register(p2pv2.NewSubscriber(nil, xuper_p2p.XuperMessage_GET_BLOCK, xm.handleGetBlock, "")); err != nil {
 		return err
 	}
@@ -67,7 +71,7 @@ func (xm *XChainMG) handleReceivedMsg(msg *xuper_p2p.XuperMessage) {
 	// check msg type
 	msgType := msg.GetHeader().GetType()
 	if msgType != xuper_p2p.XuperMessage_POSTTX && msgType != xuper_p2p.XuperMessage_SENDBLOCK && msgType !=
-		xuper_p2p.XuperMessage_BATCHPOSTTX {
+		xuper_p2p.XuperMessage_BATCHPOSTTX && msgType != xuper_p2p.XuperMessage_NEW_BLOCKID {
 		xm.Log.Warn("Received msg cannot handled!", "logid", msg.GetHeader().GetLogid())
 		return
 	}
@@ -86,6 +90,8 @@ func (xm *XChainMG) handleReceivedMsg(msg *xuper_p2p.XuperMessage) {
 		xm.HandleSendBlock(msg)
 	case xuper_p2p.XuperMessage_BATCHPOSTTX:
 		xm.handleBatchPostTx(msg)
+	case xuper_p2p.XuperMessage_NEW_BLOCKID:
+		xm.handleNewBlockID(msg)
 	}
 }
 
@@ -182,18 +188,8 @@ func (xm *XChainMG) HandleSendBlock(msg *xuper_p2p.XuperMessage) {
 	// send block to peers
 	bcname := block.GetBcname()
 	bc := xm.Get(bcname)
-	if xm.Cfg.BlockBroadcaseMode == 1 {
-		//  we could use Interactive_BroadCast_Mode to avoid duplicate messages
-		blockidMsg := &pb.Block{
-			Bcname:  bcname,
-			Blockid: block.Blockid,
-		}
-		msgInfo, err := proto.Marshal(blockidMsg)
-		if err != nil {
-			xm.Log.Error("HandleSendBlock marshal NEW_BLOCKID message failed", "logid", msg.GetHeader().GetLogid())
-			return
-		}
-		msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, bcname, "", xuper_p2p.XuperMessage_NEW_BLOCKID, msgInfo, xuper_p2p.XuperMessage_NONE)
+	if xm.Cfg.BlockBroadcaseMode == 0 {
+		// send full block to peers in Full_BroadCast_Mode
 		filters := []p2pv2.FilterStrategy{p2pv2.DefaultStrategy}
 		if bc.NeedCoreConnection() {
 			filters = append(filters, p2pv2.CorePeersStrategy)
@@ -204,7 +200,18 @@ func (xm *XChainMG) HandleSendBlock(msg *xuper_p2p.XuperMessage) {
 		}
 		go xm.P2pv2.SendMessage(context.Background(), msg, opts...)
 	} else {
-		// default to Full_BroadCast_Mode
+		// send block id in Interactive_BroadCast_Mode or Mixed_BroadCast_Mode
+		// we could use Interactive_BroadCast_Mode to avoid duplicate messages
+		blockidMsg := &pb.Block{
+			Bcname:  bcname,
+			Blockid: block.Blockid,
+		}
+		msgInfo, err := proto.Marshal(blockidMsg)
+		if err != nil {
+			xm.Log.Error("HandleSendBlock marshal NEW_BLOCKID message failed", "logid", msg.GetHeader().GetLogid())
+			return
+		}
+		msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, bcname, "", xuper_p2p.XuperMessage_NEW_BLOCKID, msgInfo, xuper_p2p.XuperMessage_NONE)
 		filters := []p2pv2.FilterStrategy{p2pv2.DefaultStrategy}
 		if bc.NeedCoreConnection() {
 			filters = append(filters, p2pv2.CorePeersStrategy)
@@ -441,6 +448,59 @@ func (xm *XChainMG) handleGetRPCPort(ctx context.Context, msg *xuper_p2p.XuperMe
 	return xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, "", msg.GetHeader().GetLogid(), xuper_p2p.XuperMessage_GET_RPC_PORT_RES, []byte(":"+port), xuper_p2p.XuperMessage_NONE)
 }
 
-func (xm *XChainMG) handleNewBlockID(ctx context.Context, msg *xuper_p2p.XuperMessage) (*xuper_p2p.XuperMessage, error) {
-	return nil, nil
+// handleNewBlockID handle NEW_BLOCKID message
+func (xm *XChainMG) handleNewBlockID(msg *xuper_p2p.XuperMessage) {
+	xm.Log.Trace("Start to handleNewBlockID", "logid", msg.GetHeader().GetLogid())
+	block := &pb.Block{}
+	blockBuf, err := xuper_p2p.Uncompress(msg)
+	if err != nil || blockBuf == nil {
+		xm.Log.Error("handleNewBlockID uncompressed error", "error", err, "logid", msg.GetHeader().GetLogid())
+		return
+	}
+	err = proto.Unmarshal(blockBuf, block)
+	if err != nil {
+		xm.Log.Warn("handleNewBlockID received unknown message", "error", err, "logid", msg.GetHeader().GetLogid())
+		return
+	}
+
+	// handle get blockidin xchaincore
+	bcname := block.GetBcname()
+	bc := xm.Get(bcname)
+	ctx := context.Background()
+	blockRes, err := bc.handleNewBlockID(ctx, block.GetBlockid(), msg.GetHeader().GetFrom())
+	if err != nil {
+		xm.Log.Warn("handleNewBlockID process message failed", "error", err, "logid", msg.GetHeader().GetLogid())
+		return
+	}
+
+	if blockRes == nil {
+		xm.Log.Trace("handleNewBlockID may received this block id before", "blockid", block.GetBlockid(),
+			"logid", msg.GetHeader().GetLogid())
+		return
+	}
+
+	// process block
+	if blockRes.Header == nil {
+		blockRes.Header = global.GHeader()
+	}
+	if err := xm.ProcessBlock(blockRes); err != nil {
+		if err == ErrBlockExist {
+			xm.Log.Debug("handleNewBlockID: ProcessBlock block exists")
+			return
+		}
+		xm.Log.Error("handleNewBlockID ProcessBlock error", "error", err.Error())
+		return
+	}
+
+	// broadcast New_BlockID message
+	// since the origin message is New_BlockID, so ignore Full_BroadCast_Mode
+	filters := []p2pv2.FilterStrategy{p2pv2.DefaultStrategy}
+	if bc.NeedCoreConnection() {
+		filters = append(filters, p2pv2.CorePeersStrategy)
+	}
+	opts := []p2pv2.MessageOption{
+		p2pv2.WithFilters(filters),
+		p2pv2.WithBcName(bcname),
+	}
+	go xm.P2pv2.SendMessage(context.Background(), msg, opts...)
 }
