@@ -79,7 +79,7 @@ type Ledger struct {
 	cryptoClient     crypto_base.CryptoClient
 	enablePowMinning bool
 	powMutex         *sync.Mutex
-	confirmBatch     kvdb.Batch       //新增区块
+	confirmBatch     kvdb.Batch //新增区块
 }
 
 // ConfirmStatus block status
