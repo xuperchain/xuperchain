@@ -259,10 +259,12 @@ void xvm_release_code(xvm_code_t* code) {
  * xvm_context_t相关代码
  */
 
-// FIXME: 修改访问暴露变量的方式
+// NOTE: must sync with c-writer.cc CWriter::WriteHandleFields
 struct _wasm_rt_handle_t {
   void* user_ctx;
   wasm_rt_gas_t gas;
+  uint32_t call_stack_depth;
+  uint32_t static_top;
 };
 
 xvm_context_t* xvm_new_context(xvm_code_t* code) {
@@ -293,6 +295,11 @@ void xvm_release_context(xvm_context_t* ctx) {
     xvm_free(ctx->module_handle);
   }
   memset((void*)ctx, 0, sizeof(xvm_context_t));
+}
+
+uint32_t xvm_mem_static_top(xvm_context_t* ctx) {
+    struct _wasm_rt_handle_t* _handle = ctx->module_handle;
+    return _handle->static_top;
 }
 
 uint32_t xvm_call(xvm_context_t* ctx, char* name, int64_t* params, int64_t param_len, wasm_rt_gas_t* gas, int64_t* ret) {
