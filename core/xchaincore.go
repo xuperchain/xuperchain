@@ -765,9 +765,6 @@ func (xc *XChainCore) Miner() int {
 	for {
 		// 重要: 首次出块前一定要同步到最新的状态
 		xc.log.Trace("Miner type of consensus", "type", xc.con.Type(xc.Ledger.GetMeta().TrunkHeight+1))
-		b, s := xc.con.CompeteMaster(xc.Ledger.GetMeta().TrunkHeight + 1)
-		xc.log.Debug("competemaster", "blockchain", xc.bcname, "master", b, "needSync", s)
-		xc.updateIsCoreMiner()
 		// 账本裁剪入口
 		if xc.pruneOption.Switch && xc.pruneOption.Bcname == xc.bcname {
 			rawBlockid, err := hex.DecodeString(xc.pruneOption.TargetBlockid)
@@ -781,7 +778,13 @@ func (xc *XChainCore) Miner() int {
 			}
 			xc.log.Trace("pruning ledger success")
 			xc.pruneOption.Switch = false
+			xc.SyncBlocks()
+			// 裁剪账本可能需要时间，做完之后直接返回
+			continue
 		}
+		b, s := xc.con.CompeteMaster(xc.Ledger.GetMeta().TrunkHeight + 1)
+		xc.log.Debug("competemaster", "blockchain", xc.bcname, "master", b, "needSync", s)
+		xc.updateIsCoreMiner()
 		if b {
 			// todo 首次切换为矿工时SyncBlcok, Bug: 可能会导致第一次出块失败
 			if s {

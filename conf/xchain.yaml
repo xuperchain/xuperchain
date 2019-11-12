@@ -45,8 +45,8 @@ datapath: ./data/blockchain
 #    - /ssd3/blockchain
 
 utxo:
-  # utxo的内存LRUCache大小，默认100000个address, 这个需要根据一个block里address的容量来考虑
-  cachesize: 100000
+  # utxo的内存LRUCache大小，表示内存中最多缓存多少个UtxoItem
+  cachesize: 2000000
   # GenerateTx的临时锁定期限，默认是600秒
   tmplockSeconds: 600
   #单个块的合约执行的总时间(单位ms)
