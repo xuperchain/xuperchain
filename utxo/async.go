@@ -72,14 +72,15 @@ func (uv *UtxoVM) flushTxList(txList []*pb.Transaction) error {
 		return nil
 	}
 	uv.xlog.Warn("async tx list size", "size", len(txList))
-	batch := uv.ldb.NewBatch()
 	conflictedTxs := uv.checkConflictTxs(txList)
 	uv.mutex.Lock()
 	defer uv.mutex.Unlock()
 	for uv.asyncTryBlockGen { //避让出块的线程
 		uv.asyncCond.Wait() //会临时让出锁
 	}
-	for _, tx := range txList {
+	batch := uv.asyncBatch
+	batch.Reset()
+	for i, tx := range txList {
 		if conflictedTxs[string(tx.Txid)] {
 			continue
 		}

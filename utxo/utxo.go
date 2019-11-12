@@ -138,6 +138,8 @@ type UtxoVM struct {
 	asyncWriterWG        *sync.WaitGroup      // 优雅退出异步writer的信号量
 	asyncCond            *sync.Cond           // 用来出块线程优先权的条件变量
 	asyncTryBlockGen     bool                 // doMiner线程是否准备出块
+	asyncResult          *AsyncResult         // 用于等待异步结果
+	asyncBatch           kvdb.Batch           // 异步worker复用batch
 	vatHandler           *vat.VATHandler      // Verifiable Autogen Tx 生成器
 	balanceCache         *common.LRUCache     //余额cache,加速GetBalance查询
 	cacheSize            int                  //记录构造utxo时传入的cachesize
@@ -418,6 +420,8 @@ func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, priv
 		asyncWriterWG:        &sync.WaitGroup{},
 		asyncCond:            sync.NewCond(utxoMutex),
 		asyncTryBlockGen:     false,
+		asyncResult:          &AsyncResult{},
+		asyncBatch:           baseDB.NewBatch(),
 		balanceCache:         common.NewLRUCache(cachesize),
 		cacheSize:            cachesize,
 		balanceViewDirty:     map[string]bool{},
