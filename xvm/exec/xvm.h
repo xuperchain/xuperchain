@@ -63,6 +63,7 @@ typedef struct xvm_context_t {
 int xvm_init_context(xvm_context_t* ctx, xvm_code_t* code);
 void xvm_release_context(xvm_context_t* ctx);
 uint32_t xvm_call(xvm_context_t* ctx, char* name, int64_t* params, int64_t param_len, wasm_rt_gas_t* gas, int64_t* ret);
+uint32_t xvm_mem_static_top(xvm_context_t* ctx);
 
 #ifdef __cplusplus
 }
