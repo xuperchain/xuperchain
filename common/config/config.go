@@ -214,6 +214,16 @@ type NodeConfig struct {
 	EnableCompress bool `yaml:"enableCompress,omitempty"`
 	// prune ledger option
 	Prune PruneOption `yaml:"prune,omitempty"`
+
+	// BlockBroadcaseMode is the mode for broadcast new block
+	//  * Full_BroadCast_Mode = 0, means send full block data
+	//  * Interactive_BroadCast_Mode = 1, means send block id and the receiver get block data by itself
+	//  * Mixed_BroadCast_Mode = 2, means miner use Full_BroadCast_Mode, other nodes use Interactive_BroadCast_Mode
+	//  1. 一种是完全块广播模式(Full_BroadCast_Mode)，即直接广播原始块给所有相邻节点;
+	//  2. 一种是问询式块广播模式(Interactive_BroadCast_Mode)，即先广播新块的头部给相邻节点，
+	//     相邻节点在没有相同块的情况下通过GetBlock主动获取块数据.
+	//  3. Mixed_BroadCast_Mode是指出块节点将新块用Full_BroadCast_Mode模式广播，其他节点使用Interactive_BroadCast_Mode
+	BlockBroadcaseMode uint8 `yaml:"blockBroadcaseMode,omitempty"`
 }
 
 // KernelConfig kernel config
@@ -313,6 +323,7 @@ func (nc *NodeConfig) defaultNodeConfig() {
 	nc.FailSkip = false
 	nc.ModifyBlockAddr = ""
 	nc.EnableXEndorser = false
+	nc.BlockBroadcaseMode = 0
 }
 
 // NewNodeConfig returns a config of a node

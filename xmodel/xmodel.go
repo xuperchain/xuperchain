@@ -213,7 +213,8 @@ func (s *XModel) GetWithTxStatus(bucket string, key []byte) (*xmodel_pb.Versione
 		return nil, false, err
 	}
 	exists, err := s.ledger.HasTransaction(data.RefTxid)
-	if err != nil {
+	// badger的Has底层还是调用Get接口，需要过滤掉Not found
+	if err != nil && !kvdb.ErrNotFound(err) {
 		return nil, false, err
 	}
 	return data, exists, nil

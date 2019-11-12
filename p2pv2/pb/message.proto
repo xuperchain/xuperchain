@@ -33,6 +33,9 @@ message XuperMessage {
         CHAINED_BFT_NEW_PROPOSAL_MSG = 16;
         // chained-bft vote message
         CHAINED_BFT_VOTE_MSG = 17;
+
+        // broadcast new block id to other node
+        NEW_BLOCKID = 18;
     }
     enum ErrorType {
         // success 
