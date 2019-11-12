@@ -1092,6 +1092,7 @@ func (uv *UtxoVM) doTxInternal(tx *pb.Transaction, batch kvdb.Batch) error {
 		utxoKey := GenUtxoKeyWithPrefix(addr, txid, offset)
 		batch.Delete([]byte(utxoKey)) // 删除用掉的utxo
 		uv.utxoCache.Remove(string(addr), utxoKey)
+		uv.unlockKey([]byte(utxoKey))
 		uv.subBalance(addr, big.NewInt(0).SetBytes(txInput.Amount))
 		if !uv.asyncMode {
 			uv.xlog.Trace("    delete utxo key", "utxoKey", utxoKey)
