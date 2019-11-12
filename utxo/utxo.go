@@ -762,6 +762,13 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 	req.Requests = append(reservedRequests, req.Requests...)
 	uv.xlog.Trace("PreExec requests after merge", "requests", req.Requests)
 
+	// if no reserved request and user's request, return directly
+	// the operation of xmodel.NewXModelCache costs some resources
+	if len(req.Requests) == 0 {
+		rsps := &pb.InvokeResponse{}
+		return rsps, nil
+	}
+
 	// transfer in contract
 	transContractName, transAmount, err := txn.ParseContractTransferRequest(req.Requests)
 	if err != nil {
