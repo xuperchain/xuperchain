@@ -128,7 +128,10 @@ func (x *xvmCreator) CreateInstance(ctx *bridge.Context, cp vm.ContractCodeProvi
 	case "go":
 		gowasm.RegisterRuntime(execCtx)
 	case "c":
-		emscripten.Init(execCtx)
+		err = emscripten.Init(execCtx)
+		if err != nil {
+			return nil, err
+		}
 	}
 	execCtx.SetUserData(contextIDKey, ctx.ID)
 	instance := &xvmInstance{

@@ -6,7 +6,6 @@ import "C"
 import (
 	"errors"
 	"fmt"
-	"reflect"
 	"unsafe"
 )
 
@@ -123,12 +122,14 @@ func (c *Context) Memory() []byte {
 	if c.context.mem == nil || c.context.mem.size == 0 {
 		return nil
 	}
-	var mem []byte
-	header := (*reflect.SliceHeader)(unsafe.Pointer(&mem))
-	header.Data = uintptr(unsafe.Pointer(c.context.mem.data))
-	header.Len = int(c.context.mem.size)
-	header.Cap = int(c.context.mem.size)
-	return mem
+	ptr := c.context.mem.data
+	n := int(c.context.mem.size)
+	return (*[4 << 30]byte)(unsafe.Pointer(ptr))[:n:n]
+}
+
+// StaticTop returns the static data's top offset of memory
+func (c *Context) StaticTop() uint32 {
+	return uint32(C.xvm_mem_static_top(&c.context))
 }
 
 // SetUserData store key-value pair to Context which can be retrieved by GetUserData
