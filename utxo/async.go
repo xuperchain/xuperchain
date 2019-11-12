@@ -80,7 +80,7 @@ func (uv *UtxoVM) flushTxList(txList []*pb.Transaction) error {
 	}
 	batch := uv.asyncBatch
 	batch.Reset()
-	for i, tx := range txList {
+	for _, tx := range txList {
 		if conflictedTxs[string(tx.Txid)] {
 			continue
 		}
