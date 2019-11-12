@@ -120,7 +120,8 @@ func (p *P2PServerV2) SendMessageWithResponse(ctx context.Context, msg *p2pPb.Xu
 	filter := p.getFilter(msgOpts)
 	peers, _ := filter.Filter()
 	percentage := msgOpts.percentage
-	p.log.Trace("Server SendMessage with response", "logid", msg.GetHeader().GetLogid(), "msgType", msg.GetHeader().GetType(), "checksum", msg.GetHeader().GetDataCheckSum())
+	p.log.Trace("Server SendMessage with response", "logid", msg.GetHeader().GetLogid(),
+		"msgType", msg.GetHeader().GetType(), "checksum", msg.GetHeader().GetDataCheckSum(), "peers", peers)
 	return p.node.SendMessageWithResponse(ctx, msg, peers, percentage)
 }
 
@@ -155,8 +156,9 @@ func (p *P2PServerV2) getFilter(opts *msgOptions) PeersFilter {
 	fs := opts.filters
 	bcname := opts.bcname
 	peerids := make([]peer.ID, 0)
-	tpLen := len(opts.targetPeerAddrs)
-	if len(fs) == 0 && tpLen == 0 {
+	tpaLen := len(opts.targetPeerAddrs)
+	tpiLen := len(opts.targetPeerIDs)
+	if len(fs) == 0 && tpaLen == 0 && tpiLen == 0 {
 		return &BucketsFilter{node: p.node}
 	}
 	pfs := make([]PeersFilter, 0)
@@ -177,7 +179,7 @@ func (p *P2PServerV2) getFilter(opts *msgOptions) PeersFilter {
 		pfs = append(pfs, filter)
 	}
 	// process target peer addresses
-	if tpLen > 0 {
+	if tpaLen > 0 {
 		// connect to extra target peers async
 		go p.node.ConnectToPeersByAddr(opts.targetPeerAddrs)
 		// get corresponding peer ids
@@ -188,6 +190,18 @@ func (p *P2PServerV2) getFilter(opts *msgOptions) PeersFilter {
 				continue
 			}
 			peerids = append(peerids, pid)
+		}
+	}
+
+	// process target peer IDs
+	if tpiLen > 0 {
+		for _, tpid := range opts.targetPeerIDs {
+			peerid, err := peer.IDB58Decode(tpid)
+			if err != nil {
+				p.log.Warn("getFilter parse peer ID failed", "pid", tpid, "error", err)
+				continue
+			}
+			peerids = append(peerids, peerid)
 		}
 	}
 	return NewMultiStrategy(p.node, pfs, peerids)

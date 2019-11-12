@@ -93,5 +93,4 @@ func (xc *XChainCore) syncTargetBlock(targetBlockid []byte) (*pb.InternalBlock, 
 		xc.log.Warn("syncTargetBlock->SendBlock error", "err", err)
 	}
 	return targetBlock, err
-	return nil, nil
 }

@@ -277,7 +277,7 @@ func (tp *TDpos) buildConfigs(xlog log.Logger, cfg *config.NodeConfig, consCfg m
 		}
 	} else {
 		tp.log.Warn("TDpos have no neturl info for proposers",
-			"neet_neturl", needNetURL)
+			"need_neturl", needNetURL)
 		if needNetURL {
 			return errors.New("config error, init_proposer_neturl could not be empty")
 		}
