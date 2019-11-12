@@ -76,6 +76,9 @@ const (
 	// RepostingInterval repost retry interval, ms
 	RepostingInterval = 50 // 重试广播间隔ms
 	TxidCacheGcTime   = 180 * time.Second
+
+	// DefaultMessageCacheSize for p2p message
+	DefaultMessageCacheSize = 1000
 )
 
 // XChainCore is the core struct of a chain
@@ -113,6 +116,10 @@ type XChainCore struct {
 	txidCacheExpiredTime time.Duration
 	enableCompress       bool
 	pruneOption          config.PruneOption
+
+	// cache for duplicate block message
+	msgCache           *common.LRUCache
+	blockBroadcaseMode uint8
 }
 
 // Status return the status of the chain
@@ -146,6 +153,8 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	xc.txidCache = cache.New(xc.txidCacheExpiredTime, TxidCacheGcTime)
 	xc.enableCompress = cfg.EnableCompress
 	xc.pruneOption = cfg.Prune
+	xc.msgCache = common.NewLRUCache(DefaultMessageCacheSize)
+	xc.blockBroadcaseMode = cfg.BlockBroadcaseMode
 	ledger.MemCacheSize = cfg.DBCache.MemCacheSize
 	ledger.FileHandlersCacheSize = cfg.DBCache.FdCacheSize
 	datapath := cfg.Datapath + "/" + bcname
@@ -683,24 +692,47 @@ func (xc *XChainCore) doMiner() {
 	xc.log.Debug("[Minning] Start to BroadCast", "logid", header.Logid)
 
 	go func() {
-		// broadcast block
+		// 这里提出两种块传播模式：
+		//  1. 一种是完全块广播模式(Full_BroadCast_Mode)，即直接广播原始块给所有相邻节点，
+		//     适用于出块矿工在知道周围节点都不具备该块的情况下；
+		//  2. 一种是问询式块广播模式(Interactive_BroadCast_Mode)，即先广播新块的头部给相邻节点，
+		//     相邻节点在没有相同块的情况下通过GetBlock主动获取块数据。
+		//  3. Mixed_BroadCast_Mode是指出块节点将新块用Full_BroadCast_Mode模式广播，
+		//     其他节点使用Interactive_BroadCast_Mode
+		// broadcast block in Full_BroadCast_Mode since it's the original miner
 		block := &pb.Block{
 			Bcname:  xc.bcname,
 			Blockid: freshBlock.Blockid,
-			Block:   freshBlock,
 		}
-		msgInfo, _ := proto.Marshal(block)
-		msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, xc.bcname, "", xuper_p2p.XuperMessage_SENDBLOCK, msgInfo, xuper_p2p.XuperMessage_NONE)
-		filters := []p2pv2.FilterStrategy{p2pv2.DefaultStrategy}
-		if xc.NeedCoreConnection() {
-			filters = append(filters, p2pv2.CorePeersStrategy)
+		if xc.blockBroadcaseMode == 1 {
+			// send block id in Interactive_BroadCast_Mode
+			msgInfo, _ := proto.Marshal(block)
+			msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, xc.bcname, "", xuper_p2p.XuperMessage_NEW_BLOCKID, msgInfo, xuper_p2p.XuperMessage_NONE)
+			filters := []p2pv2.FilterStrategy{p2pv2.DefaultStrategy}
+			if xc.NeedCoreConnection() {
+				filters = append(filters, p2pv2.CorePeersStrategy)
+			}
+			opts := []p2pv2.MessageOption{
+				p2pv2.WithFilters(filters),
+				p2pv2.WithBcName(xc.bcname),
+			}
+			xc.P2pv2.SendMessage(context.Background(), msg, opts...)
+		} else {
+			// send full block in Full_BroadCast_Mode or Mixed_Broadcast_Mode
+			block.Block = freshBlock
+			msgInfo, _ := proto.Marshal(block)
+			msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, xc.bcname, "", xuper_p2p.XuperMessage_SENDBLOCK, msgInfo, xuper_p2p.XuperMessage_NONE)
+			filters := []p2pv2.FilterStrategy{p2pv2.DefaultStrategy}
+			if xc.NeedCoreConnection() {
+				filters = append(filters, p2pv2.CorePeersStrategy)
+			}
+			opts := []p2pv2.MessageOption{
+				p2pv2.WithFilters(filters),
+				p2pv2.WithBcName(xc.bcname),
+				p2pv2.WithCompress(xc.enableCompress),
+			}
+			xc.P2pv2.SendMessage(context.Background(), msg, opts...)
 		}
-		opts := []p2pv2.MessageOption{
-			p2pv2.WithFilters(filters),
-			p2pv2.WithBcName(xc.bcname),
-			p2pv2.WithCompress(xc.enableCompress),
-		}
-		xc.P2pv2.SendMessage(context.Background(), msg, opts...)
 	}()
 
 	minerTimer.Mark("BroadcastBlock")
