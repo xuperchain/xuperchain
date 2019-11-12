@@ -1,6 +1,7 @@
 package emscripten
 
 import (
+	"errors"
 	"fmt"
 	"math"
 	"unsafe"
@@ -32,14 +33,18 @@ func getMutableGlobals(ctx *exec.Context) *mutableGlobals {
 }
 
 // Init initialize global variables
-func Init(ctx *exec.Context) {
+func Init(ctx *exec.Context) error {
 	mem := ctx.Memory()
 	if mem == nil {
-		return
+		return errors.New("no memory")
+	}
+	if mutableGlobalsBase >= len(mem) {
+		return errors.New("bad memory size")
 	}
 	mg := (*mutableGlobals)(unsafe.Pointer(&mem[mutableGlobalsBase]))
 	mg.DynamicTop = stackMax
 	ctx.SetUserData(mutableGlobalsKey, mg)
+	return nil
 }
 
 // NewResolver return exec.Resolver which resolves symbols needed by emscripten environment
