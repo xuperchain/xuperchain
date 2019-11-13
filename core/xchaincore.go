@@ -245,6 +245,9 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	}
 	if cfg.Utxo.AsyncMode {
 		xc.Utxovm.StartAsyncWriter()
+	} else if cfg.Utxo.AsyncBlockMode {
+		//
+		xc.Utxovm.StartAsyncBlockMode()
 	}
 	xc.Utxovm.SetMaxConfirmedDelay(cfg.Utxo.MaxConfirmedDelay)
 	xc.Utxovm.SetModifyBlockAddr(cfg.ModifyBlockAddr)
