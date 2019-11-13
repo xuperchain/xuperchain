@@ -130,6 +130,7 @@ func (tp *TDpos) getTermProposer(term int64) []*cons_base.CandidateInfo {
 		return nil
 	} else if common.NormalizedKVError(err) == common.ErrKVNotFound {
 		it := tp.utxoVM.ScanWithPrefix([]byte(genTermCheckKeyPrefix(tp.version)))
+		defer it.Release()
 		if it.Last() {
 			termLast, err := parseTermCheckKey(string(it.Key()))
 			tp.log.Trace("TDpos getTermProposer ", "termLast", string(it.Key()))
