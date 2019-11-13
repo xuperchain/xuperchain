@@ -115,18 +115,20 @@ static void wasm_rt_allocate_memory(void* context,
   memory->max_pages = max_pages;
   memory->size = initial_pages * PAGE_SIZE;
   if (memory->size != 0) {
-    memory->data = mmap(0, memory->size, PROT_READ|PROT_WRITE,
-    MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
-    if (memory->data == MAP_FAILED) {
-      xvm_raise(TRAP_NO_MEMORY);
-    }
+    /* memory->data = mmap(0, memory->size, PROT_READ|PROT_WRITE, */
+    /* MAP_PRIVATE|MAP_ANONYMOUS, -1, 0); */
+    /* if (memory->data == MAP_FAILED) { */
+    /*   xvm_raise(TRAP_NO_MEMORY); */
+    /* } */
+    memory->data = xvm_malloc(memory->size);
   }
   xvm_context_t* ctx = context;
   ctx->mem = memory;
 }
 
 static void wasm_rt_free_memory(wasm_rt_memory_t* mem) {
-    munmap(mem->data, mem->size);
+    /* munmap(mem->data, mem->size); */
+  xvm_free(mem->data);
 }
 
 static uint32_t wasm_rt_grow_memory(void* context, wasm_rt_memory_t* memory, uint32_t delta) {
@@ -232,9 +234,18 @@ xvm_code_t* xvm_new_code(char* module_path, xvm_resolver_t resolver) {
     dlclose(dlhandle);
     return NULL;
   }
+
+  void* (*new_handle_func)(void*) = dlsym(dlhandle, "new_handle");
+  if (new_handle_func == NULL) {
+    fprintf(stderr, "new_handle function not found\n");
+    dlclose(dlhandle);
+    return 0;
+  }
+
   xvm_code_t* code = xvm_malloc(sizeof(xvm_code_t));
   code->dlhandle = dlhandle;
   code->resolver = resolver;
+  code->new_handle_func = new_handle_func;
   (*init_func_types)(code);
   (*init_import_funcs)(code);
   return code;
@@ -273,14 +284,11 @@ xvm_context_t* xvm_new_context(xvm_code_t* code) {
   return ctx;
 }
 
-int xvm_init_context(xvm_context_t* ctx, xvm_code_t* code) {
-  void*(*new_handle_func)(void*) = dlsym(code->dlhandle, "new_handle");
-  if (new_handle_func == NULL) {
-    fprintf(stderr, "new_handle function not found\n");
-    return 0;
-  }
+int xvm_init_context(xvm_context_t* ctx, xvm_code_t* code, uint64_t gas_limit) {
   ctx->code = code;
-  ctx->module_handle = new_handle_func(ctx);
+  ctx->module_handle = code->new_handle_func(ctx);
+  struct _wasm_rt_handle_t* _handle = ctx->module_handle;
+  _handle->gas.limit = gas_limit;
   return 1;
 }
 
@@ -302,21 +310,25 @@ uint32_t xvm_mem_static_top(xvm_context_t* ctx) {
     return _handle->static_top;
 }
 
-uint32_t xvm_call(xvm_context_t* ctx, char* name, int64_t* params, int64_t param_len, wasm_rt_gas_t* gas, int64_t* ret) {
+uint32_t xvm_call(xvm_context_t* ctx, char* name, int64_t* params, int64_t param_len, int64_t* ret) {
   void* func = dlsym(ctx->code->dlhandle, name);
   if (func == NULL) {
     return 0;
   }
   struct _wasm_rt_handle_t* _handle = ctx->module_handle;
-  if (gas != NULL) {
-    _handle->gas.limit = gas->limit;
-  }
   int64_t (*real_func)(void*, int64_t*, int64_t) = func;
   *ret = real_func(ctx->module_handle, params, param_len);
-  if (gas != NULL) {
-    gas->used = _handle->gas.used;
-  }
   return 1;
+}
+
+void xvm_reset_gas_used(xvm_context_t* ctx) {
+    struct _wasm_rt_handle_t* _handle = ctx->module_handle;
+    _handle->gas.used = 0;
+}
+
+uint64_t xvm_gas_used(xvm_context_t* ctx) {
+    struct _wasm_rt_handle_t* _handle = ctx->module_handle;
+    return _handle->gas.used;
 }
 
 static void* xvm_malloc(size_t size) {
