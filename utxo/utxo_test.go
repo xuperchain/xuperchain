@@ -133,6 +133,7 @@ func transfer(from string, to string, t *testing.T, utxoVM *UtxoVM, ledger *ledg
 	}
 
 	// test for asyncMode
+	utxoVM.StartAsyncWriter()
 	utxoVM.asyncMode = true
 	errDo := utxoVM.DoTx(tx)
 	timer.Mark("DoTx")
@@ -448,7 +449,6 @@ func TestFrozenHeight(t *testing.T) {
 	} else {
 		t.Logf("next block id: %x", nextBlockid)
 	}
-
 	// test for GetFrozenBalance
 	frozenBalance, frozenBalanceErr := utxoVM.GetFrozenBalance(AliceAddress)
 	if frozenBalanceErr != nil {
@@ -456,7 +456,6 @@ func TestFrozenHeight(t *testing.T) {
 	} else {
 		t.Log("alice frozen balance ", frozenBalance)
 	}
-
 	//alice给bob转300, 预期失败，因为无法使用被冻住的utxo
 	nextBlockid, blockErr = transfer("alice", "bob", t, utxoVM, ledger, "300", ledger.GetMeta().TipBlockid, "", 0)
 	if blockErr != ErrNoEnoughUTXO {

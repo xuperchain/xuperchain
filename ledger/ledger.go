@@ -43,7 +43,7 @@ var (
 	// FileHandlersCacheSize baseDB memory file handler cache max size
 	FileHandlersCacheSize = 1024 //how many opened files-handlers cached
 	// DisableTxDedup ...
-	DisableTxDedup = false //whether disable dedup tx beform confirm
+	DisableTxDedup = false //whether disable dedup tx before confirm
 )
 
 const (
