@@ -79,6 +79,7 @@ type Ledger struct {
 	cryptoClient     crypto_base.CryptoClient
 	enablePowMinning bool
 	powMutex         *sync.Mutex
+	confirmBatch     kvdb.Batch //新增区块
 }
 
 // ConfirmStatus block status
@@ -133,6 +134,7 @@ func NewLedger(storePath string, xlog log.Logger, otherPaths []string, kvEngineT
 	ledger.blkHeaderCache = common.NewLRUCache(BlockCacheSize)
 	ledger.cryptoClient = cryptoClient
 	ledger.enablePowMinning = true
+	ledger.confirmBatch = baseDB.NewBatch()
 	metaBuf, metaErr := ledger.metaTable.Get([]byte(""))
 	emptyLedger := false
 	if metaErr != nil && common.NormalizedKVError(metaErr) == common.ErrKVNotFound { //说明是新创建的账本
@@ -553,7 +555,8 @@ func (l *Ledger) ConfirmBlock(block *pb.InternalBlock, isRoot bool) ConfirmStatu
 	realTransactions := block.Transactions // 真正的交易转存到局部变量
 	block.Transactions = dummyTransactions // block表不保存transaction详情
 
-	batchWrite := l.baseDB.NewBatch()
+	batchWrite := l.confirmBatch
+	batchWrite.Reset()
 	newMeta := proto.Clone(l.meta).(*pb.LedgerMeta)
 	splitHeight := newMeta.TrunkHeight
 	if isRoot { //确认创世块

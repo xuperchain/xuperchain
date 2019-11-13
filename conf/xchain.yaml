@@ -47,9 +47,9 @@ datapath: ./data/blockchain
 utxo:
   # utxo的内存LRUCache大小，表示内存中最多缓存多少个UtxoItem
   cachesize: 2000000
-  # GenerateTx的临时锁定期限，默认是600秒
-  tmplockSeconds: 600
-  #单个块的合约执行的总时间(单位ms)
+# GenerateTx的临时锁定期限，默认是60秒
+  tmplockSeconds: 60
+#单个块的合约执行的总时间(单位ms)
   contractExecutionTime: 500
 
 kernel:
