@@ -114,6 +114,7 @@ func (sp *StreamPool) DelStream(stream *Stream) error {
 		sp.streams.Del(val.p.Pretty())
 	}
 	sp.no.streamLimit.DelStream(stream.addr.String())
+	sp.streamLength--
 	return nil
 }
 
