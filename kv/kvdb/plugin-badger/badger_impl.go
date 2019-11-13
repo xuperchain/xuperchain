@@ -97,6 +97,10 @@ func (bdb *BadgerDatabase) Has(key []byte) (bool, error) {
 		}
 		return err
 	})
+	// align with leveldb, if the key doesn't exist, leveldb returns nil
+	if kvdb.ErrNotFound(err) {
+		err = nil
+	}
 	return exist, err
 }
 

@@ -46,6 +46,8 @@ func (s *syscallResolver) ResolveFunc(module, name string) (interface{}, bool) {
 		return s.goFetchResponse, true
 	case "env._call_method":
 		return s.cCallMethod, true
+	case "env._call_method_v2":
+		return s.cCallMethodv2, true
 	case "env._fetch_response":
 		return s.cFetchResponse, true
 	default:
@@ -128,4 +130,49 @@ func (s *syscallResolver) cFetchResponse(ctx *exec.Context, userBuf, userLen uin
 	}
 	ctx.SetUserData(responseKey, nil)
 	return success
+}
+
+func (s *syscallResolver) cCallMethodv2(
+	ctx *exec.Context,
+	methodAddr, methodLen uint32,
+	requestAddr, requestLen uint32,
+	responseAddr, responseLen uint32,
+	successAddr uint32) uint32 {
+
+	codec := exec.NewCodec(ctx)
+	ctxid := ctx.GetUserData(contextIDKey).(int64)
+	method := codec.String(methodAddr, methodLen)
+	requestBuf := codec.Bytes(requestAddr, requestLen)
+	responseBuf := codec.Bytes(responseAddr, responseLen)
+
+	response, err := s.rpcserver.CallMethod(context.TODO(), ctxid, method, requestBuf)
+
+	// fast path
+	if err != nil {
+		log.Error("contract syscall error", "ctxid", ctxid, "method", method, "error", err)
+		msg := err.Error()
+		if len(msg) <= len(responseBuf) {
+			copy(responseBuf, msg)
+			codec.SetUint32(successAddr, 0)
+			return uint32(len(msg))
+		}
+	} else {
+		if len(response) <= len(responseBuf) {
+			copy(responseBuf, response)
+			codec.SetUint32(successAddr, 1)
+			return uint32(len(response))
+		}
+	}
+
+	// slow path
+	var responseDesc responseDesc
+	if err != nil {
+		log.Error("contract syscall error", "ctxid", ctxid, "method", method, "error", err)
+		responseDesc.Error = true
+		responseDesc.Body = []byte(err.Error())
+	} else {
+		responseDesc.Body = response
+	}
+	ctx.SetUserData(responseKey, responseDesc)
+	return uint32(len(responseDesc.Body))
 }

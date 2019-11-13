@@ -300,3 +300,15 @@ func (s *XModel) bucketCacheGet(bucket, version string) (*xmodel_pb.VersionedDat
 	}
 	return value.(*xmodel_pb.VersionedData), true
 }
+
+func (s *XModel) BucketCacheDelete(bucket, version string) {
+	cache := s.bucketCache(bucket)
+	cache.Del(version)
+}
+
+func GenWriteKeyWithPrefix(txOutputExt *pb.TxOutputExt) string {
+	bucket := txOutputExt.GetBucket()
+	key := txOutputExt.GetKey()
+	baseWriteSetKey := bucket + fmt.Sprintf("%s", key)
+	return pb.ExtUtxoTablePrefix + baseWriteSetKey
+}

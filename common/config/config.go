@@ -2,10 +2,11 @@ package config
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb/errors"
-	"time"
 )
 
 // default settings
@@ -77,7 +78,7 @@ type P2PConfig struct {
 	// bootNodes config the bootNodes the node to connect
 	BootNodes []string `yaml:"bootNodes,omitempty"`
 	// staticNodes config the nodes which you trust
-	StaticNodes []string `yaml:"staticNodes,omitempty"`
+	StaticNodes map[string][]string `yaml:"staticNodes,omitempty"`
 	// maxStreamLimits config the max stream num
 	MaxStreamLimits int32 `yaml:"maxStreamLimits,omitempty"`
 	// maxMessageSize config the max message size
@@ -113,6 +114,7 @@ type UtxoConfig struct {
 	CacheSize             int                        `yaml:"cachesize,omitempty"`
 	TmpLockSeconds        int                        `yaml:"tmplockSeconds,omitempty"`
 	AsyncMode             bool                       `yaml:"asyncMode,omitempty"`
+	AsyncBlockMode        bool                       `yaml:"asyncBlockMode,omitempty"`
 	ContractExecutionTime int                        `yaml:"contractExecutionTime,omitempty"`
 	ContractWhiteList     map[string]map[string]bool `yaml:"contractWhiteList,omitempty"`
 	// 是否开启新版本tx k = bcname, v = isBetaTx
@@ -212,6 +214,16 @@ type NodeConfig struct {
 	EnableCompress bool `yaml:"enableCompress,omitempty"`
 	// prune ledger option
 	Prune PruneOption `yaml:"prune,omitempty"`
+
+	// BlockBroadcaseMode is the mode for broadcast new block
+	//  * Full_BroadCast_Mode = 0, means send full block data
+	//  * Interactive_BroadCast_Mode = 1, means send block id and the receiver get block data by itself
+	//  * Mixed_BroadCast_Mode = 2, means miner use Full_BroadCast_Mode, other nodes use Interactive_BroadCast_Mode
+	//  1. 一种是完全块广播模式(Full_BroadCast_Mode)，即直接广播原始块给所有相邻节点;
+	//  2. 一种是问询式块广播模式(Interactive_BroadCast_Mode)，即先广播新块的头部给相邻节点，
+	//     相邻节点在没有相同块的情况下通过GetBlock主动获取块数据.
+	//  3. Mixed_BroadCast_Mode是指出块节点将新块用Full_BroadCast_Mode模式广播，其他节点使用Interactive_BroadCast_Mode
+	BlockBroadcaseMode uint8 `yaml:"blockBroadcaseMode,omitempty"`
 }
 
 // KernelConfig kernel config
@@ -272,6 +284,7 @@ func (nc *NodeConfig) defaultNodeConfig() {
 		CacheSize:             100000,
 		TmpLockSeconds:        60,
 		AsyncMode:             false,
+		AsyncBlockMode:        false,
 		ContractExecutionTime: 500,
 		ContractWhiteList:     make(map[string]map[string]bool),
 		IsBetaTx:              make(map[string]bool),
@@ -310,6 +323,7 @@ func (nc *NodeConfig) defaultNodeConfig() {
 	nc.FailSkip = false
 	nc.ModifyBlockAddr = ""
 	nc.EnableXEndorser = false
+	nc.BlockBroadcaseMode = 0
 }
 
 // NewNodeConfig returns a config of a node
@@ -337,6 +351,7 @@ func newP2pConfigWithDefault() P2PConfig {
 		MaxBroadcastCorePeers: DefaultMaxBroadcastCorePeers,
 		IsStorePeers:          DefaultIsStorePeers,
 		P2PDataPath:           DefaultP2PDataPath,
+		StaticNodes:           make(map[string][]string),
 	}
 }
 
@@ -404,6 +419,7 @@ func (utxo *UtxoConfig) applyFlags(flags *pflag.FlagSet) {
 	flags.IntVar(&utxo.CacheSize, "cachesize", utxo.CacheSize, "used for config overwrite --cachesize <utxo LRU cache size>")
 	flags.IntVar(&utxo.TmpLockSeconds, "tmplockSeconds", utxo.TmpLockSeconds, "used for config overwrite --tmplockSeconds <How long to lock utxo referenced by GenerateTx>")
 	flags.BoolVar(&utxo.AsyncMode, "asyncMode", utxo.AsyncMode, "used for config overwrite --asyncMode")
+	flags.BoolVar(&utxo.AsyncBlockMode, "asyncBlockMode", utxo.AsyncBlockMode, "used for config overwrite --asyncBlockMode")
 }
 
 // ApplyFlags install flags and use flags to overwrite config file

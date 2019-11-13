@@ -43,7 +43,7 @@ var (
 	// FileHandlersCacheSize baseDB memory file handler cache max size
 	FileHandlersCacheSize = 1024 //how many opened files-handlers cached
 	// DisableTxDedup ...
-	DisableTxDedup = false //whether disable dedup tx beform confirm
+	DisableTxDedup = false //whether disable dedup tx before confirm
 )
 
 const (
@@ -80,6 +80,7 @@ type Ledger struct {
 	cryptoClient     crypto_base.CryptoClient
 	enablePowMinning bool
 	powMutex         *sync.Mutex
+	confirmBatch     kvdb.Batch //新增区块
 }
 
 // ConfirmStatus block status
@@ -134,6 +135,7 @@ func NewLedger(storePath string, xlog log.Logger, otherPaths []string, kvEngineT
 	ledger.blkHeaderCache = common.NewLRUCache(BlockCacheSize)
 	ledger.cryptoClient = cryptoClient
 	ledger.enablePowMinning = true
+	ledger.confirmBatch = baseDB.NewBatch()
 	metaBuf, metaErr := ledger.metaTable.Get([]byte(""))
 	emptyLedger := false
 	if metaErr != nil && common.NormalizedKVError(metaErr) == common.ErrKVNotFound { //说明是新创建的账本
@@ -460,7 +462,7 @@ func (l *Ledger) IsValidTx(idx int, tx *pb.Transaction, block *pb.InternalBlock)
 }
 
 // UpdateBlockChainData modify tx which txid is txid
-func (l *Ledger) UpdateBlockChainData(txid string, ptxid string, publickey string, sign string) error {
+func (l *Ledger) UpdateBlockChainData(txid string, ptxid string, publickey string, sign string, height int64) error {
 	if txid == "" || ptxid == "" {
 		return fmt.Errorf("invalid update blockchaindata requests")
 	}
@@ -476,10 +478,11 @@ func (l *Ledger) UpdateBlockChainData(txid string, ptxid string, publickey strin
 		l.xlog.Warn("ledger UpdateBlockChainData query tx error")
 		return fmt.Errorf("ledger UpdateBlockChainData query tx error")
 	}
+
 	tx.ModifyBlock = &pb.ModifyBlock{
 		Marked:          true,
 		EffectiveTxid:   ptxid,
-		EffectiveHeight: l.GetMeta().TrunkHeight + 1,
+		EffectiveHeight: height,
 		PublicKey:       publickey,
 		Sign:            sign,
 	}
@@ -553,7 +556,8 @@ func (l *Ledger) ConfirmBlock(block *pb.InternalBlock, isRoot bool) ConfirmStatu
 	realTransactions := block.Transactions // 真正的交易转存到局部变量
 	block.Transactions = dummyTransactions // block表不保存transaction详情
 
-	batchWrite := l.baseDB.NewBatch()
+	batchWrite := l.confirmBatch
+	batchWrite.Reset()
 	newMeta := proto.Clone(l.meta).(*pb.LedgerMeta)
 	splitHeight := newMeta.TrunkHeight
 	if isRoot { //确认创世块

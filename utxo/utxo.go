@@ -125,23 +125,26 @@ type UtxoVM struct {
 	model3            *xmodel.XModel           // XuperModel实例，处理extutxo
 	vmMgr3            *contract.VMManager
 	aclMgr            *acli.Manager // ACL manager for read/write acl table
-
-	minerPublicKey  string
-	minerPrivateKey string
-	minerAddress    []byte
-	failedTxBuf     map[string][]string
-
-	inboundTxChan        chan *InboundTx      // 异步tx chan
-	verifiedTxChan       chan *pb.Transaction //已经校验通过的tx
-	asyncMode            bool                 // 是否工作在异步模式
-	asyncCancel          context.CancelFunc   // 停止后台异步batch写的句柄
-	asyncWriterWG        *sync.WaitGroup      // 优雅退出异步writer的信号量
-	asyncCond            *sync.Cond           // 用来出块线程优先权的条件变量
-	asyncTryBlockGen     bool                 // doMiner线程是否准备出块
-	vatHandler           *vat.VATHandler      // Verifiable Autogen Tx 生成器
-	balanceCache         *common.LRUCache     //余额cache,加速GetBalance查询
-	cacheSize            int                  //记录构造utxo时传入的cachesize
-	balanceViewDirty     map[string]bool      //balanceCache 标记dirty: addr->bool
+	minerPublicKey    string
+	minerPrivateKey   string
+	minerAddress      []byte
+	failedTxBuf       map[string][]string
+	inboundTxChan     chan *InboundTx      // 异步tx chan
+	verifiedTxChan    chan *pb.Transaction //已经校验通过的tx
+	asyncMode         bool                 // 是否工作在异步模式
+	asyncCancel       context.CancelFunc   // 停止后台异步batch写的句柄
+	asyncWriterWG     *sync.WaitGroup      // 优雅退出异步writer的信号量
+	asyncCond         *sync.Cond           // 用来出块线程优先权的条件变量
+	asyncTryBlockGen  bool                 // doMiner线程是否准备出块
+	asyncResult       *AsyncResult         // 用于等待异步结果
+	// 上述asyncMode是指异步模式，默认是异步回调模式
+	// asyncBlockMode是指异步阻塞模式
+	asyncBlockMode       bool             // 是否工作在异步阻塞模式下
+	asyncBatch           kvdb.Batch       // 异步刷盘复用的batch
+	vatHandler           *vat.VATHandler  // Verifiable Autogen Tx 生成器
+	balanceCache         *common.LRUCache //余额cache,加速GetBalance查询
+	cacheSize            int              //记录构造utxo时传入的cachesize
+	balanceViewDirty     map[string]bool  //balanceCache 标记dirty: addr->bool
 	contractExectionTime int
 	unconfirmTxInMem     *sync.Map //未确认Tx表的内存镜像
 	defaultTxVersion     int32     // 默认的tx version
@@ -386,38 +389,42 @@ func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, priv
 	}
 	utxoMutex := &sync.RWMutex{}
 	utxoVM := &UtxoVM{
-		meta:                 &pb.UtxoMeta{},
-		metaTmp:              &pb.UtxoMeta{},
-		mutexMeta:            &sync.Mutex{},
-		ldb:                  baseDB,
-		mutex:                utxoMutex,
-		mutexMem:             &sync.Mutex{},
-		lockKeys:             map[string]*UtxoLockItem{},
-		lockKeyList:          list.New(),
-		lockExpireTime:       tmplockSeconds,
-		xlog:                 xlog,
-		ledger:               ledger,
-		unconfirmedTable:     kvdb.NewTable(baseDB, pb.UnconfirmedTablePrefix),
-		utxoTable:            kvdb.NewTable(baseDB, pb.UTXOTablePrefix),
-		metaTable:            kvdb.NewTable(baseDB, pb.MetaTablePrefix),
-		withdrawTable:        kvdb.NewTable(baseDB, pb.WithdrawPrefix),
-		utxoCache:            NewUtxoCache(cachesize),
-		smartContract:        contract.NewSmartContract(),
-		vatHandler:           vat.NewVATHandler(),
-		OfflineTxChan:        make(chan *pb.Transaction, OfflineTxChanBuffer),
-		prevFoundKeyCache:    common.NewLRUCache(cachesize),
-		utxoTotal:            big.NewInt(0),
-		minerAddress:         address,
-		minerPublicKey:       publicKey,
-		minerPrivateKey:      privateKey,
-		failedTxBuf:          make(map[string][]string),
-		inboundTxChan:        make(chan *InboundTx, AsyncQueueBuffer),
-		verifiedTxChan:       make(chan *pb.Transaction, AsyncQueueBuffer),
-		asyncMode:            false,
-		asyncCancel:          nil,
-		asyncWriterWG:        &sync.WaitGroup{},
-		asyncCond:            sync.NewCond(utxoMutex),
-		asyncTryBlockGen:     false,
+		meta:              &pb.UtxoMeta{},
+		metaTmp:           &pb.UtxoMeta{},
+		mutexMeta:         &sync.Mutex{},
+		ldb:               baseDB,
+		mutex:             utxoMutex,
+		mutexMem:          &sync.Mutex{},
+		lockKeys:          map[string]*UtxoLockItem{},
+		lockKeyList:       list.New(),
+		lockExpireTime:    tmplockSeconds,
+		xlog:              xlog,
+		ledger:            ledger,
+		unconfirmedTable:  kvdb.NewTable(baseDB, pb.UnconfirmedTablePrefix),
+		utxoTable:         kvdb.NewTable(baseDB, pb.UTXOTablePrefix),
+		metaTable:         kvdb.NewTable(baseDB, pb.MetaTablePrefix),
+		withdrawTable:     kvdb.NewTable(baseDB, pb.WithdrawPrefix),
+		utxoCache:         NewUtxoCache(cachesize),
+		smartContract:     contract.NewSmartContract(),
+		vatHandler:        vat.NewVATHandler(),
+		OfflineTxChan:     make(chan *pb.Transaction, OfflineTxChanBuffer),
+		prevFoundKeyCache: common.NewLRUCache(cachesize),
+		utxoTotal:         big.NewInt(0),
+		minerAddress:      address,
+		minerPublicKey:    publicKey,
+		minerPrivateKey:   privateKey,
+		failedTxBuf:       make(map[string][]string),
+		inboundTxChan:     make(chan *InboundTx, AsyncQueueBuffer),
+		verifiedTxChan:    make(chan *pb.Transaction, AsyncQueueBuffer),
+		asyncMode:         false,
+		asyncCancel:       nil,
+		asyncWriterWG:     &sync.WaitGroup{},
+		asyncCond:         sync.NewCond(utxoMutex),
+		asyncTryBlockGen:  false,
+		asyncResult:       &AsyncResult{},
+		// asyncBlockMode indidates that it is blocked when postTx
+		asyncBlockMode:       false,
+		asyncBatch:           baseDB.NewBatch(),
 		balanceCache:         common.NewLRUCache(cachesize),
 		cacheSize:            cachesize,
 		balanceViewDirty:     map[string]bool{},
@@ -768,6 +775,13 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 	req.Requests = append(reservedRequests, req.Requests...)
 	uv.xlog.Trace("PreExec requests after merge", "requests", req.Requests)
 
+	// if no reserved request and user's request, return directly
+	// the operation of xmodel.NewXModelCache costs some resources
+	if len(req.Requests) == 0 {
+		rsps := &pb.InvokeResponse{}
+		return rsps, nil
+	}
+
 	// transfer in contract
 	transContractName, transAmount, err := txn.ParseContractTransferRequest(req.Requests)
 	if err != nil {
@@ -852,6 +866,11 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 			uv.xlog.Error("PreExec Invoke error", "error", err,
 				"contractName", tmpReq.GetContractName())
 			return nil, err
+		}
+		if res.Status >= 400 && i < len(reservedRequests) {
+			ctx.Release()
+			uv.xlog.Error("PreExec Invoke error", "status", res.Status, "contractName", tmpReq.GetContractName())
+			return nil, errors.New(res.Message)
 		}
 		response = append(response, res.Body)
 		responses = append(responses, contract.ToPBContractResponse(res))
@@ -963,7 +982,7 @@ func (uv *UtxoVM) loadUnconfirmedTxFromDisk() error {
 // GetUnconfirmedTx 挖掘一批unconfirmed的交易打包，返回的结果要保证是按照交易执行的先后顺序
 // maxSize: 打包交易最大的长度（in byte）, -1 表示不限制
 func (uv *UtxoVM) GetUnconfirmedTx(dedup bool) ([]*pb.Transaction, error) {
-	if uv.asyncMode {
+	if uv.asyncMode || uv.asyncBlockMode {
 		dedup = false
 	}
 	var selectedTxs []*pb.Transaction
@@ -1275,13 +1294,18 @@ func (uv *UtxoVM) doTxAsync(tx *pb.Transaction) error {
 		return ErrAlreadyInUnconfirmed
 	}
 	inboundTx := &InboundTx{tx: tx}
+	if uv.asyncBlockMode {
+		uv.asyncResult.Open(tx.Txid)
+		uv.inboundTxChan <- inboundTx
+		return uv.asyncResult.Wait(tx.Txid)
+	}
 	uv.inboundTxChan <- inboundTx
 	return nil
 }
 
 // VerifyTx check the tx signature and permission
 func (uv *UtxoVM) VerifyTx(tx *pb.Transaction) (bool, error) {
-	if uv.asyncMode {
+	if uv.asyncMode || uv.asyncBlockMode {
 		return true, nil //异步模式推迟到后面校验
 	}
 	isValid, err := uv.ImmediateVerifyTx(tx, false)
@@ -1289,6 +1313,15 @@ func (uv *UtxoVM) VerifyTx(tx *pb.Transaction) (bool, error) {
 		uv.xlog.Warn("ImmediateVerifyTx failed", "error", err,
 			"AuthRequire ", tx.AuthRequire, "AuthRequireSigns ", tx.AuthRequireSigns,
 			"Initiator", tx.Initiator, "InitiatorSigns", tx.InitiatorSigns, "XuperSign", tx.XuperSign)
+		ok, isRelyOnMarkedTx, err := uv.verifyMarked(tx)
+		if isRelyOnMarkedTx {
+			if !ok || err != nil {
+				uv.xlog.Warn("tx verification failed because it is blocked tx", "err", err)
+			} else {
+				uv.xlog.Trace("blocked tx verification succeed")
+			}
+			return ok, err
+		}
 	}
 	return isValid, err
 }
@@ -1307,7 +1340,7 @@ func (uv *UtxoVM) DoTx(tx *pb.Transaction) error {
 		uv.xlog.Warn("coinbase tx can not be given by PostTx", "txid", global.F(tx.Txid))
 		return ErrUnexpected
 	}
-	if uv.asyncMode {
+	if uv.asyncMode || uv.asyncBlockMode {
 		return uv.doTxAsync(tx)
 	}
 	return uv.doTxSync(tx)
@@ -1867,15 +1900,19 @@ func (uv *UtxoVM) queryAccountContainAK(address string) ([]string, error) {
 
 func (uv *UtxoVM) queryTxFromForbiddenWithConfirmed(txid []byte) (bool, bool, error) {
 	// 如果配置文件配置了封禁tx监管合约，那么继续下面的执行。否则，直接返回.
-	forbiddenContract, err := uv.GetForbiddenContract()
-	if forbiddenContract == nil || err != nil {
-		return false, false, err
+	forbiddenContract := uv.GetForbiddenContract()
+	if forbiddenContract == nil {
+		return false, false, nil
 	}
 
 	// 这里不针对ModuleName/ContractName/MethodName做特殊化处理
 	moduleNameForForbidden := forbiddenContract.ModuleName
 	contractNameForForbidden := forbiddenContract.ContractName
 	methodNameForForbidden := forbiddenContract.MethodName
+
+	if moduleNameForForbidden == "" && contractNameForForbidden == "" && methodNameForForbidden == "" {
+		return false, false, nil
+	}
 
 	request := &pb.InvokeRequest{
 		ModuleName:   moduleNameForForbidden,
@@ -1903,12 +1940,16 @@ func (uv *UtxoVM) queryTxFromForbiddenWithConfirmed(txid []byte) (bool, bool, er
 	if err != nil {
 		return false, false, err
 	}
-	_, err = ctx.Invoke(request.GetMethodName(), request.GetArgs())
-	if err != nil {
+	invokeRes, invokeErr := ctx.Invoke(request.GetMethodName(), request.GetArgs())
+	if invokeErr != nil {
 		ctx.Release()
-		return false, false, err
+		return false, false, invokeErr
 	}
 	ctx.Release()
+	// 判断forbidden合约的结果
+	if invokeRes.Status >= 400 {
+		return false, false, nil
+	}
 	// inputs as []*xmodel_pb.VersionedData
 	inputs, _, _ := modelCache.GetRWSets()
 	versionData := &xmodel_pb.VersionedData{}

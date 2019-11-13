@@ -87,6 +87,9 @@ func (uv *UtxoVM) ImmediateVerifyTx(tx *pb.Transaction, isRootTx bool) (bool, er
 			return ok, ErrInvalidSignature
 		}
 
+		// get all authenticated users
+		authUsers := uv.removeDuplicateUser(tx)
+
 		// veify tx UTXO input permission (Account ACL)
 		ok, err = uv.verifyUTXOPermission(tx, verifiedID)
 		if !ok {
@@ -95,7 +98,7 @@ func (uv *UtxoVM) ImmediateVerifyTx(tx *pb.Transaction, isRootTx bool) (bool, er
 		}
 
 		// verify contract requests' permission using ACL
-		ok, err = uv.verifyContractPermission(tx)
+		ok, err = uv.verifyContractPermission(tx, authUsers)
 		if !ok {
 			uv.xlog.Warn("ImmediateVerifyTx: verifyContractPermission failed", "error", err)
 			return ok, ErrACLNotEnough
@@ -404,7 +407,7 @@ func (uv *UtxoVM) verifyRWSetPermission(tx *pb.Transaction, verifiedID map[strin
 }
 
 // verifyContractValid verify the permission of contract requests using ACL
-func (uv *UtxoVM) verifyContractPermission(tx *pb.Transaction) (bool, error) {
+func (uv *UtxoVM) verifyContractPermission(tx *pb.Transaction, allUsers []string) (bool, error) {
 	req := tx.GetContractRequests()
 	if req == nil {
 		// if no contract requests, no need to verify
@@ -416,7 +419,7 @@ func (uv *UtxoVM) verifyContractPermission(tx *pb.Transaction) (bool, error) {
 		contractName := tmpReq.GetContractName()
 		methodName := tmpReq.GetMethodName()
 
-		ok, err := pm.CheckContractMethodPerm(tx.AuthRequire, contractName, methodName, uv.aclMgr)
+		ok, err := pm.CheckContractMethodPerm(allUsers, contractName, methodName, uv.aclMgr)
 		if err != nil || !ok {
 			uv.xlog.Warn("verify contract method ACL failed ", "contract", contractName, "method",
 				methodName, "error", err)
@@ -552,11 +555,17 @@ func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
 			return false, err
 		}
 
-		_, err = ctx.Invoke(tmpReq.MethodName, tmpReq.Args)
-		if err != nil {
+		ctxResponse, ctxErr := ctx.Invoke(tmpReq.MethodName, tmpReq.Args)
+		if ctxErr != nil {
 			ctx.Release()
-			uv.xlog.Error("verifyTxRWSets Invoke error", "error", err, "contractName", tmpReq.GetContractName())
-			return false, err
+			uv.xlog.Error("verifyTxRWSets Invoke error", "error", ctxErr, "contractName", tmpReq.GetContractName())
+			return false, ctxErr
+		}
+		// 判断合约调用的返回码
+		if ctxResponse.Status >= 400 && i < len(reservedRequests) {
+			ctx.Release()
+			uv.xlog.Error("verifyTxRWSets Invoke error", "status", ctxResponse.Status, "contractName", tmpReq.GetContractName())
+			return false, errors.New(ctxResponse.Message)
 		}
 
 		ctx.Release()
@@ -612,6 +621,7 @@ func (uv *UtxoVM) verifyMarkedTx(tx *pb.Transaction) error {
 	if err != nil {
 		return errors.New("invalide arg type: sign byte")
 	}
+	tx.ModifyBlock = &pb.ModifyBlock{}
 	digestHash, err := txhash.MakeTxDigestHash(tx)
 	if err != nil {
 		uv.xlog.Warn("verifyMarkedTx call MakeTxDigestHash failed", "error", err)
@@ -619,7 +629,7 @@ func (uv *UtxoVM) verifyMarkedTx(tx *pb.Transaction) error {
 	}
 	ok, err := xcc.VerifyECDSA(ecdsaKey, bytesign, digestHash)
 	if err != nil || !ok {
-		uv.xlog.Warn("validateUpdateBlockChainData verifySignatures failed")
+		uv.xlog.Warn("verifyMarkedTx validateUpdateBlockChainData verifySignatures failed")
 		return err
 	}
 	return nil
@@ -666,13 +676,34 @@ func (uv *UtxoVM) checkRelyOnMarkedTxid(reftxid []byte, blockid []byte) (bool, b
 	}
 	if reftx.GetModifyBlock() != nil && reftx.ModifyBlock.Marked {
 		isRely = true
-		block, err := uv.ledger.QueryBlock(blockid)
-		if err != nil {
-			return false, isRely, err
+		if string(blockid) != "" {
+			ib, err := uv.ledger.QueryBlock(blockid)
+			if err != nil {
+				return false, isRely, err
+			}
+			if ib.Height <= reftx.ModifyBlock.EffectiveHeight {
+				return true, isRely, nil
+			}
 		}
-		if block.Height >= reftx.ModifyBlock.EffectiveHeight {
-			return false, isRely, nil
-		}
+		return false, isRely, nil
 	}
 	return true, isRely, nil
+}
+
+// removeDuplicateUser combine initiator and auth_require and remove duplicate users
+func (uv *UtxoVM) removeDuplicateUser(tx *pb.Transaction) []string {
+	dupCheck := make(map[string]bool)
+	finalUsers := make([]string, 0)
+	if acl.IsAccount(tx.Initiator) == 0 {
+		finalUsers = append(finalUsers, tx.Initiator)
+		dupCheck[tx.Initiator] = true
+	}
+	for _, user := range tx.AuthRequire {
+		if dupCheck[user] {
+			continue
+		}
+		finalUsers = append(finalUsers, user)
+		dupCheck[user] = true
+	}
+	return finalUsers
 }
