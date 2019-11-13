@@ -3,6 +3,7 @@ package p2pv2
 import (
 	"context"
 	"errors"
+	"strings"
 	"sync"
 
 	net "github.com/libp2p/go-libp2p-net"
