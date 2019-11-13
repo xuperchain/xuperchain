@@ -153,9 +153,8 @@ func (sp *StreamPool) sendMessage(ctx context.Context, msg *p2pPb.XuperMessage, 
 		return err
 	}
 	if err := str.SendMessage(ctx, msg); err != nil {
-		if err.Error() == "stream reset" || strings.HasSuffix(err.Error(), "connection reset by peer") {
-			sp.DelStream(str)
-		}
+		// delete the stream when error happens
+		sp.DelStream(str)
 		sp.log.Error("StreamPool stream SendMessage error!", "error", err)
 		return err
 	}
@@ -231,6 +230,7 @@ func (sp *StreamPool) sendMessageWithResponse(ctx context.Context, msg *p2pPb.Xu
 	}
 	res, err := str.SendMessageWithResponse(ctx, msg)
 	if err != nil {
+		sp.DelStream(str)
 		sp.log.Warn("StreamPool sendMessageWithResponse SendMessageWithResponse error!", "error", err.Error())
 		return
 	}
