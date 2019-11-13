@@ -75,7 +75,7 @@ func (sp *StreamPool) Add(s net.Stream) *Stream {
 		stream.Close()
 		sp.DelStream(stream)
 		sp.no.kdht.RoutingTable().Remove(stream.p)
-		sp.log.Warn("New stream is deleted")
+		sp.log.Warn("New stream is deleted", "error", err)
 		return nil
 	}
 	return stream
@@ -152,7 +152,7 @@ func (sp *StreamPool) sendMessage(ctx context.Context, msg *p2pPb.XuperMessage, 
 		return err
 	}
 	if err := str.SendMessage(ctx, msg); err != nil {
-		if err.Error() == "stream reset" {
+		if err.Error() == "stream reset" || strings.HasSuffix(err.Error(), "connection reset by peer") {
 			sp.DelStream(str)
 		}
 		sp.log.Error("StreamPool stream SendMessage error!", "error", err)
