@@ -30,6 +30,8 @@ var (
 		"-Oz",
 		"-s ERROR_ON_UNDEFINED_SYMBOLS=0",
 		"-s WARN_ON_UNDEFINED_SYMBOLS=0",
+		"-s TOTAL_STACK=256KB",
+		"-s TOTAL_MEMORY=1MB",
 		"-s DETERMINISTIC=1",
 		"-L/usr/local/lib",
 		"-lprotobuf-lite",
