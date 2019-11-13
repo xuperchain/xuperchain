@@ -131,17 +131,21 @@ type UtxoVM struct {
 	minerAddress    []byte
 	failedTxBuf     map[string][]string
 
-	inboundTxChan        chan *InboundTx      // 异步tx chan
-	verifiedTxChan       chan *pb.Transaction //已经校验通过的tx
-	asyncMode            bool                 // 是否工作在异步模式
-	asyncCancel          context.CancelFunc   // 停止后台异步batch写的句柄
-	asyncWriterWG        *sync.WaitGroup      // 优雅退出异步writer的信号量
-	asyncCond            *sync.Cond           // 用来出块线程优先权的条件变量
-	asyncTryBlockGen     bool                 // doMiner线程是否准备出块
-	vatHandler           *vat.VATHandler      // Verifiable Autogen Tx 生成器
-	balanceCache         *common.LRUCache     //余额cache,加速GetBalance查询
-	cacheSize            int                  //记录构造utxo时传入的cachesize
-	balanceViewDirty     map[string]bool      //balanceCache 标记dirty: addr->bool
+	inboundTxChan    chan *InboundTx      // 异步tx chan
+	verifiedTxChan   chan *pb.Transaction //已经校验通过的tx
+	asyncMode        bool                 // 是否工作在异步模式
+	asyncCancel      context.CancelFunc   // 停止后台异步batch写的句柄
+	asyncWriterWG    *sync.WaitGroup      // 优雅退出异步writer的信号量
+	asyncCond        *sync.Cond           // 用来出块线程优先权的条件变量
+	asyncTryBlockGen bool                 // doMiner线程是否准备出块
+	asyncResult      *AsyncResult         // 用于等待异步结果
+	// 上述asyncMode是指异步模式，默认是异步回调模式
+	// asyncBlockMode是指异步阻塞模式
+	asyncBlockMode       bool             // 是否工作在异步阻塞模式下
+	vatHandler           *vat.VATHandler  // Verifiable Autogen Tx 生成器
+	balanceCache         *common.LRUCache //余额cache,加速GetBalance查询
+	cacheSize            int              //记录构造utxo时传入的cachesize
+	balanceViewDirty     map[string]bool  //balanceCache 标记dirty: addr->bool
 	contractExectionTime int
 	unconfirmTxInMem     *sync.Map //未确认Tx表的内存镜像
 	defaultTxVersion     int32     // 默认的tx version
@@ -386,38 +390,41 @@ func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, priv
 	}
 	utxoMutex := &sync.RWMutex{}
 	utxoVM := &UtxoVM{
-		meta:                 &pb.UtxoMeta{},
-		metaTmp:              &pb.UtxoMeta{},
-		mutexMeta:            &sync.Mutex{},
-		ldb:                  baseDB,
-		mutex:                utxoMutex,
-		mutexMem:             &sync.Mutex{},
-		lockKeys:             map[string]*UtxoLockItem{},
-		lockKeyList:          list.New(),
-		lockExpireTime:       tmplockSeconds,
-		xlog:                 xlog,
-		ledger:               ledger,
-		unconfirmedTable:     kvdb.NewTable(baseDB, pb.UnconfirmedTablePrefix),
-		utxoTable:            kvdb.NewTable(baseDB, pb.UTXOTablePrefix),
-		metaTable:            kvdb.NewTable(baseDB, pb.MetaTablePrefix),
-		withdrawTable:        kvdb.NewTable(baseDB, pb.WithdrawPrefix),
-		utxoCache:            NewUtxoCache(cachesize),
-		smartContract:        contract.NewSmartContract(),
-		vatHandler:           vat.NewVATHandler(),
-		OfflineTxChan:        make(chan *pb.Transaction, OfflineTxChanBuffer),
-		prevFoundKeyCache:    common.NewLRUCache(cachesize),
-		utxoTotal:            big.NewInt(0),
-		minerAddress:         address,
-		minerPublicKey:       publicKey,
-		minerPrivateKey:      privateKey,
-		failedTxBuf:          make(map[string][]string),
-		inboundTxChan:        make(chan *InboundTx, AsyncQueueBuffer),
-		verifiedTxChan:       make(chan *pb.Transaction, AsyncQueueBuffer),
-		asyncMode:            false,
-		asyncCancel:          nil,
-		asyncWriterWG:        &sync.WaitGroup{},
-		asyncCond:            sync.NewCond(utxoMutex),
-		asyncTryBlockGen:     false,
+		meta:              &pb.UtxoMeta{},
+		metaTmp:           &pb.UtxoMeta{},
+		mutexMeta:         &sync.Mutex{},
+		ldb:               baseDB,
+		mutex:             utxoMutex,
+		mutexMem:          &sync.Mutex{},
+		lockKeys:          map[string]*UtxoLockItem{},
+		lockKeyList:       list.New(),
+		lockExpireTime:    tmplockSeconds,
+		xlog:              xlog,
+		ledger:            ledger,
+		unconfirmedTable:  kvdb.NewTable(baseDB, pb.UnconfirmedTablePrefix),
+		utxoTable:         kvdb.NewTable(baseDB, pb.UTXOTablePrefix),
+		metaTable:         kvdb.NewTable(baseDB, pb.MetaTablePrefix),
+		withdrawTable:     kvdb.NewTable(baseDB, pb.WithdrawPrefix),
+		utxoCache:         NewUtxoCache(cachesize),
+		smartContract:     contract.NewSmartContract(),
+		vatHandler:        vat.NewVATHandler(),
+		OfflineTxChan:     make(chan *pb.Transaction, OfflineTxChanBuffer),
+		prevFoundKeyCache: common.NewLRUCache(cachesize),
+		utxoTotal:         big.NewInt(0),
+		minerAddress:      address,
+		minerPublicKey:    publicKey,
+		minerPrivateKey:   privateKey,
+		failedTxBuf:       make(map[string][]string),
+		inboundTxChan:     make(chan *InboundTx, AsyncQueueBuffer),
+		verifiedTxChan:    make(chan *pb.Transaction, AsyncQueueBuffer),
+		asyncMode:         false,
+		asyncCancel:       nil,
+		asyncWriterWG:     &sync.WaitGroup{},
+		asyncCond:         sync.NewCond(utxoMutex),
+		asyncTryBlockGen:  false,
+		asyncResult:       &AsyncResult{},
+		// asyncBlockMode indidates that it is blocked when postTx
+		asyncBlockMode:       false,
 		balanceCache:         common.NewLRUCache(cachesize),
 		cacheSize:            cachesize,
 		balanceViewDirty:     map[string]bool{},
@@ -965,7 +972,7 @@ func (uv *UtxoVM) loadUnconfirmedTxFromDisk() error {
 // GetUnconfirmedTx 挖掘一批unconfirmed的交易打包，返回的结果要保证是按照交易执行的先后顺序
 // maxSize: 打包交易最大的长度（in byte）, -1 表示不限制
 func (uv *UtxoVM) GetUnconfirmedTx(dedup bool) ([]*pb.Transaction, error) {
-	if uv.asyncMode {
+	if uv.asyncMode || uv.asyncBlockMode {
 		dedup = false
 	}
 	var selectedTxs []*pb.Transaction
@@ -1277,13 +1284,18 @@ func (uv *UtxoVM) doTxAsync(tx *pb.Transaction) error {
 		return ErrAlreadyInUnconfirmed
 	}
 	inboundTx := &InboundTx{tx: tx}
+	if uv.asyncBlockMode {
+		uv.asyncResult.Open(tx.Txid)
+		uv.inboundTxChan <- inboundTx
+		return uv.asyncResult.Wait(tx.Txid)
+	}
 	uv.inboundTxChan <- inboundTx
 	return nil
 }
 
 // VerifyTx check the tx signature and permission
 func (uv *UtxoVM) VerifyTx(tx *pb.Transaction) (bool, error) {
-	if uv.asyncMode {
+	if uv.asyncMode || uv.asyncBlockMode {
 		return true, nil //异步模式推迟到后面校验
 	}
 	isValid, err := uv.ImmediateVerifyTx(tx, false)
@@ -1318,7 +1330,7 @@ func (uv *UtxoVM) DoTx(tx *pb.Transaction) error {
 		uv.xlog.Warn("coinbase tx can not be given by PostTx", "txid", global.F(tx.Txid))
 		return ErrUnexpected
 	}
-	if uv.asyncMode {
+	if uv.asyncMode || uv.asyncBlockMode {
 		return uv.doTxAsync(tx)
 	}
 	return uv.doTxSync(tx)
