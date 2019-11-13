@@ -114,6 +114,7 @@ type UtxoConfig struct {
 	CacheSize             int                        `yaml:"cachesize,omitempty"`
 	TmpLockSeconds        int                        `yaml:"tmplockSeconds,omitempty"`
 	AsyncMode             bool                       `yaml:"asyncMode,omitempty"`
+	AsyncBlockMode        bool                       `yaml:"asyncBlockMode,omitempty"`
 	ContractExecutionTime int                        `yaml:"contractExecutionTime,omitempty"`
 	ContractWhiteList     map[string]map[string]bool `yaml:"contractWhiteList,omitempty"`
 	// 是否开启新版本tx k = bcname, v = isBetaTx
@@ -283,6 +284,7 @@ func (nc *NodeConfig) defaultNodeConfig() {
 		CacheSize:             100000,
 		TmpLockSeconds:        60,
 		AsyncMode:             false,
+		AsyncBlockMode:        false,
 		ContractExecutionTime: 500,
 		ContractWhiteList:     make(map[string]map[string]bool),
 		IsBetaTx:              make(map[string]bool),
@@ -417,6 +419,7 @@ func (utxo *UtxoConfig) applyFlags(flags *pflag.FlagSet) {
 	flags.IntVar(&utxo.CacheSize, "cachesize", utxo.CacheSize, "used for config overwrite --cachesize <utxo LRU cache size>")
 	flags.IntVar(&utxo.TmpLockSeconds, "tmplockSeconds", utxo.TmpLockSeconds, "used for config overwrite --tmplockSeconds <How long to lock utxo referenced by GenerateTx>")
 	flags.BoolVar(&utxo.AsyncMode, "asyncMode", utxo.AsyncMode, "used for config overwrite --asyncMode")
+	flags.BoolVar(&utxo.AsyncBlockMode, "asyncBlockMode", utxo.AsyncBlockMode, "used for config overwrite --asyncBlockMode")
 }
 
 // ApplyFlags install flags and use flags to overwrite config file
