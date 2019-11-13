@@ -115,20 +115,18 @@ static void wasm_rt_allocate_memory(void* context,
   memory->max_pages = max_pages;
   memory->size = initial_pages * PAGE_SIZE;
   if (memory->size != 0) {
-    /* memory->data = mmap(0, memory->size, PROT_READ|PROT_WRITE, */
-    /* MAP_PRIVATE|MAP_ANONYMOUS, -1, 0); */
-    /* if (memory->data == MAP_FAILED) { */
-    /*   xvm_raise(TRAP_NO_MEMORY); */
-    /* } */
-    memory->data = xvm_malloc(memory->size);
+    memory->data = mmap(0, memory->size, PROT_READ|PROT_WRITE,
+    MAP_PRIVATE|MAP_ANONYMOUS, -1, 0);
+    if (memory->data == MAP_FAILED) {
+      xvm_raise(TRAP_NO_MEMORY);
+    }
   }
   xvm_context_t* ctx = context;
   ctx->mem = memory;
 }
 
 static void wasm_rt_free_memory(wasm_rt_memory_t* mem) {
-    /* munmap(mem->data, mem->size); */
-  xvm_free(mem->data);
+  munmap(mem->data, mem->size);
 }
 
 static uint32_t wasm_rt_grow_memory(void* context, wasm_rt_memory_t* memory, uint32_t delta) {
