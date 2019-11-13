@@ -130,13 +130,14 @@ func (uv *UtxoVM) flushTxList(txList []*pb.Transaction) error {
 			pbTxList[i] = pbTxBuf
 		}
 	}
-	batch := uv.ldb.NewBatch()
 	conflictedTxs := uv.checkConflictTxs(txList)
 	uv.mutex.Lock()
 	defer uv.mutex.Unlock()
 	for uv.asyncTryBlockGen { //避让出块的线程
 		uv.asyncCond.Wait() //会临时让出锁
 	}
+	batch := uv.asyncBatch
+	batch.Reset()
 	for i, tx := range txList {
 		if uv.asyncBlockMode && pbTxList[i] == nil {
 			uv.asyncResult.Send(tx.Txid, errors.New("marshal failed"))

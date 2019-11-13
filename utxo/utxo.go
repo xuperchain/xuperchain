@@ -125,23 +125,22 @@ type UtxoVM struct {
 	model3            *xmodel.XModel           // XuperModel实例，处理extutxo
 	vmMgr3            *contract.VMManager
 	aclMgr            *acli.Manager // ACL manager for read/write acl table
-
-	minerPublicKey  string
-	minerPrivateKey string
-	minerAddress    []byte
-	failedTxBuf     map[string][]string
-
-	inboundTxChan    chan *InboundTx      // 异步tx chan
-	verifiedTxChan   chan *pb.Transaction //已经校验通过的tx
-	asyncMode        bool                 // 是否工作在异步模式
-	asyncCancel      context.CancelFunc   // 停止后台异步batch写的句柄
-	asyncWriterWG    *sync.WaitGroup      // 优雅退出异步writer的信号量
-	asyncCond        *sync.Cond           // 用来出块线程优先权的条件变量
-	asyncTryBlockGen bool                 // doMiner线程是否准备出块
-	asyncResult      *AsyncResult         // 用于等待异步结果
+	minerPublicKey    string
+	minerPrivateKey   string
+	minerAddress      []byte
+	failedTxBuf       map[string][]string
+	inboundTxChan     chan *InboundTx      // 异步tx chan
+	verifiedTxChan    chan *pb.Transaction //已经校验通过的tx
+	asyncMode         bool                 // 是否工作在异步模式
+	asyncCancel       context.CancelFunc   // 停止后台异步batch写的句柄
+	asyncWriterWG     *sync.WaitGroup      // 优雅退出异步writer的信号量
+	asyncCond         *sync.Cond           // 用来出块线程优先权的条件变量
+	asyncTryBlockGen  bool                 // doMiner线程是否准备出块
+	asyncResult       *AsyncResult         // 用于等待异步结果
 	// 上述asyncMode是指异步模式，默认是异步回调模式
 	// asyncBlockMode是指异步阻塞模式
 	asyncBlockMode       bool             // 是否工作在异步阻塞模式下
+	asyncBatch           kvdb.Batch       // 异步刷盘复用的batch
 	vatHandler           *vat.VATHandler  // Verifiable Autogen Tx 生成器
 	balanceCache         *common.LRUCache //余额cache,加速GetBalance查询
 	cacheSize            int              //记录构造utxo时传入的cachesize
@@ -425,6 +424,7 @@ func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, priv
 		asyncResult:       &AsyncResult{},
 		// asyncBlockMode indidates that it is blocked when postTx
 		asyncBlockMode:       false,
+		asyncBatch:           baseDB.NewBatch(),
 		balanceCache:         common.NewLRUCache(cachesize),
 		cacheSize:            cachesize,
 		balanceViewDirty:     map[string]bool{},
