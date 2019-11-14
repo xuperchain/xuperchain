@@ -3,6 +3,7 @@ package p2pv2
 import (
 	"context"
 	"errors"
+	"strings"
 	"sync"
 
 	net "github.com/libp2p/go-libp2p-net"
@@ -27,7 +28,6 @@ type StreamPool struct {
 	log log.Logger
 	// key: peer id, value: Stream
 	streams        *common.LRUCache
-	streamLength   int32
 	maxStreamLimit int32
 	no             *Node
 	quitCh         chan bool
@@ -39,7 +39,6 @@ func NewStreamPool(maxStreamLimit int32, no *Node, log log.Logger) (*StreamPool,
 		log:            log,
 		streams:        common.NewLRUCache(int(maxStreamLimit)),
 		quitCh:         make(chan bool, 1),
-		streamLength:   0,
 		maxStreamLimit: maxStreamLimit,
 		no:             no,
 	}, nil
@@ -83,7 +82,7 @@ func (sp *StreamPool) Add(s net.Stream) *Stream {
 
 // AddStream used to add a new P2P stream into pool
 func (sp *StreamPool) AddStream(stream *Stream) error {
-	if sp.streamLength > sp.maxStreamLimit {
+	if int32(sp.streams.Len()) > sp.maxStreamLimit {
 		return ErrStreamPoolFull
 	}
 
@@ -97,12 +96,10 @@ func (sp *StreamPool) AddStream(stream *Stream) error {
 	if v, ok := sp.streams.Get(stream.p.Pretty()); ok {
 		val, _ := v.(*Stream)
 		sp.streams.Del(val.p.Pretty())
-		sp.streamLength--
 		if val.s != nil {
 			val.s.Close()
 		}
 	}
-	sp.streamLength++
 	sp.streams.Add(stream.p.Pretty(), stream)
 	return nil
 }
@@ -114,7 +111,6 @@ func (sp *StreamPool) DelStream(stream *Stream) error {
 		sp.streams.Del(val.p.Pretty())
 	}
 	sp.no.streamLimit.DelStream(stream.addr.String())
-	sp.streamLength--
 	return nil
 }
 
@@ -153,8 +149,10 @@ func (sp *StreamPool) sendMessage(ctx context.Context, msg *p2pPb.XuperMessage, 
 		return err
 	}
 	if err := str.SendMessage(ctx, msg); err != nil {
-		// delete the stream when error happens
-		sp.DelStream(str)
+		if err.Error() == "stream reset" || strings.HasSuffix(err.Error(), "connection reset by peer") {
+			// delete the stream when error happens
+			sp.DelStream(str)
+		}
 		sp.log.Error("StreamPool stream SendMessage error!", "error", err)
 		return err
 	}
@@ -230,7 +228,9 @@ func (sp *StreamPool) sendMessageWithResponse(ctx context.Context, msg *p2pPb.Xu
 	}
 	res, err := str.SendMessageWithResponse(ctx, msg)
 	if err != nil {
-		sp.DelStream(str)
+		if err.Error() == "stream reset" || strings.HasSuffix(err.Error(), "connection reset by peer") {
+			sp.DelStream(str)
+		}
 		sp.log.Warn("StreamPool sendMessageWithResponse SendMessageWithResponse error!", "error", err.Error())
 		return
 	}
