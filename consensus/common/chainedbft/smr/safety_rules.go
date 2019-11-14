@@ -3,6 +3,7 @@ package smr
 import (
 	"encoding/hex"
 
+	cons_base "github.com/xuperchain/xuperunion/consensus/base"
 	"github.com/xuperchain/xuperunion/consensus/common/chainedbft/utils"
 	"github.com/xuperchain/xuperunion/pb"
 )
@@ -40,20 +41,27 @@ func (s *Smr) IsQuorumCertValidate(justify *pb.QuorumCert) (bool, error) {
 		return false, ErrParams
 	}
 	justifySigns := justify.GetSignInfos().GetQCSignInfos()
-	s.slog.Warn("safeProposal proposal justify sign", "autual", len(justifySigns), "require", (len(s.validates)-1)*2/3)
-	if len(justifySigns) <= (len(s.validates)-1)*2/3 {
+	// verify justify sign
+	if justify.GetViewNumber() == s.vscView {
+		return s.verifyVotes(justifySigns, s.preValidates, justify.GetProposalId())
+	}
+	return s.verifyVotes(justifySigns, s.validates, justify.GetProposalId())
+}
+
+// verifyVotes verify QC sign
+func (s *Smr) verifyVotes(signs []*pb.SignInfo, validateSets []*cons_base.CandidateInfo, proposalID []byte) (bool, error) {
+	s.slog.Trace("safeProposal proposal justify sign", "autual", len(signs), "require", (len(validateSets)-1)*2/3)
+	if len(signs) <= (len(validateSets)-1)*2/3 {
 		return false, ErrJustifySignNotEnough
 	}
-	// verify justify sign
-	for _, v := range justifySigns {
-		if !utils.IsInValidateSets(s.validates, v.GetAddress()) {
-			s.slog.Error("safeProposal IsInValidateSets error")
+	for _, v := range signs {
+		if !utils.IsInValidateSets(validateSets, v.GetAddress()) {
+			s.slog.Error("verifyVotes IsInValidateSets error")
 			return false, ErrInValidateSets
 		}
-
-		ok, err := utils.VerifyVoteMsgSign(s.cryptoClient, v, justify.GetProposalId())
+		ok, err := utils.VerifyVoteMsgSign(s.cryptoClient, v, proposalID)
 		if !ok || err != nil {
-			s.slog.Error("safeProposal VerifyVoteMsgSign error", "ok", ok, "error", err)
+			s.slog.Error("verifyVotes VerifyVoteMsgSign error", "ok", ok, "error", err)
 			return false, ErrVerifyVoteSign
 		}
 	}
