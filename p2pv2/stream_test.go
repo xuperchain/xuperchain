@@ -80,7 +80,7 @@ func handleStream(s net.Stream) {
 			} else {
 				fmt.Println("get a bad stream")
 			}
-			fmt.Println("streamLength ", streamPool.streamLength)
+			fmt.Println("streamLength ", int32(streamPool.streams.Len()))
 			// test for DelStream
 			err = streamPool.DelStream(tmpStream)
 			if err != nil {
