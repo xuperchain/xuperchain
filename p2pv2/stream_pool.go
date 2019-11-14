@@ -3,7 +3,6 @@ package p2pv2
 import (
 	"context"
 	"errors"
-	"strings"
 	"sync"
 
 	net "github.com/libp2p/go-libp2p-net"
@@ -149,7 +148,7 @@ func (sp *StreamPool) sendMessage(ctx context.Context, msg *p2pPb.XuperMessage, 
 		return err
 	}
 	if err := str.SendMessage(ctx, msg); err != nil {
-		if err.Error() == "stream reset" || strings.HasSuffix(err.Error(), "connection reset by peer") {
+		if common.NormalizedKVError(err) == common.ErrP2PError {
 			// delete the stream when error happens
 			sp.DelStream(str)
 		}
@@ -228,7 +227,7 @@ func (sp *StreamPool) sendMessageWithResponse(ctx context.Context, msg *p2pPb.Xu
 	}
 	res, err := str.SendMessageWithResponse(ctx, msg)
 	if err != nil {
-		if err.Error() == "stream reset" || strings.HasSuffix(err.Error(), "connection reset by peer") {
+		if common.NormalizedKVError(err) == common.ErrP2PError {
 			sp.DelStream(str)
 		}
 		sp.log.Warn("StreamPool sendMessageWithResponse SendMessageWithResponse error!", "error", err.Error())
