@@ -203,7 +203,7 @@ func (s *Stream) SendMessageWithResponse(ctx context.Context, msg *p2pPb.XuperMe
 		// 开始写消息
 		s.node.log.Trace("sendMessageWithResponse start to write msg", "logid", msg.GetHeader().GetLogid(), "msgType", msg.GetHeader().GetType(), "checksum", msg.GetHeader().GetDataCheckSum(), "to", s.p.Pretty())
 		if err := s.writeData(msg); err != nil {
-			s.node.log.Warn("sendMessageWithResponse", "err", err)
+			s.node.log.Warn("sendMessageWithResponse writeData failed", "err", err)
 			return nil, err
 		}
 

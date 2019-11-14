@@ -305,7 +305,7 @@ func (prp *Proposal) fillOldState(desc []byte) ([]byte, error) {
 		descObj.Args["old_block_size"] = oldMaxBlockSize
 	case "kernel.UpdateNewAccountResourceAmount":
 		prp.log.Trace("contract desc need to process", "contractKey", "kernel.UpdateNewAccountResourceAmount")
-		descObj.Args["old_new_account_resource_amount"] = prp.ledger.GetNewAccountResourceAmount()
+		descObj.Args["old_new_account_resource_amount"] = prp.utxoVM.GetNewAccountResourceAmount()
 	case "kernel.UpdateIrreversibleSlideWindow":
 		prp.log.Trace("contract desc need to process", "contractKey", "kernel.UpdateIrreversibleSlideWindow")
 		descObj.Args["old_irreversible_slide_window"] = prp.utxoVM.GetIrreversibleSlideWindow()
