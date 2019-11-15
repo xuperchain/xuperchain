@@ -14,6 +14,14 @@ const (
 	MaxGasLimit = 0xFFFFFFFF
 )
 
+type ErrFuncNotFound struct {
+	Name string
+}
+
+func (e *ErrFuncNotFound) Error() string {
+	return fmt.Sprintf("%s not found", e.Name)
+}
+
 // ContextConfig configures an execution context
 type ContextConfig struct {
 	GasLimit int64
@@ -103,7 +111,9 @@ func (c *Context) Exec(name string, param []int64) (ret int64, err error) {
 	var cret C.int64_t
 	ok := C.xvm_call(&c.context, cname, args, C.int64_t(len(param)), &cret)
 	if ok == 0 {
-		return 0, fmt.Errorf("%s not found", name)
+		return 0, &ErrFuncNotFound{
+			Name: name,
+		}
 	}
 	ret = int64(cret)
 	return
