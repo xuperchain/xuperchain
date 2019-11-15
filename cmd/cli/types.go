@@ -101,7 +101,7 @@ type QCSignInfos struct {
 // QuorumCert is a data type that combines a collection of signatures from replicas.
 type QuorumCert struct {
 	// The id of Proposal this QC certified.
-	ProposalId []byte `protobuf:"bytes,1,opt,name=ProposalId,proto3" json:"ProposalId,omitempty"`
+	ProposalId string `protobuf:"bytes,1,opt,name=ProposalId,proto3" json:"ProposalId,omitempty"`
 	// The msg of Proposal this QC certified.
 	ProposalMsg []byte `protobuf:"bytes,2,opt,name=ProposalMsg,proto3" json:"ProposalMsg,omitempty"`
 	// The current type of this QC certified.
@@ -308,7 +308,7 @@ func FromInternalBlockPB(block *pb.InternalBlock) *InternalBlock {
 func FromPBJustify(qc *pb.QuorumCert) *QuorumCert {
 	justify := &QuorumCert{}
 	if qc != nil {
-		justify.ProposalId = qc.ProposalId
+		justify.ProposalId = hex.EncodeToString(qc.ProposalId)
 		justify.ProposalMsg = qc.ProposalMsg
 		justify.Type = QCState(int(qc.Type))
 		justify.ViewNumber = qc.ViewNumber
