@@ -28,11 +28,10 @@ var (
 	}
 	defaultLDFlags = []string{
 		"-Oz",
-		"-s ERROR_ON_UNDEFINED_SYMBOLS=0",
-		"-s WARN_ON_UNDEFINED_SYMBOLS=0",
 		"-s TOTAL_STACK=256KB",
 		"-s TOTAL_MEMORY=1MB",
 		"-s DETERMINISTIC=1",
+		"-s EXTRA_EXPORTED_RUNTIME_METHODS=[\"stackAlloc\"]",
 		"-L/usr/local/lib",
 		"-lprotobuf-lite",
 		"-lpthread",
@@ -134,6 +133,8 @@ func (c *buildCommand) initCompileFlags(xroot string) error {
 	// -lxchain must be in front of -lprotobuf-lite
 	xchainLDFlags := []string{"-L" + filepath.Join(xroot, "contractsdk", "cpp", "build"), "-lxchain"}
 	c.ldflags = append(xchainLDFlags, defaultLDFlags...)
+	exportJsPath := filepath.Join(xroot, "contractsdk", "cpp", "xchain", "exports.js")
+	c.ldflags = append(c.ldflags, "--js-library "+exportJsPath)
 	return nil
 }
 

@@ -47,7 +47,7 @@ func NewContext(code *Code, cfg *ContextConfig) (ctx *Context, err error) {
 		}
 	}()
 	defer CaptureTrap(&err)
-	ret := C.xvm_init_context(&ctx.context, code.code)
+	ret := C.xvm_init_context(&ctx.context, code.code, C.uint64_t(cfg.GasLimit))
 	if ret == 0 {
 		return nil, errors.New("init context error")
 	}
@@ -100,21 +100,23 @@ func (c *Context) Exec(name string, param []int64) (ret int64, err error) {
 	if len(param) != 0 {
 		args = (*C.int64_t)(unsafe.Pointer(&param[0]))
 	}
-	var cgas C.wasm_rt_gas_t
-	cgas.limit = C.int64_t(c.cfg.GasLimit)
 	var cret C.int64_t
-	ok := C.xvm_call(&c.context, cname, args, C.int64_t(len(param)), &cgas, &cret)
+	ok := C.xvm_call(&c.context, cname, args, C.int64_t(len(param)), &cret)
 	if ok == 0 {
 		return 0, fmt.Errorf("%s not found", name)
 	}
 	ret = int64(cret)
-	c.gasUsed = int64(cgas.used)
 	return
 }
 
 // GasUsed returns the gas used by Exec
 func (c *Context) GasUsed() int64 {
-	return c.gasUsed
+	return int64(C.xvm_gas_used(&c.context))
+}
+
+// ResetGasUsed reset the gas counter
+func (c *Context) ResetGasUsed() {
+	C.xvm_reset_gas_used(&c.context)
 }
 
 // Memory returns the memory of current context, nil will be returned if wasm code has no memory
