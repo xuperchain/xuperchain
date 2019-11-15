@@ -12,6 +12,7 @@ import (
 
 const (
 	mutableGlobalsKey = "mutableGlobals"
+	stackAllocFunc    = "stackAlloc"
 
 	// mutableGlobalsBase is the base pointer of mutableGlobals
 	// static data begin at 1024, the first 1024 bytes is not used.
@@ -33,6 +34,21 @@ func getMutableGlobals(ctx *exec.Context) *mutableGlobals {
 	return ctx.GetUserData(mutableGlobalsKey).(*mutableGlobals)
 }
 
+func memoryStackBase(ctx *exec.Context) (uint32, error) {
+	base, err := ctx.Exec(stackAllocFunc, []int64{0})
+	if err != nil {
+		// stackAllocFunc not found, fallback to StaticTop method.
+		base := ctx.StaticTop()
+		// align 4K boundry
+		if base%4096 != 0 {
+			base += 4096 - base%4096
+		}
+		return base, nil
+	}
+	ctx.ResetGasUsed()
+	return uint32(base), nil
+}
+
 // Init initialize global variables
 func Init(ctx *exec.Context) error {
 	mem := ctx.Memory()
@@ -43,10 +59,9 @@ func Init(ctx *exec.Context) error {
 		return errors.New("bad memory size")
 	}
 
-	// align 4K boundry
-	stackBase := ctx.StaticTop()
-	if stackBase%4096 != 0 {
-		stackBase += 4096 - stackBase%4096
+	stackBase, err := memoryStackBase(ctx)
+	if err != nil {
+		return err
 	}
 	mg := (*mutableGlobals)(unsafe.Pointer(&mem[mutableGlobalsBase]))
 	mg.HeapBase = stackBase + stackSize
