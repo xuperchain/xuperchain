@@ -37,6 +37,9 @@ func getMutableGlobals(ctx *exec.Context) *mutableGlobals {
 func memoryStackBase(ctx *exec.Context) (uint32, error) {
 	base, err := ctx.Exec(stackAllocFunc, []int64{0})
 	if err != nil {
+		if _, ok := err.(*exec.ErrFuncNotFound); !ok {
+			return 0, err
+		}
 		// stackAllocFunc not found, fallback to StaticTop method.
 		base := ctx.StaticTop()
 		// align 4K boundry
