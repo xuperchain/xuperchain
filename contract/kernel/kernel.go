@@ -290,7 +290,7 @@ func (k *Kernel) validateUpdateIrreversibleSlideWindow(desc *contract.TxDesc) er
 		}
 		switch tp := desc.Args[argName].(type) {
 		case float64:
-			return nil
+			continue
 		default:
 			return fmt.Errorf("invalid arg type: %s, %v", argName, tp)
 		}
@@ -305,7 +305,7 @@ func (k *Kernel) validateUpdateMaxBlockSize(desc *contract.TxDesc) error {
 		}
 		switch tp := desc.Args[argName].(type) {
 		case float64:
-			return nil
+			continue
 		default:
 			return fmt.Errorf("invalid arg type: %s, %v", argName, tp)
 		}
@@ -320,7 +320,7 @@ func (k *Kernel) validateUpdateNewAccountResourceAmount(desc *contract.TxDesc) e
 		}
 		switch tp := desc.Args[argName].(type) {
 		case float64:
-			return nil
+			continue
 		default:
 			return fmt.Errorf("invalid arg type: %s, %v", argName, tp)
 		}
