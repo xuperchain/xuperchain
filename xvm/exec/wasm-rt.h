@@ -188,7 +188,7 @@ typedef struct {
                                 uint32_t param_len);
 
   /* 根据module和name返回对应的值 */
-  double (*wasm_rt_resolve_global)(void* context, char* module, char* name);
+  int64_t (*wasm_rt_resolve_global)(void* context, char* module, char* name);
 
 } wasm_rt_ops_t;
 
