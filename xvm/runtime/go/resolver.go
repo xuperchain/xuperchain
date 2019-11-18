@@ -70,7 +70,7 @@ func (r *resolver) ResolveFunc(module, name string) (interface{}, bool) {
 		return nil, false
 	}
 	Type, Value := reflect.TypeOf(ifunc), reflect.ValueOf(ifunc)
-	realFunc := func(ctx *exec.Context, sp uint32) uint32 {
+	realFunc := func(ctx exec.Context, sp uint32) uint32 {
 		rt := ctx.GetUserData(goRuntimeKey).(*Runtime)
 		mem := ctx.Memory()
 		dec := NewDecoder(mem, sp+8)
@@ -93,6 +93,6 @@ func (r *resolver) ResolveFunc(module, name string) (interface{}, bool) {
 	return realFunc, true
 }
 
-func (r *resolver) ResolveGlobal(module, name string) (float64, bool) {
+func (r *resolver) ResolveGlobal(module, name string) (int64, bool) {
 	return 0, false
 }

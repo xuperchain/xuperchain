@@ -37,7 +37,7 @@ extern void xvm_raise(char* msg);
 typedef struct xvm_resolver_t {
   void* env;
   void* (*resolve_func)(void* env, char* module, char* name);
-  double (*resolve_global)(void* env, char* module, char* name);
+  int64_t (*resolve_global)(void* env, char* module, char* name);
   uint32_t (*call_func)(void* env, wasm_rt_func_handle_t hfunc, struct xvm_context_t* ctx,
                         uint32_t* params, uint32_t param_len);
 } xvm_resolver_t;

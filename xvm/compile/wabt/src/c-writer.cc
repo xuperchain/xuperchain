@@ -1034,16 +1034,19 @@ void CWriter::WriteFuncDeclaration(const FuncDeclaration& decl,
 void CWriter::WriteGlobals() {
   Index global_index = 0;
   Write(Newline(), "static void init_globals(wasm_rt_handle_t* h) ", OpenBrace());
+  Write("int64_t tmp = 0;", Newline());
   // Init imported globals
   for (const Import* import : module_->imports) {
     if (import->kind() == ExternalKind::Global) {
       const Global& global = cast<GlobalImport>(import)->global;
-      Write(ExternalRef(global.name), " = ");
+      Write("tmp = ");
       Write("(*g_rt_ops.wasm_rt_resolve_global)(",
             ExternalRef(USER_CTX_FIELD), ", ",
             QuotedString(import->module_name), ", ",
             QuotedString(import->field_name), ")");
       Write(";", Newline());
+      Write("memcpy(", ExternalPtr(global.name), ", &tmp, sizeof(", 
+            ExternalRef(global.name), "));", Newline());
     }
   }
 

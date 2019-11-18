@@ -9,7 +9,7 @@ func (m MapResolver) ResolveFunc(module, name string) (interface{}, bool) {
 	if !ok {
 		return nil, false
 	}
-	_, ok = v.(float64)
+	_, ok = v.(int64)
 	if !ok {
 		return v, true
 	}
@@ -17,12 +17,12 @@ func (m MapResolver) ResolveFunc(module, name string) (interface{}, bool) {
 }
 
 // ResolveGlobal implements Resolver interface
-func (m MapResolver) ResolveGlobal(module, name string) (float64, bool) {
+func (m MapResolver) ResolveGlobal(module, name string) (int64, bool) {
 	v, ok := m[module+"."+name]
 	if !ok {
 		return 0, false
 	}
-	ret, ok := v.(float64)
+	ret, ok := v.(int64)
 	if !ok {
 		return 0, false
 	}
