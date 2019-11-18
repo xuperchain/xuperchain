@@ -37,7 +37,7 @@ func DefaultContextConfig() *ContextConfig {
 // Context hold the context data when running a wasm instance
 type Context interface {
 	Exec(name string, param []int64) (ret int64, err error)
-	GasUsed() int64 
+	GasUsed() int64
 	ResetGasUsed()
 	Memory() []byte
 	StaticTop() uint32
