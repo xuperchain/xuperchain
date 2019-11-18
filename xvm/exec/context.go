@@ -6,7 +6,6 @@ import "C"
 import (
 	"errors"
 	"fmt"
-	"reflect"
 	"unsafe"
 )
 
@@ -14,6 +13,14 @@ const (
 	// MaxGasLimit is the maximum gas limit
 	MaxGasLimit = 0xFFFFFFFF
 )
+
+type ErrFuncNotFound struct {
+	Name string
+}
+
+func (e *ErrFuncNotFound) Error() string {
+	return fmt.Sprintf("%s not found", e.Name)
+}
 
 // ContextConfig configures an execution context
 type ContextConfig struct {
@@ -28,7 +35,23 @@ func DefaultContextConfig() *ContextConfig {
 }
 
 // Context hold the context data when running a wasm instance
-type Context struct {
+type Context interface {
+	Exec(name string, param []int64) (ret int64, err error)
+	GasUsed() int64
+	ResetGasUsed()
+	Memory() []byte
+	StaticTop() uint32
+	SetUserData(key string, value interface{})
+	GetUserData(key string) interface{}
+	Release()
+}
+
+type Code interface {
+	NewContext(cfg *ContextConfig) (ictx Context, err error)
+	Release()
+}
+
+type aotContext struct {
 	context  C.xvm_context_t
 	gasUsed  int64
 	cfg      ContextConfig
@@ -36,8 +59,8 @@ type Context struct {
 }
 
 // NewContext instances a Context from Code
-func NewContext(code *Code, cfg *ContextConfig) (ctx *Context, err error) {
-	ctx = &Context{
+func (code *aotCode) NewContext(cfg *ContextConfig) (ictx Context, err error) {
+	ctx := &aotContext{
 		cfg:      *cfg,
 		userData: make(map[string]interface{}),
 	}
@@ -48,15 +71,16 @@ func NewContext(code *Code, cfg *ContextConfig) (ctx *Context, err error) {
 		}
 	}()
 	defer CaptureTrap(&err)
-	ret := C.xvm_init_context(&ctx.context, code.code)
+	ret := C.xvm_init_context(&ctx.context, code.code, C.uint64_t(cfg.GasLimit))
 	if ret == 0 {
 		return nil, errors.New("init context error")
 	}
-	return ctx, nil
+	ictx = ctx
+	return ictx, nil
 }
 
 // Release releases resources hold by Context
-func (c *Context) Release() {
+func (c *aotContext) Release() {
 	C.xvm_release_context(&c.context)
 }
 
@@ -90,7 +114,7 @@ func legalizeName(name string) string {
 }
 
 // Exec executes a wasm function by given name and param
-func (c *Context) Exec(name string, param []int64) (ret int64, err error) {
+func (c *aotContext) Exec(name string, param []int64) (ret int64, err error) {
 	defer CaptureTrap(&err)
 
 	exportName := "export_" + legalizeName(name)
@@ -101,42 +125,48 @@ func (c *Context) Exec(name string, param []int64) (ret int64, err error) {
 	if len(param) != 0 {
 		args = (*C.int64_t)(unsafe.Pointer(&param[0]))
 	}
-	var cgas C.wasm_rt_gas_t
-	cgas.limit = C.int64_t(c.cfg.GasLimit)
 	var cret C.int64_t
-	ok := C.xvm_call(&c.context, cname, args, C.int64_t(len(param)), &cgas, &cret)
+	ok := C.xvm_call(&c.context, cname, args, C.int64_t(len(param)), &cret)
 	if ok == 0 {
-		return 0, fmt.Errorf("%s not found", name)
+		return 0, &ErrFuncNotFound{
+			Name: name,
+		}
 	}
 	ret = int64(cret)
-	c.gasUsed = int64(cgas.used)
 	return
 }
 
 // GasUsed returns the gas used by Exec
-func (c *Context) GasUsed() int64 {
-	return c.gasUsed
+func (c *aotContext) GasUsed() int64 {
+	return int64(C.xvm_gas_used(&c.context))
+}
+
+// ResetGasUsed reset the gas counter
+func (c *aotContext) ResetGasUsed() {
+	C.xvm_reset_gas_used(&c.context)
 }
 
 // Memory returns the memory of current context, nil will be returned if wasm code has no memory
-func (c *Context) Memory() []byte {
+func (c *aotContext) Memory() []byte {
 	if c.context.mem == nil || c.context.mem.size == 0 {
 		return nil
 	}
-	var mem []byte
-	header := (*reflect.SliceHeader)(unsafe.Pointer(&mem))
-	header.Data = uintptr(unsafe.Pointer(c.context.mem.data))
-	header.Len = int(c.context.mem.size)
-	header.Cap = int(c.context.mem.size)
-	return mem
+	ptr := c.context.mem.data
+	n := int(c.context.mem.size)
+	return (*[4 << 30]byte)(unsafe.Pointer(ptr))[:n:n]
+}
+
+// StaticTop returns the static data's top offset of memory
+func (c *aotContext) StaticTop() uint32 {
+	return uint32(C.xvm_mem_static_top(&c.context))
 }
 
 // SetUserData store key-value pair to Context which can be retrieved by GetUserData
-func (c *Context) SetUserData(key string, value interface{}) {
+func (c *aotContext) SetUserData(key string, value interface{}) {
 	c.userData[key] = value
 }
 
 // GetUserData retrieves user data stored by SetUserData
-func (c *Context) GetUserData(key string) interface{} {
+func (c *aotContext) GetUserData(key string) interface{} {
 	return c.userData[key]
 }

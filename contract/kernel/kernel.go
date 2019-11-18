@@ -288,11 +288,8 @@ func (k *Kernel) validateUpdateIrreversibleSlideWindow(desc *contract.TxDesc) er
 		if desc.Args[argName] == nil {
 			return fmt.Errorf("miss argument in contact: %s", argName)
 		}
-		switch tp := desc.Args[argName].(type) {
-		case float64:
-			return nil
-		default:
-			return fmt.Errorf("invalid arg type: %s, %v", argName, tp)
+		if _, ok := desc.Args[argName].(float64); !ok {
+			return fmt.Errorf("invalid arg type: %s, %v", argName, reflect.TypeOf(desc.Args[argName]))
 		}
 	}
 	return nil
@@ -303,11 +300,8 @@ func (k *Kernel) validateUpdateMaxBlockSize(desc *contract.TxDesc) error {
 		if desc.Args[argName] == nil {
 			return fmt.Errorf("miss argument in contact: %s", argName)
 		}
-		switch tp := desc.Args[argName].(type) {
-		case float64:
-			return nil
-		default:
-			return fmt.Errorf("invalid arg type: %s, %v", argName, tp)
+		if _, ok := desc.Args[argName].(float64); !ok {
+			return fmt.Errorf("invalid arg type: %s, %v", argName, reflect.TypeOf(desc.Args[argName]))
 		}
 	}
 	return nil
@@ -318,11 +312,8 @@ func (k *Kernel) validateUpdateNewAccountResourceAmount(desc *contract.TxDesc) e
 		if desc.Args[argName] == nil {
 			return fmt.Errorf("miss argument in contract: %s", argName)
 		}
-		switch tp := desc.Args[argName].(type) {
-		case float64:
-			return nil
-		default:
-			return fmt.Errorf("invalid arg type: %s, %v", argName, tp)
+		if _, ok := desc.Args[argName].(float64); !ok {
+			return fmt.Errorf("invalid arg type: %s, %v", argName, reflect.TypeOf(desc.Args[argName]))
 		}
 	}
 	return nil
@@ -553,6 +544,8 @@ func (k *Kernel) Rollback(desc *contract.TxDesc) error {
 		return k.rollbackUpdateBlockChainData(desc)
 	case "UpdateNewAccountResourceAmount":
 		return k.rollbackUpdateNewAccountResourceAmount(desc)
+	case "UpdateIrreversibleSlideWindow":
+		return k.rollbackUpdateIrreversibleSlideWindow(desc)
 	default:
 		k.log.Warn("method not implemented", "method", desc.Method)
 		return ErrMethodNotImplemented

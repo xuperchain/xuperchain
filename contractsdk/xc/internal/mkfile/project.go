@@ -239,8 +239,9 @@ func (p *Project) newApplicationTask(app *Application) (*Task, error) {
 }
 
 func (p *Project) libSourceFiles(lib *Library) []string {
-	srcs, _ := filepath.Glob(filepath.Join(lib.Dir, "*.cc"))
-	return srcs
+	cpps, _ := filepath.Glob(filepath.Join(lib.Dir, "*.cc"))
+	cs, _ := filepath.Glob(filepath.Join(lib.Dir, "*.c"))
+	return append(cpps, cs...)
 }
 
 func (p *Project) libObjectFiles(lib *Library) []string {

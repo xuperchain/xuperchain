@@ -23,7 +23,7 @@ type Codec struct {
 }
 
 // NewCodec instances a Codec, if memory of ctx is nil, trapNilMemory will be raised
-func NewCodec(ctx *Context) Codec {
+func NewCodec(ctx Context) Codec {
 	mem := ctx.Memory()
 	if mem == nil {
 		Throw(trapNilMemory)
@@ -46,6 +46,12 @@ func (c Codec) Bytes(addr, length uint32) []byte {
 func (c Codec) Uint32(addr uint32) uint32 {
 	buf := c.Bytes(addr, 4)
 	return binary.LittleEndian.Uint32(buf)
+}
+
+// SetUint32 set val to memory[addr:addr+4]
+func (c Codec) SetUint32(addr uint32, val uint32) {
+	buf := c.Bytes(addr, 4)
+	binary.LittleEndian.PutUint32(buf, val)
 }
 
 // Uint64 decodes memory[addr:addr+8] to uint64

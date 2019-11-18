@@ -13,7 +13,7 @@ import (
 // A Resolver resolves global and function symbols imported by wasm code
 type Resolver interface {
 	ResolveFunc(module, name string) (interface{}, bool)
-	ResolveGlobal(module, name string) (float64, bool)
+	ResolveGlobal(module, name string) (int64, bool)
 }
 
 // MultiResolver chains multiple Resolvers, symbol looking up is according to the order of resolvers.
@@ -36,7 +36,7 @@ func (m MultiResolver) ResolveFunc(module, name string) (interface{}, bool) {
 }
 
 // ResolveGlobal implements Resolver interface
-func (m MultiResolver) ResolveGlobal(module, name string) (float64, bool) {
+func (m MultiResolver) ResolveGlobal(module, name string) (int64, bool) {
 	for _, r := range m {
 		if v, ok := r.ResolveGlobal(module, name); ok {
 			return v, true
@@ -99,7 +99,7 @@ func xvm_resolve_func(env unsafe.Pointer, module, name *C.char) C.wasm_rt_func_h
 }
 
 //export xvm_resolve_global
-func xvm_resolve_global(env unsafe.Pointer, module, name *C.char) C.double {
+func xvm_resolve_global(env unsafe.Pointer, module, name *C.char) C.int64_t {
 	r := pointer.Restore(uintptr(env)).(*resolverBridge)
 	moduleStr, nameStr := C.GoString(module), C.GoString(name)
 	value, ok := r.resolver.ResolveGlobal(moduleStr, nameStr)
@@ -109,7 +109,7 @@ func xvm_resolve_global(env unsafe.Pointer, module, name *C.char) C.double {
 			Name:   nameStr,
 		})
 	}
-	return C.double(value)
+	return C.int64_t(value)
 }
 
 //export xvm_call_func
@@ -127,7 +127,7 @@ func xvm_call_func(env unsafe.Pointer, handle C.wasm_rt_func_handle_t,
 	}
 	// TODO: 因为context字段是Context的第一个字段，可以强转，希望后续go的内存布局不会变化
 	// FIXME: cgo应该不会有问题，如果有问题可以使用pointer package来转换
-	ctx := (*Context)(unsafe.Pointer(ctxptr))
+	ctx := (*aotContext)(unsafe.Pointer(ctxptr))
 	ret, ok := applyFuncCall(ctx, f.body, args)
 	if !ok {
 		Throw(&TrapFuncSignatureNotMatch{
@@ -138,34 +138,54 @@ func xvm_call_func(env unsafe.Pointer, handle C.wasm_rt_func_handle_t,
 	return C.uint32_t(ret)
 }
 
-func applyFuncCall(ctx *Context, f interface{}, params []uint32) (uint32, bool) {
+func applyFuncCall(ctx Context, f interface{}, params []uint32) (uint32, bool) {
 	len := len(params)
 	switch fun := f.(type) {
-	case func(*Context) uint32:
+	case func(Context) uint32:
 		if len != 0 {
 			return 0, false
 		}
 		return fun(ctx), true
-	case func(*Context, uint32) uint32:
+	case func(Context, uint32) uint32:
 		if len != 1 {
 			return 0, false
 		}
 		return fun(ctx, params[0]), true
-	case func(*Context, uint32, uint32) uint32:
+	case func(Context, uint32, uint32) uint32:
 		if len != 2 {
 			return 0, false
 		}
 		return fun(ctx, params[0], params[1]), true
-	case func(*Context, uint32, uint32, uint32) uint32:
+	case func(Context, uint32, uint32, uint32) uint32:
 		if len != 3 {
 			return 0, false
 		}
 		return fun(ctx, params[0], params[1], params[2]), true
-	case func(*Context, uint32, uint32, uint32, uint32) uint32:
+	case func(Context, uint32, uint32, uint32, uint32) uint32:
 		if len != 4 {
 			return 0, false
 		}
 		return fun(ctx, params[0], params[1], params[2], params[3]), true
+	case func(Context, uint32, uint32, uint32, uint32, uint32) uint32:
+		if len != 5 {
+			return 0, false
+		}
+		return fun(ctx, params[0], params[1], params[2], params[3], params[4]), true
+	case func(Context, uint32, uint32, uint32, uint32, uint32, uint32) uint32:
+		if len != 6 {
+			return 0, false
+		}
+		return fun(ctx, params[0], params[1], params[2], params[3], params[4], params[5]), true
+	case func(Context, uint32, uint32, uint32, uint32, uint32, uint32, uint32) uint32:
+		if len != 7 {
+			return 0, false
+		}
+		return fun(ctx, params[0], params[1], params[2], params[3], params[4], params[5], params[6]), true
+	case func(Context, uint32, uint32, uint32, uint32, uint32, uint32, uint32, uint32) uint32:
+		if len != 8 {
+			return 0, false
+		}
+		return fun(ctx, params[0], params[1], params[2], params[3], params[4], params[5], params[6], params[7]), true
 	default:
 		return 0, false
 	}

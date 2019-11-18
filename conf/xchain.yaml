@@ -1,17 +1,17 @@
 # node config
 # 日志配置
 log:
-# 模块名称
+  # 模块名称
   module: xchain
-# 日志目录
+  # 日志目录
   filepath: logs
-# 日志文件名
+  # 日志文件名
   filename: xchain
   fmt: logfmt
-# 是否打印命令行工具端口
+  # 是否打印命令行工具端口
   console: true
-# 日志等级
-  level : debug
+  # 日志等级
+  level: debug
 
 # RPC 服务暴露的端口
 tcpServer:
@@ -30,9 +30,9 @@ p2pV2:
   #staticNodes:
   #  xuper:
   #    - "/ip4/<ip>/tcp/<port>/p2p/<node_hash>"
-    
+
 miner:
-# 密钥存储路径
+  # 密钥存储路径
   keypath: ./data/keys
 
 # 数据存储路径
@@ -45,18 +45,18 @@ datapath: ./data/blockchain
 #    - /ssd3/blockchain
 
 utxo:
-# utxo的内存LRUCache大小，默认100000个address, 这个需要根据一个block里address的容量来考虑
-  cachesize: 100000
-# GenerateTx的临时锁定期限，默认是600秒
-  tmplockSeconds: 600
+  # utxo的内存LRUCache大小，表示内存中最多缓存多少个UtxoItem
+  cachesize: 2000000
+# GenerateTx的临时锁定期限，默认是60秒
+  tmplockSeconds: 60
 #单个块的合约执行的总时间(单位ms)
   contractExecutionTime: 500
 
 kernel:
-# minNewChainAmount 设置创建平行链时最少要转多少钱到同链名address
+  # minNewChainAmount 设置创建平行链时最少要转多少钱到同链名address
   minNewChainAmount: "100"
   newChainWhiteList:
-      - dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN: true
+    - dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN: true
 
 # 管理native合约的配置
 native:
@@ -67,7 +67,7 @@ native:
     whiteList:
       enable: false
       addresses:
-        - dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN 
+        - dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN
 
   # docker相关配置
   docker:
@@ -86,12 +86,15 @@ native:
 pluginConfPath: "./conf/plugins.conf"
 
 # 是否启用p2p核心节点直连
-coreConnection : false
+coreConnection: false
 
-txidCacheExpiredTime : "10s"
+txidCacheExpiredTime: "10s"
 
 # 是否压缩交易/区块
-enableCompress : true
+enableCompress: true
+
+# 块广播模式
+blockBroadcaseMode: 0
 
 # 剪枝配置
 prune:

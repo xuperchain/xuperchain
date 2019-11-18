@@ -31,6 +31,9 @@ XuperUnion is the underlying solution for union networks with following highligh
 
 * **Flexibility**:  Modular and pluggable design provides high flexibility for users to build their blockchain solutions for various business scenarios.
 
+## Contact
+E-mail: xchain-help@baidu.com
+
 ## Quick start
 
 ### Requirements
@@ -225,6 +228,8 @@ docker exec -ti xchain bash
 XuperUnion使用的许可证是Apache 2.0
 
 ## 联系我们
+商务合作，请Email：xchain-help@baidu.com, 来源请注明Github。
 如果你对XuperChain开源技术及应用感兴趣，欢迎添加“百度超级链·小助手“微信，回复“技术论坛进群”，加入“百度超级链开发者社区”，与百度资深工程师深度交流!微信二维码如下:
 
 ![微信二维码](https://github.com/ToWorld/xuperchain-image/blob/master/baidu-image-xuperchain.png)
+

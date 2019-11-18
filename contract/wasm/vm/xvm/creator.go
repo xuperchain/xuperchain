@@ -101,12 +101,12 @@ func (x *xvmCreator) getContractCodeCache(name string, cp vm.ContractCodeProvide
 	return x.cm.GetExecCode(name, cp)
 }
 
-func (x *xvmCreator) MakeExecCode(libpath string) (*exec.Code, error) {
+func (x *xvmCreator) MakeExecCode(libpath string) (exec.Code, error) {
 	resolver := exec.NewMultiResolver(
 		gowasm.NewResolver(),
 		emscripten.NewResolver(),
 		newSyscallResolver(x.config.SyscallService))
-	return exec.NewCode(libpath, resolver)
+	return exec.NewAOTCode(libpath, resolver)
 }
 
 func (x *xvmCreator) CreateInstance(ctx *bridge.Context, cp vm.ContractCodeProvider) (vm.Instance, error) {
@@ -117,7 +117,7 @@ func (x *xvmCreator) CreateInstance(ctx *bridge.Context, cp vm.ContractCodeProvi
 	}
 
 	log.Info("instance resource limit", "limits", ctx.ResourceLimits)
-	execCtx, err := exec.NewContext(code.ExecCode, &exec.ContextConfig{
+	execCtx, err := code.ExecCode.NewContext(&exec.ContextConfig{
 		GasLimit: ctx.ResourceLimits.Cpu,
 	})
 	if err != nil {
@@ -128,7 +128,10 @@ func (x *xvmCreator) CreateInstance(ctx *bridge.Context, cp vm.ContractCodeProvi
 	case "go":
 		gowasm.RegisterRuntime(execCtx)
 	case "c":
-		emscripten.Init(execCtx)
+		err = emscripten.Init(execCtx)
+		if err != nil {
+			return nil, err
+		}
 	}
 	execCtx.SetUserData(contextIDKey, ctx.ID)
 	instance := &xvmInstance{
@@ -146,7 +149,7 @@ func (x *xvmCreator) RemoveCache(contractName string) {
 
 type xvmInstance struct {
 	bridgeCtx *bridge.Context
-	execCtx   *exec.Context
+	execCtx   exec.Context
 	desc      pb.WasmCodeDesc
 }
 

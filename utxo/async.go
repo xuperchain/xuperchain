@@ -2,19 +2,47 @@ package utxo
 
 import (
 	"context"
+	"errors"
+	"fmt"
+	"sync"
 	"time"
+
+	"github.com/golang/protobuf/proto"
 
 	"github.com/xuperchain/xuperunion/global"
 	"github.com/xuperchain/xuperunion/ledger"
 	"github.com/xuperchain/xuperunion/pb"
+	XModel "github.com/xuperchain/xuperunion/xmodel"
 )
 
 // Async settings
 const (
-	AsyncMaxWaitMS   = 100
+	AsyncMaxWaitMS   = 10
 	AsyncMaxWaitSize = 7000
 	AsyncQueueBuffer = 500000
 )
+
+type AsyncResult struct {
+	mailBox sync.Map
+}
+
+func (ar *AsyncResult) Open(txid []byte) {
+	ar.mailBox.Store(string(txid), make(chan error, 1))
+}
+
+func (ar *AsyncResult) Send(txid []byte, err error) {
+	ch, _ := ar.mailBox.Load(string(txid))
+	if ch != nil {
+		ch.(chan error) <- err
+	}
+}
+
+func (ar *AsyncResult) Wait(txid []byte) error {
+	ch, _ := ar.mailBox.Load(string(txid))
+	err := <-ch.(chan error)
+	ar.mailBox.Delete(string(txid))
+	return err
+}
 
 // StartAsyncWriter start the Asynchronize writer
 func (uv *UtxoVM) StartAsyncWriter() {
@@ -26,6 +54,15 @@ func (uv *UtxoVM) StartAsyncWriter() {
 	go uv.asyncVerifiy(ctx)
 }
 
+func (uv *UtxoVM) StartAsyncBlockMode() {
+	uv.asyncBlockMode = true
+	ctx, cancel := context.WithCancel(context.Background())
+	uv.asyncCancel = cancel
+	ledger.DisableTxDedup = false
+	go uv.asyncWriter(ctx)
+	go uv.asyncVerifiy(ctx)
+}
+
 func (uv *UtxoVM) verifyTxWorker(itxlist []*InboundTx) error {
 	if len(itxlist) == 0 {
 		return nil
@@ -33,11 +70,20 @@ func (uv *UtxoVM) verifyTxWorker(itxlist []*InboundTx) error {
 	uv.xlog.Debug("async tx list size", "size", len(itxlist))
 	//校验tx合法性
 	for _, itx := range itxlist {
-		ok, xerr := uv.ImmediateVerifyTx(itx.tx, false)
+		// 去重判断
+		tx := itx.tx
+		_, exist := uv.unconfirmTxInMem.Load(string(tx.Txid))
+		if exist {
+			uv.xlog.Debug("this tx already in unconfirm table, when DoTx", "txid", fmt.Sprintf("%x", tx.Txid))
+			uv.asyncResult.Send(tx.Txid, ErrAlreadyInUnconfirmed)
+			continue
+		}
+		ok, xerr := uv.ImmediateVerifyTx(tx, false)
 		if !ok {
-			uv.xlog.Warn("invalid transaction found", "txid", global.F(itx.tx.Txid), "err", xerr)
+			uv.xlog.Warn("invalid transaction found", "txid", global.F(tx.Txid), "err", xerr)
+			uv.asyncResult.Send(tx.Txid, xerr)
 		} else {
-			uv.verifiedTxChan <- itx.tx
+			uv.verifiedTxChan <- tx
 		}
 	}
 	return nil
@@ -59,6 +105,15 @@ func (uv *UtxoVM) checkConflictTxs(txList []*pb.Transaction) map[string]bool {
 				break
 			}
 		}
+		for _, txOutputExt := range tx.TxOutputsExt {
+			writeSetKey := XModel.GenWriteKeyWithPrefix(txOutputExt)
+			if !conflictUtxos[writeSetKey] {
+				conflictUtxos[writeSetKey] = true
+			} else {
+				innerConflict = true
+				break
+			}
+		}
 		if innerConflict {
 			conflictTxs[string(tx.Txid)] = true
 		}
@@ -72,29 +127,65 @@ func (uv *UtxoVM) flushTxList(txList []*pb.Transaction) error {
 		return nil
 	}
 	uv.xlog.Warn("async tx list size", "size", len(txList))
-	batch := uv.ldb.NewBatch()
+	pbTxList := make([][]byte, len(txList))
+	// 异步阻塞模式需要将交易数据持久化落盘
+	if uv.asyncBlockMode {
+		for i, tx := range txList {
+			pbTxBuf, pbErr := proto.Marshal(tx)
+			if pbErr != nil {
+				uv.xlog.Warn("    fail to marshal tx", "pbErr", pbErr)
+				pbTxList[i] = nil
+				continue
+			}
+			pbTxList[i] = pbTxBuf
+		}
+	}
 	conflictedTxs := uv.checkConflictTxs(txList)
 	uv.mutex.Lock()
 	defer uv.mutex.Unlock()
 	for uv.asyncTryBlockGen { //避让出块的线程
 		uv.asyncCond.Wait() //会临时让出锁
 	}
-	for _, tx := range txList {
+	batch := uv.asyncBatch
+	batch.Reset()
+	for i, tx := range txList {
+		if uv.asyncBlockMode && pbTxList[i] == nil {
+			uv.asyncResult.Send(tx.Txid, errors.New("marshal failed"))
+			continue
+		}
 		if conflictedTxs[string(tx.Txid)] {
+			uv.asyncResult.Send(tx.Txid, errors.New("conflict tx"))
+			pbTxList[i] = nil
 			continue
 		}
 		doErr := uv.doTxInternal(tx, batch)
 		if doErr != nil {
 			uv.xlog.Warn("doTxInternal failed, when DoTx", "doErr", doErr)
+			uv.asyncResult.Send(tx.Txid, doErr)
+			pbTxList[i] = nil
 			continue
 		}
 		uv.unconfirmTxInMem.Store(string(tx.Txid), tx)
+		if uv.asyncBlockMode {
+			batch.Put(append([]byte(pb.UnconfirmedTablePrefix), tx.Txid...), pbTxList[i])
+		}
 		// uv.xlog.Debug("print tx size when DoTx", "tx_size", batch.ValueSize(), "txid", fmt.Sprintf("%x", tx.Txid))
 	}
 	writeErr := batch.Write()
 	if writeErr != nil {
 		uv.ClearCache()
 		uv.xlog.Warn("fail to save to ldb", "writeErr", writeErr)
+	}
+	// 对于异步阻塞模式，有必要在执行完一个交易后同步PostTx，并将结果返回给客户端
+	if uv.asyncBlockMode {
+		go func() {
+			for i, tx := range txList {
+				if pbTxList[i] == nil {
+					continue
+				}
+				uv.asyncResult.Send(tx.Txid, nil)
+			}
+		}()
 	}
 	return writeErr
 }
@@ -139,7 +230,7 @@ func (uv *UtxoVM) asyncVerifiy(ctx context.Context) {
 			go uv.verifyTxWorker(itxlist)
 			itxlist = []*InboundTx{}
 		case <-ctx.Done():
-			uv.RollBackUnconfirmedTx()
+			//uv.RollBackUnconfirmedTx()
 			uv.asyncWriterWG.Done()
 			return
 		}
@@ -153,7 +244,7 @@ func (uv *UtxoVM) SetBlockGenEvent() {
 
 // NotifyFinishBlockGen notify to finish generating block
 func (uv *UtxoVM) NotifyFinishBlockGen() {
-	if !uv.asyncMode {
+	if !uv.asyncMode && !uv.asyncBlockMode {
 		return
 	}
 	uv.asyncTryBlockGen = false

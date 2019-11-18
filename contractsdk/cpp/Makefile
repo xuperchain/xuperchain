@@ -49,7 +49,13 @@ $(BUILD_DIR)/test/%.out: $(BUILD_DIR)/test/%.cc.o $(XCHAIN_CDT_LIBS) $(MOCK_CLAS
 
 # wasm target
 $(BUILD_DIR)/%.wasm: $(BUILD_DIR)/example/%.cc.o $(XCHAIN_CDT_LIBS) $(BUILD_DIR)/libxchain.a
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -o $@ $^ -Oz -s ERROR_ON_UNDEFINED_SYMBOLS=0 -s DETERMINISTIC=1 -L/usr/local/lib -lprotobuf-lite -lpthread
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -o $@ $^ -Oz \
+								-s DETERMINISTIC=1 \
+								-s TOTAL_STACK=256KB \
+								-s TOTAL_MEMORY=1MB \
+								-s EXTRA_EXPORTED_RUNTIME_METHODS='["stackAlloc"]' \
+								--js-library xchain/exports.js \
+								-L/usr/local/lib -lprotobuf-lite -lpthread
 
 # c++ source
 $(BUILD_DIR)/%.cc.o: %.cc

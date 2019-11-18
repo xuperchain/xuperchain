@@ -387,6 +387,7 @@ static const char* s_global_symbols[] = {
 static const char* HANDLE_TYPE = "wasm_rt_handle_t";
 static const char* USER_CTX_FIELD = "user_ctx";
 static const char* GAS_FIELD = "gas";
+static const char* STATIC_TOP_FIELD = "static_top";
 
 #define SECTION_NAME(x) s_header_##x
 #include "src/prebuilt/wasm2c.include.h"
@@ -921,6 +922,12 @@ void CWriter::WriteHandleFields() {
   // Write gas field
   Write("wasm_rt_gas_t ", DefineHandleFieldName(GAS_FIELD), ";", Newline());
 
+  // Write call deepth
+  Write("uint32_t ", DefineHandleFieldName("call_stack_depth"), ";", Newline());
+
+  // Write static data max offset
+  Write("uint32_t ", DefineHandleFieldName(STATIC_TOP_FIELD), ";", Newline());
+
   // Memory. include imports
   for (const Memory* memory : module_->memories) {
     WriteMemory(DefineHandleFieldName(memory->name));
@@ -938,9 +945,6 @@ void CWriter::WriteHandleFields() {
     WriteGlobal(*global, DefineHandleFieldName(global->name));
     Write(";", Newline());
   }
-
-  // Write call deepth
-  Write("uint32_t ", DefineHandleFieldName("call_stack_depth"), ";", Newline());
 }
 
 void CWriter::WriteFuncTypes() {
@@ -1030,16 +1034,19 @@ void CWriter::WriteFuncDeclaration(const FuncDeclaration& decl,
 void CWriter::WriteGlobals() {
   Index global_index = 0;
   Write(Newline(), "static void init_globals(wasm_rt_handle_t* h) ", OpenBrace());
+  Write("int64_t tmp = 0;", Newline());
   // Init imported globals
   for (const Import* import : module_->imports) {
     if (import->kind() == ExternalKind::Global) {
       const Global& global = cast<GlobalImport>(import)->global;
-      Write(ExternalRef(global.name), " = ");
+      Write("tmp = ");
       Write("(*g_rt_ops.wasm_rt_resolve_global)(",
             ExternalRef(USER_CTX_FIELD), ", ",
             QuotedString(import->module_name), ", ",
             QuotedString(import->field_name), ")");
       Write(";", Newline());
+      Write("memcpy(", ExternalPtr(global.name), ", &tmp, sizeof(", 
+            ExternalRef(global.name), "));", Newline());
     }
   }
 
@@ -1080,6 +1087,14 @@ void CWriter::WriteTable(const std::string& name) {
   Write("wasm_rt_table_t ", name, ";");
 }
 
+static uint32_t DataSegmentOffset(const DataSegment* seg) {
+  const ExprList& expr_list = seg->offset;
+  assert(expr_list.size() == 1);
+  const Expr* expr = &expr_list.front();
+  assert(expr->type() == ExprType::Const);
+  return cast<ConstExpr>(expr)->const_.u32;
+}
+
 void CWriter::WriteDataInitializers() {
   const Memory* memory = nullptr;
   Index data_segment_index = 0;
@@ -1108,14 +1123,23 @@ void CWriter::WriteDataInitializers() {
   }
 
   Write(Newline(), "static void init_memory(wasm_rt_handle_t* h) ", OpenBrace());
+  uint32_t max_off = 0;
   if (memory) {
-    uint32_t max = memory->page_limits.has_max ? memory->page_limits.max : 65536;
+    uint32_t init_page = memory->page_limits.initial == 0 ? 1 : memory->page_limits.initial;
+    uint32_t max_page = memory->page_limits.has_max ? memory->page_limits.max : 65536;
+    uint32_t mem_size = init_page * 65536;
     Write("(*g_rt_ops.wasm_rt_allocate_memory)(",
           ExternalRef(USER_CTX_FIELD), ", ",
           ExternalPtr(memory->name), ", ",
-          memory->page_limits.initial, ", ", max, ");", Newline());
+          init_page, ", ", max_page, ");", Newline());
     data_segment_index = 0;
     for (const DataSegment* data_segment : module_->data_segments) {
+      uint32_t data_off = DataSegmentOffset(data_segment);
+      uint32_t mem_off = data_off + data_segment->data.size();
+      if (max_off < mem_off) {
+        max_off = mem_off;
+      }
+      assert(mem_off <= mem_size);
       Write("memcpy(&(", ExternalRef(memory->name), ".data[");
       WriteInitExpr(data_segment->offset);
       Write("]), data_segment_data_", data_segment_index, ", ",
@@ -1123,6 +1147,7 @@ void CWriter::WriteDataInitializers() {
       ++data_segment_index;
     }
   }
+  Write(ExternalRef(STATIC_TOP_FIELD), " = ", max_off, ";", Newline());
 
   Write(CloseBrace(), Newline());
 }
