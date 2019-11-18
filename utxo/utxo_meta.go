@@ -392,7 +392,7 @@ func (uv *UtxoVM) UpdateGasPrice(nextGasPrice *pb.GasPrice, batch kvdb.Batch) er
 	}
 	uv.xlog.Info("Update gas price succeed")
 	uv.mutexMeta.Lock()
-	uv.mutexMeta.Unlock()
+	defer uv.mutexMeta.Unlock()
 	uv.metaTmp.GasPrice = nextGasPrice
 	return nil
 }
