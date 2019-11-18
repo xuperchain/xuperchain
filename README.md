@@ -1,3 +1,9 @@
+# 有奖问卷调查  
+> 想知道你对区块链行业知多少，来做有奖小调研#
+> 你是区块链行业大咖，金主，亦或是区块链小白？
+> 花几分钟时间完成问卷，就知道**你到底是不是区块链人**。
+
+> 问卷调研链接：https://iwenjuan.baidu.com/?code=zrgy7e
 # XuperUnion
 
 [![Build Status](https://travis-ci.org/xuperchain/xuperunion.svg?branch=master)](https://travis-ci.org/xuperchain/xuperunion)
