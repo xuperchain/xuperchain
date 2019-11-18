@@ -3,6 +3,7 @@ package utxo
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"time"
 
@@ -69,11 +70,20 @@ func (uv *UtxoVM) verifyTxWorker(itxlist []*InboundTx) error {
 	uv.xlog.Debug("async tx list size", "size", len(itxlist))
 	//校验tx合法性
 	for _, itx := range itxlist {
-		ok, xerr := uv.ImmediateVerifyTx(itx.tx, false)
+		// 去重判断
+		tx := itx.tx
+		_, exist := uv.unconfirmTxInMem.Load(string(tx.Txid))
+		if exist {
+			uv.xlog.Debug("this tx already in unconfirm table, when DoTx", "txid", fmt.Sprintf("%x", tx.Txid))
+			uv.asyncResult.Send(tx.Txid, ErrAlreadyInUnconfirmed)
+			continue
+		}
+		ok, xerr := uv.ImmediateVerifyTx(tx, false)
 		if !ok {
-			uv.xlog.Warn("invalid transaction found", "txid", global.F(itx.tx.Txid), "err", xerr)
+			uv.xlog.Warn("invalid transaction found", "txid", global.F(tx.Txid), "err", xerr)
+			uv.asyncResult.Send(tx.Txid, xerr)
 		} else {
-			uv.verifiedTxChan <- itx.tx
+			uv.verifiedTxChan <- tx
 		}
 	}
 	return nil
@@ -144,12 +154,15 @@ func (uv *UtxoVM) flushTxList(txList []*pb.Transaction) error {
 			continue
 		}
 		if conflictedTxs[string(tx.Txid)] {
+			uv.asyncResult.Send(tx.Txid, errors.New("conflict tx"))
+			pbTxList[i] = nil
 			continue
 		}
 		doErr := uv.doTxInternal(tx, batch)
 		if doErr != nil {
 			uv.xlog.Warn("doTxInternal failed, when DoTx", "doErr", doErr)
 			uv.asyncResult.Send(tx.Txid, doErr)
+			pbTxList[i] = nil
 			continue
 		}
 		uv.unconfirmTxInMem.Store(string(tx.Txid), tx)
@@ -166,7 +179,10 @@ func (uv *UtxoVM) flushTxList(txList []*pb.Transaction) error {
 	// 对于异步阻塞模式，有必要在执行完一个交易后同步PostTx，并将结果返回给客户端
 	if uv.asyncBlockMode {
 		go func() {
-			for _, tx := range txList {
+			for i, tx := range txList {
+				if pbTxList[i] == nil {
+					continue
+				}
 				uv.asyncResult.Send(tx.Txid, nil)
 			}
 		}()
