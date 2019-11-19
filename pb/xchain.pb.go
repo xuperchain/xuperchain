@@ -1656,6 +1656,7 @@ type UtxoMeta struct {
 	NewAccountResourceAmount int64            `protobuf:"varint,9,opt,name=new_account_resource_amount,json=newAccountResourceAmount,proto3" json:"new_account_resource_amount,omitempty"`
 	IrreversibleBlockHeight  int64            `protobuf:"varint,10,opt,name=irreversibleBlockHeight,proto3" json:"irreversibleBlockHeight,omitempty"`
 	IrreversibleSlideWindow  int64            `protobuf:"varint,11,opt,name=irreversibleSlideWindow,proto3" json:"irreversibleSlideWindow,omitempty"`
+	GasPrice                 *GasPrice        `protobuf:"bytes,12,opt,name=gasPrice,proto3" json:"gasPrice,omitempty"`
 	XXX_NoUnkeyedLiteral     struct{}         `json:"-"`
 	XXX_unrecognized         []byte           `json:"-"`
 	XXX_sizecache            int32            `json:"-"`
@@ -1763,6 +1764,76 @@ func (m *UtxoMeta) GetIrreversibleSlideWindow() int64 {
 	return 0
 }
 
+func (m *UtxoMeta) GetGasPrice() *GasPrice {
+	if m != nil {
+		return m.GasPrice
+	}
+	return nil
+}
+
+type GasPrice struct {
+	CpuRate              int64    `protobuf:"varint,1,opt,name=cpu_rate,json=cpuRate,proto3" json:"cpu_rate,omitempty"`
+	MemRate              int64    `protobuf:"varint,2,opt,name=mem_rate,json=memRate,proto3" json:"mem_rate,omitempty"`
+	DiskRate             int64    `protobuf:"varint,3,opt,name=disk_rate,json=diskRate,proto3" json:"disk_rate,omitempty"`
+	XfeeRate             int64    `protobuf:"varint,4,opt,name=xfee_rate,json=xfeeRate,proto3" json:"xfee_rate,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *GasPrice) Reset()         { *m = GasPrice{} }
+func (m *GasPrice) String() string { return proto.CompactTextString(m) }
+func (*GasPrice) ProtoMessage()    {}
+func (*GasPrice) Descriptor() ([]byte, []int) {
+	return fileDescriptor_db0991b9525664ca, []int{21}
+}
+
+func (m *GasPrice) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_GasPrice.Unmarshal(m, b)
+}
+func (m *GasPrice) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_GasPrice.Marshal(b, m, deterministic)
+}
+func (m *GasPrice) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_GasPrice.Merge(m, src)
+}
+func (m *GasPrice) XXX_Size() int {
+	return xxx_messageInfo_GasPrice.Size(m)
+}
+func (m *GasPrice) XXX_DiscardUnknown() {
+	xxx_messageInfo_GasPrice.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_GasPrice proto.InternalMessageInfo
+
+func (m *GasPrice) GetCpuRate() int64 {
+	if m != nil {
+		return m.CpuRate
+	}
+	return 0
+}
+
+func (m *GasPrice) GetMemRate() int64 {
+	if m != nil {
+		return m.MemRate
+	}
+	return 0
+}
+
+func (m *GasPrice) GetDiskRate() int64 {
+	if m != nil {
+		return m.DiskRate
+	}
+	return 0
+}
+
+func (m *GasPrice) GetXfeeRate() int64 {
+	if m != nil {
+		return m.XfeeRate
+	}
+	return 0
+}
+
 // The internal block struct
 type InternalBlock struct {
 	// block version
@@ -1812,7 +1883,7 @@ func (m *InternalBlock) Reset()         { *m = InternalBlock{} }
 func (m *InternalBlock) String() string { return proto.CompactTextString(m) }
 func (*InternalBlock) ProtoMessage()    {}
 func (*InternalBlock) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{21}
+	return fileDescriptor_db0991b9525664ca, []int{22}
 }
 
 func (m *InternalBlock) XXX_Unmarshal(b []byte) error {
@@ -1995,7 +2066,7 @@ func (m *BCStatus) Reset()         { *m = BCStatus{} }
 func (m *BCStatus) String() string { return proto.CompactTextString(m) }
 func (*BCStatus) ProtoMessage()    {}
 func (*BCStatus) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{22}
+	return fileDescriptor_db0991b9525664ca, []int{23}
 }
 
 func (m *BCStatus) XXX_Unmarshal(b []byte) error {
@@ -2070,7 +2141,7 @@ func (m *BCTipStatus) Reset()         { *m = BCTipStatus{} }
 func (m *BCTipStatus) String() string { return proto.CompactTextString(m) }
 func (*BCTipStatus) ProtoMessage()    {}
 func (*BCTipStatus) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{23}
+	return fileDescriptor_db0991b9525664ca, []int{24}
 }
 
 func (m *BCTipStatus) XXX_Unmarshal(b []byte) error {
@@ -2117,7 +2188,7 @@ func (m *BlockChains) Reset()         { *m = BlockChains{} }
 func (m *BlockChains) String() string { return proto.CompactTextString(m) }
 func (*BlockChains) ProtoMessage()    {}
 func (*BlockChains) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{24}
+	return fileDescriptor_db0991b9525664ca, []int{25}
 }
 
 func (m *BlockChains) XXX_Unmarshal(b []byte) error {
@@ -2164,7 +2235,7 @@ func (m *Speeds) Reset()         { *m = Speeds{} }
 func (m *Speeds) String() string { return proto.CompactTextString(m) }
 func (*Speeds) ProtoMessage()    {}
 func (*Speeds) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{25}
+	return fileDescriptor_db0991b9525664ca, []int{26}
 }
 
 func (m *Speeds) XXX_Unmarshal(b []byte) error {
@@ -2210,7 +2281,7 @@ func (m *BCSpeeds) Reset()         { *m = BCSpeeds{} }
 func (m *BCSpeeds) String() string { return proto.CompactTextString(m) }
 func (*BCSpeeds) ProtoMessage()    {}
 func (*BCSpeeds) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{26}
+	return fileDescriptor_db0991b9525664ca, []int{27}
 }
 
 func (m *BCSpeeds) XXX_Unmarshal(b []byte) error {
@@ -2252,7 +2323,7 @@ func (m *SystemsStatus) Reset()         { *m = SystemsStatus{} }
 func (m *SystemsStatus) String() string { return proto.CompactTextString(m) }
 func (*SystemsStatus) ProtoMessage()    {}
 func (*SystemsStatus) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{27}
+	return fileDescriptor_db0991b9525664ca, []int{28}
 }
 
 func (m *SystemsStatus) XXX_Unmarshal(b []byte) error {
@@ -2313,7 +2384,7 @@ func (m *SystemsStatusReply) Reset()         { *m = SystemsStatusReply{} }
 func (m *SystemsStatusReply) String() string { return proto.CompactTextString(m) }
 func (*SystemsStatusReply) ProtoMessage()    {}
 func (*SystemsStatusReply) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{28}
+	return fileDescriptor_db0991b9525664ca, []int{29}
 }
 
 func (m *SystemsStatusReply) XXX_Unmarshal(b []byte) error {
@@ -2361,7 +2432,7 @@ func (m *RawUrl) Reset()         { *m = RawUrl{} }
 func (m *RawUrl) String() string { return proto.CompactTextString(m) }
 func (*RawUrl) ProtoMessage()    {}
 func (*RawUrl) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{29}
+	return fileDescriptor_db0991b9525664ca, []int{30}
 }
 
 func (m *RawUrl) XXX_Unmarshal(b []byte) error {
@@ -2411,7 +2482,7 @@ func (m *Utxo) Reset()         { *m = Utxo{} }
 func (m *Utxo) String() string { return proto.CompactTextString(m) }
 func (*Utxo) ProtoMessage()    {}
 func (*Utxo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{30}
+	return fileDescriptor_db0991b9525664ca, []int{31}
 }
 
 func (m *Utxo) XXX_Unmarshal(b []byte) error {
@@ -2491,7 +2562,7 @@ func (m *UtxoInput) Reset()         { *m = UtxoInput{} }
 func (m *UtxoInput) String() string { return proto.CompactTextString(m) }
 func (*UtxoInput) ProtoMessage()    {}
 func (*UtxoInput) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{31}
+	return fileDescriptor_db0991b9525664ca, []int{32}
 }
 
 func (m *UtxoInput) XXX_Unmarshal(b []byte) error {
@@ -2579,7 +2650,7 @@ func (m *UtxoOutput) Reset()         { *m = UtxoOutput{} }
 func (m *UtxoOutput) String() string { return proto.CompactTextString(m) }
 func (*UtxoOutput) ProtoMessage()    {}
 func (*UtxoOutput) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{32}
+	return fileDescriptor_db0991b9525664ca, []int{33}
 }
 
 func (m *UtxoOutput) XXX_Unmarshal(b []byte) error {
@@ -2641,7 +2712,7 @@ func (m *NativeCodeDesc) Reset()         { *m = NativeCodeDesc{} }
 func (m *NativeCodeDesc) String() string { return proto.CompactTextString(m) }
 func (*NativeCodeDesc) ProtoMessage()    {}
 func (*NativeCodeDesc) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{33}
+	return fileDescriptor_db0991b9525664ca, []int{34}
 }
 
 func (m *NativeCodeDesc) XXX_Unmarshal(b []byte) error {
@@ -2711,7 +2782,7 @@ func (m *WasmCodeDesc) Reset()         { *m = WasmCodeDesc{} }
 func (m *WasmCodeDesc) String() string { return proto.CompactTextString(m) }
 func (*WasmCodeDesc) ProtoMessage()    {}
 func (*WasmCodeDesc) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{34}
+	return fileDescriptor_db0991b9525664ca, []int{35}
 }
 
 func (m *WasmCodeDesc) XXX_Unmarshal(b []byte) error {
@@ -2783,7 +2854,7 @@ func (m *DeployNativeCodeRequest) Reset()         { *m = DeployNativeCodeRequest
 func (m *DeployNativeCodeRequest) String() string { return proto.CompactTextString(m) }
 func (*DeployNativeCodeRequest) ProtoMessage()    {}
 func (*DeployNativeCodeRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{35}
+	return fileDescriptor_db0991b9525664ca, []int{36}
 }
 
 func (m *DeployNativeCodeRequest) XXX_Unmarshal(b []byte) error {
@@ -2864,7 +2935,7 @@ func (m *DeployNativeCodeResponse) Reset()         { *m = DeployNativeCodeRespon
 func (m *DeployNativeCodeResponse) String() string { return proto.CompactTextString(m) }
 func (*DeployNativeCodeResponse) ProtoMessage()    {}
 func (*DeployNativeCodeResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{36}
+	return fileDescriptor_db0991b9525664ca, []int{37}
 }
 
 func (m *DeployNativeCodeResponse) XXX_Unmarshal(b []byte) error {
@@ -2905,7 +2976,7 @@ func (m *NativeCodeStatus) Reset()         { *m = NativeCodeStatus{} }
 func (m *NativeCodeStatus) String() string { return proto.CompactTextString(m) }
 func (*NativeCodeStatus) ProtoMessage()    {}
 func (*NativeCodeStatus) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{37}
+	return fileDescriptor_db0991b9525664ca, []int{38}
 }
 
 func (m *NativeCodeStatus) XXX_Unmarshal(b []byte) error {
@@ -2959,7 +3030,7 @@ func (m *NativeCodeStatusRequest) Reset()         { *m = NativeCodeStatusRequest
 func (m *NativeCodeStatusRequest) String() string { return proto.CompactTextString(m) }
 func (*NativeCodeStatusRequest) ProtoMessage()    {}
 func (*NativeCodeStatusRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{38}
+	return fileDescriptor_db0991b9525664ca, []int{39}
 }
 
 func (m *NativeCodeStatusRequest) XXX_Unmarshal(b []byte) error {
@@ -3006,7 +3077,7 @@ func (m *NativeCodeStatusResponse) Reset()         { *m = NativeCodeStatusRespon
 func (m *NativeCodeStatusResponse) String() string { return proto.CompactTextString(m) }
 func (*NativeCodeStatusResponse) ProtoMessage()    {}
 func (*NativeCodeStatusResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{39}
+	return fileDescriptor_db0991b9525664ca, []int{40}
 }
 
 func (m *NativeCodeStatusResponse) XXX_Unmarshal(b []byte) error {
@@ -3054,7 +3125,7 @@ func (m *DposCandidatesRequest) Reset()         { *m = DposCandidatesRequest{} }
 func (m *DposCandidatesRequest) String() string { return proto.CompactTextString(m) }
 func (*DposCandidatesRequest) ProtoMessage()    {}
 func (*DposCandidatesRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{40}
+	return fileDescriptor_db0991b9525664ca, []int{41}
 }
 
 func (m *DposCandidatesRequest) XXX_Unmarshal(b []byte) error {
@@ -3102,7 +3173,7 @@ func (m *DposCandidatesResponse) Reset()         { *m = DposCandidatesResponse{}
 func (m *DposCandidatesResponse) String() string { return proto.CompactTextString(m) }
 func (*DposCandidatesResponse) ProtoMessage()    {}
 func (*DposCandidatesResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{41}
+	return fileDescriptor_db0991b9525664ca, []int{42}
 }
 
 func (m *DposCandidatesResponse) XXX_Unmarshal(b []byte) error {
@@ -3151,7 +3222,7 @@ func (m *DposNominateRecordsRequest) Reset()         { *m = DposNominateRecordsR
 func (m *DposNominateRecordsRequest) String() string { return proto.CompactTextString(m) }
 func (*DposNominateRecordsRequest) ProtoMessage()    {}
 func (*DposNominateRecordsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{42}
+	return fileDescriptor_db0991b9525664ca, []int{43}
 }
 
 func (m *DposNominateRecordsRequest) XXX_Unmarshal(b []byte) error {
@@ -3206,7 +3277,7 @@ func (m *DposNominateInfo) Reset()         { *m = DposNominateInfo{} }
 func (m *DposNominateInfo) String() string { return proto.CompactTextString(m) }
 func (*DposNominateInfo) ProtoMessage()    {}
 func (*DposNominateInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{43}
+	return fileDescriptor_db0991b9525664ca, []int{44}
 }
 
 func (m *DposNominateInfo) XXX_Unmarshal(b []byte) error {
@@ -3254,7 +3325,7 @@ func (m *DposNominateRecordsResponse) Reset()         { *m = DposNominateRecords
 func (m *DposNominateRecordsResponse) String() string { return proto.CompactTextString(m) }
 func (*DposNominateRecordsResponse) ProtoMessage()    {}
 func (*DposNominateRecordsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{44}
+	return fileDescriptor_db0991b9525664ca, []int{45}
 }
 
 func (m *DposNominateRecordsResponse) XXX_Unmarshal(b []byte) error {
@@ -3303,7 +3374,7 @@ func (m *DposNomineeRecordsRequest) Reset()         { *m = DposNomineeRecordsReq
 func (m *DposNomineeRecordsRequest) String() string { return proto.CompactTextString(m) }
 func (*DposNomineeRecordsRequest) ProtoMessage()    {}
 func (*DposNomineeRecordsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{45}
+	return fileDescriptor_db0991b9525664ca, []int{46}
 }
 
 func (m *DposNomineeRecordsRequest) XXX_Unmarshal(b []byte) error {
@@ -3358,7 +3429,7 @@ func (m *DposNomineeRecordsResponse) Reset()         { *m = DposNomineeRecordsRe
 func (m *DposNomineeRecordsResponse) String() string { return proto.CompactTextString(m) }
 func (*DposNomineeRecordsResponse) ProtoMessage()    {}
 func (*DposNomineeRecordsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{46}
+	return fileDescriptor_db0991b9525664ca, []int{47}
 }
 
 func (m *DposNomineeRecordsResponse) XXX_Unmarshal(b []byte) error {
@@ -3407,7 +3478,7 @@ func (m *DposVoteRecordsRequest) Reset()         { *m = DposVoteRecordsRequest{}
 func (m *DposVoteRecordsRequest) String() string { return proto.CompactTextString(m) }
 func (*DposVoteRecordsRequest) ProtoMessage()    {}
 func (*DposVoteRecordsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{47}
+	return fileDescriptor_db0991b9525664ca, []int{48}
 }
 
 func (m *DposVoteRecordsRequest) XXX_Unmarshal(b []byte) error {
@@ -3462,7 +3533,7 @@ func (m *VoteRecord) Reset()         { *m = VoteRecord{} }
 func (m *VoteRecord) String() string { return proto.CompactTextString(m) }
 func (*VoteRecord) ProtoMessage()    {}
 func (*VoteRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{48}
+	return fileDescriptor_db0991b9525664ca, []int{49}
 }
 
 func (m *VoteRecord) XXX_Unmarshal(b []byte) error {
@@ -3511,7 +3582,7 @@ func (m *DposVoteRecordsResponse) Reset()         { *m = DposVoteRecordsResponse
 func (m *DposVoteRecordsResponse) String() string { return proto.CompactTextString(m) }
 func (*DposVoteRecordsResponse) ProtoMessage()    {}
 func (*DposVoteRecordsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{49}
+	return fileDescriptor_db0991b9525664ca, []int{50}
 }
 
 func (m *DposVoteRecordsResponse) XXX_Unmarshal(b []byte) error {
@@ -3560,7 +3631,7 @@ func (m *DposVotedRecordsRequest) Reset()         { *m = DposVotedRecordsRequest
 func (m *DposVotedRecordsRequest) String() string { return proto.CompactTextString(m) }
 func (*DposVotedRecordsRequest) ProtoMessage()    {}
 func (*DposVotedRecordsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{50}
+	return fileDescriptor_db0991b9525664ca, []int{51}
 }
 
 func (m *DposVotedRecordsRequest) XXX_Unmarshal(b []byte) error {
@@ -3615,7 +3686,7 @@ func (m *VotedRecord) Reset()         { *m = VotedRecord{} }
 func (m *VotedRecord) String() string { return proto.CompactTextString(m) }
 func (*VotedRecord) ProtoMessage()    {}
 func (*VotedRecord) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{51}
+	return fileDescriptor_db0991b9525664ca, []int{52}
 }
 
 func (m *VotedRecord) XXX_Unmarshal(b []byte) error {
@@ -3664,7 +3735,7 @@ func (m *DposVotedRecordsResponse) Reset()         { *m = DposVotedRecordsRespon
 func (m *DposVotedRecordsResponse) String() string { return proto.CompactTextString(m) }
 func (*DposVotedRecordsResponse) ProtoMessage()    {}
 func (*DposVotedRecordsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{52}
+	return fileDescriptor_db0991b9525664ca, []int{53}
 }
 
 func (m *DposVotedRecordsResponse) XXX_Unmarshal(b []byte) error {
@@ -3713,7 +3784,7 @@ func (m *DposCheckResultsRequest) Reset()         { *m = DposCheckResultsRequest
 func (m *DposCheckResultsRequest) String() string { return proto.CompactTextString(m) }
 func (*DposCheckResultsRequest) ProtoMessage()    {}
 func (*DposCheckResultsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{53}
+	return fileDescriptor_db0991b9525664ca, []int{54}
 }
 
 func (m *DposCheckResultsRequest) XXX_Unmarshal(b []byte) error {
@@ -3769,7 +3840,7 @@ func (m *DposCheckResultsResponse) Reset()         { *m = DposCheckResultsRespon
 func (m *DposCheckResultsResponse) String() string { return proto.CompactTextString(m) }
 func (*DposCheckResultsResponse) ProtoMessage()    {}
 func (*DposCheckResultsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{54}
+	return fileDescriptor_db0991b9525664ca, []int{55}
 }
 
 func (m *DposCheckResultsResponse) XXX_Unmarshal(b []byte) error {
@@ -3824,7 +3895,7 @@ func (m *DposStatusRequest) Reset()         { *m = DposStatusRequest{} }
 func (m *DposStatusRequest) String() string { return proto.CompactTextString(m) }
 func (*DposStatusRequest) ProtoMessage()    {}
 func (*DposStatusRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{55}
+	return fileDescriptor_db0991b9525664ca, []int{56}
 }
 
 func (m *DposStatusRequest) XXX_Unmarshal(b []byte) error {
@@ -3872,7 +3943,7 @@ func (m *DposStatusResponse) Reset()         { *m = DposStatusResponse{} }
 func (m *DposStatusResponse) String() string { return proto.CompactTextString(m) }
 func (*DposStatusResponse) ProtoMessage()    {}
 func (*DposStatusResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{56}
+	return fileDescriptor_db0991b9525664ca, []int{57}
 }
 
 func (m *DposStatusResponse) XXX_Unmarshal(b []byte) error {
@@ -3922,7 +3993,7 @@ func (m *DposStatus) Reset()         { *m = DposStatus{} }
 func (m *DposStatus) String() string { return proto.CompactTextString(m) }
 func (*DposStatus) ProtoMessage()    {}
 func (*DposStatus) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{57}
+	return fileDescriptor_db0991b9525664ca, []int{58}
 }
 
 func (m *DposStatus) XXX_Unmarshal(b []byte) error {
@@ -3993,7 +4064,7 @@ func (m *InvokeRPCRequest) Reset()         { *m = InvokeRPCRequest{} }
 func (m *InvokeRPCRequest) String() string { return proto.CompactTextString(m) }
 func (*InvokeRPCRequest) ProtoMessage()    {}
 func (*InvokeRPCRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{58}
+	return fileDescriptor_db0991b9525664ca, []int{59}
 }
 
 func (m *InvokeRPCRequest) XXX_Unmarshal(b []byte) error {
@@ -4062,7 +4133,7 @@ func (m *InvokeRPCResponse) Reset()         { *m = InvokeRPCResponse{} }
 func (m *InvokeRPCResponse) String() string { return proto.CompactTextString(m) }
 func (*InvokeRPCResponse) ProtoMessage()    {}
 func (*InvokeRPCResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{59}
+	return fileDescriptor_db0991b9525664ca, []int{60}
 }
 
 func (m *InvokeRPCResponse) XXX_Unmarshal(b []byte) error {
@@ -4123,7 +4194,7 @@ func (m *InvokeRequest) Reset()         { *m = InvokeRequest{} }
 func (m *InvokeRequest) String() string { return proto.CompactTextString(m) }
 func (*InvokeRequest) ProtoMessage()    {}
 func (*InvokeRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{60}
+	return fileDescriptor_db0991b9525664ca, []int{61}
 }
 
 func (m *InvokeRequest) XXX_Unmarshal(b []byte) error {
@@ -4205,7 +4276,7 @@ func (m *InvokeResponse) Reset()         { *m = InvokeResponse{} }
 func (m *InvokeResponse) String() string { return proto.CompactTextString(m) }
 func (*InvokeResponse) ProtoMessage()    {}
 func (*InvokeResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{61}
+	return fileDescriptor_db0991b9525664ca, []int{62}
 }
 
 func (m *InvokeResponse) XXX_Unmarshal(b []byte) error {
@@ -4297,7 +4368,7 @@ func (m *TxInputExt) Reset()         { *m = TxInputExt{} }
 func (m *TxInputExt) String() string { return proto.CompactTextString(m) }
 func (*TxInputExt) ProtoMessage()    {}
 func (*TxInputExt) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{62}
+	return fileDescriptor_db0991b9525664ca, []int{63}
 }
 
 func (m *TxInputExt) XXX_Unmarshal(b []byte) error {
@@ -4360,7 +4431,7 @@ func (m *TxOutputExt) Reset()         { *m = TxOutputExt{} }
 func (m *TxOutputExt) String() string { return proto.CompactTextString(m) }
 func (*TxOutputExt) ProtoMessage()    {}
 func (*TxOutputExt) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{63}
+	return fileDescriptor_db0991b9525664ca, []int{64}
 }
 
 func (m *TxOutputExt) XXX_Unmarshal(b []byte) error {
@@ -4415,7 +4486,7 @@ func (m *SignatureInfo) Reset()         { *m = SignatureInfo{} }
 func (m *SignatureInfo) String() string { return proto.CompactTextString(m) }
 func (*SignatureInfo) ProtoMessage()    {}
 func (*SignatureInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{64}
+	return fileDescriptor_db0991b9525664ca, []int{65}
 }
 
 func (m *SignatureInfo) XXX_Unmarshal(b []byte) error {
@@ -4462,7 +4533,7 @@ func (m *PermissionModel) Reset()         { *m = PermissionModel{} }
 func (m *PermissionModel) String() string { return proto.CompactTextString(m) }
 func (*PermissionModel) ProtoMessage()    {}
 func (*PermissionModel) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{65}
+	return fileDescriptor_db0991b9525664ca, []int{66}
 }
 
 func (m *PermissionModel) XXX_Unmarshal(b []byte) error {
@@ -4509,7 +4580,7 @@ func (m *AkSet) Reset()         { *m = AkSet{} }
 func (m *AkSet) String() string { return proto.CompactTextString(m) }
 func (*AkSet) ProtoMessage()    {}
 func (*AkSet) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{66}
+	return fileDescriptor_db0991b9525664ca, []int{67}
 }
 
 func (m *AkSet) XXX_Unmarshal(b []byte) error {
@@ -4549,7 +4620,7 @@ func (m *AkSets) Reset()         { *m = AkSets{} }
 func (m *AkSets) String() string { return proto.CompactTextString(m) }
 func (*AkSets) ProtoMessage()    {}
 func (*AkSets) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{67}
+	return fileDescriptor_db0991b9525664ca, []int{68}
 }
 
 func (m *AkSets) XXX_Unmarshal(b []byte) error {
@@ -4598,7 +4669,7 @@ func (m *Acl) Reset()         { *m = Acl{} }
 func (m *Acl) String() string { return proto.CompactTextString(m) }
 func (*Acl) ProtoMessage()    {}
 func (*Acl) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{68}
+	return fileDescriptor_db0991b9525664ca, []int{69}
 }
 
 func (m *Acl) XXX_Unmarshal(b []byte) error {
@@ -4658,7 +4729,7 @@ func (m *AclStatus) Reset()         { *m = AclStatus{} }
 func (m *AclStatus) String() string { return proto.CompactTextString(m) }
 func (*AclStatus) ProtoMessage()    {}
 func (*AclStatus) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{69}
+	return fileDescriptor_db0991b9525664ca, []int{70}
 }
 
 func (m *AclStatus) XXX_Unmarshal(b []byte) error {
@@ -4744,7 +4815,7 @@ func (m *IdentityAuth) Reset()         { *m = IdentityAuth{} }
 func (m *IdentityAuth) String() string { return proto.CompactTextString(m) }
 func (*IdentityAuth) ProtoMessage()    {}
 func (*IdentityAuth) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{70}
+	return fileDescriptor_db0991b9525664ca, []int{71}
 }
 
 func (m *IdentityAuth) XXX_Unmarshal(b []byte) error {
@@ -4812,7 +4883,7 @@ func (m *IdentityAuths) Reset()         { *m = IdentityAuths{} }
 func (m *IdentityAuths) String() string { return proto.CompactTextString(m) }
 func (*IdentityAuths) ProtoMessage()    {}
 func (*IdentityAuths) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{71}
+	return fileDescriptor_db0991b9525664ca, []int{72}
 }
 
 func (m *IdentityAuths) XXX_Unmarshal(b []byte) error {
@@ -4852,7 +4923,7 @@ func (m *ResourceLimit) Reset()         { *m = ResourceLimit{} }
 func (m *ResourceLimit) String() string { return proto.CompactTextString(m) }
 func (*ResourceLimit) ProtoMessage()    {}
 func (*ResourceLimit) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{72}
+	return fileDescriptor_db0991b9525664ca, []int{73}
 }
 
 func (m *ResourceLimit) XXX_Unmarshal(b []byte) error {
@@ -4900,7 +4971,7 @@ func (m *AK2AccountRequest) Reset()         { *m = AK2AccountRequest{} }
 func (m *AK2AccountRequest) String() string { return proto.CompactTextString(m) }
 func (*AK2AccountRequest) ProtoMessage()    {}
 func (*AK2AccountRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{73}
+	return fileDescriptor_db0991b9525664ca, []int{74}
 }
 
 func (m *AK2AccountRequest) XXX_Unmarshal(b []byte) error {
@@ -4955,7 +5026,7 @@ func (m *AK2AccountResponse) Reset()         { *m = AK2AccountResponse{} }
 func (m *AK2AccountResponse) String() string { return proto.CompactTextString(m) }
 func (*AK2AccountResponse) ProtoMessage()    {}
 func (*AK2AccountResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{74}
+	return fileDescriptor_db0991b9525664ca, []int{75}
 }
 
 func (m *AK2AccountResponse) XXX_Unmarshal(b []byte) error {
@@ -5011,7 +5082,7 @@ func (m *GetAccountContractsRequest) Reset()         { *m = GetAccountContractsR
 func (m *GetAccountContractsRequest) String() string { return proto.CompactTextString(m) }
 func (*GetAccountContractsRequest) ProtoMessage()    {}
 func (*GetAccountContractsRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{75}
+	return fileDescriptor_db0991b9525664ca, []int{76}
 }
 
 func (m *GetAccountContractsRequest) XXX_Unmarshal(b []byte) error {
@@ -5066,7 +5137,7 @@ func (m *GetAccountContractsResponse) Reset()         { *m = GetAccountContracts
 func (m *GetAccountContractsResponse) String() string { return proto.CompactTextString(m) }
 func (*GetAccountContractsResponse) ProtoMessage()    {}
 func (*GetAccountContractsResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{76}
+	return fileDescriptor_db0991b9525664ca, []int{77}
 }
 
 func (m *GetAccountContractsResponse) XXX_Unmarshal(b []byte) error {
@@ -5116,7 +5187,7 @@ func (m *ContractStatus) Reset()         { *m = ContractStatus{} }
 func (m *ContractStatus) String() string { return proto.CompactTextString(m) }
 func (*ContractStatus) ProtoMessage()    {}
 func (*ContractStatus) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{77}
+	return fileDescriptor_db0991b9525664ca, []int{78}
 }
 
 func (m *ContractStatus) XXX_Unmarshal(b []byte) error {
@@ -5183,7 +5254,7 @@ func (m *PreExecWithSelectUTXORequest) Reset()         { *m = PreExecWithSelectU
 func (m *PreExecWithSelectUTXORequest) String() string { return proto.CompactTextString(m) }
 func (*PreExecWithSelectUTXORequest) ProtoMessage()    {}
 func (*PreExecWithSelectUTXORequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{78}
+	return fileDescriptor_db0991b9525664ca, []int{79}
 }
 
 func (m *PreExecWithSelectUTXORequest) XXX_Unmarshal(b []byte) error {
@@ -5269,7 +5340,7 @@ func (m *PreExecWithSelectUTXOResponse) Reset()         { *m = PreExecWithSelect
 func (m *PreExecWithSelectUTXOResponse) String() string { return proto.CompactTextString(m) }
 func (*PreExecWithSelectUTXOResponse) ProtoMessage()    {}
 func (*PreExecWithSelectUTXOResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{79}
+	return fileDescriptor_db0991b9525664ca, []int{80}
 }
 
 func (m *PreExecWithSelectUTXOResponse) XXX_Unmarshal(b []byte) error {
@@ -5332,7 +5403,7 @@ func (m *ContractResponse) Reset()         { *m = ContractResponse{} }
 func (m *ContractResponse) String() string { return proto.CompactTextString(m) }
 func (*ContractResponse) ProtoMessage()    {}
 func (*ContractResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{80}
+	return fileDescriptor_db0991b9525664ca, []int{81}
 }
 
 func (m *ContractResponse) XXX_Unmarshal(b []byte) error {
@@ -5394,7 +5465,7 @@ func (m *ModifyBlock) Reset()         { *m = ModifyBlock{} }
 func (m *ModifyBlock) String() string { return proto.CompactTextString(m) }
 func (*ModifyBlock) ProtoMessage()    {}
 func (*ModifyBlock) Descriptor() ([]byte, []int) {
-	return fileDescriptor_db0991b9525664ca, []int{81}
+	return fileDescriptor_db0991b9525664ca, []int{82}
 }
 
 func (m *ModifyBlock) XXX_Unmarshal(b []byte) error {
@@ -5516,6 +5587,7 @@ func init() {
 	proto.RegisterType((*Transaction)(nil), "pb.Transaction")
 	proto.RegisterType((*LedgerMeta)(nil), "pb.LedgerMeta")
 	proto.RegisterType((*UtxoMeta)(nil), "pb.UtxoMeta")
+	proto.RegisterType((*GasPrice)(nil), "pb.GasPrice")
 	proto.RegisterType((*InternalBlock)(nil), "pb.InternalBlock")
 	proto.RegisterMapType((map[string]string)(nil), "pb.InternalBlock.FailedTxsEntry")
 	proto.RegisterType((*BCStatus)(nil), "pb.BCStatus")
