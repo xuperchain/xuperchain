@@ -42,6 +42,8 @@ type Smr struct {
 	// Hotstuff State of this nodes
 	// votedView is the last voted view, view changes with chain
 	votedView int64
+	// vscView is the last validated sets changed view number
+	vscView int64
 	// proposalQC is the proposalBlock's QC
 	proposalQC *pb.QuorumCert
 	// generateQC is the proposalBlock's QC, refer to generateBlock's votes
