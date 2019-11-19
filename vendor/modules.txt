@@ -262,6 +262,8 @@ github.com/minio/blake2b-simd
 github.com/minio/sha256-simd
 # github.com/mitchellh/mapstructure v1.1.2
 github.com/mitchellh/mapstructure
+# github.com/moby/moby v1.13.2-0.20170601211448-f5ec1e2936dc
+github.com/moby/moby/pkg/pubsub
 # github.com/mr-tron/base58 v1.1.2
 github.com/mr-tron/base58/base58
 # github.com/multiformats/go-base32 v0.0.3

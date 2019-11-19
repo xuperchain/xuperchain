@@ -59,3 +59,7 @@ func DeepCopy(dst, src interface{}) error {
 	}
 	return gob.NewDecoder(bytes.NewBuffer(buf.Bytes())).Decode(dst)
 }
+
+func GenPubsubKey(chainName, initiator, txid, status string) string {
+	return chainName + " " + initiator + " " + status + " " + txid
+}

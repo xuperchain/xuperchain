@@ -16,9 +16,11 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"strconv"
+	"time"
 
 	"github.com/golang/protobuf/proto"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
+	"github.com/moby/moby/pkg/pubsub"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	log "github.com/xuperchain/log15"
 	"golang.org/x/net/context"
@@ -942,6 +944,9 @@ func startTCPServer(xchainmg *xchaincore.XChainMG) error {
 			panic(http.ListenAndServe(cfg.TCPServer.MetricPort, nil))
 		}()
 	}
+	pubsubService := &PubsubService{pub: pubsub.NewPublisher(100*time.Millisecond, 10), txChan: xchainmg.TxChan}
+	go pubsubService.Start()
+	pb.RegisterPubsubServiceServer(s, pubsubService)
 
 	lis, err := net.Listen("tcp", cfg.TCPServer.Port)
 	if err != nil {

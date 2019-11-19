@@ -152,6 +152,8 @@ type UtxoVM struct {
 	unconfirmTxAmount    int64     // 未确认的Tx数目，用于监控
 	avgDelay             int64     // 平均上链延时
 	bcname               string
+	// async event notice
+	txChan chan string
 }
 
 // InboundTx is tx wrapper
@@ -337,12 +339,12 @@ func (uv *UtxoVM) clearExpiredLocks() {
 func NewUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, privateKey, publicKey string,
 	address []byte, xlog log.Logger, isBeta bool, kvEngineType string, cryptoType string) (*UtxoVM, error) {
 	return MakeUtxoVM(bcname, ledger, storePath, privateKey, publicKey, address, xlog, UTXOCacheSize,
-		UTXOLockExpiredSecond, UTXOContractExecutionTime, []string{}, isBeta, kvEngineType, cryptoType)
+		UTXOLockExpiredSecond, UTXOContractExecutionTime, []string{}, isBeta, kvEngineType, cryptoType, nil)
 }
 
 // MakeUtxoVM 这个函数比NewUtxoVM更加可订制化
 func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, privateKey, publicKey string, address []byte, xlog log.Logger,
-	cachesize int, tmplockSeconds, contractExectionTime int, otherPaths []string, iBeta bool, kvEngineType string, cryptoType string) (*UtxoVM, error) {
+	cachesize int, tmplockSeconds, contractExectionTime int, otherPaths []string, iBeta bool, kvEngineType string, cryptoType string, txChan chan string) (*UtxoVM, error) {
 	if xlog == nil { // 如果外面没传进来log对象的话
 		xlog = log.New("module", "utxoVM")
 		xlog.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
@@ -436,6 +438,7 @@ func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, priv
 		aclMgr:               aclManager,
 		maxConfirmedDelay:    DefaultMaxConfirmedDelay,
 		bcname:               bcname,
+		txChan:               txChan,
 	}
 	if iBeta {
 		utxoVM.defaultTxVersion = BetaTxVersion
@@ -1244,6 +1247,9 @@ func (uv *UtxoVM) RollbackContract(blockid []byte, tx *pb.Transaction) error {
 func (uv *UtxoVM) doTxSync(tx *pb.Transaction) error {
 	pbTxBuf, pbErr := proto.Marshal(tx)
 	if pbErr != nil {
+		go func() {
+			uv.txChan <- common.GenPubsubKey(uv.bcname, tx.GetInitiator(), "fail", fmt.Sprintf("%x", tx.GetTxid()))
+		}()
 		uv.xlog.Warn("    fail to marshal tx", "pbErr", pbErr)
 		return pbErr
 	}
@@ -1262,6 +1268,9 @@ func (uv *UtxoVM) doTxSync(tx *pb.Transaction) error {
 	batch := uv.ldb.NewBatch()
 	doErr := uv.doTxInternal(tx, batch)
 	if doErr != nil {
+		go func() {
+			uv.txChan <- common.GenPubsubKey(uv.bcname, tx.GetInitiator(), "fail", fmt.Sprintf("%x", tx.GetTxid()))
+		}()
 		uv.xlog.Warn("doTxInternal failed, when DoTx", "doErr", doErr)
 		return doErr
 	}
@@ -1271,6 +1280,9 @@ func (uv *UtxoVM) doTxSync(tx *pb.Transaction) error {
 	if writeErr != nil {
 		uv.ClearCache()
 		uv.xlog.Warn("fail to save to ldb", "writeErr", writeErr)
+		go func() {
+			uv.txChan <- common.GenPubsubKey(uv.bcname, tx.GetInitiator(), "fail", fmt.Sprintf("%x", tx.GetTxid()))
+		}()
 		return writeErr
 	}
 	uv.unconfirmTxInMem.Store(string(tx.Txid), tx)
@@ -1639,6 +1651,11 @@ func (uv *UtxoVM) PlayForMiner(blockid []byte, batch kvdb.Batch) error {
 	uv.mutexMeta.Lock()
 	defer uv.mutexMeta.Unlock()
 	uv.meta = uv.metaTmp
+	go func() {
+		for _, tx := range block.Transactions {
+			uv.txChan <- common.GenPubsubKey(uv.bcname, tx.GetInitiator(), "on-chained", fmt.Sprintf("%x", tx.GetTxid()))
+		}
+	}()
 	return nil
 }
 

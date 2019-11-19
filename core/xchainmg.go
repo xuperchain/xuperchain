@@ -31,6 +31,8 @@ type XChainMG struct {
 	nodeMode   string
 	// the switch of compressed
 	enableCompress bool
+	// async event notice
+	TxChan chan string
 }
 
 // Init init instance of XChainMG
@@ -42,6 +44,7 @@ func (xm *XChainMG) Init(log log.Logger, cfg *config.NodeConfig,
 	xm.Cfg = cfg
 	xm.P2pv2 = p2pV2
 	xm.msgChan = make(chan *xuper_p2p.XuperMessage, p2pv2.MsgChanSize)
+	xm.TxChan = make(chan string, 1000000)
 
 	xm.Speed = probe.NewSpeedCalc("sum")
 	xm.Quit = make(chan struct{})
@@ -65,7 +68,7 @@ func (xm *XChainMG) Init(log log.Logger, cfg *config.NodeConfig,
 			aKernel := &kernel.Kernel{}
 			aKernel.Init(xm.datapath, xm.Log, xm, fi.Name())
 			x := &XChainCore{}
-			err := x.Init(fi.Name(), log, cfg, p2pV2, aKernel, xm.nodeMode)
+			err := x.Init(fi.Name(), log, cfg, p2pV2, aKernel, xm.nodeMode, xm.TxChan)
 			if err != nil {
 				return err
 			}
@@ -164,7 +167,7 @@ func (xm *XChainMG) addBlockChain(name string) (*XChainCore, error) {
 		aKernel = &kernel.Kernel{}
 		aKernel.Init(xm.datapath, xm.Log, xm, name)
 	}
-	err := x.Init(name, xm.Log, xm.Cfg, xm.P2pv2, aKernel, xm.nodeMode)
+	err := x.Init(name, xm.Log, xm.Cfg, xm.P2pv2, aKernel, xm.nodeMode, xm.TxChan)
 	if err != nil {
 		xm.Log.Warn("XChainCore init error")
 		xm.rootKernel.RemoveBlockChainData(name)
