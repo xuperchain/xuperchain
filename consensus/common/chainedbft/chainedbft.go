@@ -68,6 +68,7 @@ func (cb *ChainedBft) Start() error {
 
 // Stop will stop ChainedBft instance gracefully
 func (cb *ChainedBft) Stop() error {
+	cb.quitCh <- true
 	return nil
 }
 

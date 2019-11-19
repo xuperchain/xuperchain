@@ -787,11 +787,14 @@ func (tp *TDpos) initBFT(cfg *config.NodeConfig) error {
 			qcNeeded--
 			block, err := tp.ledger.QueryBlock(blockid)
 			if err != nil {
-				tp.log.Warn("initBFT: get block failed", "error", err)
+				tp.log.Warn("initBFT: get block failed", "error", err, "blockid", string(blockid))
 				return err
 			}
 			qc[qcNeeded] = block.GetJustify()
 			blockid = block.GetPreHash()
+			if blockid == nil {
+				break
+			}
 		}
 	}
 
