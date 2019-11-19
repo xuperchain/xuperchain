@@ -48,6 +48,20 @@ func TestXvmDeploy(t *testing.T) {
 	})
 }
 
+func TestXvmInterpDeploy(t *testing.T) {
+	WithTestContext(t, "ixvm", func(tctx *FakeWASMContext) {
+		deployArgs := makeXvmDeployArgs(t)
+		out, _, err := tctx.vmm.DeployContract(&contract.ContextConfig{
+			XMCache:        tctx.Cache,
+			ResourceLimits: contract.MaxLimits,
+		}, deployArgs)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Logf("%v", out)
+	})
+}
+
 func BenchmarkXVMInvoke(b *testing.B) {
 	WithTestContext(b, "xvm", func(tctx *FakeWASMContext) {
 		deployArgs := makeXvmDeployArgs(b)
