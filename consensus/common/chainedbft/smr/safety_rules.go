@@ -26,10 +26,11 @@ func (s *Smr) safeProposal(propsQC, justify *pb.QuorumCert) (bool, error) {
 		s.slog.Warn("safeProposal justify is nil")
 		return s.externalCons.CallVerifyQc(propsQC)
 	}
-	// if ok, err := s.IsQuorumCertValidate(justify); !ok || err != nil {
-	// 	s.slog.Error("safeProposal IsQuorumCertValidate error", "ok", ok, "error", err)
-	// 	return false, err
-	// }
+
+	if ok, err := s.IsQuorumCertValidate(justify); !ok || err != nil {
+		s.slog.Error("safeProposal IsQuorumCertValidate error", "ok", ok, "error", err)
+		return false, err
+	}
 	// step3: call external consensus verify proposalMsg
 	return s.externalCons.CallVerifyQc(propsQC)
 }
