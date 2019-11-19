@@ -33,7 +33,7 @@ func newSyscallResolver(syscall *bridge.SyscallService) exec.Resolver {
 	}
 }
 
-func (s *syscallResolver) ResolveGlobal(module, name string) (float64, bool) {
+func (s *syscallResolver) ResolveGlobal(module, name string) (int64, bool) {
 	return 0, false
 }
 
@@ -55,7 +55,7 @@ func (s *syscallResolver) ResolveFunc(module, name string) (interface{}, bool) {
 	}
 }
 
-func (s *syscallResolver) goCallMethod(ctx *exec.Context, sp uint32) uint32 {
+func (s *syscallResolver) goCallMethod(ctx exec.Context, sp uint32) uint32 {
 	codec := exec.NewCodec(ctx)
 	ctxid := ctx.GetUserData(contextIDKey).(int64)
 	method := codec.GoString(sp + 8)
@@ -73,7 +73,7 @@ func (s *syscallResolver) goCallMethod(ctx *exec.Context, sp uint32) uint32 {
 	return 0
 }
 
-func (s *syscallResolver) goFetchResponse(ctx *exec.Context, sp uint32) uint32 {
+func (s *syscallResolver) goFetchResponse(ctx exec.Context, sp uint32) uint32 {
 	codec := exec.NewCodec(ctx)
 	iresponse := ctx.GetUserData(responseKey)
 	if iresponse == nil {
@@ -94,7 +94,7 @@ func (s *syscallResolver) goFetchResponse(ctx *exec.Context, sp uint32) uint32 {
 	return 0
 }
 
-func (s *syscallResolver) cCallMethod(ctx *exec.Context, methodAddr, methodLen, requestAddr, requestLen uint32) uint32 {
+func (s *syscallResolver) cCallMethod(ctx exec.Context, methodAddr, methodLen, requestAddr, requestLen uint32) uint32 {
 	codec := exec.NewCodec(ctx)
 	ctxid := ctx.GetUserData(contextIDKey).(int64)
 	method := codec.String(methodAddr, methodLen)
@@ -112,7 +112,7 @@ func (s *syscallResolver) cCallMethod(ctx *exec.Context, methodAddr, methodLen, 
 	return uint32(len(responseDesc.Body))
 }
 
-func (s *syscallResolver) cFetchResponse(ctx *exec.Context, userBuf, userLen uint32) uint32 {
+func (s *syscallResolver) cFetchResponse(ctx exec.Context, userBuf, userLen uint32) uint32 {
 	codec := exec.NewCodec(ctx)
 	iresponse := ctx.GetUserData(responseKey)
 	if iresponse == nil {
@@ -133,7 +133,7 @@ func (s *syscallResolver) cFetchResponse(ctx *exec.Context, userBuf, userLen uin
 }
 
 func (s *syscallResolver) cCallMethodv2(
-	ctx *exec.Context,
+	ctx exec.Context,
 	methodAddr, methodLen uint32,
 	requestAddr, requestLen uint32,
 	responseAddr, responseLen uint32,
