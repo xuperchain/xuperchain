@@ -739,7 +739,7 @@ func (xc *XChainCore) doMiner() {
 	}()
 
 	minerTimer.Mark("BroadcastBlock")
-	if xc.Utxovm.IsAsync() {
+	if xc.Utxovm.IsAsync() || xc.Utxovm.IsAsyncBlock() {
 		xc.log.Warn("doMiner cost", "cost", minerTimer.Print(), "txCount", freshBlock.TxCount)
 	} else {
 		xc.log.Debug("doMiner cost", "cost", minerTimer.Print(), "txCount", freshBlock.TxCount)

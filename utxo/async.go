@@ -61,7 +61,7 @@ func (uv *UtxoVM) StartAsyncBlockMode() {
 	uv.asyncBlockMode = true
 	ctx, cancel := context.WithCancel(context.Background())
 	uv.asyncCancel = cancel
-	ledger.DisableTxDedup = false
+	ledger.DisableTxDedup = true
 	go uv.asyncWriter(ctx)
 	go uv.asyncVerifiy(ctx)
 }
@@ -251,4 +251,9 @@ func (uv *UtxoVM) NotifyFinishBlockGen() {
 // IsAsync return current async state
 func (uv *UtxoVM) IsAsync() bool {
 	return uv.asyncMode
+}
+
+// IsAsyncBlock return current async state
+func (uv *UtxoVM) IsAsyncBlock() bool {
+	return uv.asyncBlockMode
 }
