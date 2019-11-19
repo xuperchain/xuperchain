@@ -1585,6 +1585,12 @@ func (uv *UtxoVM) PlayAndRepost(blockid []byte, needRepost bool, isRootTx bool) 
 	uv.mutexMeta.Lock()
 	defer uv.mutexMeta.Unlock()
 	uv.meta = uv.metaTmp
+
+	go func() {
+		for _, tx := range block.Transactions {
+			uv.txChan <- common.GenPubsubKey(uv.bcname, tx.GetInitiator(), "on-chained", fmt.Sprintf("%x", tx.GetTxid()))
+		}
+	}()
 	return nil
 }
 

@@ -45,6 +45,7 @@ buildpkg xchain github.com/xuperchain/xuperunion/cmd/xchain
 buildpkg xc github.com/xuperchain/xuperunion/contractsdk/xc
 go build -o xchain-httpgw gateway/http_gateway.go
 go build -o dump_chain test/dump_chain.go
+go build -o event_client test/client.go
 
 # build plugins
 echo "OS:"${PLATFORM}
@@ -66,6 +67,7 @@ mv xchain-cli xchain ${output_dir}
 mv xchain-httpgw ${output_dir}
 mv wasm2c ${output_dir}
 mv dump_chain ${output_dir}
+mv event_client ${output_dir}
 mv xc ${output_dir}
 cp -rf  plugins ${output_dir}
 cp -rf data ${output_dir}

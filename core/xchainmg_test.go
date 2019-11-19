@@ -442,7 +442,7 @@ func InitCreateBlockChain(t *testing.T) {
 		t.Fatal("confirm block fail")
 	}
 
-	utxoVM, _ := utxo.MakeUtxoVM("xuper", ledger, workSpace, "", "", []byte(""), nil, 5000, 60, 500, nil, false, DefaultKvEngine, crypto_client.CryptoTypeDefault)
+	utxoVM, _ := utxo.MakeUtxoVM("xuper", ledger, workSpace, "", "", []byte(""), nil, 5000, 60, 500, nil, false, DefaultKvEngine, crypto_client.CryptoTypeDefault, nil)
 	utxoVM.RegisterVM("kernel", kl, global.VMPrivRing0)
 	defer utxoVM.Close()
 	playErr := utxoVM.Play(block.Blockid)

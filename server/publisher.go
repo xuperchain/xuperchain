@@ -10,6 +10,10 @@ import (
 	"github.com/xuperchain/xuperunion/pb"
 )
 
+const (
+	DefaultPubsubChanSize = 1000000
+)
+
 type PubsubService struct {
 	pub    *pubsub.Publisher
 	txChan chan string
@@ -18,7 +22,7 @@ type PubsubService struct {
 func NewPubsubService() *PubsubService {
 	return &PubsubService{
 		pub:    pubsub.NewPublisher(100*time.Millisecond, 10),
-		txChan: make(chan string, 1000000),
+		txChan: make(chan string, DefaultPubsubChanSize),
 	}
 }
 
