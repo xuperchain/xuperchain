@@ -120,6 +120,8 @@ type XChainCore struct {
 	// cache for duplicate block message
 	msgCache           *common.LRUCache
 	blockBroadcaseMode uint8
+	// event notification
+	TxChan chan string
 }
 
 // Status return the status of the chain
@@ -129,7 +131,7 @@ func (xc *XChainCore) Status() int {
 
 // Init init the chain
 func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfig,
-	p2p p2pv2.P2PServer, ker *kernel.Kernel, nodeMode string) error {
+	p2p p2pv2.P2PServer, ker *kernel.Kernel, nodeMode string, txChan chan string) error {
 
 	// 设置全局随机数发生器的原始种子
 	err := global.SetSeed()
@@ -141,6 +143,7 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	xc.Speed = probe.NewSpeedCalc(bcname)
 	// this.mutex.Lock()
 	// defer this.mutex.Unlock()
+	xc.TxChan = txChan
 	xc.status = global.SafeModel
 	xc.bcname = bcname
 	xc.log = xlog
@@ -237,7 +240,7 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	xc.initEvents()
 
 	xc.Utxovm, err = utxo.MakeUtxoVM(bcname, xc.Ledger, datapath, privateKeyStr, publicKeyStr, xc.address, xc.log,
-		utxoCacheSize, utxoTmplockSeconds, cfg.Utxo.ContractExecutionTime, datapathOthers, cfg.Utxo.IsBetaTx[bcname], kvEngineType, cryptoType)
+		utxoCacheSize, utxoTmplockSeconds, cfg.Utxo.ContractExecutionTime, datapathOthers, cfg.Utxo.IsBetaTx[bcname], kvEngineType, cryptoType, xc.TxChan)
 
 	if err != nil {
 		xc.log.Warn("NewUtxoVM error", "bc", xc.bcname, "datapath", datapath, "dataPathOhters", datapathOthers)

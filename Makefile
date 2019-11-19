@@ -29,5 +29,6 @@ clean:
 	rm -f xchain-cli
 	rm -f xchain
 	rm -f dump_chain
+	rm -f event_client
 
 .PHONY: all test clean

@@ -130,7 +130,7 @@ func TestCreateBlockChain(t *testing.T) {
 	if !confirmStatus.Succ {
 		t.Fatal("confirm block fail")
 	}
-	utxovm, _ := utxo.MakeUtxoVM("xuper", ledger, workspace+"xuper", "", "", []byte(""), nil, 5000, 60, 500, nil, false, defaultKVEngine, crypto_client.CryptoTypeDefault)
+	utxovm, _ := utxo.MakeUtxoVM("xuper", ledger, workspace+"xuper", "", "", []byte(""), nil, 5000, 60, 500, nil, false, defaultKVEngine, crypto_client.CryptoTypeDefault, nil)
 	utxovm.RegisterVM("kernel", kl, global.VMPrivRing0)
 	err = utxovm.Play(block.Blockid)
 	if err != nil {
@@ -223,7 +223,7 @@ func TestCreateBlockChainPermission(t *testing.T) {
 	if !confirmStatus.Succ {
 		t.Fatal("confirm block fail")
 	}
-	utxovm, _ := utxo.MakeUtxoVM(chainName, ledger, workspace+chainName, "", "", []byte(""), nil, 5000, 60, 500, nil, false, defaultKVEngine, crypto_client.CryptoTypeDefault)
+	utxovm, _ := utxo.MakeUtxoVM(chainName, ledger, workspace+chainName, "", "", []byte(""), nil, 5000, 60, 500, nil, false, defaultKVEngine, crypto_client.CryptoTypeDefault, nil)
 	utxovm.RegisterVM("kernel", kl, global.VMPrivRing0)
 	err = utxovm.Play(block.Blockid)
 	if err != nil {
@@ -315,7 +315,7 @@ func TestRunUpdateMaxBlockSize(t *testing.T) {
 	if !confirmStatus.Succ {
 		t.Error("confirm block fail")
 	}
-	utxovm, _ := utxo.MakeUtxoVM("xuper", L, workspace+"xuper", "", "", []byte(""), nil, 5000, 60, 500, nil, false, defaultKVEngine, crypto_client.CryptoTypeDefault)
+	utxovm, _ := utxo.MakeUtxoVM("xuper", L, workspace+"xuper", "", "", []byte(""), nil, 5000, 60, 500, nil, false, defaultKVEngine, crypto_client.CryptoTypeDefault, nil)
 	playErr := utxovm.Play(block.Blockid)
 	if playErr != nil {
 		t.Error(playErr)
@@ -395,7 +395,7 @@ func TestRunUpdateReservedContracts(t *testing.T) {
 	if !confirmStatus.Succ {
 		t.Error("confirm block fail")
 	}
-	utxovm, _ := utxo.MakeUtxoVM("xuper", L, workspace+"xuper", "", "", []byte(""), nil, 5000, 60, 500, nil, false, defaultKVEngine, crypto_client.CryptoTypeDefault)
+	utxovm, _ := utxo.MakeUtxoVM("xuper", L, workspace+"xuper", "", "", []byte(""), nil, 5000, 60, 500, nil, false, defaultKVEngine, crypto_client.CryptoTypeDefault, nil)
 	playErr := utxovm.Play(block.Blockid)
 	if playErr != nil {
 		t.Error(playErr)
@@ -510,7 +510,7 @@ func TestRunUpdateForbiddenContract(t *testing.T) {
 	if !confirmStatus.Succ {
 		t.Error("confirm block fail")
 	}
-	utxovm, _ := utxo.MakeUtxoVM("xuper", L, workSpace+"xuper", "", "", []byte(""), nil, 5000, 60, 500, nil, false, defaultKVEngine, crypto_client.CryptoTypeDefault)
+	utxovm, _ := utxo.MakeUtxoVM("xuper", L, workSpace+"xuper", "", "", []byte(""), nil, 5000, 60, 500, nil, false, defaultKVEngine, crypto_client.CryptoTypeDefault, nil)
 	playErr := utxovm.Play(block.Blockid)
 	if playErr != nil {
 		t.Error(playErr)

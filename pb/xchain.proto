@@ -951,3 +951,12 @@ message ModifyBlock {
   string sign = 5;
 }
 
+//// Subscribe & Publish
+message String {
+  string value = 1;
+}
+
+service PubsubService {
+  rpc Publish (String) returns (String);
+  rpc Subscribe (String) returns (stream String);
+}

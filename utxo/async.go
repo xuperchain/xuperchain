@@ -9,6 +9,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 
+	"github.com/xuperchain/xuperunion/common"
 	"github.com/xuperchain/xuperunion/global"
 	"github.com/xuperchain/xuperunion/ledger"
 	"github.com/xuperchain/xuperunion/pb"
@@ -82,6 +83,9 @@ func (uv *UtxoVM) verifyTxWorker(itxlist []*InboundTx) error {
 		if !ok {
 			uv.xlog.Warn("invalid transaction found", "txid", global.F(tx.Txid), "err", xerr)
 			uv.asyncResult.Send(tx.Txid, xerr)
+			go func() {
+				uv.txChan <- common.GenPubsubKey(uv.bcname, tx.GetInitiator(), "fail", fmt.Sprintf("%x", tx.GetTxid()))
+			}()
 		} else {
 			uv.verifiedTxChan <- tx
 		}
@@ -181,6 +185,9 @@ func (uv *UtxoVM) flushTxList(txList []*pb.Transaction) error {
 		go func() {
 			for i, tx := range txList {
 				if pbTxList[i] == nil {
+					go func() {
+						uv.txChan <- common.GenPubsubKey(uv.bcname, tx.GetInitiator(), "fail", fmt.Sprintf("%x", tx.GetTxid()))
+					}()
 					continue
 				}
 				uv.asyncResult.Send(tx.Txid, nil)
