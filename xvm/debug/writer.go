@@ -11,12 +11,12 @@ const (
 )
 
 // SetWriter set debug writer to Context
-func SetWriter(ctx *exec.Context, w io.Writer) {
+func SetWriter(ctx exec.Context, w io.Writer) {
 	ctx.SetUserData(debugWriterKey, w)
 }
 
 // GetDebugWriter get debug writer
-func GetWriter(ctx *exec.Context) io.Writer {
+func GetWriter(ctx exec.Context) io.Writer {
 	value := ctx.GetUserData(debugWriterKey)
 	if value == nil {
 		return nil
@@ -30,7 +30,7 @@ func GetWriter(ctx *exec.Context) io.Writer {
 
 // Write write debug message
 // if SetWriter is not set, message will be ignored
-func Write(ctx *exec.Context, p []byte) {
+func Write(ctx exec.Context, p []byte) {
 	w := GetWriter(ctx)
 	if w == nil {
 		return

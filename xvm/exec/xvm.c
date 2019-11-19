@@ -178,7 +178,7 @@ static uint32_t wasm_rt_call_func(void* context, wasm_rt_func_handle_t hfunc, ui
 }
 
 // TODO: 每个context有单独的全局变量设置?
-static double wasm_rt_resolve_global(void* context, char* module, char* name) {
+static int64_t wasm_rt_resolve_global(void* context, char* module, char* name) {
   xvm_context_t* ctx = context;
   return ctx->code->resolver.resolve_global(ctx->code->resolver.env, module, name);
 }
