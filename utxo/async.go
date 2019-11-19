@@ -54,7 +54,7 @@ func (uv *UtxoVM) StartAsyncWriter() {
 	uv.asyncCancel = cancel
 	ledger.DisableTxDedup = true
 	go uv.asyncWriter(ctx)
-	go uv.asyncVerifiy(ctx)
+	go uv.asyncVerify(ctx)
 }
 
 func (uv *UtxoVM) StartAsyncBlockMode() {
@@ -63,7 +63,7 @@ func (uv *UtxoVM) StartAsyncBlockMode() {
 	uv.asyncCancel = cancel
 	ledger.DisableTxDedup = true
 	go uv.asyncWriter(ctx)
-	go uv.asyncVerifiy(ctx)
+	go uv.asyncVerify(ctx)
 }
 
 func (uv *UtxoVM) verifyTxWorker(itxlist []*InboundTx) error {
@@ -211,7 +211,7 @@ func (uv *UtxoVM) asyncWriter(ctx context.Context) {
 }
 
 // asyncVerifiy 异步并行校验tx，在AsyncMode=true时开启
-func (uv *UtxoVM) asyncVerifiy(ctx context.Context) {
+func (uv *UtxoVM) asyncVerify(ctx context.Context) {
 	tick := time.Tick(time.Millisecond * AsyncMaxWaitMS)
 	itxlist := []*InboundTx{}
 	uv.asyncWriterWG.Add(1)
