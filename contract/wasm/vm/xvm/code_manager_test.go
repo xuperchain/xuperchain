@@ -88,8 +88,8 @@ func TestMakeCacheBlocking(t *testing.T) {
 		return ioutil.WriteFile(output, code, 0700)
 	}
 
-	makeExecCodeFunc := func(libpath string) (exec.Code, error) {
-		return new(fakeCode), nil
+	makeExecCodeFunc := func(libpath string) (*exec.Code, error) {
+		return new(exec.Code), nil
 	}
 
 	cp := &memCodeProvider{
