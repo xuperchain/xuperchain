@@ -60,6 +60,7 @@ const (
 	// Irreversible block height & slide window
 	IrreversibleBlockHeightKey = "IrreversibleBlockHeight"
 	IrreversibleSlideWindowKey = "IrreversibleSlideWindow"
+	GasPriceKey                = "GasPrice"
 )
 
 // Ledger define data structure of Ledger
@@ -964,6 +965,10 @@ func (l *Ledger) GetReservedContracts() ([]*pb.InvokeRequest, error) {
 
 func (l *Ledger) GetForbiddenContract() ([]*pb.InvokeRequest, error) {
 	return l.GenesisBlock.GetConfig().GetForbiddenContract()
+}
+
+func (l *Ledger) GetGasPrice() *pb.GasPrice {
+	return l.GenesisBlock.GetConfig().GetGasPrice()
 }
 
 // SavePendingBlock put block into pending table
