@@ -19,13 +19,13 @@ type Runtime struct {
 	exited   bool
 	global   *js.Global
 	jsvm     *js.VM
-	ctx      *exec.Context
+	ctx      exec.Context
 
 	timeOrigin time.Time
 }
 
 // RegisterRuntime 用于向exec.Context里面注册一个初始化好的js Runtime
-func RegisterRuntime(ctx *exec.Context) *Runtime {
+func RegisterRuntime(ctx exec.Context) *Runtime {
 	rt := &Runtime{
 		global:     js.NewGlobal(),
 		timeOrigin: time.Now(),

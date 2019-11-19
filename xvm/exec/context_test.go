@@ -6,8 +6,8 @@ import (
 )
 
 func TestNewContext(t *testing.T) {
-	withCode(t, "testdata/add.wat", nil, func(code *Code) {
-		ctx, err := NewContext(code, DefaultContextConfig())
+	withCode(t, "testdata/add.wat", nil, func(code Code) {
+		ctx, err := code.NewContext(DefaultContextConfig())
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -24,7 +24,7 @@ func TestNewContext(t *testing.T) {
 
 func TestResolveFunc(t *testing.T) {
 	r := MapResolver(map[string]interface{}{
-		"env._print": func(ctx *Context, addr uint32) uint32 {
+		"env._print": func(ctx Context, addr uint32) uint32 {
 			c := NewCodec(ctx)
 			if c.CString(addr) != "hello world" {
 				panic("not equal")
@@ -32,8 +32,8 @@ func TestResolveFunc(t *testing.T) {
 			return 0
 		},
 	})
-	withCode(t, "testdata/extern_func.wat", r, func(code *Code) {
-		ctx, err := NewContext(code, DefaultContextConfig())
+	withCode(t, "testdata/extern_func.wat", r, func(code Code) {
+		ctx, err := code.NewContext(DefaultContextConfig())
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -47,26 +47,26 @@ func TestResolveFunc(t *testing.T) {
 
 func TestGasUsed(t *testing.T) {
 	r := MapResolver(map[string]interface{}{
-		"env._print": func(ctx *Context, addr uint32) uint32 {
+		"env._print": func(ctx Context, addr uint32) uint32 {
 			return 0
 		},
-		"env.___setErrNo": func(ctx *Context, addr uint32) uint32 {
+		"env.___setErrNo": func(ctx Context, addr uint32) uint32 {
 			return 0
 		},
-		"env.abortOnCannotGrowMemory": func(ctx *Context, code uint32) uint32 {
+		"env.abortOnCannotGrowMemory": func(ctx Context, code uint32) uint32 {
 			return 0
 		},
-		"env.getTotalMemory": func(ctx *Context) uint32 {
+		"env.getTotalMemory": func(ctx Context) uint32 {
 			return 0
 		},
-		"env.enlargeMemory": func(ctx *Context) uint32 {
+		"env.enlargeMemory": func(ctx Context) uint32 {
 			return 0
 		},
-		"env.STACKTOP":       float64(4 << 10),
-		"env.DYNAMICTOP_PTR": float64(4<<10 + 4),
+		"env.STACKTOP":       int64(4 << 10),
+		"env.DYNAMICTOP_PTR": int64(4<<10 + 4),
 	})
-	withCode(t, "testdata/malloc.wat", r, func(code *Code) {
-		ctx, err := NewContext(code, DefaultContextConfig())
+	withCode(t, "testdata/malloc.wat", r, func(code Code) {
+		ctx, err := code.NewContext(DefaultContextConfig())
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -83,14 +83,14 @@ func TestGasUsed(t *testing.T) {
 
 func BenchmarkExecParallel(b *testing.B) {
 	r := MapResolver(map[string]interface{}{
-		"env._print": func(ctx *Context, addr uint32) uint32 {
+		"env._print": func(ctx Context, addr uint32) uint32 {
 			return 0
 		},
 	})
-	withCode(b, "testdata/extern_func.wat", r, func(code *Code) {
+	withCode(b, "testdata/extern_func.wat", r, func(code Code) {
 		b.RunParallel(func(pb *testing.PB) {
 			for pb.Next() {
-				ctx, err := NewContext(code, DefaultContextConfig())
+				ctx, err := code.NewContext(DefaultContextConfig())
 				if err != nil {
 					b.Fatal(err)
 				}
@@ -106,14 +106,14 @@ func BenchmarkExecParallel(b *testing.B) {
 
 func BenchmarkExecSerial(b *testing.B) {
 	r := MapResolver(map[string]interface{}{
-		"env._print": func(ctx *Context, addr uint32) uint32 {
+		"env._print": func(ctx Context, addr uint32) uint32 {
 			return 0
 		},
 	})
-	withCode(b, "testdata/extern_func.wat", r, func(code *Code) {
+	withCode(b, "testdata/extern_func.wat", r, func(code Code) {
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
-			ctx, err := NewContext(code, DefaultContextConfig())
+			ctx, err := code.NewContext(DefaultContextConfig())
 			if err != nil {
 				b.Fatal(err)
 			}
@@ -128,16 +128,16 @@ func BenchmarkExecSerial(b *testing.B) {
 
 func BenchmarkExecWorker(b *testing.B) {
 	r := MapResolver(map[string]interface{}{
-		"env._print": func(ctx *Context, addr uint32) uint32 {
+		"env._print": func(ctx Context, addr uint32) uint32 {
 			return 0
 		},
 	})
 
-	withCode(b, "testdata/extern_func.wat", r, func(code *Code) {
+	withCode(b, "testdata/extern_func.wat", r, func(code Code) {
 		wg := new(sync.WaitGroup)
 		worker := func(ch chan int) {
 			for range ch {
-				ctx, err := NewContext(code, DefaultContextConfig())
+				ctx, err := code.NewContext(DefaultContextConfig())
 				if err != nil {
 					b.Fatal(err)
 				}

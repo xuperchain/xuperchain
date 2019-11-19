@@ -23,7 +23,7 @@ type Codec struct {
 }
 
 // NewCodec instances a Codec, if memory of ctx is nil, trapNilMemory will be raised
-func NewCodec(ctx *Context) Codec {
+func NewCodec(ctx Context) Codec {
 	mem := ctx.Memory()
 	if mem == nil {
 		Throw(trapNilMemory)

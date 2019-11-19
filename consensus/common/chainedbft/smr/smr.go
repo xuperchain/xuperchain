@@ -68,6 +68,7 @@ func NewSmr(
 		address:       address,
 		publicKey:     publicKey,
 		privateKey:    privateKey,
+		preValidates:  []*cons_base.CandidateInfo{},
 		validates:     validates,
 		externalCons:  externalCons,
 		cryptoClient:  cryptoClient,
@@ -598,8 +599,11 @@ func (s *Smr) checkVoteNum(proposalID []byte) bool {
 
 // UpdateValidateSets update current ValidateSets by ex
 func (s *Smr) UpdateValidateSets(validates []*cons_base.CandidateInfo) error {
+	s.lk.Lock()
+	defer s.lk.Unlock()
 	s.preValidates = s.validates
 	s.validates = validates
+	s.vscView = s.votedView
 	return nil
 }
 

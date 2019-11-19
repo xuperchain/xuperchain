@@ -21,6 +21,15 @@ func (m *memCodeProvider) GetContractCode(name string) ([]byte, error) {
 	return m.code, nil
 }
 
+type fakeCode struct {
+}
+
+func (f *fakeCode) NewContext(cfg *exec.ContextConfig) (exec.Context, error) {
+	return nil, nil
+}
+
+func (f *fakeCode) Release() {}
+
 func TestGetCacheExecCode(t *testing.T) {
 	tmpdir, err := ioutil.TempDir("", "xvm-test")
 	if err != nil {
@@ -32,8 +41,8 @@ func TestGetCacheExecCode(t *testing.T) {
 		return ioutil.WriteFile(output, code, 0700)
 	}
 
-	makeExecCodeFunc := func(libpath string) (*exec.Code, error) {
-		return new(exec.Code), nil
+	makeExecCodeFunc := func(libpath string) (exec.Code, error) {
+		return new(fakeCode), nil
 	}
 
 	cp := &memCodeProvider{

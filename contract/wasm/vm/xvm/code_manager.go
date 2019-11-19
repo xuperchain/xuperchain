@@ -17,11 +17,11 @@ import (
 )
 
 type compileFunc func([]byte, string) error
-type makeExecCodeFunc func(libpath string) (*exec.Code, error)
+type makeExecCodeFunc func(libpath string) (exec.Code, error)
 
 type contractCode struct {
 	ContractName string
-	ExecCode     *exec.Code
+	ExecCode     exec.Code
 	Desc         pb.WasmCodeDesc
 }
 
