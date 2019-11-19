@@ -71,31 +71,31 @@ type value struct {
 
 type module struct {
 	filename string
-	code     *exec.Code
-	context  *exec.Context
+	code     exec.Code
+	context  exec.Context
 }
 
 var resolver = exec.MapResolver(map[string]interface{}{
-	"spectest.global_i32": float64(666),
-	"spectest.global_i64": float64(666),
-	"spectest.global_f32": float64(666.6),
-	"spectest.global_f64": float64(666.6),
-	"spectest.print": func(ctx *exec.Context) uint32 {
+	"spectest.global_i32": int64(666),
+	"spectest.global_i64": int64(666),
+	"spectest.global_f32": int64(math.Float32bits(666.6)),
+	"spectest.global_f64": int64(math.Float64bits(666.6)),
+	"spectest.print": func(ctx exec.Context) uint32 {
 		return 0
 	},
-	"spectest.print_i32": func(ctx *exec.Context, x uint32) uint32 {
+	"spectest.print_i32": func(ctx exec.Context, x uint32) uint32 {
 		return 0
 	},
-	"spectest.print_f32": func(ctx *exec.Context, x uint32) uint32 {
+	"spectest.print_f32": func(ctx exec.Context, x uint32) uint32 {
 		return 0
 	},
-	"spectest.print_f64": func(ctx *exec.Context, x uint32) uint32 {
+	"spectest.print_f64": func(ctx exec.Context, x uint32) uint32 {
 		return 0
 	},
-	"spectest.print_i32_f32": func(ctx *exec.Context, x, y uint32) uint32 {
+	"spectest.print_i32_f32": func(ctx exec.Context, x, y uint32) uint32 {
 		return 0
 	},
-	"spectest.print_f64_f64": func(ctx *exec.Context, x, y uint32) uint32 {
+	"spectest.print_f64_f64": func(ctx exec.Context, x, y uint32) uint32 {
 		return 0
 	},
 })
@@ -109,11 +109,11 @@ func newModule(modulePath string) (*module, error) {
 		return nil, err
 	}
 	targetPath, _ = filepath.Abs(targetPath)
-	code, err := exec.NewCode(targetPath, resolver)
+	code, err := exec.NewAOTCode(targetPath, resolver)
 	if err != nil {
 		return nil, err
 	}
-	context, err := exec.NewContext(code, exec.DefaultContextConfig())
+	context, err := code.NewContext(exec.DefaultContextConfig())
 	if err != nil {
 		return nil, err
 	}
