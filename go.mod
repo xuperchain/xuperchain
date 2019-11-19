@@ -46,6 +46,7 @@ require (
 	github.com/xuperchain/log15 v0.0.0-20190620081506-bc88a9198230
 	golang.org/x/crypto v0.0.0-20190927123631-a832865fa7ad
 	golang.org/x/net v0.0.0-20190926025831-c00fd9afed17
+	golang.org/x/sync v0.0.0-20190423024810-112230192c58
 	google.golang.org/genproto v0.0.0-20190927181202-20e1ac93f88c
 	google.golang.org/grpc v1.24.0
 	gotest.tools v2.2.0+incompatible // indirect
