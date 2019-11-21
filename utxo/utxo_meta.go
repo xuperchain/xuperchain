@@ -339,3 +339,31 @@ func (uv *UtxoVM) UpdateIrreversibleSlideWindow(nextIrreversibleSlideWindow int6
 	uv.metaTmp.IrreversibleSlideWindow = nextIrreversibleSlideWindow
 	return nil
 }
+
+// GetGasPrice get gas rate to utxo
+func (uv *UtxoVM) GetGasPrice() *pb.GasPrice {
+	uv.mutexMeta.Lock()
+	defer uv.mutexMeta.Unlock()
+	return uv.meta.GetGasPrice()
+}
+
+// LoadGasPrice load gas rate
+func (uv *UtxoVM) LoadGasPrice() (*pb.GasPrice, error) {
+	gasPriceBuf, findErr := uv.metaTable.Get([]byte(ledger_pkg.GasPriceKey))
+	if findErr == nil {
+		utxoMeta := &pb.UtxoMeta{}
+		err := proto.Unmarshal(gasPriceBuf, utxoMeta)
+		return utxoMeta.GetGasPrice(), err
+	} else if common.NormalizedKVError(findErr) == common.ErrKVNotFound {
+		gasPrice := uv.ledger.GetGasPrice()
+		cpuRate := gasPrice.CpuRate
+		memRate := gasPrice.MemRate
+		diskRate := gasPrice.DiskRate
+		xfeeRate := gasPrice.XfeeRate
+		if cpuRate < 0 || memRate < 0 || diskRate < 0 || xfeeRate < 0 {
+			return nil, ErrProposalParamsIsNegativeNumber
+		}
+		return gasPrice, nil
+	}
+	return nil, findErr
+}
