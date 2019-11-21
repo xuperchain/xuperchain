@@ -165,7 +165,6 @@ func (s *Smr) ProcessNewView(viewNumber int64, leader, preLeader string) error {
 		s.slog.Trace("ProcessNewView as a new leader, wait for n*2/3 new view messags")
 		return s.addViewMsg(newViewMsg)
 	}
-
 	// send to next leader
 	msgBuf, err := proto.Marshal(newViewMsg)
 	if err != nil {
@@ -204,7 +203,6 @@ func (s *Smr) GetGenerateQC() (*pb.QuorumCert, error) {
 // ProcessProposal used to generate new QuorumCert and broadcast to other replicas
 func (s *Smr) ProcessProposal(viewNumber int64, proposalID,
 	proposalMsg []byte) (*pb.QuorumCert, error) {
-
 	qc := &pb.QuorumCert{
 		ProposalId:  proposalID,
 		ProposalMsg: proposalMsg,
@@ -333,9 +331,6 @@ func (s *Smr) handleReceivedNewView(msg *p2p_pb.XuperMessage) error {
 // handleReceivedProposal is the core function of hotstuff. It uesd to change QuorumCerts's phase.
 // It will change three previous QuorumCerts's state because hotstuff is a three chained bft.
 func (s *Smr) handleReceivedProposal(msg *p2p_pb.XuperMessage) error {
-	s.slog.Trace("handleReceivedProposal", "logid",
-		msg.GetHeader().GetLogid(), "msg", msg)
-
 	propMsg := &pb.ChainedBftPhaseMessage{}
 	if err := proto.Unmarshal(msg.GetData().GetMsgInfo(), propMsg); err != nil {
 		s.slog.Error("handleReceivedProposal Unmarshal msg error",
@@ -368,7 +363,7 @@ func (s *Smr) handleReceivedProposal(msg *p2p_pb.XuperMessage) error {
 		return err
 	}
 
-	// Step4: upstate state
+	// Step4: update state
 	if prePropsQC != nil && bytes.Equal(prePropsQC.GetProposalId(), s.generateQC.GetProposalId()) {
 		s.slog.Info("handleReceivedProposal as the preleader, no need to updateQcStatus.")
 		return nil
@@ -386,29 +381,7 @@ func (s *Smr) handleReceivedProposal(msg *p2p_pb.XuperMessage) error {
 		s.slog.Error("handleReceivedProposal call prePrePropsQC error", "error", err)
 		return err
 	}
-	// preProposalMsg is the propsQC.ProposalMsg's parent block
-	// prePreProposalMsg is the propsQC.ProposalMsg's grandparent block
-	preProposalMsg, err := s.externalCons.CallPreProposalMsg(propsQC.GetProposalMsg())
-	if err != nil {
-		s.slog.Error("handleReceivedProposal CallProposalMsg call preProposalMsg error", "err", err)
-		return err
-	}
-	if bytes.Equal(preProposalMsg, prePropsQC.GetProposalMsg()) {
-		s.updateQcStatus(propsQC, prePropsQC, nil)
-	}
-	if !isFirstProposal {
-		prePreProposalMsg, err := s.externalCons.CallPrePreProposalMsg(propsQC.GetProposalMsg())
-		if err != nil {
-			s.slog.Error("handleReceivedProposal CallProposalMsg call prePreProposalMsg error", "err", err)
-			return err
-		}
-		if bytes.Equal(preProposalMsg, prePropsQC.GetProposalMsg()) &&
-			bytes.Equal(prePreProposalMsg, prePrePropsQC.GetProposalMsg()) {
-			s.updateQcStatus(s.proposalQC, s.generateQC, prePrePropsQC)
-		}
-	}
-	s.slog.Debug("handleReceivedProposal result", "smr.votedView", s.votedView,
-		"smr.generateQC", s.generateQC, "smr.lockedQC", s.lockedQC, "smr.proposalQC", s.proposalQC)
+	s.updateQcStatus(propsQC, prePropsQC, prePrePropsQC)
 	return nil
 }
 
@@ -449,15 +422,9 @@ func (s *Smr) updateQcStatus(proposalQC, generateQC, lockedQC *pb.QuorumCert) er
 	s.proposalQC = proposalQC
 	s.lk.Unlock()
 	// debuglog
-	if s.proposalQC != nil {
-		s.slog.Debug("updateQcStatus result", "proposalQCId", hex.EncodeToString(s.proposalQC.GetProposalId()))
-	}
-	if s.generateQC != nil {
-		s.slog.Debug("updateQcStatus result", "generateQCId", hex.EncodeToString(s.generateQC.GetProposalId()))
-	}
-	if s.lockedQC != nil {
-		s.slog.Debug("updateQcStatus result", "lockedQCId", hex.EncodeToString(s.lockedQC.GetProposalId()))
-	}
+	s.slog.Debug("updateQcStatus result", "proposalQCId", hex.EncodeToString(proposalQC.GetProposalId()))
+	s.slog.Debug("updateQcStatus result", "generateQCId", hex.EncodeToString(generateQC.GetProposalId()))
+	s.slog.Debug("updateQcStatus result", "lockedQCId", hex.EncodeToString(lockedQC.GetProposalId()))
 	return nil
 }
 
