@@ -50,6 +50,8 @@ github.com/docker/go-connections/tlsconfig
 github.com/docker/go-units
 # github.com/dustin/go-humanize v1.0.0
 github.com/dustin/go-humanize
+# github.com/edsrzf/mmap-go v1.0.0
+github.com/edsrzf/mmap-go
 # github.com/fsnotify/fsnotify v1.4.7
 github.com/fsnotify/fsnotify
 # github.com/go-stack/stack v1.8.0
@@ -338,6 +340,21 @@ github.com/syndtr/goleveldb/leveldb/iterator
 github.com/syndtr/goleveldb/leveldb/cache
 github.com/syndtr/goleveldb/leveldb/journal
 github.com/syndtr/goleveldb/leveldb/table
+# github.com/twitchyliquid64/golang-asm v0.0.0-20190126203739-365674df15fc
+github.com/twitchyliquid64/golang-asm
+github.com/twitchyliquid64/golang-asm/obj
+github.com/twitchyliquid64/golang-asm/obj/x86
+github.com/twitchyliquid64/golang-asm/asm/arch
+github.com/twitchyliquid64/golang-asm/objabi
+github.com/twitchyliquid64/golang-asm/dwarf
+github.com/twitchyliquid64/golang-asm/src
+github.com/twitchyliquid64/golang-asm/sys
+github.com/twitchyliquid64/golang-asm/obj/arm
+github.com/twitchyliquid64/golang-asm/obj/arm64
+github.com/twitchyliquid64/golang-asm/obj/mips
+github.com/twitchyliquid64/golang-asm/obj/ppc64
+github.com/twitchyliquid64/golang-asm/obj/s390x
+github.com/twitchyliquid64/golang-asm/obj/wasm
 # github.com/whyrusleeping/base32 v0.0.0-20170828182744-c30ac30633cc
 github.com/whyrusleeping/base32
 # github.com/whyrusleeping/go-keyspace v0.0.0-20160322163242-5b898ac5add1
@@ -352,6 +369,15 @@ github.com/whyrusleeping/mafmt
 github.com/whyrusleeping/multiaddr-filter
 # github.com/xuperchain/log15 v0.0.0-20190620081506-bc88a9198230
 github.com/xuperchain/log15
+# github.com/xuperchain/wagon v0.6.1-0.20191119040003-bba145e02197
+github.com/xuperchain/wagon/exec
+github.com/xuperchain/wagon/wasm
+github.com/xuperchain/wagon/wasm/leb128
+github.com/xuperchain/wagon/disasm
+github.com/xuperchain/wagon/exec/internal/compile
+github.com/xuperchain/wagon/wasm/operators
+github.com/xuperchain/wagon/wasm/internal/readpos
+github.com/xuperchain/wagon/internal/stack
 # go.opencensus.io v0.22.1
 go.opencensus.io/stats
 go.opencensus.io/tag
