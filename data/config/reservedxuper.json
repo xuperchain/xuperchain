@@ -26,7 +26,7 @@
                 "block_num":"50",
                 "vote_unit_price":"1",
                 "init_proposer": {
-                        "1":["nodeaddress1", "nodeaddress2", "nodeaddress"]
+                        "1":["nodeaddress1", "nodeaddress2", "nodeaddress3"]
                 },
                 "init_proposer_neturl": {
                      "1": ["nodeneturl1", "nodeneturl2", "nodeneturl3"]
