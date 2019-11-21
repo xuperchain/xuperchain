@@ -100,14 +100,14 @@ func run(modulePath string, args []string) error {
 		}
 
 	} else {
-		// codebuf, err := ioutil.ReadFile(modulePath)
-		// if err != nil {
-		// 	return err
-		// }
-		// code, err = exec.NewInterpCode(codebuf, resolver)
-		// if err != nil {
-		// 	return err
-		// }
+		codebuf, err := ioutil.ReadFile(modulePath)
+		if err != nil {
+			return err
+		}
+		code, err = exec.NewInterpCode(codebuf, resolver)
+		if err != nil {
+			return err
+		}
 	}
 	defer code.Release()
 	ctx, err := code.NewContext(exec.DefaultContextConfig())
