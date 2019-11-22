@@ -20,7 +20,7 @@ type aotCode struct {
 	bridgePointer uintptr
 }
 
-// NewCode instances a Code object from file path of native shared library
+// NewAOTCode instances a Code object from file path of native shared library
 func NewAOTCode(module string, resolver Resolver) (icode Code, err error) {
 	code := new(aotCode)
 	code.bridge = newResolverBridge(resolver)

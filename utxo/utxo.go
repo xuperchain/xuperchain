@@ -78,6 +78,7 @@ var (
 	ErrInvokeReqParams      = errors.New("Invalid invoke request params")
 	ErrParseContractUtxos   = errors.New("Parse contract utxos error")
 	ErrContractTxAmout      = errors.New("Contract transfer amount error")
+	ErrDuplicatedTx         = errors.New("Receive a duplicated tx")
 )
 
 // package constants
@@ -1293,7 +1294,10 @@ func (uv *UtxoVM) doTxAsync(tx *pb.Transaction) error {
 	}
 	inboundTx := &InboundTx{tx: tx}
 	if uv.asyncBlockMode {
-		uv.asyncResult.Open(tx.Txid)
+		err := uv.asyncResult.Open(tx.Txid)
+		if err != nil {
+			return err
+		}
 		uv.inboundTxChan <- inboundTx
 		return uv.asyncResult.Wait(tx.Txid)
 	}

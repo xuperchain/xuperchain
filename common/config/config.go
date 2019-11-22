@@ -164,6 +164,10 @@ type WasmConfig struct {
 	DebugLog       LogConfig
 }
 
+func (w *WasmConfig) applyFlags(flags *pflag.FlagSet) {
+	flags.StringVar(&w.Driver, "vm", w.Driver, "contract vm driver")
+}
+
 // ConsoleConfig is the command config user input
 type ConsoleConfig struct {
 	Keys       string
@@ -430,6 +434,7 @@ func (nc *NodeConfig) ApplyFlags(flags *pflag.FlagSet) {
 	nc.Miner.applyFlags(flags)
 	nc.ConsoleConfig.ApplyFlags(flags)
 	nc.Utxo.applyFlags(flags)
+	nc.Wasm.applyFlags(flags)
 
 	flags.StringVar(&nc.Datapath, "datapath", nc.Datapath, "used for config overwrite --datapath <data path>")
 	flags.StringVar(&nc.CPUProfile, "cpuprofile", nc.CPUProfile, "used to store cpu profile data --cpuprofile <pprof file>")
