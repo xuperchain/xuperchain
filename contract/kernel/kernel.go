@@ -295,6 +295,30 @@ func (k *Kernel) validateUpdateIrreversibleSlideWindow(desc *contract.TxDesc) er
 	return nil
 }
 
+func (k *Kernel) validateUpdateGasPrice(desc *contract.TxDesc, name string) (*pb.GasPrice, error) {
+	result := ledger.GasPrice{}
+	// 检测参数
+	if desc.Args[name] == nil {
+		return nil, fmt.Errorf("missing argument in contract: %s", name)
+	}
+	// 获取参数内容
+	args, ok := desc.Args[name].(interface{})
+	if !ok {
+		return nil, fmt.Errorf("validateUpdateGasPrice argName:%s invalid", name)
+	}
+	// 解析参数至结构体中
+	err := mapstructure.Decode(args, &result)
+	if err != nil {
+		return nil, err
+	}
+	return &pb.GasPrice{
+		CpuRate:  result.CpuRate,
+		MemRate:  result.MemRate,
+		DiskRate: result.DiskRate,
+		XfeeRate: result.XfeeRate,
+	}, nil
+}
+
 func (k *Kernel) validateUpdateMaxBlockSize(desc *contract.TxDesc) error {
 	for _, argName := range []string{"new_block_size", "old_block_size"} {
 		if desc.Args[argName] == nil {
@@ -506,6 +530,8 @@ func (k *Kernel) Run(desc *contract.TxDesc) error {
 		return k.runUpdateNewAccountResourceAmount(desc)
 	case "UpdateIrreversibleSlideWindow":
 		return k.runUpdateIrreversibleSlideWindow(desc)
+	case "UpdateGasPrice":
+		return k.runUpdateGasPrice(desc)
 	default:
 		k.log.Warn("method not implemented", "method", desc.Method)
 		return ErrMethodNotImplemented
@@ -546,6 +572,8 @@ func (k *Kernel) Rollback(desc *contract.TxDesc) error {
 		return k.rollbackUpdateNewAccountResourceAmount(desc)
 	case "UpdateIrreversibleSlideWindow":
 		return k.rollbackUpdateIrreversibleSlideWindow(desc)
+	case "UpdateGasPrice":
+		return k.rollbackUpdateGasPrice(desc)
 	default:
 		k.log.Warn("method not implemented", "method", desc.Method)
 		return ErrMethodNotImplemented
@@ -742,6 +770,43 @@ func (k *Kernel) runUpdateReservedContract(desc *contract.TxDesc) error {
 	k.log.Info("update reservered contract", "params", params)
 	err = k.context.UtxoMeta.UpdateReservedContracts(params, k.context.UtxoBatch)
 	return err
+}
+
+func (k *Kernel) runUpdateGasPrice(desc *contract.TxDesc) error {
+	if k.context == nil || k.context.UtxoMeta == nil {
+		return fmt.Errorf("failed to update gas price, because no utxoMeta in context")
+	}
+	oldParams, vErr := k.validateUpdateGasPrice(desc, "old_gas_price")
+	if vErr != nil {
+		return vErr
+	}
+	originalGasPrice := k.context.UtxoMeta.GetGasPrice()
+	if oldParams.GetCpuRate() != originalGasPrice.GetCpuRate() ||
+		oldParams.GetMemRate() != originalGasPrice.GetMemRate() ||
+		oldParams.GetDiskRate() != originalGasPrice.GetDiskRate() ||
+		oldParams.GetXfeeRate() != originalGasPrice.GetXfeeRate() {
+		return fmt.Errorf("old_gas_price values are not equal to the current node")
+	}
+	newGasPrice, err := k.validateUpdateGasPrice(desc, "new_gas_price")
+	if err != nil {
+		return err
+	}
+	k.log.Info("update gas price", "params", newGasPrice)
+	err = k.context.UtxoMeta.UpdateGasPrice(newGasPrice, k.context.UtxoBatch)
+	return err
+}
+
+func (k *Kernel) rollbackUpdateGasPrice(desc *contract.TxDesc) error {
+	if k.context == nil || k.context.UtxoMeta == nil {
+		return fmt.Errorf("failed to rollback gas price, because no utxoMeta in context")
+	}
+	oldParams, vErr := k.validateUpdateGasPrice(desc, "old_gas_price")
+	if vErr != nil {
+		return vErr
+	}
+	k.log.Info("rollback gas price params", "params", oldParams)
+	vErr = k.context.UtxoMeta.UpdateGasPrice(oldParams, k.context.UtxoBatch)
+	return vErr
 }
 
 func (k *Kernel) rollbackUpdateReservedContract(desc *contract.TxDesc) error {
