@@ -25,7 +25,7 @@ DEFINE_METHOD(ERC20, initialize) {
 
     std::string master = MASTERPRE;
     ctx->put_object(master, caller);
-
+    ctx->ok("initialize success");
 }
 
 DEFINE_METHOD(ERC20, mint) {
@@ -58,12 +58,13 @@ DEFINE_METHOD(ERC20, mint) {
         return;
     }
     
-    int increaseSupplyint = atoi(value.c_str());
+    int increaseSupplyint = atoi(increaseSupply.c_str());
     int valueint = atoi(value.c_str());
     int totalSupplyint = increaseSupplyint + valueint;
     char buf[32];
     snprintf(buf, 32, "%d", totalSupplyint);
     ctx->put_object("totalSupply", buf); 
+    ctx->ok(buf);
  
 }
 
