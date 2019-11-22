@@ -4,7 +4,7 @@ struct ERC20 : public xchain::Contract {};
 
 const std::string BALANCEPRE = "balanceOf_";
 const std::string ALLOWANCEPRE = "allowanceOf_";
-const std::string MASTERPRE = "masterOf_";
+const std::string MASTERPRE = "owner";
 
 DEFINE_METHOD(ERC20, initialize) {
     xchain::Context* ctx = self.context();
@@ -46,7 +46,7 @@ DEFINE_METHOD(ERC20, mint) {
         return;
     }
 
-    const std::string& increaseSupply = ctx->arg("totalSupply");
+    const std::string& increaseSupply = ctx->arg("amount");
     if (increaseSupply.empty()) {
         ctx->error("missing totalSupply");
         return;
@@ -64,8 +64,17 @@ DEFINE_METHOD(ERC20, mint) {
     char buf[32];
     snprintf(buf, 32, "%d", totalSupplyint);
     ctx->put_object("totalSupply", buf); 
+    
+    std::string key = BALANCEPRE + caller;
+    if (!ctx->get_object(key, &value)) {
+        ctx->error("get caller balance error");
+    }
+    valueint = atoi(value.c_str());
+    int callerint = increaseSupplyint + valueint;
+    snprintf(buf, 32, "%d", callerint);
+    ctx->put_object(key, buf); 
+    
     ctx->ok(buf);
- 
 }
 
 DEFINE_METHOD(ERC20, totalSupply) {
