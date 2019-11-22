@@ -68,6 +68,7 @@ DEFINE_METHOD(ERC20, mint) {
     std::string key = BALANCEPRE + caller;
     if (!ctx->get_object(key, &value)) {
         ctx->error("get caller balance error");
+        return;
     }
     valueint = atoi(value.c_str());
     int callerint = increaseSupplyint + valueint;
