@@ -48,7 +48,7 @@ DEFINE_METHOD(ERC20, mint) {
 
     const std::string& increaseSupply = ctx->arg("amount");
     if (increaseSupply.empty()) {
-        ctx->error("missing totalSupply");
+        ctx->error("missing amount");
         return;
     }
 
