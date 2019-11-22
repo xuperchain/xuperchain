@@ -4,10 +4,11 @@ struct ERC20 : public xchain::Contract {};
 
 const std::string BALANCEPRE = "balanceOf_";
 const std::string ALLOWANCEPRE = "allowanceOf_";
+const std::string MASTERPRE = "masterOf_";
 
 DEFINE_METHOD(ERC20, initialize) {
     xchain::Context* ctx = self.context();
-    const std::string& caller = ctx->arg("caller");
+    const std::string& caller = ctx->initiator();
     if (caller.empty()) {
         ctx->error("missing caller");
         return;
@@ -21,6 +22,49 @@ DEFINE_METHOD(ERC20, initialize) {
     std::string key = BALANCEPRE + caller;
     ctx->put_object("totalSupply", totalSupply);
     ctx->put_object(key, totalSupply);
+
+    std::string master = MASTERPRE;
+    ctx->put_object(master, caller);
+
+}
+
+DEFINE_METHOD(ERC20, mint) {
+    xchain::Context* ctx = self.context();
+    const std::string& caller = ctx->initiator();
+    if (caller.empty()) {
+        ctx->error("missing caller");
+        return;
+    }
+
+    std::string master;
+    if (!ctx->get_object(MASTERPRE, &master)) {
+        ctx->error("missing master");
+        return;
+    }
+    if (master != caller) {
+        ctx->error("only the person who created the contract can mint");
+        return;
+    }
+
+    const std::string& increaseSupply = ctx->arg("totalSupply");
+    if (increaseSupply.empty()) {
+        ctx->error("missing totalSupply");
+        return;
+    }
+
+    std::string value;
+    if (!ctx->get_object("totalSupply", &value)) {
+        ctx->error("get totalSupply error");
+        return;
+    }
+    
+    int increaseSupplyint = atoi(value.c_str());
+    int valueint = atoi(value.c_str());
+    int totalSupplyint = increaseSupplyint + valueint;
+    char buf[32];
+    snprintf(buf, 32, "%d", totalSupplyint);
+    ctx->put_object("totalSupply", buf); 
+ 
 }
 
 DEFINE_METHOD(ERC20, totalSupply) {
