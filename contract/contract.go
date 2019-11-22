@@ -32,6 +32,9 @@ type UtxoMetaRegister interface {
 	GetIrreversibleSlideWindow() int64
 	// Update irreversible slide window
 	UpdateIrreversibleSlideWindow(nextIrreversibleSlideWindow int64, batch kvdb.Batch) error
+	// Get gas price
+	GetGasPrice() *pb.GasPrice
+	UpdateGasPrice(*pb.GasPrice, kvdb.Batch) error
 }
 
 // TxDesc is the description to running a contract
