@@ -367,3 +367,32 @@ func (uv *UtxoVM) LoadGasPrice() (*pb.GasPrice, error) {
 	}
 	return nil, findErr
 }
+
+// UpdateGasPrice update gasPrice parameters
+func (uv *UtxoVM) UpdateGasPrice(nextGasPrice *pb.GasPrice, batch kvdb.Batch) error {
+	// check if the parameters are valid
+	cpuRate := nextGasPrice.GetCpuRate()
+	memRate := nextGasPrice.GetMemRate()
+	diskRate := nextGasPrice.GetDiskRate()
+	xfeeRate := nextGasPrice.GetXfeeRate()
+	if cpuRate < 0 || memRate < 0 || diskRate < 0 || xfeeRate < 0 {
+		return ErrProposalParamsIsNegativeNumber
+	}
+	tmpMeta := &pb.UtxoMeta{}
+	newMeta := proto.Clone(tmpMeta).(*pb.UtxoMeta)
+	newMeta.GasPrice = nextGasPrice
+	gasPriceBuf, pbErr := proto.Marshal(newMeta)
+	if pbErr != nil {
+		uv.xlog.Warn("failed to marshal pb meta")
+		return pbErr
+	}
+	err := batch.Put([]byte(pb.MetaTablePrefix+ledger_pkg.GasPriceKey), gasPriceBuf)
+	if err != nil {
+		return err
+	}
+	uv.xlog.Info("Update gas price succeed")
+	uv.mutexMeta.Lock()
+	defer uv.mutexMeta.Unlock()
+	uv.metaTmp.GasPrice = nextGasPrice
+	return nil
+}
