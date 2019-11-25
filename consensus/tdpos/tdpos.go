@@ -831,9 +831,7 @@ func (tp *TDpos) initBFT(cfg *config.NodeConfig) error {
 
 func (tp *TDpos) isFirstblock(targetHeight int64) bool {
 	consStartHeight := tp.height
-	if consStartHeight == 0 {
-		consStartHeight++
-	}
+	consStartHeight++
 	tp.log.Debug("isFirstblock check", "consStartHeight", consStartHeight,
 		"targetHeight", targetHeight)
 	return consStartHeight == targetHeight
