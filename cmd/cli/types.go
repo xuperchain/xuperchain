@@ -64,6 +64,14 @@ type InvokeRequest struct {
 	ResouceLimits []ResourceLimit   `json:"resource_limits"`
 }
 
+// GasPrice proto.GasPrice
+type GasPrice struct {
+	CpuRate  int64 `json:"cpu_rate"`
+	MemRate  int64 `json:"mem_rate"`
+	DiskRate int64 `json:"disk_rate"`
+	XfeeRate int64 `json:"xfee_rate"`
+}
+
 // SignatureInfo proto.SignatureInfo
 type SignatureInfo struct {
 	PublicKey string `json:"publickey"`
@@ -101,7 +109,7 @@ type QCSignInfos struct {
 // QuorumCert is a data type that combines a collection of signatures from replicas.
 type QuorumCert struct {
 	// The id of Proposal this QC certified.
-	ProposalId []byte `protobuf:"bytes,1,opt,name=ProposalId,proto3" json:"ProposalId,omitempty"`
+	ProposalId string `protobuf:"bytes,1,opt,name=ProposalId,proto3" json:"ProposalId,omitempty"`
 	// The msg of Proposal this QC certified.
 	ProposalMsg []byte `protobuf:"bytes,2,opt,name=ProposalMsg,proto3" json:"ProposalMsg,omitempty"`
 	// The current type of this QC certified.
@@ -308,7 +316,7 @@ func FromInternalBlockPB(block *pb.InternalBlock) *InternalBlock {
 func FromPBJustify(qc *pb.QuorumCert) *QuorumCert {
 	justify := &QuorumCert{}
 	if qc != nil {
-		justify.ProposalId = qc.ProposalId
+		justify.ProposalId = hex.EncodeToString(qc.ProposalId)
 		justify.ProposalMsg = qc.ProposalMsg
 		justify.Type = QCState(int(qc.Type))
 		justify.ViewNumber = qc.ViewNumber
@@ -361,6 +369,8 @@ type UtxoMeta struct {
 	IrreversibleBlockHeight int64 `json:"irreversibleBlockHeight"`
 	// IrreversibleSlideWindow irreversible slide window
 	IrreversibleSlideWindow int64 `json:"irreversibleSlideWindow"`
+	// GasPrice gas rate to utxo for different type resources
+	GasPrice GasPrice `json:"gasPrice"`
 }
 
 // ChainStatus proto.ChainStatus
@@ -412,6 +422,13 @@ func FromSystemStatusPB(statuspb *pb.SystemsStatus) *SystemStatus {
 			MethodName:   forbiddenContract.GetMethodName(),
 			Args:         originalArgs,
 		}
+		gasPricePB := utxoMeta.GetGasPrice()
+		gasPrice := GasPrice{
+			CpuRate:  gasPricePB.GetCpuRate(),
+			MemRate:  gasPricePB.GetMemRate(),
+			DiskRate: gasPricePB.GetDiskRate(),
+			XfeeRate: gasPricePB.GetXfeeRate(),
+		}
 		status.ChainStatus = append(status.ChainStatus, ChainStatus{
 			Name: chain.GetBcname(),
 			LedgerMeta: LedgerMeta{
@@ -432,6 +449,8 @@ func FromSystemStatusPB(statuspb *pb.SystemsStatus) *SystemStatus {
 				// Irreversible block height & slide window
 				IrreversibleBlockHeight: utxoMeta.GetIrreversibleBlockHeight(),
 				IrreversibleSlideWindow: utxoMeta.GetIrreversibleSlideWindow(),
+				// add GasPrice value
+				GasPrice: gasPrice,
 			},
 			BranchBlockid: chain.GetBranchBlockid(),
 		})

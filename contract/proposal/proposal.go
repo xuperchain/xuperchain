@@ -338,6 +338,17 @@ func (prp *Proposal) fillOldState(desc []byte) ([]byte, error) {
 		forbiddenContractMap["args"] = forbiddenContract.GetArgs()
 
 		descObj.Args["old_forbidden_contract"] = forbiddenContractMap
+	case "kernel.UpdateGasPrice":
+		prp.log.Trace("contract desc need to process", "contractKey", "kernel.UpdateGasPrice")
+		gasPrice := prp.utxoVM.GetGasPrice()
+
+		gasPriceMap := map[string]interface{}{}
+		gasPriceMap["cpu_rate"] = gasPrice.GetCpuRate()
+		gasPriceMap["mem_rate"] = gasPrice.GetMemRate()
+		gasPriceMap["disk_rate"] = gasPrice.GetDiskRate()
+		gasPriceMap["xfee_rate"] = gasPrice.GetXfeeRate()
+
+		descObj.Args["old_gas_price"] = gasPrice
 	default:
 		prp.log.Trace("contract desc do not need to process")
 	}

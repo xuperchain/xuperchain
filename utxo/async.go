@@ -3,7 +3,6 @@ package utxo
 import (
 	"context"
 	"errors"
-	"fmt"
 	"sync"
 	"time"
 
@@ -26,8 +25,12 @@ type AsyncResult struct {
 	mailBox sync.Map
 }
 
-func (ar *AsyncResult) Open(txid []byte) {
-	ar.mailBox.Store(string(txid), make(chan error, 1))
+func (ar *AsyncResult) Open(txid []byte) error {
+	_, loaded := ar.mailBox.LoadOrStore(string(txid), make(chan error, 1))
+	if loaded {
+		return ErrDuplicatedTx
+	}
+	return nil
 }
 
 func (ar *AsyncResult) Send(txid []byte, err error) {
@@ -51,16 +54,16 @@ func (uv *UtxoVM) StartAsyncWriter() {
 	uv.asyncCancel = cancel
 	ledger.DisableTxDedup = true
 	go uv.asyncWriter(ctx)
-	go uv.asyncVerifiy(ctx)
+	go uv.asyncVerify(ctx)
 }
 
 func (uv *UtxoVM) StartAsyncBlockMode() {
 	uv.asyncBlockMode = true
 	ctx, cancel := context.WithCancel(context.Background())
 	uv.asyncCancel = cancel
-	ledger.DisableTxDedup = false
+	ledger.DisableTxDedup = true
 	go uv.asyncWriter(ctx)
-	go uv.asyncVerifiy(ctx)
+	go uv.asyncVerify(ctx)
 }
 
 func (uv *UtxoVM) verifyTxWorker(itxlist []*InboundTx) error {
@@ -72,12 +75,6 @@ func (uv *UtxoVM) verifyTxWorker(itxlist []*InboundTx) error {
 	for _, itx := range itxlist {
 		// 去重判断
 		tx := itx.tx
-		_, exist := uv.unconfirmTxInMem.Load(string(tx.Txid))
-		if exist {
-			uv.xlog.Debug("this tx already in unconfirm table, when DoTx", "txid", fmt.Sprintf("%x", tx.Txid))
-			uv.asyncResult.Send(tx.Txid, ErrAlreadyInUnconfirmed)
-			continue
-		}
 		ok, xerr := uv.ImmediateVerifyTx(tx, false)
 		if !ok {
 			uv.xlog.Warn("invalid transaction found", "txid", global.F(tx.Txid), "err", xerr)
@@ -126,7 +123,7 @@ func (uv *UtxoVM) flushTxList(txList []*pb.Transaction) error {
 	if len(txList) == 0 {
 		return nil
 	}
-	uv.xlog.Warn("async tx list size", "size", len(txList))
+	uv.xlog.Warn("async tx list size", "size", len(txList), "L1", len(uv.inboundTxChan), "L2", len(uv.verifiedTxChan))
 	pbTxList := make([][]byte, len(txList))
 	// 异步阻塞模式需要将交易数据持久化落盘
 	if uv.asyncBlockMode {
@@ -214,7 +211,7 @@ func (uv *UtxoVM) asyncWriter(ctx context.Context) {
 }
 
 // asyncVerifiy 异步并行校验tx，在AsyncMode=true时开启
-func (uv *UtxoVM) asyncVerifiy(ctx context.Context) {
+func (uv *UtxoVM) asyncVerify(ctx context.Context) {
 	tick := time.Tick(time.Millisecond * AsyncMaxWaitMS)
 	itxlist := []*InboundTx{}
 	uv.asyncWriterWG.Add(1)
@@ -254,4 +251,9 @@ func (uv *UtxoVM) NotifyFinishBlockGen() {
 // IsAsync return current async state
 func (uv *UtxoVM) IsAsync() bool {
 	return uv.asyncMode
+}
+
+// IsAsyncBlock return current async state
+func (uv *UtxoVM) IsAsyncBlock() bool {
+	return uv.asyncBlockMode
 }
