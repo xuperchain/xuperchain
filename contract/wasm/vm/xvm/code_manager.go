@@ -191,6 +191,9 @@ func (c *codeManager) GetExecCode(name string, cp vm.ContractCodeProvider) (*con
 		}
 		return c.makeMemCache(name, libpath, desc)
 	})
+	if err != nil {
+		return nil, err
+	}
 	return icode.(*contractCode), nil
 }
 
