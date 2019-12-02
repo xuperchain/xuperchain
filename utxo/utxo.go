@@ -509,7 +509,8 @@ func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, priv
 		xlog.Warn("failed to load gas price from disk", "loadErr", loadErr)
 		return nil, loadErr
 	}
-	utxoVM.metaTmp = utxoVM.meta
+	// cp not reference
+	utxoVM.metaTmp = proto.Clone(utxoVM.meta).(*pb.UtxoMeta)
 	return utxoVM, nil
 }
 
@@ -1584,7 +1585,7 @@ func (uv *UtxoVM) PlayAndRepost(blockid []byte, needRepost bool, isRootTx bool) 
 	// 内存级别更新UtxoMeta信息
 	uv.mutexMeta.Lock()
 	defer uv.mutexMeta.Unlock()
-	uv.meta = uv.metaTmp
+	uv.meta = proto.Clone(uv.metaTmp).(*pb.UtxoMeta)
 	return nil
 }
 
@@ -1650,7 +1651,7 @@ func (uv *UtxoVM) PlayForMiner(blockid []byte, batch kvdb.Batch) error {
 	// 内存级别更新UtxoMeta信息
 	uv.mutexMeta.Lock()
 	defer uv.mutexMeta.Unlock()
-	uv.meta = uv.metaTmp
+	uv.meta = proto.Clone(uv.metaTmp).(*pb.UtxoMeta)
 	return nil
 }
 
@@ -1770,7 +1771,7 @@ func (uv *UtxoVM) Walk(blockid []byte, ledgerPrune bool) error {
 		}
 		// 内存级别更新UtxoMeta信息
 		uv.mutexMeta.Lock()
-		uv.meta = uv.metaTmp
+		uv.meta = proto.Clone(uv.metaTmp).(*pb.UtxoMeta)
 		uv.mutexMeta.Unlock()
 	}
 	for i := len(todoBlocks) - 1; i >= 0; i-- {
@@ -1828,7 +1829,7 @@ func (uv *UtxoVM) Walk(blockid []byte, ledgerPrune bool) error {
 		}
 		// 内存级别更新UtxoMeta信息
 		uv.mutexMeta.Lock()
-		uv.meta = uv.metaTmp
+		uv.meta = proto.Clone(uv.metaTmp).(*pb.UtxoMeta)
 		uv.mutexMeta.Unlock()
 	}
 	return nil
