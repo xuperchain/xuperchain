@@ -510,7 +510,8 @@ func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, priv
 		return nil, loadErr
 	}
 	// cp not reference
-	utxoVM.metaTmp = proto.Clone(utxoVM.meta).(*pb.UtxoMeta)
+	newMeta := proto.Clone(utxoVM.meta).(*pb.UtxoMeta)
+	utxoVM.metaTmp = newMeta
 	return utxoVM, nil
 }
 
@@ -1585,7 +1586,8 @@ func (uv *UtxoVM) PlayAndRepost(blockid []byte, needRepost bool, isRootTx bool) 
 	// 内存级别更新UtxoMeta信息
 	uv.mutexMeta.Lock()
 	defer uv.mutexMeta.Unlock()
-	uv.meta = proto.Clone(uv.metaTmp).(*pb.UtxoMeta)
+	newMeta := proto.Clone(uv.metaTmp).(*pb.UtxoMeta)
+	uv.meta = newMeta
 	return nil
 }
 
@@ -1651,7 +1653,8 @@ func (uv *UtxoVM) PlayForMiner(blockid []byte, batch kvdb.Batch) error {
 	// 内存级别更新UtxoMeta信息
 	uv.mutexMeta.Lock()
 	defer uv.mutexMeta.Unlock()
-	uv.meta = proto.Clone(uv.metaTmp).(*pb.UtxoMeta)
+	newMeta := proto.Clone(uv.metaTmp).(*pb.UtxoMeta)
+	uv.meta = newMeta
 	return nil
 }
 
@@ -1771,7 +1774,8 @@ func (uv *UtxoVM) Walk(blockid []byte, ledgerPrune bool) error {
 		}
 		// 内存级别更新UtxoMeta信息
 		uv.mutexMeta.Lock()
-		uv.meta = proto.Clone(uv.metaTmp).(*pb.UtxoMeta)
+		newMeta := proto.Clone(uv.metaTmp).(*pb.UtxoMeta)
+		uv.meta = newMeta
 		uv.mutexMeta.Unlock()
 	}
 	for i := len(todoBlocks) - 1; i >= 0; i-- {
@@ -1829,7 +1833,8 @@ func (uv *UtxoVM) Walk(blockid []byte, ledgerPrune bool) error {
 		}
 		// 内存级别更新UtxoMeta信息
 		uv.mutexMeta.Lock()
-		uv.meta = proto.Clone(uv.metaTmp).(*pb.UtxoMeta)
+		newMeta := proto.Clone(uv.metaTmp).(*pb.UtxoMeta)
+		uv.meta = newMeta
 		uv.mutexMeta.Unlock()
 	}
 	return nil
