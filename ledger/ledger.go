@@ -1051,6 +1051,7 @@ func (l *Ledger) removeBlocks(fromBlockid []byte, toBlockid []byte, batch kvdb.B
 	for fromBlock.Height > toBlock.Height {
 		l.xlog.Info("remove block", "blockid", global.F(fromBlock.Blockid), "height", fromBlock.Height)
 		l.blkHeaderCache.Del(string(fromBlock.Blockid))
+		l.blockCache.Del(string(fromBlock.Blockid))
 		batch.Delete(append([]byte(pb.BlocksTablePrefix), fromBlock.Blockid...))
 		if fromBlock.InTrunk {
 			sHeight := []byte(fmt.Sprintf("%020d", fromBlock.Height))

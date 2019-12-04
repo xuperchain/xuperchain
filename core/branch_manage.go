@@ -55,6 +55,11 @@ func (xc *XChainCore) pruneLedger(targetBlockid []byte) error {
 		if err != nil && common.NormalizedKVError(err) != common.ErrKVNotFound && err != ledger_pkg.ErrBlockNotExist {
 			return err
 		}
+		// 将无效分支头信息也删掉
+		err = batch.Delete(append([]byte(pb.BranchInfoPrefix), []byte(v)...))
+		if err != nil {
+			return err
+		}
 	}
 	kvErr := batch.Write()
 	if kvErr != nil {
