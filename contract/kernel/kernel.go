@@ -824,7 +824,13 @@ func (k *Kernel) GetVerifiableAutogenTx(blockHeight int64, maxCount int, timesta
 // GetVATWhiteList 实现VAT接口
 func (k *Kernel) GetVATWhiteList() map[string]bool {
 	whiteList := map[string]bool{
-		"UpdateMaxBlockSize": true,
+		"UpdateMaxBlockSize":             true,
+		"UpdateReservedContract":         true,
+		"UpdateForbiddenContract":        true,
+		"UpdateNewAccountResourceAmount": true,
+		"UpdateIrreversibleSlideWindow":  true,
+		"UpdateGasPrice":                 true,
+		"UpdateBlockChainData":           true,
 	}
 	return whiteList
 }
