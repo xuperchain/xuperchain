@@ -437,7 +437,7 @@ func TestRunUpdateReservedContracts(t *testing.T) {
                         }
                     }
                 ],
-                "reserved_contracts":[
+                "new_reserved_contracts":[
                 {
                     "module_name":"wasm",
                     "contract_name":"identity",
@@ -548,7 +548,7 @@ func TestRunUpdateForbiddenContract(t *testing.T) {
 				"method_name": "get",
 				"args":{}
 			},
-			"forbidden_contract": {
+			"new_forbidden_contract": {
 				"module_name": "wasm",
 				"contract_name": "forbidden",
 				"method_name": "get1",
