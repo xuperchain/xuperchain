@@ -377,7 +377,7 @@ func (k *Kernel) validateUpdateForbiddenContract(desc *contract.TxDesc, name str
 func (k *Kernel) validateUpdateReservedContract(desc *contract.TxDesc, name string) (
 	[]*pb.InvokeRequest, error) {
 	result := []ledger.InvokeRequest{}
-	for _, argName := range []string{"old_reserved_contracts", "reserved_contracts"} {
+	for _, argName := range []string{"old_reserved_contracts", "new_reserved_contracts"} {
 		if desc.Args[argName] == nil {
 			return nil, fmt.Errorf("miss argument in contact: %s", argName)
 		}
@@ -709,7 +709,7 @@ func (k *Kernel) runUpdateForbiddenContract(desc *contract.TxDesc) error {
 		}
 	}
 
-	params, err := k.validateUpdateForbiddenContract(desc, "forbidden_contract")
+	params, err := k.validateUpdateForbiddenContract(desc, "new_forbidden_contract")
 	if err != nil {
 		return err
 	}
@@ -763,7 +763,7 @@ func (k *Kernel) runUpdateReservedContract(desc *contract.TxDesc) error {
 		}
 	}
 
-	params, err := k.validateUpdateReservedContract(desc, "reserved_contracts")
+	params, err := k.validateUpdateReservedContract(desc, "new_reserved_contracts")
 	if err != nil {
 		return err
 	}
