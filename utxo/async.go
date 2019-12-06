@@ -25,8 +25,12 @@ type AsyncResult struct {
 	mailBox sync.Map
 }
 
-func (ar *AsyncResult) Open(txid []byte) {
-	ar.mailBox.Store(string(txid), make(chan error, 1))
+func (ar *AsyncResult) Open(txid []byte) error {
+	_, loaded := ar.mailBox.LoadOrStore(string(txid), make(chan error, 1))
+	if loaded {
+		return ErrDuplicatedTx
+	}
+	return nil
 }
 
 func (ar *AsyncResult) Send(txid []byte, err error) {
@@ -50,16 +54,16 @@ func (uv *UtxoVM) StartAsyncWriter() {
 	uv.asyncCancel = cancel
 	ledger.DisableTxDedup = true
 	go uv.asyncWriter(ctx)
-	go uv.asyncVerifiy(ctx)
+	go uv.asyncVerify(ctx)
 }
 
 func (uv *UtxoVM) StartAsyncBlockMode() {
 	uv.asyncBlockMode = true
 	ctx, cancel := context.WithCancel(context.Background())
 	uv.asyncCancel = cancel
-	ledger.DisableTxDedup = false
+	ledger.DisableTxDedup = true
 	go uv.asyncWriter(ctx)
-	go uv.asyncVerifiy(ctx)
+	go uv.asyncVerify(ctx)
 }
 
 func (uv *UtxoVM) verifyTxWorker(itxlist []*InboundTx) error {
@@ -69,11 +73,14 @@ func (uv *UtxoVM) verifyTxWorker(itxlist []*InboundTx) error {
 	uv.xlog.Debug("async tx list size", "size", len(itxlist))
 	//校验tx合法性
 	for _, itx := range itxlist {
-		ok, xerr := uv.ImmediateVerifyTx(itx.tx, false)
+		// 去重判断
+		tx := itx.tx
+		ok, xerr := uv.ImmediateVerifyTx(tx, false)
 		if !ok {
-			uv.xlog.Warn("invalid transaction found", "txid", global.F(itx.tx.Txid), "err", xerr)
+			uv.xlog.Warn("invalid transaction found", "txid", global.F(tx.Txid), "err", xerr)
+			uv.asyncResult.Send(tx.Txid, xerr)
 		} else {
-			uv.verifiedTxChan <- itx.tx
+			uv.verifiedTxChan <- tx
 		}
 	}
 	return nil
@@ -116,7 +123,7 @@ func (uv *UtxoVM) flushTxList(txList []*pb.Transaction) error {
 	if len(txList) == 0 {
 		return nil
 	}
-	uv.xlog.Warn("async tx list size", "size", len(txList))
+	uv.xlog.Warn("async tx list size", "size", len(txList), "L1", len(uv.inboundTxChan), "L2", len(uv.verifiedTxChan))
 	pbTxList := make([][]byte, len(txList))
 	// 异步阻塞模式需要将交易数据持久化落盘
 	if uv.asyncBlockMode {
@@ -130,25 +137,29 @@ func (uv *UtxoVM) flushTxList(txList []*pb.Transaction) error {
 			pbTxList[i] = pbTxBuf
 		}
 	}
-	batch := uv.ldb.NewBatch()
 	conflictedTxs := uv.checkConflictTxs(txList)
 	uv.mutex.Lock()
 	defer uv.mutex.Unlock()
 	for uv.asyncTryBlockGen { //避让出块的线程
 		uv.asyncCond.Wait() //会临时让出锁
 	}
+	batch := uv.asyncBatch
+	batch.Reset()
 	for i, tx := range txList {
 		if uv.asyncBlockMode && pbTxList[i] == nil {
 			uv.asyncResult.Send(tx.Txid, errors.New("marshal failed"))
 			continue
 		}
 		if conflictedTxs[string(tx.Txid)] {
+			uv.asyncResult.Send(tx.Txid, errors.New("conflict tx"))
+			pbTxList[i] = nil
 			continue
 		}
 		doErr := uv.doTxInternal(tx, batch)
 		if doErr != nil {
 			uv.xlog.Warn("doTxInternal failed, when DoTx", "doErr", doErr)
 			uv.asyncResult.Send(tx.Txid, doErr)
+			pbTxList[i] = nil
 			continue
 		}
 		uv.unconfirmTxInMem.Store(string(tx.Txid), tx)
@@ -165,7 +176,10 @@ func (uv *UtxoVM) flushTxList(txList []*pb.Transaction) error {
 	// 对于异步阻塞模式，有必要在执行完一个交易后同步PostTx，并将结果返回给客户端
 	if uv.asyncBlockMode {
 		go func() {
-			for _, tx := range txList {
+			for i, tx := range txList {
+				if pbTxList[i] == nil {
+					continue
+				}
 				uv.asyncResult.Send(tx.Txid, nil)
 			}
 		}()
@@ -197,7 +211,7 @@ func (uv *UtxoVM) asyncWriter(ctx context.Context) {
 }
 
 // asyncVerifiy 异步并行校验tx，在AsyncMode=true时开启
-func (uv *UtxoVM) asyncVerifiy(ctx context.Context) {
+func (uv *UtxoVM) asyncVerify(ctx context.Context) {
 	tick := time.Tick(time.Millisecond * AsyncMaxWaitMS)
 	itxlist := []*InboundTx{}
 	uv.asyncWriterWG.Add(1)
@@ -237,4 +251,9 @@ func (uv *UtxoVM) NotifyFinishBlockGen() {
 // IsAsync return current async state
 func (uv *UtxoVM) IsAsync() bool {
 	return uv.asyncMode
+}
+
+// IsAsyncBlock return current async state
+func (uv *UtxoVM) IsAsyncBlock() bool {
+	return uv.asyncBlockMode
 }

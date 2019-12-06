@@ -34,11 +34,7 @@ func NewDPoSPaceMaker(bcname string, startView int64, viewNum int64, address str
 	if cbft == nil {
 		return nil, fmt.Errorf("Chained-BFT instance is nil")
 	}
-
-	if startView == 0 {
-		startView++
-	}
-
+	startView++
 	return &DPoSPaceMaker{
 		bcname:      bcname,
 		currentView: viewNum,

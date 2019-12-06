@@ -176,6 +176,7 @@ func (xm *XChainMG) HandleSendBlock(msg *xuper_p2p.XuperMessage) {
 	if block.Header == nil {
 		block.Header = global.GHeader()
 	}
+	xm.Log.Trace("Start to HandleSendBlock", "block.header.logid", block.GetHeader().GetLogid())
 	if err := xm.ProcessBlock(block); err != nil {
 		if err == ErrBlockExist {
 			xm.Log.Debug("ProcessBlock SendBlock block exists")
@@ -384,6 +385,8 @@ func (xm *XChainMG) handleGetBlockChainStatus(ctx context.Context, msg *xuper_p2
 		return res, errors.New("blockChain not exit")
 	}
 	bcStatusRes := bc.GetBlockChainStatus(bcStatus)
+	// no need to transfer branch id msg
+	bcStatusRes.BranchBlockid = nil
 	if bcStatusRes.GetHeader().GetError() != pb.XChainErrorEnum_SUCCESS {
 		xm.Log.Error("handleGetBlockChainStatus Get blockchain error", "error", bcStatusRes.GetHeader().GetError())
 		res, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, bcname, logid,

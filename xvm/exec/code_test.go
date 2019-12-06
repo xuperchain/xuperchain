@@ -9,7 +9,7 @@ import (
 	"github.com/xuperchain/xuperunion/xvm/compile"
 )
 
-func withCode(t testing.TB, watCode string, r Resolver, f func(code *Code)) {
+func withCode(t testing.TB, watCode string, r Resolver, f func(code Code)) {
 	tmpdir, err := ioutil.TempDir("", "xvm-exec-test")
 	if err != nil {
 		t.Fatal(err)
@@ -33,7 +33,7 @@ func withCode(t testing.TB, watCode string, r Resolver, f func(code *Code)) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	code, err := NewCode(libpath, r)
+	code, err := NewAOTCode(libpath, r)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -42,6 +42,6 @@ func withCode(t testing.TB, watCode string, r Resolver, f func(code *Code)) {
 }
 
 func TestNewCode(t *testing.T) {
-	withCode(t, "testdata/sum.wat", nil, func(code *Code) {
+	withCode(t, "testdata/sum.wat", nil, func(code Code) {
 	})
 }

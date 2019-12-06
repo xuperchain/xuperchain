@@ -15,12 +15,11 @@ type Limits struct {
 }
 
 // TotalGas converts resource to gas
-func (l *Limits) TotalGas() int64 {
-	// FIXME:
-	cpuGas := roundup(l.Cpu, 1000)
-	memGas := roundup(l.Memory, 1000000)
-	diskGas := roundup(l.Disk, 1)
-	feeGas := roundup(l.XFee, 1)
+func (l *Limits) TotalGas(gasPrice *pb.GasPrice) int64 {
+	cpuGas := roundup(l.Cpu, gasPrice.GetCpuRate())
+	memGas := roundup(l.Memory, gasPrice.GetMemRate())
+	diskGas := roundup(l.Disk, gasPrice.GetDiskRate())
+	feeGas := roundup(l.XFee, gasPrice.GetXfeeRate())
 	return cpuGas + memGas + diskGas + feeGas
 }
 
@@ -61,5 +60,8 @@ func ToPbLimits(limits Limits) []*pb.ResourceLimit {
 }
 
 func roundup(n, scale int64) int64 {
+	if scale == 0 {
+		return 0
+	}
 	return (n + scale - 1) / scale
 }

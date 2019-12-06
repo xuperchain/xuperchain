@@ -288,14 +288,35 @@ func (k *Kernel) validateUpdateIrreversibleSlideWindow(desc *contract.TxDesc) er
 		if desc.Args[argName] == nil {
 			return fmt.Errorf("miss argument in contact: %s", argName)
 		}
-		switch tp := desc.Args[argName].(type) {
-		case float64:
-			return nil
-		default:
-			return fmt.Errorf("invalid arg type: %s, %v", argName, tp)
+		if _, ok := desc.Args[argName].(float64); !ok {
+			return fmt.Errorf("invalid arg type: %s, %v", argName, reflect.TypeOf(desc.Args[argName]))
 		}
 	}
 	return nil
+}
+
+func (k *Kernel) validateUpdateGasPrice(desc *contract.TxDesc, name string) (*pb.GasPrice, error) {
+	result := ledger.GasPrice{}
+	// 检测参数
+	if desc.Args[name] == nil {
+		return nil, fmt.Errorf("missing argument in contract: %s", name)
+	}
+	// 获取参数内容
+	args, ok := desc.Args[name].(interface{})
+	if !ok {
+		return nil, fmt.Errorf("validateUpdateGasPrice argName:%s invalid", name)
+	}
+	// 解析参数至结构体中
+	err := mapstructure.Decode(args, &result)
+	if err != nil {
+		return nil, err
+	}
+	return &pb.GasPrice{
+		CpuRate:  result.CpuRate,
+		MemRate:  result.MemRate,
+		DiskRate: result.DiskRate,
+		XfeeRate: result.XfeeRate,
+	}, nil
 }
 
 func (k *Kernel) validateUpdateMaxBlockSize(desc *contract.TxDesc) error {
@@ -303,11 +324,8 @@ func (k *Kernel) validateUpdateMaxBlockSize(desc *contract.TxDesc) error {
 		if desc.Args[argName] == nil {
 			return fmt.Errorf("miss argument in contact: %s", argName)
 		}
-		switch tp := desc.Args[argName].(type) {
-		case float64:
-			return nil
-		default:
-			return fmt.Errorf("invalid arg type: %s, %v", argName, tp)
+		if _, ok := desc.Args[argName].(float64); !ok {
+			return fmt.Errorf("invalid arg type: %s, %v", argName, reflect.TypeOf(desc.Args[argName]))
 		}
 	}
 	return nil
@@ -318,11 +336,8 @@ func (k *Kernel) validateUpdateNewAccountResourceAmount(desc *contract.TxDesc) e
 		if desc.Args[argName] == nil {
 			return fmt.Errorf("miss argument in contract: %s", argName)
 		}
-		switch tp := desc.Args[argName].(type) {
-		case float64:
-			return nil
-		default:
-			return fmt.Errorf("invalid arg type: %s, %v", argName, tp)
+		if _, ok := desc.Args[argName].(float64); !ok {
+			return fmt.Errorf("invalid arg type: %s, %v", argName, reflect.TypeOf(desc.Args[argName]))
 		}
 	}
 	return nil
@@ -362,7 +377,7 @@ func (k *Kernel) validateUpdateForbiddenContract(desc *contract.TxDesc, name str
 func (k *Kernel) validateUpdateReservedContract(desc *contract.TxDesc, name string) (
 	[]*pb.InvokeRequest, error) {
 	result := []ledger.InvokeRequest{}
-	for _, argName := range []string{"old_reserved_contracts", "reserved_contracts"} {
+	for _, argName := range []string{"old_reserved_contracts", "new_reserved_contracts"} {
 		if desc.Args[argName] == nil {
 			return nil, fmt.Errorf("miss argument in contact: %s", argName)
 		}
@@ -515,6 +530,8 @@ func (k *Kernel) Run(desc *contract.TxDesc) error {
 		return k.runUpdateNewAccountResourceAmount(desc)
 	case "UpdateIrreversibleSlideWindow":
 		return k.runUpdateIrreversibleSlideWindow(desc)
+	case "UpdateGasPrice":
+		return k.runUpdateGasPrice(desc)
 	default:
 		k.log.Warn("method not implemented", "method", desc.Method)
 		return ErrMethodNotImplemented
@@ -555,6 +572,8 @@ func (k *Kernel) Rollback(desc *contract.TxDesc) error {
 		return k.rollbackUpdateNewAccountResourceAmount(desc)
 	case "UpdateIrreversibleSlideWindow":
 		return k.rollbackUpdateIrreversibleSlideWindow(desc)
+	case "UpdateGasPrice":
+		return k.rollbackUpdateGasPrice(desc)
 	default:
 		k.log.Warn("method not implemented", "method", desc.Method)
 		return ErrMethodNotImplemented
@@ -690,7 +709,7 @@ func (k *Kernel) runUpdateForbiddenContract(desc *contract.TxDesc) error {
 		}
 	}
 
-	params, err := k.validateUpdateForbiddenContract(desc, "forbidden_contract")
+	params, err := k.validateUpdateForbiddenContract(desc, "new_forbidden_contract")
 	if err != nil {
 		return err
 	}
@@ -744,13 +763,50 @@ func (k *Kernel) runUpdateReservedContract(desc *contract.TxDesc) error {
 		}
 	}
 
-	params, err := k.validateUpdateReservedContract(desc, "reserved_contracts")
+	params, err := k.validateUpdateReservedContract(desc, "new_reserved_contracts")
 	if err != nil {
 		return err
 	}
 	k.log.Info("update reservered contract", "params", params)
 	err = k.context.UtxoMeta.UpdateReservedContracts(params, k.context.UtxoBatch)
 	return err
+}
+
+func (k *Kernel) runUpdateGasPrice(desc *contract.TxDesc) error {
+	if k.context == nil || k.context.UtxoMeta == nil {
+		return fmt.Errorf("failed to update gas price, because no utxoMeta in context")
+	}
+	oldParams, vErr := k.validateUpdateGasPrice(desc, "old_gas_price")
+	if vErr != nil {
+		return vErr
+	}
+	originalGasPrice := k.context.UtxoMeta.GetGasPrice()
+	if oldParams.GetCpuRate() != originalGasPrice.GetCpuRate() ||
+		oldParams.GetMemRate() != originalGasPrice.GetMemRate() ||
+		oldParams.GetDiskRate() != originalGasPrice.GetDiskRate() ||
+		oldParams.GetXfeeRate() != originalGasPrice.GetXfeeRate() {
+		return fmt.Errorf("old_gas_price values are not equal to the current node")
+	}
+	newGasPrice, err := k.validateUpdateGasPrice(desc, "new_gas_price")
+	if err != nil {
+		return err
+	}
+	k.log.Info("update gas price", "params", newGasPrice)
+	err = k.context.UtxoMeta.UpdateGasPrice(newGasPrice, k.context.UtxoBatch)
+	return err
+}
+
+func (k *Kernel) rollbackUpdateGasPrice(desc *contract.TxDesc) error {
+	if k.context == nil || k.context.UtxoMeta == nil {
+		return fmt.Errorf("failed to rollback gas price, because no utxoMeta in context")
+	}
+	oldParams, vErr := k.validateUpdateGasPrice(desc, "old_gas_price")
+	if vErr != nil {
+		return vErr
+	}
+	k.log.Info("rollback gas price params", "params", oldParams)
+	vErr = k.context.UtxoMeta.UpdateGasPrice(oldParams, k.context.UtxoBatch)
+	return vErr
 }
 
 func (k *Kernel) rollbackUpdateReservedContract(desc *contract.TxDesc) error {
@@ -824,7 +880,13 @@ func (k *Kernel) GetVerifiableAutogenTx(blockHeight int64, maxCount int, timesta
 // GetVATWhiteList 实现VAT接口
 func (k *Kernel) GetVATWhiteList() map[string]bool {
 	whiteList := map[string]bool{
-		"UpdateMaxBlockSize": true,
+		"UpdateMaxBlockSize":             true,
+		"UpdateReservedContract":         true,
+		"UpdateForbiddenContract":        true,
+		"UpdateNewAccountResourceAmount": true,
+		"UpdateIrreversibleSlideWindow":  true,
+		"UpdateGasPrice":                 true,
+		"UpdateBlockChainData":           true,
 	}
 	return whiteList
 }

@@ -739,7 +739,7 @@ func (xc *XChainCore) doMiner() {
 	}()
 
 	minerTimer.Mark("BroadcastBlock")
-	if xc.Utxovm.IsAsync() {
+	if xc.Utxovm.IsAsync() || xc.Utxovm.IsAsyncBlock() {
 		xc.log.Warn("doMiner cost", "cost", minerTimer.Print(), "txCount", freshBlock.TxCount)
 	} else {
 		xc.log.Debug("doMiner cost", "cost", minerTimer.Print(), "txCount", freshBlock.TxCount)
@@ -898,8 +898,8 @@ func (xc *XChainCore) PostTx(in *pb.TxStatus, hd *global.XContext) (*pb.CommonRe
 		return out, false
 	}
 	xc.Speed.Add("PostTx")
-	if xc.Utxovm.IsAsync() {
-		return out, xc.Utxovm.IsInUnConfirm(string(in.Txid))
+	if xc.Utxovm.IsAsync() || xc.Utxovm.IsAsyncBlock() {
+		return out, false //no need to repost tx immediately
 	}
 	return out, true
 }

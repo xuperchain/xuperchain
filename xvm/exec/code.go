@@ -13,16 +13,16 @@ import (
 )
 
 // Code represents the wasm code object
-type Code struct {
+type aotCode struct {
 	code   *C.xvm_code_t
 	bridge *resolverBridge
 	// 因为cgo不能持有go的pointer，这个指针是一个指向bridge的token，最后需要Delete
 	bridgePointer uintptr
 }
 
-// NewCode instances a Code object from file path of native shared library
-func NewCode(module string, resolver Resolver) (code *Code, err error) {
-	code = new(Code)
+// NewAOTCode instances a Code object from file path of native shared library
+func NewAOTCode(module string, resolver Resolver) (icode Code, err error) {
+	code := new(aotCode)
 	code.bridge = newResolverBridge(resolver)
 	code.bridgePointer = pointer.Save(code.bridge)
 	// xvm_new_code执行期间可能会抛出Trap，导致资源泄露
@@ -44,16 +44,17 @@ func NewCode(module string, resolver Resolver) (code *Code, err error) {
 		err = fmt.Errorf("open module %s error", module)
 		return
 	}
+	icode = code
 	return
 }
 
 // Release releases resources hold by Code
-func (c *Code) Release() {
+func (c *aotCode) Release() {
 	if c.code != nil {
 		C.xvm_release_code(c.code)
 	}
 	if c.bridgePointer != 0 {
 		pointer.Delete(c.bridgePointer)
 	}
-	*c = Code{}
+	*c = aotCode{}
 }

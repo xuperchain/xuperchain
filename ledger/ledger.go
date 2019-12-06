@@ -60,6 +60,7 @@ const (
 	// Irreversible block height & slide window
 	IrreversibleBlockHeightKey = "IrreversibleBlockHeight"
 	IrreversibleSlideWindowKey = "IrreversibleSlideWindow"
+	GasPriceKey                = "GasPrice"
 )
 
 // Ledger define data structure of Ledger
@@ -79,6 +80,7 @@ type Ledger struct {
 	cryptoClient     crypto_base.CryptoClient
 	enablePowMinning bool
 	powMutex         *sync.Mutex
+	confirmBatch     kvdb.Batch //新增区块
 }
 
 // ConfirmStatus block status
@@ -133,6 +135,7 @@ func NewLedger(storePath string, xlog log.Logger, otherPaths []string, kvEngineT
 	ledger.blkHeaderCache = common.NewLRUCache(BlockCacheSize)
 	ledger.cryptoClient = cryptoClient
 	ledger.enablePowMinning = true
+	ledger.confirmBatch = baseDB.NewBatch()
 	metaBuf, metaErr := ledger.metaTable.Get([]byte(""))
 	emptyLedger := false
 	if metaErr != nil && common.NormalizedKVError(metaErr) == common.ErrKVNotFound { //说明是新创建的账本
@@ -553,7 +556,8 @@ func (l *Ledger) ConfirmBlock(block *pb.InternalBlock, isRoot bool) ConfirmStatu
 	realTransactions := block.Transactions // 真正的交易转存到局部变量
 	block.Transactions = dummyTransactions // block表不保存transaction详情
 
-	batchWrite := l.baseDB.NewBatch()
+	batchWrite := l.confirmBatch
+	batchWrite.Reset()
 	newMeta := proto.Clone(l.meta).(*pb.LedgerMeta)
 	splitHeight := newMeta.TrunkHeight
 	if isRoot { //确认创世块
@@ -966,6 +970,10 @@ func (l *Ledger) GetForbiddenContract() ([]*pb.InvokeRequest, error) {
 	return l.GenesisBlock.GetConfig().GetForbiddenContract()
 }
 
+func (l *Ledger) GetGasPrice() *pb.GasPrice {
+	return l.GenesisBlock.GetConfig().GetGasPrice()
+}
+
 // SavePendingBlock put block into pending table
 func (l *Ledger) SavePendingBlock(block *pb.Block) error {
 	l.xlog.Debug("begin save pending block", "blockid", fmt.Sprintf("%x", block.Block.Blockid), "tx_count", len(block.Block.Transactions))
@@ -1051,6 +1059,7 @@ func (l *Ledger) removeBlocks(fromBlockid []byte, toBlockid []byte, batch kvdb.B
 	for fromBlock.Height > toBlock.Height {
 		l.xlog.Info("remove block", "blockid", global.F(fromBlock.Blockid), "height", fromBlock.Height)
 		l.blkHeaderCache.Del(string(fromBlock.Blockid))
+		l.blockCache.Del(string(fromBlock.Blockid))
 		batch.Delete(append([]byte(pb.BlocksTablePrefix), fromBlock.Blockid...))
 		if fromBlock.InTrunk {
 			sHeight := []byte(fmt.Sprintf("%020d", fromBlock.Height))

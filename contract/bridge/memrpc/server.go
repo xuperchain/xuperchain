@@ -7,7 +7,6 @@ import (
 	"reflect"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/xuperchain/xuperunion/contract/bridge"
 	pb "github.com/xuperchain/xuperunion/contractsdk/go/pb"
 )
 
@@ -25,7 +24,6 @@ var (
 // Server represents memory RPC server
 type Server struct {
 	methods  map[string]*reflect.Method
-	syscall  *bridge.SyscallService
 	vsyscall reflect.Value
 }
 
@@ -41,7 +39,7 @@ func isErrorType(tp reflect.Type) bool {
 	return tp == errorType
 }
 
-func parseMethods(syscall *bridge.SyscallService) map[string]*reflect.Method {
+func parseMethods(syscall interface{}) map[string]*reflect.Method {
 	methods := make(map[string]*reflect.Method)
 	v := reflect.TypeOf(syscall)
 	for i := 0; i < v.NumMethod(); i++ {
@@ -63,10 +61,9 @@ func parseMethods(syscall *bridge.SyscallService) map[string]*reflect.Method {
 }
 
 // NewServer instances a new Server
-func NewServer(syscall *bridge.SyscallService) *Server {
+func NewServer(syscall interface{}) *Server {
 	return &Server{
 		methods:  parseMethods(syscall),
-		syscall:  syscall,
 		vsyscall: reflect.ValueOf(syscall),
 	}
 }

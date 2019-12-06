@@ -148,4 +148,5 @@ func (b *ldbBatch) ValueSize() int {
 func (b *ldbBatch) Reset() {
 	b.b.Reset()
 	b.size = 0
+	b.keys = map[string]bool{}
 }

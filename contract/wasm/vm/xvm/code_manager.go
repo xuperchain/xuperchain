@@ -14,14 +14,15 @@ import (
 	"github.com/xuperchain/xuperunion/pb"
 	"github.com/xuperchain/xuperunion/xvm/compile"
 	"github.com/xuperchain/xuperunion/xvm/exec"
+	"golang.org/x/sync/singleflight"
 )
 
 type compileFunc func([]byte, string) error
-type makeExecCodeFunc func(libpath string) (*exec.Code, error)
+type makeExecCodeFunc func(libpath string) (exec.Code, error)
 
 type contractCode struct {
 	ContractName string
-	ExecCode     *exec.Code
+	ExecCode     exec.Code
 	Desc         pb.WasmCodeDesc
 }
 
@@ -30,7 +31,9 @@ type codeManager struct {
 	compileCode  compileFunc
 	makeExecCode makeExecCodeFunc
 
-	mutex sync.Mutex
+	makeCacheLock singleflight.Group
+
+	mutex sync.Mutex // protect codes
 	codes map[string]*contractCode
 }
 
@@ -48,6 +51,8 @@ func codeDescEqual(a, b *pb.WasmCodeDesc) bool {
 }
 
 func (c *codeManager) lookupMemCache(name string, desc *pb.WasmCodeDesc) (*contractCode, bool) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
 	ccode, ok := c.codes[name]
 	if !ok {
 		return nil, false
@@ -59,6 +64,8 @@ func (c *codeManager) lookupMemCache(name string, desc *pb.WasmCodeDesc) (*contr
 }
 
 func (c *codeManager) purgeMemCache(name string) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
 	if ccode, ok := c.codes[name]; ok {
 		ccode.ExecCode.Release()
 	}
@@ -66,6 +73,8 @@ func (c *codeManager) purgeMemCache(name string) {
 }
 
 func (c *codeManager) makeMemCache(name, libpath string, desc *pb.WasmCodeDesc) (*contractCode, error) {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
 	if _, ok := c.codes[name]; ok {
 		return nil, errors.New("old contract code not purged")
 	}
@@ -140,8 +149,6 @@ func (c *codeManager) makeDiskCache(name string, desc *pb.WasmCodeDesc, codebuf 
 }
 
 func (c *codeManager) GetExecCode(name string, cp vm.ContractCodeProvider) (*contractCode, error) {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
 	desc, err := cp.GetContractCodeDesc(name)
 	if err != nil {
 		return nil, err
@@ -152,24 +159,42 @@ func (c *codeManager) GetExecCode(name string, cp vm.ContractCodeProvider) (*con
 		return execCode, nil
 	}
 
-	// old code handle should be closed before open new code
-	// see https://github.com/xuperchain/xuperunion/issues/352
-	c.purgeMemCache(name)
-	libpath, ok := c.lookupDiskCache(name, desc)
-	if !ok {
-		log.Debug("contract code need make disk cache", "contract", name)
-		codebuf, err := cp.GetContractCode(name)
-		if err != nil {
-			return nil, err
+	// Only allow one goroutine make disk and memory cache at given contract name
+	// other goroutine will block on the same contract name.
+	icode, err, _ := c.makeCacheLock.Do(name, func() (interface{}, error) {
+		defer c.makeCacheLock.Forget(name)
+		// 对于pending在Do上的goroutine在Do返回后能获取到最新的memory cache
+		// 但由于我们在Do完之后立马Forget，因此如果在第一个goroutine在调用Do期间,
+		// 另外一个goroutine刚好处在loopupMemCache失败之后和Do之前，这样就不能看到最新的cache，
+		// 会重复执行，清理掉正在使用的对象从而造成错误。
+		// 这里进行double check来发现最新的cache
+		execCode, ok := c.lookupMemCache(name, desc)
+		if ok {
+			return execCode, nil
 		}
-		libpath, err = c.makeDiskCache(name, desc, codebuf)
-		if err != nil {
-			return nil, err
+		// old code handle should be closed before open new code
+		// see https://github.com/xuperchain/xuperunion/issues/352
+		c.purgeMemCache(name)
+		libpath, ok := c.lookupDiskCache(name, desc)
+		if !ok {
+			log.Debug("contract code need make disk cache", "contract", name)
+			codebuf, err := cp.GetContractCode(name)
+			if err != nil {
+				return nil, err
+			}
+			libpath, err = c.makeDiskCache(name, desc, codebuf)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			log.Debug("contract code hit disk cache", "contract", name)
 		}
-	} else {
-		log.Debug("contract code hit disk cache", "contract", name)
+		return c.makeMemCache(name, libpath, desc)
+	})
+	if err != nil {
+		return nil, err
 	}
-	return c.makeMemCache(name, libpath, desc)
+	return icode.(*contractCode), nil
 }
 
 func (c *codeManager) RemoveCode(name string) {

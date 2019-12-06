@@ -20,9 +20,10 @@ import (
 )
 
 var (
-	centry      = flag.String("entry", "main", "entry function")
+	centry      = flag.String("entry", "_main", "entry function")
 	compileOnly = flag.Bool("c", false, "only compile wasm file")
 	environ     = flag.String("e", "c", "environ, c or go")
+	interpmode  = flag.Bool("i", false, "interp mode")
 )
 
 func replaceExt(name, ext string) string {
@@ -91,27 +92,42 @@ func run(modulePath string, args []string) error {
 		return err
 	}
 	resolver := exec.NewMultiResolver(resolver, gowasm.NewResolver(), emscripten.NewResolver(), wasi.NewResolver())
-	code, err := exec.NewCode(fullepath, resolver)
-	if err != nil {
-		return err
+	var code exec.Code
+	if !*interpmode {
+		code, err = exec.NewAOTCode(fullepath, resolver)
+		if err != nil {
+			return err
+		}
+
+	} else {
+		codebuf, err := ioutil.ReadFile(modulePath)
+		if err != nil {
+			return err
+		}
+		code, err = exec.NewInterpCode(codebuf, resolver)
+		if err != nil {
+			return err
+		}
 	}
 	defer code.Release()
-
-	ctx, err := exec.NewContext(code, exec.DefaultContextConfig())
+	ctx, err := code.NewContext(exec.DefaultContextConfig())
 	if err != nil {
 		return err
 	}
-	if *environ == "go" {
-		gowasm.RegisterRuntime(ctx)
-	}
+
 	defer ctx.Release()
 	debug.SetWriter(ctx, os.Stderr)
 	var entry string
 	switch *environ {
 	case "c":
 		entry = *centry
+		err = emscripten.Init(ctx)
+		if err != nil {
+			return err
+		}
 	case "go":
 		entry = "run"
+		gowasm.RegisterRuntime(ctx)
 	}
 
 	var argc, argv int
@@ -133,13 +149,18 @@ func main() {
 	var err error
 	switch ext {
 	case ".wasm":
-		target, err = compileLibrary(flag.Arg(0))
-		if err != nil {
-			log.Fatal(err)
+		if !*interpmode {
+			target, err = compileLibrary(flag.Arg(0))
+			if err != nil {
+				log.Fatal(err)
+			}
+			if *compileOnly {
+				return
+			}
+		} else {
+			target = flag.Arg(0)
 		}
-		if *compileOnly {
-			return
-		}
+
 	case ".so":
 		target = filename
 	default:
