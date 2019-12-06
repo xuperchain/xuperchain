@@ -1,5 +1,5 @@
-// Package main is the plugin for xuperchain default crypto client
-package main
+// Package eccdefault is the default crypto client of xchain
+package eccdefault
 
 import (
 	"crypto/ecdsa"
@@ -26,11 +26,6 @@ var _ base.CryptoClient = (*XchainCryptoClient)(nil)
 type XchainCryptoClient struct {
 	base.CryptoClientCommon
 	base.CryptoClientCommonMultiSig
-}
-
-// GetInstance returns the an instance of XchainCryptoClient
-func GetInstance() interface{} {
-	return &XchainCryptoClient{}
 }
 
 // GenerateKeyBySeed 通过随机数种子来生成椭圆曲线加密所需要的公钥和私钥

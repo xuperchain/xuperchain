@@ -1,4 +1,4 @@
-package main
+package schnorr
 
 import (
 	"bytes"
@@ -16,7 +16,7 @@ func generateKey() error {
 	if err != nil {
 		return err
 	}
-	xcc := GetInstance().(*SchnorrCryptoClient)
+	xcc := &SchnorrCryptoClient{}
 	err = xcc.ExportNewAccount(keypath)
 	return err
 }
@@ -48,7 +48,7 @@ func Test_Schnorr(t *testing.T) {
 
 	msg := []byte("this is a test msg")
 
-	xcc := GetInstance().(*SchnorrCryptoClient)
+	xcc := &SchnorrCryptoClient{}
 	pubkey, err := xcc.GetEcdsaPublicKeyFromJSON(pub)
 	if err != nil {
 		t.Errorf("GetEcdsaPublicKeyFromJSON failed, err=%v\n", err)
