@@ -169,6 +169,14 @@ service Xchain {
     };
   }
 
+  // Merge utxos接口，不需要签名，可以支持选择账户的utxo
+  rpc MergeUTXO(UtxoInput) returns (UtxoOutput) {
+    option (google.api.http) = {
+      post : "/v1/merge_utxo"
+      body : "*"
+    };
+  }
+
   // PreExecWithSelectUTXO preExec & selectUtxo
   rpc PreExecWithSelectUTXO(PreExecWithSelectUTXORequest) returns (PreExecWithSelectUTXOResponse) {
     option (google.api.http) = {
@@ -950,4 +958,3 @@ message ModifyBlock {
   // 监管地址对修改的交易id的签名
   string sign = 5;
 }
-

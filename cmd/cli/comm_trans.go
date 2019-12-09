@@ -309,6 +309,56 @@ func (c *CommTrans) GenTxOutputs(gasUsed int64) ([]*pb.TxOutput, *big.Int, error
 	return txOutputs, totalNeed, nil
 }
 
+func (c *CommTrans) GenTxInputsWithMergeUTXO(ctx context.Context) ([]*pb.TxInput, *pb.TxOutput, error) {
+	var fromAddr string
+	var err error
+	if c.From != "" {
+		fromAddr = c.From
+	} else {
+		fromAddr, err = readAddress(c.Keys)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
+	utxoInput := &pb.UtxoInput{
+		Bcname:   c.ChainName,
+		Address:  fromAddr,
+		NeedLock: false,
+	}
+
+	utxoOutputs, err := c.XchainClient.MergeUTXO(ctx, utxoInput)
+	if err != nil {
+		return nil, nil, fmt.Errorf("%v, details:%v", ErrSelectUtxo, err)
+	}
+	if utxoOutputs.Header.Error != pb.XChainErrorEnum_SUCCESS {
+		return nil, nil, fmt.Errorf("%v, details:%v", ErrSelectUtxo, utxoOutputs.Header.Error)
+	}
+
+	// 组装txInputs
+	var txInputs []*pb.TxInput
+	var txOutput *pb.TxOutput
+	for _, utxo := range utxoOutputs.UtxoList {
+		txInput := &pb.TxInput{}
+		txInput.RefTxid = utxo.RefTxid
+		txInput.RefOffset = utxo.RefOffset
+		txInput.FromAddr = utxo.ToAddr
+		txInput.Amount = utxo.Amount
+		txInputs = append(txInputs, txInput)
+	}
+
+	utxoTotal, ok := big.NewInt(0).SetString(utxoOutputs.TotalSelected, 10)
+	if !ok {
+		return nil, nil, ErrSelectUtxo
+	}
+	txOutput = &pb.TxOutput{
+		ToAddr: []byte(fromAddr),
+		Amount: utxoTotal.Bytes(),
+	}
+
+	return txInputs, txOutput, nil
+}
+
 // GenTxInputs 填充得到transaction的repeated TxInput tx_inputs,
 // 如果输入大于输出，增加一个转给自己(data/keys/)的输入-输出的交易
 func (c *CommTrans) GenTxInputs(ctx context.Context, totalNeed *big.Int) (
