@@ -90,21 +90,3 @@ func (uv *UtxoVM) MergeUtxos(fromAddr string, fromPubKey string, needLock, exclu
 
 	return txInputs, willLockKeys, amount, nil
 }
-
-func (uv *UtxoVM) QueryUtxoRecord(accountName string) (string, error) {
-	defaultUtxoRecord := strconv.FormatInt(int64(0), 10)
-	utxoRecord := int64(0)
-
-	addrPrefix := fmt.Sprintf("%s%s_", pb.UTXOTablePrefix, accountName)
-	it := uv.ldb.NewIteratorWithPrefix([]byte(addrPrefix))
-	defer it.Release()
-
-	for it.Next() {
-		utxoRecord++
-	}
-	if it.Error() != nil {
-		return defaultUtxoRecord, it.Error()
-	}
-
-	return strconv.FormatInt(utxoRecord, 10), nil
-}
