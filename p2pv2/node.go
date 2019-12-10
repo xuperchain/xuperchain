@@ -438,7 +438,8 @@ func (no *Node) connectToPeers(ppi []*pstore.PeerInfo) int {
 		}
 		// only retry if all connection failed
 		retryCount--
-		time.Sleep(1 * time.Second)
+		num := rand.Int63n(10)
+		time.Sleep(time.Duration(num) * time.Second)
 	}
 	return succNum
 }
