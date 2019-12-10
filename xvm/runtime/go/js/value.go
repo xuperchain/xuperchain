@@ -1,6 +1,7 @@
 package js
 
 import (
+	"errors"
 	"fmt"
 	"math"
 )
@@ -20,6 +21,15 @@ func (v *Value) String() string {
 // Name is used for debugging
 func (v *Value) Name() string {
 	return v.name
+}
+
+// Bytes return ref as []byte, error will return if type of ref is not Uint8Array
+func (v *Value) Bytes() ([]byte, error) {
+	slice, ok := v.value.([]byte)
+	if !ok {
+		return nil, errors.New("not Uint8Array")
+	}
+	return slice, nil
 }
 
 // predefined values

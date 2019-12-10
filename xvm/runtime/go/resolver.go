@@ -60,6 +60,10 @@ func (r *resolver) resolveFunc(module, name string) (interface{}, bool) {
 		return (*Runtime).syscallJsValueSetIndex, true
 	case "go::syscall/js.valueInstanceOf":
 		return (*Runtime).syscallJsValueInstanceOf, true
+	case "go::syscall/js.copyBytesToGo": // for go1.13
+		return (*Runtime).syscallJsCopyBytesToGo, true
+	case "go::syscall/js.copyBytesToJS": // for go1.13
+		return (*Runtime).syscallJsCopyBytesToJS, true
 	}
 	return nil, false
 }
