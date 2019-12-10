@@ -10,6 +10,7 @@ import (
 	"math/big"
 	"sort"
 
+	"github.com/xuperchain/xuperunion/contract"
 	pb "github.com/xuperchain/xuperunion/contractsdk/go/pb"
 	xchainpb "github.com/xuperchain/xuperunion/pb"
 )
@@ -19,18 +20,25 @@ var (
 )
 
 const (
-	DefaultCap = 1000
+	DefaultCap           = 1000
+	MaxContractCallDepth = 10
 )
+
+type VmManager interface {
+	GetVirtualMachine(name string) (contract.VirtualMachine, bool)
+}
 
 // SyscallService is the handler of contract syscalls
 type SyscallService struct {
 	ctxmgr *ContextManager
+	vmm    VmManager
 }
 
 // NewSyscallService instances a new SyscallService
-func NewSyscallService(ctxmgr *ContextManager) *SyscallService {
+func NewSyscallService(ctxmgr *ContextManager, vmm VmManager) *SyscallService {
 	return &SyscallService{
 		ctxmgr: ctxmgr,
+		vmm:    vmm,
 	}
 }
 
@@ -130,8 +138,62 @@ func (c *SyscallService) Transfer(ctx context.Context, in *pb.TransferRequest) (
 
 // ContractCall implements Syscall interface
 func (c *SyscallService) ContractCall(ctx context.Context, in *pb.ContractCallRequest) (*pb.ContractCallResponse, error) {
-	resp := new(pb.ContractCallResponse)
-	return resp, nil
+	nctx, ok := c.ctxmgr.Context(in.GetHeader().Ctxid)
+	if !ok {
+		return nil, fmt.Errorf("bad ctx id:%d", in.Header.Ctxid)
+	}
+	if nctx.ContractSet[in.GetContract()] {
+		return nil, errors.New("recursive contract call not permitted")
+	}
+
+	if len(nctx.ContractSet) >= MaxContractCallDepth {
+		return nil, errors.New("max contract call depth exceeds")
+	}
+
+	vm, ok := c.vmm.GetVirtualMachine(in.GetModule())
+	if !ok {
+		return nil, errors.New("module not found")
+	}
+	currentUsed := nctx.ResourceUsed()
+	limits := new(contract.Limits).Add(nctx.ResourceLimits).Sub(currentUsed)
+	// disk usage is shared between all context
+	limits.Disk = nctx.ResourceLimits.Disk
+
+	args := make(map[string][]byte)
+	for _, arg := range in.GetArgs() {
+		args[arg.GetKey()] = arg.GetValue()
+	}
+
+	nctx.ContractSet[in.GetContract()] = true
+	cfg := &contract.ContextConfig{
+		ContractName:   in.GetContract(),
+		XMCache:        nctx.Cache,
+		CanInitialize:  false,
+		AuthRequire:    nctx.AuthRequire,
+		Initiator:      nctx.Initiator,
+		Core:           nctx.Core,
+		ResourceLimits: *limits,
+		ContractSet:    nctx.ContractSet,
+	}
+	vctx, err := vm.NewContext(cfg)
+	if err != nil {
+		return nil, err
+	}
+	defer vctx.Release()
+	defer func() { delete(nctx.ContractSet, in.GetContract()) }()
+
+	vresp, err := vctx.Invoke(in.GetMethod(), args)
+	if err != nil {
+		return nil, err
+	}
+	nctx.SubResourceUsed.Add(vctx.ResourceUsed())
+
+	return &pb.ContractCallResponse{
+		Response: &pb.Response{
+			Status:  int32(vresp.Status),
+			Message: vresp.Message,
+			Body:    vresp.Body,
+		}}, nil
 }
 
 // PutObject implements Syscall interface

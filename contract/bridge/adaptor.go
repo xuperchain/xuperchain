@@ -41,6 +41,9 @@ func (v *vmContextImpl) Invoke(method string, args map[string][]byte) (*contract
 	if err != nil {
 		return nil, err
 	}
+	if v.ctx.ResourceUsed().Exceed(v.ctx.ResourceLimits) {
+		return nil, errors.New("resource exceeds")
+	}
 
 	if v.ctx.Output == nil {
 		return nil, &ContractError{
@@ -57,9 +60,7 @@ func (v *vmContextImpl) Invoke(method string, args map[string][]byte) (*contract
 }
 
 func (v *vmContextImpl) ResourceUsed() contract.Limits {
-	resourceUsed := v.instance.ResourceUsed()
-	resourceUsed.Disk += v.ctx.DiskUsed()
-	return resourceUsed
+	return v.ctx.ResourceUsed()
 }
 
 func (v *vmContextImpl) Release() error {
@@ -91,6 +92,11 @@ func (v *vmImpl) NewContext(ctxCfg *contract.ContextConfig) (contract.Context, e
 	ctx.CanInitialize = ctxCfg.CanInitialize
 	ctx.Core = ctxCfg.Core
 	ctx.TransferAmount = ctxCfg.TransferAmount
+	ctx.ContractSet = ctxCfg.ContractSet
+	if ctx.ContractSet == nil {
+		ctx.ContractSet = make(map[string]bool)
+		ctx.ContractSet[ctx.ContractName] = true
+	}
 	release := func() {
 		v.ctxmgr.DestroyContext(ctx)
 	}
