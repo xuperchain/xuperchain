@@ -311,8 +311,3 @@ func (vm *VM) CatchException(e *Ref) {
 	}
 	*e = vm.Exception(exp)
 }
-
-// Bytes return ref as []byte, error will return if type of ref is not Uint8Array
-func (vm *VM) Bytes(ref Ref) ([]byte, error) {
-	return nil, nil
-}
