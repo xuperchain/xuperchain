@@ -100,6 +100,33 @@ func (s *server) BatchPostTx(ctx context.Context, in *pb.BatchTxs) (*pb.CommonRe
 	return out, nil
 }
 
+// QueryUtxoRecord query utxo records
+func (s *server) QueryUtxoRecord(ctx context.Context, in *pb.UtxoRecordDetail) (*pb.UtxoRecordDetail, error) {
+	s.mg.Speed.Add("QueryUtxoRecord")
+	if in.GetHeader() == nil {
+		in.Header = global.GHeader()
+	}
+	out := &pb.UtxoRecordDetail{Header: &pb.Header{}}
+	bc := s.mg.Get(in.GetBcname())
+
+	if bc == nil {
+		out.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE
+		s.log.Trace("refuse a connection at function call QueryUtxoRecord", "logid", in.Header.Logid)
+		return out, nil
+	}
+
+	accountName := in.GetAccountName()
+	if len(accountName) > 0 {
+		utxoRecord, err := bc.QueryUtxoRecord(accountName, in.GetDisplayCount())
+		if err != nil {
+			return out, err
+		}
+		return utxoRecord, nil
+	}
+
+	return out, nil
+}
+
 // QueryAcl query some account info
 func (s *server) QueryACL(ctx context.Context, in *pb.AclStatus) (*pb.AclStatus, error) {
 	s.mg.Speed.Add("QueryAcl")

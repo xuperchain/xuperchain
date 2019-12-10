@@ -72,6 +72,13 @@ service Xchain {
     };
   }
 
+  rpc QueryUtxoRecord(UtxoRecordDetail) returns (UtxoRecordDetail) {
+    option (google.api.http) = {
+      post : "/v1/query_utxo_record"
+      body : "*"
+    };
+  }
+
   rpc GetAccountContracts(GetAccountContractsRequest)
       returns (GetAccountContractsResponse) {
     option (google.api.http) = {
@@ -951,3 +958,18 @@ message ModifyBlock {
   string sign = 5;
 }
 
+message UtxoRecordDetail {
+  Header header = 1;
+  string bcname = 2;
+  string accountName = 3; 
+  UtxoRecord totalUtxoRecord = 4;
+  UtxoRecord lockedUtxoRecord = 5;
+  UtxoRecord frozenUtxoRecord = 6;
+  int64 displayCount = 7;
+  repeated string utxoItem = 8;  
+}
+
+message UtxoRecord {
+  string utxoCount = 1;
+  string utxoAmount = 2;
+}

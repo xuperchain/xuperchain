@@ -2332,3 +2332,68 @@ func (uv *UtxoVM) queryContractBannedStatus(contractName string) (bool, error) {
 	ctx.Release()
 	return false, nil
 }
+
+// QueryUtxoRecord query utxo record details
+func (uv *UtxoVM) QueryUtxoRecord(accountName string, displayCount int64) (*pb.UtxoRecordDetail, error) {
+	defaultUtxoRecordDetail := &pb.UtxoRecordDetail{
+		Header: &pb.Header{},
+	}
+
+	addrPrefix := fmt.Sprintf("%s%s_", pb.UTXOTablePrefix, accountName)
+	it := uv.ldb.NewIteratorWithPrefix([]byte(addrPrefix))
+	defer it.Release()
+
+	totalUtxoCount := big.NewInt(0)
+	totalUtxoAmount := big.NewInt(0)
+	lockedUtxoCount := big.NewInt(0)
+	lockedUtxoAmount := big.NewInt(0)
+	frozenUtxoCount := big.NewInt(0)
+	frozenUtxoAmount := big.NewInt(0)
+	utxoItems := []string{}
+
+	for it.Next() {
+		totalUtxoCount.Add(totalUtxoCount, big.NewInt(1))
+		key := append([]byte{}, it.Key()...)
+		if totalUtxoCount.Cmp(big.NewInt(displayCount)) <= 0 {
+			utxoItems = append(utxoItems, string(key))
+		}
+		utxoItem := new(UtxoItem)
+		uErr := utxoItem.Loads(it.Value())
+		if uErr != nil {
+			continue
+		}
+		if uv.isLocked(key) {
+			lockedUtxoCount.Add(lockedUtxoCount, big.NewInt(1))
+			lockedUtxoAmount.Add(lockedUtxoAmount, utxoItem.Amount)
+			continue
+		}
+		if utxoItem.FrozenHeight > uv.ledger.GetMeta().GetTrunkHeight() || utxoItem.FrozenHeight == -1 {
+			frozenUtxoCount.Add(frozenUtxoCount, big.NewInt(1))
+			frozenUtxoAmount.Add(frozenUtxoAmount, utxoItem.Amount)
+			continue
+		}
+		totalUtxoAmount.Add(totalUtxoAmount, utxoItem.Amount)
+	}
+	if it.Error() != nil {
+		return defaultUtxoRecordDetail, it.Error()
+	}
+
+	totalUtxoCount.Add(totalUtxoCount, lockedUtxoCount).Add(totalUtxoCount, frozenUtxoCount)
+	totalUtxoAmount.Add(totalUtxoAmount, lockedUtxoAmount).Add(totalUtxoAmount, frozenUtxoAmount)
+
+	defaultUtxoRecordDetail.TotalUtxoRecord = &pb.UtxoRecord{
+		UtxoCount:  totalUtxoCount.String(),
+		UtxoAmount: totalUtxoAmount.String(),
+	}
+	defaultUtxoRecordDetail.LockedUtxoRecord = &pb.UtxoRecord{
+		UtxoCount:  lockedUtxoCount.String(),
+		UtxoAmount: lockedUtxoAmount.String(),
+	}
+	defaultUtxoRecordDetail.FrozenUtxoRecord = &pb.UtxoRecord{
+		UtxoCount:  frozenUtxoCount.String(),
+		UtxoAmount: frozenUtxoAmount.String(),
+	}
+	defaultUtxoRecordDetail.UtxoItem = utxoItems
+
+	return defaultUtxoRecordDetail, nil
+}
