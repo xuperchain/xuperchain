@@ -453,6 +453,10 @@ func GetAccInfoFromFile(filename string) ([]byte, []byte, []byte, error) {
 }
 
 // GetCryptoByteFromMnemonic get crypto byte from mnemonic
+// return values:
+//    bool: is the mnemonic a old version, true means it's a old version of mnemonic
+//    uint8: the cryptographic indicator
+//    error: the error message
 func GetCryptoByteFromMnemonic(mnemonic string, language int) (bool, uint8, error) {
 	entropy, err := walletRand.GetEntropyFromMnemonic(mnemonic, language)
 	if err != nil {
