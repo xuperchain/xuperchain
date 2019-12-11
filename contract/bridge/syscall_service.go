@@ -179,8 +179,10 @@ func (c *SyscallService) ContractCall(ctx context.Context, in *pb.ContractCallRe
 	if err != nil {
 		return nil, err
 	}
-	defer vctx.Release()
-	defer func() { delete(nctx.ContractSet, in.GetContract()) }()
+	defer func() {
+		vctx.Release()
+		delete(nctx.ContractSet, in.GetContract())
+	}()
 
 	vresp, err := vctx.Invoke(in.GetMethod(), args)
 	if err != nil {
