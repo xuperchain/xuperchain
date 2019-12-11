@@ -27,7 +27,7 @@ func NewQueryUtxoRecordsCommand(cli *Cli) *cobra.Command {
 	c := new(QueryUtxoRecordsCommand)
 	c.cli = cli
 	c.cmd = &cobra.Command{
-		Use:   "query-utxo-records",
+		Use:   "list-utxo",
 		Short: "Get utxo records info of an user.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := context.TODO()
@@ -39,12 +39,15 @@ func NewQueryUtxoRecordsCommand(cli *Cli) *cobra.Command {
 }
 
 func (c *QueryUtxoRecordsCommand) addFlags() {
-	c.cmd.Flags().StringVar(&c.addr, "address", "", "address")
-	c.cmd.Flags().Int64Var(&c.utxoItemNum, "N", 0, "utxo items to be displayed")
+	c.cmd.Flags().StringVarP(&c.addr, "address", "A", "", "address")
+	c.cmd.Flags().Int64VarP(&c.utxoItemNum, "num", "N", 1, "utxo items to be displayed")
 }
 
 func (c *QueryUtxoRecordsCommand) queryUtxoRecords(ctx context.Context) error {
 	client := c.cli.XchainClient()
+	if c.addr == "" {
+		c.addr, _ = readAddress(c.cli.RootOptions.Keys)
+	}
 	request := &pb.UtxoRecordDetail{
 		Bcname:       c.cli.RootOptions.Name,
 		AccountName:  c.addr,
@@ -52,12 +55,10 @@ func (c *QueryUtxoRecordsCommand) queryUtxoRecords(ctx context.Context) error {
 	}
 	response, err := client.QueryUtxoRecord(ctx, request)
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 	output, err := json.MarshalIndent(response, "", "  ")
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 	fmt.Println(string(output))

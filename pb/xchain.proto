@@ -962,14 +962,20 @@ message UtxoRecordDetail {
   Header header = 1;
   string bcname = 2;
   string accountName = 3; 
-  UtxoRecord totalUtxoRecord = 4;
+  UtxoRecord openUtxoRecord = 4;
   UtxoRecord lockedUtxoRecord = 5;
   UtxoRecord frozenUtxoRecord = 6;
   int64 displayCount = 7;
-  repeated string utxoItem = 8;  
 }
 
 message UtxoRecord {
   string utxoCount = 1;
   string utxoAmount = 2;
+  repeated UtxoKey item = 3;
+}
+
+message UtxoKey {
+  string refTxid = 1;
+  string offset = 2;
+  string amount = 3;
 }
