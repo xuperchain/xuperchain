@@ -402,7 +402,45 @@ func (s *server) GetNetURL(ctx context.Context, in *pb.CommonIn) (*pb.RawUrl, er
 	return out, nil
 }
 
-// SelectUTXO select utxo inputs
+// MergeUTXO select utxo inputs depending on size
+func (s *server) MergeUTXO(ctx context.Context, in *pb.UtxoInput) (*pb.UtxoOutput, error) {
+	if in.GetHeader() == nil {
+		in.Header = global.GHeader()
+	}
+	out := &pb.UtxoOutput{Header: &pb.Header{Logid: in.Header.Logid}}
+	bc := s.mg.Get(in.GetBcname())
+	if bc == nil {
+		out.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE
+		s.log.Warn("failed to merge utxo, bcname not exists", "logid", in.Header.Logid)
+		return out, nil
+	}
+	out.Header.Error = pb.XChainErrorEnum_SUCCESS
+	utxos, _, totalSelected, err := bc.Utxovm.MergeUtxos(in.GetAddress(), in.GetPublickey(), in.GetNeedLock(), false)
+	if err != nil {
+		out.Header.Error = xchaincore.HandlerUtxoError(err)
+		s.log.Warn("failed to select utxo", "logid", in.Header.Logid, "error", err.Error())
+		return out, nil
+	}
+	utxoList := []*pb.Utxo{}
+	for _, v := range utxos {
+		utxo := &pb.Utxo{
+			RefTxid:   v.RefTxid,
+			RefOffset: v.RefOffset,
+			ToAddr:    v.FromAddr,
+			Amount:    v.Amount,
+		}
+		utxoList = append(utxoList, utxo)
+		s.log.Trace("Merge utxo list", "refTxid", fmt.Sprintf("%x", v.RefTxid), "refOffset", v.RefOffset, "amount", new(big.Int).SetBytes(v.Amount).String())
+	}
+	totalSelectedStr := totalSelected.String()
+	s.log.Trace("Merge utxo totalSelect", "totalSelect", totalSelectedStr)
+	out.UtxoList = utxoList
+	out.TotalSelected = totalSelectedStr
+
+	return out, nil
+}
+
+// SelectUTXO select utxo inputs depending on amount
 func (s *server) SelectUTXO(ctx context.Context, in *pb.UtxoInput) (*pb.UtxoOutput, error) {
 	if in.Header == nil {
 		in.Header = global.GHeader()
