@@ -79,7 +79,7 @@ func NewTransferCommand(cli *Cli) *cobra.Command {
 
 func (t *TransferCommand) addFlags() {
 	t.cmd.Flags().StringVar(&t.to, "to", "", "common transfer transaction to whom")
-	t.cmd.Flags().StringVar(&t.amount, "amount", "", "transfer tokens")
+	t.cmd.Flags().StringVar(&t.amount, "amount", "0", "transfer tokens")
 	t.cmd.Flags().StringVar(&t.descfile, "desc", "", "desc file of tx, eg. contract or tdpos consensus")
 	t.cmd.Flags().StringVar(&t.fee, "fee", "0", "fee of one tx")
 	t.cmd.Flags().Int64Var(&t.frozenHeight, "frozen", 0, "frozen height of one tx")
