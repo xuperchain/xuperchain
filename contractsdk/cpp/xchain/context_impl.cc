@@ -141,4 +141,28 @@ const std::string& ContextImpl::transfer_amount() const {
     return _call_args.transfer_amount();
 }
 
+bool ContextImpl::call(const std::string& module, const std::string& contract,
+                      const std::string& method,
+                      const std::map<std::string, std::string>& args,
+                      Response* xresponse) {
+    pb::ContractCallRequest request;
+    pb::ContractCallResponse response;
+    request.set_module(module);
+    request.set_contract(contract);
+    request.set_method(method);
+    for (auto it=args.begin(); it!=args.end(); it++) {
+        auto arg = request.add_args();
+        arg->set_key(it->first);
+        arg->set_value(it->second);
+    }
+    bool ok = syscall("ContractCall", request, &response);
+    if (!ok) {
+        return false;
+    }
+    xresponse->status = response.response().status();
+    xresponse->message = response.response().message();
+    xresponse->body = response.response().body();
+    return true;
+}
+
 }  // namespace xchain
