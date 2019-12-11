@@ -105,12 +105,12 @@ func readFileUsingFilename(filename string) ([]byte, error) {
 // 这里不应该再需要知道指定曲线了，也不需要指定地址版本了，这个功能应该由助记词中的标记位来判断
 func GenerateAccountByMnemonic(mnemonic string, language int) (*ECDSAAccount, error) {
 	// 判断密码学算法是否支持
-	cryptography, err := GetCryptoByteFromMnemonic(mnemonic, language)
+	isOld, cryptography, err := GetCryptoByteFromMnemonic(mnemonic, language)
 	if err != nil {
 		return nil, err
 	}
 
-	if cryptography != config.Nist && cryptography != config.NistSN {
+	if !isOld && cryptography != config.Nist && cryptography != config.NistSN {
 		err = fmt.Errorf("Only cryptoGraphy NIST[%d or %d] is supported in this version, this cryptoGraphy is [%v]",
 			config.Nist, config.NistSN, cryptography)
 		return nil, err
@@ -119,8 +119,15 @@ func GenerateAccountByMnemonic(mnemonic string, language int) (*ECDSAAccount, er
 
 	// 将助记词转为随机数种子，在此过程中，校验助记词是否合法
 	password := "jingbo is handsome!"
-	seed, err := walletRand.GenerateSeedWithErrorChecking(mnemonic, password, 40, language)
+	var seed []byte
+	if isOld {
+		seed, err = walletRand.GenerateOldSeedWithErrorChecking(mnemonic, password, 40, language)
+	} else {
+		seed, err = walletRand.GenerateSeedWithErrorChecking(mnemonic, password, 40, language)
+	}
+
 	if err != nil {
+		log.Println("GenerateSeedWithErrorChecking failed, err=", err)
 		return nil, err
 	}
 
@@ -128,21 +135,25 @@ func GenerateAccountByMnemonic(mnemonic string, language int) (*ECDSAAccount, er
 	privateKey, err := utils.GenerateKeyBySeed(curve, seed)
 
 	if err != nil {
+		log.Println("GenerateKeyBySeed failed, err=", err)
 		return nil, err
 	}
 	// 获取私钥的json格式的字符串
 	jsonPrivateKey, err := GetEcdsaPrivateKeyJSONFormat(privateKey)
 	if err != nil {
+		log.Println("GetEcdsaPrivateKeyJSONFormat failed, err=", err)
 		return nil, err
 	}
 	// 通过公钥的json格式的字符串
 	jsonPublicKey, err := GetEcdsaPublicKeyJSONFormat(privateKey)
 	if err != nil {
+		log.Println("GetEcdsaPublicKeyJSONFormat failed, err=", err)
 		return nil, err
 	}
 	// 使用公钥来生成钱包地址
 	address, err := GetAddressFromPublicKey(&privateKey.PublicKey)
 	if err != nil {
+		log.Println("GetAddressFromPublicKey failed, err=", err)
 		return nil, err
 	}
 	// 返回的字段：助记词、私钥的json、公钥的json、钱包地址、错误信息
@@ -442,10 +453,20 @@ func GetAccInfoFromFile(filename string) ([]byte, []byte, []byte, error) {
 }
 
 // GetCryptoByteFromMnemonic get crypto byte from mnemonic
-func GetCryptoByteFromMnemonic(mnemonic string, language int) (uint8, error) {
+// return values:
+//    bool: is the mnemonic a old version, true means it's a old version of mnemonic
+//    uint8: the cryptographic indicator
+//    error: the error message
+func GetCryptoByteFromMnemonic(mnemonic string, language int) (bool, uint8, error) {
 	entropy, err := walletRand.GetEntropyFromMnemonic(mnemonic, language)
 	if err != nil {
-		return 0, err
+		// 再看看是不是旧版本的助记词
+		entropy, err = walletRand.GetEntropyFromOldMnemonic(mnemonic, language)
+		if err != nil {
+			return false, 0, err
+		}
+		// old mnemonic
+		return true, 0, nil
 	}
 
 	tagByte := entropy[len(entropy)-1:]
@@ -462,9 +483,9 @@ func GetCryptoByteFromMnemonic(mnemonic string, language int) (uint8, error) {
 	cryptographyByte := cryptographyInt.Bytes()
 	if len(cryptographyByte) == 0 {
 		err = fmt.Errorf("cryptographyByte %v is not valid", cryptographyByte)
-		return 0, err
+		return false, 0, err
 	}
 	cryptography := uint8(cryptographyByte[0])
 
-	return cryptography, nil
+	return false, cryptography, nil
 }
