@@ -31,6 +31,10 @@ public:
     virtual std::unique_ptr<Iterator> new_iterator(const std::string& start, const std::string& limit);
     virtual Account& sender();
     virtual const std::string& transfer_amount() const;
+    virtual bool call(const std::string& module, const std::string& contract,
+                      const std::string& method,
+                      const std::map<std::string, std::string>& args,
+                      Response* response);
 
 private:
     pb::CallArgs _call_args;

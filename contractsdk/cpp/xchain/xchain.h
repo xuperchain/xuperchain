@@ -40,6 +40,10 @@ public:
     virtual std::unique_ptr<Iterator> new_iterator(const std::string& start, const std::string& limit) = 0;
     virtual Account& sender() = 0;
     virtual const std::string& transfer_amount() const = 0;
+    virtual bool call(const std::string& module, const std::string& contract,
+                      const std::string& method,
+                      const std::map<std::string, std::string>& args,
+                      Response* response) = 0;
 };
 
 class Contract {
