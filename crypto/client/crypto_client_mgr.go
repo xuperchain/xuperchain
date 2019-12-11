@@ -107,9 +107,13 @@ func CreateCryptoClientFromJSONPrivateKey(jsonKey []byte) (base.CryptoClient, er
 
 // CreateCryptoClientFromMnemonic create CryptoClient by mnemonic
 func CreateCryptoClientFromMnemonic(mnemonic string, language int) (base.CryptoClient, error) {
-	cryptoByte, err := account.GetCryptoByteFromMnemonic(mnemonic, language)
+	isOld, cryptoByte, err := account.GetCryptoByteFromMnemonic(mnemonic, language)
 	if err != nil {
 		return nil, err
+	}
+	// for old mnemonic, only Nist is supported
+	if isOld {
+		cryptoByte = config.Nist
 	}
 	cryptoType, err := getTypeByCryptoByte(cryptoByte)
 	if err != nil {
