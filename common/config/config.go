@@ -28,7 +28,7 @@ const (
 	// limitation size for same ip
 	DefaultStreamIPLimitSize     = 10
 	DefaultMaxBroadcastPeers     = 20
-	DefaultMaxBroadcastCorePeers = 10
+	DefaultMaxBroadcastCorePeers = 17
 	DefaultIsStorePeers          = false
 	DefaultP2PDataPath           = "./data/p2p"
 )
