@@ -1080,6 +1080,23 @@ func (xc *XChainCore) QueryAccountACL(accountName string) (*pb.Acl, bool, error)
 	return acl, confirmed, nil
 }
 
+// QueryUtxoRecord get utxo record for an account
+func (xc *XChainCore) QueryUtxoRecord(accountName string, displayCount int64) (*pb.UtxoRecordDetail, error) {
+	defaultUtxoRecord := &pb.UtxoRecordDetail{Header: &pb.Header{}}
+	if xc == nil {
+		return defaultUtxoRecord, errors.New("xchaincore is nil")
+	}
+	if xc.Status() != global.Normal {
+		return defaultUtxoRecord, ErrNotReady
+	}
+	utxoRecord, err := xc.Utxovm.QueryUtxoRecord(accountName, displayCount)
+	if err != nil {
+		return defaultUtxoRecord, err
+	}
+
+	return utxoRecord, nil
+}
+
 // QueryAccountContainAK get all accounts contain a specific address
 func (xc *XChainCore) QueryAccountContainAK(address string) ([]string, error) {
 	if xc == nil {

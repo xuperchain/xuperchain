@@ -16,12 +16,6 @@ const KernelModuleName = "kernel"
 // ConsensusModueName is the name of consensus contract
 const ConsensusModueName = "consensus"
 
-// AutoGenWhiteList 为必须通过提案机制才能触发调用的智能合约名单
-var AutoGenWhiteList = map[string]bool{
-	"consensus.update_consensus": true,
-	"kernel.UpdateMaxBlockSize":  true,
-}
-
 // UtxoMetaRegister in avoid to being refered in a cycle way
 type UtxoMetaRegister interface {
 	GetMaxBlockSize() int64

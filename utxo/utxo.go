@@ -509,7 +509,9 @@ func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, priv
 		xlog.Warn("failed to load gas price from disk", "loadErr", loadErr)
 		return nil, loadErr
 	}
-	utxoVM.metaTmp = utxoVM.meta
+	// cp not reference
+	newMeta := proto.Clone(utxoVM.meta).(*pb.UtxoMeta)
+	utxoVM.metaTmp = newMeta
 	return utxoVM, nil
 }
 
@@ -1584,7 +1586,8 @@ func (uv *UtxoVM) PlayAndRepost(blockid []byte, needRepost bool, isRootTx bool) 
 	// 内存级别更新UtxoMeta信息
 	uv.mutexMeta.Lock()
 	defer uv.mutexMeta.Unlock()
-	uv.meta = uv.metaTmp
+	newMeta := proto.Clone(uv.metaTmp).(*pb.UtxoMeta)
+	uv.meta = newMeta
 	return nil
 }
 
@@ -1650,7 +1653,8 @@ func (uv *UtxoVM) PlayForMiner(blockid []byte, batch kvdb.Batch) error {
 	// 内存级别更新UtxoMeta信息
 	uv.mutexMeta.Lock()
 	defer uv.mutexMeta.Unlock()
-	uv.meta = uv.metaTmp
+	newMeta := proto.Clone(uv.metaTmp).(*pb.UtxoMeta)
+	uv.meta = newMeta
 	return nil
 }
 
@@ -1770,7 +1774,8 @@ func (uv *UtxoVM) Walk(blockid []byte, ledgerPrune bool) error {
 		}
 		// 内存级别更新UtxoMeta信息
 		uv.mutexMeta.Lock()
-		uv.meta = uv.metaTmp
+		newMeta := proto.Clone(uv.metaTmp).(*pb.UtxoMeta)
+		uv.meta = newMeta
 		uv.mutexMeta.Unlock()
 	}
 	for i := len(todoBlocks) - 1; i >= 0; i-- {
@@ -1828,7 +1833,8 @@ func (uv *UtxoVM) Walk(blockid []byte, ledgerPrune bool) error {
 		}
 		// 内存级别更新UtxoMeta信息
 		uv.mutexMeta.Lock()
-		uv.meta = uv.metaTmp
+		newMeta := proto.Clone(uv.metaTmp).(*pb.UtxoMeta)
+		uv.meta = newMeta
 		uv.mutexMeta.Unlock()
 	}
 	return nil
@@ -2325,4 +2331,91 @@ func (uv *UtxoVM) queryContractBannedStatus(contractName string) (bool, error) {
 	}
 	ctx.Release()
 	return false, nil
+}
+
+// QueryUtxoRecord query utxo record details
+func (uv *UtxoVM) QueryUtxoRecord(accountName string, displayCount int64) (*pb.UtxoRecordDetail, error) {
+	utxoRecordDetail := &pb.UtxoRecordDetail{
+		Header: &pb.Header{},
+	}
+
+	addrPrefix := fmt.Sprintf("%s%s_", pb.UTXOTablePrefix, accountName)
+	it := uv.ldb.NewIteratorWithPrefix([]byte(addrPrefix))
+	defer it.Release()
+
+	openUtxoCount := big.NewInt(0)
+	openUtxoAmount := big.NewInt(0)
+	openItem := []*pb.UtxoKey{}
+	lockedUtxoCount := big.NewInt(0)
+	lockedUtxoAmount := big.NewInt(0)
+	lockedItem := []*pb.UtxoKey{}
+	frozenUtxoCount := big.NewInt(0)
+	frozenUtxoAmount := big.NewInt(0)
+	frozenItem := []*pb.UtxoKey{}
+
+	for it.Next() {
+		key := append([]byte{}, it.Key()...)
+		utxoItem := new(UtxoItem)
+		uErr := utxoItem.Loads(it.Value())
+		if uErr != nil {
+			continue
+		}
+
+		if uv.isLocked(key) {
+			lockedUtxoCount.Add(lockedUtxoCount, big.NewInt(1))
+			lockedUtxoAmount.Add(lockedUtxoAmount, utxoItem.Amount)
+			if displayCount > 0 {
+				lockedItem = append(lockedItem, MakeUtxoKey(key, utxoItem.Amount.String()))
+				displayCount--
+			}
+			continue
+		}
+		if utxoItem.FrozenHeight > uv.ledger.GetMeta().GetTrunkHeight() || utxoItem.FrozenHeight == -1 {
+			frozenUtxoCount.Add(frozenUtxoCount, big.NewInt(1))
+			frozenUtxoAmount.Add(frozenUtxoAmount, utxoItem.Amount)
+			if displayCount > 0 {
+				frozenItem = append(frozenItem, MakeUtxoKey(key, utxoItem.Amount.String()))
+				displayCount--
+			}
+			continue
+		}
+		openUtxoCount.Add(openUtxoCount, big.NewInt(1))
+		openUtxoAmount.Add(openUtxoAmount, utxoItem.Amount)
+		if displayCount > 0 {
+			openItem = append(openItem, MakeUtxoKey(key, utxoItem.Amount.String()))
+			displayCount--
+		}
+	}
+	if it.Error() != nil {
+		return utxoRecordDetail, it.Error()
+	}
+
+	utxoRecordDetail.OpenUtxoRecord = &pb.UtxoRecord{
+		UtxoCount:  openUtxoCount.String(),
+		UtxoAmount: openUtxoAmount.String(),
+		Item:       openItem,
+	}
+	utxoRecordDetail.LockedUtxoRecord = &pb.UtxoRecord{
+		UtxoCount:  lockedUtxoCount.String(),
+		UtxoAmount: lockedUtxoAmount.String(),
+		Item:       lockedItem,
+	}
+	utxoRecordDetail.FrozenUtxoRecord = &pb.UtxoRecord{
+		UtxoCount:  frozenUtxoCount.String(),
+		UtxoAmount: frozenUtxoAmount.String(),
+		Item:       frozenItem,
+	}
+
+	return utxoRecordDetail, nil
+}
+
+func MakeUtxoKey(key []byte, amount string) *pb.UtxoKey {
+	keyTuple := bytes.Split(key[1:], []byte("_")) // [1:] 是为了剔除表名字前缀
+	tmpUtxoKey := &pb.UtxoKey{
+		RefTxid: string(keyTuple[len(keyTuple)-2]),
+		Offset:  string(keyTuple[len(keyTuple)-1]),
+		Amount:  amount,
+	}
+
+	return tmpUtxoKey
 }

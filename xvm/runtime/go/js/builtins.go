@@ -7,6 +7,11 @@ func Array(args []interface{}) interface{} {
 
 // Uint8Array simulates Uint8Array function
 func Uint8Array(args []interface{}) interface{} {
+	// for new Uint8Array(n)
+	if len(args) == 1 {
+		return make([]byte, args[0].(int64))
+	}
+	// for new Uint8Array(buffer, 0, n)
 	mem, ok := args[0].([]byte)
 	if !ok {
 		ThrowException(ExceptionInvalidArgument)

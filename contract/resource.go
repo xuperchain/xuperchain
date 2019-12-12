@@ -23,6 +23,32 @@ func (l *Limits) TotalGas(gasPrice *pb.GasPrice) int64 {
 	return cpuGas + memGas + diskGas + feeGas
 }
 
+// Add accumulates resource limits, returns self.
+func (l *Limits) Add(l1 Limits) *Limits {
+	l.Cpu += l1.Cpu
+	l.Memory += l1.Memory
+	l.Disk += l1.Disk
+	l.XFee += l1.XFee
+	return l
+}
+
+// Sub sub limits from l
+func (l *Limits) Sub(l1 Limits) *Limits {
+	l.Cpu -= l1.Cpu
+	l.Memory -= l1.Memory
+	l.Disk -= l1.Disk
+	l.XFee -= l1.XFee
+	return l
+}
+
+// Exceed judge whether resource exceeds l1
+func (l Limits) Exceed(l1 Limits) bool {
+	return l.Cpu > l1.Cpu ||
+		l.Memory > l1.Memory ||
+		l.Disk > l1.Disk ||
+		l.XFee > l1.XFee
+}
+
 // MaxLimits describes the maximum limit of resources
 var MaxLimits = Limits{
 	Cpu:    maxResourceLimit,

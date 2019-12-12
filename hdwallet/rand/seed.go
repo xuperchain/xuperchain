@@ -330,7 +330,7 @@ func GetEntropyFromMnemonic(mnemonic string, language int) ([]byte, error) {
 	newEntropyWithChecksumBytes := padByteSlice(addChecksum(entropyBytes), fullByteSize)
 	if !compareByteSlices(entropyWithChecksumBytes, newEntropyWithChecksumBytes) {
 		//		return nil, ErrMnemonicChecksumIncorrect
-		return nil, fmt.Errorf("The checksum within the Mnemonic sentence incorrect fake:%v - real:%v, entropy:%v, mnemonic:%v", entropyWithChecksumBytes, newEntropyWithChecksumBytes, entropyBytes, mnemonic)
+		return nil, fmt.Errorf("The checksum within the new Mnemonic sentence incorrect fake:%v - real:%v, entropy:%v, mnemonic:%v", entropyWithChecksumBytes, newEntropyWithChecksumBytes, entropyBytes, mnemonic)
 	}
 
 	return entropy.Bytes(), nil
@@ -396,7 +396,7 @@ func GetEntropyFromOldMnemonic(mnemonic string, language int) ([]byte, error) {
 	newEntropyWithChecksumBytes := padByteSlice(addOldChecksum(entropyBytes), fullByteSize)
 	if !compareByteSlices(entropyWithChecksumBytes, newEntropyWithChecksumBytes) {
 		//		return nil, ErrMnemonicChecksumIncorrect
-		return nil, fmt.Errorf("The checksum within the Mnemonic sentence incorrect fake:%v - real:%v, entropy:%v, mnemonic:%v", entropyWithChecksumBytes, newEntropyWithChecksumBytes, entropyBytes, mnemonic)
+		return nil, fmt.Errorf("The checksum within the old Mnemonic sentence incorrect fake:%v - real:%v, entropy:%v, mnemonic:%v", entropyWithChecksumBytes, newEntropyWithChecksumBytes, entropyBytes, mnemonic)
 	}
 
 	return entropy.Bytes(), nil
@@ -419,6 +419,16 @@ func compareByteSlices(a, b []byte) bool {
 // 会校验助记词串是否
 func GenerateSeedWithErrorChecking(mnemonic string, password string, keyLen int, language int) ([]byte, error) {
 	_, err := GetEntropyFromMnemonic(mnemonic, language)
+	if err != nil {
+		return nil, err
+	}
+	return generateSeed(mnemonic, password, keyLen), nil
+}
+
+// GenerateOldSeedWithErrorChecking 带有错误检查。通过用户输入的助记词串（之前函数生成的）和用户指定的密码，来生成一个随机数种子
+// 老版本的助记词检查方法
+func GenerateOldSeedWithErrorChecking(mnemonic string, password string, keyLen int, language int) ([]byte, error) {
+	_, err := GetEntropyFromOldMnemonic(mnemonic, language)
 	if err != nil {
 		return nil, err
 	}

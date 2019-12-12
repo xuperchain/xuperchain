@@ -437,7 +437,7 @@ func TestRunUpdateReservedContracts(t *testing.T) {
                         }
                     }
                 ],
-                "reserved_contracts":[
+                "new_reserved_contracts":[
                 {
                     "module_name":"wasm",
                     "contract_name":"identity",
@@ -548,7 +548,7 @@ func TestRunUpdateForbiddenContract(t *testing.T) {
 				"method_name": "get",
 				"args":{}
 			},
-			"forbidden_contract": {
+			"new_forbidden_contract": {
 				"module_name": "wasm",
 				"contract_name": "forbidden",
 				"method_name": "get1",
@@ -563,7 +563,6 @@ func TestRunUpdateForbiddenContract(t *testing.T) {
 	if runUpdateBlkChainErr != nil {
 		t.Error("runUpdateForbiddenContract error:->", runUpdateBlkChainErr.Error())
 	}
-
 	rollbackUpdateBlkChainErr := kl.rollbackUpdateForbiddenContract(txDesc)
 	if rollbackUpdateBlkChainErr != nil {
 		t.Error("runUpdateForbiddenContract error:->", rollbackUpdateBlkChainErr.Error())
@@ -589,8 +588,8 @@ func TestRunUpdateForbiddenContract(t *testing.T) {
 	}
 	currentNewAccountResourceAmount := utxovm.GetNewAccountResourceAmount()
 	t.Log("new newAccountResourceAmount->", currentNewAccountResourceAmount)
-	if currentNewAccountResourceAmount != 100 {
-		t.Error("expect 100, but got ", currentNewAccountResourceAmount)
+	if currentNewAccountResourceAmount != 1000 {
+		t.Error("expect 1000, but got ", currentNewAccountResourceAmount)
 	}
 	rollbackUpdateNewAccountResourceAmountErr := kl.rollbackUpdateNewAccountResourceAmount(txDesc)
 	if rollbackUpdateNewAccountResourceAmountErr != nil {

@@ -35,6 +35,13 @@ type Context struct {
 
 	Instance Instance
 
+	// resource used by sub contract call
+	SubResourceUsed contract.Limits
+
+	// Contract being called
+	// set by bridge to check recursive contract call
+	ContractSet map[string]bool
+
 	// Write by contract
 	Output *pb.Response
 }
@@ -54,6 +61,14 @@ func (c *Context) DiskUsed() int64 {
 func (c *Context) ExceedDiskLimit() bool {
 	size := c.DiskUsed()
 	return size > c.ResourceLimits.Disk
+}
+
+// ResourceUsed returns the resource used by context
+func (c *Context) ResourceUsed() contract.Limits {
+	var total contract.Limits
+	total.Add(c.Instance.ResourceUsed()).Add(c.SubResourceUsed)
+	total.Disk += c.DiskUsed()
+	return total
 }
 
 // ContextManager 用于管理产生和销毁Context

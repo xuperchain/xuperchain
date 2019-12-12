@@ -66,6 +66,10 @@ type ContextConfig struct {
 
 	// Chain name
 	BCName string
+
+	// Contract being called
+	// set by bridge to check recursive contract call
+	ContractSet map[string]bool
 }
 
 // VirtualMachine define virtual machine interface
