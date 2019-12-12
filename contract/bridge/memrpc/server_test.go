@@ -27,7 +27,7 @@ func (s *serverContext) NewContext() int64 {
 func withServerContext(t *testing.T, callback func(s *serverContext)) {
 	util.WithXModelContext(t, func(x *util.XModelContext) {
 		tm := bridge.NewContextManager()
-		syscall := bridge.NewSyscallService(tm)
+		syscall := bridge.NewSyscallService(tm, nil)
 		s := &serverContext{
 			tm:            tm,
 			server:        NewServer(syscall),

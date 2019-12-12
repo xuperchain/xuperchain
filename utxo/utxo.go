@@ -639,6 +639,9 @@ func GenerateRootTx(js []byte) (*pb.Transaction, error) {
 //输入: 转账人地址、公钥、金额、是否需要锁定utxo
 //输出：选出的utxo、utxo keys、实际构成的金额(可能大于需要的金额)、错误码
 func (uv *UtxoVM) SelectUtxos(fromAddr string, fromPubKey string, totalNeed *big.Int, needLock, excludeUnconfirmed bool) ([]*pb.TxInput, [][]byte, *big.Int, error) {
+	if totalNeed.Cmp(big.NewInt(0)) == 0 {
+		return nil, nil, big.NewInt(0), nil
+	}
 	curLedgerHeight := uv.ledger.GetMeta().TrunkHeight
 	willLockKeys := make([][]byte, 0)
 	foundEnough := false
@@ -2331,4 +2334,91 @@ func (uv *UtxoVM) queryContractBannedStatus(contractName string) (bool, error) {
 	}
 	ctx.Release()
 	return false, nil
+}
+
+// QueryUtxoRecord query utxo record details
+func (uv *UtxoVM) QueryUtxoRecord(accountName string, displayCount int64) (*pb.UtxoRecordDetail, error) {
+	utxoRecordDetail := &pb.UtxoRecordDetail{
+		Header: &pb.Header{},
+	}
+
+	addrPrefix := fmt.Sprintf("%s%s_", pb.UTXOTablePrefix, accountName)
+	it := uv.ldb.NewIteratorWithPrefix([]byte(addrPrefix))
+	defer it.Release()
+
+	openUtxoCount := big.NewInt(0)
+	openUtxoAmount := big.NewInt(0)
+	openItem := []*pb.UtxoKey{}
+	lockedUtxoCount := big.NewInt(0)
+	lockedUtxoAmount := big.NewInt(0)
+	lockedItem := []*pb.UtxoKey{}
+	frozenUtxoCount := big.NewInt(0)
+	frozenUtxoAmount := big.NewInt(0)
+	frozenItem := []*pb.UtxoKey{}
+
+	for it.Next() {
+		key := append([]byte{}, it.Key()...)
+		utxoItem := new(UtxoItem)
+		uErr := utxoItem.Loads(it.Value())
+		if uErr != nil {
+			continue
+		}
+
+		if uv.isLocked(key) {
+			lockedUtxoCount.Add(lockedUtxoCount, big.NewInt(1))
+			lockedUtxoAmount.Add(lockedUtxoAmount, utxoItem.Amount)
+			if displayCount > 0 {
+				lockedItem = append(lockedItem, MakeUtxoKey(key, utxoItem.Amount.String()))
+				displayCount--
+			}
+			continue
+		}
+		if utxoItem.FrozenHeight > uv.ledger.GetMeta().GetTrunkHeight() || utxoItem.FrozenHeight == -1 {
+			frozenUtxoCount.Add(frozenUtxoCount, big.NewInt(1))
+			frozenUtxoAmount.Add(frozenUtxoAmount, utxoItem.Amount)
+			if displayCount > 0 {
+				frozenItem = append(frozenItem, MakeUtxoKey(key, utxoItem.Amount.String()))
+				displayCount--
+			}
+			continue
+		}
+		openUtxoCount.Add(openUtxoCount, big.NewInt(1))
+		openUtxoAmount.Add(openUtxoAmount, utxoItem.Amount)
+		if displayCount > 0 {
+			openItem = append(openItem, MakeUtxoKey(key, utxoItem.Amount.String()))
+			displayCount--
+		}
+	}
+	if it.Error() != nil {
+		return utxoRecordDetail, it.Error()
+	}
+
+	utxoRecordDetail.OpenUtxoRecord = &pb.UtxoRecord{
+		UtxoCount:  openUtxoCount.String(),
+		UtxoAmount: openUtxoAmount.String(),
+		Item:       openItem,
+	}
+	utxoRecordDetail.LockedUtxoRecord = &pb.UtxoRecord{
+		UtxoCount:  lockedUtxoCount.String(),
+		UtxoAmount: lockedUtxoAmount.String(),
+		Item:       lockedItem,
+	}
+	utxoRecordDetail.FrozenUtxoRecord = &pb.UtxoRecord{
+		UtxoCount:  frozenUtxoCount.String(),
+		UtxoAmount: frozenUtxoAmount.String(),
+		Item:       frozenItem,
+	}
+
+	return utxoRecordDetail, nil
+}
+
+func MakeUtxoKey(key []byte, amount string) *pb.UtxoKey {
+	keyTuple := bytes.Split(key[1:], []byte("_")) // [1:] 是为了剔除表名字前缀
+	tmpUtxoKey := &pb.UtxoKey{
+		RefTxid: string(keyTuple[len(keyTuple)-2]),
+		Offset:  string(keyTuple[len(keyTuple)-1]),
+		Amount:  amount,
+	}
+
+	return tmpUtxoKey
 }
