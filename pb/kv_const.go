@@ -13,6 +13,7 @@ const (
 	VoteProposalPrefix       = "V"
 	PlugConsPrefix           = "P"
 	ConsTDposPrefix          = "D"
+	ConsPoaPrefix            = "A"
 	PendingBlocksTablePrefix = "E"
 	TxExtensionPrefix        = "X"
 	WithdrawPrefix           = "W"

@@ -595,6 +595,13 @@ func (xc *XChainCore) doMiner() {
 					if qci, ok := data["quorum_cert"].(*pb.QuorumCert); ok {
 						qc = qci
 					}
+				case consensus.ConsensusTypePoa:
+					xc.log.Trace("Minning poa ProcessBeforeMiner!")
+					curTerm = data["curTerm"].(int64)
+					curBlockNum = data["curBlockNum"].(int64)
+					if qci, ok := data["quorum_cert"].(*pb.QuorumCert); ok {
+						qc = qci
+					}
 				case consensus.ConsensusTypePow:
 					xc.log.Trace("Minning tdpos ProcessBeforeMiner!")
 					targetBits = data["targetBits"].(int32)

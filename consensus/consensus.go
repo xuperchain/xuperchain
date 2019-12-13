@@ -28,6 +28,7 @@ const (
 	updateConsensusMethod = "update_consensus"
 	ConsensusPluginName   = "consensus"
 	ConsensusTypeTdpos    = "tdpos"
+	ConsensusTypePoa      = "poa"
 	ConsensusTypePow      = "pow"
 	ConsensusTypeSingle   = "single"
 )
@@ -90,6 +91,15 @@ func (pc *PluggableConsensus) makeFirstCons(xlog log.Logger, cfg *config.NodeCon
 	height := int64(0)
 	timestamp := int64(0)
 	if name == ConsensusTypeTdpos {
+		if consConf["timestamp"] == nil {
+			return nil, errors.New("Genious consensus tdpos's timestamp can not be null")
+		}
+		tmpTime, err := strconv.ParseInt(consConf["timestamp"].(string), 10, 64)
+		if err != nil {
+			return nil, err
+		}
+		timestamp = tmpTime
+	} else if name == ConsensusTypePoa {
 		if consConf["timestamp"] == nil {
 			return nil, errors.New("Genious consensus tdpos's timestamp can not be null")
 		}
@@ -255,6 +265,25 @@ func (pc *PluggableConsensus) postUpdateConsensusActions(name string, sc *StepCo
 		pc.utxoVM.UnRegisterVAT(ConsensusTypeTdpos)
 		pc.utxoVM.RegisterVAT(ConsensusTypeTdpos, vat, vat.GetVATWhiteList())
 		pc.xlog.Trace("Register Tdpos utxovm after updateTDPosConsensus", "name", "Tdpos")
+	} else if name == ConsensusTypePoa {
+		cons := sc.Conn
+		for _, v := range pc.cons {
+			if v.Conn.Type() == ConsensusTypePoa {
+				if v.Conn.Version() == cons.Version() {
+					pc.xlog.Warn("This version of tdpos already exist", "version", v.Conn.Version())
+					return errors.New("This version of poa already exist")
+				}
+			}
+		}
+
+		// 注册tdpos合约
+		ci := cons.(contract.ContractInterface)
+		pc.utxoVM.UnRegisterVM(ConsensusTypePoa, global.VMPrivRing0)
+		pc.utxoVM.RegisterVM(ConsensusTypePoa, ci, global.VMPrivRing0)
+		vat := cons.(vat.VATInterface)
+		pc.utxoVM.UnRegisterVAT(ConsensusTypePoa)
+		pc.utxoVM.RegisterVAT(ConsensusTypePoa, vat, vat.GetVATWhiteList())
+		pc.xlog.Trace("Register Tdpos utxovm after updateTDPosConsensus", "name", "Tdpos")
 	}
 
 	return nil
@@ -271,7 +300,7 @@ func (pc *PluggableConsensus) updateConsensusByName(name string, height int64,
 
 	pluginIns, err := pluginMgr.PluginMgr.CreatePluginInstance(ConsensusPluginName, name)
 	if err != nil {
-		pc.xlog.Warn("create consensus instance failed", "name", name)
+		pc.xlog.Warn("create consensus instance failed", "name", name, "err", err.Error())
 		if err.Error() == "Invalid plugin subtype" {
 			err = errors.New("Consensus not support")
 		}
@@ -296,6 +325,13 @@ func (pc *PluggableConsensus) newUpdateConsensus(name string, height int64, time
 	extParams["block"] = block
 	extParams["crypto_client"] = pc.cryptoClient
 	if name == ConsensusTypeTdpos {
+		extParams["bcname"] = pc.bcname
+		extParams["ledger"] = pc.ledger
+		extParams["utxovm"] = pc.utxoVM
+		extParams["timestamp"] = timestamp
+		extParams["p2psvr"] = pc.p2psvr
+		extParams["height"] = height
+	} else if name == ConsensusTypePoa {
 		extParams["bcname"] = pc.bcname
 		extParams["ledger"] = pc.ledger
 		extParams["utxovm"] = pc.utxoVM

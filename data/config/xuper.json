@@ -21,25 +21,20 @@
     },
     "new_account_resource_amount": 1000,
     "genesis_consensus": {
-        "name": "tdpos",
+        "name": "poa",
         "config": {
             "timestamp": "1559021720000000000",
-            "proposer_num": "1",
             "period": "3000",
             "alternate_interval": "3000",
-            "term_interval": "6000",
             "block_num": "20",
-            "vote_unit_price": "1",
-            "init_proposer": {
-                "1": [
-                    "dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN"
-                ]
-            },
-            "init_proposer_neturl": {
-                "1": [
-                    "/ip4/127.0.0.1/tcp/47101/p2p/QmVxeNubpg1ZQjQT8W5yZC9fD7ZB1ViArwvyGUB53sqf8e"
-                ]
-            }
+            "account_name": "poa_candidates_list",
+            "init_proposer": [
+                "dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN"
+            ],
+            "need_netUrl": true,
+            "init_proposer_neturl": [
+                "/ip4/127.0.0.1/tcp/47101/p2p/QmVxeNubpg1ZQjQT8W5yZC9fD7ZB1ViArwvyGUB53sqf8e"
+            ]
         }
     }
 }
