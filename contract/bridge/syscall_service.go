@@ -150,6 +150,11 @@ func (c *SyscallService) ContractCall(ctx context.Context, in *pb.ContractCallRe
 		return nil, errors.New("max contract call depth exceeds")
 	}
 
+	ok, err := nctx.Core.VerifyContractPermission(nctx.Initiator, nctx.AuthRequire, in.GetContract(), in.GetMethod())
+	if !ok || err != nil {
+		return nil, errors.New("verify contract permission failed")
+	}
+
 	vm, ok := c.vmm.GetVirtualMachine(in.GetModule())
 	if !ok {
 		return nil, errors.New("module not found")
