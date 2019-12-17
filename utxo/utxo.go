@@ -180,6 +180,7 @@ type UtxoLockItem struct {
 
 type contractChainCore struct {
 	*acli.Manager // ACL manager for read/write acl table
+	*UtxoVM
 }
 
 func genUtxoKey(addr []byte, txid []byte, offset int32) string {
@@ -809,6 +810,7 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 		ResourceLimits:           contract.MaxLimits,
 		Core: contractChainCore{
 			Manager: uv.aclMgr,
+			UtxoVM:  uv,
 		},
 		BCName: uv.bcname,
 	}
