@@ -9,7 +9,6 @@ import (
 	log "github.com/xuperchain/log15"
 	cons_base "github.com/xuperchain/xuperunion/consensus/base"
 	bft_config "github.com/xuperchain/xuperunion/consensus/common/chainedbft/config"
-	"github.com/xuperchain/xuperunion/contract"
 	crypto_base "github.com/xuperchain/xuperunion/crypto/client/base"
 	"github.com/xuperchain/xuperunion/ledger"
 	"github.com/xuperchain/xuperunion/p2pv2"
@@ -26,14 +25,6 @@ var (
 const (
 	// TYPE the type of tdpos
 	TYPE = "poa"
-	// 候选人投票
-	voteMethod = "vote"
-	// 候选人投票撤销
-	revokeVoteMethod = "revoke_vote"
-	// 候选人提名
-	nominateCandidateMethod = "nominate_candidate"
-	// 候选人罢黜
-	revokeCandidateMethod = "revoke_candidate"
 	// 验证人生成
 	checkvValidaterMethod = "check_validater"
 )
@@ -73,8 +64,7 @@ type Poa struct {
 	// revokeCache 撤销记录缓存, 内存状态, 记录每个block中撤销的记录, key: txid, value: true
 	revokeCache *sync.Map
 	isProduce   map[int64]bool
-	// 执行智能合约获取合约上下文
-	context *contract.TxContext
+
 	mutex   *sync.RWMutex
 	// BFT module
 	bftPaceMaker *bft.PoaPaceMaker
@@ -104,27 +94,4 @@ type PoaConfig struct {
 	// BTF related config
 	enableBFT bool
 	bftConfig *bft_config.Config
-}
-
-// 每个选票的详情, 支持一票多投
-type voteInfo struct {
-	// 每个选票投给的address名单, 最多不能超过proposerNum的限制
-	candidates []string
-	// 每一轮投多少票, 依据总的amount计算得到
-	// ballots = 总金额 / 投票单价
-	ballots int64
-	voter   string
-}
-
-// 每个地址每一轮的总票数
-type termBallots struct {
-	Address string
-	Ballots int64
-}
-
-// candidateBallotsCacheValue
-type candidateBallotsCacheValue struct {
-	ballots int64
-	// 是否被标记为删除
-	isDel bool
 }

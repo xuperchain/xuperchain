@@ -225,7 +225,7 @@ func (poa *Poa) buildConfigs(xlog log.Logger, cfg *config.NodeConfig, consCfg ma
 			return errors.New("config error, init_proposer_neturl could not be empty")
 		}
 	}
-	poa.proposerNum = int64(len(poa.proposerInfos))
+	poa.proposerNum = uint64(len(poa.proposerInfos))
 
 	version, err := strconv.ParseInt(consCfg["version"].(string), 10, 64)
 	if err != nil {
@@ -252,7 +252,7 @@ func (poa *Poa) CompeteMaster(height int64) (bool, bool) {
 	time.Sleep(time.Duration(poa.config.alternateInterval))
 	poa.mutex.RLock()
 	defer poa.mutex.RUnlock()
-	if string(poa.address) == poa.proposerInfos[poa.curPos % poa.proposerNum].Address {
+	if string(poa.address) == poa.proposerInfos[poa.curPos].Address {
 		poa.log.Trace("CompeteMaster now xterm infos", "term", poa.curTerm, "pos", poa.curPos, "blockPos", poa.curBlockNum,
 			"master", true)
 		return true, poa.needSync()
@@ -275,44 +275,6 @@ func (poa *Poa) needSync() bool {
 		return false
 	}
 	return true
-}
-
-func (poa *Poa) notifyNewView(height int64) error {
-	if !poa.config.enableBFT {
-		// BFT not enabled, continue
-		return nil
-	}
-
-	// get current proposer
-	meta := poa.ledger.GetMeta()
-	proposer, err := poa.getProposer(0, 0)
-	if err != nil {
-		return err
-	}
-	if meta.TrunkHeight != 0 {
-		blockTip, err := poa.ledger.QueryBlock(meta.TipBlockid)
-		if err != nil {
-			return err
-		}
-		proposer = string(blockTip.GetProposer())
-	}
-
-	nextProposer, err := poa.getNextProposer()
-	if err != nil {
-		return err
-	}
-	// old height might out-of-date, use current trunkHeight when NewView
-	return poa.bftPaceMaker.NextNewView(meta.TrunkHeight+1, nextProposer, proposer)
-}
-
-func (poa *Poa) notifyTermChanged(term int64) error {
-	if !poa.config.enableBFT {
-		// BFT not enabled, continue
-		return nil
-	}
-
-	proposers := poa.getTermProposer(term)
-	return poa.bftPaceMaker.UpdateValidatorSet(proposers)
 }
 
 // CheckMinerMatch is the specific implementation of ConsensusInterface
@@ -398,7 +360,7 @@ func (poa *Poa) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock) (bool, 
 			}
 		}
 	} else {
-		poa.log.Warn("CheckMinerMatch failed, revieved block shouldn't proposed!")
+		poa.log.Warn("CheckMinerMatch failed, received block shouldn't proposed!")
 		return false, nil
 	}
 	return true, nil
