@@ -265,27 +265,7 @@ func (pc *PluggableConsensus) postUpdateConsensusActions(name string, sc *StepCo
 		pc.utxoVM.UnRegisterVAT(ConsensusTypeTdpos)
 		pc.utxoVM.RegisterVAT(ConsensusTypeTdpos, vat, vat.GetVATWhiteList())
 		pc.xlog.Trace("Register Tdpos utxovm after updateTDPosConsensus", "name", "Tdpos")
-	} else if name == ConsensusTypePoa {
-		cons := sc.Conn
-		for _, v := range pc.cons {
-			if v.Conn.Type() == ConsensusTypePoa {
-				if v.Conn.Version() == cons.Version() {
-					pc.xlog.Warn("This version of tdpos already exist", "version", v.Conn.Version())
-					return errors.New("This version of poa already exist")
-				}
-			}
-		}
-
-		// 注册tdpos合约
-		ci := cons.(contract.ContractInterface)
-		pc.utxoVM.UnRegisterVM(ConsensusTypePoa, global.VMPrivRing0)
-		pc.utxoVM.RegisterVM(ConsensusTypePoa, ci, global.VMPrivRing0)
-		vat := cons.(vat.VATInterface)
-		pc.utxoVM.UnRegisterVAT(ConsensusTypePoa)
-		pc.utxoVM.RegisterVAT(ConsensusTypePoa, vat, vat.GetVATWhiteList())
-		pc.xlog.Trace("Register Tdpos utxovm after updateTDPosConsensus", "name", "Tdpos")
 	}
-
 	return nil
 }
 

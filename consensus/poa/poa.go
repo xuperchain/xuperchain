@@ -4,8 +4,8 @@ package poa
 
 import (
 	"bytes"
+	"encoding/hex"
 	"errors"
-	"fmt"
 	log "github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperunion/consensus/poa/bft"
 	"io/ioutil"
@@ -14,13 +14,9 @@ import (
 	"sync"
 	"time"
 
-	"encoding/hex"
-	"encoding/json"
-
-	"github.com/xuperchain/xuperunion/common"
 	"github.com/xuperchain/xuperunion/common/config"
 	cons_base "github.com/xuperchain/xuperunion/consensus/base"
-	chainedbft "github.com/xuperchain/xuperunion/consensus/common/chainedbft"
+	"github.com/xuperchain/xuperunion/consensus/common/chainedbft"
 	bft_config "github.com/xuperchain/xuperunion/consensus/common/chainedbft/config"
 	"github.com/xuperchain/xuperunion/contract"
 	crypto_base "github.com/xuperchain/xuperunion/crypto/client/base"
@@ -36,9 +32,11 @@ func (poa *Poa) Init() {
 	poa.config = PoaConfig{
 		initProposer: make([]*cons_base.CandidateInfo, 0),
 	}
+	poa.curTerm = 1
+	poa.curPos = 0
+	poa.curBlockNum = 0
 	poa.isProduce = make(map[int64]bool)
 	poa.revokeCache = new(sync.Map)
-	poa.context = &contract.TxContext{}
 	poa.mutex = new(sync.RWMutex)
 }
 
@@ -235,11 +233,10 @@ func (poa *Poa) buildConfigs(xlog log.Logger, cfg *config.NodeConfig, consCfg ma
 	poa.version = version
 
 	// parse bft related config
-	poa.config.enableBFT = false
+	poa.config.enableBFT = true
 	if bftConfData, ok := consCfg["bft_config"].(map[string]interface{}); ok {
 		bftconf := bft_config.MakeConfig(bftConfData)
 		// if bft_config is not empty, enable bft
-		poa.config.enableBFT = true
 		poa.config.bftConfig = bftconf
 	}
 
@@ -252,7 +249,7 @@ func (poa *Poa) CompeteMaster(height int64) (bool, bool) {
 	time.Sleep(time.Duration(poa.config.alternateInterval))
 	poa.mutex.RLock()
 	defer poa.mutex.RUnlock()
-	if string(poa.address) == poa.proposerInfos[poa.curPos % poa.proposerNum].Address {
+	if string(poa.address) == poa.proposerInfos[poa.curPos].Address {
 		poa.log.Trace("CompeteMaster now xterm infos", "term", poa.curTerm, "pos", poa.curPos, "blockPos", poa.curBlockNum,
 			"master", true)
 		return true, poa.needSync()
@@ -275,44 +272,6 @@ func (poa *Poa) needSync() bool {
 		return false
 	}
 	return true
-}
-
-func (poa *Poa) notifyNewView(height int64) error {
-	if !poa.config.enableBFT {
-		// BFT not enabled, continue
-		return nil
-	}
-
-	// get current proposer
-	meta := poa.ledger.GetMeta()
-	proposer, err := poa.getProposer(0, 0)
-	if err != nil {
-		return err
-	}
-	if meta.TrunkHeight != 0 {
-		blockTip, err := poa.ledger.QueryBlock(meta.TipBlockid)
-		if err != nil {
-			return err
-		}
-		proposer = string(blockTip.GetProposer())
-	}
-
-	nextProposer, err := poa.getNextProposer()
-	if err != nil {
-		return err
-	}
-	// old height might out-of-date, use current trunkHeight when NewView
-	return poa.bftPaceMaker.NextNewView(meta.TrunkHeight+1, nextProposer, proposer)
-}
-
-func (poa *Poa) notifyTermChanged(term int64) error {
-	if !poa.config.enableBFT {
-		// BFT not enabled, continue
-		return nil
-	}
-
-	proposers := poa.getTermProposer(term)
-	return poa.bftPaceMaker.UpdateValidatorSet(proposers)
 }
 
 // CheckMinerMatch is the specific implementation of ConsensusInterface
@@ -357,27 +316,14 @@ func (poa *Poa) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock) (bool, 
 	}
 
 	// 2 验证轮数信息
-	preBlock, err := poa.ledger.QueryBlock(in.PreHash)
-	if err != nil {
-		poa.log.Warn("CheckMinerMatch failed, get preblock error")
-		return false, nil
-	}
-	poa.log.Trace("CheckMinerMatch", "preBlock.CurTerm", preBlock.CurTerm, "in.CurTerm", in.CurTerm, " in.Proposer",
-		string(in.Proposer), "blockid", fmt.Sprintf("%x", in.Blockid))
-	term, pos, _ := poa.minerScheduling(in.Timestamp)
-	if poa.isProposer(term, pos, in.Proposer) {
+	if poa.isProposer(poa.curTerm, poa.curPos, in.Proposer) {
 		// curTermProposerProduceNumCache is not thread safe, lock before use it.
 		poa.mutex.Lock()
 		defer poa.mutex.Unlock()
 		// 当不是第一轮时需要和前面的
 		if in.CurTerm != 1 {
-			// 减少矿工50%概率恶意地输入时间
-			if preBlock.CurTerm > term {
-				poa.log.Warn("CheckMinerMatch failed, preBlock.CurTerm is bigger than this!")
-				return false, nil
-			}
 			// 当系统切轮时初始化 curTermProposerProduceNum
-			if preBlock.CurTerm < term || (poa.curTerm == term && poa.curTermProposerProduceNumCache == nil) {
+			if poa.curTermProposerProduceNumCache == nil {
 				poa.curTermProposerProduceNumCache = make(map[int64]map[string]map[string]bool)
 				poa.curTermProposerProduceNumCache[in.CurTerm] = make(map[string]map[string]bool)
 			}
@@ -398,7 +344,7 @@ func (poa *Poa) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock) (bool, 
 			}
 		}
 	} else {
-		poa.log.Warn("CheckMinerMatch failed, revieved block shouldn't proposed!")
+		poa.log.Warn("CheckMinerMatch failed, received block shouldn't proposed!")
 		return false, nil
 	}
 	return true, nil
@@ -480,40 +426,6 @@ func (poa *Poa) Stop() {
 // ReadOutput is the specific implementation of interface contract
 func (poa *Poa) ReadOutput(desc *contract.TxDesc) (contract.ContractOutputInterface, error) {
 	return nil, nil
-}
-
-// GetVerifiableAutogenTx is the specific implementation of interface VAT
-func (poa *Poa) GetVerifiableAutogenTx(blockHeight int64, maxCount int, timestamp int64) ([]*pb.Transaction, error) {
-	term, _, _ := poa.minerScheduling(timestamp)
-
-	key := GenTermCheckKey(poa.version, term+1)
-	val, err := poa.utxoVM.GetFromTable(nil, []byte(key))
-	txs := []*pb.Transaction{}
-	if val == nil && common.NormalizedKVError(err) == common.ErrKVNotFound {
-		desc := &contract.TxDesc{
-			Module: "tdpos",
-			Method: checkvValidaterMethod,
-			Args:   make(map[string]interface{}),
-		}
-		desc.Args["version"] = strconv.FormatInt(poa.version, 10)
-		desc.Args["term"] = strconv.FormatInt(term+1, 10)
-		descJSON, err := json.Marshal(desc)
-		if err != nil {
-			return nil, err
-		}
-		tx, err := poa.utxoVM.GenerateEmptyTx(descJSON)
-		txs = append(txs, tx)
-		return txs, nil
-	}
-	return nil, nil
-}
-
-// GetVATWhiteList the specific implementation of interface VAT
-func (poa *Poa) GetVATWhiteList() map[string]bool {
-	whiteList := map[string]bool{
-		checkvValidaterMethod: true,
-	}
-	return whiteList
 }
 
 // GetCoreMiners get the information of core miners
@@ -649,7 +561,5 @@ func (poa *Poa) Finalize(blockid []byte) error {
 
 // SetContext is the specific implementation of interface contract
 func (poa *Poa) SetContext(context *contract.TxContext) error {
-	poa.context = context
-	poa.revokeCache = &sync.Map{}
 	return nil
 }
