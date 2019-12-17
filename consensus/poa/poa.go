@@ -15,12 +15,10 @@ import (
 	"time"
 
 	"encoding/hex"
-	"encoding/json"
 
-	"github.com/xuperchain/xuperunion/common"
 	"github.com/xuperchain/xuperunion/common/config"
 	cons_base "github.com/xuperchain/xuperunion/consensus/base"
-	chainedbft "github.com/xuperchain/xuperunion/consensus/common/chainedbft"
+	"github.com/xuperchain/xuperunion/consensus/common/chainedbft"
 	bft_config "github.com/xuperchain/xuperunion/consensus/common/chainedbft/config"
 	"github.com/xuperchain/xuperunion/contract"
 	crypto_base "github.com/xuperchain/xuperunion/crypto/client/base"
@@ -38,7 +36,6 @@ func (poa *Poa) Init() {
 	}
 	poa.isProduce = make(map[int64]bool)
 	poa.revokeCache = new(sync.Map)
-	poa.context = &contract.TxContext{}
 	poa.mutex = new(sync.RWMutex)
 }
 
@@ -225,7 +222,7 @@ func (poa *Poa) buildConfigs(xlog log.Logger, cfg *config.NodeConfig, consCfg ma
 			return errors.New("config error, init_proposer_neturl could not be empty")
 		}
 	}
-	poa.proposerNum = uint64(len(poa.proposerInfos))
+	poa.proposerNum = int64(len(poa.proposerInfos))
 
 	version, err := strconv.ParseInt(consCfg["version"].(string), 10, 64)
 	if err != nil {
@@ -444,40 +441,6 @@ func (poa *Poa) ReadOutput(desc *contract.TxDesc) (contract.ContractOutputInterf
 	return nil, nil
 }
 
-// GetVerifiableAutogenTx is the specific implementation of interface VAT
-func (poa *Poa) GetVerifiableAutogenTx(blockHeight int64, maxCount int, timestamp int64) ([]*pb.Transaction, error) {
-	term, _, _ := poa.minerScheduling(timestamp)
-
-	key := GenTermCheckKey(poa.version, term+1)
-	val, err := poa.utxoVM.GetFromTable(nil, []byte(key))
-	txs := []*pb.Transaction{}
-	if val == nil && common.NormalizedKVError(err) == common.ErrKVNotFound {
-		desc := &contract.TxDesc{
-			Module: "tdpos",
-			Method: checkvValidaterMethod,
-			Args:   make(map[string]interface{}),
-		}
-		desc.Args["version"] = strconv.FormatInt(poa.version, 10)
-		desc.Args["term"] = strconv.FormatInt(term+1, 10)
-		descJSON, err := json.Marshal(desc)
-		if err != nil {
-			return nil, err
-		}
-		tx, err := poa.utxoVM.GenerateEmptyTx(descJSON)
-		txs = append(txs, tx)
-		return txs, nil
-	}
-	return nil, nil
-}
-
-// GetVATWhiteList the specific implementation of interface VAT
-func (poa *Poa) GetVATWhiteList() map[string]bool {
-	whiteList := map[string]bool{
-		checkvValidaterMethod: true,
-	}
-	return whiteList
-}
-
 // GetCoreMiners get the information of core miners
 func (poa *Poa) GetCoreMiners() []*cons_base.MinerInfo {
 	var res []*cons_base.MinerInfo
@@ -611,7 +574,5 @@ func (poa *Poa) Finalize(blockid []byte) error {
 
 // SetContext is the specific implementation of interface contract
 func (poa *Poa) SetContext(context *contract.TxContext) error {
-	poa.context = context
-	poa.revokeCache = &sync.Map{}
 	return nil
 }
