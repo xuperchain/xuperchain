@@ -10,6 +10,7 @@ xvm/compile/wabt/build/
 *.exe
 *.o
 *.so
+go.mod
 
 # OSX trash
 .DS_Store
