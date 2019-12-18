@@ -190,7 +190,6 @@ func (poa *Poa) buildConfigs(xlog log.Logger, cfg *config.NodeConfig, consCfg ma
 
 	poa.config.accountName = consCfg["account_name"].(string)
 
-
 	// read config of need_neturl
 	needNetURL := false
 	if needNetURLVal, ok := consCfg["need_neturl"]; ok {
@@ -554,6 +553,7 @@ func (poa *Poa) Run(desc *contract.TxDesc) error {
 func (poa *Poa) Rollback(desc *contract.TxDesc) error {
 	return nil
 }
+
 // Finalize is the specific implementation of interface contract
 func (poa *Poa) Finalize(blockid []byte) error {
 	return nil

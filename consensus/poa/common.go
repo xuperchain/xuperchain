@@ -64,7 +64,7 @@ func (poa *Poa) getNextProposer() (string, error) {
 	if poa.curPos >= int64(len(proposers)) {
 		acl, confirmed, err := poa.aclManager.GetAccountACLWithConfirmed(poa.accountName)
 		if err != nil || acl == nil {
-			poa.log.Warn("Poa getConfirmedACL error", "accountName", poa.accountName, "term", poa.curTerm + 1)
+			poa.log.Warn("Poa getConfirmedACL error", "accountName", poa.accountName, "term", poa.curTerm+1)
 			return poa.proposerInfos[0].Address, errors.New("no proposer confirmed")
 		}
 		if confirmed {

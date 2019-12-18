@@ -7,9 +7,9 @@ import (
 )
 
 type MyTimer struct {
-	Name      string
-	Delay     uint64
-	Target    func()
+	Name   string
+	Delay  uint64
+	Target func()
 
 	Timer     *time.Timer
 	Running   bool

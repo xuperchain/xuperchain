@@ -56,7 +56,7 @@ type Poa struct {
 	curBlockNum int64
 	// 验证者集合信息 address -> nodeInfo
 	proposerInfos []*cons_base.CandidateInfo
-	proposerNum int64
+	proposerNum   int64
 	// 记录某一轮内某个候选人出块是否大于系统限制, 以此避免矿工恶意出块, 切轮时进行初始化 map[term_num]map[proposer]map[blockid]bool
 	curTermProposerProduceNumCache map[int64]map[string]map[string]bool
 	// 此链使用的加密模块
@@ -65,13 +65,13 @@ type Poa struct {
 	revokeCache *sync.Map
 	isProduce   map[int64]bool
 
-	mutex   *sync.RWMutex
+	mutex *sync.RWMutex
 	// BFT module
 	bftPaceMaker *bft.PoaPaceMaker
 	p2psvr       p2pv2.P2PServer
 	// ACLManager
 	accountName string
-	aclManager impl.Manager
+	aclManager  impl.Manager
 	// interval timer
 	intervalT *MyTimer
 }
