@@ -9,8 +9,6 @@ import (
 	"github.com/xuperchain/xuperunion/pb"
 )
 
-const minNominateProportion = 100000
-
 // 调度产生的矿工与自身进行进行比较
 func (poa *Poa) isProposer(term int64, pos int64, address []byte) bool {
 	if term == 0 {

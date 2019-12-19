@@ -178,13 +178,6 @@ func (poa *Poa) buildConfigs(xlog log.Logger, cfg *config.NodeConfig, consCfg ma
 
 	poa.config.accountName = consCfg["account_name"].(string)
 
-	// read config of need_neturl
-	needNetURL := false
-	if needNetURLVal, ok := consCfg["need_neturl"]; ok {
-		needNetURL = needNetURLVal.(bool)
-	}
-	poa.config.needNetURL = needNetURL
-
 	initProposer := consCfg["init_proposer"].([]interface{})
 	xlog.Trace("initProposer", "initProposer", initProposer)
 
@@ -204,11 +197,7 @@ func (poa *Poa) buildConfigs(xlog log.Logger, cfg *config.NodeConfig, consCfg ma
 			poa.log.Debug("Poa proposer info", "index", idx, "proposer", poa.config.initProposer[idx])
 		}
 	} else {
-		poa.log.Warn("Poa have no neturl info for proposers",
-			"need_neturl", needNetURL)
-		if needNetURL {
-			return errors.New("config error, init_proposer_neturl could not be empty")
-		}
+		return errors.New("config error, init_proposer_neturl could not be empty")
 	}
 	poa.proposerNum = int64(len(poa.proposerInfos))
 
@@ -220,12 +209,9 @@ func (poa *Poa) buildConfigs(xlog log.Logger, cfg *config.NodeConfig, consCfg ma
 	poa.version = version
 
 	// parse bft related config
-	poa.config.enableBFT = true
-	if bftConfData, ok := consCfg["bft_config"].(map[string]interface{}); ok {
-		bftconf := bft_config.MakeConfig(bftConfData)
-		// if bft_config is not empty, enable bft
-		poa.config.bftConfig = bftconf
-	}
+	bftconf := bft_config.MakeConfig(make(map[string]interface{}))
+	// if bft_config is not empty, enable bft
+	poa.config.bftConfig = bftconf
 
 	poa.log.Trace("Poa after config", "TTDpos.config", poa.config)
 	return nil
@@ -292,7 +278,7 @@ func (poa *Poa) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock) (bool, 
 		return false, nil
 	}
 
-	if poa.config.enableBFT && !poa.isFirstBlock(in.GetHeight()) {
+	if !poa.isFirstBlock(in.GetHeight()) {
 		// if BFT enabled and it's not the first proposal
 		// check whether previous block's QuorumCert is valid
 		ok, err := poa.bftPaceMaker.GetChainedBFT().IsQuorumCertValidate(in.GetJustify())
@@ -313,38 +299,34 @@ func (poa *Poa) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock) (bool, 
 // ProcessBeforeMiner is the specific implementation of ConsensusInterface
 func (poa *Poa) ProcessBeforeMiner(timestamp int64) (map[string]interface{}, bool) {
 	res := make(map[string]interface{})
-	// check bft status
-	if poa.config.enableBFT {
-		// TODO: what if IsLastViewConfirmed failed in competeMaster, but succeed in ProcessBeforeMiner?
-		if !poa.isFirstBlock(poa.ledger.GetMeta().GetTrunkHeight() + 1) {
-			if ok, _ := poa.bftPaceMaker.IsLastViewConfirmed(); !ok {
-				poa.log.Warn("ProcessBeforeMiner last block not confirmed, walk to previous block")
-				lastBlockId := poa.ledger.GetMeta().GetTipBlockid()
-				lastBlock, err := poa.ledger.QueryBlock(lastBlockId)
-				if err != nil {
-					poa.log.Warn("ProcessBeforeMiner tip block query failed", "error", err)
-					return nil, false
-				}
-				err = poa.utxoVM.Walk(lastBlock.GetPreHash(), false)
-				if err != nil {
-					poa.log.Warn("ProcessBeforeMiner utxo walk failed", "error", err)
-					return nil, false
-				}
-				err = poa.ledger.Truncate(poa.utxoVM.GetLatestBlockid())
-				if err != nil {
-					poa.log.Warn("ProcessBeforeMiner ledger truncate failed", "error", err)
-					return nil, false
-				}
+	// TODO: what if IsLastViewConfirmed failed in competeMaster, but succeed in ProcessBeforeMiner?
+	if !poa.isFirstBlock(poa.ledger.GetMeta().GetTrunkHeight() + 1) {
+		if ok, _ := poa.bftPaceMaker.IsLastViewConfirmed(); !ok {
+			poa.log.Warn("ProcessBeforeMiner last block not confirmed, walk to previous block")
+			lastBlockId := poa.ledger.GetMeta().GetTipBlockid()
+			lastBlock, err := poa.ledger.QueryBlock(lastBlockId)
+			if err != nil {
+				poa.log.Warn("ProcessBeforeMiner tip block query failed", "error", err)
+				return nil, false
+			}
+			err = poa.utxoVM.Walk(lastBlock.GetPreHash(), false)
+			if err != nil {
+				poa.log.Warn("ProcessBeforeMiner utxo walk failed", "error", err)
+				return nil, false
+			}
+			err = poa.ledger.Truncate(poa.utxoVM.GetLatestBlockid())
+			if err != nil {
+				poa.log.Warn("ProcessBeforeMiner ledger truncate failed", "error", err)
+				return nil, false
 			}
 		}
-
-		qc, err := poa.bftPaceMaker.CurrentQCHigh([]byte(""))
-		if err != nil {
-			return nil, false
-		}
-		res["quorum_cert"] = qc
 	}
 
+	qc, err := poa.bftPaceMaker.CurrentQCHigh([]byte(""))
+	if err != nil {
+		return nil, false
+	}
+	res["quorum_cert"] = qc
 	res["type"] = TYPE
 	res["curTerm"] = poa.curTerm
 	res["curBlockNum"] = poa.curBlockNum
@@ -355,7 +337,7 @@ func (poa *Poa) ProcessBeforeMiner(timestamp int64) (map[string]interface{}, boo
 // ProcessConfirmBlock is the specific implementation of ConsensusInterface
 func (poa *Poa) ProcessConfirmBlock(block *pb.InternalBlock) error {
 	// send bft NewProposal if bft enable and it's the miner
-	if poa.config.enableBFT && bytes.Compare(block.GetProposer(), poa.address) == 0 {
+	if bytes.Compare(block.GetProposer(), poa.address) == 0 {
 		blockData := &pb.Block{
 			Bcname:  poa.bcname,
 			Blockid: block.Blockid,
@@ -378,9 +360,7 @@ func (poa *Poa) InitCurrent(block *pb.InternalBlock) error {
 
 // Stop is the specific implementation of interface contract
 func (poa *Poa) Stop() {
-	if poa.config.enableBFT && poa.bftPaceMaker != nil {
-		poa.bftPaceMaker.Stop()
-	}
+	poa.bftPaceMaker.Stop()
 }
 
 // ReadOutput is the specific implementation of interface contract
@@ -416,11 +396,6 @@ func (poa *Poa) GetStatus() *cons_base.ConsensusStatus {
 }
 
 func (poa *Poa) initBFT(cfg *config.NodeConfig) error {
-	// BFT not enabled
-	if !poa.config.enableBFT {
-		return nil
-	}
-
 	// read keys
 	pkpath := cfg.Miner.Keypath + "/public.key"
 	pkJSON, err := ioutil.ReadFile(pkpath)

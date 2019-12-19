@@ -30,7 +30,7 @@ const (
 	checkvValidaterMethod = "check_validater"
 )
 
-// poa is struct of poa consensus
+// Poa is struct of poa consensus
 type Poa struct {
 	// poa共识配置
 	config PoaConfig
@@ -69,7 +69,7 @@ type Poa struct {
 	intervalT *MyTimer
 }
 
-// poa 共识机制的配置
+// PoaConfig 共识机制的配置
 type PoaConfig struct {
 	// 出块间隔
 	period int64
@@ -81,10 +81,5 @@ type PoaConfig struct {
 	accountName string
 	// initial proposers
 	initProposer []*cons_base.CandidateInfo
-	// is proposers' netURL needed for nomination and poa config
-	// this is read from config need_neturl
-	needNetURL bool
-	// BTF related config
-	enableBFT bool
-	bftConfig *bft_config.Config
+	bftConfig    *bft_config.Config
 }
