@@ -5,21 +5,18 @@ package poa
 import (
 	"bytes"
 	"errors"
-	"fmt"
-	log "github.com/xuperchain/log15"
-	"github.com/xuperchain/xuperunion/consensus/poa/bft"
 	"io/ioutil"
 	"os"
 	"strconv"
 	"sync"
 	"time"
 
-	"encoding/hex"
-
+	log "github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperunion/common/config"
 	cons_base "github.com/xuperchain/xuperunion/consensus/base"
 	"github.com/xuperchain/xuperunion/consensus/common/chainedbft"
 	bft_config "github.com/xuperchain/xuperunion/consensus/common/chainedbft/config"
+	"github.com/xuperchain/xuperunion/consensus/poa/bft"
 	"github.com/xuperchain/xuperunion/contract"
 	crypto_base "github.com/xuperchain/xuperunion/crypto/client/base"
 	"github.com/xuperchain/xuperunion/global"
@@ -34,8 +31,9 @@ func (poa *Poa) Init() {
 	poa.config = PoaConfig{
 		initProposer: make([]*cons_base.CandidateInfo, 0),
 	}
-	poa.isProduce = make(map[int64]bool)
-	poa.revokeCache = new(sync.Map)
+	poa.curTerm = 1
+	poa.curPos = 0
+	poa.curBlockNum = 0
 	poa.mutex = new(sync.RWMutex)
 }
 
@@ -100,15 +98,6 @@ func (poa *Poa) Configure(xlog log.Logger, cfg *config.NodeConfig, consCfg map[s
 		poa.bcname = extParams["bcname"].(string)
 	default:
 		errMsg := "invalid type of bcname"
-		xlog.Warn(errMsg)
-		return errors.New(errMsg)
-	}
-
-	switch extParams["timestamp"].(type) {
-	case int64:
-		poa.initTimestamp = extParams["timestamp"].(int64)
-	default:
-		errMsg := "invalid type of timestamp"
 		xlog.Warn(errMsg)
 		return errors.New(errMsg)
 	}
@@ -189,7 +178,6 @@ func (poa *Poa) buildConfigs(xlog log.Logger, cfg *config.NodeConfig, consCfg ma
 
 	poa.config.accountName = consCfg["account_name"].(string)
 
-
 	// read config of need_neturl
 	needNetURL := false
 	if needNetURLVal, ok := consCfg["need_neturl"]; ok {
@@ -232,11 +220,10 @@ func (poa *Poa) buildConfigs(xlog log.Logger, cfg *config.NodeConfig, consCfg ma
 	poa.version = version
 
 	// parse bft related config
-	poa.config.enableBFT = false
+	poa.config.enableBFT = true
 	if bftConfData, ok := consCfg["bft_config"].(map[string]interface{}); ok {
 		bftconf := bft_config.MakeConfig(bftConfData)
 		// if bft_config is not empty, enable bft
-		poa.config.enableBFT = true
 		poa.config.bftConfig = bftconf
 	}
 
@@ -316,47 +303,7 @@ func (poa *Poa) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock) (bool, 
 	}
 
 	// 2 验证轮数信息
-	preBlock, err := poa.ledger.QueryBlock(in.PreHash)
-	if err != nil {
-		poa.log.Warn("CheckMinerMatch failed, get preblock error")
-		return false, nil
-	}
-	poa.log.Trace("CheckMinerMatch", "preBlock.CurTerm", preBlock.CurTerm, "in.CurTerm", in.CurTerm, " in.Proposer",
-		string(in.Proposer), "blockid", fmt.Sprintf("%x", in.Blockid))
-	term, pos, _ := poa.minerScheduling(in.Timestamp)
-	if poa.isProposer(term, pos, in.Proposer) {
-		// curTermProposerProduceNumCache is not thread safe, lock before use it.
-		poa.mutex.Lock()
-		defer poa.mutex.Unlock()
-		// 当不是第一轮时需要和前面的
-		if in.CurTerm != 1 {
-			// 减少矿工50%概率恶意地输入时间
-			if preBlock.CurTerm > term {
-				poa.log.Warn("CheckMinerMatch failed, preBlock.CurTerm is bigger than this!")
-				return false, nil
-			}
-			// 当系统切轮时初始化 curTermProposerProduceNum
-			if preBlock.CurTerm < term || (poa.curTerm == term && poa.curTermProposerProduceNumCache == nil) {
-				poa.curTermProposerProduceNumCache = make(map[int64]map[string]map[string]bool)
-				poa.curTermProposerProduceNumCache[in.CurTerm] = make(map[string]map[string]bool)
-			}
-		}
-		// 判断某个矿工是否恶意出块
-		if poa.curTermProposerProduceNumCache != nil && poa.curTermProposerProduceNumCache[in.CurTerm] != nil {
-			if _, ok := poa.curTermProposerProduceNumCache[in.CurTerm][string(in.Proposer)]; !ok {
-				poa.curTermProposerProduceNumCache[in.CurTerm][string(in.Proposer)] = make(map[string]bool)
-				poa.curTermProposerProduceNumCache[in.CurTerm][string(in.Proposer)][hex.EncodeToString(in.Blockid)] = true
-			} else {
-				if !poa.curTermProposerProduceNumCache[in.CurTerm][string(in.Proposer)][hex.EncodeToString(in.Blockid)] {
-					poa.curTermProposerProduceNumCache[in.CurTerm][string(in.Proposer)][hex.EncodeToString(in.Blockid)] = true
-				}
-			}
-			if int64(len(poa.curTermProposerProduceNumCache[in.CurTerm][string(in.Proposer)])) > poa.config.blockNum+1 {
-				poa.log.Warn("CheckMinerMatch failed, proposer produce more than config blockNum!", "blockNum", len(poa.curTermProposerProduceNumCache[in.CurTerm][string(in.Proposer)]))
-				return false, ErrProposeBlockMoreThanConfig
-			}
-		}
-	} else {
+	if !poa.isProposer(poa.curTerm, poa.curPos, in.Proposer) {
 		poa.log.Warn("CheckMinerMatch failed, received block shouldn't proposed!")
 		return false, nil
 	}
@@ -558,21 +505,4 @@ func (poa *Poa) isFirstBlock(BlockHeight int64) bool {
 
 func (poa *Poa) minerScheduling(timestamp int64) (term int64, pos int64, blockPos int64) {
 	return poa.curTerm, poa.curPos, poa.curBlockNum
-}
-
-func (poa *Poa) Run(desc *contract.TxDesc) error {
-	return nil
-}
-
-func (poa *Poa) Rollback(desc *contract.TxDesc) error {
-	return nil
-}
-// Finalize is the specific implementation of interface contract
-func (poa *Poa) Finalize(blockid []byte) error {
-	return nil
-}
-
-// SetContext is the specific implementation of interface contract
-func (poa *Poa) SetContext(context *contract.TxContext) error {
-	return nil
 }
