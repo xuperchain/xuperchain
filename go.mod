@@ -3,19 +3,14 @@ module github.com/xuperchain/xuperunion
 go 1.12
 
 require (
-	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
-	github.com/Microsoft/go-winio v0.4.14 // indirect
-	github.com/Nvveen/Gotty v0.0.0-20120604004816-cd527374f1e5 // indirect
 	github.com/btcsuite/btcutil v0.0.0-20190425235716-9e5f4b9a998d
 	github.com/dgraph-io/badger/v2 v2.0.0-rc.2
-	github.com/docker/distribution v2.7.1+incompatible // indirect
-	github.com/docker/docker v0.7.3-0.20190115220918-5ec31380a5d3
 	github.com/docker/go-connections v0.4.1-0.20180821093606-97c2040d34df
 	github.com/docker/go-units v0.4.0
+	github.com/fsouza/go-dockerclient v1.6.0
 	github.com/gogo/protobuf v1.3.0
 	github.com/golang/protobuf v1.3.2
 	github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db
-	github.com/gorilla/mux v1.7.3 // indirect
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/grpc-ecosystem/grpc-gateway v1.9.2
 	github.com/ipfs/go-ipfs-addr v0.0.1
@@ -31,8 +26,6 @@ require (
 	github.com/libp2p/go-libp2p-peerstore v0.1.3
 	github.com/mitchellh/mapstructure v1.1.2
 	github.com/multiformats/go-multiaddr v0.1.1
-	github.com/opencontainers/go-digest v1.0.0-rc1 // indirect
-	github.com/opencontainers/image-spec v1.0.1 // indirect
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/errors v0.8.1
 	github.com/prometheus/client_golang v1.1.0
@@ -47,5 +40,4 @@ require (
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
 	google.golang.org/genproto v0.0.0-20190927181202-20e1ac93f88c
 	google.golang.org/grpc v1.24.0
-	gotest.tools v2.2.0+incompatible // indirect
 )
