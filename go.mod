@@ -34,7 +34,7 @@ require (
 	github.com/spf13/viper v1.4.0
 	github.com/syndtr/goleveldb v1.0.0
 	github.com/xuperchain/log15 v0.0.0-20190620081506-bc88a9198230
-	github.com/xuperchain/wagon v0.6.1-0.20191119040003-bba145e02197
+	github.com/xuperchain/wagon v0.6.1-0.20191220081612-044b1048d271
 	golang.org/x/crypto v0.0.0-20190927123631-a832865fa7ad
 	golang.org/x/net v0.0.0-20190926025831-c00fd9afed17
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
