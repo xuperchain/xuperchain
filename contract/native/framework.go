@@ -2,17 +2,18 @@ package native
 
 import (
 	"bytes"
-	"context"
 	"encoding/hex"
 	"errors"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"os"
 	"path/filepath"
 	"sync"
 	"time"
 
-	"github.com/docker/docker/client"
+	"github.com/docker/go-connections/sockets"
+	docker "github.com/fsouza/go-dockerclient"
 	"github.com/golang/protobuf/proto"
 	log "github.com/xuperchain/log15"
 
@@ -73,6 +74,18 @@ func New(cfg *config.NativeConfig, rootpath string, xlog log.Logger, otherPaths 
 		return nil, err
 	}
 
+	uid, gid := os.Getuid(), os.Getgid()
+	relpath, err := RelPathOfCWD(socket3Path)
+	if err != nil {
+		return nil, err
+	}
+	listener, err := sockets.NewUnixSocketWithOpts(relpath, sockets.WithChown(uid, gid), sockets.WithChmod(0660))
+	if err != nil {
+		framework.Error("NewUnixSocketWithOpts error", "error", err, "chainSockPath", socket3Path)
+		return nil, err
+	}
+	framework.syscallListener = listener
+
 	framework.register()
 	return framework, nil
 }
@@ -89,8 +102,10 @@ type GeneralSCFramework struct {
 	db             kvdb.Database
 	context        *contract.TxContext
 	//持久化版本信息
-	versionTable kvdb.Database
-	wg           *sync.WaitGroup
+	versionTable    kvdb.Database
+	wg              *sync.WaitGroup
+	dockerClient    *docker.Client
+	syscallListener net.Listener
 
 	log.Logger
 }
@@ -177,16 +192,16 @@ func (gscf *GeneralSCFramework) initEnv() error {
 	if !gscf.cfg.Docker.Enable {
 		return nil
 	}
-	client, err := client.NewEnvClient()
+	client, err := docker.NewClientFromEnv()
 	if err != nil {
 		return fmt.Errorf("Native code: init docker client:%s", err)
 	}
 	imageName := gscf.cfg.Docker.ImageName
-	_, _, err = client.ImageInspectWithRaw(context.TODO(), imageName)
+	_, err = client.InspectImage(imageName)
 	if err != nil {
 		return fmt.Errorf("Native code: find docker image: %s", err)
 	}
-	client.Close()
+	gscf.dockerClient = client
 	return nil
 }
 
@@ -318,6 +333,7 @@ func (gscf *GeneralSCFramework) launchOne(desc *xpb.NativeCodeDesc, status nativ
 		mgr:           gscf,
 		desc:          desc,
 		lostBeatheart: true,
+		dockerClient:  gscf.dockerClient,
 	}
 	var err error
 	err = snc.Init()
