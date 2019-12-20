@@ -1,0 +1,147 @@
+syntax = "proto3";
+
+package pb;
+
+import "google/api/annotations.proto";
+import "xchain.proto";
+
+service PubsubService {
+  rpc Publish (EventMessage) returns (EventMessage);
+  rpc Subscribe (EventRequest) returns (stream EventResponse);
+  rpc UnSubscribe (EventRequest) returns (stream EventResponse);
+}
+
+//// EventMessage producer msg
+message EventMessage {
+  oneof Type {
+    Transaction tx = 1;
+    InternalBlock block = 2;
+  }
+}
+
+/////// 事件订阅请求数据结构
+// BlockEventRequest 订阅区块请求
+message BlockEventRequest {
+  string bc_name = 1;
+  string proposer = 2;
+  int64 start_height = 3;
+  int64 end_height = 4;
+  bool need_content = 5;
+}
+
+// TransactionEventRequest 订阅交易请求
+message TransactionEventRequest {
+  string bc_name = 1;
+  string initiator = 2;
+  repeated string auth_require = 3;
+  bool need_content = 4;
+}
+
+// AccountEventRequest 订阅账户请求
+message AccountEventRequest {
+  string from_addr = 1;
+  string to_addr = 2;
+  bool need_content = 3;
+}
+
+// CancelEventRequest 取消事件订阅请求
+message CancelEventRequest {
+  string event_id = 1;
+}
+
+// EventRequest 将上述几种事件订阅统一归为EventRequest
+message EventRequest {
+  oneof Type {
+    BlockEventRequest block_event = 1;
+    TransactionEventRequest transaction_event = 2;
+    AccountEventRequest account_event = 3;
+    CancelEventRequest cancel_event = 4;
+  }
+}
+
+//////// 事件订阅返回数据结构
+// SubscribeResponse 订阅产生的event_id
+message SubscribeResponse {
+  string event_id = 1;
+  EventRequest event_request = 2;
+}
+
+// BlockEventResponse 订阅区块返回
+message BlockEventResponse {
+  string event_id = 1;
+  EventType type = 2;
+  BlockStatusInfo status = 3;
+  InternalBlock block = 4;
+}
+
+// TransactionEventResponse 订阅交易返回
+message TransactionEventResponse {
+  string event_id = 1;
+  EventType type = 2;
+  TransactionStatusInfo status = 3;
+  Transaction tx = 4;
+}
+
+// AccountEventResponse 订阅账户返回
+message AccountEventResponse {
+  string event_id = 1;
+  EventType type = 2;
+  AccountStatusInfo status = 3;
+  Transaction tx = 4;
+}
+
+////// EventResponse 将上述几类统一归为EventResponse
+message EventResponse {
+  oneof Type {
+    BlockEventResponse block_event_response = 1;
+    TransactionEventResponse transaction_event_response = 2;
+    AccountEventRequest account_event_response = 3;
+    SubscribeResponse subscribe_response = 4;
+  }
+}
+
+///// 状态信息
+enum EventType {
+  DEFAULT_EVENT = 0;
+  SUBSCRIBE_EVENT = 1;
+  UNSUBSCRIBE_EVENT = 2;
+  BLOCK_EVENT = 3;
+  TRANSACTION_EVENT = 4;
+  ACCOUNT_EVENT = 5;
+}
+
+// BlockStatusInfo 区块元数据
+message BlockStatusInfo {
+  string bc_name = 1;
+  enum EBlockStatus {
+    ERROR = 0;
+    TRUNK = 1;
+    BRANCH = 2;
+    NONEXIST = 3;
+  }
+  EBlockStatus status = 2;
+}
+
+message TransactionStatusInfo {
+  string bc_name = 1;
+  string initiator = 2;
+  enum ETransactionStatus {
+    UNDEFINE = 0;
+    CONFIRM = 1;
+    FURCATION = 2;
+    FAILED = 3;
+    UNCONFIRM = 4;
+  }
+  ETransactionStatus status = 3;
+}
+
+message AccountStatusInfo {
+  string bc_name = 1;
+  enum ETransactionStatus {
+    UNDEFINE = 0;
+    CONFIRM = 1;
+    FURCATION = 2;
+    FAILED = 3;
+    UNCONFIRM = 4;
+  }
+}
