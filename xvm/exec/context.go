@@ -153,7 +153,7 @@ func (c *aotContext) Memory() []byte {
 	}
 	ptr := c.context.mem.data
 	n := int(c.context.mem.size)
-	return (*[4 << 30]byte)(unsafe.Pointer(ptr))[:n:n]
+	return (*[1 << 30]byte)(unsafe.Pointer(ptr))[:n:n]
 }
 
 // StaticTop returns the static data's top offset of memory
