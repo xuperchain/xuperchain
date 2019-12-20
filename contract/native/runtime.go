@@ -1,16 +1,14 @@
 package native
 
 import (
-	"context"
 	"os"
 	"os/exec"
 	"strconv"
 	"syscall"
 	"time"
 
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/client"
+	docker "github.com/fsouza/go-dockerclient"
+
 	units "github.com/docker/go-units"
 	log "github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperunion/common/config"
@@ -39,24 +37,23 @@ type DockerProcess struct {
 	cfg *config.NativeDockerConfig
 
 	id     string
-	client *client.Client
+	client *docker.Client
 	log.Logger
 }
 
-func (d *DockerProcess) resourceConfig() (container.Resources, error) {
+func (d *DockerProcess) resourceConfig() (int64, int64, error) {
+	const cpuPeriod = 100000
+
 	var cpuLimit, memLimit int64
-	cpuLimit = int64(d.cfg.Cpus * 1e9)
+	cpuLimit = int64(cpuPeriod * d.cfg.Cpus)
 	if d.cfg.Memory != "" {
 		var err error
 		memLimit, err = units.RAMInBytes(d.cfg.Memory)
 		if err != nil {
-			return container.Resources{}, err
+			return 0, 0, err
 		}
 	}
-	return container.Resources{
-		NanoCPUs: cpuLimit,
-		Memory:   memLimit,
-	}, nil
+	return cpuLimit, memLimit, nil
 }
 
 // Start implements process interface
@@ -76,62 +73,52 @@ func (d *DockerProcess) Start() error {
 		"XCHAIN_PING_TIMEOUT=" + strconv.Itoa(pingTimeoutSecond)}
 
 	user := strconv.Itoa(os.Getuid()) + ":" + strconv.Itoa(os.Getgid())
-	config := container.Config{
-		AttachStdin:     true,
-		AttachStdout:    true,
-		AttachStderr:    true,
-		OpenStdin:       true,
-		Volumes:         volumes,
-		Env:             env,
-		WorkingDir:      d.basedir,
-		NetworkDisabled: true,
-		Image:           d.cfg.ImageName,
-		Cmd:             cmd,
-		User:            user,
-	}
 
-	resources, err := d.resourceConfig()
+	cpulimit, memlimit, err := d.resourceConfig()
 	if err != nil {
 		return err
 	}
-	hostConfig := container.HostConfig{
-		AutoRemove: true,
-		Resources:  resources,
-		Binds: []string{
-			d.basedir + ":" + d.basedir,
-			d.chainSockPath + ":" + d.chainSockPath,
+
+	opts := docker.CreateContainerOptions{
+		Config: &docker.Config{
+			Volumes:         volumes,
+			Env:             env,
+			WorkingDir:      d.basedir,
+			NetworkDisabled: true,
+			Image:           d.cfg.ImageName,
+			Cmd:             cmd,
+			User:            user,
+		},
+		HostConfig: &docker.HostConfig{
+			AutoRemove: true,
+			Binds: []string{
+				d.basedir + ":" + d.basedir,
+				d.chainSockPath + ":" + d.chainSockPath,
+			},
+			CPUPeriod: cpulimit,
+			Memory:    memlimit,
 		},
 	}
+	container, err := d.client.CreateContainer(opts)
+	d.Info("create container success", "id", container.ID)
+	d.id = container.ID
 
-	ctx := context.TODO()
-	resp, err := d.client.ContainerCreate(ctx, &config, &hostConfig, nil, "")
+	err = d.client.StartContainer(d.id, nil)
 	if err != nil {
 		return err
 	}
-	d.Info("create container success", "id", resp.ID)
-	d.id = resp.ID
-
-	err = d.client.ContainerStart(ctx, d.id, types.ContainerStartOptions{})
-	if err != nil {
-		return err
-	}
-	d.Info("start container success", "id", resp.ID)
+	d.Info("start container success", "id", d.id)
 	return nil
 }
 
 // Stop implements process interface
 func (d *DockerProcess) Stop(timeout time.Duration) error {
-	ctx := context.TODO()
-	err := d.client.ContainerStop(ctx, d.id, &timeout)
+	err := d.client.StopContainer(d.id, uint(timeout.Seconds()))
 	if err != nil {
 		return err
 	}
 	d.Info("stop container success", "id", d.id)
-	statch, errch := d.client.ContainerWait(ctx, d.id, container.WaitConditionNotRunning)
-	select {
-	case <-statch:
-	case <-errch:
-	}
+	d.client.WaitContainer(d.id)
 	d.Info("wait container success", "id", d.id)
 	return nil
 }
