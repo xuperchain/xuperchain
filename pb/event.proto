@@ -102,12 +102,10 @@ message EventResponse {
 
 ///// 状态信息
 enum EventType {
-  DEFAULT_EVENT = 0;
-  SUBSCRIBE_EVENT = 1;
-  UNSUBSCRIBE_EVENT = 2;
-  BLOCK_EVENT = 3;
-  TRANSACTION_EVENT = 4;
-  ACCOUNT_EVENT = 5;
+  NULL_EVENT = 0;
+  BLOCK_EVENT = 1;
+  TRANSACTION_EVENT = 2;
+  ACCOUNT_EVENT = 3;
 }
 
 // BlockStatusInfo 区块元数据
