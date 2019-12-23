@@ -263,11 +263,27 @@ func (uv *UtxoVM) checkInputEqualOutput(tx *pb.Transaction) error {
 		}
 		inputSum.Add(inputSum, amount)
 	}
-	if inputSum.Cmp(outputSum) == 0 {
+	if inputSum.Cmp(outputSum) == 0 && inputSum.Cmp(big.NewInt(0)) != 0 {
 		return nil
 	}
 	if inputSum.Cmp(big.NewInt(0)) == 0 && tx.Coinbase {
 		// coinbase交易，输入输出不必相等, 特殊处理
+		return nil
+	}
+	// check if the tx has been confirmed
+	if inputSum.Cmp(big.NewInt(0)) == 0 {
+		// fetch tx from unconfirmed tx table
+		_, unconfirmedErr := uv.QueryTx(tx.GetTxid())
+		// it means that the tx has existed in unconfirmed tx table
+		if unconfirmedErr != ErrTxNotFound {
+			return errors.New("tx has existed in unconfirmed tx table")
+		}
+		// fetch tx from confirmed tx table
+		_, confirmedErr := uv.ledger.QueryTransaction(tx.GetTxid())
+		// it means that tx doesn't exist in confirmed tx table
+		if common.NormalizedKVError(confirmedErr) != common.ErrKVNotFound {
+			return errors.New("tx has existed in confirmed tx table")
+		}
 		return nil
 	}
 	uv.xlog.Warn("input != output", "inputSum", inputSum, "outputSum", outputSum)
