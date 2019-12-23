@@ -629,10 +629,10 @@ func (c *CommTrans) GenTxInputsWithMergeUTXO(ctx context.Context) ([]*pb.TxInput
 	utxoInput := &pb.UtxoInput{
 		Bcname:   c.ChainName,
 		Address:  fromAddr,
-		NeedLock: false,
+		NeedLock: true,
 	}
 
-	utxoOutputs, err := c.XchainClient.MergeUTXO(ctx, utxoInput)
+	utxoOutputs, err := c.XchainClient.SelectUTXOBySize(ctx, utxoInput)
 	if err != nil {
 		return nil, nil, fmt.Errorf("%v, details:%v", ErrSelectUtxo, err)
 	}

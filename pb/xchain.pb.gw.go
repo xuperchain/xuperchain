@@ -28,7 +28,7 @@ var _ status.Status
 var _ = runtime.String
 var _ = utilities.NewDoubleArray
 
-func request_Xchain_MergeUTXO_0(ctx context.Context, marshaler runtime.Marshaler, client XchainClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+func request_Xchain_SelectUTXOBySize_0(ctx context.Context, marshaler runtime.Marshaler, client XchainClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq UtxoInput
 	var metadata runtime.ServerMetadata
 
@@ -40,7 +40,7 @@ func request_Xchain_MergeUTXO_0(ctx context.Context, marshaler runtime.Marshaler
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
 	}
 
-	msg, err := client.MergeUTXO(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	msg, err := client.SelectUTXOBySize(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
 
 }
@@ -375,7 +375,7 @@ func RegisterXchainHandler(ctx context.Context, mux *runtime.ServeMux, conn *grp
 // "XchainClient" to call the correct interceptors.
 func RegisterXchainHandlerClient(ctx context.Context, mux *runtime.ServeMux, client XchainClient) error {
 
-	mux.Handle("POST", pattern_Xchain_MergeUTXO_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+	mux.Handle("POST", pattern_Xchain_SelectUTXOBySize_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
@@ -384,14 +384,14 @@ func RegisterXchainHandlerClient(ctx context.Context, mux *runtime.ServeMux, cli
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
-		resp, md, err := request_Xchain_MergeUTXO_0(rctx, inboundMarshaler, client, req, pathParams)
+		resp, md, err := request_Xchain_SelectUTXOBySize_0(rctx, inboundMarshaler, client, req, pathParams)
 		ctx = runtime.NewServerMetadataContext(ctx, md)
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
 		}
 
-		forward_Xchain_MergeUTXO_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+		forward_Xchain_SelectUTXOBySize_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 
 	})
 
@@ -739,7 +739,7 @@ func RegisterXchainHandlerClient(ctx context.Context, mux *runtime.ServeMux, cli
 }
 
 var (
-	pattern_Xchain_MergeUTXO_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "merge_utxo"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Xchain_SelectUTXOBySize_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "select_utxo_by_size"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_Xchain_PostTx_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "post_tx"}, "", runtime.AssumeColonVerbOpt(true)))
 
@@ -777,7 +777,7 @@ var (
 )
 
 var (
-	forward_Xchain_MergeUTXO_0 = runtime.ForwardResponseMessage
+	forward_Xchain_SelectUTXOBySize_0 = runtime.ForwardResponseMessage
 
 	forward_Xchain_PostTx_0 = runtime.ForwardResponseMessage
 

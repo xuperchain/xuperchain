@@ -402,8 +402,8 @@ func (s *server) GetNetURL(ctx context.Context, in *pb.CommonIn) (*pb.RawUrl, er
 	return out, nil
 }
 
-// MergeUTXO select utxo inputs depending on size
-func (s *server) MergeUTXO(ctx context.Context, in *pb.UtxoInput) (*pb.UtxoOutput, error) {
+// SelectUTXOBySize select utxo inputs depending on size
+func (s *server) SelectUTXOBySize(ctx context.Context, in *pb.UtxoInput) (*pb.UtxoOutput, error) {
 	if in.GetHeader() == nil {
 		in.Header = global.GHeader()
 	}
@@ -415,7 +415,7 @@ func (s *server) MergeUTXO(ctx context.Context, in *pb.UtxoInput) (*pb.UtxoOutpu
 		return out, nil
 	}
 	out.Header.Error = pb.XChainErrorEnum_SUCCESS
-	utxos, _, totalSelected, err := bc.Utxovm.MergeUtxos(in.GetAddress(), in.GetPublickey(), in.GetNeedLock(), false)
+	utxos, _, totalSelected, err := bc.Utxovm.SelectUtxosBySize(in.GetAddress(), in.GetPublickey(), in.GetNeedLock(), false)
 	if err != nil {
 		out.Header.Error = xchaincore.HandlerUtxoError(err)
 		s.log.Warn("failed to select utxo", "logid", in.Header.Logid, "error", err.Error())

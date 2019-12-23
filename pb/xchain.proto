@@ -57,10 +57,10 @@ enum TransactionStatus {
 // Xchain is the main interfaces
 service Xchain {
 
-  // MergeUTXO merge many utxos into a few of utxos
-  rpc MergeUTXO(UtxoInput) returns (UtxoOutput) {
+  // SelectUTXOBySize merge many utxos into a few of utxos
+  rpc SelectUTXOBySize(UtxoInput) returns (UtxoOutput) {
     option (google.api.http) = {
-      post : "/v1/merge_utxo"
+      post : "/v1/select_utxo_by_size"
       body : "*"
     };
   }

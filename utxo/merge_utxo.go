@@ -12,7 +12,7 @@ import (
 	"github.com/xuperchain/xuperunion/pb"
 )
 
-func (uv *UtxoVM) MergeUtxos(fromAddr string, fromPubKey string, needLock, excludeUnconfirmed bool) ([]*pb.TxInput, [][]byte, *big.Int, error) {
+func (uv *UtxoVM) SelectUtxosBySize(fromAddr string, fromPubKey string, needLock, excludeUnconfirmed bool) ([]*pb.TxInput, [][]byte, *big.Int, error) {
 	uv.xlog.Trace("start to merge utxos", "address", fromAddr)
 
 	// Total amount selected
