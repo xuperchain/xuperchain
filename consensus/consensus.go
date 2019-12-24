@@ -3,11 +3,12 @@ package consensus
 import (
 	"errors"
 	"fmt"
-	"github.com/xuperchain/xuperunion/p2pv2"
 	"os"
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/xuperchain/xuperunion/p2pv2"
 
 	log "github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperunion/common/config"
@@ -266,6 +267,18 @@ func (pc *PluggableConsensus) postUpdateConsensusActions(name string, sc *StepCo
 		pc.utxoVM.RegisterVAT(ConsensusTypeTdpos, vat, vat.GetVATWhiteList())
 		pc.xlog.Trace("Register Tdpos utxovm after updateTDPosConsensus", "name", "Tdpos")
 	}
+
+	if name == ConsensusTypePoa {
+		cons := sc.Conn
+		for _, v := range pc.cons {
+			if v.Conn.Type() == ConsensusTypePoa {
+				if v.Conn.Version() == cons.Version() {
+					pc.xlog.Warn("This version of poa already exist", "version", v.Conn.Version())
+					return errors.New("This version of poa already exist")
+				}
+			}
+		}
+	}
 	return nil
 }
 
@@ -315,7 +328,6 @@ func (pc *PluggableConsensus) newUpdateConsensus(name string, height int64, time
 		extParams["bcname"] = pc.bcname
 		extParams["ledger"] = pc.ledger
 		extParams["utxovm"] = pc.utxoVM
-		extParams["timestamp"] = timestamp
 		extParams["p2psvr"] = pc.p2psvr
 		extParams["height"] = height
 	} else if name == ConsensusTypePow {

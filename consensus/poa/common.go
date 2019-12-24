@@ -9,21 +9,19 @@ import (
 	"github.com/xuperchain/xuperunion/pb"
 )
 
-const minNominateProportion = 100000
-
 // 调度产生的矿工与自身进行进行比较
 func (poa *Poa) isProposer(term int64, pos int64, address []byte) bool {
 	if term == 0 {
 		return false
 	}
 	proposers := poa.getTermProposer(term)
-	poa.log.Trace("TDpos getTermProposer result", "term", term, "proposers", proposers)
+	poa.log.Trace("poa getTermProposer result", "term", term, "proposers", proposers)
 	if proposers == nil {
-		poa.log.Warn("TDpos getTermProposer error", "term", term)
+		poa.log.Warn("poa getTermProposer error", "term", term)
 		return false
 	}
 	if pos < 0 || pos > int64(len(proposers)-1) {
-		poa.log.Warn("TDpos getTermProposer error, pos index out of range", "pos", pos, "proposers", proposers)
+		poa.log.Warn("poa getTermProposer error, pos index out of range", "pos", pos, "proposers", proposers)
 		return false
 	}
 	return string(address) == proposers[pos].Address
@@ -33,19 +31,19 @@ func (poa *Poa) isProposer(term int64, pos int64, address []byte) bool {
 func (poa *Poa) getProposer(term int64, pos int64) (string, error) {
 	if term == 0 {
 		if len(poa.config.initProposer) <= 0 {
-			poa.log.Warn("TDpos getTermProposer error, no proposer in term 1")
+			poa.log.Warn("poa getTermProposer error, no proposer in term 1")
 			return "", errors.New("no proposer in term 1")
 		}
 		return poa.config.initProposer[0].Address, nil
 	}
 	proposers := poa.getTermProposer(term)
-	poa.log.Trace("TDpos getTermProposer result", "term", term, "proposers", proposers)
+	poa.log.Trace("poa getTermProposer result", "term", term, "proposers", proposers)
 	if proposers == nil {
-		poa.log.Warn("TDpos getTermProposer error", "term", term)
+		poa.log.Warn("poa getTermProposer error", "term", term)
 		return "", errors.New("no proposer found")
 	}
 	if pos < 0 || pos > int64(len(proposers)-1) {
-		poa.log.Warn("TDpos getTermProposer error, pos index out of range", "pos", pos, "proposers", proposers)
+		poa.log.Warn("poa getTermProposer error, pos index out of range", "pos", pos, "proposers", proposers)
 		return "", errors.New("invalid pos")
 	}
 	return proposers[pos].Address, nil
