@@ -100,15 +100,6 @@ func (pc *PluggableConsensus) makeFirstCons(xlog log.Logger, cfg *config.NodeCon
 			return nil, err
 		}
 		timestamp = tmpTime
-	} else if name == ConsensusTypePoa {
-		if consConf["timestamp"] == nil {
-			return nil, errors.New("Genious consensus tdpos's timestamp can not be null")
-		}
-		tmpTime, err := strconv.ParseInt(consConf["timestamp"].(string), 10, 64)
-		if err != nil {
-			return nil, err
-		}
-		timestamp = tmpTime
 	}
 	return pc.newUpdateConsensus(name, height, timestamp, consConf, nil)
 }

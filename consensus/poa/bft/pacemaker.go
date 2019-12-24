@@ -120,8 +120,10 @@ func (dpm *PoaPaceMaker) IsFirstProposal(qc *pb.QuorumCert) bool {
 func (dpm *PoaPaceMaker) IsLastViewConfirmed() (bool, error) {
 	tipID := dpm.ledger.GetMeta().GetTipBlockid()
 	qc, err := dpm.cbft.GetGenerateQC()
-	// dpm.log.Debug("IsLastViewConfirmed get generate qc", "qc", qc,
-	// 	"proposalID", hex.EncodeToString(qc.GetProposalId()))
+	if qc != nil {
+		dpm.log.Debug("IsLastViewConfirmed get generate qc", "qc", qc,
+			"proposalID", hex.EncodeToString(qc.GetProposalId()))
+	}
 	// qc is not valid or qc is valid but it's not the same with last block
 	if err != nil || bytes.Compare(qc.GetProposalId(), tipID) != 0 {
 		dpm.log.Warn("IsLastViewConfirmed check failed", "error", err)
