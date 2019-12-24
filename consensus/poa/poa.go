@@ -470,9 +470,7 @@ func (poa *Poa) initBFT(cfg *config.NodeConfig) error {
 
 func (poa *Poa) isFirstBlock(BlockHeight int64) bool {
 	consStartHeight := poa.height
-	if consStartHeight == 0 {
-		consStartHeight++
-	}
+	consStartHeight++
 	poa.log.Debug("isFirstBlock check", "consStartHeight", consStartHeight,
 		"targetHeight", BlockHeight)
 	return consStartHeight == BlockHeight
