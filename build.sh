@@ -10,7 +10,7 @@ cd `dirname $0`
 # go install github.com/golang/protobuf/protoc-gen-go
 # go install github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway
 
-protoc -I pb pb/xchain.proto pb/xchain_spv.proto pb/xcheck.proto pb/chainedbft.proto pb/xendorser.proto \
+protoc -I pb pb/xchain.proto pb/xchain_spv.proto pb/xcheck.proto pb/chainedbft.proto pb/xendorser.proto pb/event.proto\
 	-I pb/googleapis \
 	--go_out=plugins=grpc:pb \
 	--grpc-gateway_out=logtostderr=true:pb 

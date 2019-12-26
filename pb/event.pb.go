@@ -7,7 +7,6 @@ import (
 	context "context"
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
-	_ "google.golang.org/genproto/googleapis/api/annotations"
 	grpc "google.golang.org/grpc"
 	math "math"
 )
@@ -62,6 +61,7 @@ const (
 	EventType_BLOCK_EVENT       EventType = 1
 	EventType_TRANSACTION_EVENT EventType = 2
 	EventType_ACCOUNT_EVENT     EventType = 3
+	EventType_UNSUBSCRIBE_EVENT EventType = 4
 )
 
 var EventType_name = map[int32]string{
@@ -69,6 +69,7 @@ var EventType_name = map[int32]string{
 	1: "BLOCK_EVENT",
 	2: "TRANSACTION_EVENT",
 	3: "ACCOUNT_EVENT",
+	4: "UNSUBSCRIBE_EVENT",
 }
 
 var EventType_value = map[string]int32{
@@ -76,6 +77,7 @@ var EventType_value = map[string]int32{
 	"BLOCK_EVENT":       1,
 	"TRANSACTION_EVENT": 2,
 	"ACCOUNT_EVENT":     3,
+	"UNSUBSCRIBE_EVENT": 4,
 }
 
 func (x EventType) String() string {
@@ -86,85 +88,32 @@ func (EventType) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_2d17a9d3f0ddf27e, []int{1}
 }
 
-//// EventMessage producer msg
-type EventMessage struct {
-	// Types that are valid to be assigned to Type:
-	//	*EventMessage_Tx
-	//	*EventMessage_Block
-	Type                 isEventMessage_Type `protobuf_oneof:"Type"`
-	XXX_NoUnkeyedLiteral struct{}            `json:"-"`
-	XXX_unrecognized     []byte              `json:"-"`
-	XXX_sizecache        int32               `json:"-"`
+type UnSubscribeStatusInfo int32
+
+const (
+	UnSubscribeStatusInfo_UNSUBSCRIBE_UNDEFINED UnSubscribeStatusInfo = 0
+	UnSubscribeStatusInfo_UNSUBSCRIBE_SUCCESS   UnSubscribeStatusInfo = 1
+	UnSubscribeStatusInfo_UNSUBSCRIBE_FAILED    UnSubscribeStatusInfo = 2
+)
+
+var UnSubscribeStatusInfo_name = map[int32]string{
+	0: "UNSUBSCRIBE_UNDEFINED",
+	1: "UNSUBSCRIBE_SUCCESS",
+	2: "UNSUBSCRIBE_FAILED",
 }
 
-func (m *EventMessage) Reset()         { *m = EventMessage{} }
-func (m *EventMessage) String() string { return proto.CompactTextString(m) }
-func (*EventMessage) ProtoMessage()    {}
-func (*EventMessage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2d17a9d3f0ddf27e, []int{0}
+var UnSubscribeStatusInfo_value = map[string]int32{
+	"UNSUBSCRIBE_UNDEFINED": 0,
+	"UNSUBSCRIBE_SUCCESS":   1,
+	"UNSUBSCRIBE_FAILED":    2,
 }
 
-func (m *EventMessage) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_EventMessage.Unmarshal(m, b)
-}
-func (m *EventMessage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_EventMessage.Marshal(b, m, deterministic)
-}
-func (m *EventMessage) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EventMessage.Merge(m, src)
-}
-func (m *EventMessage) XXX_Size() int {
-	return xxx_messageInfo_EventMessage.Size(m)
-}
-func (m *EventMessage) XXX_DiscardUnknown() {
-	xxx_messageInfo_EventMessage.DiscardUnknown(m)
+func (x UnSubscribeStatusInfo) String() string {
+	return proto.EnumName(UnSubscribeStatusInfo_name, int32(x))
 }
 
-var xxx_messageInfo_EventMessage proto.InternalMessageInfo
-
-type isEventMessage_Type interface {
-	isEventMessage_Type()
-}
-
-type EventMessage_Tx struct {
-	Tx *Transaction `protobuf:"bytes,1,opt,name=tx,proto3,oneof"`
-}
-
-type EventMessage_Block struct {
-	Block *InternalBlock `protobuf:"bytes,2,opt,name=block,proto3,oneof"`
-}
-
-func (*EventMessage_Tx) isEventMessage_Type() {}
-
-func (*EventMessage_Block) isEventMessage_Type() {}
-
-func (m *EventMessage) GetType() isEventMessage_Type {
-	if m != nil {
-		return m.Type
-	}
-	return nil
-}
-
-func (m *EventMessage) GetTx() *Transaction {
-	if x, ok := m.GetType().(*EventMessage_Tx); ok {
-		return x.Tx
-	}
-	return nil
-}
-
-func (m *EventMessage) GetBlock() *InternalBlock {
-	if x, ok := m.GetType().(*EventMessage_Block); ok {
-		return x.Block
-	}
-	return nil
-}
-
-// XXX_OneofWrappers is for the internal use of the proto package.
-func (*EventMessage) XXX_OneofWrappers() []interface{} {
-	return []interface{}{
-		(*EventMessage_Tx)(nil),
-		(*EventMessage_Block)(nil),
-	}
+func (UnSubscribeStatusInfo) EnumDescriptor() ([]byte, []int) {
+	return fileDescriptor_2d17a9d3f0ddf27e, []int{2}
 }
 
 /////// 事件订阅请求数据结构
@@ -184,7 +133,7 @@ func (m *BlockEventRequest) Reset()         { *m = BlockEventRequest{} }
 func (m *BlockEventRequest) String() string { return proto.CompactTextString(m) }
 func (*BlockEventRequest) ProtoMessage()    {}
 func (*BlockEventRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2d17a9d3f0ddf27e, []int{1}
+	return fileDescriptor_2d17a9d3f0ddf27e, []int{0}
 }
 
 func (m *BlockEventRequest) XXX_Unmarshal(b []byte) error {
@@ -255,7 +204,7 @@ func (m *TransactionEventRequest) Reset()         { *m = TransactionEventRequest
 func (m *TransactionEventRequest) String() string { return proto.CompactTextString(m) }
 func (*TransactionEventRequest) ProtoMessage()    {}
 func (*TransactionEventRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2d17a9d3f0ddf27e, []int{2}
+	return fileDescriptor_2d17a9d3f0ddf27e, []int{1}
 }
 
 func (m *TransactionEventRequest) XXX_Unmarshal(b []byte) error {
@@ -318,7 +267,7 @@ func (m *AccountEventRequest) Reset()         { *m = AccountEventRequest{} }
 func (m *AccountEventRequest) String() string { return proto.CompactTextString(m) }
 func (*AccountEventRequest) ProtoMessage()    {}
 func (*AccountEventRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2d17a9d3f0ddf27e, []int{3}
+	return fileDescriptor_2d17a9d3f0ddf27e, []int{2}
 }
 
 func (m *AccountEventRequest) XXX_Unmarshal(b []byte) error {
@@ -360,40 +309,40 @@ func (m *AccountEventRequest) GetNeedContent() bool {
 	return false
 }
 
-// CancelEventRequest 取消事件订阅请求
-type CancelEventRequest struct {
+// UnSubscribeRequest 取消事件订阅请求
+type UnSubscribeRequest struct {
 	EventId              string   `protobuf:"bytes,1,opt,name=event_id,json=eventId,proto3" json:"event_id,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *CancelEventRequest) Reset()         { *m = CancelEventRequest{} }
-func (m *CancelEventRequest) String() string { return proto.CompactTextString(m) }
-func (*CancelEventRequest) ProtoMessage()    {}
-func (*CancelEventRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2d17a9d3f0ddf27e, []int{4}
+func (m *UnSubscribeRequest) Reset()         { *m = UnSubscribeRequest{} }
+func (m *UnSubscribeRequest) String() string { return proto.CompactTextString(m) }
+func (*UnSubscribeRequest) ProtoMessage()    {}
+func (*UnSubscribeRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_2d17a9d3f0ddf27e, []int{3}
 }
 
-func (m *CancelEventRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_CancelEventRequest.Unmarshal(m, b)
+func (m *UnSubscribeRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_UnSubscribeRequest.Unmarshal(m, b)
 }
-func (m *CancelEventRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_CancelEventRequest.Marshal(b, m, deterministic)
+func (m *UnSubscribeRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_UnSubscribeRequest.Marshal(b, m, deterministic)
 }
-func (m *CancelEventRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_CancelEventRequest.Merge(m, src)
+func (m *UnSubscribeRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UnSubscribeRequest.Merge(m, src)
 }
-func (m *CancelEventRequest) XXX_Size() int {
-	return xxx_messageInfo_CancelEventRequest.Size(m)
+func (m *UnSubscribeRequest) XXX_Size() int {
+	return xxx_messageInfo_UnSubscribeRequest.Size(m)
 }
-func (m *CancelEventRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_CancelEventRequest.DiscardUnknown(m)
+func (m *UnSubscribeRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_UnSubscribeRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_CancelEventRequest proto.InternalMessageInfo
+var xxx_messageInfo_UnSubscribeRequest proto.InternalMessageInfo
 
-func (m *CancelEventRequest) GetEventId() string {
+func (m *UnSubscribeRequest) GetEventId() string {
 	if m != nil {
 		return m.EventId
 	}
@@ -402,22 +351,18 @@ func (m *CancelEventRequest) GetEventId() string {
 
 // EventRequest 将上述几种事件订阅统一归为EventRequest
 type EventRequest struct {
-	// Types that are valid to be assigned to Type:
-	//	*EventRequest_BlockEvent
-	//	*EventRequest_TransactionEvent
-	//	*EventRequest_AccountEvent
-	//	*EventRequest_CancelEvent
-	Type                 isEventRequest_Type `protobuf_oneof:"Type"`
-	XXX_NoUnkeyedLiteral struct{}            `json:"-"`
-	XXX_unrecognized     []byte              `json:"-"`
-	XXX_sizecache        int32               `json:"-"`
+	EventType            EventType `protobuf:"varint,1,opt,name=event_type,json=eventType,proto3,enum=pb.EventType" json:"event_type,omitempty"`
+	EventRequest         []byte    `protobuf:"bytes,2,opt,name=event_request,json=eventRequest,proto3" json:"event_request,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
+	XXX_unrecognized     []byte    `json:"-"`
+	XXX_sizecache        int32     `json:"-"`
 }
 
 func (m *EventRequest) Reset()         { *m = EventRequest{} }
 func (m *EventRequest) String() string { return proto.CompactTextString(m) }
 func (*EventRequest) ProtoMessage()    {}
 func (*EventRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2d17a9d3f0ddf27e, []int{5}
+	return fileDescriptor_2d17a9d3f0ddf27e, []int{4}
 }
 
 func (m *EventRequest) XXX_Unmarshal(b []byte) error {
@@ -438,84 +383,24 @@ func (m *EventRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_EventRequest proto.InternalMessageInfo
 
-type isEventRequest_Type interface {
-	isEventRequest_Type()
-}
-
-type EventRequest_BlockEvent struct {
-	BlockEvent *BlockEventRequest `protobuf:"bytes,1,opt,name=block_event,json=blockEvent,proto3,oneof"`
-}
-
-type EventRequest_TransactionEvent struct {
-	TransactionEvent *TransactionEventRequest `protobuf:"bytes,2,opt,name=transaction_event,json=transactionEvent,proto3,oneof"`
-}
-
-type EventRequest_AccountEvent struct {
-	AccountEvent *AccountEventRequest `protobuf:"bytes,3,opt,name=account_event,json=accountEvent,proto3,oneof"`
-}
-
-type EventRequest_CancelEvent struct {
-	CancelEvent *CancelEventRequest `protobuf:"bytes,4,opt,name=cancel_event,json=cancelEvent,proto3,oneof"`
-}
-
-func (*EventRequest_BlockEvent) isEventRequest_Type() {}
-
-func (*EventRequest_TransactionEvent) isEventRequest_Type() {}
-
-func (*EventRequest_AccountEvent) isEventRequest_Type() {}
-
-func (*EventRequest_CancelEvent) isEventRequest_Type() {}
-
-func (m *EventRequest) GetType() isEventRequest_Type {
+func (m *EventRequest) GetEventType() EventType {
 	if m != nil {
-		return m.Type
+		return m.EventType
 	}
-	return nil
+	return EventType_NULL_EVENT
 }
 
-func (m *EventRequest) GetBlockEvent() *BlockEventRequest {
-	if x, ok := m.GetType().(*EventRequest_BlockEvent); ok {
-		return x.BlockEvent
+func (m *EventRequest) GetEventRequest() []byte {
+	if m != nil {
+		return m.EventRequest
 	}
 	return nil
-}
-
-func (m *EventRequest) GetTransactionEvent() *TransactionEventRequest {
-	if x, ok := m.GetType().(*EventRequest_TransactionEvent); ok {
-		return x.TransactionEvent
-	}
-	return nil
-}
-
-func (m *EventRequest) GetAccountEvent() *AccountEventRequest {
-	if x, ok := m.GetType().(*EventRequest_AccountEvent); ok {
-		return x.AccountEvent
-	}
-	return nil
-}
-
-func (m *EventRequest) GetCancelEvent() *CancelEventRequest {
-	if x, ok := m.GetType().(*EventRequest_CancelEvent); ok {
-		return x.CancelEvent
-	}
-	return nil
-}
-
-// XXX_OneofWrappers is for the internal use of the proto package.
-func (*EventRequest) XXX_OneofWrappers() []interface{} {
-	return []interface{}{
-		(*EventRequest_BlockEvent)(nil),
-		(*EventRequest_TransactionEvent)(nil),
-		(*EventRequest_AccountEvent)(nil),
-		(*EventRequest_CancelEvent)(nil),
-	}
 }
 
 //////// 事件订阅返回数据结构
 // SubscribeResponse 订阅产生的event_id
 type SubscribeResponse struct {
-	EventId              string        `protobuf:"bytes,1,opt,name=event_id,json=eventId,proto3" json:"event_id,omitempty"`
-	EventRequest         *EventRequest `protobuf:"bytes,2,opt,name=event_request,json=eventRequest,proto3" json:"event_request,omitempty"`
+	EventRequest         *EventRequest `protobuf:"bytes,1,opt,name=event_request,json=eventRequest,proto3" json:"event_request,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}      `json:"-"`
 	XXX_unrecognized     []byte        `json:"-"`
 	XXX_sizecache        int32         `json:"-"`
@@ -525,7 +410,7 @@ func (m *SubscribeResponse) Reset()         { *m = SubscribeResponse{} }
 func (m *SubscribeResponse) String() string { return proto.CompactTextString(m) }
 func (*SubscribeResponse) ProtoMessage()    {}
 func (*SubscribeResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_2d17a9d3f0ddf27e, []int{6}
+	return fileDescriptor_2d17a9d3f0ddf27e, []int{5}
 }
 
 func (m *SubscribeResponse) XXX_Unmarshal(b []byte) error {
@@ -546,13 +431,6 @@ func (m *SubscribeResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_SubscribeResponse proto.InternalMessageInfo
 
-func (m *SubscribeResponse) GetEventId() string {
-	if m != nil {
-		return m.EventId
-	}
-	return ""
-}
-
 func (m *SubscribeResponse) GetEventRequest() *EventRequest {
 	if m != nil {
 		return m.EventRequest
@@ -560,12 +438,49 @@ func (m *SubscribeResponse) GetEventRequest() *EventRequest {
 	return nil
 }
 
+type UnSubscribeResponse struct {
+	Status               UnSubscribeStatusInfo `protobuf:"varint,1,opt,name=status,proto3,enum=pb.UnSubscribeStatusInfo" json:"status,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}              `json:"-"`
+	XXX_unrecognized     []byte                `json:"-"`
+	XXX_sizecache        int32                 `json:"-"`
+}
+
+func (m *UnSubscribeResponse) Reset()         { *m = UnSubscribeResponse{} }
+func (m *UnSubscribeResponse) String() string { return proto.CompactTextString(m) }
+func (*UnSubscribeResponse) ProtoMessage()    {}
+func (*UnSubscribeResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_2d17a9d3f0ddf27e, []int{6}
+}
+
+func (m *UnSubscribeResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_UnSubscribeResponse.Unmarshal(m, b)
+}
+func (m *UnSubscribeResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_UnSubscribeResponse.Marshal(b, m, deterministic)
+}
+func (m *UnSubscribeResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UnSubscribeResponse.Merge(m, src)
+}
+func (m *UnSubscribeResponse) XXX_Size() int {
+	return xxx_messageInfo_UnSubscribeResponse.Size(m)
+}
+func (m *UnSubscribeResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_UnSubscribeResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_UnSubscribeResponse proto.InternalMessageInfo
+
+func (m *UnSubscribeResponse) GetStatus() UnSubscribeStatusInfo {
+	if m != nil {
+		return m.Status
+	}
+	return UnSubscribeStatusInfo_UNSUBSCRIBE_UNDEFINED
+}
+
 // BlockEventResponse 订阅区块返回
 type BlockEventResponse struct {
-	EventId              string           `protobuf:"bytes,1,opt,name=event_id,json=eventId,proto3" json:"event_id,omitempty"`
-	Type                 EventType        `protobuf:"varint,2,opt,name=type,proto3,enum=pb.EventType" json:"type,omitempty"`
-	Status               *BlockStatusInfo `protobuf:"bytes,3,opt,name=status,proto3" json:"status,omitempty"`
-	Block                *InternalBlock   `protobuf:"bytes,4,opt,name=block,proto3" json:"block,omitempty"`
+	Status               *BlockStatusInfo `protobuf:"bytes,1,opt,name=status,proto3" json:"status,omitempty"`
+	Block                *InternalBlock   `protobuf:"bytes,2,opt,name=block,proto3" json:"block,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}         `json:"-"`
 	XXX_unrecognized     []byte           `json:"-"`
 	XXX_sizecache        int32            `json:"-"`
@@ -596,20 +511,6 @@ func (m *BlockEventResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_BlockEventResponse proto.InternalMessageInfo
 
-func (m *BlockEventResponse) GetEventId() string {
-	if m != nil {
-		return m.EventId
-	}
-	return ""
-}
-
-func (m *BlockEventResponse) GetType() EventType {
-	if m != nil {
-		return m.Type
-	}
-	return EventType_NULL_EVENT
-}
-
 func (m *BlockEventResponse) GetStatus() *BlockStatusInfo {
 	if m != nil {
 		return m.Status
@@ -626,10 +527,8 @@ func (m *BlockEventResponse) GetBlock() *InternalBlock {
 
 // TransactionEventResponse 订阅交易返回
 type TransactionEventResponse struct {
-	EventId              string                 `protobuf:"bytes,1,opt,name=event_id,json=eventId,proto3" json:"event_id,omitempty"`
-	Type                 EventType              `protobuf:"varint,2,opt,name=type,proto3,enum=pb.EventType" json:"type,omitempty"`
-	Status               *TransactionStatusInfo `protobuf:"bytes,3,opt,name=status,proto3" json:"status,omitempty"`
-	Tx                   *Transaction           `protobuf:"bytes,4,opt,name=tx,proto3" json:"tx,omitempty"`
+	Status               *TransactionStatusInfo `protobuf:"bytes,1,opt,name=status,proto3" json:"status,omitempty"`
+	Tx                   *Transaction           `protobuf:"bytes,2,opt,name=tx,proto3" json:"tx,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}               `json:"-"`
 	XXX_unrecognized     []byte                 `json:"-"`
 	XXX_sizecache        int32                  `json:"-"`
@@ -660,20 +559,6 @@ func (m *TransactionEventResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_TransactionEventResponse proto.InternalMessageInfo
 
-func (m *TransactionEventResponse) GetEventId() string {
-	if m != nil {
-		return m.EventId
-	}
-	return ""
-}
-
-func (m *TransactionEventResponse) GetType() EventType {
-	if m != nil {
-		return m.Type
-	}
-	return EventType_NULL_EVENT
-}
-
 func (m *TransactionEventResponse) GetStatus() *TransactionStatusInfo {
 	if m != nil {
 		return m.Status
@@ -690,10 +575,8 @@ func (m *TransactionEventResponse) GetTx() *Transaction {
 
 // AccountEventResponse 订阅账户返回
 type AccountEventResponse struct {
-	EventId              string             `protobuf:"bytes,1,opt,name=event_id,json=eventId,proto3" json:"event_id,omitempty"`
-	Type                 EventType          `protobuf:"varint,2,opt,name=type,proto3,enum=pb.EventType" json:"type,omitempty"`
-	Status               *AccountStatusInfo `protobuf:"bytes,3,opt,name=status,proto3" json:"status,omitempty"`
-	Tx                   *Transaction       `protobuf:"bytes,4,opt,name=tx,proto3" json:"tx,omitempty"`
+	Status               *AccountStatusInfo `protobuf:"bytes,1,opt,name=status,proto3" json:"status,omitempty"`
+	Tx                   *Transaction       `protobuf:"bytes,2,opt,name=tx,proto3" json:"tx,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}           `json:"-"`
 	XXX_unrecognized     []byte             `json:"-"`
 	XXX_sizecache        int32              `json:"-"`
@@ -724,20 +607,6 @@ func (m *AccountEventResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_AccountEventResponse proto.InternalMessageInfo
 
-func (m *AccountEventResponse) GetEventId() string {
-	if m != nil {
-		return m.EventId
-	}
-	return ""
-}
-
-func (m *AccountEventResponse) GetType() EventType {
-	if m != nil {
-		return m.Type
-	}
-	return EventType_NULL_EVENT
-}
-
 func (m *AccountEventResponse) GetStatus() *AccountStatusInfo {
 	if m != nil {
 		return m.Status
@@ -754,15 +623,12 @@ func (m *AccountEventResponse) GetTx() *Transaction {
 
 ////// EventResponse 将上述几类统一归为EventResponse
 type EventResponse struct {
-	// Types that are valid to be assigned to Type:
-	//	*EventResponse_BlockEventResponse
-	//	*EventResponse_TransactionEventResponse
-	//	*EventResponse_AccountEventResponse
-	//	*EventResponse_SubscribeResponse
-	Type                 isEventResponse_Type `protobuf_oneof:"Type"`
-	XXX_NoUnkeyedLiteral struct{}             `json:"-"`
-	XXX_unrecognized     []byte               `json:"-"`
-	XXX_sizecache        int32                `json:"-"`
+	EventId              string    `protobuf:"bytes,1,opt,name=event_id,json=eventId,proto3" json:"event_id,omitempty"`
+	EventType            EventType `protobuf:"varint,2,opt,name=event_type,json=eventType,proto3,enum=pb.EventType" json:"event_type,omitempty"`
+	EventResponse        []byte    `protobuf:"bytes,3,opt,name=event_response,json=eventResponse,proto3" json:"event_response,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
+	XXX_unrecognized     []byte    `json:"-"`
+	XXX_sizecache        int32     `json:"-"`
 }
 
 func (m *EventResponse) Reset()         { *m = EventResponse{} }
@@ -790,77 +656,25 @@ func (m *EventResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_EventResponse proto.InternalMessageInfo
 
-type isEventResponse_Type interface {
-	isEventResponse_Type()
-}
-
-type EventResponse_BlockEventResponse struct {
-	BlockEventResponse *BlockEventResponse `protobuf:"bytes,1,opt,name=block_event_response,json=blockEventResponse,proto3,oneof"`
-}
-
-type EventResponse_TransactionEventResponse struct {
-	TransactionEventResponse *TransactionEventResponse `protobuf:"bytes,2,opt,name=transaction_event_response,json=transactionEventResponse,proto3,oneof"`
-}
-
-type EventResponse_AccountEventResponse struct {
-	AccountEventResponse *AccountEventRequest `protobuf:"bytes,3,opt,name=account_event_response,json=accountEventResponse,proto3,oneof"`
-}
-
-type EventResponse_SubscribeResponse struct {
-	SubscribeResponse *SubscribeResponse `protobuf:"bytes,4,opt,name=subscribe_response,json=subscribeResponse,proto3,oneof"`
-}
-
-func (*EventResponse_BlockEventResponse) isEventResponse_Type() {}
-
-func (*EventResponse_TransactionEventResponse) isEventResponse_Type() {}
-
-func (*EventResponse_AccountEventResponse) isEventResponse_Type() {}
-
-func (*EventResponse_SubscribeResponse) isEventResponse_Type() {}
-
-func (m *EventResponse) GetType() isEventResponse_Type {
+func (m *EventResponse) GetEventId() string {
 	if m != nil {
-		return m.Type
+		return m.EventId
 	}
-	return nil
+	return ""
 }
 
-func (m *EventResponse) GetBlockEventResponse() *BlockEventResponse {
-	if x, ok := m.GetType().(*EventResponse_BlockEventResponse); ok {
-		return x.BlockEventResponse
+func (m *EventResponse) GetEventType() EventType {
+	if m != nil {
+		return m.EventType
 	}
-	return nil
+	return EventType_NULL_EVENT
 }
 
-func (m *EventResponse) GetTransactionEventResponse() *TransactionEventResponse {
-	if x, ok := m.GetType().(*EventResponse_TransactionEventResponse); ok {
-		return x.TransactionEventResponse
+func (m *EventResponse) GetEventResponse() []byte {
+	if m != nil {
+		return m.EventResponse
 	}
 	return nil
-}
-
-func (m *EventResponse) GetAccountEventResponse() *AccountEventRequest {
-	if x, ok := m.GetType().(*EventResponse_AccountEventResponse); ok {
-		return x.AccountEventResponse
-	}
-	return nil
-}
-
-func (m *EventResponse) GetSubscribeResponse() *SubscribeResponse {
-	if x, ok := m.GetType().(*EventResponse_SubscribeResponse); ok {
-		return x.SubscribeResponse
-	}
-	return nil
-}
-
-// XXX_OneofWrappers is for the internal use of the proto package.
-func (*EventResponse) XXX_OneofWrappers() []interface{} {
-	return []interface{}{
-		(*EventResponse_BlockEventResponse)(nil),
-		(*EventResponse_TransactionEventResponse)(nil),
-		(*EventResponse_AccountEventResponse)(nil),
-		(*EventResponse_SubscribeResponse)(nil),
-	}
 }
 
 // BlockStatusInfo 区块元数据
@@ -1016,13 +830,14 @@ func (m *AccountStatusInfo) GetStatus() TransactionStatus {
 func init() {
 	proto.RegisterEnum("pb.BlockStatus", BlockStatus_name, BlockStatus_value)
 	proto.RegisterEnum("pb.EventType", EventType_name, EventType_value)
-	proto.RegisterType((*EventMessage)(nil), "pb.EventMessage")
+	proto.RegisterEnum("pb.UnSubscribeStatusInfo", UnSubscribeStatusInfo_name, UnSubscribeStatusInfo_value)
 	proto.RegisterType((*BlockEventRequest)(nil), "pb.BlockEventRequest")
 	proto.RegisterType((*TransactionEventRequest)(nil), "pb.TransactionEventRequest")
 	proto.RegisterType((*AccountEventRequest)(nil), "pb.AccountEventRequest")
-	proto.RegisterType((*CancelEventRequest)(nil), "pb.CancelEventRequest")
+	proto.RegisterType((*UnSubscribeRequest)(nil), "pb.UnSubscribeRequest")
 	proto.RegisterType((*EventRequest)(nil), "pb.EventRequest")
 	proto.RegisterType((*SubscribeResponse)(nil), "pb.SubscribeResponse")
+	proto.RegisterType((*UnSubscribeResponse)(nil), "pb.UnSubscribeResponse")
 	proto.RegisterType((*BlockEventResponse)(nil), "pb.BlockEventResponse")
 	proto.RegisterType((*TransactionEventResponse)(nil), "pb.TransactionEventResponse")
 	proto.RegisterType((*AccountEventResponse)(nil), "pb.AccountEventResponse")
@@ -1035,66 +850,57 @@ func init() {
 func init() { proto.RegisterFile("event.proto", fileDescriptor_2d17a9d3f0ddf27e) }
 
 var fileDescriptor_2d17a9d3f0ddf27e = []byte{
-	// 941 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x56, 0xcd, 0x6e, 0xdb, 0x46,
-	0x10, 0x16, 0x25, 0x59, 0x36, 0x87, 0x92, 0x2d, 0x6e, 0xfc, 0xa3, 0x28, 0x2e, 0x6a, 0xeb, 0x12,
-	0x37, 0x45, 0xec, 0xd6, 0x6d, 0x81, 0x02, 0x45, 0x0b, 0xc8, 0x82, 0x0a, 0x2a, 0x71, 0xa9, 0x60,
-	0x25, 0x07, 0x05, 0x5a, 0x80, 0x58, 0x92, 0x1b, 0x8b, 0xa8, 0xbc, 0x64, 0xc8, 0x65, 0xe0, 0x1c,
-	0xfa, 0x1a, 0x05, 0x7a, 0xef, 0x21, 0x87, 0xf6, 0x85, 0xfa, 0x34, 0x05, 0x97, 0x2b, 0x8a, 0x22,
-	0xe5, 0xa4, 0x09, 0x72, 0xd3, 0x7e, 0x33, 0x3b, 0xf3, 0xed, 0xcc, 0x37, 0x23, 0x82, 0x46, 0x5f,
-	0x51, 0xc6, 0x4f, 0x83, 0xd0, 0xe7, 0x3e, 0xaa, 0x06, 0x76, 0xf7, 0xf0, 0xda, 0xf7, 0xaf, 0xe7,
-	0xf4, 0x8c, 0x04, 0xde, 0x19, 0x61, 0xcc, 0xe7, 0x84, 0x7b, 0x3e, 0x8b, 0x52, 0x8f, 0x6e, 0xf3,
-	0xd6, 0x99, 0x11, 0x8f, 0xa5, 0xa7, 0x9e, 0x0b, 0xcd, 0x61, 0x72, 0xfd, 0x27, 0x1a, 0x45, 0xe4,
-	0x9a, 0xa2, 0x63, 0xa8, 0xf2, 0xdb, 0x8e, 0x72, 0xa4, 0x9c, 0x68, 0xe7, 0x3b, 0xa7, 0x81, 0x7d,
-	0x3a, 0x0d, 0x09, 0x8b, 0x88, 0x93, 0x44, 0x30, 0x2a, 0xb8, 0xca, 0x6f, 0xd1, 0x67, 0xb0, 0x61,
-	0xcf, 0x7d, 0xe7, 0xb7, 0x4e, 0x55, 0x78, 0xe9, 0x89, 0xd7, 0x88, 0x71, 0x1a, 0x32, 0x32, 0xbf,
-	0x48, 0x0c, 0x46, 0x05, 0xa7, 0x1e, 0x17, 0x0d, 0xa8, 0x4f, 0x5f, 0x07, 0xb4, 0xf7, 0x8f, 0x02,
-	0xba, 0x30, 0x89, 0x5c, 0x98, 0xbe, 0x8c, 0x69, 0xc4, 0xd1, 0x01, 0x6c, 0xda, 0x8e, 0xc5, 0xc8,
-	0x0d, 0x15, 0x09, 0x55, 0xdc, 0xb0, 0x1d, 0x93, 0xdc, 0x50, 0xd4, 0x85, 0xad, 0x20, 0xf4, 0x03,
-	0x3f, 0xa2, 0xa1, 0x48, 0xa2, 0xe2, 0xec, 0x8c, 0x8e, 0xa1, 0x19, 0x71, 0x12, 0x72, 0x6b, 0x46,
-	0xbd, 0xeb, 0x19, 0xef, 0xd4, 0x8e, 0x94, 0x93, 0x1a, 0xd6, 0x04, 0x66, 0x08, 0x08, 0x7d, 0x02,
-	0x40, 0x99, 0xbb, 0x70, 0xa8, 0x0b, 0x07, 0x95, 0x32, 0x57, 0x9a, 0x8f, 0xa1, 0xc9, 0x28, 0x75,
-	0x2d, 0xc7, 0x67, 0x9c, 0x32, 0xde, 0xd9, 0x38, 0x52, 0x4e, 0xb6, 0xb0, 0x96, 0x60, 0x83, 0x14,
-	0xea, 0xfd, 0xa1, 0xc0, 0x41, 0xee, 0xe1, 0xff, 0x8f, 0xf5, 0x21, 0xa8, 0x1e, 0xf3, 0xb8, 0x47,
-	0xb8, 0xbf, 0xa0, 0xbd, 0x04, 0x92, 0xac, 0x24, 0xe6, 0x33, 0x2b, 0xa4, 0x2f, 0x63, 0x2f, 0xa4,
-	0x9d, 0xda, 0x51, 0xed, 0x44, 0xc5, 0x5a, 0x82, 0xe1, 0x14, 0x2a, 0x11, 0xab, 0x97, 0x89, 0x31,
-	0xb8, 0xd7, 0x77, 0x1c, 0x3f, 0x66, 0x7c, 0x85, 0xd3, 0x03, 0x50, 0x5f, 0x84, 0xfe, 0x8d, 0x45,
-	0x5c, 0x37, 0x94, 0xac, 0xb6, 0x12, 0xa0, 0xef, 0xba, 0x61, 0x42, 0x98, 0xfb, 0xa9, 0x29, 0x65,
-	0xd5, 0xe0, 0xbe, 0x30, 0x14, 0xf3, 0xd5, 0xca, 0xf9, 0xce, 0x00, 0x0d, 0x08, 0x73, 0xe8, 0x7c,
-	0x25, 0xdd, 0x7d, 0xd8, 0x12, 0x9a, 0xb3, 0x3c, 0x57, 0x66, 0xdb, 0x14, 0xe7, 0x91, 0xdb, 0xfb,
-	0xb3, 0x2a, 0x05, 0xb5, 0xf0, 0xfd, 0x16, 0x34, 0xa1, 0x05, 0x4b, 0x78, 0x48, 0x65, 0xed, 0x25,
-	0x9a, 0x29, 0x09, 0xc2, 0xa8, 0x60, 0xb0, 0x33, 0x10, 0x3d, 0x01, 0x9d, 0x2f, 0x7b, 0x20, 0xef,
-	0xa7, 0x9a, 0x7b, 0x50, 0x50, 0x66, 0x21, 0x4a, 0x9b, 0x17, 0x4c, 0xe8, 0x07, 0x68, 0x91, 0xb4,
-	0x6e, 0x32, 0x4e, 0x4d, 0xc4, 0x39, 0x48, 0xe2, 0xac, 0x29, 0xa8, 0x51, 0xc1, 0x4d, 0x92, 0x83,
-	0xd1, 0x77, 0xd0, 0x74, 0x44, 0x1d, 0xe4, 0xf5, 0xba, 0xb8, 0xbe, 0x9f, 0x5c, 0x2f, 0xd7, 0xc7,
-	0xa8, 0x60, 0xcd, 0x59, 0xa2, 0xd9, 0x14, 0x50, 0xd0, 0x27, 0xb1, 0x1d, 0x39, 0xa1, 0x67, 0x53,
-	0x4c, 0xa3, 0xc0, 0x67, 0x11, 0x7d, 0x4b, 0x2d, 0xd1, 0x37, 0xd0, 0x4a, 0x4d, 0x61, 0x1a, 0x57,
-	0x3e, 0xbe, 0x9d, 0x64, 0xcd, 0xe7, 0xc3, 0x4d, 0x9a, 0x3b, 0xf5, 0xde, 0x28, 0x80, 0xf2, 0xb5,
-	0x7d, 0x77, 0xa2, 0x63, 0xa8, 0xf3, 0xd7, 0x01, 0x15, 0xf1, 0xb7, 0xcf, 0x5b, 0x59, 0xfc, 0x84,
-	0x35, 0x16, 0x26, 0xf4, 0x39, 0x34, 0x22, 0x4e, 0x78, 0x1c, 0xc9, 0xca, 0xdd, 0xcb, 0x3a, 0x38,
-	0x11, 0xf0, 0x88, 0xbd, 0xf0, 0xb1, 0x74, 0x41, 0x0f, 0x17, 0x1b, 0xa2, 0x7e, 0xc7, 0x86, 0x90,
-	0xfb, 0xa1, 0xf7, 0xb7, 0x02, 0x9d, 0x72, 0x1b, 0x3f, 0x0a, 0xe1, 0x2f, 0x0b, 0x84, 0xef, 0x17,
-	0x24, 0xb3, 0x86, 0xf6, 0xa7, 0x62, 0xf7, 0xd5, 0xd7, 0xee, 0xbe, 0x64, 0xf3, 0xf5, 0xfe, 0x52,
-	0x60, 0x77, 0x55, 0x2d, 0x1f, 0x85, 0xea, 0xe3, 0x02, 0xd5, 0xbd, 0x9c, 0x2a, 0x3f, 0x84, 0xe6,
-	0xbf, 0x55, 0x68, 0xad, 0xf2, 0x7b, 0x02, 0xbb, 0xb9, 0x21, 0xb4, 0x42, 0x89, 0xcb, 0x69, 0xdc,
-	0x2f, 0x4e, 0x63, 0x6a, 0x35, 0x2a, 0x18, 0xd9, 0x65, 0x1d, 0xfd, 0x0a, 0xdd, 0xd2, 0x58, 0x2e,
-	0x23, 0xa6, 0x12, 0x3d, 0x5c, 0x3f, 0x9f, 0x59, 0xdc, 0x0e, 0xbf, 0xab, 0xe9, 0x63, 0xd8, 0x5f,
-	0x19, 0xd4, 0x65, 0xe4, 0x77, 0x4e, 0xec, 0x2e, 0x59, 0xd7, 0x9a, 0x1f, 0x01, 0x45, 0x8b, 0xa1,
-	0x5b, 0x06, 0xab, 0x2f, 0x0b, 0x5d, 0x1a, 0x49, 0xa3, 0x82, 0xf5, 0xa8, 0x08, 0x66, 0x43, 0x3c,
-	0x81, 0x9d, 0x82, 0xec, 0xef, 0xfe, 0x47, 0x78, 0x98, 0x35, 0x36, 0xed, 0xfe, 0x4e, 0x61, 0x68,
-	0x16, 0x2d, 0xed, 0xfd, 0x0e, 0x7b, 0x6b, 0xa5, 0xf9, 0xa1, 0x7f, 0x36, 0xab, 0x8a, 0xda, 0x4e,
-	0x1f, 0x5a, 0xca, 0x90, 0xa5, 0xff, 0x05, 0xf4, 0x92, 0xdc, 0xee, 0x4e, 0xfd, 0xb8, 0xf0, 0xaa,
-	0xb7, 0x07, 0x7f, 0xf4, 0x3d, 0x68, 0xb9, 0x27, 0x23, 0x15, 0x36, 0x86, 0x18, 0x8f, 0x71, 0xbb,
-	0x92, 0xfc, 0x9c, 0xe2, 0x2b, 0xf3, 0x69, 0x5b, 0x41, 0x00, 0x8d, 0x0b, 0xdc, 0x37, 0x07, 0x46,
-	0xbb, 0x8a, 0x9a, 0xb0, 0x65, 0x8e, 0xcd, 0xe1, 0xcf, 0xa3, 0xc9, 0xb4, 0x5d, 0x7b, 0xf4, 0x1c,
-	0xd4, 0x6c, 0x5e, 0xd0, 0x36, 0x80, 0x79, 0x75, 0x79, 0x69, 0x0d, 0x9f, 0x0f, 0xcd, 0x69, 0xbb,
-	0x82, 0x76, 0x40, 0xbb, 0xb8, 0x1c, 0x0f, 0x9e, 0x4a, 0x40, 0x41, 0x7b, 0xa0, 0x4f, 0x71, 0xdf,
-	0x9c, 0xf4, 0x07, 0xd3, 0xd1, 0xd8, 0x94, 0x70, 0x15, 0xe9, 0xd0, 0xea, 0x0f, 0x06, 0xe3, 0x2b,
-	0x73, 0x2a, 0xa1, 0xda, 0xf9, 0x1b, 0x05, 0x5a, 0xcf, 0x62, 0x3b, 0x8a, 0xed, 0x09, 0x0d, 0x5f,
-	0x79, 0x4e, 0xf2, 0xae, 0xcd, 0x67, 0xb1, 0x3d, 0xf7, 0xa2, 0x19, 0x5a, 0xae, 0x58, 0xf9, 0x5d,
-	0xd4, 0x2d, 0x21, 0xe8, 0x1c, 0xd4, 0x4c, 0x3a, 0xa8, 0xb4, 0x93, 0xbb, 0x7a, 0x0e, 0x49, 0x25,
-	0xf4, 0x85, 0x82, 0xbe, 0x06, 0xed, 0x8a, 0xbd, 0xef, 0x2d, 0xbb, 0x21, 0x3e, 0xd5, 0xbe, 0xfa,
-	0x2f, 0x00, 0x00, 0xff, 0xff, 0x97, 0x93, 0x15, 0x7e, 0xe9, 0x09, 0x00, 0x00,
+	// 790 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x55, 0x5d, 0x6f, 0xe3, 0x44,
+	0x14, 0xad, 0xed, 0x36, 0x1b, 0x5f, 0x3b, 0xad, 0x33, 0x25, 0x34, 0x2d, 0x20, 0xba, 0x46, 0x68,
+	0xa3, 0xc2, 0x16, 0x08, 0xe2, 0x91, 0x87, 0xc4, 0xf5, 0xaa, 0x66, 0x23, 0x07, 0x8d, 0x6d, 0x84,
+	0xc4, 0x43, 0xe4, 0x8f, 0x29, 0x31, 0x6c, 0xc6, 0x5e, 0x7b, 0xbc, 0x74, 0x1f, 0x10, 0xff, 0x82,
+	0x7f, 0xc1, 0x7f, 0x44, 0x1e, 0x3b, 0x59, 0xc7, 0x49, 0x61, 0xd5, 0xb7, 0xf8, 0xdc, 0x73, 0xef,
+	0x39, 0x33, 0xf7, 0xd8, 0x01, 0x85, 0xbc, 0x21, 0x94, 0x5d, 0xa7, 0x59, 0xc2, 0x12, 0x24, 0xa6,
+	0xc1, 0x85, 0x7a, 0x1f, 0x2e, 0xfd, 0x98, 0x56, 0x88, 0xfe, 0x8f, 0x00, 0xfd, 0xe9, 0xab, 0x24,
+	0xfc, 0xdd, 0x2c, 0x69, 0x98, 0xbc, 0x2e, 0x48, 0xce, 0xd0, 0x19, 0x3c, 0x09, 0xc2, 0x05, 0xf5,
+	0x57, 0x64, 0x28, 0x5c, 0x0a, 0x23, 0x19, 0x77, 0x82, 0xd0, 0xf6, 0x57, 0x04, 0x5d, 0x40, 0x37,
+	0xcd, 0x92, 0x34, 0xc9, 0x49, 0x36, 0x14, 0x79, 0x65, 0xf3, 0x8c, 0x9e, 0x82, 0x9a, 0x33, 0x3f,
+	0x63, 0x8b, 0x25, 0x89, 0x7f, 0x5d, 0xb2, 0xa1, 0x74, 0x29, 0x8c, 0x24, 0xac, 0x70, 0xec, 0x96,
+	0x43, 0xe8, 0x13, 0x00, 0x42, 0xa3, 0x35, 0xe1, 0x90, 0x13, 0x64, 0x42, 0xa3, 0xba, 0xfc, 0x14,
+	0x54, 0x4a, 0x48, 0xb4, 0x08, 0x13, 0xca, 0x08, 0x65, 0xc3, 0xa3, 0x4b, 0x61, 0xd4, 0xc5, 0x4a,
+	0x89, 0x19, 0x15, 0xa4, 0xff, 0x2d, 0xc0, 0x99, 0x9b, 0xf9, 0x34, 0xf7, 0x43, 0x16, 0x27, 0xf4,
+	0xfd, 0x5c, 0x7f, 0x0c, 0x72, 0x4c, 0x63, 0x16, 0xfb, 0x2c, 0x59, 0xdb, 0x7e, 0x07, 0x94, 0xaa,
+	0x7e, 0xc1, 0x96, 0x8b, 0x8c, 0xbc, 0x2e, 0xe2, 0x8c, 0x0c, 0xa5, 0x4b, 0x69, 0x24, 0x63, 0xa5,
+	0xc4, 0x70, 0x05, 0xed, 0x18, 0x3b, 0xdc, 0x35, 0x46, 0xe1, 0x74, 0x12, 0x86, 0x49, 0x41, 0xd9,
+	0x96, 0xa7, 0x8f, 0x40, 0xbe, 0xcb, 0x92, 0xd5, 0xc2, 0x8f, 0xa2, 0xac, 0x76, 0xd5, 0x2d, 0x81,
+	0x49, 0x14, 0x65, 0xa5, 0x61, 0x96, 0x54, 0xa5, 0xca, 0x55, 0x87, 0x25, 0xbc, 0xd0, 0xd6, 0x93,
+	0x76, 0xf5, 0xbe, 0x02, 0xe4, 0x51, 0xa7, 0x08, 0xf2, 0x30, 0x8b, 0x03, 0xb2, 0x96, 0x3b, 0x87,
+	0x2e, 0xdf, 0xf7, 0x22, 0x8e, 0x6a, 0xb5, 0x27, 0xfc, 0xd9, 0x8a, 0x74, 0x1f, 0xd4, 0x2d, 0x67,
+	0x5f, 0x02, 0x54, 0x54, 0xf6, 0x36, 0xad, 0x2e, 0xec, 0x78, 0xdc, 0xbb, 0x4e, 0x83, 0x6b, 0xce,
+	0x72, 0xdf, 0xa6, 0x04, 0xcb, 0x64, 0xfd, 0x13, 0x7d, 0x06, 0xbd, 0x8a, 0x9d, 0x55, 0xed, 0xdc,
+	0xb0, 0x8a, 0x55, 0xd2, 0x18, 0xa9, 0xff, 0x00, 0xfd, 0x86, 0xa3, 0x3c, 0x4d, 0x68, 0x4e, 0xd0,
+	0x77, 0xed, 0xce, 0x52, 0x4a, 0x19, 0x6b, 0x1b, 0xa9, 0xba, 0xbb, 0x35, 0xeb, 0x16, 0x4e, 0xb7,
+	0xce, 0x57, 0x4f, 0xfb, 0x06, 0x3a, 0x39, 0xf3, 0x59, 0x91, 0xd7, 0x8e, 0xcf, 0xcb, 0x31, 0x0d,
+	0xa2, 0xc3, 0x8b, 0x16, 0xbd, 0x4b, 0x70, 0x4d, 0xd4, 0x7f, 0x03, 0xd4, 0x4c, 0x78, 0x3d, 0xe8,
+	0x8b, 0xad, 0x41, 0xca, 0xf8, 0xb4, 0x1c, 0xc4, 0x79, 0xbb, 0x23, 0xd0, 0x33, 0x38, 0x0a, 0xca,
+	0x12, 0x3f, 0xb5, 0x32, 0xee, 0x97, 0x5c, 0x8b, 0x32, 0x92, 0x51, 0xff, 0x15, 0xef, 0xc1, 0x55,
+	0x5d, 0xa7, 0x30, 0xdc, 0x4d, 0xe7, 0x5e, 0xeb, 0x4a, 0x65, 0xbd, 0xc1, 0xde, 0xa3, 0xfb, 0x29,
+	0x88, 0xec, 0xbe, 0x16, 0x3d, 0x69, 0xd1, 0xb1, 0xc8, 0xee, 0xf5, 0x3b, 0xf8, 0x60, 0x3b, 0x75,
+	0xb5, 0xd6, 0xf3, 0x96, 0xd6, 0xa0, 0x6c, 0xae, 0x99, 0x8f, 0xd1, 0xf9, 0x0b, 0x7a, 0xdb, 0x02,
+	0x0f, 0x07, 0xad, 0x15, 0x2c, 0xf1, 0x7f, 0x82, 0xf5, 0x39, 0x1c, 0xaf, 0xe3, 0x51, 0x8d, 0xe6,
+	0x61, 0x57, 0x71, 0x8f, 0x34, 0xf5, 0x74, 0x07, 0x4e, 0x5a, 0xcb, 0x79, 0xf8, 0x75, 0x7f, 0xb6,
+	0x39, 0x7c, 0x25, 0x7e, 0xd2, 0x5a, 0xed, 0x26, 0x19, 0x7f, 0xc2, 0x60, 0xef, 0xfd, 0x3f, 0xf6,
+	0x4b, 0xf2, 0xee, 0xd6, 0x25, 0x2e, 0x3c, 0xd8, 0xbb, 0xe1, 0x8d, 0xfc, 0x2f, 0xd0, 0xdf, 0x59,
+	0xc9, 0xc3, 0xd2, 0xcf, 0x5b, 0xa7, 0xfa, 0xef, 0xe1, 0x57, 0xdf, 0x83, 0xd2, 0x38, 0x32, 0x92,
+	0xe1, 0xc8, 0xc4, 0x78, 0x8e, 0xb5, 0x83, 0xf2, 0xa7, 0x8b, 0x3d, 0xfb, 0xa5, 0x26, 0x20, 0x80,
+	0xce, 0x14, 0x4f, 0x6c, 0xe3, 0x56, 0x13, 0x91, 0x0a, 0x5d, 0x7b, 0x6e, 0x9b, 0x3f, 0x5b, 0x8e,
+	0xab, 0x49, 0x57, 0x2b, 0x90, 0x37, 0xeb, 0x42, 0xc7, 0x00, 0xb6, 0x37, 0x9b, 0x2d, 0xcc, 0x9f,
+	0x4c, 0xdb, 0xd5, 0x0e, 0xd0, 0x09, 0x28, 0xd3, 0xd9, 0xdc, 0x78, 0x59, 0x03, 0x02, 0x1a, 0x40,
+	0xdf, 0xc5, 0x13, 0xdb, 0x99, 0x18, 0xae, 0x35, 0xb7, 0x6b, 0x58, 0x44, 0x7d, 0xe8, 0x4d, 0x0c,
+	0x63, 0xee, 0xd9, 0x6e, 0x0d, 0x49, 0x25, 0xd3, 0xb3, 0x1d, 0x6f, 0xea, 0x18, 0xd8, 0x9a, 0x9a,
+	0x35, 0x7c, 0x78, 0x15, 0xc2, 0x60, 0xef, 0x4b, 0x8c, 0xce, 0x61, 0xd0, 0xe4, 0x7b, 0xf6, 0x8d,
+	0xf9, 0xc2, 0xb2, 0xcd, 0x1b, 0xed, 0x00, 0x9d, 0xc1, 0x69, 0xb3, 0xe4, 0x78, 0x86, 0x61, 0x3a,
+	0x8e, 0x26, 0xa0, 0x0f, 0x01, 0x35, 0x0b, 0x2f, 0x26, 0xd6, 0xcc, 0xbc, 0xd1, 0xc4, 0xf1, 0x1f,
+	0xd0, 0xfb, 0xb1, 0x08, 0xf2, 0x22, 0x70, 0x48, 0xf6, 0x26, 0x0e, 0x09, 0x1a, 0x83, 0xbc, 0xd1,
+	0x44, 0x3b, 0x1f, 0xa4, 0x8b, 0x7e, 0x03, 0xa9, 0x62, 0xf8, 0xb5, 0x80, 0xc6, 0xa0, 0x34, 0x9c,
+	0xbe, 0x57, 0x57, 0xd0, 0xe1, 0xff, 0xb5, 0xdf, 0xfe, 0x1b, 0x00, 0x00, 0xff, 0xff, 0xab, 0x35,
+	0x36, 0x5b, 0x8c, 0x07, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -1109,9 +915,8 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type PubsubServiceClient interface {
-	Publish(ctx context.Context, in *EventMessage, opts ...grpc.CallOption) (*EventMessage, error)
 	Subscribe(ctx context.Context, in *EventRequest, opts ...grpc.CallOption) (PubsubService_SubscribeClient, error)
-	UnSubscribe(ctx context.Context, in *EventRequest, opts ...grpc.CallOption) (PubsubService_UnSubscribeClient, error)
+	UnSubscribe(ctx context.Context, in *EventRequest, opts ...grpc.CallOption) (*EventResponse, error)
 }
 
 type pubsubServiceClient struct {
@@ -1120,15 +925,6 @@ type pubsubServiceClient struct {
 
 func NewPubsubServiceClient(cc *grpc.ClientConn) PubsubServiceClient {
 	return &pubsubServiceClient{cc}
-}
-
-func (c *pubsubServiceClient) Publish(ctx context.Context, in *EventMessage, opts ...grpc.CallOption) (*EventMessage, error) {
-	out := new(EventMessage)
-	err := c.cc.Invoke(ctx, "/pb.PubsubService/Publish", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *pubsubServiceClient) Subscribe(ctx context.Context, in *EventRequest, opts ...grpc.CallOption) (PubsubService_SubscribeClient, error) {
@@ -1163,65 +959,23 @@ func (x *pubsubServiceSubscribeClient) Recv() (*EventResponse, error) {
 	return m, nil
 }
 
-func (c *pubsubServiceClient) UnSubscribe(ctx context.Context, in *EventRequest, opts ...grpc.CallOption) (PubsubService_UnSubscribeClient, error) {
-	stream, err := c.cc.NewStream(ctx, &_PubsubService_serviceDesc.Streams[1], "/pb.PubsubService/UnSubscribe", opts...)
+func (c *pubsubServiceClient) UnSubscribe(ctx context.Context, in *EventRequest, opts ...grpc.CallOption) (*EventResponse, error) {
+	out := new(EventResponse)
+	err := c.cc.Invoke(ctx, "/pb.PubsubService/UnSubscribe", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
-	x := &pubsubServiceUnSubscribeClient{stream}
-	if err := x.ClientStream.SendMsg(in); err != nil {
-		return nil, err
-	}
-	if err := x.ClientStream.CloseSend(); err != nil {
-		return nil, err
-	}
-	return x, nil
-}
-
-type PubsubService_UnSubscribeClient interface {
-	Recv() (*EventResponse, error)
-	grpc.ClientStream
-}
-
-type pubsubServiceUnSubscribeClient struct {
-	grpc.ClientStream
-}
-
-func (x *pubsubServiceUnSubscribeClient) Recv() (*EventResponse, error) {
-	m := new(EventResponse)
-	if err := x.ClientStream.RecvMsg(m); err != nil {
-		return nil, err
-	}
-	return m, nil
+	return out, nil
 }
 
 // PubsubServiceServer is the server API for PubsubService service.
 type PubsubServiceServer interface {
-	Publish(context.Context, *EventMessage) (*EventMessage, error)
 	Subscribe(*EventRequest, PubsubService_SubscribeServer) error
-	UnSubscribe(*EventRequest, PubsubService_UnSubscribeServer) error
+	UnSubscribe(context.Context, *EventRequest) (*EventResponse, error)
 }
 
 func RegisterPubsubServiceServer(s *grpc.Server, srv PubsubServiceServer) {
 	s.RegisterService(&_PubsubService_serviceDesc, srv)
-}
-
-func _PubsubService_Publish_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(EventMessage)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(PubsubServiceServer).Publish(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/pb.PubsubService/Publish",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PubsubServiceServer).Publish(ctx, req.(*EventMessage))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _PubsubService_Subscribe_Handler(srv interface{}, stream grpc.ServerStream) error {
@@ -1245,25 +999,22 @@ func (x *pubsubServiceSubscribeServer) Send(m *EventResponse) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func _PubsubService_UnSubscribe_Handler(srv interface{}, stream grpc.ServerStream) error {
-	m := new(EventRequest)
-	if err := stream.RecvMsg(m); err != nil {
-		return err
+func _PubsubService_UnSubscribe_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(EventRequest)
+	if err := dec(in); err != nil {
+		return nil, err
 	}
-	return srv.(PubsubServiceServer).UnSubscribe(m, &pubsubServiceUnSubscribeServer{stream})
-}
-
-type PubsubService_UnSubscribeServer interface {
-	Send(*EventResponse) error
-	grpc.ServerStream
-}
-
-type pubsubServiceUnSubscribeServer struct {
-	grpc.ServerStream
-}
-
-func (x *pubsubServiceUnSubscribeServer) Send(m *EventResponse) error {
-	return x.ServerStream.SendMsg(m)
+	if interceptor == nil {
+		return srv.(PubsubServiceServer).UnSubscribe(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/pb.PubsubService/UnSubscribe",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PubsubServiceServer).UnSubscribe(ctx, req.(*EventRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 var _PubsubService_serviceDesc = grpc.ServiceDesc{
@@ -1271,19 +1022,14 @@ var _PubsubService_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*PubsubServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "Publish",
-			Handler:    _PubsubService_Publish_Handler,
+			MethodName: "UnSubscribe",
+			Handler:    _PubsubService_UnSubscribe_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
 			StreamName:    "Subscribe",
 			Handler:       _PubsubService_Subscribe_Handler,
-			ServerStreams: true,
-		},
-		{
-			StreamName:    "UnSubscribe",
-			Handler:       _PubsubService_UnSubscribe_Handler,
 			ServerStreams: true,
 		},
 	},
