@@ -6,7 +6,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strconv"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -48,11 +47,9 @@ func NewAccountMergeUtxoCommand(cli *Cli) *cobra.Command {
 func (c *AccountMergeUtxoCommand) addFlags() {
 	c.cmd.Flags().StringVarP(&c.account, "account", "A", "", "The account/address to be merged (default ./data/keys/address).")
 	c.cmd.Flags().StringVarP(&c.accountPath, "accountPath", "P", "", "The account path, which is required for an account.")
-	c.cmd.Flags().Int64VarP(&c.num, "num", "N", 10, "final open utxo count")
 }
 
 func (c *AccountMergeUtxoCommand) mergeUtxo(ctx context.Context) error {
-Again:
 	if acl.IsAccount(c.account) == 1 && c.accountPath == "" {
 		return errors.New("accountPath can not be null because account is an Account name")
 	}
@@ -84,6 +81,10 @@ Again:
 
 	txInputs, txOutput, err := ct.GenTxInputsWithMergeUTXO(context.Background())
 	tx.TxInputs = txInputs
+	// validation check
+	if len(tx.TxInputs) == 0 {
+		return errors.New("not enough available utxo to merge")
+	}
 
 	txOutputs := []*pb.TxOutput{}
 	txOutputs = append(txOutputs, txOutput)
@@ -129,21 +130,6 @@ Again:
 		return err
 	}
 	fmt.Println(txid)
-	request := &pb.UtxoRecordDetail{
-		Bcname:      c.cli.RootOptions.Name,
-		AccountName: c.account,
-	}
-	response, err := ct.XchainClient.QueryUtxoRecord(ctx, request)
-	if err != nil {
-		return err
-	}
-	openUtxoCountStr := response.GetOpenUtxoRecord().GetUtxoCount()
-	openUtxoCount, err := strconv.ParseInt(openUtxoCountStr, 10, 64)
-	if err != nil {
-		return err
-	}
-	if openUtxoCount > c.num {
-		goto Again
-	}
+
 	return nil
 }
