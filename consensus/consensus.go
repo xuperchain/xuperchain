@@ -3,11 +3,12 @@ package consensus
 import (
 	"errors"
 	"fmt"
-	"github.com/xuperchain/xuperunion/p2pv2"
 	"os"
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/xuperchain/xuperunion/p2pv2"
 
 	log "github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperunion/common/config"
@@ -91,15 +92,6 @@ func (pc *PluggableConsensus) makeFirstCons(xlog log.Logger, cfg *config.NodeCon
 	height := int64(0)
 	timestamp := int64(0)
 	if name == ConsensusTypeTdpos {
-		if consConf["timestamp"] == nil {
-			return nil, errors.New("Genious consensus tdpos's timestamp can not be null")
-		}
-		tmpTime, err := strconv.ParseInt(consConf["timestamp"].(string), 10, 64)
-		if err != nil {
-			return nil, err
-		}
-		timestamp = tmpTime
-	} else if name == ConsensusTypePoa {
 		if consConf["timestamp"] == nil {
 			return nil, errors.New("Genious consensus tdpos's timestamp can not be null")
 		}
@@ -265,6 +257,18 @@ func (pc *PluggableConsensus) postUpdateConsensusActions(name string, sc *StepCo
 		pc.utxoVM.UnRegisterVAT(ConsensusTypeTdpos)
 		pc.utxoVM.RegisterVAT(ConsensusTypeTdpos, vat, vat.GetVATWhiteList())
 		pc.xlog.Trace("Register Tdpos utxovm after updateTDPosConsensus", "name", "Tdpos")
+	}
+
+	if name == ConsensusTypePoa {
+		cons := sc.Conn
+		for _, v := range pc.cons {
+			if v.Conn.Type() == ConsensusTypePoa {
+				if v.Conn.Version() == cons.Version() {
+					pc.xlog.Warn("This version of poa already exist", "version", v.Conn.Version())
+					return errors.New("This version of poa already exist")
+				}
+			}
+		}
 	}
 	return nil
 }

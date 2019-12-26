@@ -6,7 +6,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 
-	"github.com/xuperchain/log15"
+	log "github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperunion/consensus/base"
 	"github.com/xuperchain/xuperunion/ledger"
 	"github.com/xuperchain/xuperunion/pb"

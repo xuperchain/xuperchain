@@ -5,19 +5,19 @@ package poa
 import (
 	"bytes"
 	"errors"
-	log "github.com/xuperchain/log15"
-	"github.com/xuperchain/xuperunion/consensus/poa/bft"
+	"github.com/xuperchain/xuperunion/contract"
 	"io/ioutil"
 	"os"
 	"strconv"
 	"sync"
 	"time"
 
+	log "github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperunion/common/config"
 	cons_base "github.com/xuperchain/xuperunion/consensus/base"
 	"github.com/xuperchain/xuperunion/consensus/common/chainedbft"
 	bft_config "github.com/xuperchain/xuperunion/consensus/common/chainedbft/config"
-	"github.com/xuperchain/xuperunion/contract"
+	"github.com/xuperchain/xuperunion/consensus/poa/bft"
 	crypto_base "github.com/xuperchain/xuperunion/crypto/client/base"
 	"github.com/xuperchain/xuperunion/global"
 	"github.com/xuperchain/xuperunion/ledger"
@@ -34,8 +34,6 @@ func (poa *Poa) Init() {
 	poa.curTerm = 1
 	poa.curPos = 0
 	poa.curBlockNum = 0
-	poa.isProduce = make(map[int64]bool)
-	poa.revokeCache = new(sync.Map)
 	poa.mutex = new(sync.RWMutex)
 }
 
@@ -191,12 +189,11 @@ func (poa *Poa) buildConfigs(xlog log.Logger, cfg *config.NodeConfig, consCfg ma
 	poa.version = version
 
 	// parse bft related config
-	if bftConfData, ok := consCfg["bft_config"].(map[string]interface{}); ok {
-		poa.config.bftConfig = bft_config.MakeConfig(bftConfData)
-	} else {
-		poa.config.bftConfig = bft_config.MakeConfig(nil)
-	}
-	poa.log.Trace("Poa after config", "Poa.config", poa.config)
+	bftconf := bft_config.MakeConfig(make(map[string]interface{}))
+	// if bft_config is not empty, enable bft
+	poa.config.bftConfig = bftconf
+
+	poa.log.Trace("Poa after config", "TTDpos.config", poa.config)
 	return nil
 }
 
@@ -272,8 +269,7 @@ func (poa *Poa) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock) (bool, 
 	}
 
 	// 2 验证轮数信息
-	if poa.isProposer(poa.curTerm, poa.curPos, in.Proposer) {
-	} else {
+	if !poa.isProposer(poa.curTerm, poa.curPos, in.Proposer) {
 		poa.log.Warn("CheckMinerMatch failed, received block shouldn't proposed!")
 		return false, nil
 	}
@@ -457,25 +453,9 @@ func (poa *Poa) initBFT(cfg *config.NodeConfig) error {
 }
 
 func (poa *Poa) isFirstBlock(BlockHeight int64) bool {
-	poa.log.Debug("isFirstBlock check", "consStartHeight", poa.height,
+	consStartHeight := poa.height
+	consStartHeight++
+	poa.log.Debug("isFirstBlock check", "consStartHeight", consStartHeight,
 		"targetHeight", BlockHeight)
 	return poa.height+1 == BlockHeight
-}
-
-func (poa *Poa) Run(desc *contract.TxDesc) error {
-	return nil
-}
-
-func (poa *Poa) Rollback(desc *contract.TxDesc) error {
-	return nil
-}
-
-// Finalize is the specific implementation of interface contract
-func (poa *Poa) Finalize(blockid []byte) error {
-	return nil
-}
-
-// SetContext is the specific implementation of interface contract
-func (poa *Poa) SetContext(context *contract.TxContext) error {
-	return nil
 }

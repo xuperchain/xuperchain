@@ -2,9 +2,10 @@ package poa
 
 import (
 	"errors"
+	"sync"
+
 	"github.com/xuperchain/xuperunion/consensus/poa/bft"
 	"github.com/xuperchain/xuperunion/permission/acl/impl"
-	"sync"
 
 	log "github.com/xuperchain/log15"
 	cons_base "github.com/xuperchain/xuperunion/consensus/base"
@@ -55,11 +56,7 @@ type Poa struct {
 	proposerNum   int64
 	// 此链使用的加密模块
 	cryptoClient crypto_base.CryptoClient
-	// revokeCache 撤销记录缓存, 内存状态, 记录每个block中撤销的记录, key: txid, value: true
-	revokeCache *sync.Map
-	isProduce   map[int64]bool
-
-	mutex *sync.RWMutex
+	mutex        *sync.RWMutex
 	// BFT module
 	bftPaceMaker *bft.PoaPaceMaker
 	p2psvr       p2pv2.P2PServer

@@ -23,7 +23,6 @@
     "genesis_consensus": {
         "name": "poa",
         "config": {
-            "timestamp": "1559021720000000000",
             "period": "3000",
             "alternate_interval": "3000",
             "term_interval": "6000",
