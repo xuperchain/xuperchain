@@ -1,0 +1,8 @@
+{
+    "module_name": "xkernel",
+    "method_name": "NewAccount",
+    "args" : {
+        "account_name": "1111111111111111",
+        "acl": "{\"pm\": {\"rule\": 1,\"acceptValue\": 1},\"aksWeight\": {\"dpzuVdosQrF2kmzumhVeFQZa1aYcdgFp1\": 1}}"
+    }
+}

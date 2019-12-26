@@ -1,4 +1,4 @@
-// wrapper for consensus-tdpos plugin
+// wrapper for consensus-poa plugin
 package main
 
 import (

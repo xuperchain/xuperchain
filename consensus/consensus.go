@@ -265,7 +265,7 @@ func (pc *PluggableConsensus) postUpdateConsensusActions(name string, sc *StepCo
 			if v.Conn.Type() == ConsensusTypePoa {
 				if v.Conn.Version() == cons.Version() {
 					pc.xlog.Warn("This version of poa already exist", "version", v.Conn.Version())
-					return errors.New("This version of poa already exist")
+					return errors.New("this version of poa already exist")
 				}
 			}
 		}

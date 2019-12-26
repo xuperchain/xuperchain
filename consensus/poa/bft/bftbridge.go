@@ -5,14 +5,13 @@ import (
 	"fmt"
 
 	"github.com/golang/protobuf/proto"
-
 	log "github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperunion/consensus/base"
 	"github.com/xuperchain/xuperunion/ledger"
 	"github.com/xuperchain/xuperunion/pb"
 )
 
-// CbftBridge implements ExternalInterface that chainedbft can communicate with TDPoS
+// CbftBridge implements ExternalInterface that chained-bft can communicate with PoA
 type CbftBridge struct {
 	bcname    string
 	ledger    *ledger.Ledger
@@ -37,7 +36,7 @@ func (cb *CbftBridge) SetPaceMaker(paceMaker *PoaPaceMaker) {
 }
 
 // CallPreQc call external consensus for the PreQc with the given Qc
-//  PreQc is the the given QC's ProposalMsg's JustifyQC
+// PreQc is the the given QC's ProposalMsg's JustifyQC
 func (cb *CbftBridge) CallPreQc(qc *pb.QuorumCert) (*pb.QuorumCert, error) {
 	if qc == nil {
 		return nil, fmt.Errorf("invalid params")

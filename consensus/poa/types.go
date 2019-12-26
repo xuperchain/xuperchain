@@ -31,7 +31,7 @@ const (
 // Poa is struct of poa consensus
 type Poa struct {
 	// poa共识配置
-	config PoaConfig
+	config Config
 	// tpos 版本信息, 要求是数字版本号, 避免由于用户指定字符版本导致取前缀有误
 	version int64
 	// poa start height, 共识起始高度
@@ -54,7 +54,6 @@ type Poa struct {
 	// 验证者集合信息 address -> nodeInfo
 	proposerInfos []*cons_base.CandidateInfo
 	proposerNum   int64
-
 	// 此链使用的加密模块
 	cryptoClient crypto_base.CryptoClient
 	mutex        *sync.RWMutex
@@ -68,8 +67,8 @@ type Poa struct {
 	intervalT *MyTimer
 }
 
-// PoaConfig 共识机制的配置
-type PoaConfig struct {
+// Config poa共识机制的配置
+type Config struct {
 	// 出块间隔
 	period int64
 	// 更换候选人时间间隔
@@ -80,5 +79,6 @@ type PoaConfig struct {
 	accountName string
 	// initial proposers
 	initProposer []*cons_base.CandidateInfo
-	bftConfig    *bft_config.Config
+	// BTF related config
+	bftConfig *bft_config.Config
 }
