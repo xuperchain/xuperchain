@@ -4,7 +4,6 @@ package poa
 
 import (
 	"bytes"
-	"encoding/hex"
 	"errors"
 	log "github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperunion/consensus/poa/bft"
@@ -29,7 +28,7 @@ import (
 
 // Init init poa
 func (poa *Poa) Init() {
-	poa.config = PoaConfig{
+	poa.config = Config{
 		initProposer: make([]*cons_base.CandidateInfo, 0),
 	}
 	poa.curTerm = 1
@@ -105,15 +104,6 @@ func (poa *Poa) Configure(xlog log.Logger, cfg *config.NodeConfig, consCfg map[s
 		return errors.New(errMsg)
 	}
 
-	switch extParams["timestamp"].(type) {
-	case int64:
-		poa.initTimestamp = extParams["timestamp"].(int64)
-	default:
-		errMsg := "invalid type of timestamp"
-		xlog.Warn(errMsg)
-		return errors.New(errMsg)
-	}
-
 	if p2psvr, ok := extParams["p2psvr"].(p2pv2.P2PServer); ok {
 		poa.p2psvr = p2psvr
 	}
@@ -138,24 +128,11 @@ func (poa *Poa) Configure(xlog log.Logger, cfg *config.NodeConfig, consCfg map[s
 
 func (poa *Poa) buildConfigs(xlog log.Logger, cfg *config.NodeConfig, consCfg map[string]interface{}) error {
 	// assemble consensus config including "period", "alternate_interval", "block_num", "account_name", "init_proposer", "version"
-	if consCfg["period"] == nil {
-		return errors.New("Parse Poa period error, can not be null")
-	}
-
-	if consCfg["alternate_interval"] == nil {
-		return errors.New("Parse Poa alternate_interval error, can not be null")
-	}
-
-	if consCfg["block_num"] == nil {
-		return errors.New("Parse Poa block_num error, can not be null")
-	}
-
-	if consCfg["account_name"] == nil {
-		return errors.New("Parse Poa account_name error, can not be null")
-	}
-
-	if consCfg["init_proposer"] == nil {
-		return errors.New("Parse Poa init_proposer error, can not be null")
+	params_need := []string{"period", "alternate_interval", "block_num", "account_name", "init_proposer", "init_proposer_neturl"}
+	for _, param := range params_need {
+		if consCfg[param] == nil {
+			return errors.New("parse Poa " + param + " error, can not be null")
+		}
 	}
 
 	if consCfg["version"] == nil {
@@ -181,48 +158,30 @@ func (poa *Poa) buildConfigs(xlog log.Logger, cfg *config.NodeConfig, consCfg ma
 	}
 	poa.config.alternateInterval = alternateInterval * 1e6
 
-	blockNum, err := strconv.ParseInt(consCfg["block_num"].(string), 10, 64)
+	poa.config.blockNum, err = strconv.ParseInt(consCfg["block_num"].(string), 10, 64)
 	if err != nil {
 		xlog.Warn("Parse Poa block_num period error", "error", err.Error())
 		return err
 	}
-	poa.config.blockNum = blockNum
-
 	poa.config.accountName = consCfg["account_name"].(string)
 
-	// read config of need_neturl
-	needNetURL := false
-	if needNetURLVal, ok := consCfg["need_neturl"]; ok {
-		needNetURL = needNetURLVal.(bool)
+	initProposers := consCfg["init_proposer"].([]interface{})
+	xlog.Trace("initProposers", "initProposers", initProposers)
+	initProposerUrls := consCfg["init_proposer_neturl"].([]interface{})
+	xlog.Trace("initProposerUrls", "initProposerUrls", initProposerUrls)
+	if len(initProposers) != len(initProposerUrls) {
+		return errors.New("the lengths of initProposers and initProposerUrls should be equal")
 	}
-	poa.config.needNetURL = needNetURL
+	poa.proposerNum = int64(len(initProposers))
 
-	initProposer := consCfg["init_proposer"].([]interface{})
-	xlog.Trace("initProposer", "initProposer", initProposer)
-
-	for _, v := range initProposer {
+	for idx := int64(0); idx < poa.proposerNum; idx++ {
 		canInfo := &cons_base.CandidateInfo{}
-		canInfo.Address = v.(string)
+		canInfo.Address = initProposers[idx].(string)
+		canInfo.PeerAddr = initProposerUrls[idx].(string)
 		poa.config.initProposer = append(poa.config.initProposer, canInfo)
-		poa.proposerInfos = append(poa.proposerInfos, canInfo)
+		poa.log.Debug("Poa proposer info", "index", idx, "proposer", poa.config.initProposer[idx])
 	}
-
-	// if have init_proposer_neturl, this info can be used for core peers connection
-	if _, ok := consCfg["init_proposer_neturl"]; ok {
-		proposerNeturls := consCfg["init_proposer_neturl"].([]interface{})
-		for idx, v := range proposerNeturls {
-			poa.config.initProposer[idx].PeerAddr = v.(string)
-			poa.proposerInfos[idx].PeerAddr = v.(string)
-			poa.log.Debug("Poa proposer info", "index", idx, "proposer", poa.config.initProposer[idx])
-		}
-	} else {
-		poa.log.Warn("Poa have no neturl info for proposers",
-			"need_neturl", needNetURL)
-		if needNetURL {
-			return errors.New("config error, init_proposer_neturl could not be empty")
-		}
-	}
-	poa.proposerNum = int64(len(poa.proposerInfos))
+	poa.proposerInfos = poa.config.initProposer
 
 	version, err := strconv.ParseInt(consCfg["version"].(string), 10, 64)
 	if err != nil {
@@ -232,14 +191,12 @@ func (poa *Poa) buildConfigs(xlog log.Logger, cfg *config.NodeConfig, consCfg ma
 	poa.version = version
 
 	// parse bft related config
-	poa.config.enableBFT = true
 	if bftConfData, ok := consCfg["bft_config"].(map[string]interface{}); ok {
-		bftconf := bft_config.MakeConfig(bftConfData)
-		// if bft_config is not empty, enable bft
-		poa.config.bftConfig = bftconf
+		poa.config.bftConfig = bft_config.MakeConfig(bftConfData)
+	} else {
+		poa.config.bftConfig = bft_config.MakeConfig(nil)
 	}
-
-	poa.log.Trace("Poa after config", "TTDpos.config", poa.config)
+	poa.log.Trace("Poa after config", "Poa.config", poa.config)
 	return nil
 }
 
@@ -304,7 +261,7 @@ func (poa *Poa) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock) (bool, 
 		return false, nil
 	}
 
-	if poa.config.enableBFT && !poa.isFirstBlock(in.GetHeight()) {
+	if !poa.isFirstBlock(in.GetHeight()) {
 		// if BFT enabled and it's not the first proposal
 		// check whether previous block's QuorumCert is valid
 		ok, err := poa.bftPaceMaker.GetChainedBFT().IsQuorumCertValidate(in.GetJustify())
@@ -316,32 +273,6 @@ func (poa *Poa) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock) (bool, 
 
 	// 2 验证轮数信息
 	if poa.isProposer(poa.curTerm, poa.curPos, in.Proposer) {
-		// curTermProposerProduceNumCache is not thread safe, lock before use it.
-		poa.mutex.Lock()
-		defer poa.mutex.Unlock()
-		// 当不是第一轮时需要和前面的
-		if in.CurTerm != 1 {
-			// 当系统切轮时初始化 curTermProposerProduceNum
-			if poa.curTermProposerProduceNumCache == nil {
-				poa.curTermProposerProduceNumCache = make(map[int64]map[string]map[string]bool)
-				poa.curTermProposerProduceNumCache[in.CurTerm] = make(map[string]map[string]bool)
-			}
-		}
-		// 判断某个矿工是否恶意出块
-		if poa.curTermProposerProduceNumCache != nil && poa.curTermProposerProduceNumCache[in.CurTerm] != nil {
-			if _, ok := poa.curTermProposerProduceNumCache[in.CurTerm][string(in.Proposer)]; !ok {
-				poa.curTermProposerProduceNumCache[in.CurTerm][string(in.Proposer)] = make(map[string]bool)
-				poa.curTermProposerProduceNumCache[in.CurTerm][string(in.Proposer)][hex.EncodeToString(in.Blockid)] = true
-			} else {
-				if !poa.curTermProposerProduceNumCache[in.CurTerm][string(in.Proposer)][hex.EncodeToString(in.Blockid)] {
-					poa.curTermProposerProduceNumCache[in.CurTerm][string(in.Proposer)][hex.EncodeToString(in.Blockid)] = true
-				}
-			}
-			if int64(len(poa.curTermProposerProduceNumCache[in.CurTerm][string(in.Proposer)])) > poa.config.blockNum+1 {
-				poa.log.Warn("CheckMinerMatch failed, proposer produce more than config blockNum!", "blockNum", len(poa.curTermProposerProduceNumCache[in.CurTerm][string(in.Proposer)]))
-				return false, ErrProposeBlockMoreThanConfig
-			}
-		}
 	} else {
 		poa.log.Warn("CheckMinerMatch failed, received block shouldn't proposed!")
 		return false, nil
@@ -353,37 +284,34 @@ func (poa *Poa) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock) (bool, 
 func (poa *Poa) ProcessBeforeMiner(timestamp int64) (map[string]interface{}, bool) {
 	res := make(map[string]interface{})
 	// check bft status
-	if poa.config.enableBFT {
-		// TODO: what if IsLastViewConfirmed failed in competeMaster, but succeed in ProcessBeforeMiner?
-		if !poa.isFirstBlock(poa.ledger.GetMeta().GetTrunkHeight() + 1) {
-			if ok, _ := poa.bftPaceMaker.IsLastViewConfirmed(); !ok {
-				poa.log.Warn("ProcessBeforeMiner last block not confirmed, walk to previous block")
-				lastBlockId := poa.ledger.GetMeta().GetTipBlockid()
-				lastBlock, err := poa.ledger.QueryBlock(lastBlockId)
-				if err != nil {
-					poa.log.Warn("ProcessBeforeMiner tip block query failed", "error", err)
-					return nil, false
-				}
-				err = poa.utxoVM.Walk(lastBlock.GetPreHash(), false)
-				if err != nil {
-					poa.log.Warn("ProcessBeforeMiner utxo walk failed", "error", err)
-					return nil, false
-				}
-				err = poa.ledger.Truncate(poa.utxoVM.GetLatestBlockid())
-				if err != nil {
-					poa.log.Warn("ProcessBeforeMiner ledger truncate failed", "error", err)
-					return nil, false
-				}
+	// TODO: what if IsLastViewConfirmed failed in competeMaster, but succeed in ProcessBeforeMiner?
+	if !poa.isFirstBlock(poa.ledger.GetMeta().GetTrunkHeight() + 1) {
+		if ok, _ := poa.bftPaceMaker.IsLastViewConfirmed(); !ok {
+			poa.log.Warn("ProcessBeforeMiner last block not confirmed, walk to previous block")
+			lastBlockId := poa.ledger.GetMeta().GetTipBlockid()
+			lastBlock, err := poa.ledger.QueryBlock(lastBlockId)
+			if err != nil {
+				poa.log.Warn("ProcessBeforeMiner tip block query failed", "error", err)
+				return nil, false
+			}
+			err = poa.utxoVM.Walk(lastBlock.GetPreHash(), false)
+			if err != nil {
+				poa.log.Warn("ProcessBeforeMiner utxo walk failed", "error", err)
+				return nil, false
+			}
+			err = poa.ledger.Truncate(poa.utxoVM.GetLatestBlockid())
+			if err != nil {
+				poa.log.Warn("ProcessBeforeMiner ledger truncate failed", "error", err)
+				return nil, false
 			}
 		}
-
-		qc, err := poa.bftPaceMaker.CurrentQCHigh([]byte(""))
-		if err != nil {
-			return nil, false
-		}
-		res["quorum_cert"] = qc
 	}
 
+	qc, err := poa.bftPaceMaker.CurrentQCHigh([]byte(""))
+	if err != nil {
+		return nil, false
+	}
+	res["quorum_cert"] = qc
 	res["type"] = TYPE
 	res["curTerm"] = poa.curTerm
 	res["curBlockNum"] = poa.curBlockNum
@@ -394,7 +322,7 @@ func (poa *Poa) ProcessBeforeMiner(timestamp int64) (map[string]interface{}, boo
 // ProcessConfirmBlock is the specific implementation of ConsensusInterface
 func (poa *Poa) ProcessConfirmBlock(block *pb.InternalBlock) error {
 	// send bft NewProposal if bft enable and it's the miner
-	if poa.config.enableBFT && bytes.Compare(block.GetProposer(), poa.address) == 0 {
+	if bytes.Compare(block.GetProposer(), poa.address) == 0 {
 		blockData := &pb.Block{
 			Bcname:  poa.bcname,
 			Blockid: block.Blockid,
@@ -417,8 +345,11 @@ func (poa *Poa) InitCurrent(block *pb.InternalBlock) error {
 
 // Stop is the specific implementation of interface contract
 func (poa *Poa) Stop() {
-	if poa.config.enableBFT && poa.bftPaceMaker != nil {
-		poa.bftPaceMaker.Stop()
+	if poa.bftPaceMaker != nil {
+		err := poa.bftPaceMaker.Stop()
+		if err != nil {
+			poa.log.Error("the poa stops unsuccessfully", "error", err)
+		}
 	}
 }
 
@@ -455,11 +386,6 @@ func (poa *Poa) GetStatus() *cons_base.ConsensusStatus {
 }
 
 func (poa *Poa) initBFT(cfg *config.NodeConfig) error {
-	// BFT not enabled
-	if !poa.config.enableBFT {
-		return nil
-	}
-
 	// read keys
 	pkpath := cfg.Miner.Keypath + "/public.key"
 	pkJSON, err := ioutil.ReadFile(pkpath)
@@ -519,13 +445,11 @@ func (poa *Poa) initBFT(cfg *config.NodeConfig) error {
 		return err
 	}
 
-	paceMaker, err := bft.NewDPoSPaceMaker(poa.bcname, poa.height, meta.TrunkHeight,
+	paceMaker, err := bft.NewPoaPaceMaker(poa.bcname, poa.height, meta.TrunkHeight,
 		string(poa.address), cbft, poa.log, poa, poa.ledger)
 	if err != nil {
-		if err != nil {
-			poa.log.Warn("initBFT: create DPoSPaceMaker failed", "error", err)
-			return err
-		}
+		poa.log.Warn("initBFT: create PoaPaceMaker failed", "error", err)
+		return err
 	}
 	poa.bftPaceMaker = paceMaker
 	bridge.SetPaceMaker(paceMaker)
@@ -533,17 +457,9 @@ func (poa *Poa) initBFT(cfg *config.NodeConfig) error {
 }
 
 func (poa *Poa) isFirstBlock(BlockHeight int64) bool {
-	consStartHeight := poa.height
-	if consStartHeight == 0 {
-		consStartHeight++
-	}
-	poa.log.Debug("isFirstBlock check", "consStartHeight", consStartHeight,
+	poa.log.Debug("isFirstBlock check", "consStartHeight", poa.height,
 		"targetHeight", BlockHeight)
-	return consStartHeight == BlockHeight
-}
-
-func (poa *Poa) minerScheduling(timestamp int64) (term int64, pos int64, blockPos int64) {
-	return poa.curTerm, poa.curPos, poa.curBlockNum
+	return poa.height+1 == BlockHeight
 }
 
 func (poa *Poa) Run(desc *contract.TxDesc) error {

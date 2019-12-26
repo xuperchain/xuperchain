@@ -1,7 +1,6 @@
 package bft
 
 import (
-	"bytes"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -29,7 +28,7 @@ type PoaPaceMaker struct {
 }
 
 // NewDPoSPaceMaker create new DPoSPaceMaker instance
-func NewDPoSPaceMaker(bcname string, startView int64, viewNum int64, address string, cbft *chainedbft.ChainedBft,
+func NewPoaPaceMaker(bcname string, startView int64, viewNum int64, address string, cbft *chainedbft.ChainedBft,
 	xlog log.Logger, cons base.ConsensusInterface, ledger *ledger.Ledger) (*PoaPaceMaker, error) {
 	if cbft == nil {
 		return nil, fmt.Errorf("Chained-BFT instance is nil")
@@ -48,105 +47,106 @@ func NewDPoSPaceMaker(bcname string, startView int64, viewNum int64, address str
 }
 
 // CurrentView get current view number
-func (dpm *PoaPaceMaker) CurrentView() int64 {
-	return dpm.currentView
+func (ppm *PoaPaceMaker) CurrentView() int64 {
+	return ppm.currentView
 }
 
 // NextNewView is used submit NewView event to bft network
 // in most case it means leader changed
-func (dpm *PoaPaceMaker) NextNewView(viewNum int64, proposer, preProposer string) error {
-	if viewNum < dpm.currentView {
+func (ppm *PoaPaceMaker) NextNewView(viewNum int64, proposer, preProposer string) error {
+	if viewNum < ppm.currentView {
 		return fmt.Errorf("next view cannot smaller than current view number")
 	}
 
-	dpm.currentView = viewNum
-	err := dpm.cbft.ProcessNewView(viewNum, proposer, preProposer)
-	dpm.log.Info("bft NewView", "viewNum", viewNum, "proposer", proposer, "preProposer", preProposer)
+	ppm.currentView = viewNum
+	err := ppm.cbft.ProcessNewView(viewNum, proposer, preProposer)
+	ppm.log.Info("bft NewView", "viewNum", viewNum, "proposer", proposer, "preProposer", preProposer)
 	return err
 }
 
 // NextNewProposal used to submit new proposal to bft network
 // the content is the new block
-func (dpm *PoaPaceMaker) NextNewProposal(proposalID []byte, data interface{}) error {
+func (ppm *PoaPaceMaker) NextNewProposal(proposalID []byte, data interface{}) error {
 	block, ok := data.(*pb.Block)
 	if !ok {
 		return fmt.Errorf("Proposal data is not block")
 	}
-	if block.GetBlock().GetHeight() < dpm.currentView-1 {
+	if block.GetBlock().GetHeight() < ppm.currentView-1 {
 		return fmt.Errorf("Proposal height is too small")
 	}
 	blockid := block.GetBlockid()
 	blockMsg, err := proto.Marshal(block)
 	if err != nil {
-		dpm.log.Warn("proposal proto marshal failed", "error", err)
+		ppm.log.Warn("proposal proto marshal failed", "error", err)
 		return err
 	}
 	// set current view number to block height
-	dpm.currentView = block.GetBlock().GetHeight()
-	_, err = dpm.cbft.ProcessProposal(dpm.currentView, blockid, blockMsg)
+	ppm.currentView = block.GetBlock().GetHeight()
+	_, err = ppm.cbft.ProcessProposal(ppm.currentView, blockid, blockMsg)
 	if err != nil {
-		dpm.log.Warn("ProcessProposal failed", "error", err)
+		ppm.log.Warn("ProcessProposal failed", "error", err)
 		return err
 	}
 	// set current view number to block height
-	dpm.currentView = block.GetBlock().GetHeight()
-	dpm.log.Info("bft NewProposal", "viewNum", dpm.currentView, "blockid", hex.EncodeToString(blockid))
+	ppm.currentView = block.GetBlock().GetHeight()
+	ppm.log.Info("bft NewProposal", "viewNum", ppm.currentView, "blockid", hex.EncodeToString(blockid))
 	return nil
 }
 
 // CurrentQCHigh get the latest QuorumCert
-func (dpm *PoaPaceMaker) CurrentQCHigh(proposalID []byte) (*pb.QuorumCert, error) {
+func (ppm *PoaPaceMaker) CurrentQCHigh(proposalID []byte) (*pb.QuorumCert, error) {
 	// TODO: what would happen if current QC don't have 2/3 signature?
-	return dpm.cbft.GetGenerateQC()
+	return ppm.cbft.GetGenerateQC()
 }
 
 // UpdateValidatorSet update the validator set of BFT
-func (dpm *PoaPaceMaker) UpdateValidatorSet(validators []*base.CandidateInfo) error {
+func (ppm *PoaPaceMaker) UpdateValidatorSet(validators []*base.CandidateInfo) error {
 	valStr, _ := json.Marshal(validators)
-	dpm.log.Trace("bft update validator set", "validators", string(valStr))
-	return dpm.cbft.UpdateValidateSets(validators)
+	ppm.log.Trace("bft update validator set", "validators", string(valStr))
+	return ppm.cbft.UpdateValidateSets(validators)
 }
 
 // IsFirstProposal check if current view is the first view
-func (dpm *PoaPaceMaker) IsFirstProposal(qc *pb.QuorumCert) bool {
-	dpm.log.Trace("IsFirstProposal check", "viewNum", qc.GetViewNumber(), "startView", dpm.startView)
-	if qc.GetViewNumber() == dpm.startView {
+func (ppm *PoaPaceMaker) IsFirstProposal(qc *pb.QuorumCert) bool {
+	ppm.log.Trace("IsFirstProposal check", "viewNum", qc.GetViewNumber(), "startView", ppm.startView)
+	if qc.GetViewNumber() == ppm.startView {
 		return true
 	}
 	return false
 }
 
 // IsLastViewConfirmed check if last block is confirmed
-func (dpm *PoaPaceMaker) IsLastViewConfirmed() (bool, error) {
-	tipID := dpm.ledger.GetMeta().GetTipBlockid()
-	qc, err := dpm.cbft.GetGenerateQC()
+func (ppm *PoaPaceMaker) IsLastViewConfirmed() (bool, error) {
+	tipID := ppm.ledger.GetMeta().GetTipBlockid()
+	qc, err := ppm.cbft.GetGenerateQC()
 	// dpm.log.Debug("IsLastViewConfirmed get generate qc", "qc", qc,
 	// 	"proposalID", hex.EncodeToString(qc.GetProposalId()))
 	// qc is not valid or qc is valid but it's not the same with last block
-	if err != nil || bytes.Compare(qc.GetProposalId(), tipID) != 0 {
-		dpm.log.Warn("IsLastViewConfirmed check failed", "error", err)
+	//if err != nil || bytes.Compare(qc.GetProposalId(), tipID) != 0 {
+	if err != nil {
+		ppm.log.Warn("IsLastViewConfirmed check failed", "error", err, "qc proposerID", qc.GetProposalId(), "tipID", tipID)
 		return false, nil
 	}
 	return true, nil
 }
 
-func (dpm *PoaPaceMaker) slaveViewCheck(viewNum int64) bool {
-	trunkHeight := dpm.ledger.GetMeta().GetTrunkHeight()
+func (ppm *PoaPaceMaker) slaveViewCheck(viewNum int64) bool {
+	trunkHeight := ppm.ledger.GetMeta().GetTrunkHeight()
 	return viewNum == trunkHeight+1
 }
 
 // GetChainedBFT return the chained-bft module
-func (dpm *PoaPaceMaker) GetChainedBFT() *chainedbft.ChainedBft {
-	return dpm.cbft
+func (ppm *PoaPaceMaker) GetChainedBFT() *chainedbft.ChainedBft {
+	return ppm.cbft
 }
 
 // Start run BFT
-func (dpm *PoaPaceMaker) Start() error {
-	go dpm.cbft.Start()
+func (ppm *PoaPaceMaker) Start() error {
+	go ppm.cbft.Start()
 	return nil
 }
 
 // Stop finish running BFT
-func (dpm *PoaPaceMaker) Stop() error {
-	return dpm.cbft.Stop()
+func (ppm *PoaPaceMaker) Stop() error {
+	return ppm.cbft.Stop()
 }

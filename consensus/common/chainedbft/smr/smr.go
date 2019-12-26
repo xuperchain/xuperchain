@@ -583,7 +583,7 @@ func (s *Smr) getReplicasURL() []string {
 		}
 		validateURL = append(validateURL, v.PeerAddr)
 	}
-	s.slog.Trace("getReplicasURL result", "validateURL", validateURL)
+	s.slog.Trace("getReplicasURL result", "validates", s.validates, "validateURL", validateURL)
 	return validateURL
 }
 

@@ -315,7 +315,6 @@ func (pc *PluggableConsensus) newUpdateConsensus(name string, height int64, time
 		extParams["bcname"] = pc.bcname
 		extParams["ledger"] = pc.ledger
 		extParams["utxovm"] = pc.utxoVM
-		extParams["timestamp"] = timestamp
 		extParams["p2psvr"] = pc.p2psvr
 		extParams["height"] = height
 	} else if name == ConsensusTypePow {
