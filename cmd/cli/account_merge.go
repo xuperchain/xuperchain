@@ -25,7 +25,6 @@ type AccountMergeUtxoCommand struct {
 	account string
 	// white merge an contract account, it can not be null
 	accountPath string
-	num         int64
 }
 
 // NewAccountMergeUtxoCommand new an instance of merge utxo command
