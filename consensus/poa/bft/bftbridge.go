@@ -12,7 +12,7 @@ import (
 	"github.com/xuperchain/xuperunion/pb"
 )
 
-// CbftBridge implements ExternalInterface that chainedbft can communicate with TDPoS
+// CbftBridge implements ExternalInterface that chainedbft can communicate with PoA
 type CbftBridge struct {
 	bcname    string
 	ledger    *ledger.Ledger

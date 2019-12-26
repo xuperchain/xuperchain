@@ -15,7 +15,7 @@ import (
 	"github.com/xuperchain/xuperunion/pb"
 )
 
-// DPoSPaceMaker the implementation of PaceMakerInterface for TDPoS
+// PoaPaceMaker the implementation of PaceMakerInterface for PoA
 type PoaPaceMaker struct {
 	bcname      string
 	startView   int64
@@ -27,7 +27,7 @@ type PoaPaceMaker struct {
 	cons        base.ConsensusInterface
 }
 
-// NewDPoSPaceMaker create new DPoSPaceMaker instance
+// NewPoaPaceMaker create new PoaPaceMaker instance
 func NewPoaPaceMaker(bcname string, startView int64, viewNum int64, address string, cbft *chainedbft.ChainedBft,
 	xlog log.Logger, cons base.ConsensusInterface, ledger *ledger.Ledger) (*PoaPaceMaker, error) {
 	if cbft == nil {
@@ -69,10 +69,10 @@ func (ppm *PoaPaceMaker) NextNewView(viewNum int64, proposer, preProposer string
 func (ppm *PoaPaceMaker) NextNewProposal(proposalID []byte, data interface{}) error {
 	block, ok := data.(*pb.Block)
 	if !ok {
-		return fmt.Errorf("Proposal data is not block")
+		return fmt.Errorf("proposal data is not block")
 	}
 	if block.GetBlock().GetHeight() < ppm.currentView-1 {
-		return fmt.Errorf("Proposal height is too small")
+		return fmt.Errorf("proposal height is too small")
 	}
 	blockid := block.GetBlockid()
 	blockMsg, err := proto.Marshal(block)

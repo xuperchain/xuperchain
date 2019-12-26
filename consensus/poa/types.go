@@ -28,7 +28,7 @@ const (
 	TYPE = "poa"
 )
 
-// poa is struct of poa consensus
+// Poa is struct of poa consensus
 type Poa struct {
 	// poa共识配置
 	config Config
@@ -67,7 +67,7 @@ type Poa struct {
 	intervalT *MyTimer
 }
 
-// poa 共识机制的配置
+// Config poa共识机制的配置
 type Config struct {
 	// 出块间隔
 	period int64

@@ -4,26 +4,26 @@ package poa
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
-	"github.com/xuperchain/xuperunion/contract"
-	"io/ioutil"
-	"os"
-	"strconv"
-	"sync"
-	"time"
-
 	log "github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperunion/common/config"
 	cons_base "github.com/xuperchain/xuperunion/consensus/base"
 	"github.com/xuperchain/xuperunion/consensus/common/chainedbft"
 	bft_config "github.com/xuperchain/xuperunion/consensus/common/chainedbft/config"
 	"github.com/xuperchain/xuperunion/consensus/poa/bft"
+	"github.com/xuperchain/xuperunion/contract"
 	crypto_base "github.com/xuperchain/xuperunion/crypto/client/base"
 	"github.com/xuperchain/xuperunion/global"
 	"github.com/xuperchain/xuperunion/ledger"
 	"github.com/xuperchain/xuperunion/p2pv2"
 	"github.com/xuperchain/xuperunion/pb"
 	"github.com/xuperchain/xuperunion/utxo"
+	"io/ioutil"
+	"os"
+	"strconv"
+	"sync"
+	"time"
 )
 
 // Init init poa
@@ -126,8 +126,8 @@ func (poa *Poa) Configure(xlog log.Logger, cfg *config.NodeConfig, consCfg map[s
 
 func (poa *Poa) buildConfigs(xlog log.Logger, cfg *config.NodeConfig, consCfg map[string]interface{}) error {
 	// assemble consensus config including "period", "alternate_interval", "block_num", "account_name", "init_proposer", "version"
-	params_need := []string{"period", "alternate_interval", "block_num", "account_name", "init_proposer", "init_proposer_neturl"}
-	for _, param := range params_need {
+	paramsNeed := []string{"period", "alternate_interval", "block_num", "account_name", "init_proposer", "init_proposer_neturl"}
+	for _, param := range paramsNeed {
 		if consCfg[param] == nil {
 			return errors.New("parse Poa " + param + " error, can not be null")
 		}
@@ -162,24 +162,32 @@ func (poa *Poa) buildConfigs(xlog log.Logger, cfg *config.NodeConfig, consCfg ma
 		return err
 	}
 	poa.config.accountName = consCfg["account_name"].(string)
+	poa.accountName = poa.config.accountName
 
-	initProposers := consCfg["init_proposer"].([]interface{})
-	xlog.Trace("initProposers", "initProposers", initProposers)
-	initProposerUrls := consCfg["init_proposer_neturl"].([]interface{})
-	xlog.Trace("initProposerUrls", "initProposerUrls", initProposerUrls)
-	if len(initProposers) != len(initProposerUrls) {
-		return errors.New("the lengths of initProposers and initProposerUrls should be equal")
-	}
-	poa.proposerNum = int64(len(initProposers))
+	if proposers, err := poa.getProposersFromACL(); err == nil {
+		// if the proposers are already in the acl of account, get it from chain.
+		poa.proposerInfos = proposers
+	} else {
+		// otherwise got it from the initial configuration
+		initProposers := consCfg["init_proposer"].([]interface{})
 
-	for idx := int64(0); idx < poa.proposerNum; idx++ {
-		canInfo := &cons_base.CandidateInfo{}
-		canInfo.Address = initProposers[idx].(string)
-		canInfo.PeerAddr = initProposerUrls[idx].(string)
-		poa.config.initProposer = append(poa.config.initProposer, canInfo)
-		poa.log.Debug("Poa proposer info", "index", idx, "proposer", poa.config.initProposer[idx])
+		xlog.Trace("initProposers", "initProposers", initProposers)
+		initProposerUrls := consCfg["init_proposer_neturl"].([]interface{})
+		xlog.Trace("initProposerUrls", "initProposerUrls", initProposerUrls)
+		if len(initProposers) != len(initProposerUrls) {
+			return errors.New("the lengths of initProposers and initProposerUrls should be equal")
+		}
+		poa.proposerNum = int64(len(initProposers))
+
+		for idx := int64(0); idx < poa.proposerNum; idx++ {
+			canInfo := &cons_base.CandidateInfo{}
+			canInfo.Address = initProposers[idx].(string)
+			canInfo.PeerAddr = initProposerUrls[idx].(string)
+			poa.config.initProposer = append(poa.config.initProposer, canInfo)
+			poa.log.Debug("Poa proposer info", "index", idx, "proposer", poa.config.initProposer[idx])
+		}
+		poa.proposerInfos = poa.config.initProposer
 	}
-	poa.proposerInfos = poa.config.initProposer
 
 	version, err := strconv.ParseInt(consCfg["version"].(string), 10, 64)
 	if err != nil {
@@ -188,24 +196,23 @@ func (poa *Poa) buildConfigs(xlog log.Logger, cfg *config.NodeConfig, consCfg ma
 	}
 	poa.version = version
 
-	// parse bft related config
-	bftconf := bft_config.MakeConfig(make(map[string]interface{}))
-	// if bft_config is not empty, enable bft
-	poa.config.bftConfig = bftconf
+	// enable bft
+	poa.config.bftConfig = bft_config.MakeConfig(make(map[string]interface{}))
 
-	poa.log.Trace("Poa after config", "TTDpos.config", poa.config)
+	poa.log.Trace("Poa after config", "Poa.config", poa.config)
 	return nil
 }
 
 // CompeteMaster is the specific implementation of ConsensusInterface
 func (poa *Poa) CompeteMaster(height int64) (bool, bool) {
-	time.Sleep(time.Duration(poa.config.alternateInterval))
 	poa.mutex.RLock()
 	defer poa.mutex.RUnlock()
 	if string(poa.address) == poa.proposerInfos[poa.curPos].Address {
 		poa.log.Trace("CompeteMaster now xterm infos", "term", poa.curTerm, "pos", poa.curPos, "blockPos", poa.curBlockNum,
 			"master", true)
 		return true, poa.needSync()
+	} else {
+		time.Sleep(time.Duration(poa.config.alternateInterval))
 	}
 	poa.log.Trace("CompeteMaster now xterm infos", "term", poa.curTerm, "pos", poa.curPos, "blockPos", poa.curBlockNum,
 		"master", false)
@@ -284,8 +291,8 @@ func (poa *Poa) ProcessBeforeMiner(timestamp int64) (map[string]interface{}, boo
 	if !poa.isFirstBlock(poa.ledger.GetMeta().GetTrunkHeight() + 1) {
 		if ok, _ := poa.bftPaceMaker.IsLastViewConfirmed(); !ok {
 			poa.log.Warn("ProcessBeforeMiner last block not confirmed, walk to previous block")
-			lastBlockId := poa.ledger.GetMeta().GetTipBlockid()
-			lastBlock, err := poa.ledger.QueryBlock(lastBlockId)
+			lastBlockID := poa.ledger.GetMeta().GetTipBlockid()
+			lastBlock, err := poa.ledger.QueryBlock(lastBlockID)
 			if err != nil {
 				poa.log.Warn("ProcessBeforeMiner tip block query failed", "error", err)
 				return nil, false
@@ -331,6 +338,20 @@ func (poa *Poa) ProcessConfirmBlock(block *pb.InternalBlock) error {
 			return err
 		}
 	}
+	// increase the blockNum and change the candidateInfo when new term comes.
+	poa.curBlockNum++
+	if poa.curBlockNum >= poa.config.blockNum {
+		poa.curBlockNum = 0
+		poa.curPos++
+		if poa.curPos >= poa.proposerNum {
+			poa.curTerm++
+			poa.curPos = 0
+
+			poa.log.Debug("the accountName of poa", "account name", poa.accountName)
+		}
+	}
+	time.Sleep(time.Duration(poa.config.alternateInterval))
+	poa.log.Debug("current pos", "term", poa.curTerm, "pos", poa.curPos, "blockNum", poa.curBlockNum)
 	return nil
 }
 
@@ -458,4 +479,42 @@ func (poa *Poa) isFirstBlock(BlockHeight int64) bool {
 	poa.log.Debug("isFirstBlock check", "consStartHeight", consStartHeight,
 		"targetHeight", BlockHeight)
 	return poa.height+1 == BlockHeight
+}
+
+func (poa *Poa) getProposersFromACL() ([]*cons_base.CandidateInfo, error) {
+	acl, confirmed, err := poa.utxoVM.QueryAccountACLWithConfirmed(poa.accountName)
+	if err != nil {
+		//poa.log.Error(err.Error())
+		return nil, err
+	}
+	if acl == nil || !confirmed {
+		poa.log.Warn("no acl in current account", "acl", acl, "confirmed", confirmed)
+		return nil, errors.New("no acl in current account")
+	}
+	poa.mutex.Lock()
+	defer poa.mutex.Unlock()
+	l := 0
+	r := len(acl.AksWeight)
+	tmpSet := make([]*cons_base.CandidateInfo, r)
+	for address, weight := range acl.AksWeight {
+		if weight > 0 {
+			tmpSet[l] = &cons_base.CandidateInfo{
+				Address:  address,
+				PeerAddr: "",
+			}
+			l++
+		} else {
+			tmpSet[r] = &cons_base.CandidateInfo{
+				Address:  address,
+				PeerAddr: "",
+			}
+			r--
+		}
+	}
+	if l > 1 {
+		poa.log.Warn("more than one weights are greater than 0, means there are more than one CAs")
+	}
+	proposers, _ := json.Marshal(poa.proposerInfos)
+	poa.log.Info("the proposers is now updated", "proposers", proposers)
+	return tmpSet, nil
 }
