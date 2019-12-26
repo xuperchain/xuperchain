@@ -17,7 +17,6 @@ import (
 	"github.com/xuperchain/xuperunion/consensus/common/chainedbft"
 	bft_config "github.com/xuperchain/xuperunion/consensus/common/chainedbft/config"
 	"github.com/xuperchain/xuperunion/consensus/poa/bft"
-	"github.com/xuperchain/xuperunion/contract"
 	crypto_base "github.com/xuperchain/xuperunion/crypto/client/base"
 	"github.com/xuperchain/xuperunion/global"
 	"github.com/xuperchain/xuperunion/ledger"
@@ -361,11 +360,6 @@ func (poa *Poa) InitCurrent(block *pb.InternalBlock) error {
 // Stop is the specific implementation of interface contract
 func (poa *Poa) Stop() {
 	poa.bftPaceMaker.Stop()
-}
-
-// ReadOutput is the specific implementation of interface contract
-func (poa *Poa) ReadOutput(desc *contract.TxDesc) (contract.ContractOutputInterface, error) {
-	return nil, nil
 }
 
 // GetCoreMiners get the information of core miners

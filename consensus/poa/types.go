@@ -26,8 +26,6 @@ var (
 const (
 	// TYPE the type of poa
 	TYPE = "poa"
-	// 验证人生成
-	checkvValidaterMethod = "check_validater"
 )
 
 // Poa is struct of poa consensus
