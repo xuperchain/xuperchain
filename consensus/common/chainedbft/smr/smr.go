@@ -202,7 +202,7 @@ func (s *Smr) GetGenerateQC() (*pb.QuorumCert, error) {
 
 // ProcessProposal used to generate new QuorumCert and broadcast to other replicas
 func (s *Smr) ProcessProposal(viewNumber int64, proposalID,
-	proposalMsg []byte) (*pb.QuorumCert, error) {
+	proposalMsg []byte, withDefaultPeer bool) (*pb.QuorumCert, error) {
 	qc := &pb.QuorumCert{
 		ProposalId:  proposalID,
 		ProposalMsg: proposalMsg,
@@ -239,6 +239,9 @@ func (s *Smr) ProcessProposal(viewNumber int64, proposalID,
 	opts := []p2pv2.MessageOption{
 		p2pv2.WithBcName(s.bcname),
 		p2pv2.WithTargetPeerAddrs(s.getReplicasURL()),
+	}
+	if withDefaultPeer {
+		opts = append(opts, p2pv2.WithFilters([]p2pv2.FilterStrategy{p2pv2.DefaultStrategy}))
 	}
 	go s.p2p.SendMessage(context.Background(), netMsg, opts...)
 	return qc, nil

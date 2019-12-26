@@ -86,8 +86,8 @@ func (cb *ChainedBft) GetGenerateQC() (*pb.QuorumCert, error) {
 }
 
 // ProcessProposal used to generate new QuorumCert and broadcast to other replicas
-func (cb *ChainedBft) ProcessProposal(viewNumber int64, proposalID, proposalMsg []byte) (*pb.QuorumCert, error) {
-	return cb.smr.ProcessProposal(viewNumber, proposalID, proposalMsg)
+func (cb *ChainedBft) ProcessProposal(viewNumber int64, proposalID, proposalMsg []byte, withDefaultPeer bool) (*pb.QuorumCert, error) {
+	return cb.smr.ProcessProposal(viewNumber, proposalID, proposalMsg, withDefaultPeer)
 }
 
 // UpdateValidateSets will update the validates while
