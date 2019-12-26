@@ -81,8 +81,9 @@ func (ppm *PoaPaceMaker) NextNewProposal(proposalID []byte, data interface{}) er
 		return err
 	}
 	// set current view number to block height
-	ppm.currentView = block.GetBlock().GetHeight()
-	_, err = ppm.cbft.ProcessProposal(ppm.currentView, blockid, blockMsg)
+	dpm.currentView = block.GetBlock().GetHeight()
+	_, err = dpm.cbft.ProcessProposal(dpm.currentView, blockid, blockMsg, true)
+
 	if err != nil {
 		ppm.log.Warn("ProcessProposal failed", "error", err)
 		return err
