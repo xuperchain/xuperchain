@@ -59,7 +59,7 @@ func MakeSmr(t *testing.T) (*Smr, error) {
 	}
 
 	validates := []*cons_base.CandidateInfo{
-		&cons_base.CandidateInfo{
+		{
 			Address:  "dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN",
 			PeerAddr: "",
 		},
@@ -213,7 +213,7 @@ func TestProcessProposal(t *testing.T) {
 		t.Error("TestProcessProposal MakeSmr error", err)
 		return
 	}
-	_, err = smr.ProcessProposal(1005, []byte("test proposalID"), []byte("test proposalMsg"))
+	_, err = smr.ProcessProposal(1005, []byte("test proposalID"), []byte("test proposalMsg"), false)
 	if err != nil {
 		t.Error("TestProcessProposal error", err)
 	}
@@ -337,10 +337,10 @@ func TestUpdateValidateSets(t *testing.T) {
 		return
 	}
 	validates := []*cons_base.CandidateInfo{
-		&cons_base.CandidateInfo{
+		{
 			Address: "dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN",
 		},
-		&cons_base.CandidateInfo{
+		{
 			Address: "dpzuVdosQrF2kmzumhVeFQZa1aYcdgFp1",
 		},
 	}
