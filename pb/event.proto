@@ -24,6 +24,7 @@ enum EventType {
   BLOCK = 1;
   TRANSACTION = 2;
   ACCOUNT = 3;
+  SUBSCRIBE_RESPONSE = 4;
 }
 
 // BlockStatusInfo 区块元数据
@@ -97,11 +98,6 @@ message Event {
   string id = 1;
   EventType type = 2;
   bytes payload = 3;
-}
-
-// SubscribeEvent 订阅产生的event_id
-message SubscribeEvent {
-  EventRequest request = 1;
 }
 
 // BlockEvent 订阅区块返回
