@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/docker/docker/client"
+	docker "github.com/fsouza/go-dockerclient"
 	log "github.com/xuperchain/log15"
 	"google.golang.org/grpc"
 
@@ -52,6 +52,8 @@ type standardNativeContract struct {
 	mgr  *GeneralSCFramework
 	vsnc *versionedStandardNativeContract
 	log.Logger
+
+	dockerClient *docker.Client
 }
 
 func (snc *standardNativeContract) Init() error {
@@ -129,14 +131,13 @@ func (snc *standardNativeContract) GetNativeCodeDigest() ([]byte, error) {
 
 func (snc *standardNativeContract) newProcess() Process {
 	if snc.mgr.cfg.Docker.Enable {
-		client, _ := client.NewEnvClient()
 		return &DockerProcess{
 			basedir:       snc.basedir,
 			binpath:       snc.binpath,
 			sockpath:      snc.sockpath,
 			chainSockPath: snc.chainSockPath,
 			cfg:           &snc.mgr.cfg.Docker,
-			client:        client,
+			client:        snc.dockerClient,
 			Logger:        snc.Logger.New("module", "DockerProcess"),
 		}
 	}

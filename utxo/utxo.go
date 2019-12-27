@@ -180,6 +180,7 @@ type UtxoLockItem struct {
 
 type contractChainCore struct {
 	*acli.Manager // ACL manager for read/write acl table
+	*UtxoVM
 }
 
 func genUtxoKey(addr []byte, txid []byte, offset int32) string {
@@ -639,6 +640,9 @@ func GenerateRootTx(js []byte) (*pb.Transaction, error) {
 //输入: 转账人地址、公钥、金额、是否需要锁定utxo
 //输出：选出的utxo、utxo keys、实际构成的金额(可能大于需要的金额)、错误码
 func (uv *UtxoVM) SelectUtxos(fromAddr string, fromPubKey string, totalNeed *big.Int, needLock, excludeUnconfirmed bool) ([]*pb.TxInput, [][]byte, *big.Int, error) {
+	if totalNeed.Cmp(big.NewInt(0)) == 0 {
+		return nil, nil, big.NewInt(0), nil
+	}
 	curLedgerHeight := uv.ledger.GetMeta().TrunkHeight
 	willLockKeys := make([][]byte, 0)
 	foundEnough := false
@@ -806,6 +810,7 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 		ResourceLimits:           contract.MaxLimits,
 		Core: contractChainCore{
 			Manager: uv.aclMgr,
+			UtxoVM:  uv,
 		},
 		BCName: uv.bcname,
 	}

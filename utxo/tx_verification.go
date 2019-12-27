@@ -88,7 +88,7 @@ func (uv *UtxoVM) ImmediateVerifyTx(tx *pb.Transaction, isRootTx bool) (bool, er
 		}
 
 		// get all authenticated users
-		authUsers := uv.removeDuplicateUser(tx)
+		authUsers := uv.removeDuplicateUser(tx.GetInitiator(), tx.GetAuthRequire())
 
 		// veify tx UTXO input permission (Account ACL)
 		ok, err = uv.verifyUTXOPermission(tx, verifiedID)
@@ -508,6 +508,7 @@ func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
 		ContractName: "",
 		Core: contractChainCore{
 			Manager: uv.aclMgr,
+			UtxoVM:  uv,
 		},
 		BCName: uv.bcname,
 	}
@@ -690,14 +691,14 @@ func (uv *UtxoVM) checkRelyOnMarkedTxid(reftxid []byte, blockid []byte) (bool, b
 }
 
 // removeDuplicateUser combine initiator and auth_require and remove duplicate users
-func (uv *UtxoVM) removeDuplicateUser(tx *pb.Transaction) []string {
+func (uv *UtxoVM) removeDuplicateUser(initiator string, authRequire []string) []string {
 	dupCheck := make(map[string]bool)
 	finalUsers := make([]string, 0)
-	if acl.IsAccount(tx.Initiator) == 0 {
-		finalUsers = append(finalUsers, tx.Initiator)
-		dupCheck[tx.Initiator] = true
+	if acl.IsAccount(initiator) == 0 {
+		finalUsers = append(finalUsers, initiator)
+		dupCheck[initiator] = true
 	}
-	for _, user := range tx.AuthRequire {
+	for _, user := range authRequire {
 		if dupCheck[user] {
 			continue
 		}
@@ -705,4 +706,10 @@ func (uv *UtxoVM) removeDuplicateUser(tx *pb.Transaction) []string {
 		dupCheck[user] = true
 	}
 	return finalUsers
+}
+
+// VerifyContractPermission implement Contract ChainCore, used to verify contract permission while contract running
+func (uv *UtxoVM) VerifyContractPermission(initiator string, authRequire []string, contractName, methodName string) (bool, error) {
+	allUsers := uv.removeDuplicateUser(initiator, authRequire)
+	return pm.CheckContractMethodPerm(allUsers, contractName, methodName, uv.aclMgr)
 }

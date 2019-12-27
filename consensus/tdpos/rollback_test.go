@@ -33,7 +33,11 @@ func TestRollBackVote(t *testing.T) {
 		t.Error("roll back vote error ", rollBackVoteErr.Error())
 	}
 	// add cache
-	tdpos.candidateBallotsCache.LoadOrStore("D_candidate_ballots_f3prTg9itaZY6m48wXXikXdcxiByW7zgk", int64(1))
+	canBal := &candidateBallotsCacheValue{
+		ballots: int64(1),
+		isDel:   false,
+	}
+	tdpos.candidateBallotsCache.LoadOrStore("D_candidate_ballots_f3prTg9itaZY6m48wXXikXdcxiByW7zgk", canBal)
 	rollBackVoteErr = tdpos.rollbackVote(desc2, block)
 	if rollBackVoteErr != nil {
 		t.Error("roll back vote error ", rollBackVoteErr.Error())

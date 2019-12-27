@@ -159,6 +159,11 @@ func TestValidateRevokeVote(t *testing.T) {
 	txReq.FromAddr = AliceAddress
 	txReq.FromPubkey = AlicePubkey
 	txReq.FromScrkey = AlicePrivateKey
+	txDataAccount := &pb.TxDataAccount{
+		Address: AliceAddress,
+		Amount:  "1",
+	}
+	txReq.Account = append(txReq.Account, txDataAccount)
 	txCons, errCons := utxoVM.GenerateTx(txReq)
 	if errCons != nil {
 		t.Error("GenerateTx error ", errCons.Error())
@@ -216,7 +221,7 @@ func TestValidateRevokeVote(t *testing.T) {
 
 	voteInfo, errValid := tdpos.validateVote(desc3)
 	if errValid != nil {
-		t.Error("validateVote error ", errValid.Error())
+		t.Error("validateVote error ", errValid.Error(), desc3)
 	} else {
 		t.Log("voteInfo ", voteInfo)
 	}

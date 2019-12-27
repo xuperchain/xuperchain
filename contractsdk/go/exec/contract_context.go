@@ -1,6 +1,7 @@
 package exec
 
 import (
+	"log"
 	"math/big"
 
 	"github.com/xuperchain/xuperunion/contractsdk/go/code"
@@ -182,5 +183,9 @@ func (c *contractContext) SetOutput(response *code.Response) error {
 		},
 	}
 	rep := new(pb.SetOutputResponse)
-	return c.bridgeCallFunc(methodOutput, req, rep)
+	err := c.bridgeCallFunc(methodOutput, req, rep)
+	if err != nil {
+		log.Printf("Setoutput error:%s", err)
+	}
+	return err
 }

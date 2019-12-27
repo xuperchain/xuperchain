@@ -99,7 +99,13 @@ func makeTxWithDesc(strDesc []byte, U *utxo.UtxoVM, L *ledger.Ledger, t *testing
 	txReq.FromAddr = AliceAddress
 	txReq.FromPubkey = AlicePubkey
 	txReq.FromScrkey = AlicePrivateKey
+	txDataAccount := &pb.TxDataAccount{
+		Address: AliceAddress,
+		Amount:  "1",
+	}
+	txReq.Account = append(txReq.Account, txDataAccount)
 	txCons, errCons := U.GenerateTx(txReq)
+	//fmt.Println("----------------------transaction:", txCons)
 	if errCons != nil {
 		t.Error("GenerateTx error ", errCons.Error())
 	}
@@ -267,7 +273,7 @@ func TestRunRevokeCandidate(t *testing.T) {
 	}
 	revokeCandErr := tdpos.runRevokeCandidate(desc2, block)
 	if revokeCandErr != nil {
-		t.Error("runRevokeCandidate error ", revokeCandErr.Error())
+		t.Error("runRevokeCandidate error ", revokeCandErr.Error(), desc2)
 	}
 }
 
