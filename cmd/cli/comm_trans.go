@@ -613,3 +613,54 @@ func printTx(tx *pb.Transaction) error {
 
 	return nil
 }
+
+func (c *CommTrans) GenTxInputsWithMergeUTXO(ctx context.Context) ([]*pb.TxInput, *pb.TxOutput, error) {
+	var fromAddr string
+	var err error
+	if c.From != "" {
+		fromAddr = c.From
+	} else {
+		fromAddr, err = readAddress(c.Keys)
+		if err != nil {
+			return nil, nil, err
+		}
+	}
+
+	utxoInput := &pb.UtxoInput{
+		Bcname:   c.ChainName,
+		Address:  fromAddr,
+		NeedLock: true,
+	}
+
+	utxoOutputs, err := c.XchainClient.SelectUTXOBySize(ctx, utxoInput)
+	if err != nil {
+		return nil, nil, fmt.Errorf("%v, details:%v", ErrSelectUtxo, err)
+	}
+	if utxoOutputs.Header.Error != pb.XChainErrorEnum_SUCCESS {
+		return nil, nil, fmt.Errorf("%v, details:%v", ErrSelectUtxo, utxoOutputs.Header.Error)
+	}
+
+	// 组装txInputs
+	var txInputs []*pb.TxInput
+	var txOutput *pb.TxOutput
+	for _, utxo := range utxoOutputs.UtxoList {
+		txInput := &pb.TxInput{
+			RefTxid:   utxo.RefTxid,
+			RefOffset: utxo.RefOffset,
+			FromAddr:  utxo.ToAddr,
+			Amount:    utxo.Amount,
+		}
+		txInputs = append(txInputs, txInput)
+	}
+
+	utxoTotal, ok := big.NewInt(0).SetString(utxoOutputs.TotalSelected, 10)
+	if !ok {
+		return nil, nil, ErrSelectUtxo
+	}
+	txOutput = &pb.TxOutput{
+		ToAddr: []byte(fromAddr),
+		Amount: utxoTotal.Bytes(),
+	}
+
+	return txInputs, txOutput, nil
+}
