@@ -89,31 +89,31 @@ func (EventType) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_2d17a9d3f0ddf27e, []int{1}
 }
 
-type UnSubscribeStatusInfo int32
+type UnsubscribeStatusInfo int32
 
 const (
-	UnSubscribeStatusInfo_UNSUBSCRIBE_UNDEFINED UnSubscribeStatusInfo = 0
-	UnSubscribeStatusInfo_UNSUBSCRIBE_SUCCESS   UnSubscribeStatusInfo = 1
-	UnSubscribeStatusInfo_UNSUBSCRIBE_FAILED    UnSubscribeStatusInfo = 2
+	UnsubscribeStatusInfo_UNSUBSCRIBE_UNDEFINED UnsubscribeStatusInfo = 0
+	UnsubscribeStatusInfo_UNSUBSCRIBE_SUCCESS   UnsubscribeStatusInfo = 1
+	UnsubscribeStatusInfo_UNSUBSCRIBE_FAILED    UnsubscribeStatusInfo = 2
 )
 
-var UnSubscribeStatusInfo_name = map[int32]string{
+var UnsubscribeStatusInfo_name = map[int32]string{
 	0: "UNSUBSCRIBE_UNDEFINED",
 	1: "UNSUBSCRIBE_SUCCESS",
 	2: "UNSUBSCRIBE_FAILED",
 }
 
-var UnSubscribeStatusInfo_value = map[string]int32{
+var UnsubscribeStatusInfo_value = map[string]int32{
 	"UNSUBSCRIBE_UNDEFINED": 0,
 	"UNSUBSCRIBE_SUCCESS":   1,
 	"UNSUBSCRIBE_FAILED":    2,
 }
 
-func (x UnSubscribeStatusInfo) String() string {
-	return proto.EnumName(UnSubscribeStatusInfo_name, int32(x))
+func (x UnsubscribeStatusInfo) String() string {
+	return proto.EnumName(UnsubscribeStatusInfo_name, int32(x))
 }
 
-func (UnSubscribeStatusInfo) EnumDescriptor() ([]byte, []int) {
+func (UnsubscribeStatusInfo) EnumDescriptor() ([]byte, []int) {
 	return fileDescriptor_2d17a9d3f0ddf27e, []int{2}
 }
 
@@ -508,40 +508,40 @@ func (m *AccountEventRequest) GetNeedContent() bool {
 	return false
 }
 
-// UnSubscribeRequest 取消事件订阅请求
-type UnSubscribeRequest struct {
+// UnsubscribeRequest 取消事件订阅请求
+type UnsubscribeRequest struct {
 	Id                   string   `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *UnSubscribeRequest) Reset()         { *m = UnSubscribeRequest{} }
-func (m *UnSubscribeRequest) String() string { return proto.CompactTextString(m) }
-func (*UnSubscribeRequest) ProtoMessage()    {}
-func (*UnSubscribeRequest) Descriptor() ([]byte, []int) {
+func (m *UnsubscribeRequest) Reset()         { *m = UnsubscribeRequest{} }
+func (m *UnsubscribeRequest) String() string { return proto.CompactTextString(m) }
+func (*UnsubscribeRequest) ProtoMessage()    {}
+func (*UnsubscribeRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_2d17a9d3f0ddf27e, []int{7}
 }
 
-func (m *UnSubscribeRequest) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_UnSubscribeRequest.Unmarshal(m, b)
+func (m *UnsubscribeRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_UnsubscribeRequest.Unmarshal(m, b)
 }
-func (m *UnSubscribeRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_UnSubscribeRequest.Marshal(b, m, deterministic)
+func (m *UnsubscribeRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_UnsubscribeRequest.Marshal(b, m, deterministic)
 }
-func (m *UnSubscribeRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_UnSubscribeRequest.Merge(m, src)
+func (m *UnsubscribeRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UnsubscribeRequest.Merge(m, src)
 }
-func (m *UnSubscribeRequest) XXX_Size() int {
-	return xxx_messageInfo_UnSubscribeRequest.Size(m)
+func (m *UnsubscribeRequest) XXX_Size() int {
+	return xxx_messageInfo_UnsubscribeRequest.Size(m)
 }
-func (m *UnSubscribeRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_UnSubscribeRequest.DiscardUnknown(m)
+func (m *UnsubscribeRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_UnsubscribeRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_UnSubscribeRequest proto.InternalMessageInfo
+var xxx_messageInfo_UnsubscribeRequest proto.InternalMessageInfo
 
-func (m *UnSubscribeRequest) GetId() string {
+func (m *UnsubscribeRequest) GetId() string {
 	if m != nil {
 		return m.Id
 	}
@@ -549,52 +549,52 @@ func (m *UnSubscribeRequest) GetId() string {
 }
 
 //////// 事件订阅返回数据结构
-/////// UnSubscribeResponse 取消订阅pb接口
-type UnSubscribeResponse struct {
+/////// UnsubscribeResponse 取消订阅pb接口
+type UnsubscribeResponse struct {
 	Id                   string                `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Status               UnSubscribeStatusInfo `protobuf:"varint,3,opt,name=status,proto3,enum=pb.UnSubscribeStatusInfo" json:"status,omitempty"`
+	Status               UnsubscribeStatusInfo `protobuf:"varint,3,opt,name=status,proto3,enum=pb.UnsubscribeStatusInfo" json:"status,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}              `json:"-"`
 	XXX_unrecognized     []byte                `json:"-"`
 	XXX_sizecache        int32                 `json:"-"`
 }
 
-func (m *UnSubscribeResponse) Reset()         { *m = UnSubscribeResponse{} }
-func (m *UnSubscribeResponse) String() string { return proto.CompactTextString(m) }
-func (*UnSubscribeResponse) ProtoMessage()    {}
-func (*UnSubscribeResponse) Descriptor() ([]byte, []int) {
+func (m *UnsubscribeResponse) Reset()         { *m = UnsubscribeResponse{} }
+func (m *UnsubscribeResponse) String() string { return proto.CompactTextString(m) }
+func (*UnsubscribeResponse) ProtoMessage()    {}
+func (*UnsubscribeResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_2d17a9d3f0ddf27e, []int{8}
 }
 
-func (m *UnSubscribeResponse) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_UnSubscribeResponse.Unmarshal(m, b)
+func (m *UnsubscribeResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_UnsubscribeResponse.Unmarshal(m, b)
 }
-func (m *UnSubscribeResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_UnSubscribeResponse.Marshal(b, m, deterministic)
+func (m *UnsubscribeResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_UnsubscribeResponse.Marshal(b, m, deterministic)
 }
-func (m *UnSubscribeResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_UnSubscribeResponse.Merge(m, src)
+func (m *UnsubscribeResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_UnsubscribeResponse.Merge(m, src)
 }
-func (m *UnSubscribeResponse) XXX_Size() int {
-	return xxx_messageInfo_UnSubscribeResponse.Size(m)
+func (m *UnsubscribeResponse) XXX_Size() int {
+	return xxx_messageInfo_UnsubscribeResponse.Size(m)
 }
-func (m *UnSubscribeResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_UnSubscribeResponse.DiscardUnknown(m)
+func (m *UnsubscribeResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_UnsubscribeResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_UnSubscribeResponse proto.InternalMessageInfo
+var xxx_messageInfo_UnsubscribeResponse proto.InternalMessageInfo
 
-func (m *UnSubscribeResponse) GetId() string {
+func (m *UnsubscribeResponse) GetId() string {
 	if m != nil {
 		return m.Id
 	}
 	return ""
 }
 
-func (m *UnSubscribeResponse) GetStatus() UnSubscribeStatusInfo {
+func (m *UnsubscribeResponse) GetStatus() UnsubscribeStatusInfo {
 	if m != nil {
 		return m.Status
 	}
-	return UnSubscribeStatusInfo_UNSUBSCRIBE_UNDEFINED
+	return UnsubscribeStatusInfo_UNSUBSCRIBE_UNDEFINED
 }
 
 ///// Event 将多种事件订阅回复统一为Event, 易于扩展
@@ -800,7 +800,7 @@ func (m *AccountEvent) GetTx() *Transaction {
 func init() {
 	proto.RegisterEnum("pb.BlockStatus", BlockStatus_name, BlockStatus_value)
 	proto.RegisterEnum("pb.EventType", EventType_name, EventType_value)
-	proto.RegisterEnum("pb.UnSubscribeStatusInfo", UnSubscribeStatusInfo_name, UnSubscribeStatusInfo_value)
+	proto.RegisterEnum("pb.UnsubscribeStatusInfo", UnsubscribeStatusInfo_name, UnsubscribeStatusInfo_value)
 	proto.RegisterType((*BlockStatusInfo)(nil), "pb.BlockStatusInfo")
 	proto.RegisterType((*TransactionStatusInfo)(nil), "pb.TransactionStatusInfo")
 	proto.RegisterType((*AccountStatusInfo)(nil), "pb.AccountStatusInfo")
@@ -808,8 +808,8 @@ func init() {
 	proto.RegisterType((*BlockEventRequest)(nil), "pb.BlockEventRequest")
 	proto.RegisterType((*TransactionEventRequest)(nil), "pb.TransactionEventRequest")
 	proto.RegisterType((*AccountEventRequest)(nil), "pb.AccountEventRequest")
-	proto.RegisterType((*UnSubscribeRequest)(nil), "pb.UnSubscribeRequest")
-	proto.RegisterType((*UnSubscribeResponse)(nil), "pb.UnSubscribeResponse")
+	proto.RegisterType((*UnsubscribeRequest)(nil), "pb.UnsubscribeRequest")
+	proto.RegisterType((*UnsubscribeResponse)(nil), "pb.UnsubscribeResponse")
 	proto.RegisterType((*Event)(nil), "pb.Event")
 	proto.RegisterType((*BlockEvent)(nil), "pb.BlockEvent")
 	proto.RegisterType((*TransactionEvent)(nil), "pb.TransactionEvent")
@@ -819,7 +819,7 @@ func init() {
 func init() { proto.RegisterFile("event.proto", fileDescriptor_2d17a9d3f0ddf27e) }
 
 var fileDescriptor_2d17a9d3f0ddf27e = []byte{
-	// 753 bytes of a gzipped FileDescriptorProto
+	// 754 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x55, 0xed, 0x6e, 0xe2, 0x46,
 	0x14, 0xad, 0x6d, 0x20, 0xf8, 0xda, 0x09, 0xce, 0x20, 0x02, 0x49, 0x5b, 0x15, 0x50, 0xa5, 0x45,
 	0x54, 0x1b, 0xb5, 0xf4, 0x77, 0x2b, 0x81, 0xe3, 0xd5, 0xa2, 0x5d, 0x99, 0xd5, 0xd8, 0x48, 0xab,
@@ -845,7 +845,7 @@ var fileDescriptor_2d17a9d3f0ddf27e = []byte{
 	0x28, 0x4d, 0x64, 0xac, 0x64, 0x18, 0xce, 0xa1, 0x23, 0x5d, 0x8d, 0x63, 0x5d, 0x14, 0xba, 0xc5,
 	0x7b, 0x1f, 0x48, 0xfa, 0x12, 0xe4, 0xfb, 0x38, 0xfc, 0xb0, 0x71, 0x7c, 0x3f, 0x2e, 0x54, 0xb5,
 	0x33, 0x60, 0xee, 0xfb, 0x31, 0xea, 0xc3, 0x19, 0x0b, 0xf3, 0x50, 0xae, 0xaa, 0xc5, 0x42, 0x1e,
-	0xa8, 0xf3, 0x49, 0xc7, 0x7c, 0xdf, 0x02, 0x5a, 0x53, 0x2b, 0x75, 0x13, 0x2f, 0x0e, 0x5c, 0xb2,
+	0xa8, 0xf3, 0x49, 0xc7, 0x7c, 0xdf, 0x02, 0x5a, 0xd3, 0x24, 0x75, 0x13, 0x2f, 0x0e, 0x5c, 0xb2,
 	0xa3, 0xbb, 0x00, 0x31, 0xf0, 0x0b, 0x1e, 0x31, 0xf0, 0xc7, 0xef, 0xa1, 0x7b, 0x90, 0x95, 0x44,
 	0x21, 0x4d, 0x48, 0x3d, 0x0d, 0xfd, 0x50, 0xf3, 0xf6, 0x75, 0x66, 0xa1, 0x4a, 0xe1, 0xde, 0xc2,
 	0xa5, 0x07, 0x6d, 0x68, 0xf2, 0x8b, 0x1e, 0xf5, 0xda, 0x99, 0x51, 0x3c, 0xc9, 0x8c, 0xd2, 0xa1,
@@ -864,10 +864,10 @@ var fileDescriptor_2d17a9d3f0ddf27e = []byte{
 	0x67, 0xed, 0x83, 0xae, 0xa1, 0xb7, 0x36, 0xf7, 0x25, 0x55, 0xd2, 0x3e, 0x74, 0xab, 0x21, 0x6b,
 	0xad, 0xeb, 0x86, 0x65, 0x69, 0x42, 0x46, 0x52, 0x0d, 0xbc, 0x9a, 0x2f, 0xdf, 0x1a, 0x77, 0x9a,
 	0x38, 0xfb, 0x13, 0xce, 0xdf, 0xa5, 0x6e, 0x92, 0xba, 0x16, 0x89, 0x3f, 0x05, 0x1e, 0x41, 0x53,
-	0x90, 0x4b, 0x4e, 0xa4, 0x95, 0xce, 0x2b, 0x96, 0xe3, 0x46, 0x2e, 0x91, 0xef, 0x05, 0xf4, 0x33,
-	0x28, 0x15, 0x85, 0xe8, 0xaa, 0xe6, 0xf8, 0x5d, 0x4d, 0xff, 0x08, 0xcf, 0x57, 0xc8, 0x6d, 0xf1,
-	0x0f, 0xd7, 0x8f, 0xff, 0x06, 0x00, 0x00, 0xff, 0xff, 0x3a, 0xfd, 0x50, 0x23, 0xd9, 0x06, 0x00,
-	0x00,
+	0x90, 0xad, 0x1d, 0x27, 0xd2, 0x4a, 0xe7, 0x15, 0xcb, 0x71, 0x23, 0x97, 0xc8, 0xf7, 0x02, 0xfa,
+	0x19, 0x94, 0x8a, 0x42, 0x74, 0x55, 0x73, 0xfc, 0xae, 0xa6, 0x7f, 0x84, 0xe7, 0x2b, 0xe4, 0xb6,
+	0xf8, 0x87, 0xeb, 0xc7, 0x7f, 0x03, 0x00, 0x00, 0xff, 0xff, 0x91, 0x57, 0xf4, 0xa4, 0xd9, 0x06,
+	0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -883,7 +883,7 @@ const _ = grpc.SupportPackageIsVersion4
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type PubsubServiceClient interface {
 	Subscribe(ctx context.Context, in *EventRequest, opts ...grpc.CallOption) (PubsubService_SubscribeClient, error)
-	UnSubscribe(ctx context.Context, in *UnSubscribeRequest, opts ...grpc.CallOption) (*UnSubscribeResponse, error)
+	Unsubscribe(ctx context.Context, in *UnsubscribeRequest, opts ...grpc.CallOption) (*UnsubscribeResponse, error)
 }
 
 type pubsubServiceClient struct {
@@ -926,9 +926,9 @@ func (x *pubsubServiceSubscribeClient) Recv() (*Event, error) {
 	return m, nil
 }
 
-func (c *pubsubServiceClient) UnSubscribe(ctx context.Context, in *UnSubscribeRequest, opts ...grpc.CallOption) (*UnSubscribeResponse, error) {
-	out := new(UnSubscribeResponse)
-	err := c.cc.Invoke(ctx, "/pb.PubsubService/UnSubscribe", in, out, opts...)
+func (c *pubsubServiceClient) Unsubscribe(ctx context.Context, in *UnsubscribeRequest, opts ...grpc.CallOption) (*UnsubscribeResponse, error) {
+	out := new(UnsubscribeResponse)
+	err := c.cc.Invoke(ctx, "/pb.PubsubService/Unsubscribe", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -938,7 +938,7 @@ func (c *pubsubServiceClient) UnSubscribe(ctx context.Context, in *UnSubscribeRe
 // PubsubServiceServer is the server API for PubsubService service.
 type PubsubServiceServer interface {
 	Subscribe(*EventRequest, PubsubService_SubscribeServer) error
-	UnSubscribe(context.Context, *UnSubscribeRequest) (*UnSubscribeResponse, error)
+	Unsubscribe(context.Context, *UnsubscribeRequest) (*UnsubscribeResponse, error)
 }
 
 func RegisterPubsubServiceServer(s *grpc.Server, srv PubsubServiceServer) {
@@ -966,20 +966,20 @@ func (x *pubsubServiceSubscribeServer) Send(m *Event) error {
 	return x.ServerStream.SendMsg(m)
 }
 
-func _PubsubService_UnSubscribe_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UnSubscribeRequest)
+func _PubsubService_Unsubscribe_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UnsubscribeRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(PubsubServiceServer).UnSubscribe(ctx, in)
+		return srv.(PubsubServiceServer).Unsubscribe(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/pb.PubsubService/UnSubscribe",
+		FullMethod: "/pb.PubsubService/Unsubscribe",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(PubsubServiceServer).UnSubscribe(ctx, req.(*UnSubscribeRequest))
+		return srv.(PubsubServiceServer).Unsubscribe(ctx, req.(*UnsubscribeRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -989,8 +989,8 @@ var _PubsubService_serviceDesc = grpc.ServiceDesc{
 	HandlerType: (*PubsubServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "UnSubscribe",
-			Handler:    _PubsubService_UnSubscribe_Handler,
+			MethodName: "Unsubscribe",
+			Handler:    _PubsubService_Unsubscribe_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

@@ -7,7 +7,7 @@ import "xchain.proto";
 // rpc api
 service PubsubService {
   rpc Subscribe (EventRequest) returns (stream Event);
-  rpc UnSubscribe (UnSubscribeRequest) returns (UnSubscribeResponse);
+  rpc Unsubscribe (UnsubscribeRequest) returns (UnsubscribeResponse);
 }
 
 // BlockStatus block status
@@ -44,7 +44,7 @@ message AccountStatusInfo {
   TransactionStatus status = 2;
 }
 
-enum UnSubscribeStatusInfo {
+enum UnsubscribeStatusInfo {
   UNSUBSCRIBE_UNDEFINED = 0;
   UNSUBSCRIBE_SUCCESS = 1;
   UNSUBSCRIBE_FAILED = 2;
@@ -81,16 +81,16 @@ message AccountEventRequest {
   bool need_content = 3;
 }
 
-// UnSubscribeRequest 取消事件订阅请求
-message UnSubscribeRequest {
+// UnsubscribeRequest 取消事件订阅请求
+message UnsubscribeRequest {
   string id = 1;
 }
 
 //////// 事件订阅返回数据结构
-/////// UnSubscribeResponse 取消订阅pb接口
-message UnSubscribeResponse {
+/////// UnsubscribeResponse 取消订阅pb接口
+message UnsubscribeResponse {
   string id = 1;
-  UnSubscribeStatusInfo status = 3;
+  UnsubscribeStatusInfo status = 3;
 }
 
 ///// Event 将多种事件订阅回复统一为Event, 易于扩展
