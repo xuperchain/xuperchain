@@ -25,7 +25,7 @@ func validateSendBlock(block *pb.Block) error {
 	return nil
 }
 
-func validUtxoAccess(in *pb.UtxoInput, bc *xchaincore.XChainCore) bool {
+func validUtxoAccess(in *pb.UtxoInput, bc *xchaincore.XChainCore, requestAmount int64) bool {
 	if bc == nil {
 		return false
 	}
@@ -38,7 +38,7 @@ func validUtxoAccess(in *pb.UtxoInput, bc *xchaincore.XChainCore) bool {
 	if err != nil {
 		return false
 	}
-	checkSignResult, err := bc.CryptoClient.VerifyECDSA(publicKey, in.UserSign, hash.DoubleSha256([]byte(in.Bcname+in.Address+in.TotalNeed+strconv.FormatBool(in.NeedLock))))
+	checkSignResult, err := bc.CryptoClient.VerifyECDSA(publicKey, in.UserSign, hash.DoubleSha256([]byte(in.Bcname+in.Address+strconv.FormatInt(requestAmount, 10)+strconv.FormatBool(in.NeedLock))))
 	if err != nil {
 		return false
 	}
