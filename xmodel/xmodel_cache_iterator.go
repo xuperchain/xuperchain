@@ -53,9 +53,13 @@ func (mc *XMCache) NewXModelCacheIterator(bucket string, startKey []byte, endKey
 	iters = append(iters, mcoi)
 	mcii := mc.inputsCache.NewIterator(&util.Range{Start: rawStartKey, Limit: rawEndKey})
 	iters = append(iters, mcii)
-	mi, err := mc.model.Select(bucket, startKey, endKey)
-	if err != nil {
-		return nil, err
+	var mi Iterator
+	if mc.isPenetrate {
+		var err error
+		mi, err = mc.model.Select(bucket, startKey, endKey)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return &XMCacheIterator{
 		mIter:     mi,
@@ -179,7 +183,9 @@ func (mci *XMCacheIterator) Release() {
 		return
 	}
 	mci.dir = dirReleased
-	mci.mIter.Release()
+	if mci.mIter != nil {
+		mci.mIter.Release()
+	}
 	for _, it := range mci.iters {
 		it.Release()
 	}
