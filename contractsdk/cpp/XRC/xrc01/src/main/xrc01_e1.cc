@@ -18,6 +18,10 @@ bool safe_stoull(const std::string* in, uint64_t* out) {
     if (!in) {
         return false;
     }
+    if (in->substr(0,1) == "-") {
+        printf("issue error, param amount can not be negative \n");
+        return false;
+    }
     std::string::size_type sz = 0;
     (*out) = std::stoull((*in), &sz);
     if (sz != in->size()) {
