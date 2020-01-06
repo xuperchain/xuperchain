@@ -18,13 +18,16 @@ bool safe_stoull(const std::string* in, uint64_t* out) {
     if (!in) {
         return false;
     }
-    if (in->substr(0,1) == "-") {
+    size_t first = in->find_first_not_of(' ');
+    size_t last = in->find_last_not_of(' ');
+    std::string in_trimed = in->substr(first, (last-first+1));
+    if (in_trimed.substr(0,1) == "-") {
         printf("issue error, param amount can not be negative \n");
         return false;
     }
     std::string::size_type sz = 0;
-    (*out) = std::stoull((*in), &sz);
-    if (sz != in->size()) {
+    (*out) = std::stoull((in_trimed), &sz);
+    if (sz != in_trimed.size()) {
         return false;
     }
     return true;
