@@ -17,6 +17,7 @@ type kvIterator struct {
 	curBuf       *pb.IteratorItem   // pointer of current position
 	curIdx       int                // next index
 	c            *contractContext   // where we can get the kv items
+	end          bool
 	err          error
 	start, limit []byte
 }
@@ -45,13 +46,19 @@ func (ki *kvIterator) load() {
 		ki.err = err
 		return
 	}
+
 	if len(resp.Items) == 0 {
-		ki.start = ki.limit
+		ki.end = true
 		return
 	}
+	lastKey := resp.Items[len(resp.Items)-1].Key
+	newStartKey := make([]byte, len(lastKey)+1)
+	copy(newStartKey, lastKey)
+	newStartKey[len(lastKey)] = 1
+
 	ki.curIdx = 0
 	ki.buf = resp.Items
-	ki.start = resp.Items[len(resp.Items)-1].Key
+	ki.start = newStartKey
 }
 
 func (ki *kvIterator) Key() []byte {
@@ -63,17 +70,22 @@ func (ki *kvIterator) Value() []byte {
 }
 
 func (ki *kvIterator) Next() bool {
-	//永远保证有数据
-	if ki.curIdx == len(ki.buf) {
-		ki.load()
-	}
-	if len(ki.buf) == 0 || ki.err != nil {
+	if ki.end || ki.err != nil {
 		return false
 	}
+	//永远保证有数据
+	if ki.curIdx >= len(ki.buf) {
+		ki.load()
+		if ki.end || ki.err != nil {
+			return false
+		}
+	}
+
 	ki.curBuf = ki.buf[ki.curIdx]
 	ki.curIdx += 1
 	return true
 }
+
 func (ki *kvIterator) Error() error {
 	return ki.err
 }
