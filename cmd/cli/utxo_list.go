@@ -14,20 +14,20 @@ import (
 	"github.com/xuperchain/xuperunion/pb"
 )
 
-// QueryUtxoRecordsCommand necessary parmeters for query utxo records
-type QueryUtxoRecordsCommand struct {
+// ListUtxoCommand necessary parmeters for query utxo records
+type ListUtxoCommand struct {
 	cli         *Cli
 	cmd         *cobra.Command
 	addr        string
 	utxoItemNum int64
 }
 
-// NewQueryUtxoRecordsCommand an entry to query utxo records
-func NewQueryUtxoRecordsCommand(cli *Cli) *cobra.Command {
-	c := new(QueryUtxoRecordsCommand)
+// NewListUtxoCommand an entry to query utxo records
+func NewListUtxoCommand(cli *Cli) *cobra.Command {
+	c := new(ListUtxoCommand)
 	c.cli = cli
 	c.cmd = &cobra.Command{
-		Use:   "list-utxo",
+		Use:   "list",
 		Short: "Get utxo records info of an user.",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := context.TODO()
@@ -38,12 +38,12 @@ func NewQueryUtxoRecordsCommand(cli *Cli) *cobra.Command {
 	return c.cmd
 }
 
-func (c *QueryUtxoRecordsCommand) addFlags() {
+func (c *ListUtxoCommand) addFlags() {
 	c.cmd.Flags().StringVarP(&c.addr, "address", "A", "", "address")
 	c.cmd.Flags().Int64VarP(&c.utxoItemNum, "num", "N", 1, "utxo items to be displayed")
 }
 
-func (c *QueryUtxoRecordsCommand) queryUtxoRecords(ctx context.Context) error {
+func (c *ListUtxoCommand) queryUtxoRecords(ctx context.Context) error {
 	client := c.cli.XchainClient()
 	if c.addr == "" {
 		c.addr, _ = readAddress(c.cli.RootOptions.Keys)
