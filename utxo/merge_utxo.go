@@ -86,6 +86,7 @@ func (uv *UtxoVM) SelectUtxosBySize(fromAddr string, fromPubKey string, needLock
 		if txInputSize.Cmp(maxTxSize) == 1 {
 			txInputs = txInputs[:len(txInputs)-1]
 			amount.Sub(amount, utxoItem.Amount)
+			uv.unlockKey(key)
 			break
 		} else {
 			continue
