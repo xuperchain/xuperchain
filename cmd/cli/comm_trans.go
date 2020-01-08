@@ -282,7 +282,7 @@ func (c *CommTrans) GenTxOutputs(gasUsed int64) ([]*pb.TxOutput, *big.Int, error
 
 	// 组装txOutputs
 	bigZero := big.NewInt(0)
-	totalNeed := bigZero
+	totalNeed := big.NewInt(0)
 	txOutputs := []*pb.TxOutput{}
 	for _, acc := range accounts {
 		amount, ok := big.NewInt(0).SetString(acc.Amount, 10)
