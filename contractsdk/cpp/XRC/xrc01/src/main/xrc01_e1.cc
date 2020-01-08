@@ -14,13 +14,18 @@ bool str2bool(const std::string var, bool& var_bool) {
     return false;
 }
 
-bool safe_stoull(const std::string* in, uint64_t* out) {
-    if (!in) {
+bool safe_stoull(const std::string in, uint64_t* out) {
+    if (in == "") {
         return false;
     }
+    for (int i = 0; i < in.size(); i++) {
+        if (in[i] < '0' || in[i] > '9') {
+            return false;
+        }    
+    }
     std::string::size_type sz = 0;
-    (*out) = std::stoull((*in), &sz);
-    if (sz != in->size()) {
+    (*out) = std::stoull(in, &sz);
+    if (sz != in.size()) {
         return false;
     }
     return true;
@@ -53,13 +58,13 @@ DEFINE_METHOD(XRC01_E1, issue) {
     }
 
     uint64_t id;
-    if (!safe_stoull(&(ctx->arg("id")), &id)) {
+    if (!safe_stoull(ctx->arg("id"), &id)) {
         ctx->error("issue error, param id error");
         return;
     }
     const std::string& name = ctx->arg("name");
     uint64_t supply;
-    if (!safe_stoull(&(ctx->arg("supply")), &supply)) {
+    if (!safe_stoull(ctx->arg("supply"), &supply)) {
         ctx->error("issue error, param supply error");
         return;
     }
@@ -90,13 +95,13 @@ DEFINE_METHOD(XRC01_E1, authorization) {
     XRC01 xrc01(ctx);
     const std::string& to = ctx->arg("to");
     uint64_t token_id;
-    if (!safe_stoull(&(ctx->arg("token_id")), &token_id)) {
+    if (!safe_stoull(ctx->arg("token_id"), &token_id)) {
         ctx->error("authorization error, param token_id error");
         return;
     }
 
     uint64_t amount;
-    if (!safe_stoull(&(ctx->arg("amount")), &amount)) {
+    if (!safe_stoull(ctx->arg("amount"), &amount)) {
         ctx->error("authorization error, param amount error");
         return;
     }
@@ -114,13 +119,13 @@ DEFINE_METHOD(XRC01_E1, withdraw_authorization) {
 
     const std::string& from = ctx->arg("from");
     uint64_t token_id;
-    if (!safe_stoull(&(ctx->arg("token_id")), &token_id)) {
+    if (!safe_stoull(ctx->arg("token_id"), &token_id)) {
         ctx->error("withdraw_authorization error, param token_id error");
         return;
     }
 
     uint64_t amount;
-    if (!safe_stoull(&(ctx->arg("amount")), &amount)) {
+    if (!safe_stoull(ctx->arg("amount"), &amount)) {
         ctx->error("withdraw_authorization error, param amount error");
         return;
     }
@@ -139,13 +144,13 @@ DEFINE_METHOD(XRC01_E1, transfer) {
 
     const std::string& to = ctx->arg("to");
     uint64_t token_id;
-    if (!safe_stoull(&(ctx->arg("token_id")), &token_id)) {
+    if (!safe_stoull(ctx->arg("token_id"), &token_id)) {
         ctx->error("transfer error, param token_id error");
         return;
     }
 
     uint64_t amount;
-    if (!safe_stoull(&(ctx->arg("amount")), &amount)) {
+    if (!safe_stoull(ctx->arg("amount"), &amount)) {
         ctx->error("transfer error, param amount error");
         return;
     }
@@ -165,13 +170,13 @@ DEFINE_METHOD(XRC01_E1, authorize_transfer) {
     const std::string& from = ctx->arg("from");
     const std::string& to = ctx->arg("to");
     uint64_t token_id;
-    if (!safe_stoull(&(ctx->arg("token_id")), &token_id)) {
+    if (!safe_stoull(ctx->arg("token_id"), &token_id)) {
         ctx->error("authorize_transfer error, param token_id error");
         return;
     }
 
     uint64_t amount;
-    if (!safe_stoull(&(ctx->arg("amount")), &amount)) {
+    if (!safe_stoull(ctx->arg("amount"), &amount)) {
         ctx->error("authorize_transfer error, param amount error");
         return;
     }
@@ -190,7 +195,7 @@ DEFINE_METHOD(XRC01_E1, get_balance) {
 
     const std::string& account = ctx->arg("account");
     uint64_t token_id;
-    if (!safe_stoull(&(ctx->arg("token_id")), &token_id)) {
+    if (!safe_stoull(ctx->arg("token_id"), &token_id)) {
         ctx->error("get_balance error, param token_id error");
         return;
     }
@@ -210,7 +215,7 @@ DEFINE_METHOD(XRC01_E1, get_authorized) {
 
     const std::string& account = ctx->arg("account");
     uint64_t token_id;
-    if (!safe_stoull(&(ctx->arg("token_id")), &token_id)) {
+    if (!safe_stoull(ctx->arg("token_id"), &token_id)) {
         ctx->error("get_authorized error, param token_id error");
         return;
     }
@@ -229,7 +234,7 @@ DEFINE_METHOD(XRC01_E1, get_owner_of) {
     XRC01 xrc01(ctx);
 
     uint64_t token_id;
-    if (!safe_stoull(&(ctx->arg("token_id")), &token_id)) {
+    if (!safe_stoull(ctx->arg("token_id"), &token_id)) {
         ctx->error("get_owner_of error, param token_id error");
         return;
     }
@@ -250,7 +255,7 @@ DEFINE_METHOD(XRC01_E1, get_authorize_infos) {
 
     const std::string& account = ctx->arg("account");
     uint64_t token_id;
-    if (!safe_stoull(&(ctx->arg("token_id")), &token_id)) {
+    if (!safe_stoull(ctx->arg("token_id"), &token_id)) {
         ctx->error("get_authorize_infos error, param token_id error");
         return;
     }
@@ -279,7 +284,7 @@ DEFINE_METHOD(XRC01_E1, get_authorized_infos) {
 
     const std::string& account = ctx->arg("account");
     uint64_t token_id;
-    if (!safe_stoull(&(ctx->arg("token_id")), &token_id)) {
+    if (!safe_stoull(ctx->arg("token_id"), &token_id)) {
         ctx->error("get_authorized_infos error, param token_id error");
         return;
     }

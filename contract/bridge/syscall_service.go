@@ -273,7 +273,7 @@ func (c *SyscallService) NewIterator(ctx context.Context, in *pb.IteratorRequest
 	out := new(pb.IteratorResponse)
 	for iter.Next() && limit > 0 {
 		out.Items = append(out.Items, &pb.IteratorItem{
-			Key:   append([]byte(""), iter.Key()...), //make a copy
+			Key:   append([]byte(""), iter.Data().GetPureData().GetKey()...), //make a copy
 			Value: append([]byte(""), iter.Data().GetPureData().GetValue()...),
 		})
 		limit -= 1
