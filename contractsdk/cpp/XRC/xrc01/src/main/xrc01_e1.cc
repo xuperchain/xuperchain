@@ -18,9 +18,7 @@ bool safe_stoull(const std::string in, uint64_t* out) {
     if (in == "") {
         return false;
     }
-    printf("safe_stoull in=%s in.size=%lu \n", in.c_str(), in.size());
     for (int i = 0; i < in.size(); i++) {
-        printf("safe_stoull i=%d, in[i]= %hhd \n", i, in[i]);
         if (in[i] < '0' || in[i] > '9') {
             return false;
         }    
