@@ -373,6 +373,11 @@ type UtxoMeta struct {
 	GasPrice GasPrice `json:"gasPrice"`
 }
 
+type ContractStatData struct {
+	Account  int64 `json:"account"`
+	Contract int64 `json:"contract"`
+}
+
 // ChainStatus proto.ChainStatus
 type ChainStatus struct {
 	Name       string     `json:"name"`
@@ -380,6 +385,8 @@ type ChainStatus struct {
 	UtxoMeta   UtxoMeta   `json:"utxo"`
 	// add BranchBlockid
 	BranchBlockid []string `json:"branchBlockid"`
+	// add contract stat data
+	ContractStatData ContractStatData `json:"contractStatData"`
 }
 
 // SystemStatus proto.SystemStatus
@@ -453,6 +460,10 @@ func FromSystemStatusPB(statuspb *pb.SystemsStatus) *SystemStatus {
 				GasPrice: gasPrice,
 			},
 			BranchBlockid: chain.GetBranchBlockid(),
+			ContractStatData: ContractStatData{
+				Account:  chain.GetContractStatData().GetAccount(),
+				Contract: chain.GetContractStatData().GetContract(),
+			},
 		})
 	}
 	status.Peers = statuspb.GetPeerUrls()

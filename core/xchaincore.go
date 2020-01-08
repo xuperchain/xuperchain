@@ -1033,6 +1033,14 @@ func (xc *XChainCore) GetBlockChainStatus(in *pb.BCStatus) *pb.BCStatus {
 	for _, branchID := range branchManager {
 		out.BranchBlockid = append(out.BranchBlockid, fmt.Sprintf("%x", branchID))
 	}
+	// fetch statistics about contract
+	contractStatData, contractStatDataErr := xc.QueryContractStatData()
+	if contractStatDataErr != nil {
+		out.Header.Error = HandlerLedgerError(contractStatDataErr)
+		return out
+	}
+	out.ContractStatData = contractStatData
+	// fetch statistics about tx
 
 	return out
 }
@@ -1078,6 +1086,22 @@ func (xc *XChainCore) QueryAccountACL(accountName string) (*pb.Acl, bool, error)
 		return nil, false, err
 	}
 	return acl, confirmed, nil
+}
+
+func (xc *XChainCore) QueryContractStatData() (*pb.ContractStatDataResponse, error) {
+	defaultContractStatDataResponse := &pb.ContractStatDataResponse{}
+	if xc == nil {
+		return defaultContractStatDataResponse, errors.New("xchaincore is nil")
+	}
+	if xc.Status() != global.Normal {
+		return defaultContractStatDataResponse, ErrNotReady
+	}
+	contractStatDataResponse, contractDataErr := xc.Utxovm.QueryContractStatData()
+	if contractDataErr != nil {
+		return defaultContractStatDataResponse, contractDataErr
+	}
+
+	return contractStatDataResponse, nil
 }
 
 // QueryUtxoRecord get utxo record for an account

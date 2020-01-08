@@ -519,6 +519,8 @@ message BCStatus {
   UtxoMeta utxoMeta = 5;
   // Branch info
   repeated string branchBlockid = 6;
+  // Contract statistics data
+  ContractStatDataResponse contractStatData = 7;
 }
 
 message BCTipStatus {
@@ -987,3 +989,9 @@ message UtxoKey {
   string offset = 2;
   string amount = 3;
 }
+
+message ContractStatDataResponse {
+  int64 account = 1;
+  int64 contract = 2;
+}
+

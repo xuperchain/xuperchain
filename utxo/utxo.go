@@ -1889,6 +1889,23 @@ func (uv *UtxoVM) queryContractMethodACLWithConfirmed(contractName string, metho
 	return uv.aclMgr.GetContractMethodACLWithConfirmed(contractName, methodName)
 }
 
+// queryContractCapacity query capacity about contract from chain's point of view
+func (uv *UtxoVM) queryContractCapacity(bucket string) (int64, error) {
+	capacity := int64(0)
+	prefixKey := pb.ExtUtxoTablePrefix + bucket
+	it := uv.ldb.NewIteratorWithPrefix([]byte(prefixKey))
+	defer it.Release()
+
+	for it.Next() {
+		capacity++
+	}
+	if it.Error() != nil {
+		return int64(0), it.Error()
+	}
+
+	return capacity, nil
+}
+
 func (uv *UtxoVM) queryAccountContainAK(address string) ([]string, error) {
 	accounts := []string{}
 	if acl.IsAccount(address) != 0 {
@@ -2056,6 +2073,22 @@ func (uv *UtxoVM) QueryAccountACL(accountName string) (*pb.Acl, error) {
 // QueryContractMethodACL query contract method's ACL
 func (uv *UtxoVM) QueryContractMethodACL(contractName string, methodName string) (*pb.Acl, error) {
 	return uv.queryContractMethodACL(contractName, methodName)
+}
+
+func (uv *UtxoVM) QueryContractStatData() (*pb.ContractStatDataResponse, error) {
+	response := &pb.ContractStatDataResponse{}
+	accountAmount, accountAmountErr := uv.queryContractCapacity(utils.GetAccountBucket())
+	if accountAmountErr != nil {
+		return &pb.ContractStatDataResponse{}, accountAmountErr
+	}
+	response.Account = accountAmount
+
+	contractAmount, contractErr := uv.queryContractCapacity(utils.GetContract2AccountBucket())
+	if contractErr != nil {
+		return &pb.ContractStatDataResponse{}, contractErr
+	}
+	response.Contract = contractAmount
+	return response, nil
 }
 
 // QueryAccountContainAK query all accounts contain address
