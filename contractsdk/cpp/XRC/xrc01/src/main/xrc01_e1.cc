@@ -18,6 +18,11 @@ bool safe_stoull(const std::string* in, uint64_t* out) {
     if (!in) {
         return false;
     }
+    for (int i = 0; i < in->size(); i++) {
+        if (in[i] < "0" || in[i] > "9") {
+            return false;
+        }    
+    }
     std::string::size_type sz = 0;
     (*out) = std::stoull((*in), &sz);
     if (sz != in->size()) {
