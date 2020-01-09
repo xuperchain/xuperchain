@@ -17,8 +17,8 @@ import (
 	"github.com/xuperchain/xuperunion/utxo/txhash"
 )
 
-// AccountMergeUtxoCommand necessary parameter for merge utxo
-type AccountMergeUtxoCommand struct {
+// MergeUtxoCommand necessary parameter for merge utxo
+type MergeUtxoCommand struct {
 	cli *Cli
 	cmd *cobra.Command
 	// account will be merged
@@ -27,9 +27,9 @@ type AccountMergeUtxoCommand struct {
 	accountPath string
 }
 
-// NewAccountMergeUtxoCommand new an instance of merge utxo command
-func NewAccountMergeUtxoCommand(cli *Cli) *cobra.Command {
-	c := new(AccountMergeUtxoCommand)
+// NewMergeUtxoCommand new an instance of merge utxo command
+func NewMergeUtxoCommand(cli *Cli) *cobra.Command {
+	c := new(MergeUtxoCommand)
 	c.cli = cli
 	c.cmd = &cobra.Command{
 		Use:   "merge ",
@@ -43,12 +43,12 @@ func NewAccountMergeUtxoCommand(cli *Cli) *cobra.Command {
 	return c.cmd
 }
 
-func (c *AccountMergeUtxoCommand) addFlags() {
+func (c *MergeUtxoCommand) addFlags() {
 	c.cmd.Flags().StringVarP(&c.account, "account", "A", "", "The account/address to be merged (default ./data/keys/address).")
 	c.cmd.Flags().StringVarP(&c.accountPath, "accountPath", "P", "", "The account path, which is required for an account.")
 }
 
-func (c *AccountMergeUtxoCommand) mergeUtxo(ctx context.Context) error {
+func (c *MergeUtxoCommand) mergeUtxo(ctx context.Context) error {
 	if acl.IsAccount(c.account) == 1 && c.accountPath == "" {
 		return errors.New("accountPath can not be null because account is an Account name")
 	}

@@ -17,8 +17,8 @@ import (
 	"github.com/xuperchain/xuperunion/utxo/txhash"
 )
 
-// AccountSplitUtxoCommand split utxo of ak or account
-type AccountSplitUtxoCommand struct {
+// SplitUtxoCommand split utxo of ak or account
+type SplitUtxoCommand struct {
 	cli *Cli
 	cmd *cobra.Command
 	// account will be splited
@@ -28,9 +28,9 @@ type AccountSplitUtxoCommand struct {
 	accountPath string
 }
 
-// NewAccountSplitUtxoCommand return
-func NewAccountSplitUtxoCommand(cli *Cli) *cobra.Command {
-	c := new(AccountSplitUtxoCommand)
+// NewSplitUtxoCommand return
+func NewSplitUtxoCommand(cli *Cli) *cobra.Command {
+	c := new(SplitUtxoCommand)
 	c.cli = cli
 	c.cmd = &cobra.Command{
 		Use:   "split ",
@@ -44,13 +44,13 @@ func NewAccountSplitUtxoCommand(cli *Cli) *cobra.Command {
 	return c.cmd
 }
 
-func (c *AccountSplitUtxoCommand) addFlags() {
+func (c *SplitUtxoCommand) addFlags() {
 	c.cmd.Flags().StringVarP(&c.account, "account", "A", "", "The account/address to be splited (default ./data/keys/address).")
 	c.cmd.Flags().Int64VarP(&c.num, "num", "N", 1, "The number to split.")
 	c.cmd.Flags().StringVarP(&c.accountPath, "accountPath", "P", "", "The account path, which is required for an account.")
 }
 
-func (c *AccountSplitUtxoCommand) splitUtxo(ctx context.Context) error {
+func (c *SplitUtxoCommand) splitUtxo(ctx context.Context) error {
 	if c.num <= 0 {
 		return errors.New("illegal splitutxo num, num > 0 required")
 	}
@@ -148,7 +148,7 @@ func (c *AccountSplitUtxoCommand) splitUtxo(ctx context.Context) error {
 	return err
 }
 
-func (c *AccountSplitUtxoCommand) getBalanceHelper() (string, error) {
+func (c *SplitUtxoCommand) getBalanceHelper() (string, error) {
 	as := &pb.AddressStatus{}
 	as.Address = c.account
 	var tokens []*pb.TokenDetail
@@ -162,7 +162,7 @@ func (c *AccountSplitUtxoCommand) getBalanceHelper() (string, error) {
 	return r.Bcs[0].Balance, nil
 }
 
-func (c *AccountSplitUtxoCommand) genSplitOutputs(toralNeed *big.Int) ([]*pb.TxOutput, error) {
+func (c *SplitUtxoCommand) genSplitOutputs(toralNeed *big.Int) ([]*pb.TxOutput, error) {
 	txOutputs := []*pb.TxOutput{}
 	amount := big.NewInt(0)
 	rest := toralNeed
