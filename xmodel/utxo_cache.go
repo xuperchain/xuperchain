@@ -82,7 +82,6 @@ func (u *UtxoCache) Transfer(from, to string, amount *big.Int) error {
 			ToAddr: []byte(from),
 		})
 	}
-
 	return nil
 }
 

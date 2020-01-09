@@ -233,3 +233,239 @@ func TestXModelCacheGet(t *testing.T) {
 		t.Error("Iterator error", keys2)
 	}
 }
+
+func TestIsContractUtxoEffective(t *testing.T) {
+	testCases := map[string]struct {
+		conTxInputs  []*pb.TxInput
+		conTxOutputs []*pb.TxOutput
+		tx           *pb.Transaction
+		res          bool
+	}{
+		"test check ok": {
+			conTxInputs: []*pb.TxInput{
+				&pb.TxInput{
+					RefTxid:   []byte("txInput1_RefTxid"),
+					RefOffset: 1,
+					FromAddr:  []byte("txInput1_FromAddr"),
+				},
+				&pb.TxInput{
+					RefTxid:   []byte("txInput2_RefTxid"),
+					RefOffset: 2,
+					FromAddr:  []byte("txInput2_FromAddr"),
+				},
+				&pb.TxInput{
+					RefTxid:   []byte("txInput3_RefTxid"),
+					RefOffset: 3,
+					FromAddr:  []byte("txInput3_FromAddr"),
+				},
+			},
+			conTxOutputs: []*pb.TxOutput{
+				&pb.TxOutput{
+					Amount: []byte("txOutput1_Amount"),
+					ToAddr: []byte("txOutput1_ToAddr"),
+				},
+				&pb.TxOutput{
+					Amount: []byte("txOutput2_Amount"),
+					ToAddr: []byte("txOutput2_ToAddr"),
+				},
+				&pb.TxOutput{
+					Amount: []byte("txOutput2_Amount"),
+					ToAddr: []byte("txOutput2_ToAddr"),
+				},
+			},
+			tx: &pb.Transaction{
+				TxInputs: []*pb.TxInput{
+					&pb.TxInput{
+						RefTxid:   []byte("txInput1_RefTxid"),
+						RefOffset: 1,
+						FromAddr:  []byte("txInput1_FromAddr"),
+					},
+					&pb.TxInput{
+						RefTxid:   []byte("txInput2_RefTxid"),
+						RefOffset: 2,
+						FromAddr:  []byte("txInput2_FromAddr"),
+					},
+					&pb.TxInput{
+						RefTxid:   []byte("txInput3_RefTxid"),
+						RefOffset: 3,
+						FromAddr:  []byte("txInput3_FromAddr"),
+					},
+					&pb.TxInput{
+						RefTxid:   []byte("txInput4_RefTxid"),
+						RefOffset: 4,
+						FromAddr:  []byte("txInput4_FromAddr"),
+					},
+				},
+				TxOutputs: []*pb.TxOutput{
+					&pb.TxOutput{
+						Amount: []byte("txOutput1_Amount"),
+						ToAddr: []byte("txOutput1_ToAddr"),
+					},
+					&pb.TxOutput{
+						Amount: []byte("txOutput2_Amount"),
+						ToAddr: []byte("txOutput2_ToAddr"),
+					},
+					&pb.TxOutput{
+						Amount: []byte("txOutput2_Amount"),
+						ToAddr: []byte("txOutput2_ToAddr"),
+					},
+					&pb.TxOutput{
+						Amount: []byte("txOutput3_Amount"),
+						ToAddr: []byte("txOutput3_ToAddr"),
+					},
+				},
+			},
+			res: true,
+		},
+		"test check failed1": {
+			conTxInputs: []*pb.TxInput{
+				&pb.TxInput{
+					RefTxid:   []byte("txInput1_RefTxid"),
+					RefOffset: 1,
+					FromAddr:  []byte("txInput1_FromAddr"),
+				},
+				&pb.TxInput{
+					RefTxid:   []byte("txInput2_RefTxid"),
+					RefOffset: 2,
+					FromAddr:  []byte("txInput2_FromAddr"),
+				},
+				&pb.TxInput{
+					RefTxid:   []byte("txInput3_RefTxid"),
+					RefOffset: 3,
+					FromAddr:  []byte("txInput3_FromAddr"),
+				},
+			},
+			conTxOutputs: []*pb.TxOutput{
+				&pb.TxOutput{
+					Amount: []byte("txOutput1_Amount"),
+					ToAddr: []byte("txOutput1_ToAddr"),
+				},
+				&pb.TxOutput{
+					Amount: []byte("txOutput2_Amount"),
+					ToAddr: []byte("txOutput2_ToAddr"),
+				},
+				&pb.TxOutput{
+					Amount: []byte("txOutput2_Amount"),
+					ToAddr: []byte("txOutput2_ToAddr"),
+				},
+			},
+			tx: &pb.Transaction{
+				TxInputs: []*pb.TxInput{
+					&pb.TxInput{
+						RefTxid:   []byte("txInput1_RefTxid"),
+						RefOffset: 1,
+						FromAddr:  []byte("txInput1_FromAddr"),
+					},
+					&pb.TxInput{
+						RefTxid:   []byte("txInput2_RefTxid"),
+						RefOffset: 2,
+						FromAddr:  []byte("txInput2_FromAddr"),
+					},
+					&pb.TxInput{
+						RefTxid:   []byte("txInput3_RefTxid"),
+						RefOffset: 3,
+						FromAddr:  []byte("txInput3_FromAddr"),
+					},
+					&pb.TxInput{
+						RefTxid:   []byte("txInput4_RefTxid"),
+						RefOffset: 4,
+						FromAddr:  []byte("txInput4_FromAddr"),
+					},
+				},
+				TxOutputs: []*pb.TxOutput{
+					&pb.TxOutput{
+						Amount: []byte("txOutput1_Amount"),
+						ToAddr: []byte("txOutput1_ToAddr"),
+					},
+					&pb.TxOutput{
+						Amount: []byte("txOutput2_Amount"),
+						ToAddr: []byte("txOutput2_ToAddr"),
+					},
+					&pb.TxOutput{
+						Amount: []byte("txOutput3_Amount"),
+						ToAddr: []byte("txOutput3_ToAddr"),
+					},
+				},
+			},
+			res: false,
+		},
+		"test check failed2": {
+			conTxInputs: []*pb.TxInput{
+				&pb.TxInput{
+					RefTxid:   []byte("txInput1_RefTxid"),
+					RefOffset: 1,
+					FromAddr:  []byte("txInput1_FromAddr"),
+				},
+				&pb.TxInput{
+					RefTxid:   []byte("txInput2_RefTxid"),
+					RefOffset: 2,
+					FromAddr:  []byte("txInput2_FromAddr"),
+				},
+				&pb.TxInput{
+					RefTxid:   []byte("txInput3_RefTxid"),
+					RefOffset: 3,
+					FromAddr:  []byte("txInput3_FromAddr"),
+				},
+			},
+			conTxOutputs: []*pb.TxOutput{
+				&pb.TxOutput{
+					Amount: []byte("txOutput1_Amount"),
+					ToAddr: []byte("txOutput1_ToAddr"),
+				},
+				&pb.TxOutput{
+					Amount: []byte("txOutput2_Amount"),
+					ToAddr: []byte("txOutput2_ToAddr"),
+				},
+				&pb.TxOutput{
+					Amount: []byte("txOutput4_Amount"),
+					ToAddr: []byte("txOutput4_ToAddr"),
+				},
+			},
+			tx: &pb.Transaction{
+				TxInputs: []*pb.TxInput{
+					&pb.TxInput{
+						RefTxid:   []byte("txInput1_RefTxid"),
+						RefOffset: 1,
+						FromAddr:  []byte("txInput1_FromAddr"),
+					},
+					&pb.TxInput{
+						RefTxid:   []byte("txInput2_RefTxid"),
+						RefOffset: 2,
+						FromAddr:  []byte("txInput2_FromAddr"),
+					},
+					&pb.TxInput{
+						RefTxid:   []byte("txInput3_RefTxid"),
+						RefOffset: 3,
+						FromAddr:  []byte("txInput3_FromAddr"),
+					},
+					&pb.TxInput{
+						RefTxid:   []byte("txInput4_RefTxid"),
+						RefOffset: 4,
+						FromAddr:  []byte("txInput4_FromAddr"),
+					},
+				},
+				TxOutputs: []*pb.TxOutput{
+					&pb.TxOutput{
+						Amount: []byte("txOutput1_Amount"),
+						ToAddr: []byte("txOutput1_ToAddr"),
+					},
+					&pb.TxOutput{
+						Amount: []byte("txOutput2_Amount"),
+						ToAddr: []byte("txOutput2_ToAddr"),
+					},
+					&pb.TxOutput{
+						Amount: []byte("txOutput3_Amount"),
+						ToAddr: []byte("txOutput3_ToAddr"),
+					},
+				},
+			},
+			res: false,
+		},
+	}
+	for k, v := range testCases {
+		res := IsContractUtxoEffective(v.conTxInputs, v.conTxOutputs, v.tx)
+		if res != v.res {
+			t.Error("TestIsConUtxoEffective failed case=", k, "expect=", v.res, "actual=", res)
+		}
+	}
+}

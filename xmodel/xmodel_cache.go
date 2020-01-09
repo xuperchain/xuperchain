@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"math/big"
+	"strconv"
 
 	"github.com/syndtr/goleveldb/leveldb/comparer"
 	"github.com/syndtr/goleveldb/leveldb/util"
@@ -362,4 +363,56 @@ func ParseContractUtxo(tx *pb.Transaction) ([]*pb.TxInput, []*pb.TxOutput, error
 		}
 	}
 	return utxoInputs, utxoOutputs, nil
+}
+
+func makeInputsMap(txInputs []*pb.TxInput) map[string]bool {
+	res := map[string]bool{}
+	if len(txInputs) == 0 {
+		return nil
+	}
+	for _, v := range txInputs {
+		utxoKey := string(v.GetRefTxid()) + strconv.FormatInt(int64(v.GetRefOffset()), 10)
+		res[utxoKey] = true
+	}
+	return res
+}
+
+func isSubOutputs(contractOutputs, txOutputs []*pb.TxOutput) bool {
+	markedOutput := map[string]int{}
+	for _, v := range txOutputs {
+		key := string(v.GetAmount()) + string(v.GetToAddr())
+		markedOutput[key]++
+	}
+
+	for _, v := range contractOutputs {
+		key := string(v.GetAmount()) + string(v.GetToAddr())
+		if val, ok := markedOutput[key]; !ok {
+			return false
+		} else if val < 1 {
+			return false
+		} else {
+			markedOutput[key] = val - 1
+		}
+	}
+	return true
+}
+
+// IsContractUtxoEffective check if contract utxo in tx utxo
+func IsContractUtxoEffective(contractTxInputs []*pb.TxInput, contractTxOutputs []*pb.TxOutput, tx *pb.Transaction) bool {
+	if len(contractTxInputs) > len(tx.GetTxInputs()) || len(contractTxOutputs) > len(tx.GetTxOutputs()) {
+		return false
+	}
+
+	contractTxInputsMap := makeInputsMap(contractTxInputs)
+	txInputsMap := makeInputsMap(tx.GetTxInputs())
+	for k := range contractTxInputsMap {
+		if !(txInputsMap[k]) {
+			return false
+		}
+	}
+
+	if !isSubOutputs(contractTxOutputs, tx.GetTxOutputs()) {
+		return false
+	}
+	return true
 }
