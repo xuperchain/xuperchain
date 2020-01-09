@@ -1,15 +1,14 @@
 package xmodel
 
 import (
+	"errors"
 	"fmt"
-
 	"github.com/xuperchain/xuperunion/pb"
 	xmodel_pb "github.com/xuperchain/xuperunion/xmodel/pb"
 )
 
 // Env data structure for read/write sets environment
 type Env struct {
-	inputs     []*xmodel_pb.VersionedData
 	outputs    []*xmodel_pb.PureData
 	modelCache *XMCache
 }
@@ -35,16 +34,15 @@ func (s *XModel) PrepareEnv(tx *pb.Transaction) (*Env, error) {
 	for _, txOut := range tx.TxOutputsExt {
 		outputs = append(outputs, &xmodel_pb.PureData{Bucket: txOut.Bucket, Key: txOut.Key, Value: txOut.Value})
 	}
-	utxoInputs, err := ParseContractUtxoInputs(tx)
+	utxoInputs, utxoOutputs, err := ParseContractUtxo(tx)
 	if err != nil {
 		return nil, err
 	}
-	env.modelCache = NewXModelCacheWithInputs(inputs, utxoInputs)
-
-	for _, verData := range inputs {
-		env.modelCache.fill(verData)
+	if ok := IsContractUtxoEffective(utxoInputs, utxoOutputs, tx); !ok {
+		s.logger.Warn("PrepareEnv CheckConUtxoEffective error")
+		return nil, errors.New("PrepareEnv CheckConUtxoEffective error")
 	}
-	env.inputs = inputs
+	env.modelCache = NewXModelCacheWithInputs(inputs, utxoInputs)
 	env.outputs = outputs
 	s.logger.Trace("PrepareEnv done!", "env", env)
 	return env, nil
