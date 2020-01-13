@@ -22,7 +22,7 @@ test:
 	go test -cover `go list ./... | egrep -v 'test'`
 	# test wasm sdk
 	GOOS=js GOARCH=wasm go build github.com/xuperchain/xuperchain/core/contractsdk/go/driver
-	cd xvm/spectest && go run main.go core
+	cd core/xvm/spectest && go run main.go core
 
 clean:
 	rm -rf output
