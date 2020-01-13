@@ -7,9 +7,9 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	log "github.com/xuperchain/log15"
-	"github.com/xuperchain/xuperunion/kv/kvdb"
-	"github.com/xuperchain/xuperunion/pb"
-	xmodel_pb "github.com/xuperchain/xuperunion/xmodel/pb"
+	"github.com/xuperchain/xuperchain/core/kv/kvdb"
+	"github.com/xuperchain/xuperchain/core/pb"
+	xmodel_pb "github.com/xuperchain/xuperchain/core/xmodel/pb"
 )
 
 // KVEngineType KV storage type

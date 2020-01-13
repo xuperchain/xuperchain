@@ -26,14 +26,14 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/reflection"
 
-	"github.com/xuperchain/xuperunion/common"
-	"github.com/xuperchain/xuperunion/consensus"
-	xchaincore "github.com/xuperchain/xuperunion/core"
-	"github.com/xuperchain/xuperunion/crypto/hash"
-	"github.com/xuperchain/xuperunion/global"
-	"github.com/xuperchain/xuperunion/p2pv2"
-	xuper_p2p "github.com/xuperchain/xuperunion/p2pv2/pb"
-	"github.com/xuperchain/xuperunion/pb"
+	"github.com/xuperchain/xuperchain/core/common"
+	"github.com/xuperchain/xuperchain/core/consensus"
+	xchaincore "github.com/xuperchain/xuperchain/core/core"
+	"github.com/xuperchain/xuperchain/core/crypto/hash"
+	"github.com/xuperchain/xuperchain/core/global"
+	"github.com/xuperchain/xuperchain/core/p2pv2"
+	xuper_p2p "github.com/xuperchain/xuperchain/core/p2pv2/pb"
+	"github.com/xuperchain/xuperchain/core/pb"
 )
 
 type server struct {

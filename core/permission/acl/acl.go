@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/xuperchain/xuperunion/permission/acl/utils"
+	"github.com/xuperchain/xuperchain/core/permission/acl/utils"
 )
 
 // IsAccount check the type of name

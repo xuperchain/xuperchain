@@ -3,7 +3,7 @@ package gowasm
 import (
 	"reflect"
 
-	"github.com/xuperchain/xuperunion/xvm/exec"
+	"github.com/xuperchain/xuperchain/core/xvm/exec"
 )
 
 type resolver struct {

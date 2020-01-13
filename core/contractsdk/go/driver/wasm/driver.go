@@ -3,8 +3,8 @@
 package wasm
 
 import (
-	"github.com/xuperchain/xuperunion/contractsdk/go/code"
-	"github.com/xuperchain/xuperunion/contractsdk/go/exec"
+	"github.com/xuperchain/xuperchain/core/contractsdk/go/code"
+	"github.com/xuperchain/xuperchain/core/contractsdk/go/exec"
 )
 
 type driver struct {

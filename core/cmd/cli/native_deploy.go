@@ -13,10 +13,10 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/spf13/cobra"
 
-	crypto_client "github.com/xuperchain/xuperunion/crypto/client"
-	"github.com/xuperchain/xuperunion/crypto/hash"
-	"github.com/xuperchain/xuperunion/global"
-	"github.com/xuperchain/xuperunion/pb"
+	crypto_client "github.com/xuperchain/xuperchain/core/crypto/client"
+	"github.com/xuperchain/xuperchain/core/crypto/hash"
+	"github.com/xuperchain/xuperchain/core/global"
+	"github.com/xuperchain/xuperchain/core/pb"
 )
 
 // NativeDeployCommand native deploy cmd

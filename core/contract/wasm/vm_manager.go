@@ -10,19 +10,19 @@ import (
 
 	"github.com/golang/protobuf/proto"
 
-	"github.com/xuperchain/xuperunion/common/config"
-	"github.com/xuperchain/xuperunion/common/log"
-	"github.com/xuperchain/xuperunion/contract"
-	"github.com/xuperchain/xuperunion/contract/wasm/vm"
-	"github.com/xuperchain/xuperunion/crypto/hash"
+	"github.com/xuperchain/xuperchain/core/common/config"
+	"github.com/xuperchain/xuperchain/core/common/log"
+	"github.com/xuperchain/xuperchain/core/contract"
+	"github.com/xuperchain/xuperchain/core/contract/wasm/vm"
+	"github.com/xuperchain/xuperchain/core/crypto/hash"
 
-	"github.com/xuperchain/xuperunion/pluginmgr"
+	"github.com/xuperchain/xuperchain/core/pluginmgr"
 
 	// import xvm wasm virtual machine
-	"github.com/xuperchain/xuperunion/contract/bridge"
-	_ "github.com/xuperchain/xuperunion/contract/wasm/vm/xvm"
-	"github.com/xuperchain/xuperunion/pb"
-	"github.com/xuperchain/xuperunion/xmodel"
+	"github.com/xuperchain/xuperchain/core/contract/bridge"
+	_ "github.com/xuperchain/xuperchain/core/contract/wasm/vm/xvm"
+	"github.com/xuperchain/xuperchain/core/pb"
+	"github.com/xuperchain/xuperchain/core/xmodel"
 )
 
 // VMManager manages wasm contracts, include deploy contracts, instance wasm virtual machine, etc...

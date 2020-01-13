@@ -5,10 +5,10 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/xuperchain/xuperunion/contractsdk/go/code"
-	"github.com/xuperchain/xuperunion/contractsdk/go/exec"
-	pb "github.com/xuperchain/xuperunion/contractsdk/go/pb"
-	pbrpc "github.com/xuperchain/xuperunion/contractsdk/go/pbrpc"
+	"github.com/xuperchain/xuperchain/core/contractsdk/go/code"
+	"github.com/xuperchain/xuperchain/core/contractsdk/go/exec"
+	pb "github.com/xuperchain/xuperchain/core/contractsdk/go/pb"
+	pbrpc "github.com/xuperchain/xuperchain/core/contractsdk/go/pbrpc"
 	"google.golang.org/grpc"
 )
 

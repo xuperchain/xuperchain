@@ -8,7 +8,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/xuperchain/xuperunion/pb"
+	"github.com/xuperchain/xuperchain/core/pb"
 
 	"github.com/spf13/cobra"
 )

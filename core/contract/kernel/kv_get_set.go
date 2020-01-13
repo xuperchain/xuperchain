@@ -3,7 +3,7 @@ package kernel
 import (
 	"fmt"
 
-	"github.com/xuperchain/xuperunion/contract"
+	"github.com/xuperchain/xuperchain/core/contract"
 )
 
 // GetMethod define Get type

@@ -7,14 +7,14 @@ import (
 	osexec "os/exec"
 	"path/filepath"
 
-	"github.com/xuperchain/xuperunion/common/config"
-	"github.com/xuperchain/xuperunion/common/log"
-	"github.com/xuperchain/xuperunion/contract/bridge"
-	"github.com/xuperchain/xuperunion/contract/wasm/vm"
-	"github.com/xuperchain/xuperunion/xvm/compile"
-	"github.com/xuperchain/xuperunion/xvm/exec"
-	"github.com/xuperchain/xuperunion/xvm/runtime/emscripten"
-	gowasm "github.com/xuperchain/xuperunion/xvm/runtime/go"
+	"github.com/xuperchain/xuperchain/core/common/config"
+	"github.com/xuperchain/xuperchain/core/common/log"
+	"github.com/xuperchain/xuperchain/core/contract/bridge"
+	"github.com/xuperchain/xuperchain/core/contract/wasm/vm"
+	"github.com/xuperchain/xuperchain/core/xvm/compile"
+	"github.com/xuperchain/xuperchain/core/xvm/exec"
+	"github.com/xuperchain/xuperchain/core/xvm/runtime/emscripten"
+	gowasm "github.com/xuperchain/xuperchain/core/xvm/runtime/go"
 )
 
 type xvmCreator struct {

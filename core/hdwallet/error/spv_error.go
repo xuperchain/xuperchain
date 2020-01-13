@@ -7,7 +7,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/xuperchain/xuperunion/pb"
+	"github.com/xuperchain/xuperchain/core/pb"
 )
 
 // 定义全局errors

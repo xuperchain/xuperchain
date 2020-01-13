@@ -6,12 +6,12 @@ import (
 	"testing"
 
 	log "github.com/xuperchain/log15"
-	"github.com/xuperchain/xuperunion/contract"
-	crypto_client "github.com/xuperchain/xuperunion/crypto/client"
-	"github.com/xuperchain/xuperunion/kv/kvdb"
-	"github.com/xuperchain/xuperunion/ledger"
-	"github.com/xuperchain/xuperunion/pluginmgr"
-	"github.com/xuperchain/xuperunion/xmodel"
+	"github.com/xuperchain/xuperchain/core/contract"
+	crypto_client "github.com/xuperchain/xuperchain/core/crypto/client"
+	"github.com/xuperchain/xuperchain/core/kv/kvdb"
+	"github.com/xuperchain/xuperchain/core/ledger"
+	"github.com/xuperchain/xuperchain/core/pluginmgr"
+	"github.com/xuperchain/xuperchain/core/xmodel"
 )
 
 const DefaultKvEngine = "default"

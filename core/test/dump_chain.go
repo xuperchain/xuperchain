@@ -3,8 +3,8 @@ package main
 import "os"
 import "fmt"
 import "strings"
-import "github.com/xuperchain/xuperunion/ledger"
-import "github.com/xuperchain/xuperunion/crypto/client"
+import "github.com/xuperchain/xuperchain/core/ledger"
+import "github.com/xuperchain/xuperchain/core/crypto/client"
 
 func main() {
 	if len(os.Args) < 2 {

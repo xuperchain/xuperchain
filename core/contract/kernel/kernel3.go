@@ -3,9 +3,9 @@ package kernel
 import (
 	"fmt"
 
-	"github.com/xuperchain/xuperunion/contract"
-	"github.com/xuperchain/xuperunion/contract/wasm"
-	"github.com/xuperchain/xuperunion/xmodel"
+	"github.com/xuperchain/xuperchain/core/contract"
+	"github.com/xuperchain/xuperchain/core/contract/wasm"
+	"github.com/xuperchain/xuperchain/core/xmodel"
 )
 
 // ModuleName moudle name

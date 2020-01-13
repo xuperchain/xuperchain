@@ -6,11 +6,11 @@ import (
 	//"os"
 	//"testing"
 	//log "github.com/xuperchain/log15"
-	//"github.com/xuperchain/xuperunion/utxo"
+	//"github.com/xuperchain/xuperchain/core/utxo"
 	//"encoding/json"
-	//"github.com/xuperchain/xuperunion/contract"
-	//"github.com/xuperchain/xuperunion/global"
-	//"github.com/xuperchain/xuperunion/pb"
+	//"github.com/xuperchain/xuperchain/core/contract"
+	//"github.com/xuperchain/xuperchain/core/global"
+	//"github.com/xuperchain/xuperchain/core/pb"
 )
 
 var workspace, workSpaceErr = ioutil.TempDir("/tmp", "")

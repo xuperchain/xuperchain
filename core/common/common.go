@@ -10,7 +10,7 @@ import (
 
 	"github.com/golang/protobuf/proto"
 
-	"github.com/xuperchain/xuperunion/pb"
+	"github.com/xuperchain/xuperchain/core/pb"
 )
 
 // GetTxSerializedSize get size(in bytes) of a tx after being serialized

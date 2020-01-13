@@ -1,7 +1,7 @@
 package acl
 
 import (
-	"github.com/xuperchain/xuperunion/pb"
+	"github.com/xuperchain/xuperchain/core/pb"
 )
 
 // AccountACL is interface to read/write accounts' ACL

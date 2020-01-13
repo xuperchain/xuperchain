@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 
-	crypto_base "github.com/xuperchain/xuperunion/crypto/client/base"
-	"github.com/xuperchain/xuperunion/crypto/hash"
-	"github.com/xuperchain/xuperunion/pb"
+	crypto_base "github.com/xuperchain/xuperchain/core/crypto/client/base"
+	"github.com/xuperchain/xuperchain/core/crypto/hash"
+	"github.com/xuperchain/xuperchain/core/pb"
 )
 
 // MakeTransactionID 事务id生成

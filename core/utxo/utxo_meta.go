@@ -6,10 +6,10 @@ import (
 
 	"github.com/golang/protobuf/proto"
 
-	"github.com/xuperchain/xuperunion/common"
-	"github.com/xuperchain/xuperunion/kv/kvdb"
-	ledger_pkg "github.com/xuperchain/xuperunion/ledger"
-	"github.com/xuperchain/xuperunion/pb"
+	"github.com/xuperchain/xuperchain/core/common"
+	"github.com/xuperchain/xuperchain/core/kv/kvdb"
+	ledger_pkg "github.com/xuperchain/xuperchain/core/ledger"
+	"github.com/xuperchain/xuperchain/core/pb"
 )
 
 var (

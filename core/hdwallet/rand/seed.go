@@ -14,8 +14,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/xuperchain/xuperunion/crypto/hash"
-	"github.com/xuperchain/xuperunion/hdwallet/wordlist"
+	"github.com/xuperchain/xuperchain/core/crypto/hash"
+	"github.com/xuperchain/xuperchain/core/hdwallet/wordlist"
 
 	"golang.org/x/crypto/pbkdf2"
 )

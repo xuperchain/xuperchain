@@ -10,8 +10,8 @@ import (
 	"fmt"
 	"reflect"
 
-	"github.com/xuperchain/xuperunion/crypto/config"
-	"github.com/xuperchain/xuperunion/crypto/hash"
+	"github.com/xuperchain/xuperchain/core/crypto/config"
+	"github.com/xuperchain/xuperchain/core/crypto/hash"
 
 	"github.com/btcsuite/btcutil/base58"
 )

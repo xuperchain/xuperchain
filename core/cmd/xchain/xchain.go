@@ -14,11 +14,11 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/syndtr/goleveldb/leveldb/errors"
 
-	"github.com/xuperchain/xuperunion/common/config"
-	"github.com/xuperchain/xuperunion/common/log"
-	xchaincore "github.com/xuperchain/xuperunion/core"
-	"github.com/xuperchain/xuperunion/p2pv2"
-	"github.com/xuperchain/xuperunion/server"
+	"github.com/xuperchain/xuperchain/core/common/config"
+	"github.com/xuperchain/xuperchain/core/common/log"
+	xchaincore "github.com/xuperchain/xuperchain/core/core"
+	"github.com/xuperchain/xuperchain/core/p2pv2"
+	"github.com/xuperchain/xuperchain/core/server"
 )
 
 var (

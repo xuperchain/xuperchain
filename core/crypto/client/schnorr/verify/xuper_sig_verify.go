@@ -8,12 +8,12 @@ import (
 	"errors"
 	"fmt"
 
-	schnorr_ring_sign "github.com/xuperchain/xuperunion/crypto/client/schnorr/ringsign"
-	schnorr_sign "github.com/xuperchain/xuperunion/crypto/client/schnorr/sign"
-	"github.com/xuperchain/xuperunion/crypto/common"
-	"github.com/xuperchain/xuperunion/crypto/config"
-	"github.com/xuperchain/xuperunion/crypto/multisign"
-	"github.com/xuperchain/xuperunion/crypto/sign"
+	schnorr_ring_sign "github.com/xuperchain/xuperchain/core/crypto/client/schnorr/ringsign"
+	schnorr_sign "github.com/xuperchain/xuperchain/core/crypto/client/schnorr/sign"
+	"github.com/xuperchain/xuperchain/core/crypto/common"
+	"github.com/xuperchain/xuperchain/core/crypto/config"
+	"github.com/xuperchain/xuperchain/core/crypto/multisign"
+	"github.com/xuperchain/xuperchain/core/crypto/sign"
 )
 
 // define errors

@@ -5,7 +5,7 @@ import (
 	"flag"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"github.com/xuperchain/xuperunion/pb"
+	"github.com/xuperchain/xuperchain/core/pb"
 	"google.golang.org/grpc"
 	"net/http"
 )

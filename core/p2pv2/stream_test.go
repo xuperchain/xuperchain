@@ -16,8 +16,8 @@ import (
 	pstore "github.com/libp2p/go-libp2p-peerstore"
 	ma "github.com/multiformats/go-multiaddr"
 	log "github.com/xuperchain/log15"
-	"github.com/xuperchain/xuperunion/common/config"
-	xuperp2p "github.com/xuperchain/xuperunion/p2pv2/pb"
+	"github.com/xuperchain/xuperchain/core/common/config"
+	xuperp2p "github.com/xuperchain/xuperchain/core/p2pv2/pb"
 )
 
 var fullPath string

@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"unsafe"
 
-	"github.com/xuperchain/xuperunion/xvm/pointer"
+	"github.com/xuperchain/xuperchain/core/xvm/pointer"
 )
 
 // Code represents the wasm code object

@@ -9,7 +9,7 @@ import (
 
 	"github.com/patrickmn/go-cache"
 	"github.com/xuperchain/log15"
-	"github.com/xuperchain/xuperunion/p2pv2/pb"
+	"github.com/xuperchain/xuperchain/core/p2pv2/pb"
 )
 
 // define default message config

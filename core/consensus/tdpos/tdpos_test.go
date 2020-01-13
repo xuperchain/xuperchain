@@ -6,13 +6,13 @@ import (
 	"os"
 	//"testing"
 	//"time"
-	//"github.com/xuperchain/xuperunion/common/config"
-	//cons_base "github.com/xuperchain/xuperunion/consensus/base"
-	//"github.com/xuperchain/xuperunion/contract"
-	//crypto_client "github.com/xuperchain/xuperunion/crypto/client"
-	//"github.com/xuperchain/xuperunion/global"
-	//"github.com/xuperchain/xuperunion/pb"
-	//"github.com/xuperchain/xuperunion/utxo"
+	//"github.com/xuperchain/xuperchain/core/common/config"
+	//cons_base "github.com/xuperchain/xuperchain/core/consensus/base"
+	//"github.com/xuperchain/xuperchain/core/contract"
+	//crypto_client "github.com/xuperchain/xuperchain/core/crypto/client"
+	//"github.com/xuperchain/xuperchain/core/global"
+	//"github.com/xuperchain/xuperchain/core/pb"
+	//"github.com/xuperchain/xuperchain/core/utxo"
 )
 
 func close() {

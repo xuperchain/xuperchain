@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/opt"
-	"github.com/xuperchain/xuperunion/kv/mstorage"
+	"github.com/xuperchain/xuperchain/core/kv/mstorage"
 )
 
 func main() {

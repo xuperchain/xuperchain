@@ -3,7 +3,7 @@ package impl
 import (
 	"testing"
 
-	"github.com/xuperchain/xuperunion/pb"
+	"github.com/xuperchain/xuperchain/core/pb"
 )
 
 func Test_GetAccountAddressesWithThreshold(t *testing.T) {

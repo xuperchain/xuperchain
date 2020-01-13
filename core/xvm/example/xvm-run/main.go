@@ -11,12 +11,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/xuperchain/xuperunion/xvm/compile"
-	"github.com/xuperchain/xuperunion/xvm/debug"
-	"github.com/xuperchain/xuperunion/xvm/exec"
-	"github.com/xuperchain/xuperunion/xvm/runtime/emscripten"
-	gowasm "github.com/xuperchain/xuperunion/xvm/runtime/go"
-	"github.com/xuperchain/xuperunion/xvm/runtime/wasi"
+	"github.com/xuperchain/xuperchain/core/xvm/compile"
+	"github.com/xuperchain/xuperchain/core/xvm/debug"
+	"github.com/xuperchain/xuperchain/core/xvm/exec"
+	"github.com/xuperchain/xuperchain/core/xvm/runtime/emscripten"
+	gowasm "github.com/xuperchain/xuperchain/core/xvm/runtime/go"
+	"github.com/xuperchain/xuperchain/core/xvm/runtime/wasi"
 )
 
 var (

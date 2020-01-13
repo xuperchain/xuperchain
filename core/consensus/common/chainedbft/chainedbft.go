@@ -5,13 +5,13 @@ import (
 	"crypto/ecdsa"
 
 	log "github.com/xuperchain/log15"
-	cons_base "github.com/xuperchain/xuperunion/consensus/base"
-	"github.com/xuperchain/xuperunion/consensus/common/chainedbft/config"
-	"github.com/xuperchain/xuperunion/consensus/common/chainedbft/external"
-	"github.com/xuperchain/xuperunion/consensus/common/chainedbft/smr"
-	crypto_base "github.com/xuperchain/xuperunion/crypto/client/base"
-	"github.com/xuperchain/xuperunion/p2pv2"
-	"github.com/xuperchain/xuperunion/pb"
+	cons_base "github.com/xuperchain/xuperchain/core/consensus/base"
+	"github.com/xuperchain/xuperchain/core/consensus/common/chainedbft/config"
+	"github.com/xuperchain/xuperchain/core/consensus/common/chainedbft/external"
+	"github.com/xuperchain/xuperchain/core/consensus/common/chainedbft/smr"
+	crypto_base "github.com/xuperchain/xuperchain/core/crypto/client/base"
+	"github.com/xuperchain/xuperchain/core/p2pv2"
+	"github.com/xuperchain/xuperchain/core/pb"
 )
 
 // ChainedBft is the implements of hotstuff

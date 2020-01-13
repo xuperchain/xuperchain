@@ -4,8 +4,8 @@ import (
 	"errors"
 	"math/big"
 
-	"github.com/xuperchain/xuperunion/contractsdk/go/code"
-	"github.com/xuperchain/xuperunion/contractsdk/go/driver"
+	"github.com/xuperchain/xuperchain/core/contractsdk/go/code"
+	"github.com/xuperchain/xuperchain/core/contractsdk/go/driver"
 )
 
 const (

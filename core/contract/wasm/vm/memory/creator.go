@@ -4,12 +4,12 @@ import (
 	"context"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/xuperchain/xuperunion/contract"
-	"github.com/xuperchain/xuperunion/contract/bridge"
-	"github.com/xuperchain/xuperunion/contract/bridge/memrpc"
-	"github.com/xuperchain/xuperunion/contract/wasm/vm"
-	"github.com/xuperchain/xuperunion/contractsdk/go/code"
-	"github.com/xuperchain/xuperunion/contractsdk/go/exec"
+	"github.com/xuperchain/xuperchain/core/contract"
+	"github.com/xuperchain/xuperchain/core/contract/bridge"
+	"github.com/xuperchain/xuperchain/core/contract/bridge/memrpc"
+	"github.com/xuperchain/xuperchain/core/contract/wasm/vm"
+	"github.com/xuperchain/xuperchain/core/contractsdk/go/code"
+	"github.com/xuperchain/xuperchain/core/contractsdk/go/exec"
 )
 
 type memoryInstanceCreator struct {

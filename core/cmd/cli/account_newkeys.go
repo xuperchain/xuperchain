@@ -10,7 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	crypto_client "github.com/xuperchain/xuperunion/crypto/client"
+	crypto_client "github.com/xuperchain/xuperchain/core/crypto/client"
 )
 
 // AccountNewkeysCommand create account addr

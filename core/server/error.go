@@ -5,8 +5,8 @@
 package server
 
 import (
-	"github.com/xuperchain/xuperunion/core"
-	"github.com/xuperchain/xuperunion/pb"
+	"github.com/xuperchain/xuperchain/core/core"
+	"github.com/xuperchain/xuperchain/core/pb"
 )
 
 // HandleBlockCoreError core error <=> pb.error

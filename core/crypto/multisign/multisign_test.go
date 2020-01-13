@@ -3,10 +3,10 @@ package multisign
 import (
 	"crypto/ecdsa"
 	"encoding/json"
-	"github.com/xuperchain/xuperunion/crypto/common"
+	"github.com/xuperchain/xuperchain/core/crypto/common"
 	"testing"
 
-	"github.com/xuperchain/xuperunion/crypto/account"
+	"github.com/xuperchain/xuperchain/core/crypto/account"
 )
 
 var (

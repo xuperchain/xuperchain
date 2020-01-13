@@ -12,8 +12,8 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/spf13/cobra"
 
-	"github.com/xuperchain/xuperunion/pb"
-	"github.com/xuperchain/xuperunion/utxo"
+	"github.com/xuperchain/xuperchain/core/pb"
+	"github.com/xuperchain/xuperchain/core/utxo"
 )
 
 // WasmDeployCommand wasm deploy cmd

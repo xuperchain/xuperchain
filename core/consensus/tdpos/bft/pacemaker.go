@@ -10,10 +10,10 @@ import (
 
 	"github.com/golang/protobuf/proto"
 
-	"github.com/xuperchain/xuperunion/consensus/base"
-	"github.com/xuperchain/xuperunion/consensus/common/chainedbft"
-	"github.com/xuperchain/xuperunion/ledger"
-	"github.com/xuperchain/xuperunion/pb"
+	"github.com/xuperchain/xuperchain/core/consensus/base"
+	"github.com/xuperchain/xuperchain/core/consensus/common/chainedbft"
+	"github.com/xuperchain/xuperchain/core/ledger"
+	"github.com/xuperchain/xuperchain/core/pb"
 )
 
 // DPoSPaceMaker the implementation of PaceMakerInterface for TDPoS

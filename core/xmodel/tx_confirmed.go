@@ -3,7 +3,7 @@ package xmodel
 import (
 	"errors"
 
-	"github.com/xuperchain/xuperunion/pb"
+	"github.com/xuperchain/xuperchain/core/pb"
 )
 
 // GetNearestConfirmedValue get the confirmed value of a specific key

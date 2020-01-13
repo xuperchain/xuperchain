@@ -8,10 +8,10 @@ import (
 
 	"github.com/golang/protobuf/proto"
 
-	"github.com/xuperchain/xuperunion/global"
-	"github.com/xuperchain/xuperunion/ledger"
-	"github.com/xuperchain/xuperunion/pb"
-	XModel "github.com/xuperchain/xuperunion/xmodel"
+	"github.com/xuperchain/xuperchain/core/global"
+	"github.com/xuperchain/xuperchain/core/ledger"
+	"github.com/xuperchain/xuperchain/core/pb"
+	XModel "github.com/xuperchain/xuperchain/core/xmodel"
 )
 
 // Async settings

@@ -1,7 +1,7 @@
 package mock
 
 import (
-	"github.com/xuperchain/xuperunion/pb"
+	"github.com/xuperchain/xuperchain/core/pb"
 )
 
 // FakeACLManager is a mock up of ACL Manager for test purpose

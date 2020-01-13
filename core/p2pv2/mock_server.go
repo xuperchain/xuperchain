@@ -3,7 +3,7 @@ package p2pv2
 import (
 	"context"
 
-	p2pPb "github.com/xuperchain/xuperunion/p2pv2/pb"
+	p2pPb "github.com/xuperchain/xuperchain/core/p2pv2/pb"
 )
 
 // MockP2pServer is mock struct of P2PServer interface

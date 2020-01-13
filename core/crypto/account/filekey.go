@@ -12,9 +12,9 @@ import (
 	"os"
 	"strings"
 
-	"github.com/xuperchain/xuperunion/crypto/config"
-	"github.com/xuperchain/xuperunion/crypto/utils"
-	walletRand "github.com/xuperchain/xuperunion/hdwallet/rand"
+	"github.com/xuperchain/xuperchain/core/crypto/config"
+	"github.com/xuperchain/xuperchain/core/crypto/utils"
+	walletRand "github.com/xuperchain/xuperchain/core/hdwallet/rand"
 )
 
 // 定义助记词的强度类型

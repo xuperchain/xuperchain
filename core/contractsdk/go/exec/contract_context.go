@@ -4,8 +4,8 @@ import (
 	"log"
 	"math/big"
 
-	"github.com/xuperchain/xuperunion/contractsdk/go/code"
-	pb "github.com/xuperchain/xuperunion/contractsdk/go/pb"
+	"github.com/xuperchain/xuperchain/core/contractsdk/go/code"
+	pb "github.com/xuperchain/xuperchain/core/contractsdk/go/pb"
 )
 
 const (

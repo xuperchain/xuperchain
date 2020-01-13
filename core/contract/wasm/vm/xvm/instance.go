@@ -3,15 +3,15 @@ package xvm
 import (
 	"errors"
 
-	"github.com/xuperchain/xuperunion/common/log"
-	"github.com/xuperchain/xuperunion/contract"
-	"github.com/xuperchain/xuperunion/contract/bridge"
-	"github.com/xuperchain/xuperunion/contract/wasm/vm"
-	"github.com/xuperchain/xuperunion/pb"
-	"github.com/xuperchain/xuperunion/xvm/debug"
-	"github.com/xuperchain/xuperunion/xvm/exec"
-	"github.com/xuperchain/xuperunion/xvm/runtime/emscripten"
-	gowasm "github.com/xuperchain/xuperunion/xvm/runtime/go"
+	"github.com/xuperchain/xuperchain/core/common/log"
+	"github.com/xuperchain/xuperchain/core/contract"
+	"github.com/xuperchain/xuperchain/core/contract/bridge"
+	"github.com/xuperchain/xuperchain/core/contract/wasm/vm"
+	"github.com/xuperchain/xuperchain/core/pb"
+	"github.com/xuperchain/xuperchain/core/xvm/debug"
+	"github.com/xuperchain/xuperchain/core/xvm/exec"
+	"github.com/xuperchain/xuperchain/core/xvm/runtime/emscripten"
+	gowasm "github.com/xuperchain/xuperchain/core/xvm/runtime/go"
 )
 
 func createInstance(ctx *bridge.Context, code *contractCode, debugLogger *log.Logger) (vm.Instance, error) {

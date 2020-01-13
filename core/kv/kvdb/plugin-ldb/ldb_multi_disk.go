@@ -10,7 +10,7 @@ import (
 	"github.com/syndtr/goleveldb/leveldb/filter"
 	"github.com/syndtr/goleveldb/leveldb/opt"
 	"github.com/xuperchain/log15"
-	"github.com/xuperchain/xuperunion/kv/mstorage"
+	"github.com/xuperchain/xuperchain/core/kv/mstorage"
 )
 
 // Open opens an instance of LDB with parameters (ldb path and other options)

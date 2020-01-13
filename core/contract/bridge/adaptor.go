@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/xuperchain/xuperunion/contract"
+	"github.com/xuperchain/xuperchain/core/contract"
 )
 
 const (

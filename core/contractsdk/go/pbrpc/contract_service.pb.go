@@ -7,7 +7,7 @@ import (
 	context "context"
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
-	pb "github.com/xuperchain/xuperunion/contractsdk/go/pb"
+	pb "github.com/xuperchain/xuperchain/core/contractsdk/go/pb"
 	grpc "google.golang.org/grpc"
 	math "math"
 )

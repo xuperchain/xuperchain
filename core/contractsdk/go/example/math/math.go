@@ -7,8 +7,8 @@ import (
 	"math/big"
 	"os"
 
-	"github.com/xuperchain/xuperunion/contractsdk/go/code"
-	"github.com/xuperchain/xuperunion/contractsdk/go/driver"
+	"github.com/xuperchain/xuperchain/core/contractsdk/go/code"
+	"github.com/xuperchain/xuperchain/core/contractsdk/go/driver"
 )
 
 type math struct{}

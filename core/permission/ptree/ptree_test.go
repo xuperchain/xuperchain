@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"testing"
 
-	acl_mock "github.com/xuperchain/xuperunion/permission/acl/mock"
+	acl_mock "github.com/xuperchain/xuperchain/core/permission/acl/mock"
 )
 
 func Test_AccountPTree(t *testing.T) {

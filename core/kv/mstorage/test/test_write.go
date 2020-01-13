@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/syndtr/goleveldb/leveldb"
-	"github.com/xuperchain/xuperunion/kv/mstorage"
+	"github.com/xuperchain/xuperchain/core/kv/mstorage"
 	"strings"
 )
 

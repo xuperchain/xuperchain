@@ -16,16 +16,16 @@ import (
 	"github.com/golang/protobuf/proto"
 
 	log "github.com/xuperchain/log15"
-	"github.com/xuperchain/xuperunion/common/config"
-	"github.com/xuperchain/xuperunion/global"
-	"github.com/xuperchain/xuperunion/p2pv2"
-	xuper_p2p "github.com/xuperchain/xuperunion/p2pv2/pb"
-	"github.com/xuperchain/xuperunion/pb"
+	"github.com/xuperchain/xuperchain/core/common/config"
+	"github.com/xuperchain/xuperchain/core/global"
+	"github.com/xuperchain/xuperchain/core/p2pv2"
+	xuper_p2p "github.com/xuperchain/xuperchain/core/p2pv2/pb"
+	"github.com/xuperchain/xuperchain/core/pb"
 
-	"github.com/xuperchain/xuperunion/contract/kernel"
-	crypto_client "github.com/xuperchain/xuperunion/crypto/client"
-	"github.com/xuperchain/xuperunion/ledger"
-	"github.com/xuperchain/xuperunion/utxo"
+	"github.com/xuperchain/xuperchain/core/contract/kernel"
+	crypto_client "github.com/xuperchain/xuperchain/core/crypto/client"
+	"github.com/xuperchain/xuperchain/core/ledger"
+	"github.com/xuperchain/xuperchain/core/utxo"
 )
 
 const BobAddress = "dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN"

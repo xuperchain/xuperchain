@@ -3,8 +3,8 @@ package xmodel
 import (
 	"fmt"
 
-	"github.com/xuperchain/xuperunion/pb"
-	xmodel_pb "github.com/xuperchain/xuperunion/xmodel/pb"
+	"github.com/xuperchain/xuperchain/core/pb"
+	xmodel_pb "github.com/xuperchain/xuperchain/core/xmodel/pb"
 )
 
 func parseVersion(version string) ([]byte, int, error) {

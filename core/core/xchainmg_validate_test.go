@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	"encoding/json"
-	"github.com/xuperchain/xuperunion/contract"
-	"github.com/xuperchain/xuperunion/pb"
+	"github.com/xuperchain/xuperchain/core/contract"
+	"github.com/xuperchain/xuperchain/core/pb"
 )
 
 func TestValidatePostTx(t *testing.T) {

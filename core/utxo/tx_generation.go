@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/xuperchain/xuperunion/common"
-	crypto_client "github.com/xuperchain/xuperunion/crypto/client"
-	"github.com/xuperchain/xuperunion/pb"
-	"github.com/xuperchain/xuperunion/utxo/txhash"
+	"github.com/xuperchain/xuperchain/core/common"
+	crypto_client "github.com/xuperchain/xuperchain/core/crypto/client"
+	"github.com/xuperchain/xuperchain/core/pb"
+	"github.com/xuperchain/xuperchain/core/utxo/txhash"
 )
 
 // GenerateTx 根据一个原始订单, 得到UTXO格式的交易, 相当于预执行, 会在内存中锁定一段时间UTXO, 但是不修改kv存储

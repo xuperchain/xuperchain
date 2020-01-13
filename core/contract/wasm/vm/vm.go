@@ -1,10 +1,10 @@
 package vm
 
 import (
-	"github.com/xuperchain/xuperunion/common/log"
-	"github.com/xuperchain/xuperunion/contract"
-	"github.com/xuperchain/xuperunion/contract/bridge"
-	"github.com/xuperchain/xuperunion/pb"
+	"github.com/xuperchain/xuperchain/core/common/log"
+	"github.com/xuperchain/xuperchain/core/contract"
+	"github.com/xuperchain/xuperchain/core/contract/bridge"
+	"github.com/xuperchain/xuperchain/core/pb"
 )
 
 // InstanceCreatorConfig configures InstanceCreator

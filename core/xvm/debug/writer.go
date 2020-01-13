@@ -3,7 +3,7 @@ package debug
 import (
 	"io"
 
-	"github.com/xuperchain/xuperunion/xvm/exec"
+	"github.com/xuperchain/xuperchain/core/xvm/exec"
 )
 
 const (

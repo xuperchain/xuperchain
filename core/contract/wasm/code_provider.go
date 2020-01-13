@@ -4,9 +4,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/xuperchain/xuperunion/contract/wasm/vm"
-	"github.com/xuperchain/xuperunion/pb"
-	xmodel_pb "github.com/xuperchain/xuperunion/xmodel/pb"
+	"github.com/xuperchain/xuperchain/core/contract/wasm/vm"
+	"github.com/xuperchain/xuperchain/core/pb"
+	xmodel_pb "github.com/xuperchain/xuperchain/core/xmodel/pb"
 
 	"github.com/golang/protobuf/proto"
 )

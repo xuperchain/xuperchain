@@ -3,7 +3,7 @@ package fs
 import (
 	"os"
 
-	"github.com/xuperchain/xuperunion/xvm/runtime/go/js"
+	"github.com/xuperchain/xuperchain/core/xvm/runtime/go/js"
 )
 
 // Constants is the constants in fs

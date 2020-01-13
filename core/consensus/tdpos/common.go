@@ -9,10 +9,10 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/xuperchain/xuperunion/common"
-	cons_base "github.com/xuperchain/xuperunion/consensus/base"
-	"github.com/xuperchain/xuperunion/contract"
-	"github.com/xuperchain/xuperunion/pb"
+	"github.com/xuperchain/xuperchain/core/common"
+	cons_base "github.com/xuperchain/xuperchain/core/consensus/base"
+	"github.com/xuperchain/xuperchain/core/contract"
+	"github.com/xuperchain/xuperchain/core/pb"
 )
 
 const minNominateProportion = 100000

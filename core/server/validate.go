@@ -8,10 +8,10 @@ import (
 	"errors"
 	"strconv"
 
-	xchaincore "github.com/xuperchain/xuperunion/core"
-	"github.com/xuperchain/xuperunion/crypto/hash"
-	"github.com/xuperchain/xuperunion/pb"
-	"github.com/xuperchain/xuperunion/permission/acl"
+	xchaincore "github.com/xuperchain/xuperchain/core/core"
+	"github.com/xuperchain/xuperchain/core/crypto/hash"
+	"github.com/xuperchain/xuperchain/core/pb"
+	"github.com/xuperchain/xuperchain/core/permission/acl"
 )
 
 func validateSendBlock(block *pb.Block) error {

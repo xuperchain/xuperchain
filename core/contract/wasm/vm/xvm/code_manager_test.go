@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/xuperchain/xuperunion/pb"
-	"github.com/xuperchain/xuperunion/xvm/exec"
+	"github.com/xuperchain/xuperchain/core/pb"
+	"github.com/xuperchain/xuperchain/core/xvm/exec"
 )
 
 type memCodeProvider struct {

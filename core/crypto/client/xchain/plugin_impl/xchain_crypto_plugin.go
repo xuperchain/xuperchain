@@ -2,7 +2,7 @@
 package main
 
 import (
-	"github.com/xuperchain/xuperunion/crypto/client/xchain"
+	"github.com/xuperchain/xuperchain/core/crypto/client/xchain"
 )
 
 // GetInstance returns the an instance of XchainCryptoClient

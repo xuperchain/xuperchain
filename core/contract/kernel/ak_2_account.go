@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/xuperchain/xuperunion/pb"
-	"github.com/xuperchain/xuperunion/permission/acl/utils"
+	"github.com/xuperchain/xuperchain/core/pb"
+	"github.com/xuperchain/xuperchain/core/permission/acl/utils"
 )
 
 func updateThresholdWithDel(ctx *KContext, aksWeight map[string]float64, accountName string) error {

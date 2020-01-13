@@ -3,11 +3,11 @@ package base
 import (
 	"crypto/ecdsa"
 	"fmt"
-	"github.com/xuperchain/xuperunion/crypto/config"
+	"github.com/xuperchain/xuperchain/core/crypto/config"
 
-	"github.com/xuperchain/xuperunion/crypto/account"
-	"github.com/xuperchain/xuperunion/crypto/multisign"
-	"github.com/xuperchain/xuperunion/hdwallet/rand"
+	"github.com/xuperchain/xuperchain/core/crypto/account"
+	"github.com/xuperchain/xuperchain/core/crypto/multisign"
+	"github.com/xuperchain/xuperchain/core/hdwallet/rand"
 )
 
 // CryptoClientCommon : common implementation for CryptoClient

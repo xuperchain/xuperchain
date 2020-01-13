@@ -11,7 +11,7 @@ import (
 	"strconv"
 
 	"github.com/spf13/cobra"
-	"github.com/xuperchain/xuperunion/contractsdk/xc/internal/mkfile"
+	"github.com/xuperchain/xuperchain/core/contractsdk/xc/internal/mkfile"
 )
 
 const (

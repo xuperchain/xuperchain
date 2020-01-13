@@ -5,7 +5,7 @@ import (
 	"crypto/rand"
 	"fmt"
 
-	libecies "github.com/xuperchain/xuperunion/crypto/ecies/libecies"
+	libecies "github.com/xuperchain/xuperchain/core/crypto/ecies/libecies"
 )
 
 // Encrypt message using public key

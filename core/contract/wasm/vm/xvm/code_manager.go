@@ -9,11 +9,11 @@ import (
 	"path/filepath"
 	"sync"
 
-	"github.com/xuperchain/xuperunion/common/log"
-	"github.com/xuperchain/xuperunion/contract/wasm/vm"
-	"github.com/xuperchain/xuperunion/pb"
-	"github.com/xuperchain/xuperunion/xvm/compile"
-	"github.com/xuperchain/xuperunion/xvm/exec"
+	"github.com/xuperchain/xuperchain/core/common/log"
+	"github.com/xuperchain/xuperchain/core/contract/wasm/vm"
+	"github.com/xuperchain/xuperchain/core/pb"
+	"github.com/xuperchain/xuperchain/core/xvm/compile"
+	"github.com/xuperchain/xuperchain/core/xvm/exec"
 	"golang.org/x/sync/singleflight"
 )
 
@@ -173,7 +173,7 @@ func (c *codeManager) GetExecCode(name string, cp vm.ContractCodeProvider) (*con
 			return execCode, nil
 		}
 		// old code handle should be closed before open new code
-		// see https://github.com/xuperchain/xuperunion/issues/352
+		// see https://github.com/xuperchain/xuperchain/core/issues/352
 		c.purgeMemCache(name)
 		libpath, ok := c.lookupDiskCache(name, desc)
 		if !ok {

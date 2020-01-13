@@ -9,7 +9,7 @@ import (
 	"encoding/json"
 	"math/big"
 
-	"github.com/xuperchain/xuperunion/pb"
+	"github.com/xuperchain/xuperchain/core/pb"
 )
 
 // HexID bytes

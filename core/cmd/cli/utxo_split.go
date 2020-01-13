@@ -10,11 +10,11 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
-	"github.com/xuperchain/xuperunion/global"
-	"github.com/xuperchain/xuperunion/pb"
-	"github.com/xuperchain/xuperunion/permission/acl"
-	"github.com/xuperchain/xuperunion/utxo"
-	"github.com/xuperchain/xuperunion/utxo/txhash"
+	"github.com/xuperchain/xuperchain/core/global"
+	"github.com/xuperchain/xuperchain/core/pb"
+	"github.com/xuperchain/xuperchain/core/permission/acl"
+	"github.com/xuperchain/xuperchain/core/utxo"
+	"github.com/xuperchain/xuperchain/core/utxo/txhash"
 )
 
 // SplitUtxoCommand split utxo of ak or account

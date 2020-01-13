@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"sync"
 
-	xuperp2p "github.com/xuperchain/xuperunion/p2pv2/pb"
+	xuperp2p "github.com/xuperchain/xuperchain/core/p2pv2/pb"
 )
 
 // Subscriber define the subscriber of message

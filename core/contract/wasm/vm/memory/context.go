@@ -4,9 +4,9 @@ import (
 	"context"
 	"math/big"
 
-	"github.com/xuperchain/xuperunion/contract/bridge"
-	"github.com/xuperchain/xuperunion/contractsdk/go/code"
-	pb "github.com/xuperchain/xuperunion/contractsdk/go/pb"
+	"github.com/xuperchain/xuperchain/core/contract/bridge"
+	"github.com/xuperchain/xuperchain/core/contractsdk/go/code"
+	pb "github.com/xuperchain/xuperchain/core/contractsdk/go/pb"
 )
 
 type codeContext struct {

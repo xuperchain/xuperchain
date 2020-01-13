@@ -10,9 +10,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/xuperchain/xuperunion/pb"
+	"github.com/xuperchain/xuperchain/core/pb"
 
-	walletRand "github.com/xuperchain/xuperunion/hdwallet/rand"
+	walletRand "github.com/xuperchain/xuperchain/core/hdwallet/rand"
 )
 
 const (

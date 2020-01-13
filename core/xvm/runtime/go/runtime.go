@@ -3,10 +3,10 @@ package gowasm
 import (
 	"time"
 
-	"github.com/xuperchain/xuperunion/xvm/debug"
-	"github.com/xuperchain/xuperunion/xvm/exec"
-	"github.com/xuperchain/xuperunion/xvm/runtime/go/js"
-	"github.com/xuperchain/xuperunion/xvm/runtime/go/js/fs"
+	"github.com/xuperchain/xuperchain/core/xvm/debug"
+	"github.com/xuperchain/xuperchain/core/xvm/exec"
+	"github.com/xuperchain/xuperchain/core/xvm/runtime/go/js"
+	"github.com/xuperchain/xuperchain/core/xvm/runtime/go/js/fs"
 )
 
 const (

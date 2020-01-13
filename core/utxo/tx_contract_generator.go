@@ -9,11 +9,11 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/xuperchain/xuperunion/common"
-	"github.com/xuperchain/xuperunion/contract"
-	"github.com/xuperchain/xuperunion/global"
-	"github.com/xuperchain/xuperunion/kv/kvdb"
-	"github.com/xuperchain/xuperunion/pb"
+	"github.com/xuperchain/xuperchain/core/common"
+	"github.com/xuperchain/xuperchain/core/contract"
+	"github.com/xuperchain/xuperchain/core/global"
+	"github.com/xuperchain/xuperchain/core/kv/kvdb"
+	"github.com/xuperchain/xuperchain/core/pb"
 )
 
 func (uv *UtxoVM) isSmartContract(desc []byte) (*contract.TxDesc, bool) {

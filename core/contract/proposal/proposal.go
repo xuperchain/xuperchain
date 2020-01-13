@@ -14,10 +14,10 @@ import (
 
 	log "github.com/xuperchain/log15"
 
-	"github.com/xuperchain/xuperunion/contract"
-	"github.com/xuperchain/xuperunion/ledger"
-	"github.com/xuperchain/xuperunion/pb"
-	"github.com/xuperchain/xuperunion/utxo"
+	"github.com/xuperchain/xuperchain/core/contract"
+	"github.com/xuperchain/xuperchain/core/ledger"
+	"github.com/xuperchain/xuperchain/core/pb"
+	"github.com/xuperchain/xuperchain/core/utxo"
 )
 
 const proposeMethod = "Propose"

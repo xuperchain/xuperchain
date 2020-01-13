@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/docker/go-connections/sockets"
-	"github.com/xuperchain/xuperunion/contractsdk/go/code"
-	pbrpc "github.com/xuperchain/xuperunion/contractsdk/go/pbrpc"
+	"github.com/xuperchain/xuperchain/core/contractsdk/go/code"
+	pbrpc "github.com/xuperchain/xuperchain/core/contractsdk/go/pbrpc"
 	"google.golang.org/grpc"
 )
 

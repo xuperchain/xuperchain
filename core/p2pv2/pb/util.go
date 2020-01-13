@@ -5,7 +5,7 @@ import (
 
 	"github.com/golang/snappy"
 
-	"github.com/xuperchain/xuperunion/global"
+	"github.com/xuperchain/xuperchain/core/global"
 )
 
 // define message versions

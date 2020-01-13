@@ -7,8 +7,8 @@ import (
 	"math"
 	"sort"
 
-	"github.com/xuperchain/xuperunion/crypto/hash"
-	"github.com/xuperchain/xuperunion/pb"
+	"github.com/xuperchain/xuperchain/core/crypto/hash"
+	"github.com/xuperchain/xuperchain/core/pb"
 )
 
 func getLeafSize(txCount int) int {

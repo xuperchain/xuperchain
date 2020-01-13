@@ -2,7 +2,7 @@ package schnorr
 
 import (
 	"bytes"
-	"github.com/xuperchain/xuperunion/crypto/account"
+	"github.com/xuperchain/xuperchain/core/crypto/account"
 	"os"
 	"testing"
 )

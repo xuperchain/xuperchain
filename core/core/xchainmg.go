@@ -6,13 +6,13 @@ import (
 	"sync"
 
 	"github.com/xuperchain/log15"
-	"github.com/xuperchain/xuperunion/common/config"
-	"github.com/xuperchain/xuperunion/common/events"
-	"github.com/xuperchain/xuperunion/common/probe"
-	"github.com/xuperchain/xuperunion/contract/kernel"
-	"github.com/xuperchain/xuperunion/p2pv2"
-	xuper_p2p "github.com/xuperchain/xuperunion/p2pv2/pb"
-	pm "github.com/xuperchain/xuperunion/pluginmgr"
+	"github.com/xuperchain/xuperchain/core/common/config"
+	"github.com/xuperchain/xuperchain/core/common/events"
+	"github.com/xuperchain/xuperchain/core/common/probe"
+	"github.com/xuperchain/xuperchain/core/contract/kernel"
+	"github.com/xuperchain/xuperchain/core/p2pv2"
+	xuper_p2p "github.com/xuperchain/xuperchain/core/p2pv2/pb"
+	pm "github.com/xuperchain/xuperchain/core/pluginmgr"
 )
 
 // XChainMG manage all chains

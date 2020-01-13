@@ -1,6 +1,6 @@
 package wasi
 
-import "github.com/xuperchain/xuperunion/xvm/exec"
+import "github.com/xuperchain/xuperchain/core/xvm/exec"
 
 var resolver = exec.MapResolver(map[string]interface{}{
 	"wasi_unstable.fd_prestat_get": func(ctx exec.Context, x, y uint32) uint32 {

@@ -1,7 +1,7 @@
 package utxo
 
 import (
-	"github.com/xuperchain/xuperunion/pb"
+	"github.com/xuperchain/xuperchain/core/pb"
 )
 
 func (uv *UtxoVM) buildTxDeps(txs []*pb.Transaction) (map[string]*pb.Transaction, TxGraph, error) {

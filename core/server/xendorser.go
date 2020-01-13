@@ -6,9 +6,9 @@ import (
 	context "golang.org/x/net/context"
 	"io/ioutil"
 
-	crypto_client "github.com/xuperchain/xuperunion/crypto/client"
-	"github.com/xuperchain/xuperunion/pb"
-	"github.com/xuperchain/xuperunion/utxo/txhash"
+	crypto_client "github.com/xuperchain/xuperchain/core/crypto/client"
+	"github.com/xuperchain/xuperchain/core/pb"
+	"github.com/xuperchain/xuperchain/core/utxo/txhash"
 )
 
 // XEndorser is the interface for endorser service

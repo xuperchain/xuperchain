@@ -1,8 +1,8 @@
 package utils
 
 import (
-	cons_base "github.com/xuperchain/xuperunion/consensus/base"
-	pb "github.com/xuperchain/xuperunion/pb"
+	cons_base "github.com/xuperchain/xuperchain/core/consensus/base"
+	pb "github.com/xuperchain/xuperchain/core/pb"
 )
 
 // IsInValidateSets check whether addr in validates

@@ -10,11 +10,11 @@ import (
 
 	"github.com/golang/protobuf/proto"
 
-	"github.com/xuperchain/xuperunion/common/config"
-	crypto_client "github.com/xuperchain/xuperunion/crypto/client"
-	"github.com/xuperchain/xuperunion/crypto/hash"
-	xuper_p2p "github.com/xuperchain/xuperunion/p2pv2/pb"
-	"github.com/xuperchain/xuperunion/pb"
+	"github.com/xuperchain/xuperchain/core/common/config"
+	crypto_client "github.com/xuperchain/xuperchain/core/crypto/client"
+	"github.com/xuperchain/xuperchain/core/crypto/hash"
+	xuper_p2p "github.com/xuperchain/xuperchain/core/p2pv2/pb"
+	"github.com/xuperchain/xuperchain/core/pb"
 )
 
 // RegisterSubsriber register handleMessage callback fucntion

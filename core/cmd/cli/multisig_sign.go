@@ -13,9 +13,9 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/spf13/cobra"
 
-	crypto_client "github.com/xuperchain/xuperunion/crypto/client"
-	"github.com/xuperchain/xuperunion/pb"
-	"github.com/xuperchain/xuperunion/utxo/txhash"
+	crypto_client "github.com/xuperchain/xuperchain/core/crypto/client"
+	"github.com/xuperchain/xuperchain/core/pb"
+	"github.com/xuperchain/xuperchain/core/utxo/txhash"
 )
 
 // MultisigSignCommand multisig sign struct

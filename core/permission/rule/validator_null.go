@@ -1,7 +1,7 @@
 package rule
 
 import (
-	"github.com/xuperchain/xuperunion/permission/ptree"
+	"github.com/xuperchain/xuperchain/core/permission/ptree"
 )
 
 // NullValidator is Valiator for Null permission model

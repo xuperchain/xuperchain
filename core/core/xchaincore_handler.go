@@ -1,9 +1,9 @@
 package xchaincore
 
 import (
-	"github.com/xuperchain/xuperunion/common/events"
-	cons_base "github.com/xuperchain/xuperunion/consensus/base"
-	p2pv2 "github.com/xuperchain/xuperunion/p2pv2"
+	"github.com/xuperchain/xuperchain/core/common/events"
+	cons_base "github.com/xuperchain/xuperchain/core/consensus/base"
+	p2pv2 "github.com/xuperchain/xuperchain/core/p2pv2"
 )
 
 // register events with handler

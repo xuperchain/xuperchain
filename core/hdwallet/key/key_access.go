@@ -21,12 +21,12 @@ import (
 	"os"
 	"strings"
 
-	"github.com/xuperchain/xuperunion/crypto/account"
-	"github.com/xuperchain/xuperunion/crypto/ecies"
-	"github.com/xuperchain/xuperunion/crypto/hash"
-	"github.com/xuperchain/xuperunion/hdwallet/config"
-	"github.com/xuperchain/xuperunion/hdwallet/error"
-	"github.com/xuperchain/xuperunion/pb"
+	"github.com/xuperchain/xuperchain/core/crypto/account"
+	"github.com/xuperchain/xuperchain/core/crypto/ecies"
+	"github.com/xuperchain/xuperchain/core/crypto/hash"
+	"github.com/xuperchain/xuperchain/core/hdwallet/config"
+	"github.com/xuperchain/xuperchain/core/hdwallet/error"
+	"github.com/xuperchain/xuperchain/core/pb"
 )
 
 // GetBinaryEcdsaPrivateKeyFromFile parse binary ecdsa private key from file

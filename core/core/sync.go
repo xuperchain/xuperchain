@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/xuperchain/xuperunion/global"
-	"github.com/xuperchain/xuperunion/p2pv2"
-	xuper_p2p "github.com/xuperchain/xuperunion/p2pv2/pb"
-	"github.com/xuperchain/xuperunion/pb"
+	"github.com/xuperchain/xuperchain/core/global"
+	"github.com/xuperchain/xuperchain/core/p2pv2"
+	xuper_p2p "github.com/xuperchain/xuperchain/core/p2pv2/pb"
+	"github.com/xuperchain/xuperchain/core/pb"
 )
 
 const (

@@ -1,9 +1,9 @@
 package ptree
 
 import (
-	"github.com/xuperchain/xuperunion/pb"
-	"github.com/xuperchain/xuperunion/permission/acl"
-	"github.com/xuperchain/xuperunion/permission/utils"
+	"github.com/xuperchain/xuperchain/core/pb"
+	"github.com/xuperchain/xuperchain/core/permission/acl"
+	"github.com/xuperchain/xuperchain/core/permission/utils"
 )
 
 // ValidateStatus define the validation status of a perm node

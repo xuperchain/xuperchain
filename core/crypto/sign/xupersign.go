@@ -7,7 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/xuperchain/xuperunion/crypto/common"
+	"github.com/xuperchain/xuperchain/core/crypto/common"
 )
 
 // XuperSign sign message using private key for all kinds of signatures

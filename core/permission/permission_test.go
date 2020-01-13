@@ -1,9 +1,9 @@
 package permission
 
 import (
-	crypto_client "github.com/xuperchain/xuperunion/crypto/client"
-	"github.com/xuperchain/xuperunion/pb"
-	acl_mock "github.com/xuperchain/xuperunion/permission/acl/mock"
+	crypto_client "github.com/xuperchain/xuperchain/core/crypto/client"
+	"github.com/xuperchain/xuperchain/core/pb"
+	acl_mock "github.com/xuperchain/xuperchain/core/permission/acl/mock"
 
 	"testing"
 )

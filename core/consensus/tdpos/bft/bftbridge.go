@@ -7,9 +7,9 @@ import (
 	"github.com/golang/protobuf/proto"
 
 	"github.com/xuperchain/log15"
-	"github.com/xuperchain/xuperunion/consensus/base"
-	"github.com/xuperchain/xuperunion/ledger"
-	"github.com/xuperchain/xuperunion/pb"
+	"github.com/xuperchain/xuperchain/core/consensus/base"
+	"github.com/xuperchain/xuperchain/core/ledger"
+	"github.com/xuperchain/xuperchain/core/pb"
 )
 
 // CbftBridge implements ExternalInterface that chainedbft can communicate with TDPoS

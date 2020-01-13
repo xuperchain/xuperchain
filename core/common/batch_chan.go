@@ -7,7 +7,7 @@ package common
 import (
 	"time"
 
-	"github.com/xuperchain/xuperunion/pb"
+	"github.com/xuperchain/xuperchain/core/pb"
 )
 
 //BatchChan 将单条的chan包装成batch的chan

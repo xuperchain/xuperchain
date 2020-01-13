@@ -5,10 +5,10 @@ import (
 	"encoding/binary"
 	"fmt"
 
-	"github.com/xuperchain/xuperunion/common/log"
-	"github.com/xuperchain/xuperunion/contract/bridge"
-	"github.com/xuperchain/xuperunion/contract/bridge/memrpc"
-	"github.com/xuperchain/xuperunion/xvm/exec"
+	"github.com/xuperchain/xuperchain/core/common/log"
+	"github.com/xuperchain/xuperchain/core/contract/bridge"
+	"github.com/xuperchain/xuperchain/core/contract/bridge/memrpc"
+	"github.com/xuperchain/xuperchain/core/xvm/exec"
 )
 
 const (
@@ -40,9 +40,9 @@ func (s *syscallResolver) ResolveGlobal(module, name string) (int64, bool) {
 func (s *syscallResolver) ResolveFunc(module, name string) (interface{}, bool) {
 	fullname := module + "." + name
 	switch fullname {
-	case "go.github.com/xuperchain/xuperunion/contractsdk/go/driver/wasm.callMethod":
+	case "go.github.com/xuperchain/xuperchain/core/contractsdk/go/driver/wasm.callMethod":
 		return s.goCallMethod, true
-	case "go.github.com/xuperchain/xuperunion/contractsdk/go/driver/wasm.fetchResponse":
+	case "go.github.com/xuperchain/xuperchain/core/contractsdk/go/driver/wasm.fetchResponse":
 		return s.goFetchResponse, true
 	case "env._call_method":
 		return s.cCallMethod, true

@@ -3,9 +3,9 @@ package bridge
 import (
 	"sync"
 
-	"github.com/xuperchain/xuperunion/contract"
-	pb "github.com/xuperchain/xuperunion/contractsdk/go/pb"
-	"github.com/xuperchain/xuperunion/xmodel"
+	"github.com/xuperchain/xuperchain/core/contract"
+	pb "github.com/xuperchain/xuperchain/core/contractsdk/go/pb"
+	"github.com/xuperchain/xuperchain/core/xmodel"
 )
 
 // Context 保存了合约执行的内核状态，

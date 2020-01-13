@@ -8,7 +8,7 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/xuperchain/xuperunion/pb"
+	"github.com/xuperchain/xuperchain/core/pb"
 )
 
 var (

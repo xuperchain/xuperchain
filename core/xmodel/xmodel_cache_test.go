@@ -5,10 +5,10 @@ import (
 	"testing"
 
 	log "github.com/xuperchain/log15"
-	crypto_client "github.com/xuperchain/xuperunion/crypto/client"
-	"github.com/xuperchain/xuperunion/kv/kvdb"
-	"github.com/xuperchain/xuperunion/ledger"
-	"github.com/xuperchain/xuperunion/pb"
+	crypto_client "github.com/xuperchain/xuperchain/core/crypto/client"
+	"github.com/xuperchain/xuperchain/core/kv/kvdb"
+	"github.com/xuperchain/xuperchain/core/ledger"
+	"github.com/xuperchain/xuperchain/core/pb"
 )
 
 const pathDB = "/tmp/xmodel_cache_test"

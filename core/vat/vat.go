@@ -2,7 +2,7 @@
 package vat
 
 import (
-	"github.com/xuperchain/xuperunion/pb"
+	"github.com/xuperchain/xuperchain/core/pb"
 	"sort"
 	"sync"
 )

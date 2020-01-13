@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/xuperchain/xuperunion/xvm/compile"
+	"github.com/xuperchain/xuperchain/core/xvm/compile"
 )
 
 func withCode(t testing.TB, watCode string, r Resolver, f func(code Code)) {

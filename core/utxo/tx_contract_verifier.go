@@ -1,10 +1,10 @@
 package utxo
 
 import (
-	"github.com/xuperchain/xuperunion/global"
-	"github.com/xuperchain/xuperunion/kv/kvdb"
-	ledger_pkg "github.com/xuperchain/xuperunion/ledger"
-	"github.com/xuperchain/xuperunion/pb"
+	"github.com/xuperchain/xuperchain/core/global"
+	"github.com/xuperchain/xuperchain/core/kv/kvdb"
+	ledger_pkg "github.com/xuperchain/xuperchain/core/ledger"
+	"github.com/xuperchain/xuperchain/core/pb"
 )
 
 // TxOfRunningContractVerify run contract and verify the tx

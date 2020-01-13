@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"unsafe"
 
-	"github.com/xuperchain/xuperunion/xvm/pointer"
+	"github.com/xuperchain/xuperchain/core/xvm/pointer"
 )
 
 // A Resolver resolves global and function symbols imported by wasm code

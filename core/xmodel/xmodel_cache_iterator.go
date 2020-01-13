@@ -6,7 +6,7 @@ import (
 	"github.com/syndtr/goleveldb/leveldb/comparer"
 	"github.com/syndtr/goleveldb/leveldb/iterator"
 	"github.com/syndtr/goleveldb/leveldb/util"
-	xmodel_pb "github.com/xuperchain/xuperunion/xmodel/pb"
+	xmodel_pb "github.com/xuperchain/xuperchain/core/xmodel/pb"
 )
 
 type dir int

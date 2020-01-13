@@ -3,11 +3,11 @@ package xvm
 import (
 	"io/ioutil"
 
-	"github.com/xuperchain/xuperunion/contract/bridge"
-	"github.com/xuperchain/xuperunion/contract/wasm/vm"
-	"github.com/xuperchain/xuperunion/xvm/exec"
-	"github.com/xuperchain/xuperunion/xvm/runtime/emscripten"
-	gowasm "github.com/xuperchain/xuperunion/xvm/runtime/go"
+	"github.com/xuperchain/xuperchain/core/contract/bridge"
+	"github.com/xuperchain/xuperchain/core/contract/wasm/vm"
+	"github.com/xuperchain/xuperchain/core/xvm/exec"
+	"github.com/xuperchain/xuperchain/core/xvm/runtime/emscripten"
+	gowasm "github.com/xuperchain/xuperchain/core/xvm/runtime/go"
 )
 
 type xvmInterpCreator struct {

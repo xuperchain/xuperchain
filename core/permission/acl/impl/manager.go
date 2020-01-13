@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/xuperchain/xuperunion/pb"
-	"github.com/xuperchain/xuperunion/permission/acl/utils"
-	"github.com/xuperchain/xuperunion/xmodel"
+	"github.com/xuperchain/xuperchain/core/pb"
+	"github.com/xuperchain/xuperchain/core/permission/acl/utils"
+	"github.com/xuperchain/xuperchain/core/xmodel"
 )
 
 // Manager manages all ACL releated data, providing read/write interface for ACL table

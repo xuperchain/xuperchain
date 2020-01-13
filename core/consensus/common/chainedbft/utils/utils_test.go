@@ -3,8 +3,8 @@ package utils
 import (
 	"testing"
 
-	cons_base "github.com/xuperchain/xuperunion/consensus/base"
-	"github.com/xuperchain/xuperunion/pb"
+	cons_base "github.com/xuperchain/xuperchain/core/consensus/base"
+	"github.com/xuperchain/xuperchain/core/pb"
 )
 
 func TestIsInValidateSets(t *testing.T) {

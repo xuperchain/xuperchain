@@ -4,11 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/xuperchain/xuperunion/contract"
-	"github.com/xuperchain/xuperunion/pb"
-	"github.com/xuperchain/xuperunion/permission/acl"
-	"github.com/xuperchain/xuperunion/permission/acl/utils"
-	"github.com/xuperchain/xuperunion/xmodel"
+	"github.com/xuperchain/xuperchain/core/contract"
+	"github.com/xuperchain/xuperchain/core/pb"
+	"github.com/xuperchain/xuperchain/core/permission/acl"
+	"github.com/xuperchain/xuperchain/core/permission/acl/utils"
+	"github.com/xuperchain/xuperchain/core/xmodel"
 )
 
 // NewAccountMethod define NewAccountMethod type

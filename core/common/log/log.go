@@ -5,7 +5,7 @@ import (
 	"os"
 
 	log "github.com/xuperchain/log15"
-	"github.com/xuperchain/xuperunion/common/config"
+	"github.com/xuperchain/xuperchain/core/common/config"
 )
 
 var (

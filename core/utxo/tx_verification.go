@@ -15,16 +15,16 @@ import (
 	"strings"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/xuperchain/xuperunion/contract"
-	"github.com/xuperchain/xuperunion/crypto/client"
-	"github.com/xuperchain/xuperunion/pb"
-	pm "github.com/xuperchain/xuperunion/permission"
-	"github.com/xuperchain/xuperunion/permission/acl"
-	aclu "github.com/xuperchain/xuperunion/permission/acl/utils"
-	"github.com/xuperchain/xuperunion/txn"
-	"github.com/xuperchain/xuperunion/utxo/txhash"
-	"github.com/xuperchain/xuperunion/xmodel"
-	xmodel_pb "github.com/xuperchain/xuperunion/xmodel/pb"
+	"github.com/xuperchain/xuperchain/core/contract"
+	"github.com/xuperchain/xuperchain/core/crypto/client"
+	"github.com/xuperchain/xuperchain/core/pb"
+	pm "github.com/xuperchain/xuperchain/core/permission"
+	"github.com/xuperchain/xuperchain/core/permission/acl"
+	aclu "github.com/xuperchain/xuperchain/core/permission/acl/utils"
+	"github.com/xuperchain/xuperchain/core/txn"
+	"github.com/xuperchain/xuperchain/core/utxo/txhash"
+	"github.com/xuperchain/xuperchain/core/xmodel"
+	xmodel_pb "github.com/xuperchain/xuperchain/core/xmodel/pb"
 )
 
 // ImmediateVerifyTx verify tx Immediately

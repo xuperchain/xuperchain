@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/xuperchain/xuperunion/contract"
-	pb "github.com/xuperchain/xuperunion/contractsdk/go/pb"
-	"github.com/xuperchain/xuperunion/test/util"
+	"github.com/xuperchain/xuperchain/core/contract"
+	pb "github.com/xuperchain/xuperchain/core/contractsdk/go/pb"
+	"github.com/xuperchain/xuperchain/core/test/util"
 )
 
 type codeExecutor struct {

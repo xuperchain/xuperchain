@@ -5,7 +5,7 @@ import (
 	"errors"
 	"math/big"
 
-	"github.com/xuperchain/xuperunion/pb"
+	"github.com/xuperchain/xuperchain/core/pb"
 )
 
 // Transaction is the internal represents of transaction

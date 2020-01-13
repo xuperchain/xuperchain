@@ -3,7 +3,7 @@ package tdpos
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/xuperchain/xuperunion/contract"
+	"github.com/xuperchain/xuperchain/core/contract"
 	"testing"
 )
 

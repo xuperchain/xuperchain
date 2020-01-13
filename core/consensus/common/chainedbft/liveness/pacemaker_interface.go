@@ -1,8 +1,8 @@
 package liveness
 
 import (
-	cons_base "github.com/xuperchain/xuperunion/consensus/base"
-	"github.com/xuperchain/xuperunion/pb"
+	cons_base "github.com/xuperchain/xuperchain/core/consensus/base"
+	"github.com/xuperchain/xuperchain/core/pb"
 )
 
 // PacemakerInterface is the interface of Pacemaker. It responsible for generating a new round.

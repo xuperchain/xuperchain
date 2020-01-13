@@ -3,8 +3,8 @@ package utils
 import (
 	"strings"
 
-	"github.com/xuperchain/xuperunion/pb"
-	"github.com/xuperchain/xuperunion/permission/acl"
+	"github.com/xuperchain/xuperchain/core/pb"
+	"github.com/xuperchain/xuperchain/core/permission/acl"
 )
 
 // SplitAccountURI split a nested ak into account and address

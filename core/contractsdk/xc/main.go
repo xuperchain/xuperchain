@@ -1,6 +1,6 @@
 package main
 
-import "github.com/xuperchain/xuperunion/contractsdk/xc/internal/cmd"
+import "github.com/xuperchain/xuperchain/core/contractsdk/xc/internal/cmd"
 
 var (
 	buildVersion = ""

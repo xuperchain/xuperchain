@@ -6,16 +6,16 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 
-	"github.com/xuperchain/xuperunion/crypto/account"
-	"github.com/xuperchain/xuperunion/crypto/client/base"
-	schnorr_ring_sign "github.com/xuperchain/xuperunion/crypto/client/schnorr/ringsign"
-	schnorr_sign "github.com/xuperchain/xuperunion/crypto/client/schnorr/sign"
-	"github.com/xuperchain/xuperunion/crypto/client/schnorr/verify"
-	"github.com/xuperchain/xuperunion/crypto/config"
-	"github.com/xuperchain/xuperunion/crypto/ecies"
-	"github.com/xuperchain/xuperunion/crypto/utils"
-	"github.com/xuperchain/xuperunion/hdwallet/key"
-	walletRand "github.com/xuperchain/xuperunion/hdwallet/rand"
+	"github.com/xuperchain/xuperchain/core/crypto/account"
+	"github.com/xuperchain/xuperchain/core/crypto/client/base"
+	schnorr_ring_sign "github.com/xuperchain/xuperchain/core/crypto/client/schnorr/ringsign"
+	schnorr_sign "github.com/xuperchain/xuperchain/core/crypto/client/schnorr/sign"
+	"github.com/xuperchain/xuperchain/core/crypto/client/schnorr/verify"
+	"github.com/xuperchain/xuperchain/core/crypto/config"
+	"github.com/xuperchain/xuperchain/core/crypto/ecies"
+	"github.com/xuperchain/xuperchain/core/crypto/utils"
+	"github.com/xuperchain/xuperchain/core/hdwallet/key"
+	walletRand "github.com/xuperchain/xuperchain/core/hdwallet/rand"
 )
 
 // make sure this plugin implemented the interface

@@ -3,7 +3,7 @@ package code
 import (
 	"math/big"
 
-	pb "github.com/xuperchain/xuperunion/contractsdk/go/pb"
+	pb "github.com/xuperchain/xuperchain/core/contractsdk/go/pb"
 )
 
 // Context is the context in which the contract runs

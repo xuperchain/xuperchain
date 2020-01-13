@@ -5,8 +5,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/xuperchain/xuperunion/common/config"
-	xuperp2p "github.com/xuperchain/xuperunion/p2pv2/pb"
+	"github.com/xuperchain/xuperchain/core/common/config"
+	xuperp2p "github.com/xuperchain/xuperchain/core/p2pv2/pb"
 )
 
 func TestNewP2PServerV2(t *testing.T) {

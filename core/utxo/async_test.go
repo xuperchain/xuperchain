@@ -7,8 +7,8 @@ import (
 //"io/ioutil"
 //"time"
 
-//crypto_client "github.com/xuperchain/xuperunion/crypto/client"
-//ledger_pkg "github.com/xuperchain/xuperunion/ledger"
+//crypto_client "github.com/xuperchain/xuperchain/core/crypto/client"
+//ledger_pkg "github.com/xuperchain/xuperchain/core/ledger"
 )
 
 /*

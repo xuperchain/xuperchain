@@ -12,10 +12,10 @@ import (
 
 	mathRand "math/rand"
 
-	schnorr_sign "github.com/xuperchain/xuperunion/crypto/client/schnorr/sign"
-	"github.com/xuperchain/xuperunion/crypto/common"
-	"github.com/xuperchain/xuperunion/crypto/hash"
-	"github.com/xuperchain/xuperunion/hdwallet/rand"
+	schnorr_sign "github.com/xuperchain/xuperchain/core/crypto/client/schnorr/sign"
+	"github.com/xuperchain/xuperchain/core/crypto/common"
+	"github.com/xuperchain/xuperchain/core/crypto/hash"
+	"github.com/xuperchain/xuperchain/core/hdwallet/rand"
 )
 
 // define errors

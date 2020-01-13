@@ -13,10 +13,10 @@ import (
 	log "github.com/xuperchain/log15"
 	"google.golang.org/grpc"
 
-	pb "github.com/xuperchain/xuperunion/contractsdk/go/pb"
-	pbrpc "github.com/xuperchain/xuperunion/contractsdk/go/pbrpc"
-	"github.com/xuperchain/xuperunion/crypto/hash"
-	xpb "github.com/xuperchain/xuperunion/pb"
+	pb "github.com/xuperchain/xuperchain/core/contractsdk/go/pb"
+	pbrpc "github.com/xuperchain/xuperchain/core/contractsdk/go/pbrpc"
+	"github.com/xuperchain/xuperchain/core/crypto/hash"
+	xpb "github.com/xuperchain/xuperchain/core/pb"
 )
 
 type nativeCodeStatus int

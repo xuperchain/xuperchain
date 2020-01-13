@@ -3,7 +3,7 @@ package xmodel
 import (
 	"fmt"
 
-	"github.com/xuperchain/xuperunion/pb"
+	"github.com/xuperchain/xuperchain/core/pb"
 )
 
 func (s *XModel) verifyInputs(tx *pb.Transaction) error {

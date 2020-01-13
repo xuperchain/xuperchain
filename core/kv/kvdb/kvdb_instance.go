@@ -1,8 +1,8 @@
 package kvdb
 
 import (
-	"github.com/xuperchain/xuperunion/common/log"
-	"github.com/xuperchain/xuperunion/pluginmgr"
+	"github.com/xuperchain/xuperchain/core/common/log"
+	"github.com/xuperchain/xuperchain/core/pluginmgr"
 )
 
 // KVParameter structure for kv instance parameters

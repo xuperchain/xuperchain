@@ -3,8 +3,8 @@ package utils
 import (
 	"errors"
 
-	crypto_client "github.com/xuperchain/xuperunion/crypto/client"
-	"github.com/xuperchain/xuperunion/pb"
+	crypto_client "github.com/xuperchain/xuperchain/core/crypto/client"
+	"github.com/xuperchain/xuperchain/core/pb"
 )
 
 // VerifySign verify if the signature of data and the public key are match

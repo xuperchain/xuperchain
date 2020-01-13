@@ -1,8 +1,8 @@
 package pluginmgr
 
 import (
-	"github.com/xuperchain/xuperunion/common/config"
-	"github.com/xuperchain/xuperunion/common/log"
+	"github.com/xuperchain/xuperchain/core/common/config"
+	"github.com/xuperchain/xuperchain/core/common/log"
 
 	"fmt"
 	"os"

@@ -4,10 +4,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/xuperchain/xuperunion/common"
-	"github.com/xuperchain/xuperunion/contract"
-	"github.com/xuperchain/xuperunion/contract/wasm"
-	"github.com/xuperchain/xuperunion/permission/acl/utils"
+	"github.com/xuperchain/xuperchain/core/common"
+	"github.com/xuperchain/xuperchain/core/contract"
+	"github.com/xuperchain/xuperchain/core/contract/wasm"
+	"github.com/xuperchain/xuperchain/core/permission/acl/utils"
 )
 
 // DeployMethod define Deploy type

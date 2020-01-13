@@ -6,14 +6,14 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	log "github.com/xuperchain/log15"
-	cons_base "github.com/xuperchain/xuperunion/consensus/base"
-	"github.com/xuperchain/xuperunion/consensus/common/chainedbft/config"
-	"github.com/xuperchain/xuperunion/consensus/common/chainedbft/external"
-	"github.com/xuperchain/xuperunion/consensus/common/chainedbft/utils"
-	crypto_client "github.com/xuperchain/xuperunion/crypto/client"
-	"github.com/xuperchain/xuperunion/p2pv2"
-	p2p_pb "github.com/xuperchain/xuperunion/p2pv2/pb"
-	"github.com/xuperchain/xuperunion/pb"
+	cons_base "github.com/xuperchain/xuperchain/core/consensus/base"
+	"github.com/xuperchain/xuperchain/core/consensus/common/chainedbft/config"
+	"github.com/xuperchain/xuperchain/core/consensus/common/chainedbft/external"
+	"github.com/xuperchain/xuperchain/core/consensus/common/chainedbft/utils"
+	crypto_client "github.com/xuperchain/xuperchain/core/crypto/client"
+	"github.com/xuperchain/xuperchain/core/p2pv2"
+	p2p_pb "github.com/xuperchain/xuperchain/core/p2pv2/pb"
+	"github.com/xuperchain/xuperchain/core/pb"
 )
 
 type user struct {

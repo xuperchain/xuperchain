@@ -6,8 +6,8 @@ import (
 	"math"
 	"unsafe"
 
-	"github.com/xuperchain/xuperunion/xvm/debug"
-	"github.com/xuperchain/xuperunion/xvm/exec"
+	"github.com/xuperchain/xuperchain/core/xvm/debug"
+	"github.com/xuperchain/xuperchain/core/xvm/exec"
 )
 
 const (

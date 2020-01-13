@@ -3,8 +3,8 @@
 package driver
 
 import (
-	"github.com/xuperchain/xuperunion/contractsdk/go/code"
-	"github.com/xuperchain/xuperunion/contractsdk/go/driver/wasm"
+	"github.com/xuperchain/xuperchain/core/contractsdk/go/code"
+	"github.com/xuperchain/xuperchain/core/contractsdk/go/driver/wasm"
 )
 
 // Serve run contract in wasm environment

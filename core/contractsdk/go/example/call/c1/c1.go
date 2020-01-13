@@ -4,8 +4,8 @@ import (
 	"math/big"
 	"strconv"
 
-	"github.com/xuperchain/xuperunion/contractsdk/go/code"
-	"github.com/xuperchain/xuperunion/contractsdk/go/driver"
+	"github.com/xuperchain/xuperchain/core/contractsdk/go/code"
+	"github.com/xuperchain/xuperchain/core/contractsdk/go/driver"
 )
 
 type c1 struct{}

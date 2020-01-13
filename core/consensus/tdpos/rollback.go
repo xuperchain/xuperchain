@@ -4,8 +4,8 @@ import (
 	"strconv"
 
 	"encoding/hex"
-	"github.com/xuperchain/xuperunion/contract"
-	"github.com/xuperchain/xuperunion/pb"
+	"github.com/xuperchain/xuperchain/core/contract"
+	"github.com/xuperchain/xuperchain/core/pb"
 )
 
 // 回滚投票

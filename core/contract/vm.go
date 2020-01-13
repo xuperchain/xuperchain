@@ -5,8 +5,8 @@ import (
 	"sync"
 
 	log "github.com/xuperchain/log15"
-	"github.com/xuperchain/xuperunion/pb"
-	"github.com/xuperchain/xuperunion/xmodel"
+	"github.com/xuperchain/xuperchain/core/pb"
+	"github.com/xuperchain/xuperchain/core/xmodel"
 )
 
 const (

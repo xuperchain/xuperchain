@@ -2,18 +2,18 @@ package tdpos
 
 import (
 	"errors"
-	"github.com/xuperchain/xuperunion/consensus/tdpos/bft"
+	"github.com/xuperchain/xuperchain/core/consensus/tdpos/bft"
 	"math/big"
 	"sync"
 
 	log "github.com/xuperchain/log15"
-	cons_base "github.com/xuperchain/xuperunion/consensus/base"
-	bft_config "github.com/xuperchain/xuperunion/consensus/common/chainedbft/config"
-	"github.com/xuperchain/xuperunion/contract"
-	crypto_base "github.com/xuperchain/xuperunion/crypto/client/base"
-	"github.com/xuperchain/xuperunion/ledger"
-	"github.com/xuperchain/xuperunion/p2pv2"
-	"github.com/xuperchain/xuperunion/utxo"
+	cons_base "github.com/xuperchain/xuperchain/core/consensus/base"
+	bft_config "github.com/xuperchain/xuperchain/core/consensus/common/chainedbft/config"
+	"github.com/xuperchain/xuperchain/core/contract"
+	crypto_base "github.com/xuperchain/xuperchain/core/crypto/client/base"
+	"github.com/xuperchain/xuperchain/core/ledger"
+	"github.com/xuperchain/xuperchain/core/p2pv2"
+	"github.com/xuperchain/xuperchain/core/utxo"
 )
 
 var (

@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/xuperchain/xuperunion/contractsdk/go/code"
+	"github.com/xuperchain/xuperchain/core/contractsdk/go/code"
 )
 
 type BridgeCallFunc func(method string, request proto.Message, response proto.Message) error

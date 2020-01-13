@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 
-	"github.com/xuperchain/xuperunion/contractsdk/go/code"
+	"github.com/xuperchain/xuperchain/core/contractsdk/go/code"
 )
 
 // Encode encodes a contract handler to bytes which can be later Decoded to contract

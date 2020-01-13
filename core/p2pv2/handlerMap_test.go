@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/xuperchain/log15"
-	"github.com/xuperchain/xuperunion/p2pv2/pb"
+	"github.com/xuperchain/xuperchain/core/p2pv2/pb"
 )
 
 func TestStartHandlerMap(t *testing.T) {

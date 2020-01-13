@@ -15,8 +15,8 @@ import (
 	"strconv"
 	"unsafe"
 
-	"github.com/xuperchain/xuperunion/xvm/compile"
-	"github.com/xuperchain/xuperunion/xvm/exec"
+	"github.com/xuperchain/xuperchain/core/xvm/compile"
+	"github.com/xuperchain/xuperchain/core/xvm/exec"
 )
 
 var (

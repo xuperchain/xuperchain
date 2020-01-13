@@ -1,11 +1,11 @@
 package permission
 
 import (
-	"github.com/xuperchain/xuperunion/pb"
-	"github.com/xuperchain/xuperunion/permission/acl"
-	"github.com/xuperchain/xuperunion/permission/ptree"
-	"github.com/xuperchain/xuperunion/permission/rule"
-	"github.com/xuperchain/xuperunion/permission/utils"
+	"github.com/xuperchain/xuperchain/core/pb"
+	"github.com/xuperchain/xuperchain/core/permission/acl"
+	"github.com/xuperchain/xuperchain/core/permission/ptree"
+	"github.com/xuperchain/xuperchain/core/permission/rule"
+	"github.com/xuperchain/xuperchain/core/permission/utils"
 
 	"errors"
 	"fmt"

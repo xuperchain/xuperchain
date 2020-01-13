@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/xuperchain/xuperunion/xvm/exec"
+	"github.com/xuperchain/xuperchain/core/xvm/exec"
 )
 
 var resolver = exec.MapResolver(map[string]interface{}{

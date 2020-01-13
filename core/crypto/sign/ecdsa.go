@@ -6,7 +6,7 @@ import (
 	"crypto/rand"
 	"fmt"
 
-	"github.com/xuperchain/xuperunion/crypto/utils"
+	"github.com/xuperchain/xuperchain/core/crypto/utils"
 )
 
 // SignECDSA sign message using private key

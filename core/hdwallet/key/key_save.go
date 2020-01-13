@@ -20,10 +20,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/xuperchain/xuperunion/crypto/account"
-	"github.com/xuperchain/xuperunion/crypto/hash"
-	"github.com/xuperchain/xuperunion/hdwallet/config"
-	"github.com/xuperchain/xuperunion/hdwallet/error"
+	"github.com/xuperchain/xuperchain/core/crypto/account"
+	"github.com/xuperchain/xuperchain/core/crypto/hash"
+	"github.com/xuperchain/xuperchain/core/hdwallet/config"
+	"github.com/xuperchain/xuperchain/core/hdwallet/error"
 )
 
 // AccountInfo describes the data struct for account information

@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/xuperchain/xuperunion/common"
-	"github.com/xuperchain/xuperunion/contract"
-	"github.com/xuperchain/xuperunion/contract/bridge"
-	pb "github.com/xuperchain/xuperunion/contractsdk/go/pb"
-	pbrpc "github.com/xuperchain/xuperunion/contractsdk/go/pbrpc"
+	"github.com/xuperchain/xuperchain/core/common"
+	"github.com/xuperchain/xuperchain/core/contract"
+	"github.com/xuperchain/xuperchain/core/contract/bridge"
+	pb "github.com/xuperchain/xuperchain/core/contractsdk/go/pb"
+	pbrpc "github.com/xuperchain/xuperchain/core/contractsdk/go/pbrpc"
 	"google.golang.org/grpc"
 )
 

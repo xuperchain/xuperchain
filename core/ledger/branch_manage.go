@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/xuperchain/xuperunion/kv/kvdb"
-	"github.com/xuperchain/xuperunion/pb"
+	"github.com/xuperchain/xuperchain/core/kv/kvdb"
+	"github.com/xuperchain/xuperchain/core/pb"
 )
 
 func (l *Ledger) updateBranchInfo(addedBlockid, deletedBlockid []byte, addedBlockHeight int64, batch kvdb.Batch) error {

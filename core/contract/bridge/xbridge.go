@@ -1,7 +1,7 @@
 package bridge
 
 import (
-	"github.com/xuperchain/xuperunion/contract"
+	"github.com/xuperchain/xuperchain/core/contract"
 )
 
 // Executor 为用户态虚拟机工厂类

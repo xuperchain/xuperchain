@@ -9,8 +9,8 @@ import (
 	peer "github.com/libp2p/go-libp2p-peer"
 
 	log "github.com/xuperchain/log15"
-	xuper_p2p "github.com/xuperchain/xuperunion/p2pv2/pb"
-	"github.com/xuperchain/xuperunion/pb"
+	xuper_p2p "github.com/xuperchain/xuperchain/core/p2pv2/pb"
+	"github.com/xuperchain/xuperchain/core/pb"
 )
 
 func InitMsg(t *testing.T) *xuper_p2p.XuperMessage {

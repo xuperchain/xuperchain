@@ -6,9 +6,9 @@ import (
 	"encoding/json"
 	"math/big"
 
-	"github.com/xuperchain/xuperunion/crypto/common"
-	"github.com/xuperchain/xuperunion/crypto/hash"
-	"github.com/xuperchain/xuperunion/hdwallet/rand"
+	"github.com/xuperchain/xuperchain/core/crypto/common"
+	"github.com/xuperchain/xuperchain/core/crypto/hash"
+	"github.com/xuperchain/xuperchain/core/hdwallet/rand"
 )
 
 // GetRandom32Bytes 生成默认随机数Ki

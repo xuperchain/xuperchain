@@ -11,8 +11,8 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 
-	"github.com/xuperchain/xuperunion/global"
-	"github.com/xuperchain/xuperunion/pb"
+	"github.com/xuperchain/xuperchain/core/global"
+	"github.com/xuperchain/xuperchain/core/pb"
 )
 
 type GetComplianceCheckSignCommand struct {

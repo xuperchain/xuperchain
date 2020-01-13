@@ -14,15 +14,15 @@ import (
 	"github.com/mitchellh/mapstructure"
 
 	log "github.com/xuperchain/log15"
-	"github.com/xuperchain/xuperunion/common/config"
-	"github.com/xuperchain/xuperunion/contract"
-	"github.com/xuperchain/xuperunion/crypto/client"
-	"github.com/xuperchain/xuperunion/global"
-	"github.com/xuperchain/xuperunion/ledger"
-	"github.com/xuperchain/xuperunion/pb"
-	"github.com/xuperchain/xuperunion/utxo"
-	"github.com/xuperchain/xuperunion/utxo/txhash"
-	"github.com/xuperchain/xuperunion/xmodel"
+	"github.com/xuperchain/xuperchain/core/common/config"
+	"github.com/xuperchain/xuperchain/core/contract"
+	"github.com/xuperchain/xuperchain/core/crypto/client"
+	"github.com/xuperchain/xuperchain/core/global"
+	"github.com/xuperchain/xuperchain/core/ledger"
+	"github.com/xuperchain/xuperchain/core/pb"
+	"github.com/xuperchain/xuperchain/core/utxo"
+	"github.com/xuperchain/xuperchain/core/utxo/txhash"
+	"github.com/xuperchain/xuperchain/core/xmodel"
 )
 
 // ChainRegister register blockchains

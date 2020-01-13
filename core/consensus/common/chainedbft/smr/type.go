@@ -5,13 +5,13 @@ import (
 	"sync"
 
 	log "github.com/xuperchain/log15"
-	cons_base "github.com/xuperchain/xuperunion/consensus/base"
-	"github.com/xuperchain/xuperunion/consensus/common/chainedbft/config"
-	"github.com/xuperchain/xuperunion/consensus/common/chainedbft/external"
-	crypto_base "github.com/xuperchain/xuperunion/crypto/client/base"
-	"github.com/xuperchain/xuperunion/p2pv2"
-	xuper_p2p "github.com/xuperchain/xuperunion/p2pv2/pb"
-	pb "github.com/xuperchain/xuperunion/pb"
+	cons_base "github.com/xuperchain/xuperchain/core/consensus/base"
+	"github.com/xuperchain/xuperchain/core/consensus/common/chainedbft/config"
+	"github.com/xuperchain/xuperchain/core/consensus/common/chainedbft/external"
+	crypto_base "github.com/xuperchain/xuperchain/core/crypto/client/base"
+	"github.com/xuperchain/xuperchain/core/p2pv2"
+	xuper_p2p "github.com/xuperchain/xuperchain/core/p2pv2/pb"
+	pb "github.com/xuperchain/xuperchain/core/pb"
 )
 
 // Smr is the state of the node

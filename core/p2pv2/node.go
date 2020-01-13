@@ -23,10 +23,10 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/xuperchain/log15"
 
-	"github.com/xuperchain/xuperunion/common/config"
-	p2pPb "github.com/xuperchain/xuperunion/p2pv2/pb"
+	"github.com/xuperchain/xuperchain/core/common/config"
+	p2pPb "github.com/xuperchain/xuperchain/core/p2pv2/pb"
 
-	"github.com/xuperchain/xuperunion/kv/kvdb"
+	"github.com/xuperchain/xuperchain/core/kv/kvdb"
 )
 
 // define the common config

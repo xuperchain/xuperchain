@@ -3,8 +3,8 @@ package smr
 import (
 	"testing"
 
-	"github.com/xuperchain/xuperunion/consensus/common/chainedbft/utils"
-	"github.com/xuperchain/xuperunion/pb"
+	"github.com/xuperchain/xuperchain/core/consensus/common/chainedbft/utils"
+	"github.com/xuperchain/xuperchain/core/pb"
 )
 
 func TestSafeProposal(t *testing.T) {

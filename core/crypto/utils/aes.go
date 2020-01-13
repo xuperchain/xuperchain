@@ -4,8 +4,8 @@ package utils
 import (
 	"crypto/aes"
 	"encoding/base64"
-	"github.com/xuperchain/xuperunion/crypto/aes/ecb"
-	"github.com/xuperchain/xuperunion/crypto/aes/padding"
+	"github.com/xuperchain/xuperchain/core/crypto/aes/ecb"
+	"github.com/xuperchain/xuperchain/core/crypto/aes/padding"
 )
 
 // AESEncrypt encrypt plaint text to encrypted text using key

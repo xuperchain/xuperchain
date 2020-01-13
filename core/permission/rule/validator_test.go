@@ -1,8 +1,8 @@
 package rule
 
 import (
-	"github.com/xuperchain/xuperunion/pb"
-	"github.com/xuperchain/xuperunion/permission/ptree"
+	"github.com/xuperchain/xuperchain/core/pb"
+	"github.com/xuperchain/xuperchain/core/permission/ptree"
 
 	"testing"
 )

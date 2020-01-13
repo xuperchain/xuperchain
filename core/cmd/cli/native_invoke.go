@@ -11,7 +11,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/xuperchain/xuperunion/utxo"
+	"github.com/xuperchain/xuperchain/core/utxo"
 )
 
 // NativeInvokeCommand native invoke cmd

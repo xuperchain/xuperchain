@@ -1,7 +1,7 @@
 package contract
 
 import (
-	"github.com/xuperchain/xuperunion/pluginmgr"
+	"github.com/xuperchain/xuperchain/core/pluginmgr"
 
 	"errors"
 )

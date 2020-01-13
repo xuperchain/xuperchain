@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/xuperchain/xuperunion/permission/acl/utils"
+	"github.com/xuperchain/xuperchain/core/permission/acl/utils"
 )
 
 var (

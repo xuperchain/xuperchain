@@ -1,6 +1,6 @@
 package contract
 
-import "github.com/xuperchain/xuperunion/pb"
+import "github.com/xuperchain/xuperchain/core/pb"
 
 const (
 	maxResourceLimit = 0xFFFFFFFF

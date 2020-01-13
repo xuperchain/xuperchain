@@ -5,10 +5,10 @@ import (
 	"testing"
 
 	"github.com/golang/protobuf/proto"
-	"github.com/xuperchain/xuperunion/contract"
-	"github.com/xuperchain/xuperunion/contract/bridge"
-	pb "github.com/xuperchain/xuperunion/contractsdk/go/pb"
-	"github.com/xuperchain/xuperunion/test/util"
+	"github.com/xuperchain/xuperchain/core/contract"
+	"github.com/xuperchain/xuperchain/core/contract/bridge"
+	pb "github.com/xuperchain/xuperchain/core/contractsdk/go/pb"
+	"github.com/xuperchain/xuperchain/core/test/util"
 )
 
 type serverContext struct {
