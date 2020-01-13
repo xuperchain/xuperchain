@@ -1,4 +1,4 @@
-module github.com/xuperchain/xuperunion
+module github.com/xuperchain/xuperchain
 
 go 1.12
 

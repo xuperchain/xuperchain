@@ -11,9 +11,9 @@ endif
 all: build 
 export GO111MODULE=on
 export GOFLAGS=-mod=vendor
-XCHAIN_ROOT := ${PWD}
+XCHAIN_ROOT := ${PWD}/core
 export XCHAIN_ROOT
-PATH := ${PWD}/xvm/compile/wabt/build:$(PATH)
+PATH := ${PWD}/core/xvm/compile/wabt/build:$(PATH)
 
 build:
 	PLATFORM=$(PLATFORM) ./build.sh
@@ -21,8 +21,8 @@ build:
 test:
 	go test -cover `go list ./... | egrep -v 'test'`
 	# test wasm sdk
-	GOOS=js GOARCH=wasm go build github.com/xuperchain/xuperunion/contractsdk/go/driver
-	cd xvm/spectest && go run main.go core
+	GOOS=js GOARCH=wasm go build github.com/xuperchain/xuperchain/core/contractsdk/go/driver
+	cd core/xvm/spectest && go run main.go core
 
 clean:
 	rm -rf output
