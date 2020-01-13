@@ -8,7 +8,7 @@
 #------------------------------
 
 basepath=$(cd `dirname $0`; pwd)
-outputpath=$(cd `dirname $0`; cd ../; pwd)
+outputpath=$(cd `dirname $0`; cd ../..; pwd)
 echo "--------> basepath=$basepath"
 echo "--------> outputpath=$outputpath"
 

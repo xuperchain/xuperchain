@@ -2,8 +2,6 @@ language: go
 install: true
 sudo: false
 
-before_install:
-  - cd core
 go:
   - 1.12.x
 

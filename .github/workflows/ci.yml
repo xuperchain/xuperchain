@@ -16,7 +16,6 @@ jobs:
       uses: actions/checkout@v1
     - name: Test
       run: |
-        diff -u <(echo -n) <(gofmt -d $(find . -type f -name '*.go' -not -path "./core/vendor/*")) 
-        cd core
+        diff -u <(echo -n) <(gofmt -d $(find . -type f -name '*.go' -not -path "./vendor/*")) 
         make && make test
-        cd ./test && bash ci_pipeline.sh
+        cd ./core/test && bash ci_pipeline.sh
