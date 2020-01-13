@@ -1,5 +1,5 @@
 language: go
-go_import_path: github.com/xuperchain/xuperunion
+go_import_path: github.com/xuperchain/xuperunion/core
 sudo: false
 
 go:
@@ -13,7 +13,7 @@ matrix:
       osx_image: xcode10.1
 
 script:
-  - diff -u <(echo -n) <(gofmt -d $(find . -type f -name '*.go' -not -path "./vendor/*")) 
+  - diff -u <(echo -n) <(gofmt -d $(find . -type f -name '*.go' -not -path "./core/vendor/*")) 
   - cd core
   - make && make test
   - cd ./test && bash ci_pipeline.sh
