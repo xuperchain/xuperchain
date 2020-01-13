@@ -11,7 +11,7 @@ endif
 all: build 
 export GO111MODULE=on
 export GOFLAGS=-mod=vendor
-XCHAIN_ROOT := ${PWD}
+XCHAIN_ROOT := ${PWD}/core
 export XCHAIN_ROOT
 PATH := ${PWD}/core/xvm/compile/wabt/build:$(PATH)
 
