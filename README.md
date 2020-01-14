@@ -1,15 +1,15 @@
-# XuperUnion
+# XuperChain
 
-[![Build Status](https://travis-ci.org/xuperchain/xuperunion.svg?branch=master)](https://travis-ci.org/xuperchain/xuperunion)
-[![Go Report Card](https://goreportcard.com/badge/github.com/xuperchain/xuperunion)](https://goreportcard.com/report/github.com/xuperchain/xuperunion)
+[![Build Status](https://travis-ci.org/xuperchain/xuperchain.svg?branch=master)](https://travis-ci.org/xuperchain/xuperchain)
+[![Go Report Card](https://goreportcard.com/badge/github.com/xuperchain/xuperchain)](https://goreportcard.com/report/github.com/xuperchain/xuperchain)
 
 [中文说明](#中文说明-1)
 -----
-## What is XuperUnion
+## What is XuperChain
 
-**XuperUnion**, the first open source project of **XuperChain**, introduces a highly flexible blockchain architecture with great transaction performance.
+**XuperChain**, the first open source project of **XuperChain**, introduces a highly flexible blockchain architecture with great transaction performance.
  
-XuperUnion is the underlying solution for union networks with following highlight features:
+XuperChain is the underlying solution for union networks with following highlight features:
 
 * **High Performance**
 
@@ -48,15 +48,15 @@ E-mail: xchain-help@baidu.com
 Clone the repository
 
 ```
-git clone https://github.com/xuperchain/xuperunion
+git clone https://github.com/xuperchain/xuperchain
 ```
 
 **Note**: `master` branch contains latest features but might be **unstable**. for production use, please checkout our release branch. the latest release branch is `v3.4`.
 
-Enter the xuperunion folder and build the code:
+Enter the xuperchain folder and build the code:
 
 ```
-cd xuperunion
+cd xuperchain
 make
 ```
 
@@ -78,7 +78,7 @@ cd ./output
 
 By doing this, a blockchain named "xuper" is created, you can find the data of this blockchain at `./data/blockchain/xuper/`.
 
-Then start the node and run XuperUnion full node servers:
+Then start the node and run XuperChain full node servers:
 
 ```
 nohup ./xchain &
@@ -95,14 +95,14 @@ By default, the `xuper` chain will produce a block every 3 seconds, try the foll
 ### Build image
 
 ```bash
-docker build . -t xuperunion
+docker build . -t xuperchain
 ```
 
 ### Run image
 
 ```bash
 # run xchain daemon
-docker run -d -p 37101:37101 -p 47101:47101 --rm --name xchain xuperunion
+docker run -d -p 37101:37101 -p 47101:47101 --rm --name xchain xuperchain
 # enter running container
 docker exec -ti xchain bash
 # run command
@@ -113,24 +113,24 @@ docker exec -ti xchain bash
 
 ## Documentation
 
-Please refer to our [wiki](https://github.com/xuperchain/xuperunion/wiki) for more  information, including how to build multi-node network, transfer to others, deploy and invoke smart contract.
+Please refer to our [wiki](https://github.com/xuperchain/xuperchain/wiki) for more  information, including how to build multi-node network, transfer to others, deploy and invoke smart contract.
 
 ## How to Contribute
 
-We encourage you to contribute to XuperUnion.
+We encourage you to contribute to XuperChain.
 
-Please review the [Contribution guidelines](https://github.com/xuperchain/xuperunion/blob/master/CONTRIBUTING.md)  for information on how to get started contributing to the project.
+Please review the [Contribution guidelines](https://github.com/xuperchain/xuperchain/blob/master/CONTRIBUTING.md)  for information on how to get started contributing to the project.
 
 ## License
 
-XuperUnion is under the [Apache License, Version 2.0](https://github.com/xuperchain/xuperunion/blob/master/LICENSE).
+XuperChain is under the [Apache License, Version 2.0](https://github.com/xuperchain/xuperchain/blob/master/LICENSE).
 
 
 =====
 
 # 中文说明
 
-## XuperUnion是什么?
+## XuperChain是什么?
 
 **XuperUion**是超级链体系下的第一个开源项目，是构建超级联盟网络的底层方案。
 
@@ -166,16 +166,16 @@ XuperUnion is under the [Apache License, Version 2.0](https://github.com/xuperch
 
 ### 构建
 
-克隆XuperUnion仓库
+克隆XuperChain仓库
 ```
-git clone https://github.com/xuperchain/xuperunion
+git clone https://github.com/xuperchain/xuperchain
 ```
 
 **注意**: `master` 分支是日常开发分支，会包含最新的功能，但是 **不稳定**。生产环境请使用最新的已发布分支，最新的已发布分支是`v3.4`。
 
 编译
 ```
-cd xuperunion
+cd xuperchain
 make
 ```
 
@@ -197,14 +197,14 @@ nohup ./xchain &
 ### 编译镜像
 
 ```bash
-docker build . -t xuperunion
+docker build . -t xuperchain
 ```
 
 ### 运行镜像
 
 ```bash
 # 运行容器 daemon
-docker run -d -p 37101:37101 -p 47101:47101 --rm --name xchain xuperunion
+docker run -d -p 37101:37101 -p 47101:47101 --rm --name xchain xuperchain
 # 进入容器
 docker exec -ti xchain bash
 # 运行指令
@@ -215,21 +215,22 @@ docker exec -ti xchain bash
 
 ## 文档
 
-关于XuperUnion更详细、更深入的使用方法链接：[wiki](https://github.com/xuperchain/xuperunion/wiki)
+关于XuperChain更详细、更深入的使用方法链接：[wiki](https://github.com/xuperchain/xuperchain/wiki)
 
 ## 如何参与开发
 1. 阅读源代码，了解我们当前的开发方向
 2. 找到自己感兴趣的功能或模块
 3. 进行开发，开发完成后自测功能是否正确，并运行make & make test
 4. 发起pull request
-5. 更多详情请参见[链接](https://github.com/xuperchain/xuperunion/blob/master/CONTRIBUTING_CN.md)
+5. 更多详情请参见[链接](https://github.com/xuperchain/xuperchain/blob/master/CONTRIBUTING_CN.md)
 
 ## 许可证
-XuperUnion使用的许可证是Apache 2.0
+XuperChain使用的许可证是Apache 2.0
 
 ## 联系我们
 商务合作，请Email：xchain-help@baidu.com, 来源请注明Github。
 如果你对XuperChain开源技术及应用感兴趣，欢迎添加“百度超级链·小助手“微信，回复“技术论坛进群”，加入“百度超级链开发者社区”，与百度资深工程师深度交流!微信二维码如下:
 
 ![微信二维码](https://github.com/ToWorld/xuperchain-image/blob/master/baidu-image-xuperchain.png)
+
 
