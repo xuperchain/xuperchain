@@ -402,7 +402,7 @@ func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
 		return ErrBlockExist
 	}
 	// Note in BFT case, we should accept blocks with same hight
-	if in.Block.Height < xc.Ledger.GetMeta().TrunkHeight {
+	if in.Block.Height <= xc.Ledger.GetMeta().TrunkHeight-3 {
 		xc.log.Warn("refuse short chain of blocks", "remote", in.Block.Height, "local", xc.Ledger.GetMeta().TrunkHeight)
 		return ErrServiceRefused
 	}
