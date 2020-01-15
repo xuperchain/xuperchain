@@ -125,6 +125,10 @@ func (c *SyscallService) Transfer(ctx context.Context, in *pb.TransferRequest) (
 	if !ok {
 		return nil, errors.New("parse amount error")
 	}
+	// make sure amount is not negative
+	if amount.Cmp(new(big.Int)) < 0 {
+		return nil, errors.New("amount should not be negative")
+	}
 	if in.GetTo() == "" {
 		return nil, errors.New("empty to address")
 	}
