@@ -7,7 +7,7 @@
 -----
 ## What is XuperChain
 
-**XuperChain**, the first open source project of **XuperChain**, introduces a highly flexible blockchain architecture with great transaction performance.
+**XuperChain**, the first open source project of **XuperChain Lab**, introduces a highly flexible blockchain architecture with great transaction performance.
  
 XuperChain is the underlying solution for union networks with following highlight features:
 
