@@ -13,7 +13,7 @@ const FeePlaceholder = "$"
 func (tx *Transaction) GetFrozenAmount(height int64) *big.Int {
 	sum := big.NewInt(0)
 	for _, txOutput := range tx.TxOutputs {
-		if txOutput.FrozenHeight > height {
+		if txOutput.FrozenHeight > height || txOutput.FrozenHeight == -1 {
 			amount := big.NewInt(0)
 			amount.SetBytes(txOutput.Amount)
 			sum = sum.Add(sum, amount)
