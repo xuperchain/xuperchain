@@ -125,7 +125,7 @@ func (s *XModel) UndoTx(tx *pb.Transaction, batch kvdb.Batch) error {
 			}
 			if isDelFlag(verData.PureData.Value) {
 				putKey := append([]byte(pb.ExtUtxoDelTablePrefix), bucketAndKey...)
-				batch.Put(putKey, verData.PureData.Value)
+				batch.Put(putKey, []byte(previousVersion))
 				delKey := append([]byte(pb.ExtUtxoTablePrefix), bucketAndKey...)
 				batch.Delete(delKey)
 				s.logger.Trace("    undo xmodel put gc", "putkey", string(putKey), "prever", previousVersion)
