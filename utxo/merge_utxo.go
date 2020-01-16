@@ -23,6 +23,9 @@ func (uv *UtxoVM) SelectUtxosBySize(fromAddr string, fromPubKey string, needLock
 	txInputs := []*pb.TxInput{}
 	txInputSize := int64(0)
 
+	// same as the logic of SelectUTXO
+	uv.clearExpiredLocks()
+
 	addrPrefix := fmt.Sprintf("%s%s_", pb.UTXOTablePrefix, fromAddr)
 	it := uv.ldb.NewIteratorWithPrefix([]byte(addrPrefix))
 	defer it.Release()
