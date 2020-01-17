@@ -1,8 +1,6 @@
 package utxo
 
 import (
-	"fmt"
-
 	"github.com/xuperchain/xuperchain/core/pb"
 	"github.com/xuperchain/xuperchain/core/permission/acl/utils"
 )
@@ -15,7 +13,6 @@ func (uv *UtxoVM) queryContractStatData(bucket string) (int64, error) {
 	defer it.Release()
 
 	for it.Next() {
-		fmt.Println("---------->", string(it.Key()))
 		dataCount++
 	}
 	if it.Error() != nil {
