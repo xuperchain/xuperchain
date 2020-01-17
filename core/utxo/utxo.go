@@ -263,11 +263,25 @@ func (uv *UtxoVM) checkInputEqualOutput(tx *pb.Transaction) error {
 		}
 		inputSum.Add(inputSum, amount)
 	}
-	if inputSum.Cmp(outputSum) == 0 {
-		return nil
-	}
+
+	// deal depends
+	// case1: coinbase
 	if inputSum.Cmp(big.NewInt(0)) == 0 && tx.Coinbase {
 		// coinbase交易，输入输出不必相等, 特殊处理
+		return nil
+	}
+	// case2: input & output equals big.NewInt(0) both and not coinbase tx
+	if inputSum.Cmp(outputSum) == 0 && inputSum.Cmp(big.NewInt(0)) == 0 {
+		// query if tx has been confirmed
+		exist, err := uv.ledger.HasTransaction(tx.GetTxid())
+		if !exist && err == nil {
+			return nil
+		}
+		uv.xlog.Warn("checkInputOutput error", "err", err)
+		return err
+	}
+	// other cases where inputSum equals outputSum
+	if inputSum.Cmp(outputSum) == 0 {
 		return nil
 	}
 	uv.xlog.Warn("input != output", "inputSum", inputSum, "outputSum", outputSum)
