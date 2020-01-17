@@ -1080,6 +1080,25 @@ func (xc *XChainCore) QueryAccountACL(accountName string) (*pb.Acl, bool, error)
 	return acl, confirmed, nil
 }
 
+func (xc *XChainCore) QueryContractStatData() (*pb.ContractStatDataResponse, error) {
+	contractStatDataResponse := &pb.ContractStatDataResponse{
+		Header: global.GHeader(),
+		Bcname: xc.bcname,
+	}
+
+	if xc.Status() != global.Normal {
+		return contractStatDataResponse, ErrNotReady
+	}
+
+	contractStatData, contractStatDataErr := xc.Utxovm.QueryContractStatData()
+	if contractStatDataErr != nil {
+		return contractStatDataResponse, contractStatDataErr
+	}
+
+	contractStatDataResponse.Data = contractStatData
+	return contractStatDataResponse, nil
+}
+
 // QueryUtxoRecord get utxo record for an account
 func (xc *XChainCore) QueryUtxoRecord(accountName string, displayCount int64) (*pb.UtxoRecordDetail, error) {
 	defaultUtxoRecord := &pb.UtxoRecordDetail{Header: &pb.Header{}}
