@@ -10,19 +10,19 @@ cd `dirname $0`
 # go install github.com/golang/protobuf/protoc-gen-go
 # go install github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway
 
-protoc -I pb pb/xchain.proto pb/xchain_spv.proto pb/xcheck.proto pb/chainedbft.proto pb/xendorser.proto pb/event.proto\
-	-I pb/googleapis \
-	--go_out=plugins=grpc:pb \
-	--grpc-gateway_out=logtostderr=true:pb 
+protoc -I core/pb core/pb/*.proto \
+	-I core/pb/googleapis \
+	--go_out=plugins=grpc:core/pb \
+	--grpc-gateway_out=logtostderr=true:core/pb 
 
-protoc -I p2pv2/pb p2pv2/pb/message.proto  --go_out=p2pv2/pb
+protoc -I core/p2pv2/pb core/p2pv2/pb/message.proto  --go_out=core/p2pv2/pb
 
-protoc -I xmodel/pb xmodel/pb/versioned_data.proto --go_out=xmodel/pb 
+protoc -I core/xmodel/pb core/xmodel/pb/versioned_data.proto --go_out=core/xmodel/pb 
 
-protoc -I contractsdk/pb contractsdk/pb/contract_service.proto \
-       --go_out=plugins=grpc,paths=source_relative:contractsdk/go/pbrpc
-protoc -I contractsdk/pb contractsdk/pb/contract.proto \
-       --go_out=paths=source_relative:contractsdk/go/pb
+protoc -I core/contractsdk/pb core/contractsdk/pb/contract_service.proto \
+       --go_out=plugins=grpc,paths=source_relative:core/contractsdk/go/pbrpc
+protoc -I core/contractsdk/pb core/contractsdk/pb/contract.proto \
+       --go_out=paths=source_relative:core/contractsdk/go/pb
 
 !
 
