@@ -54,7 +54,7 @@ func (c *ContractStatDataQueryCommand) queryContractStatData(ctx context.Context
 		return errors.New(reply.Header.Error.String())
 	}
 
-	output, err := json.MarshalIndent(reply.GetData(), "", "  ")
+	output, err := json.MarshalIndent(reply, "", "  ")
 	if err != nil {
 		return err
 	}
