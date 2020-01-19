@@ -200,7 +200,7 @@ func (uv *UtxoVM) verifySignatures(tx *pb.Transaction, digestHash []byte) (bool,
 		splitRes := strings.Split(authReq, "/")
 		addr := splitRes[len(splitRes)-1]
 		signInfo := tx.AuthRequireSigns[idx]
-		if _, has := verifiedAddr[tx.Initiator]; has {
+		if _, has := verifiedAddr[addr]; has {
 			continue
 		}
 		ok, err := pm.IdentifyAK(addr, signInfo, digestHash)
@@ -208,7 +208,7 @@ func (uv *UtxoVM) verifySignatures(tx *pb.Transaction, digestHash []byte) (bool,
 			uv.xlog.Warn("verifySignatures failed", "address", addr, "error", err)
 			return false, nil, err
 		}
-		verifiedAddr[tx.Initiator] = true
+		verifiedAddr[addr] = true
 	}
 	return true, verifiedAddr, nil
 }
