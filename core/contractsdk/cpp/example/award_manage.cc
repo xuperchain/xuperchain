@@ -4,55 +4,55 @@ const std::string BALANCEPRE = "balanceOf_";
 const std::string ALLOWANCEPRE = "allowanceOf_";
 const std::string MASTERPRE = "owner";
 
-// 资产管理合约的基类
-// 资产管理合约需要实现基类中指定的方法
+// 积分管理合约的基类
+// 积分管理合约需要实现基类中指定的方法
 // 参数由xchain::Contract中的context提供
-class AssetBasic {
+class AwardBasic {
 public:
     /*
-     * func: 初始化资产管理账户以及总发行量
-     * @param: initiator:交易发起者,也是初始化资产的owner
-     * @param: totalSupply:发行总量,初始化时,资产全部归initiator
+     * func: 初始化积分管理账户以及总发行量
+     * @param: initiator:交易发起者,也是初始化积分的owner
+     * @param: totalSupply:发行总量,初始化时,积分全部归initiator
      */
     virtual void initialize() = 0;
     /*
-     * func: 增发资产
-      * @param: initiator:交易发起者,只有交易发起者等于资产owner时，才能增发
+     * func: 增发积分
+      * @param: initiator:交易发起者,只有交易发起者等于积分owner时，才能增发
       * @param: amount:增发容量
       */
-    virtual void mint() = 0;
+    virtual void addAward() = 0;
     /*
-     * func: 获取资产总供应量
+     * func: 获取积分总供应量
      */
     virtual void totalSupply() = 0;
     /*
-     * func: 获取caller的资产余额
+     * func: 获取caller的积分余额
      * @param: caller: 合约调用者
      */
     virtual void balance() = 0;
     /*
-     * func: 查询to用户能消费from用户的资产数量
-     * @param: from: 被消费方
-     * @param: to: 消费方
+     * func: 查询to用户能消费from用户的积分数量
+     * @param: from: 被消费积分的一方
+     * @param: to: 消费积分的一方
      */
     virtual void allowance() = 0;
     /*
-     * func: from账户给to账户转token数量的资产
-     * @param: from:转账方
-     * @param: to:收账方
-     * @param: token:转账资产数量
+     * func: from账户给to账户转token数量的积分
+     * @param: from:转移积分的一方
+     * @param: to:收积分的一方
+     * @param: token:转移积分数量
      */
     virtual void transfer() = 0;
     /*
-     * func: 从授权账户from转移数量为token的资产给to账户
-      * @param: from:被转账账户
+     * func: 从授权账户from转移数量为token的积分给to账户
+      * @param: from:被转积分账户
       * @param: caller:合约调用者
-      * @param: to:收账账户
-      * @param: token:转移的资产数量
+      * @param: to:收积分账户
+      * @param: token:转移的积分数量
       */
     virtual void transferFrom() = 0;
     /*
-      * func: 允许to账户从from账户转移token数量的资产
+      * func: 允许to账户从from账户转移token数量的积分
      * @param: from:
      * @param: to:
      * @param: token
@@ -60,7 +60,7 @@ public:
     virtual void approve() = 0;
 };
 
-struct ERC20 : public AssetBasic, public xchain::Contract {
+struct Award : public AwardBasic, public xchain::Contract {
 public:
     void initialize() {
         xchain::Context* ctx = this->context();
@@ -83,7 +83,7 @@ public:
         ctx->put_object(master, caller);
         ctx->ok("initialize success");
     }
-    void mint() {
+    void addAward() {
         xchain::Context* ctx = this->context();
         const std::string& caller = ctx->initiator();
         if (caller.empty()) {
@@ -97,7 +97,7 @@ public:
             return;
         }
         if (master != caller) {
-            ctx->error("only the person who created the contract can mint");
+            ctx->error("only the person who created the contract can addAward");
             return;
         }
 
@@ -355,34 +355,34 @@ public:
 };
 
 
-DEFINE_METHOD(ERC20, initialize) {
+DEFINE_METHOD(Award, initialize) {
     self.initialize();
 }
 
-DEFINE_METHOD(ERC20, mint) {
-    self.mint();
+DEFINE_METHOD(Award, addAward) {
+    self.addAward();
 }
 
-DEFINE_METHOD(ERC20, totalSupply) {
+DEFINE_METHOD(Award, totalSupply) {
     self.totalSupply();
 }
 
-DEFINE_METHOD(ERC20, balance) {
+DEFINE_METHOD(Award, balance) {
     self.balance();
 }
 
-DEFINE_METHOD(ERC20, allowance) {
+DEFINE_METHOD(Award, allowance) {
     self.allowance();
 }
 
-DEFINE_METHOD(ERC20, transfer) {
+DEFINE_METHOD(Award, transfer) {
     self.transfer();
 }
 
-DEFINE_METHOD(ERC20, transferFrom) {
+DEFINE_METHOD(Award, transferFrom) {
     self.transferFrom();
 }
 
-DEFINE_METHOD(ERC20, approve) {
+DEFINE_METHOD(Award, approve) {
     self.approve();
 }
