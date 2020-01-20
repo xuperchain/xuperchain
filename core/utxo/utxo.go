@@ -264,23 +264,10 @@ func (uv *UtxoVM) checkInputEqualOutput(tx *pb.Transaction) error {
 		inputSum.Add(inputSum, amount)
 	}
 
-	// deal depends
-	// case1: coinbase
 	if inputSum.Cmp(big.NewInt(0)) == 0 && tx.Coinbase {
 		// coinbase交易，输入输出不必相等, 特殊处理
 		return nil
 	}
-	// case2: input & output equals big.NewInt(0) both and not coinbase tx
-	if inputSum.Cmp(outputSum) == 0 && inputSum.Cmp(big.NewInt(0)) == 0 {
-		// query if tx has been confirmed
-		exist, err := uv.ledger.HasTransaction(tx.GetTxid())
-		if !exist && err == nil {
-			return nil
-		}
-		uv.xlog.Warn("checkInputOutput error", "err", err)
-		return err
-	}
-	// other cases where inputSum equals outputSum
 	if inputSum.Cmp(outputSum) == 0 {
 		return nil
 	}
@@ -1288,6 +1275,17 @@ func (uv *UtxoVM) doTxSync(tx *pb.Transaction) error {
 	if exist {
 		uv.xlog.Debug("this tx already in unconfirm table, when DoTx", "txid", fmt.Sprintf("%x", tx.Txid))
 		return ErrAlreadyInUnconfirmed
+	}
+	err := validInputAndOutputSumForNonUtxo(tx)
+	if err != nil {
+		exist, err := uv.ledger.HasTransaction(tx.GetTxid())
+		if exist {
+			errMsg := fmt.Sprintf("%x", tx.GetTxid()) + "has existed already"
+			return errors.New(errMsg)
+		}
+		if err != nil {
+			return err
+		}
 	}
 	batch := uv.ldb.NewBatch()
 	doErr := uv.doTxInternal(tx, batch)
@@ -2437,4 +2435,23 @@ func MakeUtxoKey(key []byte, amount string) *pb.UtxoKey {
 	}
 
 	return tmpUtxoKey
+}
+
+func validInputAndOutputSumForNonUtxo(tx *pb.Transaction) error {
+	for _, txOutput := range tx.TxOutputs {
+		amount := big.NewInt(0)
+		amount.SetBytes(txOutput.Amount)
+		if amount.Cmp(big.NewInt(0)) != 0 {
+			return errors.New("not nonutxo, ignore")
+		}
+	}
+	for _, txInput := range tx.TxInputs {
+		amount := big.NewInt(0)
+		amount.SetBytes(txInput.Amount)
+		if amount.Cmp(big.NewInt(0)) < 0 {
+			return errors.New("not nonutxo, ignore")
+		}
+	}
+
+	return nil
 }
