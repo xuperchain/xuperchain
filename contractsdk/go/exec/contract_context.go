@@ -1,6 +1,7 @@
 package exec
 
 import (
+	"errors"
 	"log"
 	"math/big"
 
@@ -64,7 +65,7 @@ func (c *contractContext) Args() map[string][]byte {
 }
 
 func (c *contractContext) Caller() string {
-	return ""
+	return c.callArgs.GetInitiator()
 }
 
 func (c *contractContext) Initiator() string {
@@ -143,6 +144,14 @@ func (c *contractContext) Transfer(to string, amount *big.Int) error {
 	}
 	rep := new(pb.TransferResponse)
 	return c.bridgeCallFunc(methodTransfer, req, rep)
+}
+
+func (c *contractContext) TransferAmount() (*big.Int, error) {
+	amount, ok := new(big.Int).SetString(c.callArgs.GetTransferAmount(), 10)
+	if !ok {
+		return nil, errors.New("bad amount:" + c.callArgs.GetTransferAmount())
+	}
+	return amount, nil
 }
 
 func (c *contractContext) Call(module, contract, method string, args map[string][]byte) (*code.Response, error) {
