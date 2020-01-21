@@ -263,12 +263,11 @@ func (uv *UtxoVM) checkInputEqualOutput(tx *pb.Transaction) error {
 		}
 		inputSum.Add(inputSum, amount)
 	}
-
-	if inputSum.Cmp(big.NewInt(0)) == 0 && tx.Coinbase {
-		// coinbase交易，输入输出不必相等, 特殊处理
+	if inputSum.Cmp(outputSum) == 0 {
 		return nil
 	}
-	if inputSum.Cmp(outputSum) == 0 {
+	if inputSum.Cmp(big.NewInt(0)) == 0 && tx.Coinbase {
+		// coinbase交易，输入输出不必相等, 特殊处理
 		return nil
 	}
 	uv.xlog.Warn("input != output", "inputSum", inputSum, "outputSum", outputSum)
