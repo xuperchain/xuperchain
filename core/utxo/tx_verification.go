@@ -509,6 +509,7 @@ func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
 		Core: contractChainCore{
 			Manager: uv.aclMgr,
 			UtxoVM:  uv,
+			Ledger:  uv.ledger,
 		},
 		BCName: uv.bcname,
 	}
