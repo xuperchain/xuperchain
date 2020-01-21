@@ -396,7 +396,7 @@ github.com/whyrusleeping/mafmt
 github.com/whyrusleeping/multiaddr-filter
 # github.com/xuperchain/log15 v0.0.0-20190620081506-bc88a9198230
 github.com/xuperchain/log15
-# github.com/xuperchain/wagon v0.6.1-0.20191220111953-67f85be02003
+# github.com/xuperchain/wagon v0.6.1-0.20200121123450-b08562bb5f9a
 github.com/xuperchain/wagon/disasm
 github.com/xuperchain/wagon/exec
 github.com/xuperchain/wagon/exec/internal/compile
