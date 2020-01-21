@@ -49,9 +49,12 @@ typedef struct xvm_code_t {
   uint32_t func_type_count;
   xvm_resolver_t resolver;
   void* (*new_handle_func)(void*);
+  void (*init_func_types)(void*);
+  void (*init_import_funcs)(void*);
 } xvm_code_t;
 
 xvm_code_t* xvm_new_code(char* module_path, xvm_resolver_t resolver);
+int xvm_init_code(xvm_code_t* code);
 void xvm_release_code(xvm_code_t* code);
 
 typedef struct xvm_context_t {
