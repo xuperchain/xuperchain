@@ -1278,8 +1278,7 @@ func (uv *UtxoVM) doTxSync(tx *pb.Transaction) error {
 	if TxInputsWithoutUtxo(tx) {
 		exist, err := uv.ledger.HasTransaction(tx.GetTxid())
 		if exist {
-			errMsg := fmt.Sprintf("%x", tx.GetTxid()) + "has existed already"
-			return errors.New(errMsg)
+			return fmt.Errorf("%x has existed already", tx.GetTxid())
 		}
 		if err != nil {
 			return err
