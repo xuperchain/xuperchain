@@ -2439,7 +2439,7 @@ func ValidTxInput(tx *pb.Transaction) error {
 	if tx.GetTxInputs() == nil {
 		return nil
 	}
-	for _, v := range tx {
+	for _, v := range tx.GetTxInputs() {
 		if v != nil {
 			return errors.New("has utxo input")
 		}
