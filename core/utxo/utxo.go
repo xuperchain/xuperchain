@@ -1275,7 +1275,7 @@ func (uv *UtxoVM) doTxSync(tx *pb.Transaction) error {
 		uv.xlog.Debug("this tx already in unconfirm table, when DoTx", "txid", fmt.Sprintf("%x", tx.Txid))
 		return ErrAlreadyInUnconfirmed
 	}
-	if ValidTxIsNoUtxo(tx) {
+	if TxInputsWithoutUtxo(tx) {
 		exist, err := uv.ledger.HasTransaction(tx.GetTxid())
 		if exist {
 			errMsg := fmt.Sprintf("%x", tx.GetTxid()) + "has existed already"
@@ -2435,7 +2435,7 @@ func MakeUtxoKey(key []byte, amount string) *pb.UtxoKey {
 	return tmpUtxoKey
 }
 
-func ValidTxIsNoUtxo(tx *pb.Transaction) bool {
+func TxInputsWithoutUtxo(tx *pb.Transaction) bool {
 	if tx.GetTxInputs() == nil {
 		return true
 	}
