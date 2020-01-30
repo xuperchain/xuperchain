@@ -49,6 +49,9 @@ func (c *HashedTimelock) Open(ctx code.Context) code.Response {
 	}
 	sender := ctx.Initiator()
 	amount, _ := ctx.TransferAmount()
+	if amount.Cmp(big.NewInt(0)) < 1 {
+		return code.Errors("amount should be greater than zero")
+	}
 	value := fmt.Sprintf("%s %s %s %s", sender, string(receiver), amount.String(), expiredHeight)
 	err := ctx.PutObject(riddleHash, []byte(value))
 	if err != nil {
