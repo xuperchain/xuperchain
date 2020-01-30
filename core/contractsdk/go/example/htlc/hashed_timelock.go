@@ -43,6 +43,10 @@ func (c *HashedTimelock) Open(ctx code.Context) code.Response {
 	if !ok {
 		return code.Errors("missing expired_height")
 	}
+	nHeight, _ := strconv.Atoi(string(expiredHeight))
+	if nHeight <= 0 {
+		return code.Errors("expired_height must be greater than zero")
+	}
 	sender := ctx.Initiator()
 	amount, _ := ctx.TransferAmount()
 	value := fmt.Sprintf("%s %s %s %s", sender, string(receiver), amount.String(), expiredHeight)
