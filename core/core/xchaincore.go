@@ -475,6 +475,10 @@ func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
 			xc.log.Debug("ConfirmBlock Time", "logid", in.Header.Logid, "cost", hd.Timer.Print())
 			if !cs.Succ {
 				xc.log.Warn("confirm error", "logid", in.Header.Logid)
+				err := xc.Utxovm.Walk(xc.Utxovm.GetMeta().LatestBlockid, false)
+				if err != nil {
+					xc.log.Warn("try to walk utxo, but failed", "err", err)
+				}
 				return ErrConfirmBlock
 			}
 			isTipBlock := (i == 0)
@@ -678,6 +682,10 @@ func (xc *XChainCore) doMiner() {
 		xc.log.Info("[Minning] ConfirmBlock Success", "logid", header.Logid, "Height", meta.TrunkHeight+1)
 	} else {
 		xc.log.Warn("[Minning] ConfirmBlock Fail", "logid", header.Logid, "confirm_status", confirmStatus)
+		err := xc.Utxovm.Walk(xc.Utxovm.GetLatestBlockid(), false)
+		if err != nil {
+			xc.log.Warn("[Mining] failed to walk when confirming block has error", "err", err)
+		}
 		return
 	}
 	xc.mutex.Unlock() //后面放开锁
