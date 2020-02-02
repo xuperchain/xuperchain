@@ -475,10 +475,6 @@ func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
 			xc.log.Debug("ConfirmBlock Time", "logid", in.Header.Logid, "cost", hd.Timer.Print())
 			if !cs.Succ {
 				xc.log.Warn("confirm error", "logid", in.Header.Logid)
-				err := xc.Utxovm.Walk(xc.Utxovm.GetMeta().LatestBlockid, false)
-				if err != nil {
-					xc.log.Warn("try to walk utxo, but failed", "err", err)
-				}
 				return ErrConfirmBlock
 			}
 			isTipBlock := (i == 0)
