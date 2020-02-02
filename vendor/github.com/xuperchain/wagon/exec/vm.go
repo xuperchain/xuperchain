@@ -125,14 +125,13 @@ func WithGasLimit(limit int64) VMOption {
 }
 
 // WithLazyCompile compile function when needed and cached result.
-// if no cached store is specified, DefaultCacheStore is used.
 func WithLazyCompile(v bool) VMOption {
 	return func(c *config) {
 		c.LazyCompile = v
 	}
 }
 
-// WithCacheStore set the store to cache compiled function if WithLazyCompile is enabled.
+// WithCacheStore set the store to cache compiled function.
 func WithCacheStore(s FuncCacheStore) VMOption {
 	return func(c *config) {
 		c.CacheStore = s
@@ -153,9 +152,6 @@ func NewVM(module *wasm.Module, opts ...VMOption) (*VM, error) {
 	}
 	if options.LazyCompile && options.EnableAOT {
 		return nil, errors.New("LazyCompile and EnableAOT can't be true at the same time")
-	}
-	if options.LazyCompile && options.CacheStore == nil {
-		options.CacheStore = DefaultCacheStore
 	}
 	vm.cfg = options
 	vm.gasMapper = options.GasMapper
@@ -286,18 +282,22 @@ func (vm *VM) getFunc(idx int) (function, error) {
 	}
 
 	// found from cache
-	v, ok := vm.cfg.CacheStore.Get(fn.Body.Hash)
-	if ok {
-		ifn = v.(function)
-		vm.funcs[idx] = ifn
-		return ifn, nil
+	if vm.cfg.CacheStore != nil {
+		v, ok := vm.cfg.CacheStore.Get(fn.Body.Hash)
+		if ok {
+			ifn = v.(function)
+			vm.funcs[idx] = ifn
+			return ifn, nil
+		}
 	}
 
 	ifn, err := vm.compileFunction(fn)
 	if err != nil {
 		return nil, err
 	}
-	vm.cfg.CacheStore.Put(fn.Body.Hash, ifn)
+	if vm.cfg.CacheStore != nil {
+		vm.cfg.CacheStore.Put(fn.Body.Hash, ifn)
+	}
 	vm.funcs[idx] = ifn
 	return ifn, nil
 }

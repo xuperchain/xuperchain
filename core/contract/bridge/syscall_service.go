@@ -59,7 +59,7 @@ func (c *SyscallService) QueryBlock(ctx context.Context, in *pb.QueryBlockReques
 		return nil, err
 	}
 
-	block, err := nctx.Cache.QueryBlock(rawBlockid)
+	block, err := nctx.Core.QueryBlock(rawBlockid)
 	if err != nil {
 		return nil, err
 	}
@@ -99,13 +99,9 @@ func (c *SyscallService) QueryTx(ctx context.Context, in *pb.QueryTxRequest) (*p
 		return nil, err
 	}
 
-	tx, confirmed, err := nctx.Cache.QueryTx(rawTxid)
+	tx, err := nctx.Core.QueryTransaction(rawTxid)
 	if err != nil {
 		return nil, err
-	}
-
-	if !confirmed {
-		return nil, fmt.Errorf("Unconfirm tx:%s", in.Txid)
 	}
 
 	txsdk := ConvertTxToSDKTx(tx)

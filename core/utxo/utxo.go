@@ -30,6 +30,7 @@ import (
 	crypto_base "github.com/xuperchain/xuperchain/core/crypto/client/base"
 	"github.com/xuperchain/xuperchain/core/global"
 	"github.com/xuperchain/xuperchain/core/kv/kvdb"
+	"github.com/xuperchain/xuperchain/core/ledger"
 	ledger_pkg "github.com/xuperchain/xuperchain/core/ledger"
 	"github.com/xuperchain/xuperchain/core/pb"
 	"github.com/xuperchain/xuperchain/core/permission/acl"
@@ -181,6 +182,7 @@ type UtxoLockItem struct {
 type contractChainCore struct {
 	*acli.Manager // ACL manager for read/write acl table
 	*UtxoVM
+	*ledger.Ledger
 }
 
 func genUtxoKey(addr []byte, txid []byte, offset int32) string {
@@ -811,6 +813,7 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 		Core: contractChainCore{
 			Manager: uv.aclMgr,
 			UtxoVM:  uv,
+			Ledger:  uv.ledger,
 		},
 		BCName: uv.bcname,
 	}
