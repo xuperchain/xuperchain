@@ -43,8 +43,14 @@ func ToPBContractResponse(resp *Response) *pb.ContractResponse {
 
 // ChainCore is the interface of chain service
 type ChainCore interface {
+	// GetAccountAddress get addresses associated with account name
 	GetAccountAddresses(accountName string) ([]string, error)
+	// VerifyContractPermission verify permission of calling contract
 	VerifyContractPermission(initiator string, authRequire []string, contractName, methodName string) (bool, error)
+	// QueryTransaction query confirmed tx
+	QueryTransaction(txid []byte) (*pb.Transaction, error)
+	// QueryBlock query block
+	QueryBlock(blockid []byte) (*pb.InternalBlock, error)
 }
 
 // ContextConfig define the config of context
