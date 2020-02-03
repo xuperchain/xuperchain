@@ -44,6 +44,11 @@ func NewAOTCode(module string, resolver Resolver) (icode Code, err error) {
 		err = fmt.Errorf("open module %s error", module)
 		return
 	}
+	ret := C.xvm_init_code(code.code)
+	if ret == 0 {
+		err = fmt.Errorf("init module %s error", module)
+		return
+	}
 	icode = code
 	return
 }

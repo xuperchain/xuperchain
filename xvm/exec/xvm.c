@@ -244,9 +244,15 @@ xvm_code_t* xvm_new_code(char* module_path, xvm_resolver_t resolver) {
   code->dlhandle = dlhandle;
   code->resolver = resolver;
   code->new_handle_func = new_handle_func;
-  (*init_func_types)(code);
-  (*init_import_funcs)(code);
+  code->init_func_types = init_func_types;
+  code->init_import_funcs = init_import_funcs;
   return code;
+}
+
+int xvm_init_code(xvm_code_t* code) {
+  code->init_func_types(code);
+  code->init_import_funcs(code);
+  return 1;
 }
 
 void xvm_release_code(xvm_code_t* code) {
