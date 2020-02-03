@@ -24,7 +24,8 @@ import (
 	log "github.com/xuperchain/log15"
 
 	"github.com/xuperchain/xuperchain/core/common/config"
-	p2pPb "github.com/xuperchain/xuperchain/core/p2pv2/pb"
+	p2p_base "github.com/xuperchain/xuperchain/core/p2p/base"
+	p2pPb "github.com/xuperchain/xuperchain/core/p2p/pb"
 
 	"github.com/xuperchain/xuperchain/core/kv/kvdb"
 )
@@ -77,7 +78,7 @@ type Node struct {
 	ctx         context.Context
 	srv         *P2PServerV2
 	quitCh      chan bool
-	addrs       map[string]*XchainAddrInfo
+	addrs       map[string]*p2p_base.XchainAddrInfo
 	coreRoute   map[string]*corePeersRoute
 	staticNodes map[string][]peer.ID
 	routeLock   sync.RWMutex
@@ -110,7 +111,7 @@ func NewNode(cfg config.P2PConfig, log log.Logger) (*Node, error) {
 		ctx:       ctx,
 		host:      ho,
 		quitCh:    make(chan bool, 1),
-		addrs:     map[string]*XchainAddrInfo{},
+		addrs:     map[string]*p2p_base.XchainAddrInfo{},
 		coreRoute: make(map[string]*corePeersRoute),
 		// new StreamLimit
 		streamLimit:  &StreamLimit{},
@@ -305,7 +306,7 @@ func (no *Node) ListPeers() []peer.ID {
 }
 
 // UpdateCorePeers update core peers' info and keep connection to core peers
-func (no *Node) UpdateCorePeers(cp *CorePeersInfo) error {
+func (no *Node) UpdateCorePeers(cp *p2p_base.CorePeersInfo) error {
 	if cp == nil {
 		return ErrInvalidParams
 	}
@@ -330,7 +331,7 @@ func (no *Node) UpdateCorePeers(cp *CorePeersInfo) error {
 // updateCoreConnection update direct connections to core peers.
 // this function remove out-of-date core peers and create connections to new peers
 func (no *Node) updateCoreConnection(oldInfo *corePeersRoute,
-	newInfo *CorePeersInfo) (*corePeersRoute, error) {
+	newInfo *p2p_base.CorePeersInfo) (*corePeersRoute, error) {
 	newCurrentPeers := make([]*corePeerInfo, 0)
 	newNextPeers := make([]*corePeerInfo, 0)
 	allPeers := make([]*pstore.PeerInfo, 0)

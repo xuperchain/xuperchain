@@ -6,24 +6,8 @@ import (
 
 	"github.com/libp2p/go-libp2p-kbucket"
 	peer "github.com/libp2p/go-libp2p-peer"
+	p2p_base "github.com/xuperchain/xuperchain/core/p2p/base"
 )
-
-// FilterStrategy defines the supported filter strategies
-type FilterStrategy string
-
-// supported filter strategies
-const (
-	DefaultStrategy           FilterStrategy = "DefaultStrategy"
-	BucketsStrategy                          = "BucketsStrategy"
-	NearestBucketStrategy                    = "NearestBucketStrategy"
-	BucketsWithFactorStrategy                = "BucketsWithFactorStrategy"
-	CorePeersStrategy                        = "CorePeersStrategy"
-)
-
-// PeersFilter the interface for filter peers
-type PeersFilter interface {
-	Filter() ([]peer.ID, error)
-}
 
 // BucketsFilter define filter that get all peers in buckets
 type BucketsFilter struct {
@@ -31,7 +15,7 @@ type BucketsFilter struct {
 }
 
 // Filter 依据Bucket分层广播
-func (bf *BucketsFilter) Filter() ([]peer.ID, error) {
+func (bf *BucketsFilter) Filter() (interface{}, error) {
 	peers := []peer.ID{}
 	rt := bf.node.kdht.RoutingTable()
 	for i := 0; i < len(rt.Buckets); i++ {
@@ -46,7 +30,7 @@ type NearestBucketFilter struct {
 }
 
 // Filter 广播给最近的Bucket
-func (nf *NearestBucketFilter) Filter() ([]peer.ID, error) {
+func (nf *NearestBucketFilter) Filter() (interface{}, error) {
 	peers := nf.node.kdht.RoutingTable().NearestPeers(kbucket.ConvertPeerID(nf.node.NodeID()), MaxBroadCastPeers)
 	return peers, nil
 }
@@ -65,7 +49,7 @@ type BucketsFilterWithFactor struct {
  *--------------------------------------------
  *       split1   split2    split3   split4 split5
  */
-func (nf *BucketsFilterWithFactor) Filter() ([]peer.ID, error) {
+func (nf *BucketsFilterWithFactor) Filter() (interface{}, error) {
 	factor := 0.5
 	rt := nf.node.kdht.RoutingTable()
 	filterPeers := []peer.ID{}
@@ -111,7 +95,7 @@ func (cp *CorePeersFilter) SetRouteName(name string) {
 
 // Filter select MaxBroadCastCorePeers random peers from core peers,
 // half from current and half from next
-func (cp *CorePeersFilter) Filter() ([]peer.ID, error) {
+func (cp *CorePeersFilter) Filter() (interface{}, error) {
 	peerids := make([]peer.ID, 0)
 	cp.node.routeLock.RLock()
 	bcRoute, ok := cp.node.coreRoute[cp.name]
@@ -143,19 +127,19 @@ type StaticNodeStrategy struct {
 }
 
 // Filter return static nodes peers
-func (ss *StaticNodeStrategy) Filter() ([]peer.ID, error) {
+func (ss *StaticNodeStrategy) Filter() (interface{}, error) {
 	return ss.node.staticNodes[ss.bcname], nil
 }
 
 // MultiStrategy a peer filter that contains multiple filters
 type MultiStrategy struct {
 	node       *Node
-	filters    []PeersFilter
+	filters    []p2p_base.PeersFilter
 	extraPeers []peer.ID
 }
 
 // NewMultiStrategy create instance of MultiStrategy
-func NewMultiStrategy(node *Node, filters []PeersFilter, extraPeers []peer.ID) *MultiStrategy {
+func NewMultiStrategy(node *Node, filters []p2p_base.PeersFilter, extraPeers []peer.ID) *MultiStrategy {
 	return &MultiStrategy{
 		node:       node,
 		filters:    filters,
@@ -164,7 +148,7 @@ func NewMultiStrategy(node *Node, filters []PeersFilter, extraPeers []peer.ID) *
 }
 
 // Filter return peer IDs with multiple filters
-func (cp *MultiStrategy) Filter() ([]peer.ID, error) {
+func (cp *MultiStrategy) Filter() (interface{}, error) {
 	res := make([]peer.ID, 0)
 	dupCheck := make(map[string]bool)
 	// add all filters
@@ -173,7 +157,7 @@ func (cp *MultiStrategy) Filter() ([]peer.ID, error) {
 		if err != nil {
 			return res, err
 		}
-		for _, peer := range peers {
+		for _, peer := range peers.([]peer.ID) {
 			if _, ok := dupCheck[peer.Pretty()]; !ok {
 				dupCheck[peer.Pretty()] = true
 				res = append(res, peer)

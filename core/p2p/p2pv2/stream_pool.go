@@ -10,7 +10,7 @@ import (
 
 	log "github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperchain/core/common"
-	p2pPb "github.com/xuperchain/xuperchain/core/p2pv2/pb"
+	p2pPb "github.com/xuperchain/xuperchain/core/p2p/pb"
 )
 
 // define common errors

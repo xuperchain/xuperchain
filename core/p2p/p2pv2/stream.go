@@ -14,7 +14,7 @@ import (
 	"github.com/libp2p/go-libp2p-peer"
 	ma "github.com/multiformats/go-multiaddr"
 
-	p2pPb "github.com/xuperchain/xuperchain/core/p2pv2/pb"
+	p2pPb "github.com/xuperchain/xuperchain/core/p2p/pb"
 	"github.com/xuperchain/xuperchain/core/pb"
 )
 
@@ -181,15 +181,15 @@ func (s *Stream) SendMessageWithResponse(ctx context.Context, msg *p2pPb.XuperMe
 		resCh := make(chan *p2pPb.XuperMessage, 100)
 		responseCh := make(chan *p2pPb.XuperMessage, 1)
 		errCh := make(chan error, 1)
-		sub := NewSubscriber(resCh, resType, nil, s.p.Pretty())
-		sub, err := s.node.srv.Register(sub)
+		sub := NewMsgSubscriber(resCh, resType, nil, s.p.Pretty())
+		newsub, err := s.node.srv.Register(sub)
 		if err != nil {
 			s.node.log.Trace("sendMessageWithResponse register error", "error", err)
 			return nil, err
 		}
 
 		// 程序结束需要注销该订阅者
-		defer s.node.srv.UnRegister(sub)
+		defer s.node.srv.UnRegister(newsub)
 		go func() {
 			res, err := s.ctxWaitRes(ctx, msg, resCh)
 			if res != nil {

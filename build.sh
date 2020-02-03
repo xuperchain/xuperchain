@@ -15,7 +15,7 @@ protoc -I core/pb core/pb/*.proto \
 	--go_out=plugins=grpc:core/pb \
 	--grpc-gateway_out=logtostderr=true:core/pb 
 
-protoc -I core/p2pv2/pb core/p2pv2/pb/message.proto  --go_out=core/p2pv2/pb
+protoc -I core/p2p/pb core/p2p/pb/message.proto  --go_out=core/p2p/pb
 
 protoc -I core/xmodel/pb core/xmodel/pb/versioned_data.proto --go_out=core/xmodel/pb 
 

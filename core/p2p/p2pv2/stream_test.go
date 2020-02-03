@@ -17,7 +17,7 @@ import (
 	ma "github.com/multiformats/go-multiaddr"
 	log "github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperchain/core/common/config"
-	xuperp2p "github.com/xuperchain/xuperchain/core/p2pv2/pb"
+	xuperp2p "github.com/xuperchain/xuperchain/core/p2p/pb"
 )
 
 var fullPath string

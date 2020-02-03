@@ -7,8 +7,8 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/xuperchain/xuperchain/core/global"
-	"github.com/xuperchain/xuperchain/core/p2pv2"
-	xuper_p2p "github.com/xuperchain/xuperchain/core/p2pv2/pb"
+	p2p_base "github.com/xuperchain/xuperchain/core/p2p/base"
+	xuper_p2p "github.com/xuperchain/xuperchain/core/p2p/pb"
 	"github.com/xuperchain/xuperchain/core/pb"
 )
 
@@ -20,15 +20,15 @@ func (xc *XChainCore) BroadCastGetBlock(bid *pb.BlockID) *pb.Block {
 		return nil
 	}
 	msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, bid.GetBcname(), "", xuper_p2p.XuperMessage_GET_BLOCK, msgbuf, xuper_p2p.XuperMessage_NONE)
-	filters := []p2pv2.FilterStrategy{p2pv2.NearestBucketStrategy}
+	filters := []p2p_base.FilterStrategy{p2p_base.NearestBucketStrategy}
 	if xc.NeedCoreConnection() {
-		filters = append(filters, p2pv2.CorePeersStrategy)
+		filters = append(filters, p2p_base.CorePeersStrategy)
 	}
-	opts := []p2pv2.MessageOption{
-		p2pv2.WithFilters(filters),
-		p2pv2.WithBcName(xc.bcname),
+	opts := []p2p_base.MessageOption{
+		p2p_base.WithFilters(filters),
+		p2p_base.WithBcName(xc.bcname),
 	}
-	res, err := xc.P2pv2.SendMessageWithResponse(context.Background(), msg, opts...)
+	res, err := xc.P2pSvr.SendMessageWithResponse(context.Background(), msg, opts...)
 	if err != nil || len(res) < 1 {
 		return nil
 	}
@@ -72,11 +72,11 @@ func (xc *XChainCore) getBlockFromPeer(ctx context.Context, blockid []byte, remo
 	// send GET_BLOCK message to the remote peer
 	msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, bid.GetBcname(), "",
 		xuper_p2p.XuperMessage_GET_BLOCK, msgbuf, xuper_p2p.XuperMessage_NONE)
-	opts := []p2pv2.MessageOption{
-		p2pv2.WithBcName(xc.bcname),
-		p2pv2.WithTargetPeerIDs([]string{remotePid}),
+	opts := []p2p_base.MessageOption{
+		p2p_base.WithBcName(xc.bcname),
+		p2p_base.WithTargetPeerIDs([]string{remotePid}),
 	}
-	res, err := xc.P2pv2.SendMessageWithResponse(context.Background(), msg, opts...)
+	res, err := xc.P2pSvr.SendMessageWithResponse(context.Background(), msg, opts...)
 	if err != nil || len(res) < 1 {
 		xc.log.Warn("getBlockFromPeer get error or empty response", "error", err, "msglen", len(res))
 		return nil, errors.New("get block failed")

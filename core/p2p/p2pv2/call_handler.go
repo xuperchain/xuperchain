@@ -13,13 +13,13 @@ import (
 	"github.com/xuperchain/xuperchain/core/common/config"
 	crypto_client "github.com/xuperchain/xuperchain/core/crypto/client"
 	"github.com/xuperchain/xuperchain/core/crypto/hash"
-	xuper_p2p "github.com/xuperchain/xuperchain/core/p2pv2/pb"
+	xuper_p2p "github.com/xuperchain/xuperchain/core/p2p/pb"
 	"github.com/xuperchain/xuperchain/core/pb"
 )
 
 // RegisterSubsriber register handleMessage callback fucntion
 func (p *P2PServerV2) registerSubscriber() error {
-	if _, err := p.Register(NewSubscriber(nil, xuper_p2p.XuperMessage_GET_AUTHENTICATION,
+	if _, err := p.Register(NewMsgSubscriber(nil, xuper_p2p.XuperMessage_GET_AUTHENTICATION,
 		p.handleGetAuthentication, "")); err != nil {
 		return err
 	}

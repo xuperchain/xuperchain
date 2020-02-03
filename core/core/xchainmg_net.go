@@ -10,43 +10,43 @@ import (
 
 	"github.com/xuperchain/xuperchain/core/common/config"
 	"github.com/xuperchain/xuperchain/core/global"
-	"github.com/xuperchain/xuperchain/core/p2pv2"
-	xuper_p2p "github.com/xuperchain/xuperchain/core/p2pv2/pb"
+	p2p_base "github.com/xuperchain/xuperchain/core/p2p/base"
+	xuper_p2p "github.com/xuperchain/xuperchain/core/p2p/pb"
 	"github.com/xuperchain/xuperchain/core/pb"
 )
 
-// RegisterSubscriber register p2pv2 msg type
+// RegisterSubscriber register p2p_base msg type
 func (xm *XChainMG) RegisterSubscriber() error {
 	xm.Log.Trace("Start to Register Subscriber")
-	if _, err := xm.P2pv2.Register(p2pv2.NewSubscriber(xm.msgChan, xuper_p2p.XuperMessage_POSTTX, nil, "")); err != nil {
+	if _, err := xm.P2pSvr.Register(xm.P2pSvr.NewSubscriber(xm.msgChan, xuper_p2p.XuperMessage_POSTTX, nil, "")); err != nil {
 		return err
 	}
 
-	if _, err := xm.P2pv2.Register(p2pv2.NewSubscriber(xm.msgChan, xuper_p2p.XuperMessage_SENDBLOCK, nil, "")); err != nil {
+	if _, err := xm.P2pSvr.Register(xm.P2pSvr.NewSubscriber(xm.msgChan, xuper_p2p.XuperMessage_SENDBLOCK, nil, "")); err != nil {
 		return err
 	}
 
-	if _, err := xm.P2pv2.Register(p2pv2.NewSubscriber(xm.msgChan, xuper_p2p.XuperMessage_BATCHPOSTTX, nil, "")); err != nil {
+	if _, err := xm.P2pSvr.Register(xm.P2pSvr.NewSubscriber(xm.msgChan, xuper_p2p.XuperMessage_BATCHPOSTTX, nil, "")); err != nil {
 		return err
 	}
 
-	if _, err := xm.P2pv2.Register(p2pv2.NewSubscriber(xm.msgChan, xuper_p2p.XuperMessage_NEW_BLOCKID, nil, "")); err != nil {
+	if _, err := xm.P2pSvr.Register(xm.P2pSvr.NewSubscriber(xm.msgChan, xuper_p2p.XuperMessage_NEW_BLOCKID, nil, "")); err != nil {
 		return err
 	}
 
-	if _, err := xm.P2pv2.Register(p2pv2.NewSubscriber(nil, xuper_p2p.XuperMessage_GET_BLOCK, xm.handleGetBlock, "")); err != nil {
+	if _, err := xm.P2pSvr.Register(xm.P2pSvr.NewSubscriber(nil, xuper_p2p.XuperMessage_GET_BLOCK, xm.handleGetBlock, "")); err != nil {
 		return err
 	}
 
-	if _, err := xm.P2pv2.Register(p2pv2.NewSubscriber(nil, xuper_p2p.XuperMessage_GET_BLOCKCHAINSTATUS, xm.handleGetBlockChainStatus, "")); err != nil {
+	if _, err := xm.P2pSvr.Register(xm.P2pSvr.NewSubscriber(nil, xuper_p2p.XuperMessage_GET_BLOCKCHAINSTATUS, xm.handleGetBlockChainStatus, "")); err != nil {
 		return err
 	}
 
-	if _, err := xm.P2pv2.Register(p2pv2.NewSubscriber(nil, xuper_p2p.XuperMessage_CONFIRM_BLOCKCHAINSTATUS, xm.handleConfirmBlockChainStatus, "")); err != nil {
+	if _, err := xm.P2pSvr.Register(xm.P2pSvr.NewSubscriber(nil, xuper_p2p.XuperMessage_CONFIRM_BLOCKCHAINSTATUS, xm.handleConfirmBlockChainStatus, "")); err != nil {
 		return err
 	}
 
-	if _, err := xm.P2pv2.Register(p2pv2.NewSubscriber(nil, xuper_p2p.XuperMessage_GET_RPC_PORT, xm.handleGetRPCPort, "")); err != nil {
+	if _, err := xm.P2pSvr.Register(xm.P2pSvr.NewSubscriber(nil, xuper_p2p.XuperMessage_GET_RPC_PORT, xm.handleGetRPCPort, "")); err != nil {
 		return err
 	}
 
@@ -115,11 +115,11 @@ func (xm *XChainMG) handlePostTx(msg *xuper_p2p.XuperMessage) {
 		txStatus.Header = global.GHeader()
 	}
 	if _, needRepost, _ := xm.ProcessTx(txStatus); needRepost {
-		opts := []p2pv2.MessageOption{
-			p2pv2.WithFilters([]p2pv2.FilterStrategy{p2pv2.DefaultStrategy}),
-			p2pv2.WithBcName(msg.GetHeader().GetBcname()),
+		opts := []p2p_base.MessageOption{
+			p2p_base.WithFilters([]p2p_base.FilterStrategy{p2p_base.DefaultStrategy}),
+			p2p_base.WithBcName(msg.GetHeader().GetBcname()),
 		}
-		go xm.P2pv2.SendMessage(context.Background(), msg, opts...)
+		go xm.P2pSvr.SendMessage(context.Background(), msg, opts...)
 	}
 	return
 }
@@ -185,15 +185,15 @@ func (xm *XChainMG) HandleSendBlock(msg *xuper_p2p.XuperMessage) {
 	bc := xm.Get(bcname)
 	if xm.Cfg.BlockBroadcaseMode == 0 {
 		// send full block to peers in Full_BroadCast_Mode
-		filters := []p2pv2.FilterStrategy{p2pv2.DefaultStrategy}
+		filters := []p2p_base.FilterStrategy{p2p_base.DefaultStrategy}
 		if bc.NeedCoreConnection() {
-			filters = append(filters, p2pv2.CorePeersStrategy)
+			filters = append(filters, p2p_base.CorePeersStrategy)
 		}
-		opts := []p2pv2.MessageOption{
-			p2pv2.WithFilters(filters),
-			p2pv2.WithBcName(bcname),
+		opts := []p2p_base.MessageOption{
+			p2p_base.WithFilters(filters),
+			p2p_base.WithBcName(bcname),
 		}
-		go xm.P2pv2.SendMessage(context.Background(), msg, opts...)
+		go xm.P2pSvr.SendMessage(context.Background(), msg, opts...)
 	} else {
 		// send block id in Interactive_BroadCast_Mode or Mixed_BroadCast_Mode
 		// we could use Interactive_BroadCast_Mode to avoid duplicate messages
@@ -207,15 +207,15 @@ func (xm *XChainMG) HandleSendBlock(msg *xuper_p2p.XuperMessage) {
 			return
 		}
 		msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, bcname, "", xuper_p2p.XuperMessage_NEW_BLOCKID, msgInfo, xuper_p2p.XuperMessage_NONE)
-		filters := []p2pv2.FilterStrategy{p2pv2.DefaultStrategy}
+		filters := []p2p_base.FilterStrategy{p2p_base.DefaultStrategy}
 		if bc.NeedCoreConnection() {
-			filters = append(filters, p2pv2.CorePeersStrategy)
+			filters = append(filters, p2p_base.CorePeersStrategy)
 		}
-		opts := []p2pv2.MessageOption{
-			p2pv2.WithFilters(filters),
-			p2pv2.WithBcName(bcname),
+		opts := []p2p_base.MessageOption{
+			p2p_base.WithFilters(filters),
+			p2p_base.WithBcName(bcname),
 		}
-		go xm.P2pv2.SendMessage(context.Background(), msg, opts...)
+		go xm.P2pSvr.SendMessage(context.Background(), msg, opts...)
 	}
 	return
 }
@@ -277,12 +277,12 @@ func (xm *XChainMG) handleBatchPostTx(msg *xuper_p2p.XuperMessage) {
 		}
 		msg.Data.MsgInfo = txsData
 		msg.Header.DataCheckSum = xuper_p2p.CalDataCheckSum(msg)
-		opts := []p2pv2.MessageOption{
-			p2pv2.WithFilters([]p2pv2.FilterStrategy{p2pv2.DefaultStrategy}),
-			p2pv2.WithBcName(msg.GetHeader().GetBcname()),
-			p2pv2.WithCompress(xm.enableCompress),
+		opts := []p2p_base.MessageOption{
+			p2p_base.WithFilters([]p2p_base.FilterStrategy{p2p_base.DefaultStrategy}),
+			p2p_base.WithBcName(msg.GetHeader().GetBcname()),
+			p2p_base.WithCompress(xm.enableCompress),
 		}
-		go xm.P2pv2.SendMessage(context.Background(), msg, opts...)
+		go xm.P2pSvr.SendMessage(context.Background(), msg, opts...)
 	}
 	return
 }
@@ -491,13 +491,13 @@ func (xm *XChainMG) handleNewBlockID(msg *xuper_p2p.XuperMessage) {
 
 	// broadcast New_BlockID message
 	// since the origin message is New_BlockID, so ignore Full_BroadCast_Mode
-	filters := []p2pv2.FilterStrategy{p2pv2.DefaultStrategy}
+	filters := []p2p_base.FilterStrategy{p2p_base.DefaultStrategy}
 	if bc.NeedCoreConnection() {
-		filters = append(filters, p2pv2.CorePeersStrategy)
+		filters = append(filters, p2p_base.CorePeersStrategy)
 	}
-	opts := []p2pv2.MessageOption{
-		p2pv2.WithFilters(filters),
-		p2pv2.WithBcName(bcname),
+	opts := []p2p_base.MessageOption{
+		p2p_base.WithFilters(filters),
+		p2p_base.WithBcName(bcname),
 	}
-	go xm.P2pv2.SendMessage(context.Background(), msg, opts...)
+	go xm.P2pSvr.SendMessage(context.Background(), msg, opts...)
 }

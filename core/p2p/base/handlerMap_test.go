@@ -1,6 +1,7 @@
-package p2pv2
+package base
 
 import (
+	"container/list"
 	"context"
 	"fmt"
 	"os"
@@ -8,8 +9,72 @@ import (
 	"time"
 
 	"github.com/xuperchain/log15"
-	"github.com/xuperchain/xuperchain/core/p2pv2/pb"
+	"github.com/xuperchain/xuperchain/core/p2p/pb"
 )
+
+// Subscriber define the subscriber of message
+type MockSubscriber struct {
+	msgCh   chan *xuperp2p.XuperMessage
+	msgType xuperp2p.XuperMessage_MessageType
+	// 支持注册回调函数方式
+	handler XuperHandler
+	e       *list.Element
+	// 仅接收固定来源的消息
+	msgFrom string
+}
+
+// NewSubscriber create instance of Subscriber
+func NewMockSubscriber(msgCh chan *xuperp2p.XuperMessage, msgType xuperp2p.XuperMessage_MessageType, handler XuperHandler, msgFrom string) *MockSubscriber {
+	sub := &MockSubscriber{}
+	if msgCh == nil && handler == nil {
+		return nil
+	}
+	sub.msgCh = msgCh
+	sub.msgType = msgType
+	sub.handler = handler
+	sub.msgFrom = msgFrom
+	return sub
+}
+
+// GetMessageType return the subscribed message type of this subscriber
+func (msub *MockSubscriber) GetMessageType() xuperp2p.XuperMessage_MessageType {
+	return msub.msgType
+}
+
+// GetMessageChan return the to-be-processed message channel
+func (msub *MockSubscriber) GetMessageChan() chan *xuperp2p.XuperMessage {
+	return msub.msgCh
+}
+
+// GetElement get the element of list
+func (msub *MockSubscriber) GetElement() *list.Element {
+	return msub.e
+}
+
+// GetMessageFrom get the peer id which this message is from
+func (msub *MockSubscriber) GetMessageFrom() string {
+	return msub.msgFrom
+}
+
+// GetHandler get the message handler, this could be nil if use message channel
+func (msub *MockSubscriber) GetHandler() XuperHandler {
+	return msub.handler
+}
+
+// SetHandler set message processer
+func (msub *MockSubscriber) SetHandler(handler XuperHandler) {
+	msub.handler = handler
+}
+
+// SetElement set the element of list in MultiSubscriber
+func (msub *MockSubscriber) SetElement(e *list.Element) {
+	msub.e = e
+}
+
+// HandleMessage process a message
+func (*MockSubscriber) HandleMessage(stream interface{}, msg *xuperp2p.XuperMessage) {
+	return
+}
 
 func TestStartHandlerMap(t *testing.T) {
 	mgHeader := xuperp2p.XuperMessage_MessageHeader{
@@ -45,7 +110,7 @@ func TestStartHandlerMap(t *testing.T) {
 
 	// new a subscriber and Register
 	ch := make(chan *xuperp2p.XuperMessage, 5000)
-	sub := &Subscriber{
+	sub := &MockSubscriber{
 		msgCh:   ch,
 		msgType: xuperp2p.XuperMessage_SENDBLOCK,
 	}
@@ -68,7 +133,7 @@ func TestStartHandlerMap(t *testing.T) {
 			//t.Error("Expect true, got ", IsHandled)
 		}
 		// stop HandlerMap service
-		hm.quitCh <- true
+		hm.QuitCh <- true
 
 		// UnRegister
 		v2, _ := hm.subscriberCenter.Load(sub.msgType)
@@ -143,7 +208,7 @@ func TestHandleMessage(t *testing.T) {
 	if err != nil {
 		t.Error("NewHandlerMap error", err.Error())
 	}
-	sub := NewSubscriber(nil, xuperp2p.XuperMessage_PING, testHandler, "")
+	sub := NewMockSubscriber(nil, xuperp2p.XuperMessage_PING, testHandler, "")
 	hm.Register(sub)
 
 	mgHeader := xuperp2p.XuperMessage_MessageHeader{

@@ -9,7 +9,7 @@ import (
 	peer "github.com/libp2p/go-libp2p-peer"
 
 	log "github.com/xuperchain/log15"
-	xuper_p2p "github.com/xuperchain/xuperchain/core/p2pv2/pb"
+	xuper_p2p "github.com/xuperchain/xuperchain/core/p2p/pb"
 	"github.com/xuperchain/xuperchain/core/pb"
 )
 
