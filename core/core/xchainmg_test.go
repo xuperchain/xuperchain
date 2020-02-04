@@ -18,7 +18,7 @@ import (
 	log "github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperchain/core/common/config"
 	"github.com/xuperchain/xuperchain/core/global"
-	"github.com/xuperchain/xuperchain/core/p2p/base"
+	p2p_factory "github.com/xuperchain/xuperchain/core/p2p/factory"
 	xuper_p2p "github.com/xuperchain/xuperchain/core/p2p/pb"
 	"github.com/xuperchain/xuperchain/core/pb"
 
@@ -46,7 +46,7 @@ func Init(t *testing.T) *XChainMG {
 	t.Log("port: ", port)
 	cfg.P2pV2.Port = int32(port)
 
-	p2pV2Service, p2pV2Err := p2pv2.NewP2PServerV2(cfg.P2pV2, nil)
+	p2pV2Service, p2pV2Err := p2p_factory.GetP2PServer("p2pv2", cfg.P2pV2, nil, nil)
 	t.Log("cfg: ", cfg.P2pV2)
 	if p2pV2Err != nil {
 		t.Error("new p2pv2 server error ", p2pV2Err.Error())

@@ -3,19 +3,27 @@ package p2pv2
 import (
 	"testing"
 
+	_ "github.com/xuperchain/xuperchain/core/p2p/base"
 	"github.com/xuperchain/xuperchain/core/p2p/pb"
 )
 
 func TestNewSubscriber(t *testing.T) {
-	ms := newMultiSubscriber()
 	resch := make(chan *xuperp2p.XuperMessage, 1)
-	sub := NewSubscriber(resch, xuperp2p.XuperMessage_PING, nil, "")
-	sub, _ = ms.register(sub)
-	if ms.elem.Len() != 1 {
-		t.Error("register sub error")
+	sub := NewMsgSubscriber(resch, xuperp2p.XuperMessage_PING, nil, "")
+	if sub.GetMessageType() != xuperp2p.XuperMessage_PING {
+		t.Error("message type not the same")
+		return
 	}
-	ms.unRegister(sub)
-	if ms.elem.Len() != 0 {
-		t.Error("unRegister sub error")
+
+	if sub.GetMessageChan() != resch {
+		t.Error("message channel not the same")
+		return
 	}
+
+	if sub.GetHandler() != nil {
+		t.Error("message handler not the same")
+		return
+	}
+
+	sub.HandleMessage(nil, nil)
 }

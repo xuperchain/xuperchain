@@ -65,6 +65,11 @@ func (hm *HandlerMap) Stop() {
 	hm.lg.Trace("Stop HandlerMap")
 }
 
+// GetSubscriberCenter get the map of subscribers
+func (hm *HandlerMap) GetSubscriberCenter() *sync.Map {
+	return hm.subscriberCenter
+}
+
 // Register used to register subscriber to handlerMap.
 func (hm *HandlerMap) Register(sub Subscriber) (Subscriber, error) {
 	if sub == nil {
@@ -72,7 +77,7 @@ func (hm *HandlerMap) Register(sub Subscriber) (Subscriber, error) {
 	}
 	v, ok := hm.subscriberCenter.Load(sub.GetMessageType())
 	if !ok {
-		ms := newMultiSubscriber()
+		ms := NewMultiSubscriber()
 		hm.subscriberCenter.Store(sub.GetMessageType(), ms)
 		return ms.register(sub)
 	}

@@ -26,7 +26,8 @@ func TestNewP2PServerV2(t *testing.T) {
 		},
 	}
 
-	srv, err := NewP2PServerV2(testCases["testNewServer"].in, nil)
+	srv := NewP2PServerV2()
+	err := srv.Init(testCases["testNewServer"].in, nil, nil)
 	if err != nil {
 		t.Log(err.Error())
 	}
@@ -36,12 +37,9 @@ func TestNewP2PServerV2(t *testing.T) {
 		ch := make(chan *xuperp2p.XuperMessage, 5000)
 		time.Sleep(1 * time.Second)
 
-		sub := &Subscriber{
-			msgCh:   ch,
-			msgType: xuperp2p.XuperMessage_PING,
-		}
+		sub := srv.NewSubscriber(ch, xuperp2p.XuperMessage_PING, nil, "")
 		e, _ := srv.Register(sub)
-		_, ok := srv.handlerMap.subscriberCenter.Load(xuperp2p.XuperMessage_PING)
+		_, ok := srv.handlerMap.GetSubscriberCenter().Load(xuperp2p.XuperMessage_PING)
 		if !ok {
 			t.Error("Register sub error")
 		}

@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/libp2p/go-libp2p-peer"
+
+	"github.com/xuperchain/xuperchain/core/p2p/base"
 )
 
 const Address1 = "dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN"
@@ -61,7 +63,7 @@ func TestGenerateUniqueRandList(t *testing.T) {
 }
 
 func TestGetAuthRequest(t *testing.T) {
-	xchainAddr := &XchainAddrInfo{
+	xchainAddr := &base.XchainAddrInfo{
 		Addr:   Address1,
 		Pubkey: []byte(Pubkey1),
 		Prikey: []byte(PrivateKey1),

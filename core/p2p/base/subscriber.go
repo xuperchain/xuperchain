@@ -47,7 +47,7 @@ type MultiSubscriber struct {
 	lk   *sync.Mutex
 }
 
-func newMultiSubscriber() *MultiSubscriber {
+func NewMultiSubscriber() *MultiSubscriber {
 	return &MultiSubscriber{
 		elem: list.New(),
 		lk:   new(sync.Mutex),

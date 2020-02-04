@@ -9,12 +9,13 @@ import (
 	peer "github.com/libp2p/go-libp2p-peer"
 
 	log "github.com/xuperchain/log15"
+	p2p_base "github.com/xuperchain/xuperchain/core/p2p/base"
 	xuper_p2p "github.com/xuperchain/xuperchain/core/p2p/pb"
 	"github.com/xuperchain/xuperchain/core/pb"
 )
 
 func InitMsg(t *testing.T) *xuper_p2p.XuperMessage {
-	xchainAddr := &XchainAddrInfo{
+	xchainAddr := &p2p_base.XchainAddrInfo{
 		Addr:   Address1,
 		Pubkey: []byte(Pubkey1),
 		Prikey: []byte(PrivateKey1),

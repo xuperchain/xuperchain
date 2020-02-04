@@ -3,6 +3,9 @@ package base
 import (
 	"context"
 
+	log "github.com/xuperchain/log15"
+
+	"github.com/xuperchain/xuperchain/core/common/config"
 	p2pPb "github.com/xuperchain/xuperchain/core/p2p/pb"
 )
 
@@ -11,7 +14,8 @@ import (
 type MockP2pServer struct {
 }
 
-func (mp *MockP2pServer) Init() error {
+// Init initialize the Mock p2p server
+func (mp *MockP2pServer) Init(cfg config.P2PConfig, lg log.Logger, extra map[string]interface{}) error {
 	return nil
 }
 
@@ -31,12 +35,12 @@ func (mp *MockP2pServer) NewSubscriber(chan *p2pPb.XuperMessage, p2pPb.XuperMess
 }
 
 // Register implements the Register interface
-func (mp *MockP2pServer) Register(sub *Subscriber) (*Subscriber, error) {
+func (mp *MockP2pServer) Register(sub Subscriber) (Subscriber, error) {
 	return nil, nil
 }
 
 // UnRegister implements the UnRegister interface
-func (mp *MockP2pServer) UnRegister(sub *Subscriber) error {
+func (mp *MockP2pServer) UnRegister(sub Subscriber) error {
 	return nil
 }
 
