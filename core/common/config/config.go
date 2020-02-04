@@ -31,6 +31,7 @@ const (
 	DefaultMaxBroadcastCorePeers = 17
 	DefaultIsStorePeers          = false
 	DefaultP2PDataPath           = "./data/p2p"
+	DefaultP2PModuleName         = "p2pv2"
 )
 
 // LogConfig is the log config of node
@@ -65,6 +66,8 @@ type TCPServerConfig struct {
 
 // P2PConfig is the config of xuper p2p server. Attention, config of dht are not expose
 type P2PConfig struct {
+	// Module is the name of p2p module plugin
+	Module string `yaml:"module,omitempty"`
 	// port the p2p network listened
 	Port int32 `yaml:"port,omitempty"`
 	// keyPath is the node private key path, xuper will gen a random one if is nil
@@ -340,6 +343,7 @@ func NewNodeConfig() *NodeConfig {
 // newP2pConfigWithDefault create default p2p configuration
 func newP2pConfigWithDefault() P2PConfig {
 	return P2PConfig{
+		Module:           DefaultP2PModuleName,
 		Port:             DefaultNetPort,
 		KeyPath:          DefaultNetKeyPath,
 		IsNat:            DefaultNetIsNat,

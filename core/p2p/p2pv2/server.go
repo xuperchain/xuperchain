@@ -23,6 +23,9 @@ var (
 	ErrCreateHandlerMap = errors.New("create handlerMap error")
 )
 
+// make sure p2pv2 implemented the P2PServer interface
+var _ p2p_base.P2PServer = (*P2PServerV2)(nil)
+
 // P2PServerV2 is the v2 of XuperChain p2p server. An implement of P2PServer interface.
 type P2PServerV2 struct {
 	log log.Logger
@@ -35,9 +38,7 @@ type P2PServerV2 struct {
 
 // NewP2PServerV2 create P2PServerV2 instance
 func NewP2PServerV2() *P2PServerV2 {
-	return &P2PServerV2{
-		quitCh: make(chan bool, 1),
-	}
+	return &P2PServerV2{}
 }
 
 // Init initialize p2p server using given config
@@ -64,6 +65,7 @@ func (p *P2PServerV2) Init(cfg config.P2PConfig, lg log.Logger, extra map[string
 	p.config = cfg
 	p.node = no
 	p.handlerMap = hm
+	p.quitCh = make(chan bool, 1)
 
 	no.SetServer(p)
 

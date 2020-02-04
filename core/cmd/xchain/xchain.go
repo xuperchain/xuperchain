@@ -50,7 +50,7 @@ func Start(cfg *config.NodeConfig) error {
 	defer signal.Stop(sigc)
 
 	// Init p2p server
-	p2pServ, err := p2p_factory.GetP2PServer("p2pv2", cfg.P2pV2, xlog, nil)
+	p2pServ, err := p2p_factory.GetP2PServer(cfg.P2pV2.Module, cfg.P2pV2, xlog, nil)
 	if err != nil {
 		panic(err)
 	}
