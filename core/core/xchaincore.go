@@ -9,7 +9,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"os"
 	"path/filepath"
 	"sync"
 	"syscall"
@@ -789,11 +788,7 @@ func (xc *XChainCore) Miner() int {
 			xc.pruneOption.Switch = false
 			xc.SyncBlocks()
 			// 裁剪账本可能需要时间，做完之后直接返回
-			process, err := os.FindProcess(os.Getpid())
-			if err != nil {
-				os.Exit(0)
-			}
-			process.Signal(syscall.SIGINT)
+			syscall.Kill(syscall.Getpid(), syscall.SIGINT)
 			return -1
 		}
 		b, s := xc.con.CompeteMaster(xc.Ledger.GetMeta().TrunkHeight + 1)
