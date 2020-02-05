@@ -373,6 +373,12 @@ type UtxoMeta struct {
 	GasPrice GasPrice `json:"gasPrice"`
 }
 
+// ContractStatData proto.ContractStatData
+type ContractStatData struct {
+	AccountCount  int64 `json:"accountCount"`
+	ContractCount int64 `json:"contractCount"`
+}
+
 // ChainStatus proto.ChainStatus
 type ChainStatus struct {
 	Name       string     `json:"name"`
