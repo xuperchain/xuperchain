@@ -40,6 +40,10 @@ func (s *syscallResolver) ResolveGlobal(module, name string) (int64, bool) {
 func (s *syscallResolver) ResolveFunc(module, name string) (interface{}, bool) {
 	fullname := module + "." + name
 	switch fullname {
+	case "go.github.com/xuperchain/xuperunion/contractsdk/go/driver/wasm.callMethod":
+		return s.goCallMethod, true
+	case "go.github.com/xuperchain/xuperunion/contractsdk/go/driver/wasm.fetchResponse":
+		return s.goFetchResponse, true
 	case "go.github.com/xuperchain/xuperchain/core/contractsdk/go/driver/wasm.callMethod":
 		return s.goCallMethod, true
 	case "go.github.com/xuperchain/xuperchain/core/contractsdk/go/driver/wasm.fetchResponse":
