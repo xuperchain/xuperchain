@@ -794,6 +794,7 @@ func (xc *XChainCore) Miner() int {
 				os.Exit(0)
 			}
 			process.Signal(syscall.SIGINT)
+			return -1
 		}
 		b, s := xc.con.CompeteMaster(xc.Ledger.GetMeta().TrunkHeight + 1)
 		xc.log.Debug("competemaster", "blockchain", xc.bcname, "master", b, "needSync", s)
