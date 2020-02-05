@@ -12,6 +12,7 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -788,8 +789,11 @@ func (xc *XChainCore) Miner() int {
 			xc.pruneOption.Switch = false
 			xc.SyncBlocks()
 			// 裁剪账本可能需要时间，做完之后直接返回
-			xc.Stop()
-			os.Exit(0)
+			process, err := os.FindProcess(os.Getpid())
+			if err != nil {
+				os.Exit(0)
+			}
+			process.Signal(syscall.SIGINT)
 		}
 		b, s := xc.con.CompeteMaster(xc.Ledger.GetMeta().TrunkHeight + 1)
 		xc.log.Debug("competemaster", "blockchain", xc.bcname, "master", b, "needSync", s)
