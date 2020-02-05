@@ -8,8 +8,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/xuperchain/xuperchain/core/global"
-	"github.com/xuperchain/xuperchain/core/pb"
+	"github.com/xuperchain/xuperunion/global"
+	"github.com/xuperchain/xuperunion/pb"
 )
 
 // ContractStatDataQueryCommand contract statistic data query cmd

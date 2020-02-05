@@ -1,8 +1,8 @@
 package utxo
 
 import (
-	"github.com/xuperchain/xuperchain/core/pb"
-	"github.com/xuperchain/xuperchain/core/permission/acl/utils"
+	"github.com/xuperchain/xuperunion/pb"
+	"github.com/xuperchain/xuperunion/permission/acl/utils"
 )
 
 // queryContractStatData query stat data about contract, such as total contract and total account
