@@ -3,10 +3,7 @@ package xchaincore
 import (
 	"errors"
 	"io/ioutil"
-	"os"
-	"os/signal"
 	"sync"
-	"syscall"
 
 	"github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperchain/core/common/config"
@@ -131,14 +128,6 @@ func (xm *XChainMG) Start() {
 		return true
 	})
 	go xm.StartLoop()
-	// signal deal
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT)
-	go func(sigs chan os.Signal) {
-		<-sigs
-		xm.Stop()
-		os.Exit(0)
-	}(sigs)
 }
 
 // Stop stop all blockchain instances
