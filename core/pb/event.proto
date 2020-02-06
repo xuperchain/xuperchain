@@ -38,7 +38,8 @@ message BlockStatusInfo {
 message TransactionStatusInfo {
   string bcname = 1;
   string initiator = 2;
-  TransactionStatus status = 3;
+  repeated string auth_require = 3;
+  TransactionStatus status = 4;
 }
 
 message AccountStatusInfo {
@@ -72,7 +73,7 @@ message BlockEventRequest {
 message TransactionEventRequest {
   string bcname = 1;
   string initiator = 2;
-  repeated string auth_require = 3;
+  string auth_require = 3;
   bool need_content = 4;
 }
 
@@ -108,18 +109,15 @@ message Event {
 
 // BlockEvent 订阅区块返回
 message BlockEvent {
-  //BlockStatusInfo status = 1;
   InternalBlock block = 2;
 }
 
 // TransactionEvent 订阅交易返回
 message TransactionEvent {
-  //TransactionStatusInfo status = 1;
   Transaction tx = 2;
 }
 
 // AccountEvent 订阅账户返回
 message AccountEvent {
-  //AccountStatusInfo status = 1;
   Transaction tx = 2;
 }

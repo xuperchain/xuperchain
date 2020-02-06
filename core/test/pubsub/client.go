@@ -22,10 +22,10 @@ type Config struct {
 }
 
 type TransactionEventRequest struct {
-	Bcname      string   `json:"bcname"`
-	Initiator   string   `json:"initiator"`
-	AuthRequire []string `json:"auth_require"`
-	NeedContent bool     `json:"need_content"`
+	Bcname      string `json:"bcname"`
+	Initiator   string `json:"initiator"`
+	AuthRequire string `json:"auth_require"`
+	NeedContent bool   `json:"need_content"`
 }
 
 type BlockEventRequest struct {
@@ -134,6 +134,7 @@ func (cmd *PubsubClientCommand) Subscribe() {
 		requestPB := &pb.TransactionEventRequest{
 			Bcname:      requestLocal.Bcname,
 			Initiator:   requestLocal.Initiator,
+			AuthRequire: requestLocal.AuthRequire,
 			NeedContent: requestLocal.NeedContent,
 		}
 		requestBytes, requestBytesErr = proto.Marshal(requestPB)

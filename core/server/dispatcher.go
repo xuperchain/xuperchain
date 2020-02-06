@@ -95,8 +95,17 @@ func (p *PubsubService) Subscribe(arg *pb.EventRequest, stream pb.PubsubService_
 			request := &pb.TransactionEventRequest{}
 			proto.Unmarshal(arg.GetPayload(), request)
 			metaData := v.GetTxStatus()
-			if request.GetBcname() == metaData.GetBcname() &&
-				request.GetInitiator() == metaData.GetInitiator() {
+
+			requestBcname := request.GetBcname()
+			requestInitiator := request.GetInitiator()
+			requestAuthRequire := request.GetAuthRequire()
+			eventBcname := metaData.GetBcname()
+			eventInitiator := metaData.GetInitiator()
+			eventAuthRequire := metaData.GetAuthRequire()
+
+			if requestBcname == eventBcname &&
+				((eventInitiator != "" && requestInitiator == eventInitiator) ||
+					StringContains(requestAuthRequire, eventAuthRequire)) {
 				return true
 			}
 			return false
@@ -112,7 +121,6 @@ func (p *PubsubService) Subscribe(arg *pb.EventRequest, stream pb.PubsubService_
 				return true
 			}
 			return false
-		case pb.EventType_UNDEFINED:
 		}
 		return true
 	})
@@ -176,4 +184,18 @@ func (p *PubsubService) sub(ip string) {
 			p.srcIP2Cnt.Store(ip, currCnt-1)
 		}
 	}
+}
+
+func StringContains(target string, arr []string) bool {
+	fmt.Println("--------arr:", arr, "  target", target)
+	if arr == nil || len(arr) == 0 {
+		return false
+	}
+	for i := 0; i < len(arr); i++ {
+		if arr[i] == target {
+			return true
+		}
+	}
+
+	return false
 }

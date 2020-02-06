@@ -30,9 +30,10 @@ func produceBlockEvent(msgChan chan *pb.Event, block *pb.InternalBlock, bcname s
 
 func produceTransactionEvent(msgChan chan *pb.Event, tx *pb.Transaction, bcname string, status pb.TransactionStatus) {
 	txStatus := &pb.TransactionStatusInfo{
-		Bcname:    bcname,
-		Initiator: tx.GetInitiator(),
-		Status:    status,
+		Bcname:      bcname,
+		Initiator:   tx.GetInitiator(),
+		AuthRequire: tx.GetAuthRequire(),
+		Status:      status,
 	}
 	txEvent := &pb.TransactionEvent{
 		Tx: tx,
