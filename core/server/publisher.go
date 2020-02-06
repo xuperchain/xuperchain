@@ -1,3 +1,8 @@
+// import "github.com/moby/moby/pkg/pubsub"
+// Use of this source code is governed under the Apache License, Version 2.0
+//
+// ~~ 2020.02.07
+// Modified by Baidu.Inc. inorder to support customized event mechanism
 package server
 
 import (
