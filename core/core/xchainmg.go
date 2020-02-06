@@ -31,7 +31,8 @@ type XChainMG struct {
 	Quit       chan struct{}
 	nodeMode   string
 	// the switch of compressed
-	enableCompress      bool
+	enableCompress bool
+	// event involved
 	MsgChan             chan *pb.Event
 	pubsubServiceSwitch bool
 }

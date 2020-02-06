@@ -119,9 +119,7 @@ func (xm *XChainMG) handlePostTx(msg *xuper_p2p.XuperMessage) {
 			p2pv2.WithFilters([]p2pv2.FilterStrategy{p2pv2.DefaultStrategy}),
 			p2pv2.WithBcName(msg.GetHeader().GetBcname()),
 		}
-		go func() {
-			xm.P2pv2.SendMessage(context.Background(), msg, opts...)
-		}()
+		go xm.P2pv2.SendMessage(context.Background(), msg, opts...)
 	}
 	return
 }
