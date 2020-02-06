@@ -7,7 +7,7 @@ import "xchain.proto";
 // rpc api
 service PubsubService {
   rpc Subscribe (EventRequest) returns (stream Event);
-  rpc Unsubscribe (UnsubscribeRequest) returns (UnsubscribeResponse);
+  rpc Unsubscribe (UnsubscribeRequest) returns (UnsubscribeResponse) {}
 }
 
 // BlockStatus block status
@@ -30,7 +30,9 @@ enum EventType {
 // BlockStatusInfo 区块元数据
 message BlockStatusInfo {
   string bcname = 1;
-  BlockStatus status = 2;
+  string proposer = 2;
+  int64 height = 3;
+  BlockStatus status = 4;
 }
 
 message TransactionStatusInfo {
@@ -76,9 +78,10 @@ message TransactionEventRequest {
 
 // AccountEventRequest 订阅账户请求
 message AccountEventRequest {
-  string from_addr = 1;
-  string to_addr = 2;
-  bool need_content = 3;
+  string bcname = 1;
+  string from_addr = 2;
+  string to_addr = 3;
+  bool need_content = 4;
 }
 
 // UnsubscribeRequest 取消事件订阅请求
@@ -98,22 +101,25 @@ message Event {
   string id = 1;
   EventType type = 2;
   bytes payload = 3;
+  BlockStatusInfo block_status = 4;
+  TransactionStatusInfo tx_status = 5;
+  AccountStatusInfo account_status = 6;
 }
 
 // BlockEvent 订阅区块返回
 message BlockEvent {
-  BlockStatusInfo status = 1;
+  //BlockStatusInfo status = 1;
   InternalBlock block = 2;
 }
 
 // TransactionEvent 订阅交易返回
 message TransactionEvent {
-  TransactionStatusInfo status = 1;
+  //TransactionStatusInfo status = 1;
   Transaction tx = 2;
 }
 
 // AccountEvent 订阅账户返回
 message AccountEvent {
-  AccountStatusInfo status = 1;
+  //AccountStatusInfo status = 1;
   Transaction tx = 2;
 }

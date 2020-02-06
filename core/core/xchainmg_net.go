@@ -119,7 +119,9 @@ func (xm *XChainMG) handlePostTx(msg *xuper_p2p.XuperMessage) {
 			p2pv2.WithFilters([]p2pv2.FilterStrategy{p2pv2.DefaultStrategy}),
 			p2pv2.WithBcName(msg.GetHeader().GetBcname()),
 		}
-		go xm.P2pv2.SendMessage(context.Background(), msg, opts...)
+		go func() {
+			xm.P2pv2.SendMessage(context.Background(), msg, opts...)
+		}()
 	}
 	return
 }
@@ -148,6 +150,12 @@ func (xm *XChainMG) ProcessTx(in *pb.TxStatus) (*pb.CommonReply, bool, error) {
 		return out, false, nil
 	}
 	out, needRepost := bc.PostTx(in, hd)
+
+	if needRepost && xm.pubsubServiceSwitch {
+		go produceTransactionEvent(xm.MsgChan, in.GetTx(), in.GetBcname(),
+			pb.TransactionStatus_UNDEFINE)
+	}
+
 	return out, needRepost, nil
 }
 

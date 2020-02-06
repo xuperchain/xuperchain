@@ -12,6 +12,7 @@ import (
 	"github.com/xuperchain/xuperchain/core/contract/kernel"
 	"github.com/xuperchain/xuperchain/core/p2pv2"
 	xuper_p2p "github.com/xuperchain/xuperchain/core/p2pv2/pb"
+	"github.com/xuperchain/xuperchain/core/pb"
 	pm "github.com/xuperchain/xuperchain/core/pluginmgr"
 )
 
@@ -30,7 +31,9 @@ type XChainMG struct {
 	Quit       chan struct{}
 	nodeMode   string
 	// the switch of compressed
-	enableCompress bool
+	enableCompress      bool
+	MsgChan             chan *pb.Event
+	pubsubServiceSwitch bool
 }
 
 // Init init instance of XChainMG
@@ -47,6 +50,8 @@ func (xm *XChainMG) Init(log log.Logger, cfg *config.NodeConfig,
 	xm.Quit = make(chan struct{})
 	xm.nodeMode = cfg.NodeMode
 	xm.enableCompress = cfg.EnableCompress
+	xm.MsgChan = make(chan *pb.Event, 100)
+	xm.pubsubServiceSwitch = cfg.PubsubService
 
 	// auto-load plugins here
 	if err := pm.Init(cfg); err != nil {
@@ -65,7 +70,7 @@ func (xm *XChainMG) Init(log log.Logger, cfg *config.NodeConfig,
 			aKernel := &kernel.Kernel{}
 			aKernel.Init(xm.datapath, xm.Log, xm, fi.Name())
 			x := &XChainCore{}
-			err := x.Init(fi.Name(), log, cfg, p2pV2, aKernel, xm.nodeMode)
+			err := x.Init(fi.Name(), log, cfg, p2pV2, aKernel, xm.nodeMode, xm.MsgChan)
 			if err != nil {
 				return err
 			}
@@ -164,7 +169,7 @@ func (xm *XChainMG) addBlockChain(name string) (*XChainCore, error) {
 		aKernel = &kernel.Kernel{}
 		aKernel.Init(xm.datapath, xm.Log, xm, name)
 	}
-	err := x.Init(name, xm.Log, xm.Cfg, xm.P2pv2, aKernel, xm.nodeMode)
+	err := x.Init(name, xm.Log, xm.Cfg, xm.P2pv2, aKernel, xm.nodeMode, xm.MsgChan)
 	if err != nil {
 		xm.Log.Warn("XChainCore init error")
 		xm.rootKernel.RemoveBlockChainData(name)
