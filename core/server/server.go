@@ -100,6 +100,28 @@ func (s *server) BatchPostTx(ctx context.Context, in *pb.BatchTxs) (*pb.CommonRe
 	return out, nil
 }
 
+// QueryContractStatData query statistic info about contract
+func (s *server) QueryContractStatData(ctx context.Context, in *pb.ContractStatDataRequest) (*pb.ContractStatDataResponse, error) {
+	s.mg.Speed.Add("QueryContractStatData")
+	if in.GetHeader() == nil {
+		in.Header = global.GHeader()
+	}
+	out := &pb.ContractStatDataResponse{Header: &pb.Header{}}
+	bc := s.mg.Get(in.GetBcname())
+
+	if bc == nil {
+		out.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE
+		s.log.Trace("refuse a connection at function call QueryContractStatData", "logid", in.Header.Logid)
+		return out, nil
+	}
+	contractStatDataResponse, contractStatDataErr := bc.QueryContractStatData()
+	if contractStatDataErr != nil {
+		return out, contractStatDataErr
+	}
+
+	return contractStatDataResponse, nil
+}
+
 // QueryUtxoRecord query utxo records
 func (s *server) QueryUtxoRecord(ctx context.Context, in *pb.UtxoRecordDetail) (*pb.UtxoRecordDetail, error) {
 	s.mg.Speed.Add("QueryUtxoRecord")

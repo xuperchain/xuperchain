@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -679,6 +680,10 @@ func (xc *XChainCore) doMiner() {
 		xc.log.Info("[Minning] ConfirmBlock Success", "logid", header.Logid, "Height", meta.TrunkHeight+1)
 	} else {
 		xc.log.Warn("[Minning] ConfirmBlock Fail", "logid", header.Logid, "confirm_status", confirmStatus)
+		err := xc.Utxovm.Walk(xc.Utxovm.GetLatestBlockid(), false)
+		if err != nil {
+			xc.log.Warn("[Mining] failed to walk when confirming block has error", "err", err)
+		}
 		return
 	}
 	xc.mutex.Unlock() //后面放开锁
@@ -784,7 +789,8 @@ func (xc *XChainCore) Miner() int {
 			xc.pruneOption.Switch = false
 			xc.SyncBlocks()
 			// 裁剪账本可能需要时间，做完之后直接返回
-			continue
+			syscall.Kill(syscall.Getpid(), syscall.SIGINT)
+			return -1
 		}
 		b, s := xc.con.CompeteMaster(xc.Ledger.GetMeta().TrunkHeight + 1)
 		xc.log.Debug("competemaster", "blockchain", xc.bcname, "master", b, "needSync", s)
@@ -1079,6 +1085,25 @@ func (xc *XChainCore) QueryAccountACL(accountName string) (*pb.Acl, bool, error)
 		return nil, false, err
 	}
 	return acl, confirmed, nil
+}
+
+func (xc *XChainCore) QueryContractStatData() (*pb.ContractStatDataResponse, error) {
+	contractStatDataResponse := &pb.ContractStatDataResponse{
+		Header: global.GHeader(),
+		Bcname: xc.bcname,
+	}
+
+	if xc.Status() != global.Normal {
+		return contractStatDataResponse, ErrNotReady
+	}
+
+	contractStatData, contractStatDataErr := xc.Utxovm.QueryContractStatData()
+	if contractStatDataErr != nil {
+		return contractStatDataResponse, contractStatDataErr
+	}
+
+	contractStatDataResponse.Data = contractStatData
+	return contractStatDataResponse, nil
 }
 
 // QueryUtxoRecord get utxo record for an account
