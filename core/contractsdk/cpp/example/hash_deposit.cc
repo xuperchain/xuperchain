@@ -16,7 +16,7 @@ public:
     virtual void queryUserList() = 0;
     // 查询某个User下所有信息
     virtual void queryFileInfoByUser() = 0;
-    // 按照Hash查询文件信息
+    // 按照Hash查询文件信息,需要指定用户
     virtual void queryFileInfoByHash() = 0;
 };
 
@@ -32,9 +32,8 @@ public:
         std::string hash_id = ctx->arg("hash_id");
         std::string file_name = ctx->arg("file_name");
         const std::string userKey = UserBucket + "/" + user_id + "/" + hash_id;
-        const std::string hashKey = HashBucket + "/" + hash_id;
         std::string value = user_id + "\t" + hash_id + "\t" + file_name;
-        if (ctx->put_object(userKey, value) && ctx->put_object(hashKey, value)) {
+        if (ctx->put_object(userKey, value)) {
             ctx->ok("storeFileInfo success");
             return;
         }
@@ -69,8 +68,9 @@ public:
     }
     void queryFileInfoByHash() {
         xchain::Context* ctx = this->context();
-        const std::string key = HashBucket + "/" + ctx->arg("hash_id");
-           std::string value;
+        
+        const std::string key = HashBucket + "/" + ctx->arg("user_id") + "/" + ctx->arg("hash_id");
+        std::string value;
         bool ret = ctx->get_object(key, &value);
         if (ret) {
             ctx->ok(value);
