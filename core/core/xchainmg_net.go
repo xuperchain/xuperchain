@@ -134,12 +134,6 @@ func (xm *XChainMG) ProcessTx(in *pb.TxStatus) (*pb.CommonReply, bool, error) {
 		return out, false, err
 	}
 
-	if len(in.Tx.TxInputs) == 0 && !xm.Cfg.Utxo.NonUtxo {
-		out.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
-		xm.Log.Warn("PostTx TxInputs can not be null while need utxo!", "logid", in.Header.Logid)
-		return out, false, nil
-	}
-
 	bc := xm.Get(in.Bcname)
 	if bc == nil {
 		out.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
