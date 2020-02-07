@@ -1,6 +1,8 @@
 package p2pv1
 
 import (
+	"sync"
+
 	log "github.com/xuperchain/log15"
 )
 
@@ -11,6 +13,7 @@ type ConnPool struct {
 	// key: peer id, value: conn
 	conns         map[string]*Conn
 	maxConnsLimit int32
+	lock          sync.Mutex
 }
 
 func NewConnPool(lg log.Logger) (*ConnPool, error) {
@@ -28,6 +31,6 @@ func Remove(*Conn) error {
 }
 
 // Find find conn from connpool
-func Find(string) error {
-	return nil
+func Find(string) (*Conn, error) {
+	return nil, nil
 }
