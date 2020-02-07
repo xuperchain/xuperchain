@@ -3,6 +3,7 @@
 const std::string UserBucket = "USER";
 const int TOPIC_LENGTH_LIMIT = 36;
 const int TITLE_LENGTH_LIMIT = 100;
+const int CONTENT_LENGTH_LIMIT = 3000;
 
 // 短内容存证API规范
 // 参数由Context提供
@@ -33,8 +34,9 @@ public:
         std::string topic = ctx->arg("topic");
         std::string content = ctx->arg("content");
         const std::string userKey = UserBucket + "/" + user_id + "/" + topic + "/" + title;
-        if (topic.length() > TOPIC_LENGTH_LIMIT || title.length() > TITLE_LENGTH_LIMIT) {
-            ctx->error("The length of topic or title is more than limitation");
+        if (topic.length() > TOPIC_LENGTH_LIMIT || title.length() > TITLE_LENGTH_LIMIT ||
+            content.length() > CONTENT_LENGTH_LIMIT) {
+            ctx->error("The length of topic or title or content is more than limitation");
             return;
         }
         if (ctx->put_object(userKey, content)) {
