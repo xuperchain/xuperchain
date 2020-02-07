@@ -45,6 +45,7 @@ buildpkg xchain github.com/xuperchain/xuperchain/core/cmd/xchain
 buildpkg xc github.com/xuperchain/xuperchain/core/contractsdk/xc
 buildpkg xchain-httpgw github.com/xuperchain/xuperchain/core/gateway
 buildpkg dump_chain github.com/xuperchain/xuperchain/core/test
+buildpkg event_client github.com/xuperchain/xuperchain/core/test/pubsub
 
 # build plugins
 echo "OS:"${PLATFORM}
@@ -66,6 +67,7 @@ mv xchain-cli xchain ${output_dir}
 mv xchain-httpgw ${output_dir}
 mv wasm2c ${output_dir}
 mv dump_chain ${output_dir}
+mv event_client ${output_dir}
 mv xc ${output_dir}
 cp -rf core/plugins ${output_dir}
 cp -rf core/data ${output_dir}
