@@ -43,7 +43,7 @@ public:
     void queryUserList() {
         xchain::Context* ctx = this->context();
         const std::string key = UserBucket + "/";
-        std::unique_ptr<xchain::Iterator> iter = ctx->new_iterator(key, key + "~");
+        std::unique_ptr<xchain::Iterator> iter = ctx->new_iterator(key, key + "～");
         std::string result;
         do {
             std::pair<std::string, std::string> res;
@@ -57,7 +57,7 @@ public:
     void queryFileInfoByUser() {
         xchain::Context* ctx = this->context();
         const std::string key = UserBucket + "/" + ctx->arg("user_id");
-        std::unique_ptr<xchain::Iterator> iter = ctx->new_iterator(key, key + "~");
+        std::unique_ptr<xchain::Iterator> iter = ctx->new_iterator(key, key + "～");
         std::string result;
         do {
             std::pair<std::string, std::string> res;
