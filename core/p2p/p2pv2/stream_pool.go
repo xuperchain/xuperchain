@@ -10,6 +10,7 @@ import (
 
 	log "github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperchain/core/common"
+	p2p_base "github.com/xuperchain/xuperchain/core/p2p/base"
 	p2pPb "github.com/xuperchain/xuperchain/core/p2p/pb"
 )
 
@@ -206,7 +207,7 @@ func (sp *StreamPool) SendMessageWithResponse(ctx context.Context, msg *p2pPb.Xu
 		if len(res) > int(float32(len(peers))*percentage) {
 			break
 		}
-		if p2pPb.VerifyDataCheckSum(r) {
+		if p2p_base.VerifyDataCheckSum(r) {
 			res = append(res, r)
 		}
 		if i >= lenCh-1 {

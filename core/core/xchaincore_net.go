@@ -19,7 +19,7 @@ func (xc *XChainCore) BroadCastGetBlock(bid *pb.BlockID) *pb.Block {
 		xc.log.Warn("BroadCastGetBlock Marshal msg error", "error", err)
 		return nil
 	}
-	msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, bid.GetBcname(), "", xuper_p2p.XuperMessage_GET_BLOCK, msgbuf, xuper_p2p.XuperMessage_NONE)
+	msg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, bid.GetBcname(), "", xuper_p2p.XuperMessage_GET_BLOCK, msgbuf, xuper_p2p.XuperMessage_NONE)
 	filters := []p2p_base.FilterStrategy{p2p_base.NearestBucketStrategy}
 	if xc.NeedCoreConnection() {
 		filters = append(filters, p2p_base.CorePeersStrategy)
@@ -39,7 +39,7 @@ func (xc *XChainCore) BroadCastGetBlock(bid *pb.BlockID) *pb.Block {
 		}
 
 		block := &pb.Block{}
-		blockBuf, err := xuper_p2p.Uncompress(v)
+		blockBuf, err := p2p_base.Uncompress(v)
 		if blockBuf == nil || err != nil {
 			xc.log.Warn("BroadCastGetBlock xuper_p2p Uncompress error", "error", err)
 			continue
@@ -70,7 +70,7 @@ func (xc *XChainCore) getBlockFromPeer(ctx context.Context, blockid []byte, remo
 		return nil, err
 	}
 	// send GET_BLOCK message to the remote peer
-	msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, bid.GetBcname(), "",
+	msg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, bid.GetBcname(), "",
 		xuper_p2p.XuperMessage_GET_BLOCK, msgbuf, xuper_p2p.XuperMessage_NONE)
 	opts := []p2p_base.MessageOption{
 		p2p_base.WithBcName(xc.bcname),
@@ -89,7 +89,7 @@ func (xc *XChainCore) getBlockFromPeer(ctx context.Context, blockid []byte, remo
 		}
 
 		block := &pb.Block{}
-		blockBuf, err := xuper_p2p.Uncompress(v)
+		blockBuf, err := p2p_base.Uncompress(v)
 		if blockBuf == nil || err != nil {
 			xc.log.Warn("getBlockFromPeer xuper_p2p Uncompress error", "error", err)
 			continue

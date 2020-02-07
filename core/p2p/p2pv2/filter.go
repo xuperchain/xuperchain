@@ -31,7 +31,7 @@ type NearestBucketFilter struct {
 
 // Filter 广播给最近的Bucket
 func (nf *NearestBucketFilter) Filter() (interface{}, error) {
-	peers := nf.node.kdht.RoutingTable().NearestPeers(kbucket.ConvertPeerID(nf.node.NodeID()), MaxBroadCastPeers)
+	peers := nf.node.kdht.RoutingTable().NearestPeers(kbucket.ConvertPeerID(nf.node.id), MaxBroadCastPeers)
 	return peers, nil
 }
 
@@ -106,8 +106,8 @@ func (cp *CorePeersFilter) Filter() (interface{}, error) {
 	currSize := len(bcRoute.CurrentPeers)
 	nextSize := len(bcRoute.NextPeers)
 
-	currIdxs := GenerateUniqueRandList(MaxBroadCastCorePeers/2, currSize)
-	nextIdxs := GenerateUniqueRandList(MaxBroadCastCorePeers-MaxBroadCastCorePeers/2, nextSize)
+	currIdxs := p2p_base.GenerateUniqueRandList(MaxBroadCastCorePeers/2, currSize)
+	nextIdxs := p2p_base.GenerateUniqueRandList(MaxBroadCastCorePeers-MaxBroadCastCorePeers/2, nextSize)
 
 	for _, idx := range currIdxs {
 		peerids = append(peerids, bcRoute.CurrentPeers[idx].PeerInfo.ID)
@@ -133,15 +133,13 @@ func (ss *StaticNodeStrategy) Filter() (interface{}, error) {
 
 // MultiStrategy a peer filter that contains multiple filters
 type MultiStrategy struct {
-	node       *Node
 	filters    []p2p_base.PeersFilter
 	extraPeers []peer.ID
 }
 
 // NewMultiStrategy create instance of MultiStrategy
-func NewMultiStrategy(node *Node, filters []p2p_base.PeersFilter, extraPeers []peer.ID) *MultiStrategy {
+func NewMultiStrategy(filters []p2p_base.PeersFilter, extraPeers []peer.ID) *MultiStrategy {
 	return &MultiStrategy{
-		node:       node,
 		filters:    filters,
 		extraPeers: extraPeers,
 	}

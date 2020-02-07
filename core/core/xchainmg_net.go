@@ -77,7 +77,7 @@ func (xm *XChainMG) handleReceivedMsg(msg *xuper_p2p.XuperMessage) {
 	}
 
 	// verify msg
-	if !xuper_p2p.VerifyDataCheckSum(msg) {
+	if !p2p_base.VerifyDataCheckSum(msg) {
 		xm.Log.Warn("Verify Data error!", "logid", msg.GetHeader().GetLogid())
 		return
 	}
@@ -98,7 +98,7 @@ func (xm *XChainMG) handleReceivedMsg(msg *xuper_p2p.XuperMessage) {
 func (xm *XChainMG) handlePostTx(msg *xuper_p2p.XuperMessage) {
 	txStatus := &pb.TxStatus{}
 
-	txStatusBuf, err := xuper_p2p.Uncompress(msg)
+	txStatusBuf, err := p2p_base.Uncompress(msg)
 	if txStatusBuf == nil || err != nil {
 		xm.Log.Error("handlePostTx xuper_p2p uncompressed error", "error", err)
 		return
@@ -154,7 +154,7 @@ func (xm *XChainMG) ProcessTx(in *pb.TxStatus) (*pb.CommonReply, bool, error) {
 // HandleSendBlock handle SENDBLOCK type msg
 func (xm *XChainMG) HandleSendBlock(msg *xuper_p2p.XuperMessage) {
 	block := &pb.Block{}
-	blockBuf, err := xuper_p2p.Uncompress(msg)
+	blockBuf, err := p2p_base.Uncompress(msg)
 	if blockBuf == nil || err != nil {
 		xm.Log.Error("HandleSendBlock xuper_p2p uncompressed error", "error", err)
 		return
@@ -206,7 +206,7 @@ func (xm *XChainMG) HandleSendBlock(msg *xuper_p2p.XuperMessage) {
 			xm.Log.Error("HandleSendBlock marshal NEW_BLOCKID message failed", "logid", msg.GetHeader().GetLogid())
 			return
 		}
-		msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, bcname, "", xuper_p2p.XuperMessage_NEW_BLOCKID, msgInfo, xuper_p2p.XuperMessage_NONE)
+		msg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion1, bcname, "", xuper_p2p.XuperMessage_NEW_BLOCKID, msgInfo, xuper_p2p.XuperMessage_NONE)
 		filters := []p2p_base.FilterStrategy{p2p_base.DefaultStrategy}
 		if bc.NeedCoreConnection() {
 			filters = append(filters, p2p_base.CorePeersStrategy)
@@ -251,7 +251,7 @@ func (xm *XChainMG) ProcessBlock(block *pb.Block) error {
 
 func (xm *XChainMG) handleBatchPostTx(msg *xuper_p2p.XuperMessage) {
 	batchTxs := &pb.BatchTxs{}
-	batchTxsBuf, err := xuper_p2p.Uncompress(msg)
+	batchTxsBuf, err := p2p_base.Uncompress(msg)
 	if batchTxsBuf == nil || err != nil {
 		xm.Log.Error("handleBatchPostTx xuper_p2p uncompressed error", "error", err)
 		return
@@ -276,7 +276,7 @@ func (xm *XChainMG) handleBatchPostTx(msg *xuper_p2p.XuperMessage) {
 			return
 		}
 		msg.Data.MsgInfo = txsData
-		msg.Header.DataCheckSum = xuper_p2p.CalDataCheckSum(msg)
+		msg.Header.DataCheckSum = p2p_base.CalDataCheckSum(msg)
 		opts := []p2p_base.MessageOption{
 			p2p_base.WithFilters([]p2p_base.FilterStrategy{p2p_base.DefaultStrategy}),
 			p2p_base.WithBcName(msg.GetHeader().GetBcname()),
@@ -306,10 +306,10 @@ func (xm *XChainMG) handleGetBlock(ctx context.Context, msg *xuper_p2p.XuperMess
 	logid := msg.GetHeader().GetLogid()
 	xm.Log.Trace("Start to handleGetBlock", "bcname", bcname, "logid", logid)
 	block := &pb.Block{Header: global.GHeader()}
-	if !xuper_p2p.VerifyDataCheckSum(msg) {
+	if !p2p_base.VerifyDataCheckSum(msg) {
 		xm.Log.Warn("handleGetBlock verify msg error", "log_id", logid)
 		resBuf, _ := proto.Marshal(block)
-		res, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, bcname, logid,
+		res, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, bcname, logid,
 			xuper_p2p.XuperMessage_GET_BLOCK_RES, resBuf, xuper_p2p.XuperMessage_CHECK_SUM_ERROR)
 		return res, errors.New("verify msg error")
 	}
@@ -319,7 +319,7 @@ func (xm *XChainMG) handleGetBlock(ctx context.Context, msg *xuper_p2p.XuperMess
 	if err != nil {
 		xm.Log.Error("handleGetBlock unmarshal msg error", "error", err.Error())
 		resBuf, _ := proto.Marshal(block)
-		res, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, bcname, logid,
+		res, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, bcname, logid,
 			xuper_p2p.XuperMessage_GET_BLOCK_RES, resBuf, xuper_p2p.XuperMessage_UNMARSHAL_MSG_BODY_ERROR)
 		return res, errors.New("unmarshal msg error")
 	}
@@ -328,7 +328,7 @@ func (xm *XChainMG) handleGetBlock(ctx context.Context, msg *xuper_p2p.XuperMess
 	if bc == nil {
 		xm.Log.Error("handleGetBlock Get blockchain error", "error", "blockchain not exit", "bcname", bcname)
 		resBuf, _ := proto.Marshal(block)
-		res, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, bcname, logid,
+		res, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, bcname, logid,
 			xuper_p2p.XuperMessage_GET_BLOCK_RES, resBuf, xuper_p2p.XuperMessage_BLOCKCHAIN_NOTEXIST)
 		return res, errors.New("blockChain not exit")
 	}
@@ -338,16 +338,16 @@ func (xm *XChainMG) handleGetBlock(ctx context.Context, msg *xuper_p2p.XuperMess
 	if block.GetHeader().GetError() != pb.XChainErrorEnum_SUCCESS {
 		xm.Log.Error("handleGetBlock GetBlock error", "error", block.GetHeader().GetError())
 		resBuf, _ := proto.Marshal(block)
-		res, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, bcname, logid,
+		res, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, bcname, logid,
 			xuper_p2p.XuperMessage_GET_BLOCK_RES, resBuf, xuper_p2p.XuperMessage_GET_BLOCK_ERROR)
 		return res, errors.New("getBlock error")
 	}
 
 	resBuf, _ := proto.Marshal(block)
-	res, err := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, bcname, logid,
+	res, err := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, bcname, logid,
 		xuper_p2p.XuperMessage_GET_BLOCK_RES, resBuf, xuper_p2p.XuperMessage_SUCCESS)
 	if xm.enableCompress {
-		res = xuper_p2p.Compress(res)
+		res = p2p_base.Compress(res)
 	}
 	return res, err
 }
@@ -357,9 +357,9 @@ func (xm *XChainMG) handleGetBlockChainStatus(ctx context.Context, msg *xuper_p2
 	bcname := msg.GetHeader().GetBcname()
 	logid := msg.GetHeader().GetLogid()
 	xm.Log.Trace("Start to handleGetBlockChainStatus", "bcname", bcname, "logid", logid)
-	if !xuper_p2p.VerifyDataCheckSum(msg) {
+	if !p2p_base.VerifyDataCheckSum(msg) {
 		xm.Log.Warn("handleGetBlockChainStatus verify msg error", "log_id", logid)
-		res, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, bcname, logid,
+		res, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, bcname, logid,
 			xuper_p2p.XuperMessage_GET_BLOCKCHAINSTATUS_RES, nil, xuper_p2p.XuperMessage_CHECK_SUM_ERROR)
 		return res, errors.New("verify msg error")
 	}
@@ -367,14 +367,14 @@ func (xm *XChainMG) handleGetBlockChainStatus(ctx context.Context, msg *xuper_p2
 	err := proto.Unmarshal(msg.GetData().GetMsgInfo(), bcStatus)
 	if err != nil {
 		xm.Log.Error("handleGetBlockChainStatus unmarshal msg error", "error", err.Error())
-		res, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, bcname, logid,
+		res, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, bcname, logid,
 			xuper_p2p.XuperMessage_GET_BLOCKCHAINSTATUS_RES, nil, xuper_p2p.XuperMessage_UNMARSHAL_MSG_BODY_ERROR)
 		return res, errors.New("unmarshal msg error")
 	}
 	bc := xm.Get(bcname)
 	if bc == nil {
 		xm.Log.Error("handleGetBlockChainStatus Get blockchain error", "error", "blockchain not exit", "bcname", bcname)
-		res, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, bcname, logid,
+		res, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, bcname, logid,
 			xuper_p2p.XuperMessage_GET_BLOCKCHAINSTATUS_RES, nil, xuper_p2p.XuperMessage_BLOCKCHAIN_NOTEXIST)
 		return res, errors.New("blockChain not exit")
 	}
@@ -383,12 +383,12 @@ func (xm *XChainMG) handleGetBlockChainStatus(ctx context.Context, msg *xuper_p2
 	bcStatusRes.BranchBlockid = nil
 	if bcStatusRes.GetHeader().GetError() != pb.XChainErrorEnum_SUCCESS {
 		xm.Log.Error("handleGetBlockChainStatus Get blockchain error", "error", bcStatusRes.GetHeader().GetError())
-		res, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, bcname, logid,
+		res, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, bcname, logid,
 			xuper_p2p.XuperMessage_GET_BLOCKCHAINSTATUS_RES, nil, xuper_p2p.XuperMessage_GET_BLOCKCHAIN_ERROR)
 		return res, errors.New("get BlockChainStatus error")
 	}
 	resBuf, _ := proto.Marshal(bcStatusRes)
-	res, err := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, bcname, logid,
+	res, err := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, bcname, logid,
 		xuper_p2p.XuperMessage_GET_BLOCKCHAINSTATUS_RES, resBuf, xuper_p2p.XuperMessage_SUCCESS)
 	return res, err
 }
@@ -398,9 +398,9 @@ func (xm *XChainMG) handleConfirmBlockChainStatus(ctx context.Context, msg *xupe
 	bcname := msg.GetHeader().GetBcname()
 	logid := msg.GetHeader().GetLogid()
 	xm.Log.Trace("Start to handleConfirmBlockChainStatus", "bcname", bcname, "logid", logid)
-	if !xuper_p2p.VerifyDataCheckSum(msg) {
+	if !p2p_base.VerifyDataCheckSum(msg) {
 		xm.Log.Warn("handleConfirmBlockChainStatus verify msg error", "log_id", logid)
-		res, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, bcname, logid,
+		res, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, bcname, logid,
 			xuper_p2p.XuperMessage_CONFIRM_BLOCKCHAINSTATUS_RES, nil, xuper_p2p.XuperMessage_CHECK_SUM_ERROR)
 		return res, errors.New("verify msg error")
 	}
@@ -409,7 +409,7 @@ func (xm *XChainMG) handleConfirmBlockChainStatus(ctx context.Context, msg *xupe
 	err := proto.Unmarshal(msg.GetData().GetMsgInfo(), bcStatus)
 	if err != nil {
 		xm.Log.Error("handleConfirmBlockChainStatus unmarshal msg error", "error", err.Error())
-		res, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, bcname, logid,
+		res, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, bcname, logid,
 			xuper_p2p.XuperMessage_CONFIRM_BLOCKCHAINSTATUS_RES, nil, xuper_p2p.XuperMessage_UNMARSHAL_MSG_BODY_ERROR)
 		return res, errors.New("unmarshal msg error")
 	}
@@ -417,19 +417,19 @@ func (xm *XChainMG) handleConfirmBlockChainStatus(ctx context.Context, msg *xupe
 	bc := xm.Get(bcname)
 	if bc == nil {
 		xm.Log.Error("handleConfirmBlockChainStatus Get blockchain error", "error", "blockchain not exit", "bcname", bcname)
-		res, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, bcname, logid,
+		res, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, bcname, logid,
 			xuper_p2p.XuperMessage_CONFIRM_BLOCKCHAINSTATUS_RES, nil, xuper_p2p.XuperMessage_BLOCKCHAIN_NOTEXIST)
 		return res, errors.New("blockChain not exit")
 	}
 	tipStatus := bc.ConfirmTipBlockChainStatus(bcStatus)
 	if tipStatus.GetHeader().GetError() != pb.XChainErrorEnum_SUCCESS {
 		xm.Log.Error("handleConfirmBlockChainStatus ConfirmTipBlockChainStatus error", "error", tipStatus.GetHeader().GetError())
-		res, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, bcname, logid,
+		res, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, bcname, logid,
 			xuper_p2p.XuperMessage_CONFIRM_BLOCKCHAINSTATUS_RES, nil, xuper_p2p.XuperMessage_CONFIRM_BLOCKCHAINSTATUS_ERROR)
 		return res, errors.New("confirmBlockChainStatus error")
 	}
 	resBuf, _ := proto.Marshal(tipStatus)
-	res, err := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, bcname, logid,
+	res, err := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, bcname, logid,
 		xuper_p2p.XuperMessage_CONFIRM_BLOCKCHAINSTATUS_RES, resBuf, xuper_p2p.XuperMessage_SUCCESS)
 	return res, err
 }
@@ -442,14 +442,14 @@ func (xm *XChainMG) handleGetRPCPort(ctx context.Context, msg *xuper_p2p.XuperMe
 		xm.Log.Error("handleGetRPCPort SplitHostPort error", "error", err.Error())
 		return nil, err
 	}
-	return xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, "", msg.GetHeader().GetLogid(), xuper_p2p.XuperMessage_GET_RPC_PORT_RES, []byte(":"+port), xuper_p2p.XuperMessage_NONE)
+	return p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, "", msg.GetHeader().GetLogid(), xuper_p2p.XuperMessage_GET_RPC_PORT_RES, []byte(":"+port), xuper_p2p.XuperMessage_NONE)
 }
 
 // handleNewBlockID handle NEW_BLOCKID message
 func (xm *XChainMG) handleNewBlockID(msg *xuper_p2p.XuperMessage) {
 	xm.Log.Trace("Start to handleNewBlockID", "logid", msg.GetHeader().GetLogid())
 	block := &pb.Block{}
-	blockBuf, err := xuper_p2p.Uncompress(msg)
+	blockBuf, err := p2p_base.Uncompress(msg)
 	if err != nil || blockBuf == nil {
 		xm.Log.Error("handleNewBlockID uncompressed error", "error", err, "logid", msg.GetHeader().GetLogid())
 		return

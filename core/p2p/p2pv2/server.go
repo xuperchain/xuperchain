@@ -95,8 +95,8 @@ func (p *P2PServerV2) Start() {
 // Stop stop P2P server V2
 func (p *P2PServerV2) Stop() {
 	p.log.Info("Stop p2pv2 server!")
-	p.node.quitCh <- true
-	p.handlerMap.QuitCh <- true
+	p.node.Stop()
+	p.handlerMap.Stop()
 }
 
 // SendMessage send message to peers using given filter strategy
@@ -112,7 +112,7 @@ func (p *P2PServerV2) SendMessage(ctx context.Context, msg *p2pPb.XuperMessage,
 		enableCompress := msg.Header.EnableCompress
 		// msg原本没有被压缩
 		if !enableCompress {
-			msg = p2pPb.Compress(msg)
+			msg = p2p_base.Compress(msg)
 		}
 	}
 	p.log.Trace("Server SendMessage", "logid", msg.GetHeader().GetLogid(), "msgType", msg.GetHeader().GetType(), "checksum", msg.GetHeader().GetDataCheckSum())
@@ -162,7 +162,7 @@ func (p *P2PServerV2) getCompress(opts *p2p_base.MsgOptions) bool {
 
 func (p *P2PServerV2) getFilter(opts *p2p_base.MsgOptions) p2p_base.PeersFilter {
 	// All filtering strategies will invalid if
-	if len(p.node.staticNodes[opts.Bcname]) != 0 {
+	if len(p.node.GetStaticNodes(opts.Bcname)) != 0 {
 		return &StaticNodeStrategy{node: p.node, bcname: opts.Bcname}
 	}
 	fs := opts.Filters
@@ -196,7 +196,7 @@ func (p *P2PServerV2) getFilter(opts *p2p_base.MsgOptions) p2p_base.PeersFilter 
 		go p.node.ConnectToPeersByAddr(opts.TargetPeerAddrs)
 		// get corresponding peer ids
 		for _, addr := range opts.TargetPeerAddrs {
-			pid, err := GetIDFromAddr(addr)
+			pid, err := p2p_base.GetIDFromAddr(addr)
 			if err != nil {
 				p.log.Warn("getFilter parse peer address failed", "paddr", addr, "error", err)
 				continue
@@ -216,7 +216,7 @@ func (p *P2PServerV2) getFilter(opts *p2p_base.MsgOptions) p2p_base.PeersFilter 
 			peerids = append(peerids, peerid)
 		}
 	}
-	return NewMultiStrategy(p.node, pfs, peerids)
+	return NewMultiStrategy(pfs, peerids)
 }
 
 // GetPeerUrls 查询所连接节点的信息
@@ -253,9 +253,5 @@ func (p *P2PServerV2) SetCorePeers(cp *p2p_base.CorePeersInfo) error {
 
 // SetXchainAddr Set xchain address info from core
 func (p *P2PServerV2) SetXchainAddr(bcname string, info *p2p_base.XchainAddrInfo) {
-	p.log.Debug("+++++node info", "node", p.node)
-	if _, ok := p.node.addrs[bcname]; !ok {
-		info.PeerID = p.node.id.Pretty()
-		p.node.addrs[bcname] = info
-	}
+	p.node.SetXchainAddr(bcname, info)
 }

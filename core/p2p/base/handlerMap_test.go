@@ -133,7 +133,7 @@ func TestStartHandlerMap(t *testing.T) {
 			//t.Error("Expect true, got ", IsHandled)
 		}
 		// stop HandlerMap service
-		hm.QuitCh <- true
+		hm.quitCh <- true
 
 		// UnRegister
 		v2, _ := hm.subscriberCenter.Load(sub.msgType)

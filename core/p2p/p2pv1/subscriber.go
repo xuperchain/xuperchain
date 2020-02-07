@@ -1,9 +1,7 @@
-package p2pv2
+package p2pv1
 
 import (
 	"container/list"
-	"context"
-	"fmt"
 
 	p2p_base "github.com/xuperchain/xuperchain/core/p2p/base"
 	xuperp2p "github.com/xuperchain/xuperchain/core/p2p/pb"
@@ -69,52 +67,39 @@ func (sub *MsgSubscriber) SetElement(e *list.Element) {
 }
 
 // HandleMessage process a message
-func (sub *MsgSubscriber) HandleMessage(msgStream interface{}, msg *xuperp2p.XuperMessage) {
-	s, ok := msgStream.(*Stream)
-	if !ok {
-		fmt.Println("invalid message stream")
-		return
-	}
-	if s == nil {
-		fmt.Println("message stream cannot be nil")
-		return
-	}
-	if !s.valid() {
-		return
-	}
+// TODO
+func (sub *MsgSubscriber) HandleMessage(conn interface{}, msg *xuperp2p.XuperMessage) {
+	// s, ok := conn.(*Conn)
+	// if !ok {
+	// 	fmt.Println("invalid message stream")
+	// 	return
+	// }
+	// if s == nil {
+	// 	fmt.Println("message stream cannot be nil")
+	// 	return
+	// }
+	// if !s.valid() {
+	// 	return
+	// }
 
-	if sub.handler != nil {
-		go func(sub *MsgSubscriber, s *Stream, msg *xuperp2p.XuperMessage) {
-			ctx := context.WithValue(context.Background(), "Stream", s)
-			if msg.Header.Type != xuperp2p.XuperMessage_GET_AUTHENTICATION_RES &&
-				msg.Header.Type != xuperp2p.XuperMessage_GET_AUTHENTICATION {
-				if s.node.srv.config.IsAuthentication && !s.auth() {
-					s.node.log.Trace("Stream not authenticated")
-					resType := p2p_base.GetResMsgType(msg.GetHeader().GetType())
-					res, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, "", msg.GetHeader().GetLogid(),
-						resType, []byte(""), xuperp2p.XuperMessage_GET_AUTHENTICATION_NOT_PASS)
-					if err := s.writeData(res); err != nil {
-						fmt.Println("Stream not authenticated to write msg error", "err", err)
-					}
-					return
-				}
-			}
-
-			res, err := sub.handler(ctx, msg)
-			if err != nil {
-				fmt.Println("subscriber handleMessage error", "err", err)
-			}
-			if err := s.writeData(res); err != nil {
-				fmt.Println("subscriber handleMessage to write msg error", "err", err)
-			}
-		}(sub, s, msg)
-		return
-	}
-	if sub.msgCh == nil {
-		return
-	}
-	select {
-	case sub.msgCh <- msg:
-	default:
-	}
+	// if sub.handler != nil {
+	// 	go func(sub *MsgSubscriber, s *Conn, msg *xuperp2p.XuperMessage) {
+	// 		ctx := context.WithValue(context.Background(), "Stream", s)
+	// 		res, err := sub.handler(ctx, msg)
+	// 		if err != nil {
+	// 			fmt.Println("subscriber handleMessage error", "err", err)
+	// 		}
+	// 		if err := s.writeData(res); err != nil {
+	// 			fmt.Println("subscriber handleMessage to write msg error", "err", err)
+	// 		}
+	// 	}(sub, s, msg)
+	// 	return
+	// }
+	// if sub.msgCh == nil {
+	// 	return
+	// }
+	// select {
+	// case sub.msgCh <- msg:
+	// default:
+	// }
 }

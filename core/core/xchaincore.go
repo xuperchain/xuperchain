@@ -335,7 +335,7 @@ func (xc *XChainCore) repostOfflineTx() {
 		}
 		xc.log.Debug("repost batch tx list", "size", len(batchTxMsg.Txs))
 		msgInfo, _ := proto.Marshal(batchTxMsg)
-		msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, xc.bcname, header.GetLogid(), xuper_p2p.XuperMessage_BATCHPOSTTX, msgInfo, xuper_p2p.XuperMessage_SUCCESS)
+		msg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion1, xc.bcname, header.GetLogid(), xuper_p2p.XuperMessage_BATCHPOSTTX, msgInfo, xuper_p2p.XuperMessage_SUCCESS)
 
 		filters := []p2p_base.FilterStrategy{p2p_base.DefaultStrategy}
 		if xc.NeedCoreConnection() {
@@ -711,7 +711,7 @@ func (xc *XChainCore) doMiner() {
 		if xc.blockBroadcaseMode == 1 {
 			// send block id in Interactive_BroadCast_Mode
 			msgInfo, _ := proto.Marshal(block)
-			msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, xc.bcname, "", xuper_p2p.XuperMessage_NEW_BLOCKID, msgInfo, xuper_p2p.XuperMessage_NONE)
+			msg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion1, xc.bcname, "", xuper_p2p.XuperMessage_NEW_BLOCKID, msgInfo, xuper_p2p.XuperMessage_NONE)
 			filters := []p2p_base.FilterStrategy{p2p_base.DefaultStrategy}
 			if xc.NeedCoreConnection() {
 				filters = append(filters, p2p_base.CorePeersStrategy)
@@ -725,7 +725,7 @@ func (xc *XChainCore) doMiner() {
 			// send full block in Full_BroadCast_Mode or Mixed_Broadcast_Mode
 			block.Block = freshBlock
 			msgInfo, _ := proto.Marshal(block)
-			msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, xc.bcname, "", xuper_p2p.XuperMessage_SENDBLOCK, msgInfo, xuper_p2p.XuperMessage_NONE)
+			msg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion1, xc.bcname, "", xuper_p2p.XuperMessage_SENDBLOCK, msgInfo, xuper_p2p.XuperMessage_NONE)
 			filters := []p2p_base.FilterStrategy{p2p_base.DefaultStrategy}
 			if xc.NeedCoreConnection() {
 				filters = append(filters, p2p_base.CorePeersStrategy)

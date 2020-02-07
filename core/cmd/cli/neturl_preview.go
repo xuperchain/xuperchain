@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	p2pv2 "github.com/xuperchain/xuperchain/core/p2p/p2pv2"
+	p2p_base "github.com/xuperchain/xuperchain/core/p2p/base"
 )
 
 // NetURLPreviewCommand preview neturl using given params
@@ -40,7 +40,7 @@ func (n *NetURLPreviewCommand) addFlags() {
 }
 
 func (n *NetURLPreviewCommand) previewNetURL(ctx context.Context) error {
-	pid, err := p2pv2.GetPeerIDFromPath(n.path)
+	pid, err := p2p_base.GetPeerIDFromPath(n.path)
 	if err != nil {
 		fmt.Println("Parse net URL from key path failed, err=", err)
 	}

@@ -1,4 +1,4 @@
-package p2pv2
+package base
 
 import (
 	"crypto/rand"
@@ -18,7 +18,6 @@ import (
 	"github.com/xuperchain/xuperchain/core/common/config"
 	crypto_client "github.com/xuperchain/xuperchain/core/crypto/client"
 	"github.com/xuperchain/xuperchain/core/crypto/hash"
-	p2p_base "github.com/xuperchain/xuperchain/core/p2p/base"
 	"github.com/xuperchain/xuperchain/core/pb"
 )
 
@@ -91,7 +90,7 @@ func GenerateUniqueRandList(size int, max int) []int {
 }
 
 // GetAuthRequest get auth request for authentication
-func GetAuthRequest(v *p2p_base.XchainAddrInfo) (*pb.IdentityAuth, error) {
+func GetAuthRequest(v *XchainAddrInfo) (*pb.IdentityAuth, error) {
 	cryptoClient, err := crypto_client.CreateCryptoClientFromJSONPublicKey(v.Pubkey)
 	if err != nil {
 		return nil, errors.New("GetAuthRequest: Create crypto client error")

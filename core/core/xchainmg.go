@@ -5,7 +5,7 @@ import (
 	"io/ioutil"
 	"sync"
 
-	"github.com/xuperchain/log15"
+	log "github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperchain/core/common/config"
 	"github.com/xuperchain/xuperchain/core/common/events"
 	"github.com/xuperchain/xuperchain/core/common/probe"
@@ -41,7 +41,7 @@ func (xm *XChainMG) Init(log log.Logger, cfg *config.NodeConfig,
 	xm.datapath = cfg.Datapath
 	xm.Cfg = cfg
 	xm.P2pSvr = p2pV2
-	xm.msgChan = make(chan *xuper_p2p.XuperMessage, p2p_base.MsgChanSize)
+	xm.msgChan = make(chan *xuper_p2p.XuperMessage, 50000)
 
 	xm.Speed = probe.NewSpeedCalc("sum")
 	xm.Quit = make(chan struct{})

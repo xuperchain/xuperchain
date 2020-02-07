@@ -53,7 +53,7 @@ func (s *server) PostTx(ctx context.Context, in *pb.TxStatus) (*pb.CommonReply, 
 	if needRepost {
 		go func() {
 			msgInfo, _ := proto.Marshal(in)
-			msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, in.GetBcname(), in.GetHeader().GetLogid(), xuper_p2p.XuperMessage_POSTTX, msgInfo, xuper_p2p.XuperMessage_NONE)
+			msg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion1, in.GetBcname(), in.GetHeader().GetLogid(), xuper_p2p.XuperMessage_POSTTX, msgInfo, xuper_p2p.XuperMessage_NONE)
 			opts := []p2p_base.MessageOption{
 				p2p_base.WithFilters([]p2p_base.FilterStrategy{p2p_base.DefaultStrategy}),
 				p2p_base.WithBcName(in.GetBcname()),
@@ -90,7 +90,7 @@ func (s *server) BatchPostTx(ctx context.Context, in *pb.BatchTxs) (*pb.CommonRe
 			return out, nil
 		}
 
-		msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, "", in.GetHeader().GetLogid(), xuper_p2p.XuperMessage_BATCHPOSTTX, txsData, xuper_p2p.XuperMessage_NONE)
+		msg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion1, "", in.GetHeader().GetLogid(), xuper_p2p.XuperMessage_BATCHPOSTTX, txsData, xuper_p2p.XuperMessage_NONE)
 		opts := []p2p_base.MessageOption{
 			p2p_base.WithFilters([]p2p_base.FilterStrategy{p2p_base.DefaultStrategy}),
 			p2p_base.WithBcName(in.Txs[0].GetBcname()),

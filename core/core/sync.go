@@ -50,7 +50,7 @@ func (xc *XChainCore) SyncBlocks() {
 func (xc *XChainCore) syncForOnce() (*pb.BCStatus, bool) {
 	bcs := &pb.BCStatus{Bcname: xc.bcname}
 	bcsBuf, _ := proto.Marshal(bcs)
-	msg, err := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, xc.bcname, "", xuper_p2p.XuperMessage_GET_BLOCKCHAINSTATUS, bcsBuf, xuper_p2p.XuperMessage_NONE)
+	msg, err := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, xc.bcname, "", xuper_p2p.XuperMessage_GET_BLOCKCHAINSTATUS, bcsBuf, xuper_p2p.XuperMessage_NONE)
 	if err != nil {
 		xc.log.Warn("syncForOnce error", "error", err)
 		return nil, false
@@ -99,7 +99,7 @@ func countGetBlockChainStatus(hbcs []*xuper_p2p.XuperMessage) *pb.BCStatus {
 // syncConfirm 向周围节点询问块是否可以被接受
 func (xc *XChainCore) syncConfirm(bcs *pb.BCStatus) bool {
 	bcsBuf, err := proto.Marshal(bcs)
-	msg, err := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, bcs.GetBcname(), "", xuper_p2p.XuperMessage_CONFIRM_BLOCKCHAINSTATUS, bcsBuf, xuper_p2p.XuperMessage_NONE)
+	msg, err := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, bcs.GetBcname(), "", xuper_p2p.XuperMessage_CONFIRM_BLOCKCHAINSTATUS, bcsBuf, xuper_p2p.XuperMessage_NONE)
 	filters := []p2p_base.FilterStrategy{p2p_base.NearestBucketStrategy}
 	opts := []p2p_base.MessageOption{
 		p2p_base.WithFilters(filters),

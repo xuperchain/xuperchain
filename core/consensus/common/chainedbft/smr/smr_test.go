@@ -118,7 +118,7 @@ func MakeProposalMsg(t *testing.T) (*p2p_pb.XuperMessage, error) {
 		t.Error("MakeProposalMsg marshal msg error", err)
 		return nil, err
 	}
-	netMsg, _ := p2p_pb.NewXuperMessage(p2p_pb.XuperMsgVersion3, smr.bcname, "",
+	netMsg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion3, smr.bcname, "",
 		p2p_pb.XuperMessage_CHAINED_BFT_NEW_PROPOSAL_MSG, msgBuf, p2p_pb.XuperMessage_NONE)
 	return netMsg, nil
 }
@@ -147,7 +147,7 @@ func MakeNewViewMsg(t *testing.T) (*p2p_pb.XuperMessage, error) {
 		t.Error("MakeNewViewMsg marshal msg error", err)
 		return nil, err
 	}
-	netMsg, _ := p2p_pb.NewXuperMessage(p2p_pb.XuperMsgVersion3, smr.bcname, "",
+	netMsg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion3, smr.bcname, "",
 		p2p_pb.XuperMessage_CHAINED_BFT_NEW_VIEW_MSG, msgBuf, p2p_pb.XuperMessage_NONE)
 	return netMsg, nil
 }
@@ -177,7 +177,7 @@ func MakeVoteMsg(t *testing.T) (*p2p_pb.XuperMessage, error) {
 		return nil, err
 	}
 
-	netMsg, _ := p2p_pb.NewXuperMessage(p2p_pb.XuperMsgVersion3, smr.bcname, "",
+	netMsg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion3, smr.bcname, "",
 		p2p_pb.XuperMessage_CHAINED_BFT_VOTE_MSG, msgBuf, p2p_pb.XuperMessage_NONE)
 	return netMsg, nil
 }

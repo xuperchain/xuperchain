@@ -8,13 +8,12 @@ import (
 	"time"
 
 	"github.com/patrickmn/go-cache"
-	"github.com/xuperchain/log15"
-	"github.com/xuperchain/xuperchain/core/p2p/pb"
+	log "github.com/xuperchain/log15"
+	xuperp2p "github.com/xuperchain/xuperchain/core/p2p/pb"
 )
 
 // define default message config
 const (
-	MsgChanSize         = 50000
 	MsgHandledCacheSize = 50000
 )
 
@@ -36,7 +35,7 @@ type HandlerMap struct {
 	subscriberCenter *sync.Map
 	msgHandled       *cache.Cache
 
-	QuitCh chan bool
+	quitCh chan bool
 }
 
 // NewHandlerMap create instance of HandlerMap
@@ -45,7 +44,7 @@ func NewHandlerMap(log log.Logger) (*HandlerMap, error) {
 		lg:               log,
 		subscriberCenter: new(sync.Map),
 		msgHandled:       cache.New(time.Duration(3)*time.Second, 1*time.Second),
-		QuitCh:           make(chan bool, 1),
+		quitCh:           make(chan bool, 1),
 	}, nil
 }
 
@@ -53,7 +52,7 @@ func NewHandlerMap(log log.Logger) (*HandlerMap, error) {
 func (hm *HandlerMap) Start() {
 	for {
 		select {
-		case <-hm.QuitCh:
+		case <-hm.quitCh:
 			hm.Stop()
 		}
 	}
@@ -61,7 +60,7 @@ func (hm *HandlerMap) Start() {
 
 // Stop stop message handling
 func (hm *HandlerMap) Stop() {
-	// todo
+	hm.quitCh <- true
 	hm.lg.Trace("Stop HandlerMap")
 }
 

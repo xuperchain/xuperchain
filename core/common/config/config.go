@@ -17,8 +17,9 @@ const (
 	NodeModeFastSync        = "FastSync"
 	DefaultNetPort          = 47101             // p2p port
 	DefaultNetKeyPath       = "./data/netkeys/" // node private key path
-	DefaultNetIsNat         = true              // use NAT
-	DefaultNetIsSecure      = true              // use encrypted secure transport
+	DefaultCertPath         = "./data/cert"
+	DefaultNetIsNat         = true // use NAT
+	DefaultNetIsSecure      = true // use encrypted secure transport
 	DefaultNetIsHidden      = false
 	DefaultMaxStreamLimits  = 1024
 	DefaultMaxMessageSize   = 128
@@ -103,6 +104,10 @@ type P2PConfig struct {
 	P2PDataPath string `yaml:"p2PDataPath,omitempty"`
 	// IsStorePeers determine wherther storing the peers infos
 	IsStorePeers bool `yaml:"isStorePeers,omitempty"`
+	// CertPath
+	CertPath string `yaml:"certPath,omitempty"`
+	// ServiceName
+	ServiceName string `yaml:"serviceName,omitempty"`
 }
 
 // MinerConfig is the config of miner
@@ -188,7 +193,7 @@ type NodeConfig struct {
 	Version         string          `yaml:"version,omitempty"`
 	Log             LogConfig       `yaml:"log,omitempty"`
 	TCPServer       TCPServerConfig `yaml:"tcpServer,omitempty"`
-	P2pV2           P2PConfig       `yaml:"p2pV2,omitempty"`
+	P2p             P2PConfig       `yaml:"p2pV2,omitempty"`
 	Miner           MinerConfig     `yaml:"miner,omitempty"`
 	Datapath        string          `yaml:"datapath,omitempty"`
 	DatapathOthers  []string        `yaml:"datapathOthers,omitempty"` //扩展盘的路径
@@ -279,7 +284,7 @@ func (nc *NodeConfig) defaultNodeConfig() {
 		ReadBufferSize:        32 << 10,
 		WriteBufferSize:       32 << 10,
 	}
-	nc.P2pV2 = newP2pConfigWithDefault()
+	nc.P2p = newP2pConfigWithDefault()
 	nc.Miner = MinerConfig{
 		Keypath: "./data/keys",
 	}
@@ -360,6 +365,7 @@ func newP2pConfigWithDefault() P2PConfig {
 		IsStorePeers:          DefaultIsStorePeers,
 		P2PDataPath:           DefaultP2PDataPath,
 		StaticNodes:           make(map[string][]string),
+		CertPath:              DefaultCertPath,
 	}
 }
 

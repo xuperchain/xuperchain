@@ -3,11 +3,9 @@
 
 package pb
 
-import (
-	fmt "fmt"
-	proto "github.com/golang/protobuf/proto"
-	math "math"
-)
+import proto "github.com/golang/protobuf/proto"
+import fmt "fmt"
+import math "math"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
@@ -18,7 +16,7 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 // QCState is the phase of hotstuff
 type QCState int32
@@ -38,7 +36,6 @@ var QCState_name = map[int32]string{
 	3: "COMMIT",
 	4: "DECIDE",
 }
-
 var QCState_value = map[string]int32{
 	"NEW_VIEW":   0,
 	"PREPARE":    1,
@@ -50,9 +47,8 @@ var QCState_value = map[string]int32{
 func (x QCState) String() string {
 	return proto.EnumName(QCState_name, int32(x))
 }
-
 func (QCState) EnumDescriptor() ([]byte, []int) {
-	return fileDescriptor_e2652a5c831a51bf, []int{0}
+	return fileDescriptor_chainedbft_dad3f8ff2cb00686, []int{0}
 }
 
 // QuorumCert is a data type that combines a collection of signatures from replicas.
@@ -63,12 +59,12 @@ type QuorumCert struct {
 	ProposalMsg []byte `protobuf:"bytes,2,opt,name=ProposalMsg,proto3" json:"ProposalMsg,omitempty"`
 	// The current type of this QC certified.
 	// the type contains `NEW_VIEW`, `PREPARE`
-	Type QCState `protobuf:"varint,3,opt,name=Type,proto3,enum=pb.QCState" json:"Type,omitempty"`
+	Type QCState `protobuf:"varint,3,opt,name=Type,enum=pb.QCState" json:"Type,omitempty"`
 	// The view number of this QC certified.
-	ViewNumber int64 `protobuf:"varint,4,opt,name=ViewNumber,proto3" json:"ViewNumber,omitempty"`
+	ViewNumber int64 `protobuf:"varint,4,opt,name=ViewNumber" json:"ViewNumber,omitempty"`
 	// SignInfos is the signs of the leader gathered from replicas
 	// of a specifically certType.
-	SignInfos            *QCSignInfos `protobuf:"bytes,5,opt,name=SignInfos,proto3" json:"SignInfos,omitempty"`
+	SignInfos            *QCSignInfos `protobuf:"bytes,5,opt,name=SignInfos" json:"SignInfos,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
 	XXX_unrecognized     []byte       `json:"-"`
 	XXX_sizecache        int32        `json:"-"`
@@ -78,17 +74,16 @@ func (m *QuorumCert) Reset()         { *m = QuorumCert{} }
 func (m *QuorumCert) String() string { return proto.CompactTextString(m) }
 func (*QuorumCert) ProtoMessage()    {}
 func (*QuorumCert) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e2652a5c831a51bf, []int{0}
+	return fileDescriptor_chainedbft_dad3f8ff2cb00686, []int{0}
 }
-
 func (m *QuorumCert) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_QuorumCert.Unmarshal(m, b)
 }
 func (m *QuorumCert) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_QuorumCert.Marshal(b, m, deterministic)
 }
-func (m *QuorumCert) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QuorumCert.Merge(m, src)
+func (dst *QuorumCert) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QuorumCert.Merge(dst, src)
 }
 func (m *QuorumCert) XXX_Size() int {
 	return xxx_messageInfo_QuorumCert.Size(m)
@@ -140,7 +135,7 @@ func (m *QuorumCert) GetSignInfos() *QCSignInfos {
 // Crypto lib support Threshold-Signatures.
 type QCSignInfos struct {
 	// QCSignInfos
-	QCSignInfos          []*SignInfo `protobuf:"bytes,1,rep,name=QCSignInfos,proto3" json:"QCSignInfos,omitempty"`
+	QCSignInfos          []*SignInfo `protobuf:"bytes,1,rep,name=QCSignInfos" json:"QCSignInfos,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}    `json:"-"`
 	XXX_unrecognized     []byte      `json:"-"`
 	XXX_sizecache        int32       `json:"-"`
@@ -150,17 +145,16 @@ func (m *QCSignInfos) Reset()         { *m = QCSignInfos{} }
 func (m *QCSignInfos) String() string { return proto.CompactTextString(m) }
 func (*QCSignInfos) ProtoMessage()    {}
 func (*QCSignInfos) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e2652a5c831a51bf, []int{1}
+	return fileDescriptor_chainedbft_dad3f8ff2cb00686, []int{1}
 }
-
 func (m *QCSignInfos) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_QCSignInfos.Unmarshal(m, b)
 }
 func (m *QCSignInfos) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_QCSignInfos.Marshal(b, m, deterministic)
 }
-func (m *QCSignInfos) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QCSignInfos.Merge(m, src)
+func (dst *QCSignInfos) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QCSignInfos.Merge(dst, src)
 }
 func (m *QCSignInfos) XXX_Size() int {
 	return xxx_messageInfo_QCSignInfos.Size(m)
@@ -180,8 +174,8 @@ func (m *QCSignInfos) GetQCSignInfos() []*SignInfo {
 
 // SignInfo is the signature information of the
 type SignInfo struct {
-	Address              string   `protobuf:"bytes,1,opt,name=Address,proto3" json:"Address,omitempty"`
-	PublicKey            string   `protobuf:"bytes,2,opt,name=PublicKey,proto3" json:"PublicKey,omitempty"`
+	Address              string   `protobuf:"bytes,1,opt,name=Address" json:"Address,omitempty"`
+	PublicKey            string   `protobuf:"bytes,2,opt,name=PublicKey" json:"PublicKey,omitempty"`
 	Sign                 []byte   `protobuf:"bytes,3,opt,name=Sign,proto3" json:"Sign,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
@@ -192,17 +186,16 @@ func (m *SignInfo) Reset()         { *m = SignInfo{} }
 func (m *SignInfo) String() string { return proto.CompactTextString(m) }
 func (*SignInfo) ProtoMessage()    {}
 func (*SignInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e2652a5c831a51bf, []int{2}
+	return fileDescriptor_chainedbft_dad3f8ff2cb00686, []int{2}
 }
-
 func (m *SignInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_SignInfo.Unmarshal(m, b)
 }
 func (m *SignInfo) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_SignInfo.Marshal(b, m, deterministic)
 }
-func (m *SignInfo) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_SignInfo.Merge(m, src)
+func (dst *SignInfo) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SignInfo.Merge(dst, src)
 }
 func (m *SignInfo) XXX_Size() int {
 	return xxx_messageInfo_SignInfo.Size(m)
@@ -239,17 +232,17 @@ func (m *SignInfo) GetSign() []byte {
 // A stable leader can skip this "NEW_VIEW_MESSAGE".
 type ChainedBftPhaseMessage struct {
 	// Message Type: NEW_VIEW_MESSAGE or QC_MESSAGE
-	Type QCState `protobuf:"varint,1,opt,name=Type,proto3,enum=pb.QCState" json:"Type,omitempty"`
+	Type QCState `protobuf:"varint,1,opt,name=Type,enum=pb.QCState" json:"Type,omitempty"`
 	// ViewNumber the current view number
-	ViewNumber int64 `protobuf:"varint,2,opt,name=ViewNumber,proto3" json:"ViewNumber,omitempty"`
+	ViewNumber int64 `protobuf:"varint,2,opt,name=ViewNumber" json:"ViewNumber,omitempty"`
 	// The new proposal send to other replicas while the
-	ProposalQC *QuorumCert `protobuf:"bytes,3,opt,name=ProposalQC,proto3" json:"ProposalQC,omitempty"`
+	ProposalQC *QuorumCert `protobuf:"bytes,3,opt,name=ProposalQC" json:"ProposalQC,omitempty"`
 	// JustifyQC is the QC of the leader gathered, send to next leader, while the message type is "NEW_VIEW_MESSAGE"
-	JustifyQC *QuorumCert `protobuf:"bytes,4,opt,name=JustifyQC,proto3" json:"JustifyQC,omitempty"`
+	JustifyQC *QuorumCert `protobuf:"bytes,4,opt,name=JustifyQC" json:"JustifyQC,omitempty"`
 	// MsgDigest is the digest of the msgg
 	MsgDigest []byte `protobuf:"bytes,5,opt,name=MsgDigest,proto3" json:"MsgDigest,omitempty"`
 	// Signature for this msg
-	Signature            *SignInfo `protobuf:"bytes,6,opt,name=Signature,proto3" json:"Signature,omitempty"`
+	Signature            *SignInfo `protobuf:"bytes,6,opt,name=Signature" json:"Signature,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
 	XXX_unrecognized     []byte    `json:"-"`
 	XXX_sizecache        int32     `json:"-"`
@@ -259,17 +252,16 @@ func (m *ChainedBftPhaseMessage) Reset()         { *m = ChainedBftPhaseMessage{}
 func (m *ChainedBftPhaseMessage) String() string { return proto.CompactTextString(m) }
 func (*ChainedBftPhaseMessage) ProtoMessage()    {}
 func (*ChainedBftPhaseMessage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e2652a5c831a51bf, []int{3}
+	return fileDescriptor_chainedbft_dad3f8ff2cb00686, []int{3}
 }
-
 func (m *ChainedBftPhaseMessage) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ChainedBftPhaseMessage.Unmarshal(m, b)
 }
 func (m *ChainedBftPhaseMessage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ChainedBftPhaseMessage.Marshal(b, m, deterministic)
 }
-func (m *ChainedBftPhaseMessage) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ChainedBftPhaseMessage.Merge(m, src)
+func (dst *ChainedBftPhaseMessage) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ChainedBftPhaseMessage.Merge(dst, src)
 }
 func (m *ChainedBftPhaseMessage) XXX_Size() int {
 	return xxx_messageInfo_ChainedBftPhaseMessage.Size(m)
@@ -327,7 +319,7 @@ type ChainedBftVoteMessage struct {
 	// The id of this message votes for.
 	ProposalId []byte `protobuf:"bytes,1,opt,name=ProposalId,proto3" json:"ProposalId,omitempty"`
 	// Replica will sign the QCMessage if the QuorumCert if valid.
-	Signature            *SignInfo `protobuf:"bytes,2,opt,name=Signature,proto3" json:"Signature,omitempty"`
+	Signature            *SignInfo `protobuf:"bytes,2,opt,name=Signature" json:"Signature,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
 	XXX_unrecognized     []byte    `json:"-"`
 	XXX_sizecache        int32     `json:"-"`
@@ -337,17 +329,16 @@ func (m *ChainedBftVoteMessage) Reset()         { *m = ChainedBftVoteMessage{} }
 func (m *ChainedBftVoteMessage) String() string { return proto.CompactTextString(m) }
 func (*ChainedBftVoteMessage) ProtoMessage()    {}
 func (*ChainedBftVoteMessage) Descriptor() ([]byte, []int) {
-	return fileDescriptor_e2652a5c831a51bf, []int{4}
+	return fileDescriptor_chainedbft_dad3f8ff2cb00686, []int{4}
 }
-
 func (m *ChainedBftVoteMessage) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ChainedBftVoteMessage.Unmarshal(m, b)
 }
 func (m *ChainedBftVoteMessage) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_ChainedBftVoteMessage.Marshal(b, m, deterministic)
 }
-func (m *ChainedBftVoteMessage) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ChainedBftVoteMessage.Merge(m, src)
+func (dst *ChainedBftVoteMessage) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ChainedBftVoteMessage.Merge(dst, src)
 }
 func (m *ChainedBftVoteMessage) XXX_Size() int {
 	return xxx_messageInfo_ChainedBftVoteMessage.Size(m)
@@ -373,17 +364,17 @@ func (m *ChainedBftVoteMessage) GetSignature() *SignInfo {
 }
 
 func init() {
-	proto.RegisterEnum("pb.QCState", QCState_name, QCState_value)
 	proto.RegisterType((*QuorumCert)(nil), "pb.QuorumCert")
 	proto.RegisterType((*QCSignInfos)(nil), "pb.QCSignInfos")
 	proto.RegisterType((*SignInfo)(nil), "pb.SignInfo")
 	proto.RegisterType((*ChainedBftPhaseMessage)(nil), "pb.ChainedBftPhaseMessage")
 	proto.RegisterType((*ChainedBftVoteMessage)(nil), "pb.ChainedBftVoteMessage")
+	proto.RegisterEnum("pb.QCState", QCState_name, QCState_value)
 }
 
-func init() { proto.RegisterFile("chainedbft.proto", fileDescriptor_e2652a5c831a51bf) }
+func init() { proto.RegisterFile("chainedbft.proto", fileDescriptor_chainedbft_dad3f8ff2cb00686) }
 
-var fileDescriptor_e2652a5c831a51bf = []byte{
+var fileDescriptor_chainedbft_dad3f8ff2cb00686 = []byte{
 	// 424 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x93, 0xc1, 0x6e, 0x9b, 0x40,
 	0x10, 0x86, 0xbb, 0xd8, 0xb5, 0xc3, 0x80, 0x5c, 0x34, 0x52, 0xab, 0x3d, 0x54, 0x2d, 0xe2, 0x84,

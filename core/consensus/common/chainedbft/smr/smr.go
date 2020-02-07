@@ -172,7 +172,7 @@ func (s *Smr) ProcessNewView(viewNumber int64, leader, preLeader string) error {
 		return err
 	}
 
-	netMsg, _ := p2p_pb.NewXuperMessage(p2p_pb.XuperMsgVersion3, s.bcname, "",
+	netMsg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion3, s.bcname, "",
 		p2p_pb.XuperMessage_CHAINED_BFT_NEW_VIEW_MSG, msgBuf, p2p_pb.XuperMessage_NONE)
 	opts := []p2p_base.MessageOption{
 		p2p_base.WithBcName(s.bcname),
@@ -233,7 +233,7 @@ func (s *Smr) ProcessProposal(viewNumber int64, proposalID,
 		s.slog.Error("ProcessProposal marshal msg error", "error", err)
 		return nil, err
 	}
-	netMsg, _ := p2p_pb.NewXuperMessage(p2p_pb.XuperMsgVersion3, s.bcname, "",
+	netMsg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion3, s.bcname, "",
 		p2p_pb.XuperMessage_CHAINED_BFT_NEW_PROPOSAL_MSG, msgBuf, p2p_pb.XuperMessage_NONE)
 	s.slog.Debug("ProcessProposal proposal msg", "netMsg", netMsg)
 	opts := []p2p_base.MessageOption{
@@ -250,7 +250,7 @@ func (s *Smr) handleReceivedMsg(msg *p2p_pb.XuperMessage) error {
 		msg.GetHeader().GetLogid(), "type", msg.GetHeader().GetType())
 
 	// verify msg
-	if !p2p_pb.VerifyDataCheckSum(msg) {
+	if !p2p_base.VerifyDataCheckSum(msg) {
 		s.slog.Warn("handleReceivedMsg verify msg data error!", "logid", msg.GetHeader().GetLogid())
 		return ErrCheckDataSum
 	}
@@ -449,7 +449,7 @@ func (s *Smr) voteProposal(propsQC *pb.QuorumCert, voteTo, logid string) error {
 		s.slog.Error("voteProposal marshal msg error", "error", err)
 		return err
 	}
-	netMsg, _ := p2p_pb.NewXuperMessage(p2p_pb.XuperMsgVersion3, s.bcname, logid,
+	netMsg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion3, s.bcname, logid,
 		p2p_pb.XuperMessage_CHAINED_BFT_VOTE_MSG, msgBuf, p2p_pb.XuperMessage_NONE)
 	s.slog.Trace("voteProposal", "msg", netMsg, "voteTo", voteTo, "logid", logid)
 

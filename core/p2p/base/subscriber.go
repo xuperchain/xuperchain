@@ -29,17 +29,6 @@ type Subscriber interface {
 	HandleMessage(stream interface{}, msg *xuperp2p.XuperMessage)
 }
 
-// // Subscriber define the subscriber of message
-// type MsgSubscriber struct {
-// 	msgCh   chan *xuperp2p.XuperMessage
-// 	msgType xuperp2p.XuperMessage_MessageType
-// 	// 支持注册回调函数方式
-// 	handler xuperHandler
-// 	e       *list.Element
-// 	// 仅接收固定来源的消息
-// 	msgFrom string
-// }
-
 // MultiSubscriber wrap a list of Subscriber of same message
 type MultiSubscriber struct {
 	// elem 存监听同一消息类型的多个Subscriber
@@ -47,6 +36,7 @@ type MultiSubscriber struct {
 	lk   *sync.Mutex
 }
 
+// NewMultiSubscriber init MultiSubscriber
 func NewMultiSubscriber() *MultiSubscriber {
 	return &MultiSubscriber{
 		elem: list.New(),

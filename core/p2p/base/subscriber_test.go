@@ -3,7 +3,7 @@ package base
 import (
 	"testing"
 
-	"github.com/xuperchain/xuperchain/core/p2p/pb"
+	xuperp2p "github.com/xuperchain/xuperchain/core/p2p/pb"
 )
 
 func TestNewSubscriber(t *testing.T) {

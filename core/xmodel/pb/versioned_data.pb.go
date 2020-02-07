@@ -3,11 +3,9 @@
 
 package xmodel_pb
 
-import (
-	fmt "fmt"
-	proto "github.com/golang/protobuf/proto"
-	math "math"
-)
+import proto "github.com/golang/protobuf/proto"
+import fmt "fmt"
+import math "math"
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ = proto.Marshal
@@ -18,12 +16,12 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
 type VersionedData struct {
-	PureData             *PureData `protobuf:"bytes,1,opt,name=pureData,proto3" json:"pureData,omitempty"`
+	PureData             *PureData `protobuf:"bytes,1,opt,name=pureData" json:"pureData,omitempty"`
 	RefTxid              []byte    `protobuf:"bytes,2,opt,name=refTxid,proto3" json:"refTxid,omitempty"`
-	RefOffset            int32     `protobuf:"varint,3,opt,name=refOffset,proto3" json:"refOffset,omitempty"`
+	RefOffset            int32     `protobuf:"varint,3,opt,name=refOffset" json:"refOffset,omitempty"`
 	XXX_NoUnkeyedLiteral struct{}  `json:"-"`
 	XXX_unrecognized     []byte    `json:"-"`
 	XXX_sizecache        int32     `json:"-"`
@@ -33,17 +31,16 @@ func (m *VersionedData) Reset()         { *m = VersionedData{} }
 func (m *VersionedData) String() string { return proto.CompactTextString(m) }
 func (*VersionedData) ProtoMessage()    {}
 func (*VersionedData) Descriptor() ([]byte, []int) {
-	return fileDescriptor_33d80ff3522116c9, []int{0}
+	return fileDescriptor_versioned_data_484052a3e5c05bf3, []int{0}
 }
-
 func (m *VersionedData) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_VersionedData.Unmarshal(m, b)
 }
 func (m *VersionedData) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_VersionedData.Marshal(b, m, deterministic)
 }
-func (m *VersionedData) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_VersionedData.Merge(m, src)
+func (dst *VersionedData) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_VersionedData.Merge(dst, src)
 }
 func (m *VersionedData) XXX_Size() int {
 	return xxx_messageInfo_VersionedData.Size(m)
@@ -76,7 +73,7 @@ func (m *VersionedData) GetRefOffset() int32 {
 }
 
 type PureData struct {
-	Bucket               string   `protobuf:"bytes,1,opt,name=bucket,proto3" json:"bucket,omitempty"`
+	Bucket               string   `protobuf:"bytes,1,opt,name=bucket" json:"bucket,omitempty"`
 	Key                  []byte   `protobuf:"bytes,2,opt,name=key,proto3" json:"key,omitempty"`
 	Value                []byte   `protobuf:"bytes,3,opt,name=value,proto3" json:"value,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -88,17 +85,16 @@ func (m *PureData) Reset()         { *m = PureData{} }
 func (m *PureData) String() string { return proto.CompactTextString(m) }
 func (*PureData) ProtoMessage()    {}
 func (*PureData) Descriptor() ([]byte, []int) {
-	return fileDescriptor_33d80ff3522116c9, []int{1}
+	return fileDescriptor_versioned_data_484052a3e5c05bf3, []int{1}
 }
-
 func (m *PureData) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_PureData.Unmarshal(m, b)
 }
 func (m *PureData) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_PureData.Marshal(b, m, deterministic)
 }
-func (m *PureData) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_PureData.Merge(m, src)
+func (dst *PureData) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_PureData.Merge(dst, src)
 }
 func (m *PureData) XXX_Size() int {
 	return xxx_messageInfo_PureData.Size(m)
@@ -135,9 +131,11 @@ func init() {
 	proto.RegisterType((*PureData)(nil), "xmodel.pb.PureData")
 }
 
-func init() { proto.RegisterFile("versioned_data.proto", fileDescriptor_33d80ff3522116c9) }
+func init() {
+	proto.RegisterFile("versioned_data.proto", fileDescriptor_versioned_data_484052a3e5c05bf3)
+}
 
-var fileDescriptor_33d80ff3522116c9 = []byte{
+var fileDescriptor_versioned_data_484052a3e5c05bf3 = []byte{
 	// 190 bytes of a gzipped FileDescriptorProto
 	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x12, 0x29, 0x4b, 0x2d, 0x2a,
 	0xce, 0xcc, 0xcf, 0x4b, 0x4d, 0x89, 0x4f, 0x49, 0x2c, 0x49, 0xd4, 0x2b, 0x28, 0xca, 0x2f, 0xc9,

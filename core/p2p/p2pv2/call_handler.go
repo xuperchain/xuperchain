@@ -13,13 +13,14 @@ import (
 	"github.com/xuperchain/xuperchain/core/common/config"
 	crypto_client "github.com/xuperchain/xuperchain/core/crypto/client"
 	"github.com/xuperchain/xuperchain/core/crypto/hash"
-	xuper_p2p "github.com/xuperchain/xuperchain/core/p2p/pb"
+	"github.com/xuperchain/xuperchain/core/p2p/pb"
+	p2p_base "github.com/xuperchain/xuperchain/core/p2p/base"
 	"github.com/xuperchain/xuperchain/core/pb"
 )
 
 // RegisterSubsriber register handleMessage callback fucntion
 func (p *P2PServerV2) registerSubscriber() error {
-	if _, err := p.Register(NewMsgSubscriber(nil, xuper_p2p.XuperMessage_GET_AUTHENTICATION,
+	if _, err := p.Register(NewMsgSubscriber(nil, xuperp2p.XuperMessage_GET_AUTHENTICATION,
 		p.handleGetAuthentication, "")); err != nil {
 		return err
 	}
@@ -29,7 +30,7 @@ func (p *P2PServerV2) registerSubscriber() error {
 }
 
 // handleGetAuthentication callback function for handling identity authentication
-func (p *P2PServerV2) handleGetAuthentication(ctx context.Context, msg *xuper_p2p.XuperMessage) (*xuper_p2p.XuperMessage, error) {
+func (p *P2PServerV2) handleGetAuthentication(ctx context.Context, msg *xuperp2p.XuperMessage) (*xuperp2p.XuperMessage, error) {
 	logid := msg.Header.Logid
 	auths := &pb.IdentityAuths{}
 	errRes := errorHandleGetAuthenMsg(logid)
@@ -98,13 +99,13 @@ func (p *P2PServerV2) handleGetAuthentication(ctx context.Context, msg *xuper_p2
 	s.setReceivedAddr(addrs)
 	s.isAuth = true
 
-	res, err := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, "", logid,
-		xuper_p2p.XuperMessage_GET_AUTHENTICATION_RES, resBuf, xuper_p2p.XuperMessage_SUCCESS)
+	res, err := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, "", logid,
+		xuperp2p.XuperMessage_GET_AUTHENTICATION_RES, resBuf, xuperp2p.XuperMessage_SUCCESS)
 	return res, err
 }
 
-func errorHandleGetAuthenMsg(logid string) *xuper_p2p.XuperMessage {
-	res, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, "", logid,
-		xuper_p2p.XuperMessage_GET_AUTHENTICATION_RES, nil, xuper_p2p.XuperMessage_GET_AUTHENTICATION_ERROR)
+func errorHandleGetAuthenMsg(logid string) *xuperp2p.XuperMessage {
+	res, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, "", logid,
+		xuperp2p.XuperMessage_GET_AUTHENTICATION_RES, nil, xuperp2p.XuperMessage_GET_AUTHENTICATION_ERROR)
 	return res
 }
