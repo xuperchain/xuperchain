@@ -48,13 +48,13 @@ public:
     void queryByUser() {
         xchain::Context* ctx = this->context();
         std::string key = UserBucket + "/" + ctx->arg("user_id") + "/";
-        std::unique_ptr<xchain::Iterator> iter = ctx->new_iterator(key, key + "~");
+        std::unique_ptr<xchain::Iterator> iter = ctx->new_iterator(key, key + "～");
         std::string result;
-        do {
+        while (iter->next()) {
             std::pair<std::string, std::string> res;
             iter->get(&res);
             result += res.first + "\n" + res.second + "\n";
-        } while(iter->next());
+        }
         ctx->ok(result);
     }
     void queryByTitle() {
@@ -77,12 +77,12 @@ public:
         std::string topic = ctx->arg("topic");
         std::string key = UserBucket + "/" + user_id + "/" + topic + "/";
         std::string result;
-        std::unique_ptr<xchain::Iterator> iter = ctx->new_iterator(key, key + "~");
-        do {
+        std::unique_ptr<xchain::Iterator> iter = ctx->new_iterator(key, key + "～");
+        while (iter->next()) {
             std::pair<std::string, std::string> res;
             iter->get(&res);
             result += res.first + "\n" + res.second + "\n";
-        } while(iter->next());
+        }
         ctx->ok(result);
     }
 };
