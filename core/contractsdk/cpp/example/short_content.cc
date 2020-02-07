@@ -1,6 +1,8 @@
 #include "xchain/xchain.h"
 
 const std::string UserBucket = "USER";
+const int TOPIC_LENGTH_LIMIT = 36;
+const int TITLE_LENGTH_LIMIT = 100;
 
 // 短内容存证API规范
 // 参数由Context提供
@@ -14,7 +16,7 @@ public:
     virtual void queryByUser() = 0;
     // 按照标题粒度查询内容，用户名是必须的
     virtual void queryByTitle() = 0;
-    // 按照标题粒度查询内容，用户名是必须的
+    // 按照主题粒度查询内容，用户名是必须的
     virtual void queryByTopic() = 0;
 };
 
@@ -31,6 +33,10 @@ public:
         std::string topic = ctx->arg("topic");
         std::string content = ctx->arg("content");
         const std::string userKey = UserBucket + "/" + user_id + "/" + topic + "/" + title;
+        if (topic.length() > TOPIC_LENGTH_LIMIT || title.length() > TITLE_LENGTH_LIMIT) {
+            ctx->error("The length of topic or title is more than limitation");
+            return;
+        }
         if (ctx->put_object(userKey, content)) {
             ctx->ok("storeShortContent success");
             return;
