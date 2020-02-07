@@ -16,6 +16,8 @@ import (
 	pm "github.com/xuperchain/xuperchain/core/pluginmgr"
 )
 
+const MESSAGE_CAPACITY_LIMIT = 100000
+
 // XChainMG manage all chains
 type XChainMG struct {
 	Log   log.Logger
@@ -51,7 +53,7 @@ func (xm *XChainMG) Init(log log.Logger, cfg *config.NodeConfig,
 	xm.Quit = make(chan struct{})
 	xm.nodeMode = cfg.NodeMode
 	xm.enableCompress = cfg.EnableCompress
-	xm.MsgChan = make(chan *pb.Event, 100)
+	xm.MsgChan = make(chan *pb.Event, MESSAGE_CAPACITY_LIMIT)
 	xm.pubsubServiceSwitch = cfg.PubsubService
 
 	// auto-load plugins here

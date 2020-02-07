@@ -91,60 +91,20 @@ func (p *PubsubService) Subscribe(arg *pb.EventRequest, stream pb.PubsubService_
 	needContent := false
 
 	ch := p.pub.SubscribeTopic(func(v *pb.Event) bool {
+		res := false
 		eventType := arg.GetType()
 		switch eventType {
 		case pb.EventType_TRANSACTION:
-			request := &pb.TransactionEventRequest{}
-			proto.Unmarshal(arg.GetPayload(), request)
-			metaData := v.GetTxStatus()
-
-			requestBcname := request.GetBcname()
-			requestInitiator := request.GetInitiator()
-			requestAuthRequire := request.GetAuthRequire()
-			needContent = request.GetNeedContent()
-			eventBcname := metaData.GetBcname()
-			eventInitiator := metaData.GetInitiator()
-			eventAuthRequire := metaData.GetAuthRequire()
-
-			if requestBcname == eventBcname &&
-				((eventInitiator != "" && requestInitiator == eventInitiator) ||
-					StringContains(requestAuthRequire, eventAuthRequire)) {
-				return true
-			}
-			return false
+			res, needContent = filterForTransactionEvent(arg.GetPayload(), v)
+			return res
 		case pb.EventType_ACCOUNT:
-			request := &pb.AccountEventRequest{}
-			proto.Unmarshal(arg.GetPayload(), request)
-			metaData := v.GetAccountStatus()
-
-			requestBcname := request.GetBcname()
-			requestFromAddr := request.GetFromAddr()
-			requestToAddr := request.GetToAddr()
-			needContent = request.GetNeedContent()
-			eventBcname := metaData.GetBcname()
-			eventFromAddr := metaData.GetFromAddr()
-			eventToAddr := metaData.GetToAddr()
-
-			if requestBcname == eventBcname &&
-				(StringContains(requestFromAddr, eventFromAddr) ||
-					StringContains(requestToAddr, eventToAddr)) {
-				return true
-			}
-			return false
+			res, needContent = filterForAccountEvent(arg.GetPayload(), v)
+			return res
 		case pb.EventType_BLOCK:
-			request := &pb.BlockEventRequest{}
-			proto.Unmarshal(arg.GetPayload(), request)
-			metaData := v.GetBlockStatus()
-			needContent = request.GetNeedContent()
-			if request.GetBcname() == metaData.GetBcname() &&
-				request.GetProposer() == metaData.GetProposer() &&
-				request.GetStartHeight() <= metaData.GetHeight() &&
-				request.GetEndHeight() >= metaData.GetHeight() {
-				return true
-			}
-			return false
+			res, needContent = filterForBlockEvent(arg.GetPayload(), v)
+			return res
 		}
-		return true
+		return false
 	})
 	p.eventID2MsgChan.Store(eventID, ch)
 
@@ -221,4 +181,52 @@ func StringContains(target string, arr []string) bool {
 	}
 
 	return false
+}
+
+func filterForTransactionEvent(payload []byte, v *pb.Event) (bool, bool) {
+	request := &pb.TransactionEventRequest{}
+	proto.Unmarshal(payload, request)
+	metaData := v.GetTxStatus()
+
+	requestInitiator := request.GetInitiator()
+	eventInitiator := metaData.GetInitiator()
+	needContent := request.GetNeedContent()
+	if request.GetBcname() == metaData.GetBcname() &&
+		((eventInitiator != "" && requestInitiator == eventInitiator) ||
+			StringContains(request.GetAuthRequire(), metaData.GetAuthRequire())) {
+		return true, needContent
+	}
+
+	return false, needContent
+}
+
+func filterForBlockEvent(payload []byte, v *pb.Event) (bool, bool) {
+	request := &pb.BlockEventRequest{}
+	proto.Unmarshal(payload, request)
+	metaData := v.GetBlockStatus()
+	needContent := request.GetNeedContent()
+
+	if request.GetBcname() == metaData.GetBcname() &&
+		request.GetProposer() == metaData.GetProposer() &&
+		request.GetStartHeight() <= metaData.GetHeight() &&
+		request.GetEndHeight() >= metaData.GetHeight() {
+		return true, needContent
+	}
+
+	return false, needContent
+}
+
+func filterForAccountEvent(payload []byte, v *pb.Event) (bool, bool) {
+	request := &pb.AccountEventRequest{}
+	proto.Unmarshal(payload, request)
+	metaData := v.GetAccountStatus()
+	needContent := request.GetNeedContent()
+
+	if request.GetBcname() == metaData.GetBcname() &&
+		(StringContains(request.GetFromAddr(), metaData.GetFromAddr()) ||
+			StringContains(request.GetToAddr(), metaData.GetToAddr())) {
+		return true, needContent
+	}
+
+	return false, needContent
 }
