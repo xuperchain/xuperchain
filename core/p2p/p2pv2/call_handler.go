@@ -13,8 +13,8 @@ import (
 	"github.com/xuperchain/xuperchain/core/common/config"
 	crypto_client "github.com/xuperchain/xuperchain/core/crypto/client"
 	"github.com/xuperchain/xuperchain/core/crypto/hash"
-	"github.com/xuperchain/xuperchain/core/p2p/pb"
 	p2p_base "github.com/xuperchain/xuperchain/core/p2p/base"
+	"github.com/xuperchain/xuperchain/core/p2p/pb"
 	"github.com/xuperchain/xuperchain/core/pb"
 )
 

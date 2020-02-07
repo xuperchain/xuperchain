@@ -14,8 +14,8 @@ import (
 	peer "github.com/libp2p/go-libp2p-peer"
 	ma "github.com/multiformats/go-multiaddr"
 
-	p2pPb "github.com/xuperchain/xuperchain/core/p2p/pb"
 	p2p_base "github.com/xuperchain/xuperchain/core/p2p/base"
+	p2pPb "github.com/xuperchain/xuperchain/core/p2p/pb"
 	"github.com/xuperchain/xuperchain/core/pb"
 )
 
