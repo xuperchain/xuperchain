@@ -31,5 +31,3 @@ func Remove(*Conn) error {
 func Find(string) error {
 	return nil
 }
-
-// TODO 消息发送

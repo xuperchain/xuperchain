@@ -224,7 +224,6 @@ func (p *P2PServerV1) startServer() {
 	}()
 }
 
-// TODO
 // SendP2PMessage
 func (p *P2PServerV1) SendP2PMessage(str p2pPb.P2PService_SendP2PMessageServer) error {
 	return nil

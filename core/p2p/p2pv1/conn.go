@@ -1,6 +1,7 @@
 package p2pv1
 
 import (
+	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"io/ioutil"
@@ -8,6 +9,8 @@ import (
 
 	"github.com/pkg/errors"
 	log "github.com/xuperchain/log15"
+	p2pPb "github.com/xuperchain/xuperchain/core/p2p/pb"
+	p2p_pb "github.com/xuperchain/xuperchain/core/p2p/pb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
@@ -17,7 +20,7 @@ type Conn struct {
 	// addr:"IP:Port"
 	id     string
 	lg     log.Logger
-	conn   *grpc.ClientConn
+	cli    p2p_pb.P2PService_SendP2PMessageClient
 	quitCh chan bool
 	lock   *sync.RWMutex
 }
@@ -29,7 +32,7 @@ func NewConn(lg log.Logger, addr string, certPath, serviceName string, maxMsgSiz
 		quitCh: make(chan bool, 1),
 		lock:   &sync.RWMutex{},
 	}
-	conn.NewGrpcConn(maxMsgSize, certPath, serviceName)
+	conn.NewGrpcClient(maxMsgSize, certPath, serviceName)
 	return conn
 }
 
@@ -56,36 +59,45 @@ func genCreds(certPath, serviceName string) (credentials.TransportCredentials, e
 	return creds, nil
 }
 
-func (c *Conn) NewGrpcConn(maxMsgSize int, certPath string, serviceName string) error {
-	if c.conn == nil {
+func (c *Conn) NewGrpcClient(maxMsgSize int, certPath string, serviceName string) error {
+	conn := &grpc.ClientConn{}
+	if c.cli == nil {
 		creds, err := genCreds(certPath, serviceName)
 		if err != nil {
 			return err
 		}
-		conn, err := grpc.Dial(c.id, grpc.WithTransportCredentials(creds), grpc.WithMaxMsgSize(maxMsgSize))
+		conn, err = grpc.Dial(c.id, grpc.WithTransportCredentials(creds), grpc.WithMaxMsgSize(maxMsgSize))
 		if err != nil {
-			return errors.New("New grpcs conn error!")
+			return errors.New("New grpcs conn error")
 		}
-		c.conn = conn
-		return nil
+
 	}
-	connState := c.conn.GetState().String()
-	if connState == "TRANSIENT_FAILURE" || connState == "SHUTDOWN" || connState == "Invalid-State" {
-		c.conn.Close()
-		creds, err := genCreds(certPath, serviceName)
-		if err != nil {
-			return err
-		}
-		conn, err := grpc.Dial(c.id, grpc.WithTransportCredentials(creds), grpc.WithMaxMsgSize(maxMsgSize))
-		if err != nil {
-			return errors.New("New grpcs conn error!")
-		}
-		c.conn = conn
-		return nil
+	client := p2p_pb.NewP2PServiceClient(conn)
+	cli, err := client.SendP2PMessage(context.Background())
+	if err != nil {
+		return errors.New("New grpcs cli error")
 	}
+	c.cli = cli
+	// TODO: add handler
 	return nil
 }
 
+// SendMessage send message to a peer
+func (c *Conn) SendMessage(ctx context.Context, msg *p2pPb.XuperMessage) error {
+	return c.cli.Send(msg)
+}
+
+// SendMessageWithResponse send message to a peer with responce
+func (c *Conn) SendMessageWithResponse(ctx context.Context, msg *p2pPb.XuperMessage) (*p2pPb.XuperMessage, error) {
+	err := c.cli.Send(msg)
+	if err != nil {
+		c.lg.Error("SendMessageWithResponse error", "error", err.Error())
+		return nil, err
+	}
+	// TODO: add rev logic
+	return nil, nil
+}
+
 func (c *Conn) Close() {
-	c.conn.Close()
+	c.cli.CloseSend()
 }
