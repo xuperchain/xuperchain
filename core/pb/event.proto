@@ -44,7 +44,9 @@ message TransactionStatusInfo {
 
 message AccountStatusInfo {
   string bcname = 1;
-  TransactionStatus status = 2;
+  repeated string from_addr = 2;
+  repeated string to_addr = 3;
+  TransactionStatus status = 4;
 }
 
 enum UnsubscribeStatusInfo {
@@ -109,15 +111,10 @@ message Event {
 
 // BlockEvent 订阅区块返回
 message BlockEvent {
-  InternalBlock block = 2;
+  InternalBlock block = 1;
 }
 
 // TransactionEvent 订阅交易返回
 message TransactionEvent {
-  Transaction tx = 2;
-}
-
-// AccountEvent 订阅账户返回
-message AccountEvent {
-  Transaction tx = 2;
+  Transaction tx = 1;
 }

@@ -44,4 +44,40 @@ func produceTransactionEvent(msgChan chan *pb.Event, tx *pb.Transaction, bcname 
 		Payload:  payload,
 		TxStatus: txStatus,
 	}
+
+	// Account Event
+	fromAddrs, toAddrs := getFromAddrAndToAddr(tx)
+	accountStatus := &pb.AccountStatusInfo{
+		Bcname:   bcname,
+		FromAddr: fromAddrs,
+		ToAddr:   toAddrs,
+		Status:   status,
+	}
+	msgChan <- &pb.Event{
+		Type:          pb.EventType_ACCOUNT,
+		Payload:       payload,
+		AccountStatus: accountStatus,
+	}
+}
+
+func getFromAddrAndToAddr(tx *pb.Transaction) ([]string, []string) {
+	if tx == nil {
+		return nil, nil
+	}
+	fromAddrs := []string{}
+	toAddrs := []string{}
+	for _, input := range tx.GetTxInputs() {
+		if input == nil {
+			continue
+		}
+		fromAddrs = append(fromAddrs, fmt.Sprintf("%s", input.GetFromAddr()))
+	}
+	for _, output := range tx.GetTxOutputs() {
+		if output == nil {
+			continue
+		}
+		toAddrs = append(toAddrs, fmt.Sprintf("%s", output.GetToAddr()))
+	}
+
+	return fromAddrs, toAddrs
 }

@@ -149,7 +149,7 @@ func (xm *XChainMG) ProcessTx(in *pb.TxStatus) (*pb.CommonReply, bool, error) {
 	}
 	out, needRepost := bc.PostTx(in, hd)
 
-	if needRepost && xm.pubsubServiceSwitch {
+	if !needRepost && xm.pubsubServiceSwitch {
 		go produceTransactionEvent(xm.MsgChan, in.GetTx(), in.GetBcname(),
 			pb.TransactionStatus_UNDEFINE)
 	}

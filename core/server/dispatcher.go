@@ -110,6 +110,26 @@ func (p *PubsubService) Subscribe(arg *pb.EventRequest, stream pb.PubsubService_
 			}
 			return false
 		case pb.EventType_ACCOUNT:
+			fmt.Println("into account event")
+			request := &pb.AccountEventRequest{}
+			proto.Unmarshal(arg.GetPayload(), request)
+			metaData := v.GetAccountStatus()
+
+			requestBcname := request.GetBcname()
+			requestFromAddr := request.GetFromAddr()
+			requestToAddr := request.GetToAddr()
+			eventBcname := metaData.GetBcname()
+			eventFromAddr := metaData.GetFromAddr()
+			eventToAddr := metaData.GetToAddr()
+
+			fmt.Println("--------accountEventTest", " target:", "ToAddr:", requestToAddr, " FromAddr:", requestFromAddr, " Arr:", "ToAddr:", eventToAddr, " FromAddr:", eventFromAddr)
+
+			if requestBcname == eventBcname &&
+				(StringContains(requestFromAddr, eventFromAddr) ||
+					StringContains(requestToAddr, eventToAddr)) {
+				return true
+			}
+			return false
 		case pb.EventType_BLOCK:
 			request := &pb.BlockEventRequest{}
 			proto.Unmarshal(arg.GetPayload(), request)
@@ -165,7 +185,7 @@ func (p *PubsubService) isValid(ctx context.Context) (bool, string) {
 	defer p.mutex.Unlock()
 	if exist {
 		currCnt := val.(int)
-		if currCnt > TOTAL_LIMIT_PER_IP {
+		if currCnt >= TOTAL_LIMIT_PER_IP {
 			fmt.Println("same ip up to limit")
 			return false, remoteIP
 		}

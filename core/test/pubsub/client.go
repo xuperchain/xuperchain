@@ -142,6 +142,24 @@ func (cmd *PubsubClientCommand) Subscribe() {
 			fmt.Println(requestBytesErr)
 			return
 		}
+	case "ACCOUNT":
+		requestLocal := &AccountEventRequest{}
+		err := json.Unmarshal([]byte(requestArgs), requestLocal)
+		if err != nil {
+			fmt.Println(err)
+			return
+		}
+		requestPB := &pb.AccountEventRequest{
+			Bcname:      requestLocal.Bcname,
+			FromAddr:    requestLocal.FromAddr,
+			ToAddr:      requestLocal.ToAddr,
+			NeedContent: requestLocal.NeedContent,
+		}
+		requestBytes, requestBytesErr = proto.Marshal(requestPB)
+		if requestBytesErr != nil {
+			fmt.Println(requestBytesErr)
+			return
+		}
 	default:
 		fmt.Println("unexpected subscribe type", requestType)
 		return
@@ -191,7 +209,12 @@ func (cmd *PubsubClientCommand) Subscribe() {
 			}
 			fmt.Println("I am BlockEvent", test.GetBlock())
 		case pb.EventType_ACCOUNT:
-			fmt.Println("I am AccountEvent")
+			test := &pb.TransactionEvent{}
+			unmarshalErr := proto.Unmarshal(payload, test)
+			if unmarshalErr != nil {
+				continue
+			}
+			fmt.Println("I am AccountEvent", test.GetTx())
 		default:
 			fmt.Println("I am undefined")
 		}
