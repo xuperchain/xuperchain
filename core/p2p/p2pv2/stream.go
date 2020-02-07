@@ -182,7 +182,7 @@ func (s *Stream) SendMessageWithResponse(ctx context.Context, msg *p2pPb.XuperMe
 		resCh := make(chan *p2pPb.XuperMessage, 100)
 		responseCh := make(chan *p2pPb.XuperMessage, 1)
 		errCh := make(chan error, 1)
-		sub := NewMsgSubscriber(resCh, resType, nil, s.p.Pretty())
+		sub := NewMsgSubscriber(resCh, resType, nil, s.p.Pretty(), s.node.log)
 		newsub, err := s.node.srv.Register(sub)
 		if err != nil {
 			s.node.log.Trace("sendMessageWithResponse register error", "error", err)

@@ -22,6 +22,9 @@ import (
 	p2pPb "github.com/xuperchain/xuperchain/core/p2p/pb"
 )
 
+// make sure p2pv1 implemented the P2PServer interface
+var _ p2p_base.P2PServer = (*P2PServerV1)(nil)
+
 // define errors
 var (
 	ErrValidateConfig   = errors.New("config not valid")
@@ -131,8 +134,9 @@ func (p *P2PServerV1) SendMessageWithResponse(ctx context.Context, msg *p2pPb.Xu
 }
 
 // NewSubscriber create a subscriber instance
-func (p *P2PServerV1) NewSubscriber(msgCh chan *p2pPb.XuperMessage, msgType p2pPb.XuperMessage_MessageType, handler p2p_base.XuperHandler, msgFrom string) p2p_base.Subscriber {
-	return NewMsgSubscriber(msgCh, msgType, handler, msgFrom)
+func (p *P2PServerV1) NewSubscriber(msgCh chan *p2pPb.XuperMessage, msgType p2pPb.XuperMessage_MessageType,
+	handler p2p_base.XuperHandler, msgFrom string, log log.Logger) p2p_base.Subscriber {
+	return NewMsgSubscriber(msgCh, msgType, handler, msgFrom, p.log)
 }
 
 // Register register message subscribers to handle messages
