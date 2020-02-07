@@ -9,6 +9,9 @@ import (
 )
 
 func produceBlockEvent(msgChan chan *pb.Event, block *pb.InternalBlock, bcname string) {
+	if block == nil {
+		return
+	}
 	blockStatus := &pb.BlockStatusInfo{
 		Bcname:   bcname,
 		Proposer: fmt.Sprintf("%s", block.GetProposer()),
@@ -17,7 +20,10 @@ func produceBlockEvent(msgChan chan *pb.Event, block *pb.InternalBlock, bcname s
 	blockEvent := &pb.BlockEvent{
 		Block: block,
 	}
-	payload, _ := proto.Marshal(blockEvent)
+	payload, marshalErr := proto.Marshal(blockEvent)
+	if marshalErr != nil {
+		return
+	}
 	msgChan <- &pb.Event{
 		Type:        pb.EventType_BLOCK,
 		Payload:     payload,
@@ -29,6 +35,9 @@ func produceBlockEvent(msgChan chan *pb.Event, block *pb.InternalBlock, bcname s
 }
 
 func produceTransactionEvent(msgChan chan *pb.Event, tx *pb.Transaction, bcname string, status pb.TransactionStatus) {
+	if tx == nil {
+		return
+	}
 	txStatus := &pb.TransactionStatusInfo{
 		Bcname:      bcname,
 		Initiator:   tx.GetInitiator(),
@@ -38,7 +47,10 @@ func produceTransactionEvent(msgChan chan *pb.Event, tx *pb.Transaction, bcname 
 	txEvent := &pb.TransactionEvent{
 		Tx: tx,
 	}
-	payload, _ := proto.Marshal(txEvent)
+	payload, marshalErr := proto.Marshal(txEvent)
+	if marshalErr != nil {
+		return
+	}
 	msgChan <- &pb.Event{
 		Type:     pb.EventType_TRANSACTION,
 		Payload:  payload,

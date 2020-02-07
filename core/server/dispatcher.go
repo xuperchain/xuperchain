@@ -18,7 +18,7 @@ import (
 )
 
 // ip amount limit per ip
-const TOTAL_LIMIT_PER_IP = 1
+const TOTAL_LIMIT_PER_IP = 5
 
 // PubsubService meta data for pubsub
 type PubsubService struct {
