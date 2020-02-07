@@ -88,6 +88,8 @@ func (p *PubsubService) Subscribe(arg *pb.EventRequest, stream pb.PubsubService_
 		return err
 	}
 
+	needContent := false
+
 	ch := p.pub.SubscribeTopic(func(v *pb.Event) bool {
 		eventType := arg.GetType()
 		switch eventType {
@@ -99,6 +101,7 @@ func (p *PubsubService) Subscribe(arg *pb.EventRequest, stream pb.PubsubService_
 			requestBcname := request.GetBcname()
 			requestInitiator := request.GetInitiator()
 			requestAuthRequire := request.GetAuthRequire()
+			needContent = request.GetNeedContent()
 			eventBcname := metaData.GetBcname()
 			eventInitiator := metaData.GetInitiator()
 			eventAuthRequire := metaData.GetAuthRequire()
@@ -110,7 +113,6 @@ func (p *PubsubService) Subscribe(arg *pb.EventRequest, stream pb.PubsubService_
 			}
 			return false
 		case pb.EventType_ACCOUNT:
-			fmt.Println("into account event")
 			request := &pb.AccountEventRequest{}
 			proto.Unmarshal(arg.GetPayload(), request)
 			metaData := v.GetAccountStatus()
@@ -118,11 +120,10 @@ func (p *PubsubService) Subscribe(arg *pb.EventRequest, stream pb.PubsubService_
 			requestBcname := request.GetBcname()
 			requestFromAddr := request.GetFromAddr()
 			requestToAddr := request.GetToAddr()
+			needContent = request.GetNeedContent()
 			eventBcname := metaData.GetBcname()
 			eventFromAddr := metaData.GetFromAddr()
 			eventToAddr := metaData.GetToAddr()
-
-			fmt.Println("--------accountEventTest", " target:", "ToAddr:", requestToAddr, " FromAddr:", requestFromAddr, " Arr:", "ToAddr:", eventToAddr, " FromAddr:", eventFromAddr)
 
 			if requestBcname == eventBcname &&
 				(StringContains(requestFromAddr, eventFromAddr) ||
@@ -134,6 +135,7 @@ func (p *PubsubService) Subscribe(arg *pb.EventRequest, stream pb.PubsubService_
 			request := &pb.BlockEventRequest{}
 			proto.Unmarshal(arg.GetPayload(), request)
 			metaData := v.GetBlockStatus()
+			needContent = request.GetNeedContent()
 			if request.GetBcname() == metaData.GetBcname() &&
 				request.GetProposer() == metaData.GetProposer() &&
 				request.GetStartHeight() <= metaData.GetHeight() &&
@@ -146,7 +148,6 @@ func (p *PubsubService) Subscribe(arg *pb.EventRequest, stream pb.PubsubService_
 	})
 	p.eventID2MsgChan.Store(eventID, ch)
 
-	//stream.Send(e)
 	for {
 		msg, ok := <-ch
 		if !ok {
@@ -156,6 +157,9 @@ func (p *PubsubService) Subscribe(arg *pb.EventRequest, stream pb.PubsubService_
 		}
 		localMsg := *msg
 		localMsg.Id = eventID
+		if needContent == false {
+			localMsg.Payload = nil
+		}
 		if err := stream.Send(&localMsg); err != nil {
 			// clean work
 			// stream is invalid probably
@@ -207,7 +211,6 @@ func (p *PubsubService) sub(ip string) {
 }
 
 func StringContains(target string, arr []string) bool {
-	fmt.Println("--------arr:", arr, "  target", target)
 	if arr == nil || len(arr) == 0 {
 		return false
 	}

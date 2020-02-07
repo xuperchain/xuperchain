@@ -200,21 +200,27 @@ func (cmd *PubsubClientCommand) Subscribe() {
 			if unmarshalErr != nil {
 				continue
 			}
-			fmt.Println("I am TransactionEvent", test.GetTx())
+			fmt.Println("I am TransactionEvent")
+			fmt.Println("status:", reply.GetTxStatus())
+			fmt.Println("payload", test.GetTx())
 		case pb.EventType_BLOCK:
 			test := &pb.BlockEvent{}
 			unmarshalErr := proto.Unmarshal(payload, test)
 			if unmarshalErr != nil {
 				continue
 			}
-			fmt.Println("I am BlockEvent", test.GetBlock())
+			fmt.Println("I am BlockEvent")
+			fmt.Println("status:", reply.GetBlockStatus())
+			fmt.Println("payload", test.GetBlock())
 		case pb.EventType_ACCOUNT:
 			test := &pb.TransactionEvent{}
 			unmarshalErr := proto.Unmarshal(payload, test)
 			if unmarshalErr != nil {
 				continue
 			}
-			fmt.Println("I am AccountEvent", test.GetTx())
+			fmt.Println("I am AccountEvent")
+			fmt.Println("status:", reply.GetAccountStatus())
+			fmt.Println("payload", test.GetTx())
 		default:
 			fmt.Println("I am undefined")
 		}
