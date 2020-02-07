@@ -45,13 +45,13 @@ public:
         const std::string key = UserBucket + "/";
         std::unique_ptr<xchain::Iterator> iter = ctx->new_iterator(key, key + "～");
         std::string result;
-        do {
+        while (iter->next()) {
             std::pair<std::string, std::string> res;
             iter->get(&res);    
             if (res.first.length() > UserBucket.length() + 1) {
                 result += res.first.substr(UserBucket.length() + 1) + "\n";
             }
-        } while (iter->next());
+        }
         ctx->ok(result);
     }
     void queryFileInfoByUser() {
@@ -60,10 +60,11 @@ public:
         std::unique_ptr<xchain::Iterator> iter = ctx->new_iterator(key, key + "～");
         std::string result;
         do {
+        while (iter->next()) {
             std::pair<std::string, std::string> res;
             iter->get(&res);
             result += res.second + "\n";
-        } while (iter->next());
+        }
         ctx->ok(result);
     }
     void queryFileInfoByHash() {
