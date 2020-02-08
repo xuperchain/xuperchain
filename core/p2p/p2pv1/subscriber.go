@@ -92,15 +92,17 @@ func (sub *MsgSubscriber) HandleMessage(conn interface{}, msg *xuperp2p.XuperMes
 
 	if sub.handler != nil {
 		go func(sub *MsgSubscriber, s *Conn, msg *xuperp2p.XuperMessage) {
-			ctx := context.WithValue(context.Background(), "Stream", s)
-			_, err := sub.handler(ctx, msg)
+			ctx := context.Background()
+			res, err := sub.handler(ctx, msg)
 			if err != nil {
 				sub.log.Warn("subscriber handleMessage error", "err", err)
 			}
-			// // write response if needed
-			// if err := s.conn.writeData(res); err != nil {
-			// 	sub.log.Warn("subscriber handleMessage to write msg error", "err", err)
-			// }
+			if res != nil {
+				// write response if needed
+				if err := s.SendMessage(ctx, res); err != nil {
+					sub.log.Warn("subscriber handleMessage write response error", "err", err)
+				}
+			}
 		}(sub, s, msg)
 		return
 	}

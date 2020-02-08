@@ -31,6 +31,6 @@ func Remove(*Conn) error {
 }
 
 // Find find conn from connpool
-func Find(string) (*Conn, error) {
+func (*ConnPool) Find(string) (*Conn, error) {
 	return nil, nil
 }
