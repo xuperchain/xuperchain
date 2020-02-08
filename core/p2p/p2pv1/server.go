@@ -77,6 +77,30 @@ func (p *P2PServerV1) Init(cfg config.P2PConfig, lg log.Logger, extra map[string
 	p.handlerMap = hm
 	p.connPool = cp
 	p.quitCh = make(chan bool, 1)
+
+	peerids := []string{}
+	hasPeerMap := map[string]bool{}
+
+	// connect to all static nodes
+	for _, peers := range cfg.StaticNodes {
+		for _, peer := range peers {
+			// peer address connected before
+			if _, ok := hasPeerMap[peer]; ok {
+				continue
+			}
+
+			conn, err := NewConn(lg, peer, cfg.CertPath, cfg.ServiceName, (int)(cfg.MaxMessageSize))
+			if err != nil {
+				p.log.Warn("p2p connect to peer failed", "peer", peer, "error", err)
+				continue
+			}
+			p.connPool.Add(conn)
+
+			hasPeerMap[peer] = true
+			peerids = append(peerids, peer)
+		}
+	}
+
 	go p.Start()
 	return nil
 }
@@ -276,8 +300,17 @@ func (p *P2PServerV1) getFilter(opts *p2p_base.MsgOptions) p2p_base.PeersFilter 
 
 // GetPeerUrls 查询所连接节点的信息
 func (p *P2PServerV1) GetPeerUrls() []string {
-	urls := []string{}
-	return urls
+	res := []string{}
+	conns, err := p.connPool.GetConns()
+	if err != nil {
+		p.log.Warn("p2p get peer urls failed", "error", err)
+		return res
+	}
+	for _, conn := range conns {
+		id := conn.GetConnID()
+		res = append(res, id)
+	}
+	return res
 }
 
 // SetCorePeers set core peers' info to P2P server
