@@ -12,7 +12,7 @@ import (
 	"plugin"
 	"sync"
 
-	"github.com/xuperchain/log15"
+	"github.com/xuperchain/xuperchain/core/common/log"
 )
 
 // PluginMgr defines the data struct of plugin manager
@@ -69,7 +69,6 @@ func (pm *PluginMgr) CreatePluginInstance(name string, subtype string) (pluginIn
 		pm.xlog.Warn("Invalid plugin subtype", "name", name, "subtype", subtype)
 		return nil, errors.New("Invalid plugin subtype")
 	}
-
 	return pm.loadOnePlugin(name, subtype)
 }
 

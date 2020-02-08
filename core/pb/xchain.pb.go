@@ -5722,6 +5722,155 @@ func (m *UtxoKey) GetAmount() string {
 	return ""
 }
 
+type ContractStatDataRequest struct {
+	Header               *Header  `protobuf:"bytes,1,opt,name=header,proto3" json:"header,omitempty"`
+	Bcname               string   `protobuf:"bytes,2,opt,name=bcname,proto3" json:"bcname,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *ContractStatDataRequest) Reset()         { *m = ContractStatDataRequest{} }
+func (m *ContractStatDataRequest) String() string { return proto.CompactTextString(m) }
+func (*ContractStatDataRequest) ProtoMessage()    {}
+func (*ContractStatDataRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_db0991b9525664ca, []int{86}
+}
+
+func (m *ContractStatDataRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ContractStatDataRequest.Unmarshal(m, b)
+}
+func (m *ContractStatDataRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ContractStatDataRequest.Marshal(b, m, deterministic)
+}
+func (m *ContractStatDataRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ContractStatDataRequest.Merge(m, src)
+}
+func (m *ContractStatDataRequest) XXX_Size() int {
+	return xxx_messageInfo_ContractStatDataRequest.Size(m)
+}
+func (m *ContractStatDataRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_ContractStatDataRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ContractStatDataRequest proto.InternalMessageInfo
+
+func (m *ContractStatDataRequest) GetHeader() *Header {
+	if m != nil {
+		return m.Header
+	}
+	return nil
+}
+
+func (m *ContractStatDataRequest) GetBcname() string {
+	if m != nil {
+		return m.Bcname
+	}
+	return ""
+}
+
+type ContractStatDataResponse struct {
+	Header               *Header           `protobuf:"bytes,1,opt,name=header,proto3" json:"header,omitempty"`
+	Bcname               string            `protobuf:"bytes,2,opt,name=bcname,proto3" json:"bcname,omitempty"`
+	Data                 *ContractStatData `protobuf:"bytes,3,opt,name=data,proto3" json:"data,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}          `json:"-"`
+	XXX_unrecognized     []byte            `json:"-"`
+	XXX_sizecache        int32             `json:"-"`
+}
+
+func (m *ContractStatDataResponse) Reset()         { *m = ContractStatDataResponse{} }
+func (m *ContractStatDataResponse) String() string { return proto.CompactTextString(m) }
+func (*ContractStatDataResponse) ProtoMessage()    {}
+func (*ContractStatDataResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_db0991b9525664ca, []int{87}
+}
+
+func (m *ContractStatDataResponse) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ContractStatDataResponse.Unmarshal(m, b)
+}
+func (m *ContractStatDataResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ContractStatDataResponse.Marshal(b, m, deterministic)
+}
+func (m *ContractStatDataResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ContractStatDataResponse.Merge(m, src)
+}
+func (m *ContractStatDataResponse) XXX_Size() int {
+	return xxx_messageInfo_ContractStatDataResponse.Size(m)
+}
+func (m *ContractStatDataResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_ContractStatDataResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ContractStatDataResponse proto.InternalMessageInfo
+
+func (m *ContractStatDataResponse) GetHeader() *Header {
+	if m != nil {
+		return m.Header
+	}
+	return nil
+}
+
+func (m *ContractStatDataResponse) GetBcname() string {
+	if m != nil {
+		return m.Bcname
+	}
+	return ""
+}
+
+func (m *ContractStatDataResponse) GetData() *ContractStatData {
+	if m != nil {
+		return m.Data
+	}
+	return nil
+}
+
+type ContractStatData struct {
+	AccountCount         int64    `protobuf:"varint,1,opt,name=accountCount,proto3" json:"accountCount,omitempty"`
+	ContractCount        int64    `protobuf:"varint,2,opt,name=contractCount,proto3" json:"contractCount,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *ContractStatData) Reset()         { *m = ContractStatData{} }
+func (m *ContractStatData) String() string { return proto.CompactTextString(m) }
+func (*ContractStatData) ProtoMessage()    {}
+func (*ContractStatData) Descriptor() ([]byte, []int) {
+	return fileDescriptor_db0991b9525664ca, []int{88}
+}
+
+func (m *ContractStatData) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ContractStatData.Unmarshal(m, b)
+}
+func (m *ContractStatData) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ContractStatData.Marshal(b, m, deterministic)
+}
+func (m *ContractStatData) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ContractStatData.Merge(m, src)
+}
+func (m *ContractStatData) XXX_Size() int {
+	return xxx_messageInfo_ContractStatData.Size(m)
+}
+func (m *ContractStatData) XXX_DiscardUnknown() {
+	xxx_messageInfo_ContractStatData.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_ContractStatData proto.InternalMessageInfo
+
+func (m *ContractStatData) GetAccountCount() int64 {
+	if m != nil {
+		return m.AccountCount
+	}
+	return 0
+}
+
+func (m *ContractStatData) GetContractCount() int64 {
+	if m != nil {
+		return m.ContractCount
+	}
+	return 0
+}
+
 func init() {
 	proto.RegisterEnum("pb.XChainErrorEnum", XChainErrorEnum_name, XChainErrorEnum_value)
 	proto.RegisterEnum("pb.TransactionStatus", TransactionStatus_name, TransactionStatus_value)
@@ -5821,6 +5970,9 @@ func init() {
 	proto.RegisterType((*UtxoRecordDetail)(nil), "pb.UtxoRecordDetail")
 	proto.RegisterType((*UtxoRecord)(nil), "pb.UtxoRecord")
 	proto.RegisterType((*UtxoKey)(nil), "pb.UtxoKey")
+	proto.RegisterType((*ContractStatDataRequest)(nil), "pb.ContractStatDataRequest")
+	proto.RegisterType((*ContractStatDataResponse)(nil), "pb.ContractStatDataResponse")
+	proto.RegisterType((*ContractStatData)(nil), "pb.ContractStatData")
 }
 
 func init() { proto.RegisterFile("xchain.proto", fileDescriptor_db0991b9525664ca) }
@@ -6186,6 +6338,7 @@ type XchainClient interface {
 	PostTx(ctx context.Context, in *TxStatus, opts ...grpc.CallOption) (*CommonReply, error)
 	QueryACL(ctx context.Context, in *AclStatus, opts ...grpc.CallOption) (*AclStatus, error)
 	QueryUtxoRecord(ctx context.Context, in *UtxoRecordDetail, opts ...grpc.CallOption) (*UtxoRecordDetail, error)
+	QueryContractStatData(ctx context.Context, in *ContractStatDataRequest, opts ...grpc.CallOption) (*ContractStatDataResponse, error)
 	GetAccountContracts(ctx context.Context, in *GetAccountContractsRequest, opts ...grpc.CallOption) (*GetAccountContractsResponse, error)
 	// QueryTx query Transaction by TxStatus,
 	// Bcname and Txid are required for this
@@ -6279,6 +6432,15 @@ func (c *xchainClient) QueryACL(ctx context.Context, in *AclStatus, opts ...grpc
 func (c *xchainClient) QueryUtxoRecord(ctx context.Context, in *UtxoRecordDetail, opts ...grpc.CallOption) (*UtxoRecordDetail, error) {
 	out := new(UtxoRecordDetail)
 	err := c.cc.Invoke(ctx, "/pb.Xchain/QueryUtxoRecord", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *xchainClient) QueryContractStatData(ctx context.Context, in *ContractStatDataRequest, opts ...grpc.CallOption) (*ContractStatDataResponse, error) {
+	out := new(ContractStatDataResponse)
+	err := c.cc.Invoke(ctx, "/pb.Xchain/QueryContractStatData", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -6509,6 +6671,7 @@ type XchainServer interface {
 	PostTx(context.Context, *TxStatus) (*CommonReply, error)
 	QueryACL(context.Context, *AclStatus) (*AclStatus, error)
 	QueryUtxoRecord(context.Context, *UtxoRecordDetail) (*UtxoRecordDetail, error)
+	QueryContractStatData(context.Context, *ContractStatDataRequest) (*ContractStatDataResponse, error)
 	GetAccountContracts(context.Context, *GetAccountContractsRequest) (*GetAccountContractsResponse, error)
 	// QueryTx query Transaction by TxStatus,
 	// Bcname and Txid are required for this
@@ -6636,6 +6799,24 @@ func _Xchain_QueryUtxoRecord_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(XchainServer).QueryUtxoRecord(ctx, req.(*UtxoRecordDetail))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Xchain_QueryContractStatData_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ContractStatDataRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(XchainServer).QueryContractStatData(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/pb.Xchain/QueryContractStatData",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(XchainServer).QueryContractStatData(ctx, req.(*ContractStatDataRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -7091,6 +7272,10 @@ var _Xchain_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "QueryUtxoRecord",
 			Handler:    _Xchain_QueryUtxoRecord_Handler,
+		},
+		{
+			MethodName: "QueryContractStatData",
+			Handler:    _Xchain_QueryContractStatData_Handler,
 		},
 		{
 			MethodName: "GetAccountContracts",

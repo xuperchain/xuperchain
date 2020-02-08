@@ -11,6 +11,7 @@ import (
 	"io/ioutil"
 	"path/filepath"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -36,8 +37,8 @@ import (
 	"github.com/xuperchain/xuperchain/core/global"
 	"github.com/xuperchain/xuperchain/core/kv/kvdb"
 	"github.com/xuperchain/xuperchain/core/ledger"
-	"github.com/xuperchain/xuperchain/core/p2pv2"
-	xuper_p2p "github.com/xuperchain/xuperchain/core/p2pv2/pb"
+	p2p_base "github.com/xuperchain/xuperchain/core/p2p/base"
+	xuper_p2p "github.com/xuperchain/xuperchain/core/p2p/pb"
 	"github.com/xuperchain/xuperchain/core/pb"
 	"github.com/xuperchain/xuperchain/core/utxo"
 )
@@ -87,7 +88,7 @@ type XChainCore struct {
 	con          *consensus.PluggableConsensus
 	Ledger       *ledger.Ledger
 	Utxovm       *utxo.UtxoVM
-	P2pv2        p2pv2.P2PServer
+	P2pSvr       p2p_base.P2PServer
 	bcname       string
 	log          log.Logger
 	status       int
@@ -132,7 +133,7 @@ func (xc *XChainCore) Status() int {
 
 // Init init the chain
 func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfig,
-	p2p p2pv2.P2PServer, ker *kernel.Kernel, nodeMode string, eventService *event.EventService) error {
+	p2p p2p_base.P2PServer, ker *kernel.Kernel, nodeMode string eventService *event.EventService) error {
 
 	// 设置全局随机数发生器的原始种子
 	err := global.SetSeed()
@@ -148,7 +149,7 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	xc.status = global.SafeModel
 	xc.bcname = bcname
 	xc.log = xlog
-	xc.P2pv2 = p2p
+	xc.P2pSvr = p2p
 	xc.nodeMode = nodeMode
 	xc.stopFlag = false
 	xc.coreConnection = cfg.CoreConnection
@@ -215,12 +216,13 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	}
 
 	// write to p2p
-	xchainAddrInfo := &p2pv2.XchainAddrInfo{
+	xchainAddrInfo := &p2p_base.XchainAddrInfo{
 		Addr:   string(addr),
 		Pubkey: pub,
 		Prikey: pri,
 	}
-	xc.P2pv2.SetXchainAddr(xc.bcname, xchainAddrInfo)
+	xc.log.Debug("+++++++setbefore", "P2PSvr", xc.P2pSvr, "xchainAddrInfo", xchainAddrInfo)
+	xc.P2pSvr.SetXchainAddr(xc.bcname, xchainAddrInfo)
 
 	xc.Ledger, err = ledger.NewLedger(datapath, xc.log, datapathOthers, kvEngineType, cryptoType)
 	if err != nil {
@@ -338,18 +340,18 @@ func (xc *XChainCore) repostOfflineTx() {
 		}
 		xc.log.Debug("repost batch tx list", "size", len(batchTxMsg.Txs))
 		msgInfo, _ := proto.Marshal(batchTxMsg)
-		msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, xc.bcname, header.GetLogid(), xuper_p2p.XuperMessage_BATCHPOSTTX, msgInfo, xuper_p2p.XuperMessage_SUCCESS)
+		msg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion1, xc.bcname, header.GetLogid(), xuper_p2p.XuperMessage_BATCHPOSTTX, msgInfo, xuper_p2p.XuperMessage_SUCCESS)
 
-		filters := []p2pv2.FilterStrategy{p2pv2.DefaultStrategy}
+		filters := []p2p_base.FilterStrategy{p2p_base.DefaultStrategy}
 		if xc.NeedCoreConnection() {
-			filters = append(filters, p2pv2.CorePeersStrategy)
+			filters = append(filters, p2p_base.CorePeersStrategy)
 		}
-		opts := []p2pv2.MessageOption{
-			p2pv2.WithFilters(filters),
-			p2pv2.WithBcName(xc.bcname),
-			p2pv2.WithCompress(xc.enableCompress),
+		opts := []p2p_base.MessageOption{
+			p2p_base.WithFilters(filters),
+			p2p_base.WithBcName(xc.bcname),
+			p2p_base.WithCompress(xc.enableCompress),
 		}
-		go xc.P2pv2.SendMessage(context.Background(), msg, opts...) //p2p广播出去
+		go xc.P2pSvr.SendMessage(context.Background(), msg, opts...) //p2p广播出去
 	}
 }
 
@@ -683,6 +685,10 @@ func (xc *XChainCore) doMiner() {
 		xc.log.Info("[Minning] ConfirmBlock Success", "logid", header.Logid, "Height", meta.TrunkHeight+1)
 	} else {
 		xc.log.Warn("[Minning] ConfirmBlock Fail", "logid", header.Logid, "confirm_status", confirmStatus)
+		err := xc.Utxovm.Walk(xc.Utxovm.GetLatestBlockid(), false)
+		if err != nil {
+			xc.log.Warn("[Mining] failed to walk when confirming block has error", "err", err)
+		}
 		return
 	}
 	xc.mutex.Unlock() //后面放开锁
@@ -716,31 +722,31 @@ func (xc *XChainCore) doMiner() {
 		if xc.blockBroadcaseMode == 1 {
 			// send block id in Interactive_BroadCast_Mode
 			msgInfo, _ := proto.Marshal(block)
-			msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, xc.bcname, "", xuper_p2p.XuperMessage_NEW_BLOCKID, msgInfo, xuper_p2p.XuperMessage_NONE)
-			filters := []p2pv2.FilterStrategy{p2pv2.DefaultStrategy}
+			msg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion1, xc.bcname, "", xuper_p2p.XuperMessage_NEW_BLOCKID, msgInfo, xuper_p2p.XuperMessage_NONE)
+			filters := []p2p_base.FilterStrategy{p2p_base.DefaultStrategy}
 			if xc.NeedCoreConnection() {
-				filters = append(filters, p2pv2.CorePeersStrategy)
+				filters = append(filters, p2p_base.CorePeersStrategy)
 			}
-			opts := []p2pv2.MessageOption{
-				p2pv2.WithFilters(filters),
-				p2pv2.WithBcName(xc.bcname),
+			opts := []p2p_base.MessageOption{
+				p2p_base.WithFilters(filters),
+				p2p_base.WithBcName(xc.bcname),
 			}
-			xc.P2pv2.SendMessage(context.Background(), msg, opts...)
+			xc.P2pSvr.SendMessage(context.Background(), msg, opts...)
 		} else {
 			// send full block in Full_BroadCast_Mode or Mixed_Broadcast_Mode
 			block.Block = freshBlock
 			msgInfo, _ := proto.Marshal(block)
-			msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, xc.bcname, "", xuper_p2p.XuperMessage_SENDBLOCK, msgInfo, xuper_p2p.XuperMessage_NONE)
-			filters := []p2pv2.FilterStrategy{p2pv2.DefaultStrategy}
+			msg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion1, xc.bcname, "", xuper_p2p.XuperMessage_SENDBLOCK, msgInfo, xuper_p2p.XuperMessage_NONE)
+			filters := []p2p_base.FilterStrategy{p2p_base.DefaultStrategy}
 			if xc.NeedCoreConnection() {
-				filters = append(filters, p2pv2.CorePeersStrategy)
+				filters = append(filters, p2p_base.CorePeersStrategy)
 			}
-			opts := []p2pv2.MessageOption{
-				p2pv2.WithFilters(filters),
-				p2pv2.WithBcName(xc.bcname),
-				p2pv2.WithCompress(xc.enableCompress),
+			opts := []p2p_base.MessageOption{
+				p2p_base.WithFilters(filters),
+				p2p_base.WithBcName(xc.bcname),
+				p2p_base.WithCompress(xc.enableCompress),
 			}
-			xc.P2pv2.SendMessage(context.Background(), msg, opts...)
+			xc.P2pSvr.SendMessage(context.Background(), msg, opts...)
 		}
 	}()
 
@@ -789,7 +795,8 @@ func (xc *XChainCore) Miner() int {
 			xc.pruneOption.Switch = false
 			xc.SyncBlocks()
 			// 裁剪账本可能需要时间，做完之后直接返回
-			continue
+			syscall.Kill(syscall.Getpid(), syscall.SIGINT)
+			return -1
 		}
 		b, s := xc.con.CompeteMaster(xc.Ledger.GetMeta().TrunkHeight + 1)
 		xc.log.Debug("competemaster", "blockchain", xc.bcname, "master", b, "needSync", s)
@@ -1084,6 +1091,25 @@ func (xc *XChainCore) QueryAccountACL(accountName string) (*pb.Acl, bool, error)
 		return nil, false, err
 	}
 	return acl, confirmed, nil
+}
+
+func (xc *XChainCore) QueryContractStatData() (*pb.ContractStatDataResponse, error) {
+	contractStatDataResponse := &pb.ContractStatDataResponse{
+		Header: global.GHeader(),
+		Bcname: xc.bcname,
+	}
+
+	if xc.Status() != global.Normal {
+		return contractStatDataResponse, ErrNotReady
+	}
+
+	contractStatData, contractStatDataErr := xc.Utxovm.QueryContractStatData()
+	if contractStatDataErr != nil {
+		return contractStatDataResponse, contractStatDataErr
+	}
+
+	contractStatDataResponse.Data = contractStatData
+	return contractStatDataResponse, nil
 }
 
 // QueryUtxoRecord get utxo record for an account

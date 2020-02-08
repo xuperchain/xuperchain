@@ -5,22 +5,22 @@ import (
 	"io/ioutil"
 	"sync"
 
-	"github.com/xuperchain/log15"
+	log "github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperchain/core/common/config"
 	"github.com/xuperchain/xuperchain/core/common/events"
 	"github.com/xuperchain/xuperchain/core/common/probe"
 	"github.com/xuperchain/xuperchain/core/contract/kernel"
 	"github.com/xuperchain/xuperchain/core/event"
-	"github.com/xuperchain/xuperchain/core/p2pv2"
-	xuper_p2p "github.com/xuperchain/xuperchain/core/p2pv2/pb"
+	p2p_base "github.com/xuperchain/xuperchain/core/p2p/base"
+	xuper_p2p "github.com/xuperchain/xuperchain/core/p2p/pb"
 	pm "github.com/xuperchain/xuperchain/core/pluginmgr"
 )
 
 // XChainMG manage all chains
 type XChainMG struct {
-	Log   log.Logger
-	Cfg   *config.NodeConfig
-	P2pv2 p2pv2.P2PServer
+	Log    log.Logger
+	Cfg    *config.NodeConfig
+	P2pSvr p2p_base.P2PServer
 	// msgChan is the message subscribe from net
 	msgChan    chan *xuper_p2p.XuperMessage
 	chains     *sync.Map
@@ -38,13 +38,13 @@ type XChainMG struct {
 
 // Init init instance of XChainMG
 func (xm *XChainMG) Init(log log.Logger, cfg *config.NodeConfig,
-	p2pV2 p2pv2.P2PServer) error {
+	p2pV2 p2p_base.P2PServer) error {
 	xm.Log = log
 	xm.chains = new(sync.Map)
 	xm.datapath = cfg.Datapath
 	xm.Cfg = cfg
-	xm.P2pv2 = p2pV2
-	xm.msgChan = make(chan *xuper_p2p.XuperMessage, p2pv2.MsgChanSize)
+	xm.P2pSvr = p2pV2
+	xm.msgChan = make(chan *xuper_p2p.XuperMessage, 50000)
 
 	xm.Speed = probe.NewSpeedCalc("sum")
 	xm.Quit = make(chan struct{})
@@ -144,8 +144,8 @@ func (xm *XChainMG) Stop() {
 		xc.Stop()
 		return true
 	})
-	if xm.P2pv2 != nil {
-		xm.P2pv2.Stop()
+	if xm.P2pSvr != nil {
+		xm.P2pSvr.Stop()
 	}
 }
 
@@ -169,6 +169,7 @@ func (xm *XChainMG) addBlockChain(name string) (*XChainCore, error) {
 		aKernel = &kernel.Kernel{}
 		aKernel.Init(xm.datapath, xm.Log, xm, name)
 	}
+
 	err := x.Init(name, xm.Log, xm.Cfg, xm.P2pv2, aKernel, xm.nodeMode, xm.EventService)
 	if err != nil {
 		xm.Log.Warn("XChainCore init error")
