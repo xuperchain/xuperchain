@@ -192,10 +192,13 @@ func (p *P2PServerV1) startServer() {
 	certPool := x509.NewCertPool()
 	ok := certPool.AppendCertsFromPEM(bs)
 	if !ok {
-		panic(err)
+		panic(errors.New("AppendCertsFromPEM error"))
 	}
 
 	certificate, err := tls.LoadX509KeyPair(certPath+"/cert.pem", certPath+"/private.key")
+	if err != nil {
+		panic(err)
+	}
 	creds := credentials.NewTLS(
 		&tls.Config{
 			ServerName:   p.config.ServiceName,
