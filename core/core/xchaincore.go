@@ -133,7 +133,7 @@ func (xc *XChainCore) Status() int {
 
 // Init init the chain
 func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfig,
-	p2p p2p_base.P2PServer, ker *kernel.Kernel, nodeMode string eventService *event.EventService) error {
+	p2p p2p_base.P2PServer, ker *kernel.Kernel, nodeMode string, eventService *event.EventService) error {
 
 	// 设置全局随机数发生器的原始种子
 	err := global.SetSeed()
