@@ -1,20 +1,20 @@
-package p2pv2
+package base
 
 import (
 	"testing"
 
-	"github.com/xuperchain/xuperchain/core/p2pv2/pb"
+	xuperp2p "github.com/xuperchain/xuperchain/core/p2p/pb"
 )
 
 func TestNewSubscriber(t *testing.T) {
-	ms := newMultiSubscriber()
+	ms := NewMultiSubscriber()
 	resch := make(chan *xuperp2p.XuperMessage, 1)
-	sub := NewSubscriber(resch, xuperp2p.XuperMessage_PING, nil, "")
-	sub, _ = ms.register(sub)
+	sub := NewMockSubscriber(resch, xuperp2p.XuperMessage_PING, nil, "")
+	newsub, _ := ms.register(sub)
 	if ms.elem.Len() != 1 {
 		t.Error("register sub error")
 	}
-	ms.unRegister(sub)
+	ms.unRegister(newsub)
 	if ms.elem.Len() != 0 {
 		t.Error("unRegister sub error")
 	}

@@ -10,7 +10,7 @@ import (
 	"github.com/xuperchain/xuperchain/core/consensus/common/chainedbft/external"
 	"github.com/xuperchain/xuperchain/core/consensus/common/chainedbft/smr"
 	crypto_base "github.com/xuperchain/xuperchain/core/crypto/client/base"
-	"github.com/xuperchain/xuperchain/core/p2pv2"
+	p2p_base "github.com/xuperchain/xuperchain/core/p2p/base"
 	"github.com/xuperchain/xuperchain/core/pb"
 )
 
@@ -33,7 +33,7 @@ func NewChainedBft(
 	validates []*cons_base.CandidateInfo,
 	externalCons external.ExternalInterface,
 	cryptoClient crypto_base.CryptoClient,
-	p2p p2pv2.P2PServer,
+	p2p p2p_base.P2PServer,
 	proposalQC, generateQC, lockedQC *pb.QuorumCert) (*ChainedBft, error) {
 
 	// set up smr

@@ -1,30 +1,28 @@
-package p2pv2
+package base
 
 import (
 	"context"
 
-	p2pPb "github.com/xuperchain/xuperchain/core/p2pv2/pb"
-)
+	log "github.com/xuperchain/log15"
 
-// CorePeersInfo defines the peers' info for core nodes
-// By setting this info, we can keep some core peers always connected directly
-// It's useful for keeping DPoS key network security and for some BFT-like consensus
-type CorePeersInfo struct {
-	Name           string   // distinguished name of the node routing
-	CurrentTermNum int64    // the current term number
-	CurrentPeerIDs []string // current core peer IDs
-	NextPeerIDs    []string // upcoming core peer IDs
-}
+	"github.com/xuperchain/xuperchain/core/common/config"
+	p2pPb "github.com/xuperchain/xuperchain/core/p2p/pb"
+)
 
 // P2PServer is the p2p server interface of Xuper
 type P2PServer interface {
 	Start()
 	Stop()
 
+	// Initialize the p2p server with given config
+	Init(cfg config.P2PConfig, log log.Logger, extra map[string]interface{}) error
+
+	// NewSubscriber create a subscriber instance
+	NewSubscriber(chan *p2pPb.XuperMessage, p2pPb.XuperMessage_MessageType, XuperHandler, string) Subscriber
 	// 注册订阅者，支持多个用户订阅同一类消息
-	Register(sub *Subscriber) (*Subscriber, error)
+	Register(sub Subscriber) (Subscriber, error)
 	// 注销订阅者，需要根据当时注册时返回的Subscriber实例删除
-	UnRegister(sub *Subscriber) error
+	UnRegister(sub Subscriber) error
 
 	SendMessage(context.Context, *p2pPb.XuperMessage, ...MessageOption) error
 

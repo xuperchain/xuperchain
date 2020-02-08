@@ -12,7 +12,7 @@ import (
 	"github.com/xuperchain/xuperchain/core/contract"
 	crypto_base "github.com/xuperchain/xuperchain/core/crypto/client/base"
 	"github.com/xuperchain/xuperchain/core/ledger"
-	"github.com/xuperchain/xuperchain/core/p2pv2"
+	p2p_base "github.com/xuperchain/xuperchain/core/p2p/base"
 	"github.com/xuperchain/xuperchain/core/utxo"
 )
 
@@ -77,7 +77,7 @@ type TDpos struct {
 	mutex   *sync.RWMutex
 	// BFT module
 	bftPaceMaker *bft.DPoSPaceMaker
-	p2psvr       p2pv2.P2PServer
+	p2psvr       p2p_base.P2PServer
 }
 
 // tdpos 共识机制的配置

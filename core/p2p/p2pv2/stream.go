@@ -10,11 +10,12 @@ import (
 
 	ggio "github.com/gogo/protobuf/io"
 	"github.com/golang/protobuf/proto"
-	"github.com/libp2p/go-libp2p-net"
-	"github.com/libp2p/go-libp2p-peer"
+	net "github.com/libp2p/go-libp2p-net"
+	peer "github.com/libp2p/go-libp2p-peer"
 	ma "github.com/multiformats/go-multiaddr"
 
-	p2pPb "github.com/xuperchain/xuperchain/core/p2pv2/pb"
+	p2p_base "github.com/xuperchain/xuperchain/core/p2p/base"
+	p2pPb "github.com/xuperchain/xuperchain/core/p2p/pb"
 	"github.com/xuperchain/xuperchain/core/pb"
 )
 
@@ -134,7 +135,7 @@ func (s *Stream) handlerNewMessage(msg *p2pPb.XuperMessage) error {
 
 // getRPCPort 刚建立链接的时候获取对方的GPRC端口
 func (s *Stream) getRPCPort() {
-	msg, err := p2pPb.NewXuperMessage(p2pPb.XuperMsgVersion2, "", "", p2pPb.XuperMessage_GET_RPC_PORT, []byte{}, p2pPb.XuperMessage_NONE)
+	msg, err := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, "", "", p2pPb.XuperMessage_GET_RPC_PORT, []byte{}, p2pPb.XuperMessage_NONE)
 	if err != nil {
 		return
 	}
@@ -163,7 +164,7 @@ func (s *Stream) writeData(msg *p2pPb.XuperMessage) error {
 	}
 	s.lk.Lock()
 	defer s.lk.Unlock()
-	msg.Header.From = s.node.NodeID().Pretty()
+	msg.Header.From = s.node.NodeID()
 	if err := s.wc.WriteMsg(msg); err != nil {
 		s.resetLockFree()
 		return err
@@ -177,19 +178,19 @@ func (s *Stream) SendMessageWithResponse(ctx context.Context, msg *p2pPb.XuperMe
 	//  todo: zq 外层的这个循环是为了将来加重试
 	for {
 		// 注册临时的消息订阅着
-		resType := p2pPb.GetResMsgType(msg.GetHeader().GetType())
+		resType := p2p_base.GetResMsgType(msg.GetHeader().GetType())
 		resCh := make(chan *p2pPb.XuperMessage, 100)
 		responseCh := make(chan *p2pPb.XuperMessage, 1)
 		errCh := make(chan error, 1)
-		sub := NewSubscriber(resCh, resType, nil, s.p.Pretty())
-		sub, err := s.node.srv.Register(sub)
+		sub := NewMsgSubscriber(resCh, resType, nil, s.p.Pretty())
+		newsub, err := s.node.srv.Register(sub)
 		if err != nil {
 			s.node.log.Trace("sendMessageWithResponse register error", "error", err)
 			return nil, err
 		}
 
 		// 程序结束需要注销该订阅者
-		defer s.node.srv.UnRegister(sub)
+		defer s.node.srv.UnRegister(newsub)
 		go func() {
 			res, err := s.ctxWaitRes(ctx, msg, resCh)
 			if res != nil {
@@ -229,7 +230,7 @@ func (s *Stream) ctxWaitRes(ctx context.Context, msg *p2pPb.XuperMessage, resCh 
 		case <-t.C:
 			return nil, ErrTimeout
 		case res := <-resCh:
-			if p2pPb.VerifyMsgMatch(msg, res, s.p.Pretty()) {
+			if p2p_base.VerifyMsgMatch(msg, res, s.p.Pretty()) {
 				s.node.log.Trace("ctxWaitRes get res done", "type", res.GetHeader().GetType(), "logid", res.GetHeader().GetLogid(), "checksum", res.GetHeader().GetDataCheckSum(), "res.from", res.GetHeader().GetFrom(), "pid", s.p.Pretty())
 				return res, nil
 			}
@@ -243,7 +244,7 @@ func (s *Stream) ctxWaitRes(ctx context.Context, msg *p2pPb.XuperMessage, resCh 
 func (s *Stream) Authenticate() error {
 	authRequests := []*pb.IdentityAuth{}
 	for _, v := range s.node.addrs {
-		authRequest, err := GetAuthRequest(v)
+		authRequest, err := p2p_base.GetAuthRequest(v)
 		if err != nil {
 			s.node.log.Warn("Authenticate GetAuthRequest error", "error", err)
 		}
@@ -260,7 +261,7 @@ func (s *Stream) Authenticate() error {
 		s.node.log.Warn("Authenticate Marshal msg error", "error", err)
 	}
 
-	msg, err := p2pPb.NewXuperMessage(p2pPb.XuperMsgVersion2, "", "",
+	msg, err := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, "", "",
 		p2pPb.XuperMessage_GET_AUTHENTICATION, msgbuf, p2pPb.XuperMessage_NONE)
 
 	go func(s *Stream, msg *p2pPb.XuperMessage) {

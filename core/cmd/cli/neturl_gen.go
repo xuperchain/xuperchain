@@ -9,7 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/xuperchain/xuperchain/core/p2pv2"
+	p2p_base "github.com/xuperchain/xuperchain/core/p2p/base"
 )
 
 // NetURLGenCommand neturl gen cmd
@@ -39,5 +39,5 @@ func (n *NetURLGenCommand) addFlags() {
 }
 
 func (n *NetURLGenCommand) genNetURL(ctx context.Context) error {
-	return p2pv2.GenerateKeyPairWithPath(n.path)
+	return p2p_base.GenerateKeyPairWithPath(n.path)
 }

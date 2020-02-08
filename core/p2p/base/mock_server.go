@@ -1,14 +1,22 @@
-package p2pv2
+package base
 
 import (
 	"context"
 
-	p2pPb "github.com/xuperchain/xuperchain/core/p2pv2/pb"
+	log "github.com/xuperchain/log15"
+
+	"github.com/xuperchain/xuperchain/core/common/config"
+	p2pPb "github.com/xuperchain/xuperchain/core/p2p/pb"
 )
 
 // MockP2pServer is mock struct of P2PServer interface
 // Used in unit tests
 type MockP2pServer struct {
+}
+
+// Init initialize the Mock p2p server
+func (mp *MockP2pServer) Init(cfg config.P2PConfig, lg log.Logger, extra map[string]interface{}) error {
+	return nil
 }
 
 // Start implements the start interface
@@ -21,13 +29,18 @@ func (mp *MockP2pServer) Stop() {
 
 }
 
+// NewSubscriber create a subscriber instance
+func (mp *MockP2pServer) NewSubscriber(chan *p2pPb.XuperMessage, p2pPb.XuperMessage_MessageType, XuperHandler, string) Subscriber {
+	return nil
+}
+
 // Register implements the Register interface
-func (mp *MockP2pServer) Register(sub *Subscriber) (*Subscriber, error) {
+func (mp *MockP2pServer) Register(sub Subscriber) (Subscriber, error) {
 	return nil, nil
 }
 
 // UnRegister implements the UnRegister interface
-func (mp *MockP2pServer) UnRegister(sub *Subscriber) error {
+func (mp *MockP2pServer) UnRegister(sub Subscriber) error {
 	return nil
 }
 
