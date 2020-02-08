@@ -27,13 +27,19 @@ public:
         ctx->ok("initialize success");
     }
     void storeFileInfo() {
-        xchain::Context* ctx = this->context();
+        xchain::Context* ctx = this->context();    
         std::string user_id = ctx->arg("user_id");
         std::string hash_id = ctx->arg("hash_id");
         std::string file_name = ctx->arg("file_name");
         const std::string userKey = UserBucket + "/" + user_id + "/" + hash_id;
+        const std::string hashKey = HashBucket + "/" + hash_id;
         std::string value = user_id + "\t" + hash_id + "\t" + file_name;
-        if (ctx->put_object(userKey, value)) {
+        std::string tempVal;
+        if (ctx->get_object(hashKey, &tempVal)) {
+            ctx->error("storeFileInfo failed, such hash has existed already");
+            return;
+        }
+        if (ctx->put_object(userKey, value) && ctx->put_object(hashKey, value)) {
             ctx->ok("storeFileInfo success");
             return;
         }
@@ -59,7 +65,6 @@ public:
         const std::string key = UserBucket + "/" + ctx->arg("user_id");
         std::unique_ptr<xchain::Iterator> iter = ctx->new_iterator(key, key + "～");
         std::string result;
-        do {
         while (iter->next()) {
             std::pair<std::string, std::string> res;
             iter->get(&res);
@@ -70,7 +75,7 @@ public:
     void queryFileInfoByHash() {
         xchain::Context* ctx = this->context();
         
-        const std::string key = HashBucket + "/" + ctx->arg("user_id") + "/" + ctx->arg("hash_id");
+        const std::string key = HashBucket + "/" + ctx->arg("hash_id");
         std::string value;
         bool ret = ctx->get_object(key, &value);
         if (ret) {
