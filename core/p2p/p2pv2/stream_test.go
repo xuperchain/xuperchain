@@ -17,7 +17,8 @@ import (
 	ma "github.com/multiformats/go-multiaddr"
 	log "github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperchain/core/common/config"
-	xuperp2p "github.com/xuperchain/xuperchain/core/p2pv2/pb"
+	p2p_base "github.com/xuperchain/xuperchain/core/p2p/base"
+	xuperp2p "github.com/xuperchain/xuperchain/core/p2p/pb"
 )
 
 var fullPath string
@@ -30,7 +31,7 @@ func handleStream(s net.Stream) {
 	fmt.Println("Got a new stream")
 	cfg := config.P2PConfig{
 		Port:            20015,
-		KeyPath:         "../data/netkeys/",
+		KeyPath:         "./data/netkeys/",
 		IsNat:           true,
 		IsSecure:        true,
 		IsHidden:        false,
@@ -44,7 +45,11 @@ func handleStream(s net.Stream) {
 			node.Stop()
 		}
 	}()
-	handleMap, _ := NewHandlerMap(lg)
+	if err1 != nil {
+		fmt.Println("create node failed, err=", err1)
+		return
+	}
+	handleMap, _ := p2p_base.NewHandlerMap(lg)
 	srv := &P2PServerV2{
 		config:     cfg,
 		handlerMap: handleMap,

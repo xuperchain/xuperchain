@@ -17,7 +17,7 @@ import (
 	"github.com/xuperchain/xuperchain/core/common/config"
 	"github.com/xuperchain/xuperchain/core/common/log"
 	xchaincore "github.com/xuperchain/xuperchain/core/core"
-	"github.com/xuperchain/xuperchain/core/p2pv2"
+	p2p_factory "github.com/xuperchain/xuperchain/core/p2p/factory"
 	"github.com/xuperchain/xuperchain/core/server"
 )
 
@@ -49,14 +49,14 @@ func Start(cfg *config.NodeConfig) error {
 	signal.Notify(sigc, os.Interrupt, syscall.SIGTERM)
 	defer signal.Stop(sigc)
 
-	// Init p2pv2
-	p2pV2Serv, err := p2pv2.NewP2PServerV2(cfg.P2pV2, xlog)
+	// Init p2p server
+	p2pServ, err := p2p_factory.GetP2PServer(cfg.P2p.Module, cfg.P2p, xlog, nil)
 	if err != nil {
 		panic(err)
 	}
 
 	xcmg := xchaincore.XChainMG{}
-	if err = xcmg.Init(xlog, cfg, p2pV2Serv); err != nil {
+	if err = xcmg.Init(xlog, cfg, p2pServ); err != nil {
 		panic(err)
 	}
 

@@ -1,11 +1,11 @@
-package p2pv2
+package base
 
 import (
 	"io/ioutil"
 	"os"
 	"testing"
 
-	"github.com/libp2p/go-libp2p-peer"
+	peer "github.com/libp2p/go-libp2p-peer"
 )
 
 const Address1 = "dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN"

@@ -12,7 +12,8 @@ import (
 	log "github.com/xuperchain/log15"
 
 	"github.com/xuperchain/xuperchain/core/common/config"
-	p2pPb "github.com/xuperchain/xuperchain/core/p2pv2/pb"
+	p2p_base "github.com/xuperchain/xuperchain/core/p2p/base"
+	p2pPb "github.com/xuperchain/xuperchain/core/p2p/pb"
 )
 
 // define errors
@@ -22,19 +23,26 @@ var (
 	ErrCreateHandlerMap = errors.New("create handlerMap error")
 )
 
+// make sure p2pv2 implemented the P2PServer interface
+var _ p2p_base.P2PServer = (*P2PServerV2)(nil)
+
 // P2PServerV2 is the v2 of XuperChain p2p server. An implement of P2PServer interface.
 type P2PServerV2 struct {
 	log log.Logger
 	// config is the p2p v2 设置
 	config     config.P2PConfig
 	node       *Node
-	handlerMap *HandlerMap
+	handlerMap *p2p_base.HandlerMap
 	quitCh     chan bool
 }
 
 // NewP2PServerV2 create P2PServerV2 instance
-func NewP2PServerV2(cfg config.P2PConfig, lg log.Logger) (*P2PServerV2, error) {
+func NewP2PServerV2() *P2PServerV2 {
+	return &P2PServerV2{}
+}
 
+// Init initialize p2p server using given config
+func (p *P2PServerV2) Init(cfg config.P2PConfig, lg log.Logger, extra map[string]interface{}) error {
 	if lg == nil {
 		lg = log.New("module", "p2pv2")
 		lg.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
@@ -43,31 +51,30 @@ func NewP2PServerV2(cfg config.P2PConfig, lg log.Logger) (*P2PServerV2, error) {
 	no, err := NewNode(cfg, lg)
 	if err != nil {
 		lg.Trace("NewP2PServerV2 create node error", "error", err)
-		return nil, ErrCreateNode
+		return ErrCreateNode
 	}
 
-	hm, err := NewHandlerMap(lg)
+	hm, err := p2p_base.NewHandlerMap(lg)
 	if err != nil {
 		lg.Trace("NewP2PServerV2 new handler map error", "errors", err)
-		return nil, ErrCreateHandlerMap
+		return ErrCreateHandlerMap
 	}
 
-	p2pSrv := &P2PServerV2{
-		log:        lg,
-		config:     cfg,
-		node:       no,
-		handlerMap: hm,
-		quitCh:     make(chan bool, 1),
+	// set p2p server members
+	p.log = lg
+	p.config = cfg
+	p.node = no
+	p.handlerMap = hm
+	p.quitCh = make(chan bool, 1)
+
+	no.SetServer(p)
+
+	if err := p.registerSubscriber(); err != nil {
+		return err
 	}
 
-	no.SetServer(p2pSrv)
-
-	if err := p2pSrv.registerSubscriber(); err != nil {
-		return nil, err
-	}
-
-	go p2pSrv.Start()
-	return p2pSrv, nil
+	go p.Start()
+	return nil
 }
 
 // Start start P2P server V2
@@ -88,14 +95,14 @@ func (p *P2PServerV2) Start() {
 // Stop stop P2P server V2
 func (p *P2PServerV2) Stop() {
 	p.log.Info("Stop p2pv2 server!")
-	p.node.quitCh <- true
-	p.handlerMap.quitCh <- true
+	p.node.Stop()
+	p.handlerMap.Stop()
 }
 
 // SendMessage send message to peers using given filter strategy
 func (p *P2PServerV2) SendMessage(ctx context.Context, msg *p2pPb.XuperMessage,
-	opts ...MessageOption) error {
-	msgOpts := getMessageOption(opts)
+	opts ...p2p_base.MessageOption) error {
+	msgOpts := p2p_base.GetMessageOption(opts)
 	filter := p.getFilter(msgOpts)
 	peers, _ := filter.Filter()
 	// 是否需要经过压缩,针对由本节点产生的消息以及grpc获取的信息
@@ -105,33 +112,38 @@ func (p *P2PServerV2) SendMessage(ctx context.Context, msg *p2pPb.XuperMessage,
 		enableCompress := msg.Header.EnableCompress
 		// msg原本没有被压缩
 		if !enableCompress {
-			msg = p2pPb.Compress(msg)
+			msg = p2p_base.Compress(msg)
 		}
 	}
 	p.log.Trace("Server SendMessage", "logid", msg.GetHeader().GetLogid(), "msgType", msg.GetHeader().GetType(), "checksum", msg.GetHeader().GetDataCheckSum())
-	return p.node.SendMessage(ctx, msg, peers)
+	return p.node.SendMessage(ctx, msg, peers.([]peer.ID))
 }
 
 // SendMessageWithResponse send message to peers using given filter strategy, expect response from peers
 // 客户端再使用该方法请求带返回的消息时，最好带上log_id, 否则会导致收消息时收到不匹配的消息而影响后续的处理
 func (p *P2PServerV2) SendMessageWithResponse(ctx context.Context, msg *p2pPb.XuperMessage,
-	opts ...MessageOption) ([]*p2pPb.XuperMessage, error) {
-	msgOpts := getMessageOption(opts)
+	opts ...p2p_base.MessageOption) ([]*p2pPb.XuperMessage, error) {
+	msgOpts := p2p_base.GetMessageOption(opts)
 	filter := p.getFilter(msgOpts)
 	peers, _ := filter.Filter()
-	percentage := msgOpts.percentage
+	percentage := msgOpts.Percentage
 	p.log.Trace("Server SendMessage with response", "logid", msg.GetHeader().GetLogid(),
 		"msgType", msg.GetHeader().GetType(), "checksum", msg.GetHeader().GetDataCheckSum(), "peers", peers)
-	return p.node.SendMessageWithResponse(ctx, msg, peers, percentage)
+	return p.node.SendMessageWithResponse(ctx, msg, peers.([]peer.ID), percentage)
+}
+
+// NewSubscriber create a subscriber instance
+func (p *P2PServerV2) NewSubscriber(msgCh chan *p2pPb.XuperMessage, msgType p2pPb.XuperMessage_MessageType, handler p2p_base.XuperHandler, msgFrom string) p2p_base.Subscriber {
+	return NewMsgSubscriber(msgCh, msgType, handler, msgFrom)
 }
 
 // Register register message subscribers to handle messages
-func (p *P2PServerV2) Register(sub *Subscriber) (*Subscriber, error) {
+func (p *P2PServerV2) Register(sub p2p_base.Subscriber) (p2p_base.Subscriber, error) {
 	return p.handlerMap.Register(sub)
 }
 
 // UnRegister remove message subscribers
-func (p *P2PServerV2) UnRegister(sub *Subscriber) error {
+func (p *P2PServerV2) UnRegister(sub p2p_base.Subscriber) error {
 	return p.handlerMap.UnRegister(sub)
 }
 
@@ -141,37 +153,37 @@ func (p *P2PServerV2) GetNetURL() string {
 	return fmt.Sprintf("/ip4/127.0.0.1/tcp/%v/p2p/%s", p.config.Port, p.node.id.Pretty())
 }
 
-func (p *P2PServerV2) getCompress(opts *msgOptions) bool {
+func (p *P2PServerV2) getCompress(opts *p2p_base.MsgOptions) bool {
 	if opts == nil {
 		return false
 	}
-	return opts.compress
+	return opts.Compress
 }
 
-func (p *P2PServerV2) getFilter(opts *msgOptions) PeersFilter {
+func (p *P2PServerV2) getFilter(opts *p2p_base.MsgOptions) p2p_base.PeersFilter {
 	// All filtering strategies will invalid if
-	if len(p.node.staticNodes[opts.bcname]) != 0 {
-		return &StaticNodeStrategy{node: p.node, bcname: opts.bcname}
+	if len(p.node.GetStaticNodes(opts.Bcname)) != 0 {
+		return &StaticNodeStrategy{node: p.node, bcname: opts.Bcname}
 	}
-	fs := opts.filters
-	bcname := opts.bcname
+	fs := opts.Filters
+	bcname := opts.Bcname
 	peerids := make([]peer.ID, 0)
-	tpaLen := len(opts.targetPeerAddrs)
-	tpiLen := len(opts.targetPeerIDs)
+	tpaLen := len(opts.TargetPeerAddrs)
+	tpiLen := len(opts.TargetPeerIDs)
 	if len(fs) == 0 && tpaLen == 0 && tpiLen == 0 {
 		return &BucketsFilter{node: p.node}
 	}
-	pfs := make([]PeersFilter, 0)
+	pfs := make([]p2p_base.PeersFilter, 0)
 	for _, f := range fs {
-		var filter PeersFilter
+		var filter p2p_base.PeersFilter
 		switch f {
-		case NearestBucketStrategy:
+		case p2p_base.NearestBucketStrategy:
 			filter = &NearestBucketFilter{node: p.node}
-		case BucketsStrategy:
+		case p2p_base.BucketsStrategy:
 			filter = &BucketsFilter{node: p.node}
-		case BucketsWithFactorStrategy:
+		case p2p_base.BucketsWithFactorStrategy:
 			filter = &BucketsFilterWithFactor{node: p.node}
-		case CorePeersStrategy:
+		case p2p_base.CorePeersStrategy:
 			filter = &CorePeersFilter{node: p.node, name: bcname}
 		default:
 			filter = &BucketsFilter{node: p.node}
@@ -181,10 +193,10 @@ func (p *P2PServerV2) getFilter(opts *msgOptions) PeersFilter {
 	// process target peer addresses
 	if tpaLen > 0 {
 		// connect to extra target peers async
-		go p.node.ConnectToPeersByAddr(opts.targetPeerAddrs)
+		go p.node.ConnectToPeersByAddr(opts.TargetPeerAddrs)
 		// get corresponding peer ids
-		for _, addr := range opts.targetPeerAddrs {
-			pid, err := GetIDFromAddr(addr)
+		for _, addr := range opts.TargetPeerAddrs {
+			pid, err := p2p_base.GetIDFromAddr(addr)
 			if err != nil {
 				p.log.Warn("getFilter parse peer address failed", "paddr", addr, "error", err)
 				continue
@@ -195,7 +207,7 @@ func (p *P2PServerV2) getFilter(opts *msgOptions) PeersFilter {
 
 	// process target peer IDs
 	if tpiLen > 0 {
-		for _, tpid := range opts.targetPeerIDs {
+		for _, tpid := range opts.TargetPeerIDs {
 			peerid, err := peer.IDB58Decode(tpid)
 			if err != nil {
 				p.log.Warn("getFilter parse peer ID failed", "pid", tpid, "error", err)
@@ -204,7 +216,7 @@ func (p *P2PServerV2) getFilter(opts *msgOptions) PeersFilter {
 			peerids = append(peerids, peerid)
 		}
 	}
-	return NewMultiStrategy(p.node, pfs, peerids)
+	return NewMultiStrategy(pfs, peerids)
 }
 
 // GetPeerUrls 查询所连接节点的信息
@@ -232,7 +244,7 @@ func (p *P2PServerV2) GetPeerUrls() []string {
 }
 
 // SetCorePeers set core peers' info to P2P server
-func (p *P2PServerV2) SetCorePeers(cp *CorePeersInfo) error {
+func (p *P2PServerV2) SetCorePeers(cp *p2p_base.CorePeersInfo) error {
 	if cp == nil {
 		return ErrInvalidParams
 	}
@@ -240,9 +252,6 @@ func (p *P2PServerV2) SetCorePeers(cp *CorePeersInfo) error {
 }
 
 // SetXchainAddr Set xchain address info from core
-func (p *P2PServerV2) SetXchainAddr(bcname string, info *XchainAddrInfo) {
-	if _, ok := p.node.addrs[bcname]; !ok {
-		info.PeerID = p.node.id.Pretty()
-		p.node.addrs[bcname] = info
-	}
+func (p *P2PServerV2) SetXchainAddr(bcname string, info *p2p_base.XchainAddrInfo) {
+	p.node.SetXchainAddr(bcname, info)
 }
