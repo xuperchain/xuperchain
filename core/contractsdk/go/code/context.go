@@ -21,6 +21,7 @@ type Context interface {
 	QueryTx(txid string) (*pb.Transaction, error)
 	QueryBlock(blockid string) (*pb.Block, error)
 	Transfer(to string, amount *big.Int) error
+	TransferAmount() (*big.Int, error)
 	Call(module, contract, method string, args map[string][]byte) (*Response, error)
 }
 

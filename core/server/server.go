@@ -31,8 +31,8 @@ import (
 	xchaincore "github.com/xuperchain/xuperchain/core/core"
 	"github.com/xuperchain/xuperchain/core/crypto/hash"
 	"github.com/xuperchain/xuperchain/core/global"
-	"github.com/xuperchain/xuperchain/core/p2pv2"
-	xuper_p2p "github.com/xuperchain/xuperchain/core/p2pv2/pb"
+	p2p_base "github.com/xuperchain/xuperchain/core/p2p/base"
+	xuper_p2p "github.com/xuperchain/xuperchain/core/p2p/pb"
 	"github.com/xuperchain/xuperchain/core/pb"
 )
 
@@ -53,13 +53,13 @@ func (s *server) PostTx(ctx context.Context, in *pb.TxStatus) (*pb.CommonReply, 
 	if needRepost {
 		go func() {
 			msgInfo, _ := proto.Marshal(in)
-			msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, in.GetBcname(), in.GetHeader().GetLogid(), xuper_p2p.XuperMessage_POSTTX, msgInfo, xuper_p2p.XuperMessage_NONE)
-			opts := []p2pv2.MessageOption{
-				p2pv2.WithFilters([]p2pv2.FilterStrategy{p2pv2.DefaultStrategy}),
-				p2pv2.WithBcName(in.GetBcname()),
-				p2pv2.WithCompress(s.mg.GetXchainmgConfig().EnableCompress),
+			msg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion1, in.GetBcname(), in.GetHeader().GetLogid(), xuper_p2p.XuperMessage_POSTTX, msgInfo, xuper_p2p.XuperMessage_NONE)
+			opts := []p2p_base.MessageOption{
+				p2p_base.WithFilters([]p2p_base.FilterStrategy{p2p_base.DefaultStrategy}),
+				p2p_base.WithBcName(in.GetBcname()),
+				p2p_base.WithCompress(s.mg.GetXchainmgConfig().EnableCompress),
 			}
-			s.mg.P2pv2.SendMessage(context.Background(), msg, opts...)
+			s.mg.P2pSvr.SendMessage(context.Background(), msg, opts...)
 		}()
 	}
 	return out, err
@@ -90,14 +90,36 @@ func (s *server) BatchPostTx(ctx context.Context, in *pb.BatchTxs) (*pb.CommonRe
 			return out, nil
 		}
 
-		msg, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, "", in.GetHeader().GetLogid(), xuper_p2p.XuperMessage_BATCHPOSTTX, txsData, xuper_p2p.XuperMessage_NONE)
-		opts := []p2pv2.MessageOption{
-			p2pv2.WithFilters([]p2pv2.FilterStrategy{p2pv2.DefaultStrategy}),
-			p2pv2.WithBcName(in.Txs[0].GetBcname()),
+		msg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion1, "", in.GetHeader().GetLogid(), xuper_p2p.XuperMessage_BATCHPOSTTX, txsData, xuper_p2p.XuperMessage_NONE)
+		opts := []p2p_base.MessageOption{
+			p2p_base.WithFilters([]p2p_base.FilterStrategy{p2p_base.DefaultStrategy}),
+			p2p_base.WithBcName(in.Txs[0].GetBcname()),
 		}
-		go s.mg.P2pv2.SendMessage(context.Background(), msg, opts...)
+		go s.mg.P2pSvr.SendMessage(context.Background(), msg, opts...)
 	}
 	return out, nil
+}
+
+// QueryContractStatData query statistic info about contract
+func (s *server) QueryContractStatData(ctx context.Context, in *pb.ContractStatDataRequest) (*pb.ContractStatDataResponse, error) {
+	s.mg.Speed.Add("QueryContractStatData")
+	if in.GetHeader() == nil {
+		in.Header = global.GHeader()
+	}
+	out := &pb.ContractStatDataResponse{Header: &pb.Header{}}
+	bc := s.mg.Get(in.GetBcname())
+
+	if bc == nil {
+		out.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE
+		s.log.Trace("refuse a connection at function call QueryContractStatData", "logid", in.Header.Logid)
+		return out, nil
+	}
+	contractStatDataResponse, contractStatDataErr := bc.QueryContractStatData()
+	if contractStatDataErr != nil {
+		return out, contractStatDataErr
+	}
+
+	return contractStatDataResponse, nil
 }
 
 // QueryUtxoRecord query utxo records
@@ -385,19 +407,19 @@ func (s *server) GetSystemStatus(ctx context.Context, in *pb.CommonIn) (*pb.Syst
 		systemsStatus.BcsStatus = append(systemsStatus.BcsStatus, bcst)
 	}
 	systemsStatus.Speeds.SumSpeeds = s.mg.Speed.GetMaxSpeed()
-	systemsStatus.PeerUrls = s.mg.P2pv2.GetPeerUrls()
+	systemsStatus.PeerUrls = s.mg.P2pSvr.GetPeerUrls()
 	out.SystemsStatus = systemsStatus
 	return out, nil
 }
 
-// GetNetURL get net url in p2pv2
+// GetNetURL get net url in p2p_base
 func (s *server) GetNetURL(ctx context.Context, in *pb.CommonIn) (*pb.RawUrl, error) {
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
 	out := &pb.RawUrl{Header: &pb.Header{Logid: in.Header.Logid}}
 	out.Header.Error = pb.XChainErrorEnum_SUCCESS
-	netURL := s.mg.P2pv2.GetNetURL()
+	netURL := s.mg.P2pSvr.GetNetURL()
 	out.RawUrl = netURL
 	return out, nil
 }

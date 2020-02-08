@@ -10,19 +10,19 @@ cd `dirname $0`
 # go install github.com/golang/protobuf/protoc-gen-go
 # go install github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway
 
-protoc -I pb pb/xchain.proto pb/xchain_spv.proto pb/xcheck.proto pb/chainedbft.proto pb/xendorser.proto pb/event.proto\
-	-I pb/googleapis \
-	--go_out=plugins=grpc:pb \
-	--grpc-gateway_out=logtostderr=true:pb 
+protoc -I core/pb core/pb/*.proto \
+	-I core/pb/googleapis \
+	--go_out=plugins=grpc:core/pb \
+	--grpc-gateway_out=logtostderr=true:core/pb 
 
-protoc -I p2pv2/pb p2pv2/pb/message.proto  --go_out=p2pv2/pb
+protoc -I core/p2p/pb core/p2p/pb/*.proto  --go_out=plugins=grpc:core/p2p/pb
 
-protoc -I xmodel/pb xmodel/pb/versioned_data.proto --go_out=xmodel/pb 
+protoc -I core/xmodel/pb core/xmodel/pb/versioned_data.proto --go_out=core/xmodel/pb 
 
-protoc -I contractsdk/pb contractsdk/pb/contract_service.proto \
-       --go_out=plugins=grpc,paths=source_relative:contractsdk/go/pbrpc
-protoc -I contractsdk/pb contractsdk/pb/contract.proto \
-       --go_out=paths=source_relative:contractsdk/go/pb
+protoc -I core/contractsdk/pb core/contractsdk/pb/contract_service.proto \
+       --go_out=plugins=grpc,paths=source_relative:core/contractsdk/go/pbrpc
+protoc -I core/contractsdk/pb core/contractsdk/pb/contract.proto \
+       --go_out=paths=source_relative:core/contractsdk/go/pb
 
 !
 
@@ -58,6 +58,9 @@ go build --buildmode=plugin -o core/plugins/crypto/crypto-schnorr.so.1.0.0 githu
 go build --buildmode=plugin -o core/plugins/consensus/consensus-pow.so.1.0.0 github.com/xuperchain/xuperchain/core/consensus/pow
 go build --buildmode=plugin -o core/plugins/consensus/consensus-single.so.1.0.0 github.com/xuperchain/xuperchain/core/consensus/single
 go build --buildmode=plugin -o core/plugins/consensus/consensus-tdpos.so.1.0.0 github.com/xuperchain/xuperchain/core/consensus/tdpos/main
+go build --buildmode=plugin -o core/plugins/p2p/p2p-p2pv1.so.1.0.0 github.com/xuperchain/xuperchain/core/p2p/p2pv1/plugin_impl
+go build --buildmode=plugin -o core/plugins/p2p/p2p-p2pv2.so.1.0.0 github.com/xuperchain/xuperchain/core/p2p/p2pv2/plugin_impl
+
 
 # build output dir
 mkdir -p output

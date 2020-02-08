@@ -86,6 +86,9 @@ func makeWagonModule(resolver Resolver) wasm.ResolveModuleFunc {
 				}
 
 				index := importEntry.Type.(wasm.FuncImport).Type
+				if main.Types == nil || int(index) >= len(main.Types.Entries) {
+					return nil, errors.New("bad function type")
+				}
 				sig := main.Types.Entries[index]
 				fun, err := makeExportFunc(sig, ifunc)
 				if err != nil {
@@ -142,6 +145,16 @@ type InterpCode struct {
 
 // NewInterpCode instance a Code based on the wasm code and resolver
 func NewInterpCode(wasmCode []byte, resolver Resolver) (code *InterpCode, err error) {
+	defer func() {
+		ierr := recover()
+		if ierr == nil {
+			return
+		}
+		if v, ok := ierr.(error); ok {
+			err = v
+		}
+		err = fmt.Errorf("%s", ierr)
+	}()
 	defer CaptureTrap(&err)
 	importModuleFunc := makeWagonModule(resolver)
 	module, err := wasm.LoadModule(bytes.NewBuffer(wasmCode), importModuleFunc)
@@ -156,6 +169,16 @@ func NewInterpCode(wasmCode []byte, resolver Resolver) (code *InterpCode, err er
 
 // NewContext instances a new context
 func (code *InterpCode) NewContext(cfg *ContextConfig) (ictx Context, err error) {
+	defer func() {
+		ierr := recover()
+		if ierr == nil {
+			return
+		}
+		if v, ok := ierr.(error); ok {
+			err = v
+		}
+		err = fmt.Errorf("%s", ierr)
+	}()
 	defer CaptureTrap(&err)
 	vm, err := exec.NewVM(code.module,
 		exec.WithLazyCompile(true),

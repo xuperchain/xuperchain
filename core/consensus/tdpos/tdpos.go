@@ -28,7 +28,7 @@ import (
 	crypto_base "github.com/xuperchain/xuperchain/core/crypto/client/base"
 	"github.com/xuperchain/xuperchain/core/global"
 	"github.com/xuperchain/xuperchain/core/ledger"
-	"github.com/xuperchain/xuperchain/core/p2pv2"
+	p2p_base "github.com/xuperchain/xuperchain/core/p2p/base"
 	"github.com/xuperchain/xuperchain/core/pb"
 	"github.com/xuperchain/xuperchain/core/utxo"
 )
@@ -116,7 +116,7 @@ func (tp *TDpos) Configure(xlog log.Logger, cfg *config.NodeConfig, consCfg map[
 		return errors.New(errMsg)
 	}
 
-	if p2psvr, ok := extParams["p2psvr"].(p2pv2.P2PServer); ok {
+	if p2psvr, ok := extParams["p2psvr"].(p2p_base.P2PServer); ok {
 		tp.p2psvr = p2psvr
 	}
 
