@@ -29,9 +29,9 @@ p2p:
   port: 47101
   #bootNodes:
   #  - "/ip4/<ip>/tcp/<port>/p2p/<node_hash>"
-  #staticNodes:
-  #  xuper:
-  #    - "/ip4/<ip>/tcp/<port>/p2p/<node_hash>"
+  #staticNodes: 
+  #  - "/ip4/<ip>/tcp/<port>/p2p/<node_hash>"
+
 
 miner:
   # 密钥存储路径

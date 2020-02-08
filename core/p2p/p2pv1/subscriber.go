@@ -2,11 +2,11 @@ package p2pv1
 
 import (
 	"container/list"
-	"context"
 
 	log "github.com/xuperchain/log15"
 
 	p2p_base "github.com/xuperchain/xuperchain/core/p2p/base"
+	p2p_pb "github.com/xuperchain/xuperchain/core/p2p/pb"
 	xuperp2p "github.com/xuperchain/xuperchain/core/p2p/pb"
 )
 
@@ -80,7 +80,7 @@ func (sub *MsgSubscriber) SetElement(e *list.Element) {
 // HandleMessage process a message
 // Currently not support Authentication message
 func (sub *MsgSubscriber) HandleMessage(conn interface{}, msg *xuperp2p.XuperMessage) {
-	s, ok := conn.(*Conn)
+	s, ok := conn.(*p2p_pb.P2PService_SendP2PMessageServer)
 	if !ok {
 		sub.log.Warn("p2p HandleMessage: invalid message stream")
 		return
@@ -91,17 +91,17 @@ func (sub *MsgSubscriber) HandleMessage(conn interface{}, msg *xuperp2p.XuperMes
 	}
 
 	if sub.handler != nil {
-		go func(sub *MsgSubscriber, s *Conn, msg *xuperp2p.XuperMessage) {
-			ctx := context.WithValue(context.Background(), "Stream", s)
-			_, err := sub.handler(ctx, msg)
-			if err != nil {
-				sub.log.Warn("subscriber handleMessage error", "err", err)
-			}
-			// // write response if needed
-			// if err := s.conn.writeData(res); err != nil {
-			// 	sub.log.Warn("subscriber handleMessage to write msg error", "err", err)
-			// }
-		}(sub, s, msg)
+		// go func(sub *MsgSubscriber, s *Conn, msg *xuperp2p.XuperMessage) {
+		// 	ctx := context.WithValue(context.Background(), "Stream", s)
+		// 	_, err := sub.handler(ctx, msg)
+		// 	if err != nil {
+		// 		sub.log.Warn("subscriber handleMessage error", "err", err)
+		// 	}
+		// 	// // write response if needed
+		// 	// if err := s.conn.writeData(res); err != nil {
+		// 	// 	sub.log.Warn("subscriber handleMessage to write msg error", "err", err)
+		// 	// }
+		// }(sub, s, msg)
 		return
 	}
 	if sub.msgCh == nil {

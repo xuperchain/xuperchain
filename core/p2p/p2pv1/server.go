@@ -6,6 +6,7 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"net"
 	"os"
@@ -65,7 +66,7 @@ func (p *P2PServerV1) Init(cfg config.P2PConfig, lg log.Logger, extra map[string
 	if err != nil {
 		return ErrCreateHandlerMap
 	}
-	cp, err := NewConnPool(lg)
+	cp, err := NewConnPool(lg, cfg)
 	if err != nil {
 		return ErrConnPool
 	}
@@ -231,7 +232,16 @@ func (p *P2PServerV1) startServer() {
 	}()
 }
 
-// SendP2PMessage
+// SendP2PMessage implement the SendP2PMessageServer
 func (p *P2PServerV1) SendP2PMessage(str p2pPb.P2PService_SendP2PMessageServer) error {
+	in, err := str.Recv()
+	if err == io.EOF {
+		return nil
+	}
+	if err != nil {
+		p.log.Warn("SendP2PMessage Recv msg error")
+		return err
+	}
+	p.handlerMap.HandleMessage(str, in)
 	return nil
 }

@@ -33,6 +33,7 @@ const (
 	DefaultIsStorePeers          = false
 	DefaultP2PDataPath           = "./data/p2p"
 	DefaultP2PModuleName         = "p2pv2"
+	DefaultServiceName           = ""
 )
 
 // LogConfig is the log config of node
@@ -366,6 +367,7 @@ func newP2pConfigWithDefault() P2PConfig {
 		P2PDataPath:           DefaultP2PDataPath,
 		StaticNodes:           make(map[string][]string),
 		CertPath:              DefaultCertPath,
+		ServiceName:           DefaultServiceName,
 	}
 }
 

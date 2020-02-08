@@ -34,8 +34,7 @@ type HandlerMap struct {
 	// key: xuperp2p.XuperMessage_MessageType, value: *MultiSubscriber
 	subscriberCenter *sync.Map
 	msgHandled       *cache.Cache
-
-	quitCh chan bool
+	quitCh           chan bool
 }
 
 // NewHandlerMap create instance of HandlerMap
