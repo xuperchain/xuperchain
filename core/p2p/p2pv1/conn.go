@@ -25,19 +25,23 @@ type Conn struct {
 	lock   *sync.RWMutex
 }
 
-func NewConn(lg log.Logger, addr string, certPath, serviceName string, maxMsgSize int) *Conn {
+func NewConn(lg log.Logger, addr string, certPath, serviceName string, maxMsgSize int) (*Conn, error) {
 	conn := &Conn{
 		id:     addr,
 		lg:     lg,
 		quitCh: make(chan bool, 1),
 		lock:   &sync.RWMutex{},
 	}
-	conn.NewGrpcClient(maxMsgSize, certPath, serviceName)
-	return conn
+	if err := conn.NewGrpcClient(maxMsgSize, certPath, serviceName); err != nil {
+		lg.Error("NewConn error", "error", err.Error())
+		return nil, err
+	}
+
+	return conn, nil
 }
 
 func genCreds(certPath, serviceName string) (credentials.TransportCredentials, error) {
-	bs, err := ioutil.ReadFile(certPath + "/cert.crt")
+	bs, err := ioutil.ReadFile(certPath + "/cacert.pem")
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +51,10 @@ func genCreds(certPath, serviceName string) (credentials.TransportCredentials, e
 		return nil, err
 	}
 
-	certificate, err := tls.LoadX509KeyPair(certPath+"/key.pem", certPath+"/private.key")
+	certificate, err := tls.LoadX509KeyPair(certPath+"/cert.pem", certPath+"/private.key")
+	if err != nil {
+		return nil, err
+	}
 	creds := credentials.NewTLS(
 		&tls.Config{
 			ServerName:   serviceName,

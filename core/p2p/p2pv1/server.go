@@ -185,7 +185,7 @@ func (p *P2PServerV1) SetXchainAddr(bcname string, info *p2p_base.XchainAddrInfo
 // startServer start p2p server
 func (p *P2PServerV1) startServer() {
 	certPath := p.config.CertPath
-	bs, err := ioutil.ReadFile(certPath + "/cert.crt")
+	bs, err := ioutil.ReadFile(certPath + "/cacert.pem")
 	if err != nil {
 		panic(err)
 	}
@@ -195,7 +195,7 @@ func (p *P2PServerV1) startServer() {
 		panic(err)
 	}
 
-	certificate, err := tls.LoadX509KeyPair(certPath+"/key.pem", certPath+"/private.key")
+	certificate, err := tls.LoadX509KeyPair(certPath+"/cert.pem", certPath+"/private.key")
 	creds := credentials.NewTLS(
 		&tls.Config{
 			ServerName:   p.config.ServiceName,
