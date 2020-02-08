@@ -94,8 +94,8 @@ func (c *Conn) SendMessageWithResponse(ctx context.Context, msg *p2pPb.XuperMess
 		c.lg.Error("SendMessageWithResponse error", "error", err.Error())
 		return nil, err
 	}
-	// TODO: add rev logic
-	return nil, nil
+	res, err := c.cli.Recv()
+	return res, err
 }
 
 func (c *Conn) Close() {
