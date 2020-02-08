@@ -94,17 +94,17 @@ func NewSmr(
 // registerToNetwork register msg handler to p2p network
 func (s *Smr) registerToNetwork() error {
 	if _, err := s.p2p.Register(s.p2p.NewSubscriber(s.p2pMsgChan,
-		p2p_pb.XuperMessage_CHAINED_BFT_NEW_VIEW_MSG, nil, "")); err != nil {
+		p2p_pb.XuperMessage_CHAINED_BFT_NEW_VIEW_MSG, nil, "", s.slog)); err != nil {
 		return err
 	}
 
 	if _, err := s.p2p.Register(s.p2p.NewSubscriber(s.p2pMsgChan,
-		p2p_pb.XuperMessage_CHAINED_BFT_NEW_PROPOSAL_MSG, nil, "")); err != nil {
+		p2p_pb.XuperMessage_CHAINED_BFT_NEW_PROPOSAL_MSG, nil, "", s.slog)); err != nil {
 		return err
 	}
 
 	if _, err := s.p2p.Register(s.p2p.NewSubscriber(s.p2pMsgChan,
-		p2p_pb.XuperMessage_CHAINED_BFT_VOTE_MSG, nil, "")); err != nil {
+		p2p_pb.XuperMessage_CHAINED_BFT_VOTE_MSG, nil, "", s.slog)); err != nil {
 		return err
 	}
 	return nil

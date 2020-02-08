@@ -9,7 +9,7 @@ import (
 func TestNewSubscriber(t *testing.T) {
 	ms := NewMultiSubscriber()
 	resch := make(chan *xuperp2p.XuperMessage, 1)
-	sub := NewMockSubscriber(resch, xuperp2p.XuperMessage_PING, nil, "")
+	sub := NewMockSubscriber(resch, xuperp2p.XuperMessage_PING, nil, "", nil)
 	newsub, _ := ms.register(sub)
 	if ms.elem.Len() != 1 {
 		t.Error("register sub error")

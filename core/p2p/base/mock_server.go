@@ -9,6 +9,9 @@ import (
 	p2pPb "github.com/xuperchain/xuperchain/core/p2p/pb"
 )
 
+// make sure mockp2pserver implemented the P2PServer interface
+var _ P2PServer = (*MockP2pServer)(nil)
+
 // MockP2pServer is mock struct of P2PServer interface
 // Used in unit tests
 type MockP2pServer struct {
@@ -30,7 +33,7 @@ func (mp *MockP2pServer) Stop() {
 }
 
 // NewSubscriber create a subscriber instance
-func (mp *MockP2pServer) NewSubscriber(chan *p2pPb.XuperMessage, p2pPb.XuperMessage_MessageType, XuperHandler, string) Subscriber {
+func (mp *MockP2pServer) NewSubscriber(chan *p2pPb.XuperMessage, p2pPb.XuperMessage_MessageType, XuperHandler, string, log.Logger) Subscriber {
 	return nil
 }
 
