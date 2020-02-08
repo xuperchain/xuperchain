@@ -81,23 +81,31 @@ func (p *P2PServerV1) Init(cfg config.P2PConfig, lg log.Logger, extra map[string
 	peerids := []string{}
 	hasPeerMap := map[string]bool{}
 
-	// connect to all static nodes
-	for _, peers := range cfg.StaticNodes {
-		for _, peer := range peers {
-			// peer address connected before
-			if _, ok := hasPeerMap[peer]; ok {
-				continue
-			}
+	if len(cfg.StaticNodes) > 0 {
+		// connect to all static nodes
+		for _, peers := range cfg.StaticNodes {
+			for _, peer := range peers {
+				// peer address connected before
+				if _, ok := hasPeerMap[peer]; ok {
+					continue
+				}
 
-			conn, err := NewConn(lg, peer, cfg.CertPath, cfg.ServiceName, (int)(cfg.MaxMessageSize))
-			if err != nil {
-				p.log.Warn("p2p connect to peer failed", "peer", peer, "error", err)
-				continue
-			}
-			p.connPool.Add(conn)
+				conn, err := NewConn(lg, peer, cfg.CertPath, cfg.ServiceName, (int)(cfg.MaxMessageSize))
+				if err != nil {
+					p.log.Warn("p2p connect to peer failed", "peer", peer, "error", err)
+					continue
+				}
+				p.connPool.Add(conn)
 
-			hasPeerMap[peer] = true
-			peerids = append(peerids, peer)
+				hasPeerMap[peer] = true
+				peerids = append(peerids, peer)
+			}
+		}
+
+		p.staticNodes = cfg.StaticNodes
+		// "xuper" blockchain is super set of all blockchains
+		if len(p.staticNodes["xuper"]) < len(peerids) {
+			p.staticNodes["xuper"] = peerids
 		}
 	}
 
