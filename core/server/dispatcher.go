@@ -9,62 +9,30 @@ import (
 	"sync"
 	"time"
 
-	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/peer"
 
 	"github.com/xuperchain/xuperchain/core/crypto/hash"
+	"github.com/xuperchain/xuperchain/core/event"
 	"github.com/xuperchain/xuperchain/core/pb"
 )
 
 // ip amount limit per ip
-const TOTAL_LIMIT_PER_IP = 5
+const totalLimitPerIP = 5
 
-// PubsubService meta data for pubsub
+// PubsubService rpc object
 type PubsubService struct {
-	pub     *Publisher
-	msgChan chan *pb.Event
+	EventService *event.EventService
 	// same ip limitation
-	srcIP2Cnt       *sync.Map
-	eventID2MsgChan *sync.Map
-	mutex           *sync.Mutex
-}
-
-// Start recv msg from producer and dispatch to consumer
-func (p *PubsubService) Start() {
-	p.Init()
-	for {
-		select {
-		case msg := <-p.msgChan:
-			p.pub.Publish(msg)
-		}
-	}
-}
-
-// Init initialize meta data
-func (p *PubsubService) Init() {
-	p.srcIP2Cnt = &sync.Map{}
-	p.eventID2MsgChan = &sync.Map{}
-	p.mutex = &sync.Mutex{}
-}
-
-// clean clean meta data after a stream is invalid or calling Unsubscribe
-func (p *PubsubService) clean(eventID string) {
-	// if Evict equals false, which means eventID has been unsubscribed already
-	p.mutex.Lock()
-	defer p.mutex.Unlock()
-	eventChan, exist := p.eventID2MsgChan.Load(eventID)
-	if !exist {
-		return
-	}
-	if p.pub.Evict(eventChan.(chan *pb.Event)) {
-		p.eventID2MsgChan.Delete(eventID)
-	}
+	srcIP2Cnt sync.Map
+	mutex     sync.Mutex
 }
 
 // Unsubscribe unsubscribe an event by eventID
 func (p *PubsubService) Unsubscribe(ctx context.Context, arg *pb.UnsubscribeRequest) (*pb.UnsubscribeResponse, error) {
-	p.clean(arg.GetId())
+	p.mutex.Lock()
+	defer p.mutex.Unlock()
+	p.EventService.Unsubscribe(arg.GetId())
 	return &pb.UnsubscribeResponse{}, nil
 }
 
@@ -84,52 +52,11 @@ func (p *PubsubService) Subscribe(arg *pb.EventRequest, stream pb.PubsubService_
 		Id:   eventID,
 		Type: pb.EventType_SUBSCRIBE_RESPONSE,
 	}); err != nil {
-		p.clean(eventID)
+		p.EventService.Unsubscribe(eventID)
 		return err
 	}
 
-	needContent := false
-
-	ch := p.pub.SubscribeTopic(func(v *pb.Event) bool {
-		res := false
-		eventType := arg.GetType()
-		switch eventType {
-		case pb.EventType_TRANSACTION:
-			res, needContent = filterForTransactionEvent(arg.GetPayload(), v)
-			return res
-		case pb.EventType_ACCOUNT:
-			res, needContent = filterForAccountEvent(arg.GetPayload(), v)
-			return res
-		case pb.EventType_BLOCK:
-			res, needContent = filterForBlockEvent(arg.GetPayload(), v)
-			return res
-		}
-		return false
-	})
-	p.eventID2MsgChan.Store(eventID, ch)
-
-	for {
-		msg, ok := <-ch
-		if !ok {
-			// return directly
-			p.clean(eventID)
-			return errors.New("the event has expired")
-		}
-		localMsg := *msg
-		localMsg.Id = eventID
-		if needContent == false {
-			localMsg.Payload = nil
-		}
-		if err := stream.Send(&localMsg); err != nil {
-			// clean work
-			// stream is invalid probably
-			// clean metadata about stream
-			p.clean(eventID)
-			return err
-		}
-	}
-
-	return nil
+	return p.EventService.Subscribe(stream, eventID, arg.GetType(), arg.GetPayload())
 }
 
 func (p *PubsubService) isValid(ctx context.Context) (bool, string) {
@@ -149,7 +76,7 @@ func (p *PubsubService) isValid(ctx context.Context) (bool, string) {
 	defer p.mutex.Unlock()
 	if exist {
 		currCnt := val.(int)
-		if currCnt >= TOTAL_LIMIT_PER_IP {
+		if currCnt >= totalLimitPerIP {
 			fmt.Println("same ip up to limit")
 			return false, remoteIP
 		}
@@ -168,65 +95,4 @@ func (p *PubsubService) sub(ip string) {
 			p.srcIP2Cnt.Store(ip, currCnt-1)
 		}
 	}
-}
-
-func StringContains(target string, arr []string) bool {
-	if arr == nil || len(arr) == 0 {
-		return false
-	}
-	for i := 0; i < len(arr); i++ {
-		if arr[i] == target {
-			return true
-		}
-	}
-
-	return false
-}
-
-func filterForTransactionEvent(payload []byte, v *pb.Event) (bool, bool) {
-	request := &pb.TransactionEventRequest{}
-	proto.Unmarshal(payload, request)
-	metaData := v.GetTxStatus()
-
-	requestInitiator := request.GetInitiator()
-	eventInitiator := metaData.GetInitiator()
-	needContent := request.GetNeedContent()
-	if request.GetBcname() == metaData.GetBcname() &&
-		((eventInitiator != "" && requestInitiator == eventInitiator) ||
-			StringContains(request.GetAuthRequire(), metaData.GetAuthRequire())) {
-		return true, needContent
-	}
-
-	return false, needContent
-}
-
-func filterForBlockEvent(payload []byte, v *pb.Event) (bool, bool) {
-	request := &pb.BlockEventRequest{}
-	proto.Unmarshal(payload, request)
-	metaData := v.GetBlockStatus()
-	needContent := request.GetNeedContent()
-
-	if request.GetBcname() == metaData.GetBcname() &&
-		request.GetProposer() == metaData.GetProposer() &&
-		request.GetStartHeight() <= metaData.GetHeight() &&
-		request.GetEndHeight() >= metaData.GetHeight() {
-		return true, needContent
-	}
-
-	return false, needContent
-}
-
-func filterForAccountEvent(payload []byte, v *pb.Event) (bool, bool) {
-	request := &pb.AccountEventRequest{}
-	proto.Unmarshal(payload, request)
-	metaData := v.GetAccountStatus()
-	needContent := request.GetNeedContent()
-
-	if request.GetBcname() == metaData.GetBcname() &&
-		(StringContains(request.GetFromAddr(), metaData.GetFromAddr()) ||
-			StringContains(request.GetToAddr(), metaData.GetToAddr())) {
-		return true, needContent
-	}
-
-	return false, needContent
 }

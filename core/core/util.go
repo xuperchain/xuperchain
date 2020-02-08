@@ -5,10 +5,11 @@ import (
 
 	"github.com/golang/protobuf/proto"
 
+	"github.com/xuperchain/xuperchain/core/event"
 	"github.com/xuperchain/xuperchain/core/pb"
 )
 
-func produceBlockEvent(msgChan chan *pb.Event, block *pb.InternalBlock, bcname string) {
+func produceBlockEvent(eventService *event.EventService, block *pb.InternalBlock, bcname string) {
 	if block == nil {
 		return
 	}
@@ -24,17 +25,17 @@ func produceBlockEvent(msgChan chan *pb.Event, block *pb.InternalBlock, bcname s
 	if marshalErr != nil {
 		return
 	}
-	msgChan <- &pb.Event{
+	eventService.Publish(&pb.Event{
 		Type:        pb.EventType_BLOCK,
 		Payload:     payload,
 		BlockStatus: blockStatus,
-	}
+	})
 	for _, tx := range block.GetTransactions() {
-		produceTransactionEvent(msgChan, tx, bcname, pb.TransactionStatus_CONFIRM)
+		produceTransactionEvent(eventService, tx, bcname, pb.TransactionStatus_CONFIRM)
 	}
 }
 
-func produceTransactionEvent(msgChan chan *pb.Event, tx *pb.Transaction, bcname string, status pb.TransactionStatus) {
+func produceTransactionEvent(eventService *event.EventService, tx *pb.Transaction, bcname string, status pb.TransactionStatus) {
 	if tx == nil {
 		return
 	}
@@ -51,11 +52,11 @@ func produceTransactionEvent(msgChan chan *pb.Event, tx *pb.Transaction, bcname 
 	if marshalErr != nil {
 		return
 	}
-	msgChan <- &pb.Event{
+	eventService.Publish(&pb.Event{
 		Type:     pb.EventType_TRANSACTION,
 		Payload:  payload,
 		TxStatus: txStatus,
-	}
+	})
 
 	// Account Event
 	fromAddrs, toAddrs := getFromAddrAndToAddr(tx)
@@ -65,11 +66,11 @@ func produceTransactionEvent(msgChan chan *pb.Event, tx *pb.Transaction, bcname 
 		ToAddr:   toAddrs,
 		Status:   status,
 	}
-	msgChan <- &pb.Event{
+	eventService.Publish(&pb.Event{
 		Type:          pb.EventType_ACCOUNT,
 		Payload:       payload,
 		AccountStatus: accountStatus,
-	}
+	})
 }
 
 func getFromAddrAndToAddr(tx *pb.Transaction) ([]string, []string) {

@@ -67,7 +67,6 @@ mv xchain-cli xchain ${output_dir}
 mv xchain-httpgw ${output_dir}
 mv wasm2c ${output_dir}
 mv dump_chain ${output_dir}
-mv event_client ${output_dir}
 mv xc ${output_dir}
 cp -rf core/plugins ${output_dir}
 cp -rf core/data ${output_dir}

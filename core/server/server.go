@@ -16,7 +16,6 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"strconv"
-	"time"
 
 	"github.com/golang/protobuf/proto"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
@@ -1008,11 +1007,11 @@ func startTCPServer(xchainmg *xchaincore.XChainMG) error {
 			panic(http.ListenAndServe(cfg.TCPServer.MetricPort, nil))
 		}()
 	}
-	if cfg.PubsubService {
-		pubsubService := &PubsubService{pub: NewPublisher(100*time.Millisecond, 10), msgChan: xchainmg.MsgChan}
-		go pubsubService.Start()
-		pb.RegisterPubsubServiceServer(s, pubsubService)
-	}
+
+	// event involved rpc
+	pubsubService := &PubsubService{EventService: xchainmg.EventService}
+	go pubsubService.EventService.Start()
+	pb.RegisterPubsubServiceServer(s, pubsubService)
 
 	lis, err := net.Listen("tcp", cfg.TCPServer.Port)
 	if err != nil {

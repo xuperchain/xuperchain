@@ -32,6 +32,7 @@ import (
 	"github.com/xuperchain/xuperchain/core/crypto/account"
 	crypto_client "github.com/xuperchain/xuperchain/core/crypto/client"
 	crypto_base "github.com/xuperchain/xuperchain/core/crypto/client/base"
+	"github.com/xuperchain/xuperchain/core/event"
 	"github.com/xuperchain/xuperchain/core/global"
 	"github.com/xuperchain/xuperchain/core/kv/kvdb"
 	"github.com/xuperchain/xuperchain/core/ledger"
@@ -121,8 +122,7 @@ type XChainCore struct {
 	msgCache           *common.LRUCache
 	blockBroadcaseMode uint8
 	// event involved
-	msgChan             chan *pb.Event
-	pubsubServiceSwitch bool
+	eventService *event.EventService
 }
 
 // Status return the status of the chain
@@ -132,7 +132,7 @@ func (xc *XChainCore) Status() int {
 
 // Init init the chain
 func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfig,
-	p2p p2pv2.P2PServer, ker *kernel.Kernel, nodeMode string, msgChan chan *pb.Event) error {
+	p2p p2pv2.P2PServer, ker *kernel.Kernel, nodeMode string, eventService *event.EventService) error {
 
 	// 设置全局随机数发生器的原始种子
 	err := global.SetSeed()
@@ -144,8 +144,7 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	xc.Speed = probe.NewSpeedCalc(bcname)
 	// this.mutex.Lock()
 	// defer this.mutex.Unlock()
-	xc.msgChan = msgChan
-	xc.pubsubServiceSwitch = cfg.PubsubService
+	xc.eventService = eventService
 	xc.status = global.SafeModel
 	xc.bcname = bcname
 	xc.log = xlog
@@ -489,9 +488,7 @@ func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
 				xc.log.Warn("utxo vm play err", "logid", in.Header.Logid, "err", err)
 				return ErrUTXOVMPlay
 			}
-			if xc.pubsubServiceSwitch {
-				go produceBlockEvent(xc.msgChan, block.GetBlock(), xc.bcname)
-			}
+			go produceBlockEvent(xc.eventService, block.GetBlock(), xc.bcname)
 		}
 	} else {
 		//交点不等于utxo latest block
@@ -697,9 +694,7 @@ func (xc *XChainCore) doMiner() {
 		xc.log.Warn("[Minning] utxo play error ", "logid", header.Logid, "error", err, "blockid", fmt.Sprintf("%x", freshBlock.Blockid))
 		return
 	}
-	if xc.pubsubServiceSwitch {
-		go produceBlockEvent(xc.msgChan, freshBlock, xc.bcname)
-	}
+	go produceBlockEvent(xc.eventService, freshBlock, xc.bcname)
 	minerTimer.Mark("PlayForMiner")
 	xc.con.ProcessConfirmBlock(freshBlock)
 	minerTimer.Mark("ProcessConfirmBlock")

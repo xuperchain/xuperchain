@@ -3,7 +3,7 @@
 //
 // ~~ 2020.02.07
 // Modified by Baidu.Inc. inorder to support customized event mechanism
-package server
+package event
 
 import (
 	"sync"
