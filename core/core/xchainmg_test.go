@@ -18,8 +18,9 @@ import (
 	log "github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperchain/core/common/config"
 	"github.com/xuperchain/xuperchain/core/global"
-	"github.com/xuperchain/xuperchain/core/p2pv2"
-	xuper_p2p "github.com/xuperchain/xuperchain/core/p2pv2/pb"
+	p2p_base "github.com/xuperchain/xuperchain/core/p2p/base"
+	p2p_factory "github.com/xuperchain/xuperchain/core/p2p/factory"
+	xuper_p2p "github.com/xuperchain/xuperchain/core/p2p/pb"
 	"github.com/xuperchain/xuperchain/core/pb"
 
 	"github.com/xuperchain/xuperchain/core/contract/kernel"
@@ -44,16 +45,16 @@ func Init(t *testing.T) *XChainMG {
 	port := l.Addr().(*net.TCPAddr).Port
 	l.Close()
 	t.Log("port: ", port)
-	cfg.P2pV2.Port = int32(port)
+	cfg.P2p.Port = int32(port)
 
-	p2pV2Service, p2pV2Err := p2pv2.NewP2PServerV2(cfg.P2pV2, nil)
-	t.Log("cfg: ", cfg.P2pV2)
-	if p2pV2Err != nil {
-		t.Error("new p2pv2 server error ", p2pV2Err.Error())
+	p2pService, p2pErr := p2p_factory.GetP2PServer("p2pv2", cfg.P2p, nil, nil)
+	t.Log("cfg: ", cfg.P2p)
+	if p2pErr != nil {
+		t.Error("new p2p server error ", p2pErr.Error())
 	}
 	xcmg := &XChainMG{}
 	cfg.Datapath = "../core/data/blockchain"
-	if err := xcmg.Init(logger, cfg, p2pV2Service); err != nil {
+	if err := xcmg.Init(logger, cfg, p2pService); err != nil {
 		t.Error("XChainMG init error ", err.Error())
 	}
 	return xcmg
@@ -348,7 +349,7 @@ func TestXChainMgBasic(t *testing.T) {
 	out2 := rootXCore.ConfirmTipBlockChainStatus(blkStatus)
 	t.Log("out: ", out2)
 	// test for countGetBlockChainStatus
-	res, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, "xuper", "123456789",
+	res, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, "xuper", "123456789",
 		xuper_p2p.XuperMessage_GET_BLOCK_RES, nil, xuper_p2p.XuperMessage_CHECK_SUM_ERROR)
 	countGetBlockChainStatus([]*xuper_p2p.XuperMessage{res})
 	// test for countConfirmBlockRes
@@ -363,7 +364,7 @@ func TestXChainMgBasic(t *testing.T) {
 	// assemble POSTTX,SENDBLOCK,BATCHPOSTTX,
 	msgInfo, _ := proto.Marshal(txStatus)
 	t.Log("msg info ", msgInfo)
-	msgTmp, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, "xuper", "123456", xuper_p2p.XuperMessage_POSTTX,
+	msgTmp, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion1, "xuper", "123456", xuper_p2p.XuperMessage_POSTTX,
 		msgInfo, xuper_p2p.XuperMessage_NONE)
 	xcmg.msgChan <- msgTmp
 	//batch BatchPostTx
@@ -373,11 +374,11 @@ func TestXChainMgBasic(t *testing.T) {
 	}
 	t.Log("batchTxs: ", batchTxs)
 	msgInfos, _ := proto.Marshal(batchTxs)
-	msgsTmp, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, "xuper", "123457", xuper_p2p.XuperMessage_BATCHPOSTTX,
+	msgsTmp, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion1, "xuper", "123457", xuper_p2p.XuperMessage_BATCHPOSTTX,
 		msgInfos, xuper_p2p.XuperMessage_NONE)
 	xcmg.msgChan <- msgsTmp
 	sendBlockMsgInfo, _ := proto.Marshal(globalBlock)
-	sendBlockMsgTmp, _ := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion1, "xuper", "123458", xuper_p2p.XuperMessage_SENDBLOCK,
+	sendBlockMsgTmp, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion1, "xuper", "123458", xuper_p2p.XuperMessage_SENDBLOCK,
 		sendBlockMsgInfo, xuper_p2p.XuperMessage_NONE)
 	xcmg.msgChan <- sendBlockMsgTmp
 }

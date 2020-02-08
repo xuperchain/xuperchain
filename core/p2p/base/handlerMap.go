@@ -1,4 +1,4 @@
-package p2pv2
+package base
 
 import (
 	"context"
@@ -8,13 +8,12 @@ import (
 	"time"
 
 	"github.com/patrickmn/go-cache"
-	"github.com/xuperchain/log15"
-	"github.com/xuperchain/xuperchain/core/p2pv2/pb"
+	log "github.com/xuperchain/log15"
+	xuperp2p "github.com/xuperchain/xuperchain/core/p2p/pb"
 )
 
 // define default message config
 const (
-	MsgChanSize         = 50000
 	MsgHandledCacheSize = 50000
 )
 
@@ -25,7 +24,8 @@ var (
 	ErrUnregister      = errors.New("unregister subscriber error")
 )
 
-type xuperHandler func(context.Context, *xuperp2p.XuperMessage) (*xuperp2p.XuperMessage, error)
+// XuperHandler is the callback function to handle p2p message
+type XuperHandler func(context.Context, *xuperp2p.XuperMessage) (*xuperp2p.XuperMessage, error)
 
 // HandlerMap the message handler manager
 // keeps the message and handler mapping and recently handled messages
@@ -34,7 +34,8 @@ type HandlerMap struct {
 	// key: xuperp2p.XuperMessage_MessageType, value: *MultiSubscriber
 	subscriberCenter *sync.Map
 	msgHandled       *cache.Cache
-	quitCh           chan bool
+
+	quitCh chan bool
 }
 
 // NewHandlerMap create instance of HandlerMap
@@ -59,19 +60,24 @@ func (hm *HandlerMap) Start() {
 
 // Stop stop message handling
 func (hm *HandlerMap) Stop() {
-	// todo
+	hm.quitCh <- true
 	hm.lg.Trace("Stop HandlerMap")
 }
 
+// GetSubscriberCenter get the map of subscribers
+func (hm *HandlerMap) GetSubscriberCenter() *sync.Map {
+	return hm.subscriberCenter
+}
+
 // Register used to register subscriber to handlerMap.
-func (hm *HandlerMap) Register(sub *Subscriber) (*Subscriber, error) {
+func (hm *HandlerMap) Register(sub Subscriber) (Subscriber, error) {
 	if sub == nil {
 		return nil, ErrSubscribe
 	}
-	v, ok := hm.subscriberCenter.Load(sub.msgType)
+	v, ok := hm.subscriberCenter.Load(sub.GetMessageType())
 	if !ok {
-		ms := newMultiSubscriber()
-		hm.subscriberCenter.Store(sub.msgType, ms)
+		ms := NewMultiSubscriber()
+		hm.subscriberCenter.Store(sub.GetMessageType(), ms)
 		return ms.register(sub)
 	}
 	ms, ok := v.(*MultiSubscriber)
@@ -83,17 +89,17 @@ func (hm *HandlerMap) Register(sub *Subscriber) (*Subscriber, error) {
 }
 
 // UnRegister used to un register subscriber from handlerMap.
-func (hm *HandlerMap) UnRegister(sub *Subscriber) error {
-	if sub.e == nil {
+func (hm *HandlerMap) UnRegister(sub Subscriber) error {
+	if sub.GetElement() == nil {
 		return ErrUnregister
 	}
 
-	sub, ok := (sub.e.Value).(*Subscriber)
+	sub, ok := (sub.GetElement().Value).(Subscriber)
 	if !ok {
 		return ErrUnregister
 	}
 
-	v, ok := hm.subscriberCenter.Load(sub.msgType)
+	v, ok := hm.subscriberCenter.Load(sub.GetMessageType())
 	if !ok {
 		return ErrUnregister
 	}
@@ -123,8 +129,9 @@ func (hm *HandlerMap) IsMsgAsHandled(msg *xuperp2p.XuperMessage) bool {
 }
 
 // HandleMessage handle new messages with registered handlers
-func (hm *HandlerMap) HandleMessage(s *Stream, msg *xuperp2p.XuperMessage) error {
-	if s == nil {
+// Note that message should have peer stream,
+func (hm *HandlerMap) HandleMessage(stream interface{}, msg *xuperp2p.XuperMessage) error {
+	if stream == nil {
 		hm.lg.Warn("handlerMap stream can not be null")
 		return nil
 	}
@@ -132,9 +139,9 @@ func (hm *HandlerMap) HandleMessage(s *Stream, msg *xuperp2p.XuperMessage) error
 		hm.lg.Warn("HandlerMap receive msg is null!")
 		return nil
 	}
-	hm.lg.Trace("HandlerMap receive msg", "logid", msg.GetHeader().GetLogid(), "msgType", msg.GetHeader().GetType(), "checksum", msg.GetHeader().GetDataCheckSum(), "peer", s.p.Pretty())
+	hm.lg.Trace("HandlerMap receive msg", "logid", msg.GetHeader().GetLogid(), "msgType", msg.GetHeader().GetType(), "checksum", msg.GetHeader().GetDataCheckSum())
 	if ok := hm.IsMsgAsHandled(msg); ok {
-		hm.lg.Trace("HandlerMap receive is handled", "logid", msg.GetHeader().GetLogid(), "msgType", msg.GetHeader().GetType(), "checksum", msg.GetHeader().GetDataCheckSum(), "peer", s.p.Pretty())
+		hm.lg.Trace("HandlerMap receive is handled", "logid", msg.GetHeader().GetLogid(), "msgType", msg.GetHeader().GetType(), "checksum", msg.GetHeader().GetDataCheckSum())
 		return nil
 	}
 	msgType := msg.GetHeader().GetType()
@@ -146,7 +153,7 @@ func (hm *HandlerMap) HandleMessage(s *Stream, msg *xuperp2p.XuperMessage) error
 
 	if ms, ok := v.(*MultiSubscriber); ok {
 		// 如果注册了回调方法，则调用回调方法, 如果注册了channel,则进行通知
-		go ms.handleMessage(s, msg)
+		go ms.handleMessage(stream, msg)
 		hm.MarkMsgAsHandled(msg)
 		return nil
 	}

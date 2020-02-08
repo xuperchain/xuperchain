@@ -24,7 +24,8 @@ import (
 	log "github.com/xuperchain/log15"
 
 	"github.com/xuperchain/xuperchain/core/common/config"
-	p2pPb "github.com/xuperchain/xuperchain/core/p2pv2/pb"
+	p2p_base "github.com/xuperchain/xuperchain/core/p2p/base"
+	p2pPb "github.com/xuperchain/xuperchain/core/p2p/pb"
 
 	"github.com/xuperchain/xuperchain/core/kv/kvdb"
 )
@@ -77,7 +78,7 @@ type Node struct {
 	ctx         context.Context
 	srv         *P2PServerV2
 	quitCh      chan bool
-	addrs       map[string]*XchainAddrInfo
+	addrs       map[string]*p2p_base.XchainAddrInfo
 	coreRoute   map[string]*corePeersRoute
 	staticNodes map[string][]peer.ID
 	routeLock   sync.RWMutex
@@ -110,7 +111,7 @@ func NewNode(cfg config.P2PConfig, log log.Logger) (*Node, error) {
 		ctx:       ctx,
 		host:      ho,
 		quitCh:    make(chan bool, 1),
-		addrs:     map[string]*XchainAddrInfo{},
+		addrs:     map[string]*p2p_base.XchainAddrInfo{},
 		coreRoute: make(map[string]*corePeersRoute),
 		// new StreamLimit
 		streamLimit:  &StreamLimit{},
@@ -176,7 +177,7 @@ func setStaticNodes(cfg config.P2PConfig, node *Node) error {
 	for bcname, peers := range cfg.StaticNodes {
 		ps := []peer.ID{}
 		for _, peer := range peers {
-			id, err := GetIDFromAddr(peer)
+			id, err := p2p_base.GetIDFromAddr(peer)
 			if err != nil {
 				continue
 			}
@@ -201,7 +202,7 @@ func genHostOption(cfg config.P2PConfig) ([]libp2p.Option, error) {
 	}
 	opts = append(opts, libp2p.EnableRelay(circuit.OptHop))
 
-	priv, err := GetKeyPairFromPath(cfg.KeyPath)
+	priv, err := p2p_base.GetKeyPairFromPath(cfg.KeyPath)
 	if err != nil {
 		return nil, err
 	}
@@ -247,8 +248,8 @@ func (no *Node) handlerNewStream(s net.Stream) {
 }
 
 // NodeID return the node ID
-func (no *Node) NodeID() peer.ID {
-	return no.id
+func (no *Node) NodeID() string {
+	return no.id.Pretty()
 }
 
 // Context return the node context
@@ -305,7 +306,7 @@ func (no *Node) ListPeers() []peer.ID {
 }
 
 // UpdateCorePeers update core peers' info and keep connection to core peers
-func (no *Node) UpdateCorePeers(cp *CorePeersInfo) error {
+func (no *Node) UpdateCorePeers(cp *p2p_base.CorePeersInfo) error {
 	if cp == nil {
 		return ErrInvalidParams
 	}
@@ -330,7 +331,7 @@ func (no *Node) UpdateCorePeers(cp *CorePeersInfo) error {
 // updateCoreConnection update direct connections to core peers.
 // this function remove out-of-date core peers and create connections to new peers
 func (no *Node) updateCoreConnection(oldInfo *corePeersRoute,
-	newInfo *CorePeersInfo) (*corePeersRoute, error) {
+	newInfo *p2p_base.CorePeersInfo) (*corePeersRoute, error) {
 	newCurrentPeers := make([]*corePeerInfo, 0)
 	newNextPeers := make([]*corePeerInfo, 0)
 	allPeers := make([]*pstore.PeerInfo, 0)
@@ -468,7 +469,7 @@ func (no *Node) createPeerStream(ppi []*pstore.PeerInfo) int {
 // persistPeersToDisk persist peers connecting to each other to disk
 func (no *Node) persistPeersToDisk() bool {
 	batch := no.ldb.NewBatch()
-	prefix := no.GetP2PMultiAddrPrefix()
+	prefix := no.getP2PMultiAddrPrefix()
 	it := no.ldb.NewIteratorWithPrefix([]byte(prefix))
 	defer it.Release()
 	// delete history records before
@@ -494,7 +495,7 @@ func (no *Node) persistPeersToDisk() bool {
 // getPeersFromDisk get peers from disk
 func (no *Node) getPeersFromDisk() ([]string, error) {
 	peers := []string{}
-	prefix := no.GetP2PMultiAddrPrefix()
+	prefix := no.getP2PMultiAddrPrefix()
 	it := no.ldb.NewIteratorWithPrefix([]byte(prefix))
 	defer it.Release()
 	for it.Next() {
@@ -520,7 +521,20 @@ func newBaseDB(dbPath string) (kvdb.Database, error) {
 	return kvdb.NewKVDBInstance(kvParam)
 }
 
-// GetP2PMultiAddrPrefix return P2PMultiAddrPrefix
-func (no *Node) GetP2PMultiAddrPrefix() string {
+// getP2PMultiAddrPrefix return P2PMultiAddrPrefix
+func (no *Node) getP2PMultiAddrPrefix() string {
 	return P2PMultiAddrPrefix
+}
+
+// GetStaticNodes get StaticNode a chain
+func (no *Node) GetStaticNodes(bcname string) []peer.ID {
+	return no.staticNodes[bcname]
+}
+
+// SetXchainAddr set xchainAddr
+func (no *Node) SetXchainAddr(bcname string, info *p2p_base.XchainAddrInfo) {
+	if _, ok := no.addrs[bcname]; !ok {
+		info.PeerID = no.NodeID()
+		no.addrs[bcname] = info
+	}
 }
