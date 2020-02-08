@@ -48,6 +48,7 @@ type P2PServerV1 struct {
 	staticNodes map[string][]string
 	quitCh      chan bool
 	lock        sync.Mutex
+	localAddr   map[string]*p2p_base.XchainAddrInfo
 }
 
 // NewP2PServerV1 create P2PServerV1 instance
@@ -104,34 +105,53 @@ func (p *P2PServerV1) Stop() {
 // SendMessage send message to peers using given filter strategy
 func (p *P2PServerV1) SendMessage(ctx context.Context, msg *p2pPb.XuperMessage,
 	opts ...p2p_base.MessageOption) error {
-	// msgOpts := p2p_base.GetMessageOption(opts)
-	// filter := p.getFilter(msgOpts)
-	// peers, _ := filter.Filter()
-	// // 是否需要经过压缩,针对由本节点产生的消息以及grpc获取的信息
-	// if needCompress := p.getCompress(msgOpts); needCompress {
-	// 	// 更新MsgInfo & Header.enableCompress
-	// 	// 重新计算CheckSum
-	// 	enableCompress := msg.Header.EnableCompress
-	// 	// msg原本没有被压缩
-	// 	if !enableCompress {
-	// 		msg = p2p_base.Compress(msg)
-	// 	}
-	// }
-	// p.log.Trace("Server SendMessage", "logid", msg.GetHeader().GetLogid(), "msgType", msg.GetHeader().GetType(), "checksum", msg.GetHeader().GetDataCheckSum())
-	return nil
+	msgOpts := p2p_base.GetMessageOption(opts)
+	filter := p.getFilter(msgOpts)
+	peers, _ := filter.Filter()
+	peerids, ok := peers.([]string)
+	if !ok {
+		p.log.Warn("p2p filter get peers failed, ignore this message",
+			"logid", msg.GetHeader().GetLogid())
+		return errors.New("p2p SendMessage: filter returned error data")
+	}
+	// 是否需要经过压缩,针对由本节点产生的消息以及grpc获取的信息
+	if needCompress := p.getCompress(msgOpts); needCompress {
+		// 更新MsgInfo & Header.enableCompress
+		// 重新计算CheckSum
+		enableCompress := msg.Header.EnableCompress
+		// msg原本没有被压缩
+		if !enableCompress {
+			msg = p2p_base.Compress(msg)
+		}
+	}
+	return p.sendMessage(ctx, msg, peerids)
 }
 
 // SendMessageWithResponse send message to peers using given filter strategy, expect response from peers
 // 客户端再使用该方法请求带返回的消息时，最好带上log_id, 否则会导致收消息时收到不匹配的消息而影响后续的处理
 func (p *P2PServerV1) SendMessageWithResponse(ctx context.Context, msg *p2pPb.XuperMessage,
 	opts ...p2p_base.MessageOption) ([]*p2pPb.XuperMessage, error) {
-	// msgOpts := p2p_base.GetMessageOption(opts)
-	// filter := p.getFilter(msgOpts)
-	// peers, _ := filter.Filter()
-	// percentage := msgOpts.Percentage
-	// p.log.Trace("Server SendMessage with response", "logid", msg.GetHeader().GetLogid(),
-	// 	"msgType", msg.GetHeader().GetType(), "checksum", msg.GetHeader().GetDataCheckSum(), "peers", peers)
-	return nil, nil
+	msgOpts := p2p_base.GetMessageOption(opts)
+	filter := p.getFilter(msgOpts)
+	peers, _ := filter.Filter()
+	percentage := msgOpts.Percentage
+	peerids, ok := peers.([]string)
+	if !ok {
+		p.log.Warn("p2p filter get peers failed, ignore this message",
+			"logid", msg.GetHeader().GetLogid())
+		return nil, errors.New("p2p SendMessageWithRes: filter returned error data")
+	}
+	// 是否需要经过压缩,针对由本节点产生的消息以及grpc获取的信息
+	if needCompress := p.getCompress(msgOpts); needCompress {
+		// 更新MsgInfo & Header.enableCompress
+		// 重新计算CheckSum
+		enableCompress := msg.Header.EnableCompress
+		// msg原本没有被压缩
+		if !enableCompress {
+			msg = p2p_base.Compress(msg)
+		}
+	}
+	return p.sendMessageWithRes(ctx, msg, peerids, percentage)
 }
 
 // NewSubscriber create a subscriber instance
@@ -156,6 +176,91 @@ func (p *P2PServerV1) GetNetURL() string {
 	return fmt.Sprintf("/ip4/127.0.0.1/tcp/%v", p.config.Port)
 }
 
+func (p *P2PServerV1) sendMessage(ctx context.Context, msg *p2pPb.XuperMessage, peerids []string) error {
+	// send message to all peers
+	p.log.Trace("Server SendMessage", "logid", msg.GetHeader().GetLogid(),
+		"msgType", msg.GetHeader().GetType(), "checksum", msg.GetHeader().GetDataCheckSum())
+	wg := sync.WaitGroup{}
+	for _, peerid := range peerids {
+		// find connection in connPool
+		conn, err := p.connPool.Find(peerid)
+		if err != nil {
+			p.log.Warn("p2p connPool find conn failed", "logid", msg.GetHeader().GetLogid(),
+				"peerid", peerid, "error", err)
+			continue
+		}
+		// send message async
+		wg.Add(1)
+		go func(conn *Conn) {
+			defer wg.Done()
+			err = conn.SendMessage(ctx, msg)
+			if err != nil {
+				p.log.Error("SendMessage to peer error", "logid", msg.GetHeader().GetLogid(),
+					"peerid", conn.id, "error", err)
+			}
+		}(conn)
+	}
+	wg.Wait()
+	return nil
+}
+
+func (p *P2PServerV1) sendMessageWithRes(ctx context.Context, msg *p2pPb.XuperMessage,
+	peerids []string, percent float32) ([]*p2pPb.XuperMessage, error) {
+	// send message to all peers
+	p.log.Trace("Server sendMessageWithRes", "logid", msg.GetHeader().GetLogid(),
+		"msgType", msg.GetHeader().GetType(), "checksum", msg.GetHeader().GetDataCheckSum())
+	conns := []*Conn{}
+	for _, peerid := range peerids {
+		// find connection in connPool
+		conn, err := p.connPool.Find(peerid)
+		if err != nil {
+			p.log.Warn("p2p connPool find conn failed", "logid", msg.GetHeader().GetLogid(),
+				"peerid", peerid, "error", err)
+			continue
+		}
+		conns = append(conns, conn)
+	}
+
+	wg := sync.WaitGroup{}
+	msgChan := make(chan *p2pPb.XuperMessage, len(conns))
+	for _, conn := range conns {
+		// send message async
+		wg.Add(1)
+		go func(conn *Conn) {
+			defer wg.Done()
+			res, err := conn.SendMessageWithResponse(ctx, msg)
+			if err != nil {
+				p.log.Error("SendMessage to peer error", "logid", msg.GetHeader().GetLogid(),
+					"peerid", conn.id, "error", err)
+			}
+			msgChan <- res
+		}(conn)
+	}
+	wg.Wait()
+
+	res := []*p2pPb.XuperMessage{}
+	lenCh := len(msgChan)
+	if lenCh <= 0 {
+		p.log.Warn("SendMessageWithResponse response error: lenCh is nil")
+		return res, errors.New("Request get no results")
+	}
+
+	i := 0
+	for r := range msgChan {
+		if len(res) > int(float32(len(conns))*percent) {
+			break
+		}
+		if p2p_base.VerifyDataCheckSum(r) {
+			res = append(res, r)
+		}
+		if i >= lenCh-1 {
+			break
+		}
+		i++
+	}
+	return res, nil
+}
+
 func (p *P2PServerV1) getCompress(opts *p2p_base.MsgOptions) bool {
 	if opts == nil {
 		return false
@@ -165,11 +270,8 @@ func (p *P2PServerV1) getCompress(opts *p2p_base.MsgOptions) bool {
 
 func (p *P2PServerV1) getFilter(opts *p2p_base.MsgOptions) p2p_base.PeersFilter {
 	// All filtering strategies will invalid if
+	// TODO: support TargetPeerAddrs and TargetPeerIDs options
 	return &StaticNodeStrategy{pSer: p, bcname: opts.Bcname}
-}
-
-func (p *P2PServerV1) connectToPeers([]string) {
-
 }
 
 // GetPeerUrls 查询所连接节点的信息
@@ -180,11 +282,15 @@ func (p *P2PServerV1) GetPeerUrls() []string {
 
 // SetCorePeers set core peers' info to P2P server
 func (p *P2PServerV1) SetCorePeers(cp *p2p_base.CorePeersInfo) error {
+	// TODO: p2pv1 only support static nodes at this time, do not support core peers
 	return nil
 }
 
 // SetXchainAddr Set xchain address info from core
 func (p *P2PServerV1) SetXchainAddr(bcname string, info *p2p_base.XchainAddrInfo) {
+	p.lock.Lock()
+	defer p.lock.Unlock()
+	p.localAddr[bcname] = info
 }
 
 // startServer start p2p server
