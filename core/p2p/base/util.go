@@ -1,4 +1,4 @@
-package p2pv2
+package base
 
 import (
 	"crypto/rand"
@@ -87,14 +87,6 @@ func GenerateUniqueRandList(size int, max int) []int {
 	}
 	randList := r.Perm(max)
 	return randList[:size]
-}
-
-// XchainAddrInfo my xchain addr info
-type XchainAddrInfo struct {
-	Addr   string
-	Pubkey []byte
-	Prikey []byte
-	PeerID string
 }
 
 // GetAuthRequest get auth request for authentication

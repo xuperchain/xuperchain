@@ -3,7 +3,7 @@ package xchaincore
 import (
 	"github.com/xuperchain/xuperchain/core/common/events"
 	cons_base "github.com/xuperchain/xuperchain/core/consensus/base"
-	p2pv2 "github.com/xuperchain/xuperchain/core/p2pv2"
+	p2p_base "github.com/xuperchain/xuperchain/core/p2p/base"
 )
 
 // register events with handler
@@ -49,7 +49,7 @@ func (xc *XChainCore) handleProposerChanged(em *events.EventMessage) {
 		return
 	}
 
-	cpi := &p2pv2.CorePeersInfo{
+	cpi := &p2p_base.CorePeersInfo{
 		Name:           mcevent.BcName,
 		CurrentPeerIDs: make([]string, 0, len(mcevent.CurrentMiners)),
 		NextPeerIDs:    make([]string, 0, len(mcevent.NextMiners)),
@@ -85,7 +85,7 @@ func (xc *XChainCore) handleProposerChanged(em *events.EventMessage) {
 		return
 	}
 
-	err := xc.P2pv2.SetCorePeers(cpi)
+	err := xc.P2pSvr.SetCorePeers(cpi)
 	if err != nil {
 		xc.log.Warn("handleProposerChanged set core peers failed", "err", err)
 	}

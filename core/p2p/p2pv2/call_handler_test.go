@@ -9,19 +9,25 @@ import (
 	peer "github.com/libp2p/go-libp2p-peer"
 
 	log "github.com/xuperchain/log15"
-	xuper_p2p "github.com/xuperchain/xuperchain/core/p2pv2/pb"
+	p2p_base "github.com/xuperchain/xuperchain/core/p2p/base"
+	xuper_p2p "github.com/xuperchain/xuperchain/core/p2p/pb"
 	"github.com/xuperchain/xuperchain/core/pb"
 )
 
+const Address1 = "dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN"
+const Pubkey1 = `{"Curvname":"P-256","X":74695617477160058757747208220371236837474210247114418775262229497812962582435,"Y":51348715319124770392993866417088542497927816017012182211244120852620959209571}`
+const PrivateKey1 = `{"Curvname":"P-256","X":74695617477160058757747208220371236837474210247114418775262229497812962582435,"Y":51348715319124770392993866417088542497927816017012182211244120852620959209571,"D":29079635126530934056640915735344231956621504557963207107451663058887647996601}`
+const Peer1 = "QmVxeNubpg1ZQjQT8W5yZC9fD7ZB1ViArwvyGUB53sqf8e"
+
 func InitMsg(t *testing.T) *xuper_p2p.XuperMessage {
-	xchainAddr := &XchainAddrInfo{
+	xchainAddr := &p2p_base.XchainAddrInfo{
 		Addr:   Address1,
 		Pubkey: []byte(Pubkey1),
 		Prikey: []byte(PrivateKey1),
 		PeerID: "dKYWwnRHc7Ck",
 	}
 
-	auth, err := GetAuthRequest(xchainAddr)
+	auth, err := p2p_base.GetAuthRequest(xchainAddr)
 	auths := []*pb.IdentityAuth{}
 	auths = append(auths, auth)
 
@@ -36,7 +42,7 @@ func InitMsg(t *testing.T) *xuper_p2p.XuperMessage {
 		t.Log(err.Error())
 	}
 
-	msg, err := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, "", "",
+	msg, err := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, "", "",
 		xuper_p2p.XuperMessage_GET_AUTHENTICATION, msgbuf, xuper_p2p.XuperMessage_NONE)
 	if err != nil {
 		t.Log(err.Error())
@@ -56,7 +62,7 @@ func InitEmptyMsg(t *testing.T) *xuper_p2p.XuperMessage {
 		t.Log(err.Error())
 	}
 
-	msg, err := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, "", "",
+	msg, err := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, "", "",
 		xuper_p2p.XuperMessage_GET_AUTHENTICATION, msgbuf, xuper_p2p.XuperMessage_NONE)
 	if err != nil {
 		t.Log(err.Error())

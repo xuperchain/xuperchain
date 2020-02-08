@@ -7,8 +7,8 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/xuperchain/xuperchain/core/global"
-	"github.com/xuperchain/xuperchain/core/p2pv2"
-	xuper_p2p "github.com/xuperchain/xuperchain/core/p2pv2/pb"
+	p2p_base "github.com/xuperchain/xuperchain/core/p2p/base"
+	xuper_p2p "github.com/xuperchain/xuperchain/core/p2p/pb"
 	"github.com/xuperchain/xuperchain/core/pb"
 )
 
@@ -50,17 +50,17 @@ func (xc *XChainCore) SyncBlocks() {
 func (xc *XChainCore) syncForOnce() (*pb.BCStatus, bool) {
 	bcs := &pb.BCStatus{Bcname: xc.bcname}
 	bcsBuf, _ := proto.Marshal(bcs)
-	msg, err := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, xc.bcname, "", xuper_p2p.XuperMessage_GET_BLOCKCHAINSTATUS, bcsBuf, xuper_p2p.XuperMessage_NONE)
+	msg, err := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, xc.bcname, "", xuper_p2p.XuperMessage_GET_BLOCKCHAINSTATUS, bcsBuf, xuper_p2p.XuperMessage_NONE)
 	if err != nil {
 		xc.log.Warn("syncForOnce error", "error", err)
 		return nil, false
 	}
-	filters := []p2pv2.FilterStrategy{p2pv2.NearestBucketStrategy}
-	opts := []p2pv2.MessageOption{
-		p2pv2.WithFilters(filters),
-		p2pv2.WithBcName(xc.bcname),
+	filters := []p2p_base.FilterStrategy{p2p_base.NearestBucketStrategy}
+	opts := []p2p_base.MessageOption{
+		p2p_base.WithFilters(filters),
+		p2p_base.WithBcName(xc.bcname),
 	}
-	hbcs, err := xc.P2pv2.SendMessageWithResponse(context.Background(), msg, opts...)
+	hbcs, err := xc.P2pSvr.SendMessageWithResponse(context.Background(), msg, opts...)
 	if err != nil {
 		return nil, false
 	}
@@ -99,13 +99,13 @@ func countGetBlockChainStatus(hbcs []*xuper_p2p.XuperMessage) *pb.BCStatus {
 // syncConfirm 向周围节点询问块是否可以被接受
 func (xc *XChainCore) syncConfirm(bcs *pb.BCStatus) bool {
 	bcsBuf, err := proto.Marshal(bcs)
-	msg, err := xuper_p2p.NewXuperMessage(xuper_p2p.XuperMsgVersion2, bcs.GetBcname(), "", xuper_p2p.XuperMessage_CONFIRM_BLOCKCHAINSTATUS, bcsBuf, xuper_p2p.XuperMessage_NONE)
-	filters := []p2pv2.FilterStrategy{p2pv2.NearestBucketStrategy}
-	opts := []p2pv2.MessageOption{
-		p2pv2.WithFilters(filters),
-		p2pv2.WithBcName(xc.bcname),
+	msg, err := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, bcs.GetBcname(), "", xuper_p2p.XuperMessage_CONFIRM_BLOCKCHAINSTATUS, bcsBuf, xuper_p2p.XuperMessage_NONE)
+	filters := []p2p_base.FilterStrategy{p2p_base.NearestBucketStrategy}
+	opts := []p2p_base.MessageOption{
+		p2p_base.WithFilters(filters),
+		p2p_base.WithBcName(xc.bcname),
 	}
-	res, err := xc.P2pv2.SendMessageWithResponse(context.Background(), msg, opts...)
+	res, err := xc.P2pSvr.SendMessageWithResponse(context.Background(), msg, opts...)
 	if err != nil {
 		return false
 	}
