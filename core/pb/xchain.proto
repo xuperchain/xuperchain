@@ -52,6 +52,8 @@ enum TransactionStatus {
   FURCATION = 3;
   // Transaction have not been confirmed
   UNCONFIRM = 4;
+  // Transaction occurs error
+  FAILED = 5;
 }
 
 // Xchain is the main interfaces

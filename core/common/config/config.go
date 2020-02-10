@@ -226,6 +226,8 @@ type NodeConfig struct {
 	EnableCompress bool `yaml:"enableCompress,omitempty"`
 	// prune ledger option
 	Prune PruneOption `yaml:"prune,omitempty"`
+	// pubsub switch
+	PubsubService bool `yaml:"pubsubService,omitempty"`
 
 	// BlockBroadcaseMode is the mode for broadcast new block
 	//  * Full_BroadCast_Mode = 0, means send full block data

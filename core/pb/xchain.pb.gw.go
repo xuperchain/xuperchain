@@ -776,43 +776,43 @@ func RegisterXchainHandlerClient(ctx context.Context, mux *runtime.ServeMux, cli
 }
 
 var (
-	pattern_Xchain_SelectUTXOBySize_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "select_utxo_by_size"}, ""))
+	pattern_Xchain_SelectUTXOBySize_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "select_utxo_by_size"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Xchain_PostTx_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "post_tx"}, ""))
+	pattern_Xchain_PostTx_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "post_tx"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Xchain_QueryACL_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "query_acl"}, ""))
+	pattern_Xchain_QueryACL_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "query_acl"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Xchain_QueryUtxoRecord_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "query_utxo_record"}, ""))
+	pattern_Xchain_QueryUtxoRecord_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "query_utxo_record"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Xchain_QueryContractStatData_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "query_contract_stat_data"}, ""))
+	pattern_Xchain_QueryContractStatData_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "query_contract_stat_data"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Xchain_GetAccountContracts_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "get_account_contracts"}, ""))
+	pattern_Xchain_GetAccountContracts_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "get_account_contracts"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Xchain_QueryTx_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "query_tx"}, ""))
+	pattern_Xchain_QueryTx_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "query_tx"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Xchain_GetBalance_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "get_balance"}, ""))
+	pattern_Xchain_GetBalance_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "get_balance"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Xchain_GetBalanceDetail_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "get_balance_detail"}, ""))
+	pattern_Xchain_GetBalanceDetail_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "get_balance_detail"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Xchain_GetFrozenBalance_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "get_frozen_balance"}, ""))
+	pattern_Xchain_GetFrozenBalance_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "get_frozen_balance"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Xchain_GetBlock_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "get_block"}, ""))
+	pattern_Xchain_GetBlock_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "get_block"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Xchain_GetBlockByHeight_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "get_block_by_height"}, ""))
+	pattern_Xchain_GetBlockByHeight_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "get_block_by_height"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Xchain_GetBlockChainStatus_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "get_bcstatus"}, ""))
+	pattern_Xchain_GetBlockChainStatus_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "get_bcstatus"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Xchain_GetBlockChains_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "get_bcchains"}, ""))
+	pattern_Xchain_GetBlockChains_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "get_bcchains"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Xchain_GetSystemStatus_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "get_sysstatus"}, ""))
+	pattern_Xchain_GetSystemStatus_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "get_sysstatus"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Xchain_SelectUTXO_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "select_utxos_v2"}, ""))
+	pattern_Xchain_SelectUTXO_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "select_utxos_v2"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Xchain_PreExecWithSelectUTXO_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "preexec_select_utxo"}, ""))
+	pattern_Xchain_PreExecWithSelectUTXO_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "preexec_select_utxo"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Xchain_GetAccountByAK_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "get_account_by_ak"}, ""))
+	pattern_Xchain_GetAccountByAK_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "get_account_by_ak"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Xchain_PreExec_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "preexec"}, ""))
+	pattern_Xchain_PreExec_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "preexec"}, "", runtime.AssumeColonVerbOpt(true)))
 )
 
 var (
