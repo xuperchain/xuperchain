@@ -1,0 +1,6 @@
+{
+    "Type": "TRANSACTION",
+	"Args": {
+		"data": "{\"bcname\":\"xuper\", \"auth_require\":\"TXR83L5UNcDKd88ZkvSQBHhTmgzBdhqJf\"}"
+	}
+}

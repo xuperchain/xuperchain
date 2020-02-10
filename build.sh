@@ -45,6 +45,7 @@ buildpkg xchain github.com/xuperchain/xuperchain/core/cmd/xchain
 buildpkg xc github.com/xuperchain/xuperchain/core/contractsdk/xc
 buildpkg xchain-httpgw github.com/xuperchain/xuperchain/core/gateway
 buildpkg dump_chain github.com/xuperchain/xuperchain/core/test
+buildpkg event_client github.com/xuperchain/xuperchain/core/test/pubsub
 
 # build plugins
 echo "OS:"${PLATFORM}
