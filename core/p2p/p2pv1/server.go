@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"net"
 	"os"
+	"strconv"
 	"sync"
 
 	"github.com/pkg/errors"
@@ -77,6 +78,7 @@ func (p *P2PServerV1) Init(cfg config.P2PConfig, lg log.Logger, extra map[string
 	p.handlerMap = hm
 	p.connPool = cp
 	p.quitCh = make(chan bool, 1)
+	p.localAddr = map[string]*p2p_base.XchainAddrInfo{}
 
 	peerids := []string{}
 	hasPeerMap := map[string]bool{}
@@ -360,7 +362,7 @@ func (p *P2PServerV1) startServer() {
 			ClientAuth:   tls.RequireAndVerifyClientCert,
 		})
 
-	l, err := net.Listen("tcp", ":"+string(p.config.Port))
+	l, err := net.Listen("tcp", ":"+strconv.Itoa((int)(p.config.Port)))
 	if err != nil {
 		panic(err)
 	}
