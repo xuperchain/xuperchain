@@ -39,6 +39,7 @@ type HandlerMap struct {
 
 // NewHandlerMap create instance of HandlerMap
 func NewHandlerMap(log log.Logger) (*HandlerMap, error) {
+	log.Trace("Create NewHandlerMap")
 	return &HandlerMap{
 		lg:               log,
 		subscriberCenter: new(sync.Map),
@@ -49,17 +50,11 @@ func NewHandlerMap(log log.Logger) (*HandlerMap, error) {
 
 // Start start message handling
 func (hm *HandlerMap) Start() {
-	for {
-		select {
-		case <-hm.quitCh:
-			hm.Stop()
-		}
-	}
+	hm.lg.Trace("Start HandlerMap")
 }
 
 // Stop stop message handling
 func (hm *HandlerMap) Stop() {
-	hm.quitCh <- true
 	hm.lg.Trace("Stop HandlerMap")
 }
 
