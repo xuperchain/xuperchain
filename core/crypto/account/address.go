@@ -18,6 +18,9 @@ import (
 
 // GetAddressFromPublicKey 返回33位长度的地址
 func GetAddressFromPublicKey(pub *ecdsa.PublicKey) (string, error) {
+	if pub.X == nil || pub.Y == nil {
+		return "", fmt.Errorf("public field is missing, pub.X:[%v], pub.Y:[%v]", pub.X, pub.Y)
+	}
 	//using SHA256 and Ripemd160 for hash summary
 	data := elliptic.Marshal(pub.Curve, pub.X, pub.Y)
 	outputSha256 := hash.UsingSha256(data)

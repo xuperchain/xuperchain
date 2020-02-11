@@ -199,16 +199,6 @@ func (xc *XMCache) Select(bucket string, startKey []byte, endKey []byte) (Iterat
 	return xc.NewXModelCacheIterator(bucket, startKey, endKey, comparer.DefaultComparer)
 }
 
-// QueryTx query transaction from xmodel
-func (xc *XMCache) QueryTx(txid []byte) (*pb.Transaction, bool, error) {
-	return xc.model.QueryTx(txid)
-}
-
-// QueryBlock query block from xmodel
-func (xc *XMCache) QueryBlock(blockid []byte) (*pb.InternalBlock, error) {
-	return xc.model.QueryBlock(blockid)
-}
-
 // GetRWSets get read/write sets
 func (xc *XMCache) GetRWSets() ([]*xmodel_pb.VersionedData, []*xmodel_pb.PureData, error) {
 	readSets, err := xc.getReadSets()
