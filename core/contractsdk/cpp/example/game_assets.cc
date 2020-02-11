@@ -1,9 +1,5 @@
 #include "xchain/xchain.h"
 
-const std::string ASSETTYPE = "AssetType_";
-const std::string USERASSET = "UserAsset_";
-const std::string ADMIN = "admin";
-
 // 游戏装备资产模板
 // 参数由xchain::Contract中的context提供
 class GameAssets {
@@ -34,7 +30,7 @@ public:
      * func: 系统新生成的新装备，发放给特定用户，只能由管理员调用
      * @param: typeid: 游戏装备类型id
      * @param: assetid:
-     * 游戏装备唯一id(目前合约没有随机数生成，因此先从外部获取装备id)
+     * 游戏装备唯一id(先从外部获取装备id,也可以实现成一个自增计数器)
      * @param: userid: 获得游戏装备的用户
      */
     virtual void newAssetToUser() = 0;
@@ -48,22 +44,26 @@ public:
 
 struct GameDemo : public GameAssets, public xchain::Contract {
 public:
+    const std::string ASSETTYPE = "AssetType_";
+    const std::string USERASSET = "UserAsset_";
+    const std::string ASSET2USER = "Asset2User_";
+
     void initialize() {
         xchain::Context* ctx = this->context();
-        const std::string& admin = ctx->arg(ADMIN);
+        const std::string& admin = ctx->arg("admin");
+        printf("the arg is key[%s], value[%s].\n", "admin", admin.c_str());
         if (admin.empty()) {
             ctx->error("missing admin address");
             return;
         }
 
-        std::string key = ADMIN;
-        ctx->put_object(key, admin);
+        ctx->put_object("admin", admin);
         ctx->ok("initialize success");
     }
 
     bool isAdmin(xchain::Context* ctx, const std::string& caller) {
         std::string admin;
-        if (!ctx->get_object(ADMIN, &admin)) {
+        if (!ctx->get_object("admin", &admin)) {
             return false;
         }
         return (admin == caller);
@@ -109,14 +109,14 @@ public:
         std::unique_ptr<xchain::Iterator> iter =
             ctx->new_iterator(ASSETTYPE, ASSETTYPE + "~");
         std::string result;
-        do {
+        while (iter->next()) {
             std::pair<std::string, std::string> res;
             iter->get(&res);
             if (res.first.length() > ASSETTYPE.length()) {
                 result += res.first.substr(ASSETTYPE.length()) + ":" +
                           res.second + '\n';
             }
-        } while (iter->next());
+        }
         ctx->ok(result);
     }
 
@@ -140,7 +140,7 @@ public:
         std::unique_ptr<xchain::Iterator> iter =
             ctx->new_iterator(userAssetKey, userAssetKey + "~");
         std::string result;
-        do {
+        while (iter->next()) {
             std::pair<std::string, std::string> res;
             iter->get(&res);
             if (res.first.length() > userAssetKey.length()) {
@@ -155,7 +155,7 @@ public:
                 result += "assetid=" + assetId + ",typeid=" + typeId +
                           ",assetDesc=" + assetDesc + '\n';
             }
-        } while (iter->next());
+        }
         ctx->ok(result);
     }
 
@@ -190,12 +190,19 @@ public:
             return;
         }
 
+        std::string assetKey = ASSET2USER + assetId;
+        std::string value;
+        if (ctx->get_object(assetKey, &value)) {
+            ctx->error("the asset id is already exist, please check again");
+            return;
+        }
+
         std::string userAssetKey = USERASSET + userId + "_" + assetId;
-        if (ctx->put_object(userAssetKey, typeId)) {
-            ctx->ok(assetId);
-        } else {
+        if (!ctx->put_object(userAssetKey, typeId) ||
+            !ctx->put_object(assetKey, userId)) {
             ctx->error("failed to generate asset to user");
         }
+        ctx->ok(assetId);
     }
 
     void tradeAsset() {
@@ -229,8 +236,10 @@ public:
             return;
         }
 
+        std::string assetKey = ASSET2USER + assetId;
         std::string newUserAssetKey = USERASSET + to + "_" + assetId;
-        if (!ctx->put_object(newUserAssetKey, assetType)) {
+        if (!ctx->put_object(newUserAssetKey, assetType) ||
+            !ctx->put_object(assetKey, to)) {
             ctx->error("failed to save assetid:" + assetId);
             return;
         }
