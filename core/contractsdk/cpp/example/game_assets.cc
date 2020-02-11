@@ -51,7 +51,6 @@ public:
     void initialize() {
         xchain::Context* ctx = this->context();
         const std::string& admin = ctx->arg("admin");
-        printf("the arg is key[%s], value[%s].\n", "admin", admin.c_str());
         if (admin.empty()) {
             ctx->error("missing admin address");
             return;
