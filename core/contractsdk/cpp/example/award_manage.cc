@@ -17,9 +17,9 @@ public:
     virtual void initialize() = 0;
     /*
      * func: 增发积分
-      * @param: initiator:交易发起者,只有交易发起者等于积分owner时，才能增发
-      * @param: amount:增发容量
-      */
+     * @param: initiator:交易发起者,只有交易发起者等于积分owner时，才能增发
+     * @param: amount:增发容量
+     */
     virtual void addAward() = 0;
     /*
      * func: 获取积分总供应量
@@ -74,6 +74,10 @@ public:
             ctx->error("missing totalSupply");
             return;
         }
+        if (atoi(totalSupply.c_str()) <= 0) {
+            ctx->error("totalSupply is overflow");
+            return;
+        }
 
         std::string key = BALANCEPRE + caller;
         ctx->put_object("totalSupply", totalSupply);
@@ -106,6 +110,10 @@ public:
             ctx->error("missing amount");
             return;
         }
+        if (atoi(increaseSupply.c_str()) <= 0) {
+            ctx->error("amount is overflow");
+            return;
+        }
 
         std::string value;
         if (!ctx->get_object("totalSupply", &value)) {
@@ -115,6 +123,10 @@ public:
         int increaseSupplyint = atoi(increaseSupply.c_str());
         int valueint = atoi(value.c_str());
         int totalSupplyint = increaseSupplyint + valueint;
+        if (totalSupplyint <= 0) {
+            ctx->error("amount+totalSupply is overflow");
+            return;
+        }
         char buf[32];
         snprintf(buf, 32, "%d", totalSupplyint);
         ctx->put_object("totalSupply", buf); 
@@ -198,6 +210,10 @@ public:
             return;
         }
         int token = atoi(token_str.c_str());
+        if (token <= 0) {
+            ctx->error("token is overflow");
+            return;
+        }
 
         std::string from_key = BALANCEPRE + from;
         std::string value;
@@ -256,6 +272,10 @@ public:
             return;
         }
         int token = atoi(token_str.c_str());
+        if (token <= 0) {
+            ctx->error("token is overflow");
+            return;
+        }
 
         std::string allowance_key = ALLOWANCEPRE + from + "_" + caller;
         std::string value;
@@ -324,6 +344,10 @@ public:
             return;
         }
         int token = atoi(token_str.c_str());
+        if (token <= 0) {
+            ctx->error("token is overflow");
+            return;
+        }
 
         std::string from_key = BALANCEPRE + from;
         std::string value;
