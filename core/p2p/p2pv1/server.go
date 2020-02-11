@@ -92,7 +92,7 @@ func (p *P2PServerV1) Init(cfg config.P2PConfig, lg log.Logger, extra map[string
 					continue
 				}
 
-				conn, err := NewConn(lg, peer, cfg.CertPath, cfg.ServiceName, (int)(cfg.MaxMessageSize))
+				conn, err := NewConn(lg, peer, cfg.CertPath, cfg.ServiceName, (int)(cfg.MaxMessageSize)<<20)
 				if err != nil {
 					p.log.Warn("p2p connect to peer failed", "peer", peer, "error", err)
 					continue
