@@ -90,6 +90,7 @@ func (c *Conn) SendMessage(ctx context.Context, msg *p2pPb.XuperMessage) error {
 	client, err := c.newClient(ctx)
 	if err != nil {
 		c.lg.Error("SendMessage new client error")
+		return err
 	}
 	return client.Send(msg)
 }
@@ -99,6 +100,7 @@ func (c *Conn) SendMessageWithResponse(ctx context.Context, msg *p2pPb.XuperMess
 	client, err := c.newClient(ctx)
 	if err != nil {
 		c.lg.Error("SendMessageWithResponse new client error")
+		return nil, err
 	}
 	err = client.Send(msg)
 	if err != nil {

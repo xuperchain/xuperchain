@@ -24,14 +24,16 @@ tcpServer:
 
 # 区块链节点配置
 p2p:
-  # module is the name of p2p module plugin, value is [p2pv2/p2prpc], default is p2pv2
+  # module is the name of p2p module plugin, value is [p2pv2/p2pv1], default is p2pv2
   module: p2pv2
   port: 47101
+  #certPath: ./data/tls/1
+  #serviceName: saas_test.server.com
   #bootNodes:
   #  - "/ip4/<ip>/tcp/<port>/p2p/<node_hash>"
-  #staticNodes: 
-  #  - "/ip4/<ip>/tcp/<port>/p2p/<node_hash>"
-
+  #staticNodes:
+  #  xuper:
+  #    - "127.0.0.1:47102"
 
 miner:
   # 密钥存储路径
