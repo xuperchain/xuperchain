@@ -9,8 +9,8 @@ import (
 	"github.com/xuperchain/xuperchain/core/consensus/common/chainedbft/config"
 	"github.com/xuperchain/xuperchain/core/consensus/common/chainedbft/external"
 	crypto_base "github.com/xuperchain/xuperchain/core/crypto/client/base"
-	"github.com/xuperchain/xuperchain/core/p2pv2"
-	xuper_p2p "github.com/xuperchain/xuperchain/core/p2pv2/pb"
+	p2p_base "github.com/xuperchain/xuperchain/core/p2p/base"
+	xuper_p2p "github.com/xuperchain/xuperchain/core/p2p/pb"
 	pb "github.com/xuperchain/xuperchain/core/pb"
 )
 
@@ -35,7 +35,7 @@ type Smr struct {
 	// cryptoClient is default cryptoclient of chain
 	cryptoClient crypto_base.CryptoClient
 	// p2p is the network instance
-	p2p p2pv2.P2PServer
+	p2p p2p_base.P2PServer
 	// p2pMsgChan is the msg channel registered to network
 	p2pMsgChan chan *xuper_p2p.XuperMessage
 

@@ -23,7 +23,9 @@ tcpServer:
   # 最大接受数据包长度
 
 # 区块链节点配置
-p2pV2:
+p2p:
+  # module is the name of p2p module plugin, value is [p2pv2/p2prpc], default is p2pv2
+  module: p2pv2
   port: 47101
   #bootNodes:
   #  - "/ip4/<ip>/tcp/<port>/p2p/<node_hash>"
@@ -47,9 +49,9 @@ datapath: ./data/blockchain
 utxo:
   # utxo的内存LRUCache大小，表示内存中最多缓存多少个UtxoItem
   cachesize: 2000000
-# GenerateTx的临时锁定期限，默认是60秒
+  # GenerateTx的临时锁定期限，默认是60秒
   tmplockSeconds: 60
-#单个块的合约执行的总时间(单位ms)
+  #单个块的合约执行的总时间(单位ms)
   contractExecutionTime: 500
 
 kernel:

@@ -3,7 +3,6 @@ package consensus
 import (
 	"errors"
 	"fmt"
-	"github.com/xuperchain/xuperchain/core/p2pv2"
 	"os"
 	"strconv"
 	"strings"
@@ -17,6 +16,7 @@ import (
 	crypto_base "github.com/xuperchain/xuperchain/core/crypto/client/base"
 	"github.com/xuperchain/xuperchain/core/global"
 	"github.com/xuperchain/xuperchain/core/ledger"
+	p2p_base "github.com/xuperchain/xuperchain/core/p2p/base"
 	"github.com/xuperchain/xuperchain/core/pb"
 	"github.com/xuperchain/xuperchain/core/pluginmgr"
 	"github.com/xuperchain/xuperchain/core/utxo"
@@ -50,7 +50,7 @@ type PluggableConsensus struct {
 	cons         []*StepConsensus
 	cryptoClient crypto_base.CryptoClient
 	mutex        *sync.RWMutex
-	p2psvr       p2pv2.P2PServer
+	p2psvr       p2p_base.P2PServer
 }
 
 func genPlugConsKey(height int64, timestamp int64) string {
@@ -105,7 +105,7 @@ func (pc *PluggableConsensus) makeFirstCons(xlog log.Logger, cfg *config.NodeCon
 // NewPluggableConsensus create the PluggableConsensus instance
 func NewPluggableConsensus(xlog log.Logger, cfg *config.NodeConfig, bcname string,
 	ledger *ledger.Ledger, utxoVM *utxo.UtxoVM, gCon map[string]interface{},
-	cryptoType string, p2psvr p2pv2.P2PServer) (*PluggableConsensus, error) {
+	cryptoType string, p2psvr p2p_base.P2PServer) (*PluggableConsensus, error) {
 	if xlog == nil {
 		xlog = log.New("module", "plug_cons")
 		xlog.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
