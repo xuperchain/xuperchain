@@ -123,9 +123,9 @@ func (s *XModel) UndoTx(tx *pb.Transaction, batch kvdb.Batch) error {
 			if err != nil {
 				return err
 			}
-			if isDelFlag(verData.PureData.Value) {
+			if isDelFlag(verData.PureData.Value) { //previous version is del
 				putKey := append([]byte(pb.ExtUtxoDelTablePrefix), bucketAndKey...)
-				batch.Put(putKey, verData.PureData.Value)
+				batch.Put(putKey, []byte(previousVersion))
 				delKey := append([]byte(pb.ExtUtxoTablePrefix), bucketAndKey...)
 				batch.Delete(delKey)
 				s.logger.Trace("    undo xmodel put gc", "putkey", string(putKey), "prever", previousVersion)
@@ -134,6 +134,10 @@ func (s *XModel) UndoTx(tx *pb.Transaction, batch kvdb.Batch) error {
 				putKey := append([]byte(pb.ExtUtxoTablePrefix), bucketAndKey...)
 				batch.Put(putKey, []byte(previousVersion))
 				s.logger.Trace("    undo xmodel put", "putkey", string(putKey), "prever", previousVersion)
+				if isDelFlag(txOut.Value) { //current version is del
+					delKey := append([]byte(pb.ExtUtxoDelTablePrefix), bucketAndKey...)
+					batch.Delete(delKey) //remove garbage in gc table
+				}
 			}
 			s.batchCache.Store(string(bucketAndKey), previousVersion)
 		}

@@ -52,6 +52,8 @@ enum TransactionStatus {
   FURCATION = 3;
   // Transaction have not been confirmed
   UNCONFIRM = 4;
+  // Transaction occurs error
+  FAILED = 5;
 }
 
 // Xchain is the main interfaces
@@ -83,6 +85,13 @@ service Xchain {
   rpc QueryUtxoRecord(UtxoRecordDetail) returns (UtxoRecordDetail) {
     option (google.api.http) = {
       post : "/v1/query_utxo_record"
+      body : "*"
+    };
+  }
+
+  rpc QueryContractStatData(ContractStatDataRequest) returns (ContractStatDataResponse) {
+    option (google.api.http) = {
+      post : "/v1/query_contract_stat_data"
       body : "*"
     };
   }
@@ -986,4 +995,20 @@ message UtxoKey {
   string refTxid = 1;
   string offset = 2;
   string amount = 3;
+}
+
+message ContractStatDataRequest {
+  Header header = 1;
+  string bcname = 2;
+}
+
+message ContractStatDataResponse {
+  Header header = 1;
+  string bcname = 2;
+  ContractStatData data = 3;
+}
+
+message ContractStatData {
+  int64 accountCount = 1;
+  int64 contractCount = 2;
 }
