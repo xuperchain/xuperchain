@@ -15,7 +15,7 @@ protoc -I core/pb core/pb/*.proto \
 	--go_out=plugins=grpc:core/pb \
 	--grpc-gateway_out=logtostderr=true:core/pb 
 
-protoc -I core/p2pv2/pb core/p2pv2/pb/message.proto  --go_out=core/p2pv2/pb
+protoc -I core/p2p/pb core/p2p/pb/*.proto  --go_out=plugins=grpc:core/p2p/pb
 
 protoc -I core/xmodel/pb core/xmodel/pb/versioned_data.proto --go_out=core/xmodel/pb 
 
@@ -45,6 +45,7 @@ buildpkg xchain github.com/xuperchain/xuperchain/core/cmd/xchain
 buildpkg xc github.com/xuperchain/xuperchain/core/contractsdk/xc
 buildpkg xchain-httpgw github.com/xuperchain/xuperchain/core/gateway
 buildpkg dump_chain github.com/xuperchain/xuperchain/core/test
+buildpkg event_client github.com/xuperchain/xuperchain/core/test/pubsub
 
 # build plugins
 echo "OS:"${PLATFORM}
@@ -58,6 +59,9 @@ go build --buildmode=plugin -o core/plugins/crypto/crypto-schnorr.so.1.0.0 githu
 go build --buildmode=plugin -o core/plugins/consensus/consensus-pow.so.1.0.0 github.com/xuperchain/xuperchain/core/consensus/pow
 go build --buildmode=plugin -o core/plugins/consensus/consensus-single.so.1.0.0 github.com/xuperchain/xuperchain/core/consensus/single
 go build --buildmode=plugin -o core/plugins/consensus/consensus-tdpos.so.1.0.0 github.com/xuperchain/xuperchain/core/consensus/tdpos/main
+go build --buildmode=plugin -o core/plugins/p2p/p2p-p2pv1.so.1.0.0 github.com/xuperchain/xuperchain/core/p2p/p2pv1/plugin_impl
+go build --buildmode=plugin -o core/plugins/p2p/p2p-p2pv2.so.1.0.0 github.com/xuperchain/xuperchain/core/p2p/p2pv2/plugin_impl
+
 
 # build output dir
 mkdir -p output

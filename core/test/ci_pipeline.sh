@@ -37,7 +37,7 @@ function deploy_env()
 			$basepath/node$i/xchain-cli netURL gen
 			sed -i'' -e "18s/  port:.*/  port: :$tcp_port/" $basepath/node$i/conf/xchain.yaml
 			sed -i'' -e "20s/  metricPort:.*/  metricPort: :$metric_port/" $basepath/node$i/conf/xchain.yaml
-			sed -i'' -e "27s/  port:.*/  port: $p2p_port/" $basepath/node$i/conf/xchain.yaml
+			sed -i'' -e "29s/  port:.*/  port: $p2p_port/" $basepath/node$i/conf/xchain.yaml
 		fi
 		#修改xuper.json文件
 		if [ $i -eq 1 ];then
