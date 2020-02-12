@@ -113,12 +113,7 @@ func (c *Conn) SendMessageWithResponse(ctx context.Context, msg *p2pPb.XuperMess
 		c.lg.Error("SendMessageWithResponse new client error", err.Error())
 		return nil, err
 	}
-	c.lg.Trace("SendMessageWithResponse", "logid", msg.GetHeader().GetLogid(), "type", msg.GetHeader().GetType())
-	err = client.Send(msg)
-	if err != nil {
-		c.lg.Error("SendMessageWithResponse error", "error", err.Error())
-		return nil, err
-	}
+
 	res := &p2pPb.XuperMessage{}
 	waitc := make(chan struct{})
 	go func() {
@@ -132,10 +127,21 @@ func (c *Conn) SendMessageWithResponse(ctx context.Context, msg *p2pPb.XuperMess
 				c.lg.Error("SendMessageWithResponse Recv error", "error", err.Error())
 				return
 			}
+			if res != nil {
+				close(waitc)
+				return
+			}
 		}
 	}()
-	// client.CloseSend()
+	c.lg.Trace("SendMessageWithResponse", "logid", msg.GetHeader().GetLogid(), "type", msg.GetHeader().GetType())
+	err = client.Send(msg)
+	if err != nil {
+		c.lg.Error("SendMessageWithResponse error", "error", err.Error())
+		return nil, err
+	}
+	client.CloseSend()
 	<-waitc
+	c.lg.Trace("SendMessageWithResponse return ", "logid", res.GetHeader().GetLogid(), "res", res)
 	return res, err
 }
 

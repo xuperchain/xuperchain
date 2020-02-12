@@ -92,18 +92,18 @@ func (sub *MsgSubscriber) HandleMessage(conn interface{}, msg *xuperp2p.XuperMes
 	}
 
 	if sub.handler != nil {
-		go func(sub *MsgSubscriber, s p2p_pb.P2PService_SendP2PMessageServer, msg *xuperp2p.XuperMessage) {
-			res, err := sub.handler(context.Background(), msg)
-			if err != nil {
-				sub.log.Warn("subscriber handleMessage error", "err", err)
+		// go func(sub *MsgSubscriber, s p2p_pb.P2PService_SendP2PMessageServer, msg *xuperp2p.XuperMessage) {
+		res, err := sub.handler(context.Background(), msg)
+		if err != nil {
+			sub.log.Warn("subscriber handleMessage error", "err", err)
+		}
+		if res != nil {
+			// write response if needed
+			if err := s.Send(res); err != nil {
+				sub.log.Warn("subscriber handleMessage write response error", "err", err)
 			}
-			if res != nil {
-				// write response if needed
-				if err := s.Send(res); err != nil {
-					sub.log.Warn("subscriber handleMessage write response error", "err", err)
-				}
-			}
-		}(sub, s, msg)
+		}
+		// }(sub, s, msg)
 		return
 	}
 	if sub.msgCh == nil {

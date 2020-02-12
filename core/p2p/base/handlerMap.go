@@ -147,7 +147,7 @@ func (hm *HandlerMap) HandleMessage(stream interface{}, msg *xuperp2p.XuperMessa
 
 	if ms, ok := v.(*MultiSubscriber); ok {
 		// 如果注册了回调方法，则调用回调方法, 如果注册了channel,则进行通知
-		go ms.handleMessage(stream, msg)
+		ms.handleMessage(stream, msg)
 		hm.MarkMsgAsHandled(msg)
 		return nil
 	}
