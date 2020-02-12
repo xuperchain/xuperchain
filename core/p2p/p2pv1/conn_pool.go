@@ -34,7 +34,7 @@ func NewConnPool(lg log.Logger, cfg config.P2PConfig) (*ConnPool, error) {
 // Add add conn to connPool
 func (cp *ConnPool) Add(conn *Conn) error {
 	if cp.conns[conn.GetConnID()] != nil {
-		cp.log.Error("Update conn error", "error", ErrAlreadyExist.Error())
+		cp.log.Error("Add conn error", "error", ErrAlreadyExist.Error())
 		return ErrAlreadyExist
 	}
 	cp.lock.Lock()
@@ -45,7 +45,7 @@ func (cp *ConnPool) Add(conn *Conn) error {
 
 // Update add conn to connPool
 func (cp *ConnPool) Update(conn *Conn) error {
-	if cp.conns[conn.GetConnID()] != nil {
+	if cp.conns[conn.GetConnID()] == nil {
 		cp.log.Error("Update conn error", "error", ErrNotExist.Error())
 		return ErrNotExist
 	}
@@ -57,7 +57,7 @@ func (cp *ConnPool) Update(conn *Conn) error {
 
 // Remove add conn to connpool
 func (cp *ConnPool) Remove(conn *Conn) error {
-	if cp.conns[conn.GetConnID()] != nil {
+	if cp.conns[conn.GetConnID()] == nil {
 		cp.log.Error("Remove conn error, this conn not found")
 		return ErrRemoveConn
 	}
