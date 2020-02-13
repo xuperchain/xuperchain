@@ -21,7 +21,7 @@ import (
 // RegisterSubsriber register handleMessage callback fucntion
 func (p *P2PServerV2) registerSubscriber() error {
 	if _, err := p.Register(NewMsgSubscriber(nil, xuperp2p.XuperMessage_GET_AUTHENTICATION,
-		p.handleGetAuthentication, "")); err != nil {
+		p.handleGetAuthentication, "", p.log)); err != nil {
 		return err
 	}
 
