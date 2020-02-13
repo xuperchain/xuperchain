@@ -15,8 +15,8 @@ import (
 	"github.com/xuperchain/xuperchain/core/consensus/common/chainedbft/external"
 	"github.com/xuperchain/xuperchain/core/consensus/common/chainedbft/utils"
 	crypto_base "github.com/xuperchain/xuperchain/core/crypto/client/base"
-	"github.com/xuperchain/xuperchain/core/p2pv2"
-	p2p_pb "github.com/xuperchain/xuperchain/core/p2pv2/pb"
+	p2p_base "github.com/xuperchain/xuperchain/core/p2p/base"
+	p2p_pb "github.com/xuperchain/xuperchain/core/p2p/pb"
 	pb "github.com/xuperchain/xuperchain/core/pb"
 )
 
@@ -56,7 +56,7 @@ func NewSmr(
 	validates []*cons_base.CandidateInfo,
 	externalCons external.ExternalInterface,
 	cryptoClient crypto_base.CryptoClient,
-	p2p p2pv2.P2PServer,
+	p2p p2p_base.P2PServer,
 	proposalQC,
 	generateQC,
 	lockedQC *pb.QuorumCert) (*Smr, error) {
@@ -93,18 +93,18 @@ func NewSmr(
 
 // registerToNetwork register msg handler to p2p network
 func (s *Smr) registerToNetwork() error {
-	if _, err := s.p2p.Register(p2pv2.NewSubscriber(s.p2pMsgChan,
-		p2p_pb.XuperMessage_CHAINED_BFT_NEW_VIEW_MSG, nil, "")); err != nil {
+	if _, err := s.p2p.Register(s.p2p.NewSubscriber(s.p2pMsgChan,
+		p2p_pb.XuperMessage_CHAINED_BFT_NEW_VIEW_MSG, nil, "", s.slog)); err != nil {
 		return err
 	}
 
-	if _, err := s.p2p.Register(p2pv2.NewSubscriber(s.p2pMsgChan,
-		p2p_pb.XuperMessage_CHAINED_BFT_NEW_PROPOSAL_MSG, nil, "")); err != nil {
+	if _, err := s.p2p.Register(s.p2p.NewSubscriber(s.p2pMsgChan,
+		p2p_pb.XuperMessage_CHAINED_BFT_NEW_PROPOSAL_MSG, nil, "", s.slog)); err != nil {
 		return err
 	}
 
-	if _, err := s.p2p.Register(p2pv2.NewSubscriber(s.p2pMsgChan,
-		p2p_pb.XuperMessage_CHAINED_BFT_VOTE_MSG, nil, "")); err != nil {
+	if _, err := s.p2p.Register(s.p2p.NewSubscriber(s.p2pMsgChan,
+		p2p_pb.XuperMessage_CHAINED_BFT_VOTE_MSG, nil, "", s.slog)); err != nil {
 		return err
 	}
 	return nil
@@ -172,11 +172,11 @@ func (s *Smr) ProcessNewView(viewNumber int64, leader, preLeader string) error {
 		return err
 	}
 
-	netMsg, _ := p2p_pb.NewXuperMessage(p2p_pb.XuperMsgVersion3, s.bcname, "",
+	netMsg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion3, s.bcname, "",
 		p2p_pb.XuperMessage_CHAINED_BFT_NEW_VIEW_MSG, msgBuf, p2p_pb.XuperMessage_NONE)
-	opts := []p2pv2.MessageOption{
-		p2pv2.WithBcName(s.bcname),
-		p2pv2.WithTargetPeerAddrs([]string{s.getAddressPeerURL(leader)}),
+	opts := []p2p_base.MessageOption{
+		p2p_base.WithBcName(s.bcname),
+		p2p_base.WithTargetPeerAddrs([]string{s.getAddressPeerURL(leader)}),
 	}
 	go s.p2p.SendMessage(context.Background(), netMsg, opts...)
 	return nil
@@ -233,12 +233,12 @@ func (s *Smr) ProcessProposal(viewNumber int64, proposalID,
 		s.slog.Error("ProcessProposal marshal msg error", "error", err)
 		return nil, err
 	}
-	netMsg, _ := p2p_pb.NewXuperMessage(p2p_pb.XuperMsgVersion3, s.bcname, "",
+	netMsg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion3, s.bcname, "",
 		p2p_pb.XuperMessage_CHAINED_BFT_NEW_PROPOSAL_MSG, msgBuf, p2p_pb.XuperMessage_NONE)
 	s.slog.Debug("ProcessProposal proposal msg", "netMsg", netMsg)
-	opts := []p2pv2.MessageOption{
-		p2pv2.WithBcName(s.bcname),
-		p2pv2.WithTargetPeerAddrs(s.getReplicasURL()),
+	opts := []p2p_base.MessageOption{
+		p2p_base.WithBcName(s.bcname),
+		p2p_base.WithTargetPeerAddrs(s.getReplicasURL()),
 	}
 	go s.p2p.SendMessage(context.Background(), netMsg, opts...)
 	return qc, nil
@@ -250,7 +250,7 @@ func (s *Smr) handleReceivedMsg(msg *p2p_pb.XuperMessage) error {
 		msg.GetHeader().GetLogid(), "type", msg.GetHeader().GetType())
 
 	// verify msg
-	if !p2p_pb.VerifyDataCheckSum(msg) {
+	if !p2p_base.VerifyDataCheckSum(msg) {
 		s.slog.Warn("handleReceivedMsg verify msg data error!", "logid", msg.GetHeader().GetLogid())
 		return ErrCheckDataSum
 	}
@@ -449,13 +449,13 @@ func (s *Smr) voteProposal(propsQC *pb.QuorumCert, voteTo, logid string) error {
 		s.slog.Error("voteProposal marshal msg error", "error", err)
 		return err
 	}
-	netMsg, _ := p2p_pb.NewXuperMessage(p2p_pb.XuperMsgVersion3, s.bcname, logid,
+	netMsg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion3, s.bcname, logid,
 		p2p_pb.XuperMessage_CHAINED_BFT_VOTE_MSG, msgBuf, p2p_pb.XuperMessage_NONE)
 	s.slog.Trace("voteProposal", "msg", netMsg, "voteTo", voteTo, "logid", logid)
 
-	opts := []p2pv2.MessageOption{
-		p2pv2.WithBcName(s.bcname),
-		p2pv2.WithTargetPeerAddrs([]string{s.getAddressPeerURL(voteTo)}),
+	opts := []p2p_base.MessageOption{
+		p2p_base.WithBcName(s.bcname),
+		p2p_base.WithTargetPeerAddrs([]string{s.getAddressPeerURL(voteTo)}),
 	}
 	go s.p2p.SendMessage(context.Background(), netMsg, opts...)
 	return nil

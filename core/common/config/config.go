@@ -17,8 +17,9 @@ const (
 	NodeModeFastSync        = "FastSync"
 	DefaultNetPort          = 47101             // p2p port
 	DefaultNetKeyPath       = "./data/netkeys/" // node private key path
-	DefaultNetIsNat         = true              // use NAT
-	DefaultNetIsSecure      = true              // use encrypted secure transport
+	DefaultCertPath         = "./data/cert"
+	DefaultNetIsNat         = true // use NAT
+	DefaultNetIsSecure      = true // use encrypted secure transport
 	DefaultNetIsHidden      = false
 	DefaultMaxStreamLimits  = 1024
 	DefaultMaxMessageSize   = 128
@@ -31,6 +32,8 @@ const (
 	DefaultMaxBroadcastCorePeers = 17
 	DefaultIsStorePeers          = false
 	DefaultP2PDataPath           = "./data/p2p"
+	DefaultP2PModuleName         = "p2pv2"
+	DefaultServiceName           = ""
 )
 
 // LogConfig is the log config of node
@@ -65,6 +68,8 @@ type TCPServerConfig struct {
 
 // P2PConfig is the config of xuper p2p server. Attention, config of dht are not expose
 type P2PConfig struct {
+	// Module is the name of p2p module plugin
+	Module string `yaml:"module,omitempty"`
 	// port the p2p network listened
 	Port int32 `yaml:"port,omitempty"`
 	// keyPath is the node private key path, xuper will gen a random one if is nil
@@ -100,6 +105,10 @@ type P2PConfig struct {
 	P2PDataPath string `yaml:"p2PDataPath,omitempty"`
 	// IsStorePeers determine wherther storing the peers infos
 	IsStorePeers bool `yaml:"isStorePeers,omitempty"`
+	// CertPath
+	CertPath string `yaml:"certPath,omitempty"`
+	// ServiceName
+	ServiceName string `yaml:"serviceName,omitempty"`
 }
 
 // MinerConfig is the config of miner
@@ -185,7 +194,7 @@ type NodeConfig struct {
 	Version         string          `yaml:"version,omitempty"`
 	Log             LogConfig       `yaml:"log,omitempty"`
 	TCPServer       TCPServerConfig `yaml:"tcpServer,omitempty"`
-	P2pV2           P2PConfig       `yaml:"p2pV2,omitempty"`
+	P2p             P2PConfig       `yaml:"p2pV2,omitempty"`
 	Miner           MinerConfig     `yaml:"miner,omitempty"`
 	Datapath        string          `yaml:"datapath,omitempty"`
 	DatapathOthers  []string        `yaml:"datapathOthers,omitempty"` //扩展盘的路径
@@ -218,6 +227,8 @@ type NodeConfig struct {
 	EnableCompress bool `yaml:"enableCompress,omitempty"`
 	// prune ledger option
 	Prune PruneOption `yaml:"prune,omitempty"`
+	// pubsub switch
+	PubsubService bool `yaml:"pubsubService,omitempty"`
 
 	// BlockBroadcaseMode is the mode for broadcast new block
 	//  * Full_BroadCast_Mode = 0, means send full block data
@@ -276,7 +287,7 @@ func (nc *NodeConfig) defaultNodeConfig() {
 		ReadBufferSize:        32 << 10,
 		WriteBufferSize:       32 << 10,
 	}
-	nc.P2pV2 = newP2pConfigWithDefault()
+	nc.P2p = newP2pConfigWithDefault()
 	nc.Miner = MinerConfig{
 		Keypath: "./data/keys",
 	}
@@ -340,6 +351,7 @@ func NewNodeConfig() *NodeConfig {
 // newP2pConfigWithDefault create default p2p configuration
 func newP2pConfigWithDefault() P2PConfig {
 	return P2PConfig{
+		Module:           DefaultP2PModuleName,
 		Port:             DefaultNetPort,
 		KeyPath:          DefaultNetKeyPath,
 		IsNat:            DefaultNetIsNat,
@@ -356,6 +368,8 @@ func newP2pConfigWithDefault() P2PConfig {
 		IsStorePeers:          DefaultIsStorePeers,
 		P2PDataPath:           DefaultP2PDataPath,
 		StaticNodes:           make(map[string][]string),
+		CertPath:              DefaultCertPath,
+		ServiceName:           DefaultServiceName,
 	}
 }
 
