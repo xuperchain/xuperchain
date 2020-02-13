@@ -37,7 +37,7 @@ func TestNewP2PServerV2(t *testing.T) {
 		ch := make(chan *xuperp2p.XuperMessage, 5000)
 		time.Sleep(1 * time.Second)
 
-		sub := srv.NewSubscriber(ch, xuperp2p.XuperMessage_PING, nil, "")
+		sub := srv.NewSubscriber(ch, xuperp2p.XuperMessage_PING, nil, "", nil)
 		e, _ := srv.Register(sub)
 		_, ok := srv.handlerMap.GetSubscriberCenter().Load(xuperp2p.XuperMessage_PING)
 		if !ok {
