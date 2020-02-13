@@ -1030,6 +1030,11 @@ func startTCPServer(xchainmg *xchaincore.XChainMG) error {
 		}()
 	}
 
+	// event involved rpc
+	pubsubService := &PubsubService{EventService: xchainmg.EventService}
+	go pubsubService.EventService.Start()
+	pb.RegisterPubsubServiceServer(s, pubsubService)
+
 	lis, err := net.Listen("tcp", cfg.TCPServer.Port)
 	if err != nil {
 		log.Error("failed to listen: ", "error", err.Error())
