@@ -103,7 +103,9 @@ func (c *Conn) SendMessage(ctx context.Context, msg *p2pPb.XuperMessage) error {
 		return err
 	}
 	c.lg.Trace("SendMessage", "logid", msg.GetHeader().GetLogid(), "type", msg.GetHeader().GetType())
-	return client.Send(msg)
+	err = client.Send(msg)
+	client.CloseSend()
+	return err
 }
 
 // SendMessageWithResponse send message to a peer with responce
