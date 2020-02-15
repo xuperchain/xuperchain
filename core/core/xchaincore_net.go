@@ -24,9 +24,11 @@ func (xc *XChainCore) BroadCastGetBlock(bid *pb.BlockID) *pb.Block {
 	if xc.NeedCoreConnection() {
 		filters = append(filters, p2p_base.CorePeersStrategy)
 	}
+	whiteList := xc.groupChain.GetAllowedPeersWithBcname(xc.bcname)
 	opts := []p2p_base.MessageOption{
 		p2p_base.WithFilters(filters),
 		p2p_base.WithBcName(xc.bcname),
+		p2p_base.WithWhiteList(whiteList),
 	}
 	res, err := xc.P2pSvr.SendMessageWithResponse(context.Background(), msg, opts...)
 	if err != nil || len(res) < 1 {
@@ -72,9 +74,11 @@ func (xc *XChainCore) getBlockFromPeer(ctx context.Context, blockid []byte, remo
 	// send GET_BLOCK message to the remote peer
 	msg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, bid.GetBcname(), "",
 		xuper_p2p.XuperMessage_GET_BLOCK, msgbuf, xuper_p2p.XuperMessage_NONE)
+	whiteList := xc.groupChain.GetAllowedPeersWithBcname(xc.bcname)
 	opts := []p2p_base.MessageOption{
 		p2p_base.WithBcName(xc.bcname),
 		p2p_base.WithTargetPeerIDs([]string{remotePid}),
+		p2p_base.WithWhiteList(whiteList),
 	}
 	res, err := xc.P2pSvr.SendMessageWithResponse(context.Background(), msg, opts...)
 	if err != nil || len(res) < 1 {

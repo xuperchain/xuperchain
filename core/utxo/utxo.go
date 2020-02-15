@@ -512,6 +512,12 @@ func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, priv
 		xlog.Warn("failed to load gas price from disk", "loadErr", loadErr)
 		return nil, loadErr
 	}
+	// load group chain
+	utxoVM.meta.GroupChainContract, loadErr = utxoVM.LoadGroupChainContract()
+	if loadErr != nil {
+		xlog.Warn("failed to load groupchain from disk", "loadErr", loadErr)
+		return nil, loadErr
+	}
 	// cp not reference
 	newMeta := proto.Clone(utxoVM.meta).(*pb.UtxoMeta)
 	utxoVM.metaTmp = newMeta
@@ -2172,6 +2178,7 @@ func (uv *UtxoVM) GetMeta() *pb.UtxoMeta {
 	meta.IrreversibleBlockHeight = uv.meta.GetIrreversibleBlockHeight()
 	meta.IrreversibleSlideWindow = uv.meta.GetIrreversibleSlideWindow()
 	meta.GasPrice = uv.meta.GetGasPrice()
+	meta.GroupChainContract = uv.meta.GetGroupChainContract()
 	return meta
 }
 

@@ -105,6 +105,18 @@ func (p *P2PServerV2) SendMessage(ctx context.Context, msg *p2pPb.XuperMessage,
 	msgOpts := p2p_base.GetMessageOption(opts)
 	filter := p.getFilter(msgOpts)
 	peers, _ := filter.Filter()
+	// 还要做一层过滤(使用白名单过滤)
+	peersRes := []peer.ID{}
+	whiteList := msgOpts.WhiteList
+	if len(whiteList) > 0 {
+		for _, v := range peers.([]peer.ID) {
+			if _, exist := whiteList[string(v)]; exist {
+				peersRes = append(peersRes, v)
+			}
+		}
+	} else {
+		peersRes = peers.([]peer.ID)
+	}
 	// 是否需要经过压缩,针对由本节点产生的消息以及grpc获取的信息
 	if needCompress := p.getCompress(msgOpts); needCompress {
 		// 更新MsgInfo & Header.enableCompress
@@ -116,7 +128,7 @@ func (p *P2PServerV2) SendMessage(ctx context.Context, msg *p2pPb.XuperMessage,
 		}
 	}
 	p.log.Trace("Server SendMessage", "logid", msg.GetHeader().GetLogid(), "msgType", msg.GetHeader().GetType(), "checksum", msg.GetHeader().GetDataCheckSum())
-	return p.node.SendMessage(ctx, msg, peers.([]peer.ID))
+	return p.node.SendMessage(ctx, msg, peersRes)
 }
 
 // SendMessageWithResponse send message to peers using given filter strategy, expect response from peers
@@ -126,10 +138,23 @@ func (p *P2PServerV2) SendMessageWithResponse(ctx context.Context, msg *p2pPb.Xu
 	msgOpts := p2p_base.GetMessageOption(opts)
 	filter := p.getFilter(msgOpts)
 	peers, _ := filter.Filter()
+	fmt.Println("=============>peers:", peers)
+	peersRes := []peer.ID{}
+	// 做一层过滤(基于白名单过滤)
+	whiteList := msgOpts.WhiteList
+	if len(whiteList) > 0 {
+		for _, v := range peers.([]peer.ID) {
+			if _, exist := whiteList[string(v)]; exist {
+				peersRes = append(peersRes, v)
+			}
+		}
+	} else {
+		peersRes = peers.([]peer.ID)
+	}
 	percentage := msgOpts.Percentage
 	p.log.Trace("Server SendMessage with response", "logid", msg.GetHeader().GetLogid(),
 		"msgType", msg.GetHeader().GetType(), "checksum", msg.GetHeader().GetDataCheckSum(), "peers", peers)
-	return p.node.SendMessageWithResponse(ctx, msg, peers.([]peer.ID), percentage)
+	return p.node.SendMessageWithResponse(ctx, msg, peersRes, percentage)
 }
 
 // NewSubscriber create a subscriber instance
@@ -241,6 +266,23 @@ func (p *P2PServerV2) GetPeerUrls() []string {
 		}
 	}
 	return urls
+}
+
+func (p *P2PServerV2) GetPeerIDAndUrls() map[string]string {
+	id2Url := map[string]string{}
+	peers := p.node.ListPeers()
+	for _, v := range peers {
+		if s, err := p.node.strPool.FindStream(v); err == nil {
+			if s.gp == "" {
+				s.getRPCPort()
+			}
+			peerID := string(v.Pretty())
+			ipStr := s.addr.String() + "/p2p/" + peerID
+			id2Url[peerID] = ipStr
+		}
+	}
+
+	return id2Url
 }
 
 // SetCorePeers set core peers' info to P2P server

@@ -31,6 +31,7 @@ type P2PServer interface {
 	GetNetURL() string
 	// 查询所连接节点的信息
 	GetPeerUrls() []string
+	GetPeerIDAndUrls() map[string]string
 
 	// SetCorePeers set core peers' info to P2P server
 	SetCorePeers(cp *CorePeersInfo) error

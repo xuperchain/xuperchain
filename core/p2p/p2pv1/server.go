@@ -173,6 +173,11 @@ func (p *P2PServerV1) GetPeerUrls() []string {
 	return urls
 }
 
+func (p *P2PServerV1) GetPeerIDAndUrls() map[string]string {
+	id2Url := map[string]string{}
+	return id2Url
+}
+
 // SetCorePeers set core peers' info to P2P server
 func (p *P2PServerV1) SetCorePeers(cp *p2p_base.CorePeersInfo) error {
 	return nil
