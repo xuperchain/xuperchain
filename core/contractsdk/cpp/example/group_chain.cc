@@ -34,7 +34,7 @@ public:
             std::pair<std::string, std::string> res;
             iter->get(&res);
             std::string target = res.first;
-            int offset = key.length() + 1;
+            int offset = key.length();
             int length = target.length() - offset;
             result += target.substr(offset, length) + endingSeparator;
         }   
