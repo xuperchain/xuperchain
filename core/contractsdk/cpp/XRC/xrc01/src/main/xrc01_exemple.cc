@@ -3,7 +3,7 @@
 #include "xrc01.h"
 
 // XRC是超级链协议标准族
-// XRC_01是XRC协议家族中的第一个协议，支持在超级链中发行通过资产
+// XRC_01是XRC协议家族中的第一个协议，支持在超级链中发行通用资产
 // 该协议同时支持可分割和不可分割两种资产的发行、转账、授权、授权转账、查询余额、授权关系等行为；
 
 // 通用资产协议XRC_01使用示例
@@ -92,17 +92,17 @@ struct XRC01_Demo : public XRC01_Example, public xchain::Contract {
 public:
     bool str2bool(const std::string var, bool& var_bool) {
         if (var == "1") {
-            var_bool = false;
+            var_bool = true;
             return true;
         } else if (var == "0") {
-            var_bool = true;
+            var_bool = false;
             return true;
         }
         return false;
     }
 
     bool safe_stoull(const std::string in, uint64_t* out) {
-        if (in == "") {
+        if (in.empty()) {
             return false;
         }
         for (int i = 0; i < in.size(); i++) {
