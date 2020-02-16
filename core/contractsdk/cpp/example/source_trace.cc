@@ -146,7 +146,7 @@ public:
             ctx->error("missing 'id' as goods identity");
             return;
         }
-        
+
         std::string goodsKey =  GOODS + id;
         std::string value;
         if (!ctx->get_object(goodsKey, &value)) {
@@ -158,7 +158,7 @@ public:
         std::unique_ptr<xchain::Iterator> iter =
             ctx->new_iterator(goodsRecordsKey, goodsRecordsKey + "~");
 
-        std::string result;
+        std::string result = "\n";
         while (iter->next()) {
             std::pair<std::string, std::string> res;
             iter->get(&res);
