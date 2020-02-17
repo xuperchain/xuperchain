@@ -2,12 +2,12 @@
 #include <sstream>
 #include "xchain/xchain.h"
 
-// 慈善捐款去向公式模板
+// 慈善捐款公示模板
 // 参数由xchain::Contract中的context提供
 class Charity {
 public:
     /*
-     * func: 初始化装备发行账户
+     * func: 初始化慈善基金管理账户
      * @param: admin: 哪个address具有管理员权限
      */
     virtual void initialize() = 0;
