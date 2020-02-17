@@ -1,7 +1,8 @@
 #include "xchain/context_impl.h"
-#include <stdio.h>
 #include "xchain/contract.pb.h"
 #include "xchain/syscall.h"
+#include <stdio.h>
+#include <stdarg.h>
 
 namespace xchain {
 
@@ -163,6 +164,14 @@ bool ContextImpl::call(const std::string& module, const std::string& contract,
     xresponse->message = response.response().message();
     xresponse->body = response.response().body();
     return true;
+}
+
+void ContextImpl::logf(const char* fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    vprintf(fmt, args);
+    va_end(args);
+    putchar('\n');
 }
 
 }  // namespace xchain
