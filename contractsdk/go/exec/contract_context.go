@@ -198,3 +198,7 @@ func (c *contractContext) SetOutput(response *code.Response) error {
 	}
 	return err
 }
+
+func (c *contractContext) Logf(fmtstr string, args ...interface{}) {
+	log.Printf(fmtstr, args...)
+}
