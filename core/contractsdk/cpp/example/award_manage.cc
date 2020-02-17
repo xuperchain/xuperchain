@@ -204,6 +204,11 @@ public:
             return;
         }
 
+        if (to == from) {
+            ctx->error("can't transfer to yourself");
+            return;
+        }
+
         const std::string& token_str = ctx->arg("token");
         if (token_str.empty()) {
             ctx->error("missing token");
