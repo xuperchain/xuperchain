@@ -401,6 +401,15 @@ func (uv *UtxoVM) verifyRWSetPermission(tx *pb.Transaction, verifiedID map[strin
 				return ok, accountErr
 			}
 			verifiedID[accountName] = true
+			// check for upgrade contract
+			// only account/ak has right to upgrade contract
+			contractName := string(key)
+			contractRes, contractErr := uv.verifyContractOwnerPermission(contractName, tx, verifiedID)
+			if !contractRes {
+				uv.xlog.Warn("verifyRWSetPermission check contract bucket failed",
+					"contract", contractName, "AuthRequire ", tx.AuthRequire, "error", contractErr)
+				return contractRes, contractErr
+			}
 		}
 	}
 	return true, nil
