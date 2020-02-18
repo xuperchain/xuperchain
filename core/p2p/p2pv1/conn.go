@@ -86,6 +86,8 @@ func (c *Conn) NewGrpcConn() error {
 func (c *Conn) newClient(ctx context.Context) (p2p_pb.P2PService_SendP2PMessageClient, error) {
 	connState := c.conn.GetState().String()
 	if connState == "TRANSIENT_FAILURE" || connState == "SHUTDOWN" || connState == "Invalid-State" {
+		c.lg.Error("newClient conn state not ready")
+		c.conn.Close()
 		err := c.NewGrpcConn()
 		if err != nil {
 			return nil, err
@@ -103,7 +105,9 @@ func (c *Conn) SendMessage(ctx context.Context, msg *p2pPb.XuperMessage) error {
 		return err
 	}
 	c.lg.Trace("SendMessage", "logid", msg.GetHeader().GetLogid(), "type", msg.GetHeader().GetType())
-	return client.Send(msg)
+	err = client.Send(msg)
+	client.CloseSend()
+	return err
 }
 
 // SendMessageWithResponse send message to a peer with responce
