@@ -64,6 +64,13 @@ public:
             return;
         }
 
+        // 检查是否存在抽奖结果，如果存在则不再继续发放奖券
+        std::string result;
+        if (ctx->get_object(RESULT, &result)) {
+            ctx->error("this luck draw is finished");
+            return;
+        }
+
         // 检查用户是否已经抽过奖券, 如果抽过直接返回上次抽的奖券号
         std::string userval;
         if (ctx->get_object(USERID + caller, &userval)) {
