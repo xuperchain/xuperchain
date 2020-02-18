@@ -129,6 +129,7 @@ func (c *Conn) SendMessageWithResponse(ctx context.Context, msg *p2pPb.XuperMess
 			}
 			if err != nil {
 				c.lg.Error("SendMessageWithResponse Recv error", "error", err.Error())
+				close(waitc)
 				return
 			}
 			if res != nil {

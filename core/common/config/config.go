@@ -34,6 +34,7 @@ const (
 	DefaultP2PDataPath           = "./data/p2p"
 	DefaultP2PModuleName         = "p2pv2"
 	DefaultServiceName           = ""
+	DefaultIsBraoadCast          = true
 )
 
 // LogConfig is the log config of node
@@ -84,6 +85,8 @@ type P2PConfig struct {
 	BootNodes []string `yaml:"bootNodes,omitempty"`
 	// staticNodes config the nodes which you trust
 	StaticNodes map[string][]string `yaml:"staticNodes,omitempty"`
+	// isBraoadCast config whether broadcast to all StaticNodes
+	IsBraoadCast bool `yaml:"isBraoadCast,omitempty"`
 	// maxStreamLimits config the max stream num
 	MaxStreamLimits int32 `yaml:"maxStreamLimits,omitempty"`
 	// maxMessageSize config the max message size
@@ -370,6 +373,7 @@ func newP2pConfigWithDefault() P2PConfig {
 		StaticNodes:           make(map[string][]string),
 		CertPath:              DefaultCertPath,
 		ServiceName:           DefaultServiceName,
+		IsBraoadCast:          DefaultIsBraoadCast,
 	}
 }
 
