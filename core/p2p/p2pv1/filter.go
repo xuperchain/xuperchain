@@ -2,14 +2,14 @@ package p2pv1
 
 // StaticNodeStrategy a peer filter that contains strategy nodes
 type StaticNodeStrategy struct {
-	isBraoadCast bool
-	bcname       string
-	pSer         *P2PServerV1
+	isBroadCast bool
+	bcname      string
+	pSer        *P2PServerV1
 }
 
 // Filter return static nodes peers
 func (ss *StaticNodeStrategy) Filter() (interface{}, error) {
-	if ss.isBraoadCast {
+	if ss.isBroadCast {
 		return ss.pSer.staticNodes["xuper"], nil
 	}
 	return ss.pSer.staticNodes[ss.bcname], nil

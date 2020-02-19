@@ -306,7 +306,7 @@ func (p *P2PServerV1) getCompress(opts *p2p_base.MsgOptions) bool {
 func (p *P2PServerV1) getFilter(opts *p2p_base.MsgOptions) p2p_base.PeersFilter {
 	// All filtering strategies will invalid if
 	// TODO: support TargetPeerAddrs and TargetPeerIDs options
-	return &StaticNodeStrategy{isBraoadCast: p.config.IsBraoadCast, pSer: p, bcname: opts.Bcname}
+	return &StaticNodeStrategy{isBroadCast: p.config.IsBroadCast, pSer: p, bcname: opts.Bcname}
 }
 
 // GetPeerUrls 查询所连接节点的信息
