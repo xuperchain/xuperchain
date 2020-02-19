@@ -44,6 +44,7 @@ public:
                       const std::string& method,
                       const std::map<std::string, std::string>& args,
                       Response* response) = 0;
+    virtual void logf(const char* fmt, ...) = 0;
 };
 
 class Contract {
