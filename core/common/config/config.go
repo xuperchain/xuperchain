@@ -174,6 +174,7 @@ type WasmConfig struct {
 	XVM            XVMConfig
 	EnableDebugLog bool
 	DebugLog       LogConfig
+	EnableUpgrade  bool
 }
 
 func (w *WasmConfig) applyFlags(flags *pflag.FlagSet) {

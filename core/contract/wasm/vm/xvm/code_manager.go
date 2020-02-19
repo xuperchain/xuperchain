@@ -2,12 +2,16 @@ package xvm
 
 import (
 	"bytes"
+	"crypto/sha1"
+	"encoding/hex"
 	"encoding/json"
-	"errors"
+	"fmt"
 	"io/ioutil"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"sync"
+	"time"
 
 	"github.com/xuperchain/xuperchain/core/common/log"
 	"github.com/xuperchain/xuperchain/core/contract/wasm/vm"
@@ -28,6 +32,8 @@ type contractCode struct {
 
 type codeManager struct {
 	basedir      string
+	rundir       string
+	cachedir     string
 	compileCode  compileFunc
 	makeExecCode makeExecCodeFunc
 
@@ -38,8 +44,15 @@ type codeManager struct {
 }
 
 func newCodeManager(basedir string, compile compileFunc, makeExec makeExecCodeFunc) *codeManager {
+	runDirFull := filepath.Join(basedir, "var", "run")
+	cacheDirFull := filepath.Join(basedir, "var", "cache")
+	os.MkdirAll(runDirFull, 0755)
+	os.MkdirAll(cacheDirFull, 0755)
+
 	return &codeManager{
 		basedir:      basedir,
+		rundir:       runDirFull,
+		cachedir:     cacheDirFull,
 		compileCode:  compile,
 		makeExecCode: makeExec,
 		codes:        make(map[string]*contractCode),
@@ -63,23 +76,18 @@ func (c *codeManager) lookupMemCache(name string, desc *pb.WasmCodeDesc) (*contr
 	return nil, false
 }
 
-func (c *codeManager) purgeMemCache(name string) {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
-	if ccode, ok := c.codes[name]; ok {
-		ccode.ExecCode.Release()
-	}
-	delete(c.codes, name)
-}
-
 func (c *codeManager) makeMemCache(name, libpath string, desc *pb.WasmCodeDesc) (*contractCode, error) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
-	if _, ok := c.codes[name]; ok {
-		return nil, errors.New("old contract code not purged")
+	// 创建临时文件，这样每个合约版本独享一个so文件，不会相互影响
+	tmpfile := fmt.Sprintf("%s-%d-%d.so", name, time.Now().UnixNano(), rand.Int()%10000)
+	libpathFull := filepath.Join(c.rundir, tmpfile)
+	err := cpfile(libpathFull, libpath)
+	if err != nil {
+		return nil, err
 	}
 
-	execCode, err := c.makeExecCode(libpath)
+	execCode, err := c.makeExecCode(libpathFull)
 	if err != nil {
 		return nil, err
 	}
@@ -172,9 +180,6 @@ func (c *codeManager) GetExecCode(name string, cp vm.ContractCodeProvider) (*con
 		if ok {
 			return execCode, nil
 		}
-		// old code handle should be closed before open new code
-		// see https://github.com/xuperchain/xuperchain/core/issues/352
-		c.purgeMemCache(name)
 		libpath, ok := c.lookupDiskCache(name, desc)
 		if !ok {
 			log.Debug("contract code need make disk cache", "contract", name)
@@ -200,10 +205,14 @@ func (c *codeManager) GetExecCode(name string, cp vm.ContractCodeProvider) (*con
 func (c *codeManager) RemoveCode(name string) {
 	c.mutex.Lock()
 	defer c.mutex.Unlock()
-	code, ok := c.codes[name]
-	if ok {
-		code.ExecCode.Release()
-	}
 	delete(c.codes, name)
 	os.RemoveAll(filepath.Join(c.basedir, name))
+}
+
+// not used now
+func makeCacheId(desc *pb.WasmCodeDesc) string {
+	h := sha1.New()
+	h.Write(desc.GetDigest())
+	h.Write([]byte(compile.Version))
+	return hex.EncodeToString(h.Sum(nil))
 }

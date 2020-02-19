@@ -93,7 +93,7 @@ func TestMakeCacheBlocking(t *testing.T) {
 	defer os.RemoveAll(tmpdir)
 
 	compileFunc := func(code []byte, output string) error {
-		time.Sleep(200 * time.Millisecond)
+		time.Sleep(time.Second)
 		return ioutil.WriteFile(output, code, 0700)
 	}
 
