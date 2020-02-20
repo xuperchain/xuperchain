@@ -154,7 +154,7 @@ public:
             return;
         }
 
-        std::string goodsRecordsKey = GOODSRECORD + id;
+        std::string goodsRecordsKey = GOODSRECORD + id + "_";
         std::unique_ptr<xchain::Iterator> iter =
             ctx->new_iterator(goodsRecordsKey, goodsRecordsKey + "~");
 
