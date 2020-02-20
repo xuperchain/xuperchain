@@ -10,6 +10,7 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
+	"runtime"
 	"sync"
 	"time"
 
@@ -43,11 +44,15 @@ type codeManager struct {
 	codes map[string]*contractCode
 }
 
-func newCodeManager(basedir string, compile compileFunc, makeExec makeExecCodeFunc) *codeManager {
+func newCodeManager(basedir string, compile compileFunc, makeExec makeExecCodeFunc) (*codeManager, error) {
 	runDirFull := filepath.Join(basedir, "var", "run")
 	cacheDirFull := filepath.Join(basedir, "var", "cache")
-	os.MkdirAll(runDirFull, 0755)
-	os.MkdirAll(cacheDirFull, 0755)
+	if err := os.MkdirAll(runDirFull, 0755); err != nil {
+		return nil, err
+	}
+	if err := os.MkdirAll(cacheDirFull, 0755); err != nil {
+		return nil, err
+	}
 
 	return &codeManager{
 		basedir:      basedir,
@@ -56,7 +61,7 @@ func newCodeManager(basedir string, compile compileFunc, makeExec makeExecCodeFu
 		compileCode:  compile,
 		makeExecCode: makeExec,
 		codes:        make(map[string]*contractCode),
-	}
+	}, nil
 }
 
 func codeDescEqual(a, b *pb.WasmCodeDesc) bool {
@@ -96,6 +101,9 @@ func (c *codeManager) makeMemCache(name, libpath string, desc *pb.WasmCodeDesc) 
 		ExecCode:     execCode,
 		Desc:         *desc,
 	}
+	runtime.SetFinalizer(code, func(c *contractCode) {
+		c.ExecCode.Release()
+	})
 	c.codes[name] = code
 
 	return code, nil

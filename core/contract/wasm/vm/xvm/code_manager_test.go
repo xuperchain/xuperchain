@@ -52,7 +52,10 @@ func TestGetCacheExecCode(t *testing.T) {
 			Digest: []byte("digest1"),
 		},
 	}
-	cm := newCodeManager(tmpdir, compileFunc, makeExecCodeFunc)
+	cm, err := newCodeManager(tmpdir, compileFunc, makeExecCodeFunc)
+	if err != nil {
+		t.Fatal(err)
+	}
 	code, err := cm.GetExecCode("c1", cp)
 	if err != nil {
 		t.Fatal(err)
@@ -74,7 +77,10 @@ func TestGetCacheExecCode(t *testing.T) {
 	}
 
 	// 期待从磁盘中获取
-	cm1 := newCodeManager(tmpdir, compileFunc, makeExecCodeFunc)
+	cm1, err := newCodeManager(tmpdir, compileFunc, makeExecCodeFunc)
+	if err != nil {
+		t.Fatal(err)
+	}
 	codeDisk, err := cm1.GetExecCode("c1", cp)
 	if err != nil {
 		t.Fatal(err)
@@ -107,7 +113,10 @@ func TestMakeCacheBlocking(t *testing.T) {
 			Digest: []byte("digest1"),
 		},
 	}
-	cm := newCodeManager(tmpdir, compileFunc, makeExecCodeFunc)
+	cm, err := newCodeManager(tmpdir, compileFunc, makeExecCodeFunc)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// fill cache
 	cm.GetExecCode("c1", cp)
