@@ -714,3 +714,26 @@ func (uv *UtxoVM) VerifyContractPermission(initiator string, authRequire []strin
 	allUsers := uv.removeDuplicateUser(initiator, authRequire)
 	return pm.CheckContractMethodPerm(allUsers, contractName, methodName, uv.aclMgr)
 }
+
+// VerifyContractOwnerPermission implement Contract ChainCore, used to verify contract ownership permisson
+func (uv *UtxoVM) VerifyContractOwnerPermission(contractName string, authRequire []string) error {
+	versionData, confirmed, err := uv.model3.GetWithTxStatus(aclu.GetContract2AccountBucket(), []byte(contractName))
+	if err != nil {
+		return err
+	}
+	if !confirmed {
+		return errors.New("contract for account not confirmed")
+	}
+	accountName := string(versionData.GetPureData().GetValue())
+	if accountName == "" {
+		return errors.New("contract not found")
+	}
+	ok, err := pm.IdentifyAccount(accountName, authRequire, uv.aclMgr)
+	if err != nil {
+		return err
+	}
+	if !ok {
+		return errors.New("verify contract owner permission failed")
+	}
+	return nil
+}

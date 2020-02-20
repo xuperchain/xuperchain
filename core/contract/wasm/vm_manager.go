@@ -214,3 +214,63 @@ func (v *VMManager) initContract(contextConfig *contract.ContextConfig, args map
 	}
 	return out, ctx.ResourceUsed(), nil
 }
+
+// UpgradeContract deploy contract and initialize contract
+func (v *VMManager) UpgradeContract(contextConfig *contract.ContextConfig, args map[string][]byte) (*contract.Response, contract.Limits, error) {
+	if !v.config.EnableUpgrade {
+		return nil, contract.Limits{}, errors.New("contract upgrade disabled")
+	}
+
+	name := args["contract_name"]
+	if name == nil {
+		return nil, contract.Limits{}, errors.New("bad contract name")
+	}
+	contractName := string(name)
+	err := v.verifyContractName(contractName)
+	if err != nil {
+		return nil, contract.Limits{}, err
+	}
+	desc, err := v.codeProvider.GetContractCodeDesc(contractName)
+	if err != nil {
+		return nil, contract.Limits{}, fmt.Errorf("contract %s not exists", contractName)
+	}
+
+	code := args["contract_code"]
+	if code == nil {
+		return nil, contract.Limits{}, errors.New("missing contract code")
+	}
+	desc.Digest = hash.DoubleSha256(code)
+	descbuf, _ := proto.Marshal(desc)
+
+	store := contextConfig.XMCache
+	store.Put("contract", ContractCodeDescKey(contractName), descbuf)
+	store.Put("contract", contractCodeKey(contractName), code)
+
+	cp := newCodeProvider(store)
+	instance, err := v.vmimpl.CreateInstance(&bridge.Context{
+		ContractName:   contractName,
+		ResourceLimits: contract.MaxLimits,
+	}, cp)
+	if err != nil {
+		log.Error("create contract instance error when upgrade contract", "error", err, "contract", contractName)
+		return nil, contract.Limits{}, err
+	}
+	instance.Release()
+
+	return &contract.Response{
+			Status: 200,
+			Body:   []byte("upgrade success"),
+		}, contract.Limits{
+			Disk: modelCacheDiskUsed(store),
+		}, nil
+}
+
+func modelCacheDiskUsed(cache *xmodel.XMCache) int64 {
+	size := int64(0)
+	_, wset, _ := cache.GetRWSets()
+	for _, w := range wset {
+		size += int64(len(w.GetKey()))
+		size += int64(len(w.GetValue()))
+	}
+	return size
+}
