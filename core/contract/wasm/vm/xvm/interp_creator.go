@@ -19,8 +19,12 @@ func newXVMInterpCreator(creatorConfig *vm.InstanceCreatorConfig) (vm.InstanceCr
 	creator := &xvmInterpCreator{
 		config: *creatorConfig,
 	}
-	creator.cm = newCodeManager(creator.config.Basedir,
+	var err error
+	creator.cm, err = newCodeManager(creator.config.Basedir,
 		creator.compileCode, creator.makeExecCode)
+	if err != nil {
+		return nil, err
+	}
 	return creator, nil
 }
 

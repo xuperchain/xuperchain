@@ -19,6 +19,7 @@ func NewWasmCommand(cli *Cli) *cobra.Command {
 	cmd.AddCommand(NewWasmDeployCommand(cli))
 	cmd.AddCommand(NewWasmInvokeCommand(cli))
 	cmd.AddCommand(NewWasmQueryCommand(cli))
+	cmd.AddCommand(NewWasmUpgradeCommand(cli))
 	return cmd
 }
 

@@ -16,6 +16,14 @@ type Method interface {
 	Invoke(ctx *KContext, args map[string][]byte) (*contract.Response, error)
 }
 
+// MethodFunc type is an adapter to allow the use of ordinary functions as Method handlers
+type MethodFunc func(ctx *KContext, args map[string][]byte) (*contract.Response, error)
+
+// Invoke implements Method interface
+func (m MethodFunc) Invoke(ctx *KContext, args map[string][]byte) (*contract.Response, error) {
+	return m(ctx, args)
+}
+
 // XuperKernel define kernel contract method type
 type XuperKernel struct {
 	methods map[string]Method
@@ -36,13 +44,17 @@ type KContext struct {
 
 // NewKernel new an instance of XuperKernel, initialized with kernel contract method
 func NewKernel(vmm *wasm.VMManager) (*XuperKernel, error) {
+	contractMethods := &contractMethods{
+		vmm: vmm,
+	}
 	return &XuperKernel{
 		methods: map[string]Method{
 			"Get":           &GetMethod{},
 			"NewAccount":    &NewAccountMethod{},
 			"SetAccountAcl": &SetAccountACLMethod{},
 			"SetMethodAcl":  &SetMethodACLMethod{},
-			"Deploy":        &DeployMethod{vmm: vmm},
+			"Deploy":        MethodFunc(contractMethods.Deploy),
+			"Upgrade":       MethodFunc(contractMethods.Upgrade),
 		},
 	}, nil
 }

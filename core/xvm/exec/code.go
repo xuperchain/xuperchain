@@ -7,6 +7,7 @@ package exec
 import "C"
 import (
 	"fmt"
+	"runtime"
 	"unsafe"
 
 	"github.com/xuperchain/xuperchain/core/xvm/pointer"
@@ -50,6 +51,7 @@ func NewAOTCode(module string, resolver Resolver) (icode Code, err error) {
 		return
 	}
 	icode = code
+	runtime.SetFinalizer(code, (*aotCode).Release)
 	return
 }
 
@@ -62,4 +64,5 @@ func (c *aotCode) Release() {
 		pointer.Delete(c.bridgePointer)
 	}
 	*c = aotCode{}
+	runtime.SetFinalizer(c, nil)
 }
