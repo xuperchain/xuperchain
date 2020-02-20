@@ -70,7 +70,7 @@ func (xm *XChainMG) StartLoop() {
 func (xm *XChainMG) handleReceivedMsg(msg *xuper_p2p.XuperMessage) {
 	bcname := msg.GetHeader().GetBcname()
 	from := msg.GetHeader().GetFrom()
-	if !xm.CheckGroupChain(bcname, from) {
+	if !xm.IsPeerInGroupChain(bcname, from) {
 		xm.Log.Warn("remote node ip is not in white list, refuse it")
 		return
 	}
@@ -321,7 +321,7 @@ func (xm *XChainMG) handleGetBlock(ctx context.Context, msg *xuper_p2p.XuperMess
 	bcname := msg.GetHeader().GetBcname()
 	logid := msg.GetHeader().GetLogid()
 	from := msg.GetHeader().GetFrom()
-	if !xm.CheckGroupChain(bcname, from) {
+	if !xm.IsPeerInGroupChain(bcname, from) {
 		xm.Log.Warn("remote node ip is not in white list, refuse it")
 		res, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, bcname, logid,
 			xuper_p2p.XuperMessage_GET_BLOCK_RES, []byte("unknown"), xuper_p2p.XuperMessage_CHECK_SUM_ERROR)
@@ -380,7 +380,7 @@ func (xm *XChainMG) handleGetBlockChainStatus(ctx context.Context, msg *xuper_p2
 	bcname := msg.GetHeader().GetBcname()
 	logid := msg.GetHeader().GetLogid()
 	from := msg.GetHeader().GetFrom()
-	if !xm.CheckGroupChain(bcname, from) {
+	if !xm.IsPeerInGroupChain(bcname, from) {
 		xm.Log.Warn("remote node ip is not in white list, refuse it")
 		res, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, bcname, logid,
 			xuper_p2p.XuperMessage_GET_BLOCK_RES, []byte("unknown"), xuper_p2p.XuperMessage_CHECK_SUM_ERROR)
@@ -428,7 +428,7 @@ func (xm *XChainMG) handleConfirmBlockChainStatus(ctx context.Context, msg *xupe
 	bcname := msg.GetHeader().GetBcname()
 	logid := msg.GetHeader().GetLogid()
 	from := msg.GetHeader().GetFrom()
-	if !xm.CheckGroupChain(bcname, from) {
+	if !xm.IsPeerInGroupChain(bcname, from) {
 		xm.Log.Warn("remote node ip is not in white list, refuse it")
 		res, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, bcname, logid,
 			xuper_p2p.XuperMessage_GET_BLOCK_RES, []byte("unknown"), xuper_p2p.XuperMessage_CHECK_SUM_ERROR)
@@ -475,7 +475,7 @@ func (xm *XChainMG) handleConfirmBlockChainStatus(ctx context.Context, msg *xupe
 func (xm *XChainMG) handleGetRPCPort(ctx context.Context, msg *xuper_p2p.XuperMessage) (*xuper_p2p.XuperMessage, error) {
 	bcname := msg.GetHeader().GetBcname()
 	from := msg.GetHeader().GetFrom()
-	if !xm.CheckGroupChain(bcname, from) {
+	if !xm.IsPeerInGroupChain(bcname, from) {
 		xm.Log.Warn("remote node ip is not in white list, refuse it")
 		res, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, msg.GetHeader().GetBcname(), msg.GetHeader().GetLogid(),
 			xuper_p2p.XuperMessage_GET_BLOCK_RES, []byte("unknown"), xuper_p2p.XuperMessage_CHECK_SUM_ERROR)

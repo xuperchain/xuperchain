@@ -6,8 +6,10 @@ import (
 	"time"
 )
 
+const groupChainCacheUpdateWindow = 2
+
 type GroupChainRegister interface {
-	CheckGroupChain(bcname, remotePeerID string) bool
+	IsPeerInGroupChain(bcname, remotePeerID string) bool
 	GetAllowedPeersWithBcname(bcname string) map[string]bool
 }
 
@@ -21,8 +23,8 @@ type groupChainCache struct {
 	Mutex              *sync.Mutex
 }
 
-// CheckGroupChain 判断某条链下的某个节点是否在白名单中
-func (xm *XChainMG) CheckGroupChain(bcname, remotePeerID string) bool {
+// IsPeerInGroupChain 判断某条链下的某个节点是否在白名单中
+func (xm *XChainMG) IsPeerInGroupChain(bcname, remotePeerID string) bool {
 	if bcname == "" {
 		return true
 	}
@@ -112,6 +114,6 @@ func (xm *XChainMG) updateGroupChainCache() {
 	for {
 		xm.updateContractCache()
 		xm.updateStreamCache()
-		time.Sleep(2 * time.Second)
+		time.Sleep(groupChainCacheUpdateWindow * time.Second)
 	}
 }

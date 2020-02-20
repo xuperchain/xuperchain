@@ -138,7 +138,6 @@ func (p *P2PServerV2) SendMessageWithResponse(ctx context.Context, msg *p2pPb.Xu
 	msgOpts := p2p_base.GetMessageOption(opts)
 	filter := p.getFilter(msgOpts)
 	peers, _ := filter.Filter()
-	fmt.Println("=============>peers:", peers)
 	peersRes := []peer.ID{}
 	// 做一层过滤(基于白名单过滤)
 	whiteList := msgOpts.WhiteList
