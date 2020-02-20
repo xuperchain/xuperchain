@@ -42,7 +42,13 @@ public:
     }
     void addNode() {
         xchain::Context* ctx = this->context();
-        std::string key = nodeBucket + ctx->arg("bcname") + endingSeparator + ctx->arg("ip");
+        const std::string bcname  = ctx->arg("bcname");
+        if (bcname == "xuper") {
+            ctx->error("xuper is forbidden");
+            return;
+        }
+        const std::string ip = ctx->arg("ip");
+        std::string key = nodeBucket + bcname + endingSeparator + ip;
         std::string value = ctx->initiator();
         if (ctx->put_object(key, value)) {
             ctx->ok("add node succeed");
