@@ -324,6 +324,11 @@ func (p *P2PServerV1) GetPeerUrls() []string {
 	return res
 }
 
+func (p *P2PServerV1) GetPeerIDAndUrls() map[string]string {
+	id2Url := map[string]string{}
+	return id2Url
+}
+
 // SetCorePeers set core peers' info to P2P server
 func (p *P2PServerV1) SetCorePeers(cp *p2p_base.CorePeersInfo) error {
 	// TODO: p2pv1 only support static nodes at this time, do not support core peers

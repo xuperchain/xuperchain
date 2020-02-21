@@ -61,6 +61,7 @@ const (
 	IrreversibleBlockHeightKey = "IrreversibleBlockHeight"
 	IrreversibleSlideWindowKey = "IrreversibleSlideWindow"
 	GasPriceKey                = "GasPrice"
+	GroupChainContractKey      = "GroupChainContract"
 )
 
 // Ledger define data structure of Ledger
@@ -968,6 +969,10 @@ func (l *Ledger) GetReservedContracts() ([]*pb.InvokeRequest, error) {
 
 func (l *Ledger) GetForbiddenContract() ([]*pb.InvokeRequest, error) {
 	return l.GenesisBlock.GetConfig().GetForbiddenContract()
+}
+
+func (l *Ledger) GetGroupChainContract() ([]*pb.InvokeRequest, error) {
+	return l.GenesisBlock.GetConfig().GetGroupChainContract()
 }
 
 func (l *Ledger) GetGasPrice() *pb.GasPrice {
