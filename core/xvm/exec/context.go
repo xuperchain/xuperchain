@@ -6,6 +6,7 @@ import "C"
 import (
 	"errors"
 	"fmt"
+	"runtime"
 	"unsafe"
 )
 
@@ -56,6 +57,7 @@ type aotContext struct {
 	gasUsed  int64
 	cfg      ContextConfig
 	userData map[string]interface{}
+	code     *aotCode
 }
 
 // NewContext instances a Context from Code
@@ -63,6 +65,7 @@ func (code *aotCode) NewContext(cfg *ContextConfig) (ictx Context, err error) {
 	ctx := &aotContext{
 		cfg:      *cfg,
 		userData: make(map[string]interface{}),
+		code:     code,
 	}
 	defer func() {
 		if err != nil {
@@ -76,12 +79,14 @@ func (code *aotCode) NewContext(cfg *ContextConfig) (ictx Context, err error) {
 		return nil, errors.New("init context error")
 	}
 	ictx = ctx
+	runtime.SetFinalizer(ctx, (*aotContext).Release)
 	return ictx, nil
 }
 
 // Release releases resources hold by Context
 func (c *aotContext) Release() {
 	C.xvm_release_context(&c.context)
+	runtime.SetFinalizer(c, nil)
 }
 
 func isalpha(c byte) bool {
