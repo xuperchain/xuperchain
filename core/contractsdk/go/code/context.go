@@ -23,6 +23,8 @@ type Context interface {
 	Transfer(to string, amount *big.Int) error
 	TransferAmount() (*big.Int, error)
 	Call(module, contract, method string, args map[string][]byte) (*Response, error)
+
+	Logf(fmt string, args ...interface{})
 }
 
 // Iterator iterates over key/value pairs in key order

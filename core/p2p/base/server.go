@@ -18,7 +18,7 @@ type P2PServer interface {
 	Init(cfg config.P2PConfig, log log.Logger, extra map[string]interface{}) error
 
 	// NewSubscriber create a subscriber instance
-	NewSubscriber(chan *p2pPb.XuperMessage, p2pPb.XuperMessage_MessageType, XuperHandler, string) Subscriber
+	NewSubscriber(chan *p2pPb.XuperMessage, p2pPb.XuperMessage_MessageType, XuperHandler, string, log.Logger) Subscriber
 	// 注册订阅者，支持多个用户订阅同一类消息
 	Register(sub Subscriber) (Subscriber, error)
 	// 注销订阅者，需要根据当时注册时返回的Subscriber实例删除

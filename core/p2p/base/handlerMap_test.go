@@ -21,10 +21,11 @@ type MockSubscriber struct {
 	e       *list.Element
 	// 仅接收固定来源的消息
 	msgFrom string
+	log     log.Logger
 }
 
 // NewSubscriber create instance of Subscriber
-func NewMockSubscriber(msgCh chan *xuperp2p.XuperMessage, msgType xuperp2p.XuperMessage_MessageType, handler XuperHandler, msgFrom string) *MockSubscriber {
+func NewMockSubscriber(msgCh chan *xuperp2p.XuperMessage, msgType xuperp2p.XuperMessage_MessageType, handler XuperHandler, msgFrom string, log log.Logger) *MockSubscriber {
 	sub := &MockSubscriber{}
 	if msgCh == nil && handler == nil {
 		return nil
@@ -33,6 +34,7 @@ func NewMockSubscriber(msgCh chan *xuperp2p.XuperMessage, msgType xuperp2p.Xuper
 	sub.msgType = msgType
 	sub.handler = handler
 	sub.msgFrom = msgFrom
+	sub.log = log
 	return sub
 }
 
@@ -208,7 +210,7 @@ func TestHandleMessage(t *testing.T) {
 	if err != nil {
 		t.Error("NewHandlerMap error", err.Error())
 	}
-	sub := NewMockSubscriber(nil, xuperp2p.XuperMessage_PING, testHandler, "")
+	sub := NewMockSubscriber(nil, xuperp2p.XuperMessage_PING, testHandler, "", nil)
 	hm.Register(sub)
 
 	mgHeader := xuperp2p.XuperMessage_MessageHeader{

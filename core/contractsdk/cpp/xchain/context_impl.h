@@ -35,6 +35,7 @@ public:
                       const std::string& method,
                       const std::map<std::string, std::string>& args,
                       Response* response);
+    virtual void logf(const char* fmt, ...);
 
 private:
     pb::CallArgs _call_args;

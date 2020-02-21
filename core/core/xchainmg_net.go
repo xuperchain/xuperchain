@@ -18,35 +18,35 @@ import (
 // RegisterSubscriber register p2p_base msg type
 func (xm *XChainMG) RegisterSubscriber() error {
 	xm.Log.Trace("Start to Register Subscriber")
-	if _, err := xm.P2pSvr.Register(xm.P2pSvr.NewSubscriber(xm.msgChan, xuper_p2p.XuperMessage_POSTTX, nil, "")); err != nil {
+	if _, err := xm.P2pSvr.Register(xm.P2pSvr.NewSubscriber(xm.msgChan, xuper_p2p.XuperMessage_POSTTX, nil, "", xm.Log)); err != nil {
 		return err
 	}
 
-	if _, err := xm.P2pSvr.Register(xm.P2pSvr.NewSubscriber(xm.msgChan, xuper_p2p.XuperMessage_SENDBLOCK, nil, "")); err != nil {
+	if _, err := xm.P2pSvr.Register(xm.P2pSvr.NewSubscriber(xm.msgChan, xuper_p2p.XuperMessage_SENDBLOCK, nil, "", xm.Log)); err != nil {
 		return err
 	}
 
-	if _, err := xm.P2pSvr.Register(xm.P2pSvr.NewSubscriber(xm.msgChan, xuper_p2p.XuperMessage_BATCHPOSTTX, nil, "")); err != nil {
+	if _, err := xm.P2pSvr.Register(xm.P2pSvr.NewSubscriber(xm.msgChan, xuper_p2p.XuperMessage_BATCHPOSTTX, nil, "", xm.Log)); err != nil {
 		return err
 	}
 
-	if _, err := xm.P2pSvr.Register(xm.P2pSvr.NewSubscriber(xm.msgChan, xuper_p2p.XuperMessage_NEW_BLOCKID, nil, "")); err != nil {
+	if _, err := xm.P2pSvr.Register(xm.P2pSvr.NewSubscriber(xm.msgChan, xuper_p2p.XuperMessage_NEW_BLOCKID, nil, "", xm.Log)); err != nil {
 		return err
 	}
 
-	if _, err := xm.P2pSvr.Register(xm.P2pSvr.NewSubscriber(nil, xuper_p2p.XuperMessage_GET_BLOCK, xm.handleGetBlock, "")); err != nil {
+	if _, err := xm.P2pSvr.Register(xm.P2pSvr.NewSubscriber(nil, xuper_p2p.XuperMessage_GET_BLOCK, xm.handleGetBlock, "", xm.Log)); err != nil {
 		return err
 	}
 
-	if _, err := xm.P2pSvr.Register(xm.P2pSvr.NewSubscriber(nil, xuper_p2p.XuperMessage_GET_BLOCKCHAINSTATUS, xm.handleGetBlockChainStatus, "")); err != nil {
+	if _, err := xm.P2pSvr.Register(xm.P2pSvr.NewSubscriber(nil, xuper_p2p.XuperMessage_GET_BLOCKCHAINSTATUS, xm.handleGetBlockChainStatus, "", xm.Log)); err != nil {
 		return err
 	}
 
-	if _, err := xm.P2pSvr.Register(xm.P2pSvr.NewSubscriber(nil, xuper_p2p.XuperMessage_CONFIRM_BLOCKCHAINSTATUS, xm.handleConfirmBlockChainStatus, "")); err != nil {
+	if _, err := xm.P2pSvr.Register(xm.P2pSvr.NewSubscriber(nil, xuper_p2p.XuperMessage_CONFIRM_BLOCKCHAINSTATUS, xm.handleConfirmBlockChainStatus, "", xm.Log)); err != nil {
 		return err
 	}
 
-	if _, err := xm.P2pSvr.Register(xm.P2pSvr.NewSubscriber(nil, xuper_p2p.XuperMessage_GET_RPC_PORT, xm.handleGetRPCPort, "")); err != nil {
+	if _, err := xm.P2pSvr.Register(xm.P2pSvr.NewSubscriber(nil, xuper_p2p.XuperMessage_GET_RPC_PORT, xm.handleGetRPCPort, "", xm.Log)); err != nil {
 		return err
 	}
 

@@ -33,6 +33,8 @@ const (
 	DefaultIsStorePeers          = false
 	DefaultP2PDataPath           = "./data/p2p"
 	DefaultP2PModuleName         = "p2pv2"
+	DefaultServiceName           = ""
+	DefaultIsBroadCast           = true
 )
 
 // LogConfig is the log config of node
@@ -83,6 +85,8 @@ type P2PConfig struct {
 	BootNodes []string `yaml:"bootNodes,omitempty"`
 	// staticNodes config the nodes which you trust
 	StaticNodes map[string][]string `yaml:"staticNodes,omitempty"`
+	// isBroadCast config whether broadcast to all StaticNodes
+	IsBroadCast bool `yaml:"isBroadCast,omitempty"`
 	// maxStreamLimits config the max stream num
 	MaxStreamLimits int32 `yaml:"maxStreamLimits,omitempty"`
 	// maxMessageSize config the max message size
@@ -170,6 +174,7 @@ type WasmConfig struct {
 	XVM            XVMConfig
 	EnableDebugLog bool
 	DebugLog       LogConfig
+	EnableUpgrade  bool
 }
 
 func (w *WasmConfig) applyFlags(flags *pflag.FlagSet) {
@@ -368,6 +373,8 @@ func newP2pConfigWithDefault() P2PConfig {
 		P2PDataPath:           DefaultP2PDataPath,
 		StaticNodes:           make(map[string][]string),
 		CertPath:              DefaultCertPath,
+		ServiceName:           DefaultServiceName,
+		IsBroadCast:           DefaultIsBroadCast,
 	}
 }
 

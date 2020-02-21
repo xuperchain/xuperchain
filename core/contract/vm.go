@@ -47,6 +47,8 @@ type ChainCore interface {
 	GetAccountAddresses(accountName string) ([]string, error)
 	// VerifyContractPermission verify permission of calling contract
 	VerifyContractPermission(initiator string, authRequire []string, contractName, methodName string) (bool, error)
+	// VerifyContractOwnerPermission verify contract ownership permisson
+	VerifyContractOwnerPermission(contractName string, authRequire []string) error
 	// QueryTransaction query confirmed tx
 	QueryTransaction(txid []byte) (*pb.Transaction, error)
 	// QueryBlock query block

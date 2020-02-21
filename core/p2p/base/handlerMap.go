@@ -34,12 +34,12 @@ type HandlerMap struct {
 	// key: xuperp2p.XuperMessage_MessageType, value: *MultiSubscriber
 	subscriberCenter *sync.Map
 	msgHandled       *cache.Cache
-
-	quitCh chan bool
+	quitCh           chan bool
 }
 
 // NewHandlerMap create instance of HandlerMap
 func NewHandlerMap(log log.Logger) (*HandlerMap, error) {
+	log.Trace("Create NewHandlerMap")
 	return &HandlerMap{
 		lg:               log,
 		subscriberCenter: new(sync.Map),
@@ -50,17 +50,11 @@ func NewHandlerMap(log log.Logger) (*HandlerMap, error) {
 
 // Start start message handling
 func (hm *HandlerMap) Start() {
-	for {
-		select {
-		case <-hm.quitCh:
-			hm.Stop()
-		}
-	}
+	hm.lg.Trace("Start HandlerMap")
 }
 
 // Stop stop message handling
 func (hm *HandlerMap) Stop() {
-	hm.quitCh <- true
 	hm.lg.Trace("Stop HandlerMap")
 }
 
@@ -153,7 +147,7 @@ func (hm *HandlerMap) HandleMessage(stream interface{}, msg *xuperp2p.XuperMessa
 
 	if ms, ok := v.(*MultiSubscriber); ok {
 		// 如果注册了回调方法，则调用回调方法, 如果注册了channel,则进行通知
-		go ms.handleMessage(stream, msg)
+		ms.handleMessage(stream, msg)
 		hm.MarkMsgAsHandled(msg)
 		return nil
 	}

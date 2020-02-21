@@ -157,8 +157,8 @@ func (p *P2PServerV2) SendMessageWithResponse(ctx context.Context, msg *p2pPb.Xu
 }
 
 // NewSubscriber create a subscriber instance
-func (p *P2PServerV2) NewSubscriber(msgCh chan *p2pPb.XuperMessage, msgType p2pPb.XuperMessage_MessageType, handler p2p_base.XuperHandler, msgFrom string) p2p_base.Subscriber {
-	return NewMsgSubscriber(msgCh, msgType, handler, msgFrom)
+func (p *P2PServerV2) NewSubscriber(msgCh chan *p2pPb.XuperMessage, msgType p2pPb.XuperMessage_MessageType, handler p2p_base.XuperHandler, msgFrom string, log log.Logger) p2p_base.Subscriber {
+	return NewMsgSubscriber(msgCh, msgType, handler, msgFrom, log)
 }
 
 // Register register message subscribers to handle messages
