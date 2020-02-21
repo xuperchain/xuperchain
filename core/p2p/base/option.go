@@ -7,11 +7,18 @@ type MsgOptions struct {
 	TargetPeerIDs   []string
 	Percentage      float32 //percentage wait for return
 	// compress
-	Compress bool
+	Compress  bool
+	WhiteList map[string]bool
 }
 
 // MessageOption define single option function
 type MessageOption func(*MsgOptions)
+
+func WithWhiteList(whiteList map[string]bool) MessageOption {
+	return func(o *MsgOptions) {
+		o.WhiteList = whiteList
+	}
+}
 
 // WithFilters add filter strategies to message option
 func WithFilters(filter []FilterStrategy) MessageOption {
