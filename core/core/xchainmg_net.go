@@ -68,6 +68,12 @@ func (xm *XChainMG) StartLoop() {
 }
 
 func (xm *XChainMG) handleReceivedMsg(msg *xuper_p2p.XuperMessage) {
+	bcname := msg.GetHeader().GetBcname()
+	from := msg.GetHeader().GetFrom()
+	if !xm.IsPeerInGroupChain(bcname, from) {
+		xm.Log.Warn("remote node ip is not in white list, refuse it")
+		return
+	}
 	// check msg type
 	msgType := msg.GetHeader().GetType()
 	if msgType != xuper_p2p.XuperMessage_POSTTX && msgType != xuper_p2p.XuperMessage_SENDBLOCK && msgType !=
@@ -314,6 +320,13 @@ func (xm *XChainMG) ProcessBatchTx(batchTx *pb.BatchTxs) (*pb.BatchTxs, error) {
 func (xm *XChainMG) handleGetBlock(ctx context.Context, msg *xuper_p2p.XuperMessage) (*xuper_p2p.XuperMessage, error) {
 	bcname := msg.GetHeader().GetBcname()
 	logid := msg.GetHeader().GetLogid()
+	from := msg.GetHeader().GetFrom()
+	if !xm.IsPeerInGroupChain(bcname, from) {
+		xm.Log.Warn("remote node ip is not in white list, refuse it")
+		res, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, bcname, logid,
+			xuper_p2p.XuperMessage_GET_BLOCK_RES, []byte("unknown"), xuper_p2p.XuperMessage_CHECK_SUM_ERROR)
+		return res, errors.New("remote node ip is not in white list, refuse it")
+	}
 	xm.Log.Trace("Start to handleGetBlock", "bcname", bcname, "logid", logid)
 	block := &pb.Block{Header: global.GHeader()}
 	if !p2p_base.VerifyDataCheckSum(msg) {
@@ -366,6 +379,13 @@ func (xm *XChainMG) handleGetBlock(ctx context.Context, msg *xuper_p2p.XuperMess
 func (xm *XChainMG) handleGetBlockChainStatus(ctx context.Context, msg *xuper_p2p.XuperMessage) (*xuper_p2p.XuperMessage, error) {
 	bcname := msg.GetHeader().GetBcname()
 	logid := msg.GetHeader().GetLogid()
+	from := msg.GetHeader().GetFrom()
+	if !xm.IsPeerInGroupChain(bcname, from) {
+		xm.Log.Warn("remote node ip is not in white list, refuse it")
+		res, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, bcname, logid,
+			xuper_p2p.XuperMessage_GET_BLOCK_RES, []byte("unknown"), xuper_p2p.XuperMessage_CHECK_SUM_ERROR)
+		return res, errors.New("remote node ip is not in white list, refuse it")
+	}
 	xm.Log.Trace("Start to handleGetBlockChainStatus", "bcname", bcname, "logid", logid)
 	if !p2p_base.VerifyDataCheckSum(msg) {
 		xm.Log.Warn("handleGetBlockChainStatus verify msg error", "log_id", logid)
@@ -407,6 +427,13 @@ func (xm *XChainMG) handleGetBlockChainStatus(ctx context.Context, msg *xuper_p2
 func (xm *XChainMG) handleConfirmBlockChainStatus(ctx context.Context, msg *xuper_p2p.XuperMessage) (*xuper_p2p.XuperMessage, error) {
 	bcname := msg.GetHeader().GetBcname()
 	logid := msg.GetHeader().GetLogid()
+	from := msg.GetHeader().GetFrom()
+	if !xm.IsPeerInGroupChain(bcname, from) {
+		xm.Log.Warn("remote node ip is not in white list, refuse it")
+		res, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, bcname, logid,
+			xuper_p2p.XuperMessage_GET_BLOCK_RES, []byte("unknown"), xuper_p2p.XuperMessage_CHECK_SUM_ERROR)
+		return res, errors.New("remote node ip is not in white list, refuse it")
+	}
 	xm.Log.Trace("Start to handleConfirmBlockChainStatus", "bcname", bcname, "logid", logid)
 	if !p2p_base.VerifyDataCheckSum(msg) {
 		xm.Log.Warn("handleConfirmBlockChainStatus verify msg error", "log_id", logid)
@@ -446,6 +473,14 @@ func (xm *XChainMG) handleConfirmBlockChainStatus(ctx context.Context, msg *xupe
 
 // 处理获取RPC端口回调函数
 func (xm *XChainMG) handleGetRPCPort(ctx context.Context, msg *xuper_p2p.XuperMessage) (*xuper_p2p.XuperMessage, error) {
+	bcname := msg.GetHeader().GetBcname()
+	from := msg.GetHeader().GetFrom()
+	if !xm.IsPeerInGroupChain(bcname, from) {
+		xm.Log.Warn("remote node ip is not in white list, refuse it")
+		res, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, msg.GetHeader().GetBcname(), msg.GetHeader().GetLogid(),
+			xuper_p2p.XuperMessage_GET_BLOCK_RES, []byte("unknown"), xuper_p2p.XuperMessage_CHECK_SUM_ERROR)
+		return res, errors.New("remote node ip is not in white list, refuse it")
+	}
 	xm.Log.Trace("Start to handleGetRPCPort", "logid", msg.GetHeader().GetLogid())
 	_, port, err := net.SplitHostPort(xm.Cfg.TCPServer.Port)
 	if err != nil {

@@ -50,6 +50,8 @@ type RootConfig struct {
 	NewAccountResourceAmount int64 `json:"new_account_resource_amount"`
 	// IrreversibleSlideWindow
 	IrreversibleSlideWindow string `json:"irreversibleslidewindow"`
+	// GroupChainContract
+	GroupChainContract InvokeRequest `json:"group_chain_contract"`
 }
 
 // GasPrice define gas rate for utxo
@@ -124,6 +126,10 @@ func (rc *RootConfig) GetReservedContract() ([]*pb.InvokeRequest, error) {
 
 func (rc *RootConfig) GetForbiddenContract() ([]*pb.InvokeRequest, error) {
 	return InvokeRequestFromJSON2Pb([]InvokeRequest{rc.ForbiddenContract})
+}
+
+func (rc *RootConfig) GetGroupChainContract() ([]*pb.InvokeRequest, error) {
+	return InvokeRequestFromJSON2Pb([]InvokeRequest{rc.GroupChainContract})
 }
 
 // GetReservedWhitelistAccount return reserved whitelist account

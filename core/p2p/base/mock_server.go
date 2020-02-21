@@ -69,6 +69,10 @@ func (mp *MockP2pServer) GetPeerUrls() []string {
 	return nil
 }
 
+func (mp *MockP2pServer) GetPeerIDAndUrls() map[string]string {
+	return nil
+}
+
 // SetCorePeers implements the SetCorePeers interface
 func (mp *MockP2pServer) SetCorePeers(corePeers *CorePeersInfo) error {
 	return nil

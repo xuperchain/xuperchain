@@ -462,6 +462,7 @@ message UtxoMeta {
   int64 irreversibleBlockHeight = 10;	// 当前不可逆区块高度，与utxo对齐
   int64 irreversibleSlideWindow = 11;	// 当前不可逆区块高度调整窗口
   GasPrice gasPrice = 12;
+  InvokeRequest group_chain_contract = 13;	// 群组合约相关
 }
 
 message GasPrice {

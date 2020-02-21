@@ -56,9 +56,11 @@ func (xc *XChainCore) syncForOnce() (*pb.BCStatus, bool) {
 		return nil, false
 	}
 	filters := []p2p_base.FilterStrategy{p2p_base.NearestBucketStrategy}
+	whiteList := xc.groupChain.GetAllowedPeersWithBcname(xc.bcname)
 	opts := []p2p_base.MessageOption{
 		p2p_base.WithFilters(filters),
 		p2p_base.WithBcName(xc.bcname),
+		p2p_base.WithWhiteList(whiteList),
 	}
 	hbcs, err := xc.P2pSvr.SendMessageWithResponse(context.Background(), msg, opts...)
 	if err != nil {
@@ -101,9 +103,11 @@ func (xc *XChainCore) syncConfirm(bcs *pb.BCStatus) bool {
 	bcsBuf, err := proto.Marshal(bcs)
 	msg, err := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, bcs.GetBcname(), "", xuper_p2p.XuperMessage_CONFIRM_BLOCKCHAINSTATUS, bcsBuf, xuper_p2p.XuperMessage_NONE)
 	filters := []p2p_base.FilterStrategy{p2p_base.NearestBucketStrategy}
+	whiteList := xc.groupChain.GetAllowedPeersWithBcname(xc.bcname)
 	opts := []p2p_base.MessageOption{
 		p2p_base.WithFilters(filters),
 		p2p_base.WithBcName(xc.bcname),
+		p2p_base.WithWhiteList(whiteList),
 	}
 	res, err := xc.P2pSvr.SendMessageWithResponse(context.Background(), msg, opts...)
 	if err != nil {
