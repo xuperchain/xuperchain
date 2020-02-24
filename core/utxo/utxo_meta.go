@@ -166,6 +166,28 @@ func (uv *UtxoVM) GetForbiddenContract() *pb.InvokeRequest {
 	return uv.meta.GetForbiddenContract()
 }
 
+func (uv *UtxoVM) GetGroupChainContract() *pb.InvokeRequest {
+	uv.mutexMeta.Lock()
+	defer uv.mutexMeta.Unlock()
+	return uv.meta.GetGroupChainContract()
+}
+
+func (uv *UtxoVM) LoadGroupChainContract() (*pb.InvokeRequest, error) {
+	groupChainContractBuf, findErr := uv.metaTable.Get([]byte(ledger_pkg.GroupChainContractKey))
+	if findErr == nil {
+		utxoMeta := &pb.UtxoMeta{}
+		err := proto.Unmarshal(groupChainContractBuf, utxoMeta)
+		return utxoMeta.GetGroupChainContract(), err
+	} else if common.NormalizedKVError(findErr) == common.ErrKVNotFound {
+		requests, err := uv.ledger.GetGroupChainContract()
+		if len(requests) > 0 {
+			return requests[0], err
+		}
+		return nil, errors.New("unexpected error")
+	}
+	return nil, findErr
+}
+
 func (uv *UtxoVM) LoadForbiddenContract() (*pb.InvokeRequest, error) {
 	forbiddenContractBuf, findErr := uv.metaTable.Get([]byte(ledger_pkg.ForbiddenContractKey))
 	if findErr == nil {

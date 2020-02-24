@@ -105,3 +105,11 @@ prune:
   switch: false
   bcname: "xuper"
   targetBlockid: "xxx"
+
+# wasm合约配置
+
+wasm:
+  driver: "xvm"
+  enableUpgrade: false
+  xvm:
+    optLevel: 0

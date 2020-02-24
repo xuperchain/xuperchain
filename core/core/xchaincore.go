@@ -124,6 +124,8 @@ type XChainCore struct {
 	blockBroadcaseMode uint8
 	// event involved
 	eventService *event.EventService
+	// group chain involved
+	groupChain GroupChainRegister
 }
 
 // Status return the status of the chain
@@ -133,7 +135,7 @@ func (xc *XChainCore) Status() int {
 
 // Init init the chain
 func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfig,
-	p2p p2p_base.P2PServer, ker *kernel.Kernel, nodeMode string, eventService *event.EventService) error {
+	p2p p2p_base.P2PServer, ker *kernel.Kernel, nodeMode string, eventService *event.EventService, groupChain GroupChainRegister) error {
 
 	// 设置全局随机数发生器的原始种子
 	err := global.SetSeed()
@@ -146,6 +148,7 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	// this.mutex.Lock()
 	// defer this.mutex.Unlock()
 	xc.eventService = eventService
+	xc.groupChain = groupChain
 	xc.status = global.SafeModel
 	xc.bcname = bcname
 	xc.log = xlog
@@ -346,10 +349,12 @@ func (xc *XChainCore) repostOfflineTx() {
 		if xc.NeedCoreConnection() {
 			filters = append(filters, p2p_base.CorePeersStrategy)
 		}
+		whiteList := xc.groupChain.GetAllowedPeersWithBcname(xc.bcname)
 		opts := []p2p_base.MessageOption{
 			p2p_base.WithFilters(filters),
 			p2p_base.WithBcName(xc.bcname),
 			p2p_base.WithCompress(xc.enableCompress),
+			p2p_base.WithWhiteList(whiteList),
 		}
 		go xc.P2pSvr.SendMessage(context.Background(), msg, opts...) //p2p广播出去
 	}
@@ -727,9 +732,11 @@ func (xc *XChainCore) doMiner() {
 			if xc.NeedCoreConnection() {
 				filters = append(filters, p2p_base.CorePeersStrategy)
 			}
+			whiteList := xc.groupChain.GetAllowedPeersWithBcname(xc.bcname)
 			opts := []p2p_base.MessageOption{
 				p2p_base.WithFilters(filters),
 				p2p_base.WithBcName(xc.bcname),
+				p2p_base.WithWhiteList(whiteList),
 			}
 			xc.P2pSvr.SendMessage(context.Background(), msg, opts...)
 		} else {
@@ -741,10 +748,12 @@ func (xc *XChainCore) doMiner() {
 			if xc.NeedCoreConnection() {
 				filters = append(filters, p2p_base.CorePeersStrategy)
 			}
+			whiteList := xc.groupChain.GetAllowedPeersWithBcname(xc.bcname)
 			opts := []p2p_base.MessageOption{
 				p2p_base.WithFilters(filters),
 				p2p_base.WithBcName(xc.bcname),
 				p2p_base.WithCompress(xc.enableCompress),
+				p2p_base.WithWhiteList(whiteList),
 			}
 			xc.P2pSvr.SendMessage(context.Background(), msg, opts...)
 		}

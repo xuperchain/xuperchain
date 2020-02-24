@@ -34,6 +34,8 @@ type XChainMG struct {
 	enableCompress bool
 	// event involved
 	EventService *event.EventService
+	// group chain involved
+	groupChainCache *groupChainCache
 }
 
 // Init init instance of XChainMG
@@ -53,6 +55,13 @@ func (xm *XChainMG) Init(log log.Logger, cfg *config.NodeConfig,
 	xm.EventService = &event.EventService{}
 	xm.EventService.Init(cfg.PubsubService)
 
+	xm.groupChainCache = &groupChainCache{
+		StreamCache:         map[string]string{},
+		StreamContractCache: map[string]map[string]bool{},
+		ChainContractCache:  map[string]bool{},
+		Mutex:               &sync.Mutex{},
+	}
+
 	// auto-load plugins here
 	if err := pm.Init(cfg); err != nil {
 		xm.Log.Error("can't initialize plugin manager", "error", err)
@@ -70,7 +79,7 @@ func (xm *XChainMG) Init(log log.Logger, cfg *config.NodeConfig,
 			aKernel := &kernel.Kernel{}
 			aKernel.Init(xm.datapath, xm.Log, xm, fi.Name())
 			x := &XChainCore{}
-			err := x.Init(fi.Name(), log, cfg, p2pV2, aKernel, xm.nodeMode, xm.EventService)
+			err := x.Init(fi.Name(), log, cfg, p2pV2, aKernel, xm.nodeMode, xm.EventService, xm)
 			if err != nil {
 				return err
 			}
@@ -94,6 +103,7 @@ func (xm *XChainMG) Init(log log.Logger, cfg *config.NodeConfig,
 		return err
 	}
 	go xm.Speed.ShowLoop(xm.Log)
+	go xm.updateGroupChainCache()
 	xm.notifyInitialized()
 	return nil
 }
@@ -169,7 +179,7 @@ func (xm *XChainMG) addBlockChain(name string) (*XChainCore, error) {
 		aKernel = &kernel.Kernel{}
 		aKernel.Init(xm.datapath, xm.Log, xm, name)
 	}
-	err := x.Init(name, xm.Log, xm.Cfg, xm.P2pSvr, aKernel, xm.nodeMode, xm.EventService)
+	err := x.Init(name, xm.Log, xm.Cfg, xm.P2pSvr, aKernel, xm.nodeMode, xm.EventService, xm)
 	if err != nil {
 		xm.Log.Warn("XChainCore init error")
 		xm.rootKernel.RemoveBlockChainData(name)

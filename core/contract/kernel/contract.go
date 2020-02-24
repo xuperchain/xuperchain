@@ -10,13 +10,13 @@ import (
 	"github.com/xuperchain/xuperchain/core/permission/acl/utils"
 )
 
-// DeployMethod define Deploy type
-type DeployMethod struct {
+// contractMethods manage methods about contract
+type contractMethods struct {
 	vmm *wasm.VMManager
 }
 
-// Invoke Deploy contract method implementation
-func (dm *DeployMethod) Invoke(ctx *KContext, args map[string][]byte) (*contract.Response, error) {
+// Deploy deploys contract
+func (c *contractMethods) Deploy(ctx *KContext, args map[string][]byte) (*contract.Response, error) {
 	// check if account exist
 	accountName := args["account_name"]
 	contractName := args["contract_name"]
@@ -32,7 +32,7 @@ func (dm *DeployMethod) Invoke(ctx *KContext, args map[string][]byte) (*contract
 		return nil, fmt.Errorf("get account `%s` error: %s", accountName, err)
 	}
 
-	out, resourceUsed, err := dm.vmm.DeployContract(ctx.ContextConfig, args)
+	out, resourceUsed, err := c.vmm.DeployContract(ctx.ContextConfig, args)
 	if err != nil {
 		return nil, err
 	}
@@ -49,4 +49,22 @@ func (dm *DeployMethod) Invoke(ctx *KContext, args map[string][]byte) (*contract
 		return nil, err
 	}
 	return out, nil
+}
+
+// Upgrade upgrades contract
+func (c *contractMethods) Upgrade(ctx *KContext, args map[string][]byte) (*contract.Response, error) {
+	contractName := args["contract_name"]
+	if contractName == nil {
+		return nil, errors.New("invoke Upgrade error, contract name is nil")
+	}
+	err := ctx.ContextConfig.Core.VerifyContractOwnerPermission(string(contractName), ctx.AuthRequire)
+	if err != nil {
+		return nil, err
+	}
+	resp, resourceUsed, err := c.vmm.UpgradeContract(ctx.ContextConfig, args)
+	if err != nil {
+		return nil, err
+	}
+	ctx.AddResourceUsed(resourceUsed)
+	return resp, nil
 }
