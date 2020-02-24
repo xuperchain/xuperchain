@@ -159,6 +159,8 @@ func (tp *TDpos) getTermProposer(term int64) []*cons_base.CandidateInfo {
 				}
 				val = preVal
 				tp.log.Trace("TDpos getTermProposer ", "key", string(preKey))
+			} else {
+				val = it.Value()
 			}
 		} else {
 			tp.log.Warn("TDpos getTermProposer query from table is nil", "tp.config.initProposer[1]", tp.config.initProposer[1])
