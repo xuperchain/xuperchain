@@ -139,22 +139,27 @@ func (tp *TDpos) getTermProposer(term int64) []*cons_base.CandidateInfo {
 				return nil
 			}
 			if termLast == term+1 {
-				if it.Prev() {
-					tp.log.Trace("TDpos getTermProposer ", "key", string(it.Key()))
-				} else {
+				keyLast := string(it.Key())
+				it.First()
+
+				keyFirst := string(it.Key())
+				if keyFirst == keyLast {
 					tp.log.Trace("TDpos getTermProposer parseTermCheckKey get prev nil")
-					it.Last()
-					keyLast := string(it.Key())
-					it.First()
-					ketFirst := string(it.Key())
-					if keyLast == ketFirst {
-						return tp.config.initProposer[1]
-					}
-					tp.log.Warn("TDpos getTermProposer parseTermCheckKey get prev error", "error", err)
-					return nil
+					return tp.config.initProposer[1]
 				}
+
+				preKey := keyFirst
+				preVal := it.Value()
+				for it.Next() {
+					if string(it.Key()) == keyLast {
+						break
+					}
+					preKey = string(it.Key())
+					preVal = it.Value()
+				}
+				val = preVal
+				tp.log.Trace("TDpos getTermProposer ", "key", string(preKey))
 			}
-			val = it.Value()
 		} else {
 			tp.log.Warn("TDpos getTermProposer query from table is nil", "tp.config.initProposer[1]", tp.config.initProposer[1])
 			return tp.config.initProposer[1]
