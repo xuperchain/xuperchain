@@ -1,8 +1,5 @@
 /*
 Copyright Baidu Inc. All Rights Reserved.
-
-<jingbo@baidu.com>
-<shubin01@baidu.com>
 */
 
 package schnorr_sign

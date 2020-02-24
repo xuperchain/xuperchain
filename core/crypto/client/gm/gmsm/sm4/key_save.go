@@ -2,8 +2,6 @@
 Copyright Baidu Inc. All Rights Reserved.
 
 把私钥加密后存储到客户端本地存储盘上，传入的信息是：私钥、对称加密的key（也就是用户的支付密码）、私钥存储地址
-
-jingbo@baidu.com
 */
 
 package sm4
@@ -28,8 +26,6 @@ import (
 	"github.com/xuperchain/xuperchain/core/crypto/hash"
 	"github.com/xuperchain/xuperchain/core/hdwallet/config"
 	spv_error "github.com/xuperchain/xuperchain/core/hdwallet/error"
-	//	"baidu.com/xchain/pb"
-	//	cryptoUtil "github.com/xuperchain/xuperchain/core/crypto/utils"
 
 	"golang.org/x/crypto/pbkdf2"
 )

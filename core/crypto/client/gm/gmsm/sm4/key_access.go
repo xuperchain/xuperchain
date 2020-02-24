@@ -2,8 +2,6 @@
 Copyright Baidu Inc. All Rights Reserved.
 
 把客户端本地存储盘上的加密后存储的私钥解析出来，传入的信息是：对称加密的key（也就是用户的支付密码）、私钥存储地址
-
-jingbo@baidu.com
 */
 
 package sm4
@@ -27,13 +25,11 @@ import (
 	"golang.org/x/crypto/pbkdf2"
 
 	"github.com/xuperchain/xuperchain/core/crypto/account"
+	"github.com/xuperchain/xuperchain/core/crypto/client/gm/gmsm/sm2"
 	"github.com/xuperchain/xuperchain/core/crypto/ecies"
 	"github.com/xuperchain/xuperchain/core/crypto/hash"
 	"github.com/xuperchain/xuperchain/core/hdwallet/config"
 	spv_error "github.com/xuperchain/xuperchain/core/hdwallet/error"
-	//	"baidu.com/xchain/pb"
-	//	cryptoUtil "github.com/xuperchain/xuperchain/core/crypto/utils"
-	"github.com/xuperchain/xuperchain/core/crypto/client/gm/gmsm/sm2"
 )
 
 func GetBinaryEcdsaPrivateKeyFromFile(path string, password string) ([]byte, error) {
