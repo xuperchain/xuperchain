@@ -20,9 +20,9 @@ import (
 	mathRand "math/rand"
 
 	//	"github.com/xuperchain/xuperchain/core/crypto/hash"
+	"github.com/xuperchain/xuperchain/core/crypto/client/gm/gmsm/schnorr_sign"
 	"github.com/xuperchain/xuperchain/core/crypto/common"
 	"github.com/xuperchain/xuperchain/core/hdwallet/rand"
-	"github.com/xuperchain/xuperchain/core/crypto/client/gm/gmsm/schnorr_sign"
 
 	"github.com/xuperchain/xuperchain/core/crypto/client/gm/gmsm/sm3"
 )
