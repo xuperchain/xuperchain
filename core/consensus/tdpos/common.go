@@ -144,7 +144,7 @@ func (tp *TDpos) getTermProposer(term int64) []*cons_base.CandidateInfo {
 
 				keyFirst := string(it.Key())
 				if keyFirst == keyLast {
-					tp.log.Trace("TDpos getTermProposer parseTermCheckKey get prev nil")
+					tp.log.Trace("TDpos getTermProposer parseTermCheckKey get prev nil", "")
 					return tp.config.initProposer[1]
 				}
 
@@ -158,8 +158,11 @@ func (tp *TDpos) getTermProposer(term int64) []*cons_base.CandidateInfo {
 					preVal = it.Value()
 				}
 				val = preVal
-				tp.log.Trace("TDpos getTermProposer ", "key", string(preKey))
+				tp.log.Trace("TDpos getTermProposer ", "available key", string(preKey),
+					"current term:", term, "last term:", termLast)
 			} else {
+				tp.log.Trace("TDpos getTermProposer ", "available key", string(it.Key()),
+					"current term:", term, "last term:", termLast)
 				val = it.Value()
 			}
 		} else {
