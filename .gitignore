@@ -2,6 +2,9 @@
 core/plugins/
 core/output/
 core/xvm/compile/wabt/build/
+core/contractsdk/cpp/build
+output
+event_client
 
 # Compiled source
 *.com
@@ -10,6 +13,7 @@ core/xvm/compile/wabt/build/
 *.exe
 *.o
 *.so
+*.d
 
 # OSX trash
 .DS_Store
@@ -25,3 +29,7 @@ core/xvm/compile/wabt/build/
 
 # idea
 .idea
+
+# Log files
+*.log
+*.log.wf

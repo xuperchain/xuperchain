@@ -1,15 +1,20 @@
 package main
 
 import (
-	//"os"
+	"io/ioutil"
+	"os"
 	"testing"
 )
 
 func TestBadgerIteratorWithPrefixBasic(t *testing.T) {
 	otherOpts := map[string]interface{}{}
 	badgerDB := &BadgerDatabase{}
-	path := "./badger1"
-	err := badgerDB.Open(path, otherOpts)
+	path, err := ioutil.TempDir("", "badger-test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(path)
+	err = badgerDB.Open(path, otherOpts)
 	if err != nil {
 		t.Error("open error: ", err)
 	}
@@ -65,8 +70,12 @@ func TestBadgerIteratorWithPrefixBasic(t *testing.T) {
 func TestBadgerIteratorWithRangeBasic(t *testing.T) {
 	otherOpts := map[string]interface{}{}
 	badgerDB := &BadgerDatabase{}
-	path := "./badger2"
-	err := badgerDB.Open(path, otherOpts)
+	path, err := ioutil.TempDir("", "badger-test")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(path)
+	err = badgerDB.Open(path, otherOpts)
 	if err != nil {
 		t.Error("open error: ", err)
 	}
