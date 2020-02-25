@@ -55,8 +55,11 @@ func newXVMCreator(creatorConfig *vm.InstanceCreatorConfig) (vm.InstanceCreator,
 			return nil, fmt.Errorf("bad xvm optlevel:%d", optlevel)
 		}
 	}
-	creator.cm = newCodeManager(creator.config.Basedir,
+	creator.cm, err = newCodeManager(creator.config.Basedir,
 		creator.CompileCode, creator.MakeExecCode)
+	if err != nil {
+		return nil, err
+	}
 	return creator, nil
 }
 
