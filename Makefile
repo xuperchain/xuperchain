@@ -19,7 +19,7 @@ build:
 	PLATFORM=$(PLATFORM) ./build.sh
 
 test:
-	go test -cover `go list ./... | egrep -v 'test'`
+	go test -cover ./...
 	# test wasm sdk
 	GOOS=js GOARCH=wasm go build github.com/xuperchain/xuperchain/core/contractsdk/go/driver
 	cd core/xvm/spectest && go run main.go core

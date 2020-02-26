@@ -2,12 +2,13 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/syndtr/goleveldb/leveldb/opt"
 	"github.com/xuperchain/xuperchain/core/kv/mstorage"
 )
 
-func main() {
+func read() {
 	store, sErr := mstorage.OpenFile("./data", true, []string{"./disks/disk1/", "./disks/disk2", "./disks/disk3"})
 	if sErr != nil {
 		panic(sErr)

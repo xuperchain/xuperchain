@@ -1,13 +1,16 @@
 package main
 
 import (
+	"flag"
 	"fmt"
+	"os"
+	"strings"
+
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/xuperchain/xuperchain/core/kv/mstorage"
-	"strings"
 )
 
-func main() {
+func write() {
 	store, sErr := mstorage.OpenFile("./data", false, []string{"./disks/disk1/", "./disks/disk2", "./disks/disk3"})
 	if sErr != nil {
 		panic(sErr)
@@ -30,5 +33,17 @@ func main() {
 	cErr := db.Close()
 	if cErr != nil {
 		panic(cErr)
+	}
+}
+
+func main() {
+	flag.Parse()
+	switch flag.Arg(0) {
+	case "read":
+		read()
+	case "write":
+		write()
+	default:
+		fmt.Printf("usage %s read|write\n", os.Args[0])
 	}
 }
