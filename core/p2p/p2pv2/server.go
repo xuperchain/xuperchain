@@ -110,7 +110,8 @@ func (p *P2PServerV2) SendMessage(ctx context.Context, msg *p2pPb.XuperMessage,
 	whiteList := msgOpts.WhiteList
 	if len(whiteList) > 0 {
 		for _, v := range peers.([]peer.ID) {
-			if _, exist := whiteList[string(v)]; exist {
+			rawPeerID := fmt.Sprintf("%s", v)
+			if _, exist := whiteList[rawPeerID]; exist {
 				peersRes = append(peersRes, v)
 			}
 		}
@@ -143,7 +144,8 @@ func (p *P2PServerV2) SendMessageWithResponse(ctx context.Context, msg *p2pPb.Xu
 	whiteList := msgOpts.WhiteList
 	if len(whiteList) > 0 {
 		for _, v := range peers.([]peer.ID) {
-			if _, exist := whiteList[string(v)]; exist {
+			rawPeerID := fmt.Sprintf("%s", v)
+			if _, exist := whiteList[rawPeerID]; exist {
 				peersRes = append(peersRes, v)
 			}
 		}
