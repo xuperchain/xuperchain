@@ -32,9 +32,14 @@ func (xm *XChainMG) IsPeerInGroupChain(bcname, remotePeerID string) bool {
 	xm.groupChainCache.Mutex.Lock()
 	defer xm.groupChainCache.Mutex.Unlock()
 	ipSet, ipSetExist := xm.groupChainCache.StreamContractCache[bcname]
-	if !ipSetExist || len(ipSet) == 0 {
+	// ipSetExist代表是否有群组属性
+	// len(ipSet)代表bcname的白名单数量
+	if !ipSetExist {
 		return true
+	} else if len(ipSet) == 0 {
+		return false
 	}
+
 	// 如果本地没有远程传来的节点id，直接拒绝
 	ip, ipExist := xm.groupChainCache.StreamCache[remotePeerID]
 	if !ipExist {
@@ -74,6 +79,9 @@ func (xm *XChainMG) GetAllowedPeersWithBcname(bcname string) map[string]bool {
 		if localIP == ip {
 			allowedPeersMap[peerID] = true
 		}
+	}
+	if len(allowedPeersMap) == 0 {
+		allowedPeersMap["MAGIC_PEERID"] = true
 	}
 
 	return allowedPeersMap
