@@ -31,6 +31,9 @@ func (xm *XChainMG) IsPeerInGroupChain(bcname, remotePeerID string) bool {
 	// 判断bcname是否支持群组
 	xm.groupChainCache.Mutex.Lock()
 	defer xm.groupChainCache.Mutex.Unlock()
+	if _, groupExist := xm.groupChainCache.ChainContractCache[bcname]; !groupExist {
+		return true
+	}
 	ipSet, ipSetExist := xm.groupChainCache.StreamContractCache[bcname]
 	// ipSetExist代表是否有群组属性
 	// len(ipSet)代表bcname的白名单数量
@@ -60,6 +63,9 @@ func (xm *XChainMG) GetAllowedPeersWithBcname(bcname string) map[string]bool {
 
 	xm.groupChainCache.Mutex.Lock()
 	defer xm.groupChainCache.Mutex.Unlock()
+	if _, groupExist := xm.groupChainCache.ChainContractCache[bcname]; !groupExist {
+		return allowedPeersMap
+	}
 	ipSet, exist := xm.groupChainCache.StreamContractCache[bcname]
 	if !exist {
 		return allowedPeersMap
