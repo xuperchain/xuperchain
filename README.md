@@ -73,6 +73,8 @@ Run test:
 make test
 ```
 
+Use Docker to build xuperchain see [docker build](core/scripts/README.md)
+
 ### Run 
 
 There is an output folder if build successfully. Enter the output folder, create a default chain firstly:
@@ -189,6 +191,8 @@ make
 ```
 make test
 ```
+
+使用docker来编译xueprchain见[docker build](core/scripts/README.md)
 
 单机版xchain
 ```
