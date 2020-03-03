@@ -118,7 +118,6 @@ func (s *Smr) Start() {
 			go s.handleReceivedMsg(msg)
 		case <-s.QuitCh:
 			s.slog.Info("Quit chainedbft smr ...")
-			s.QuitCh <- true
 			s.stop()
 			return
 		}
@@ -127,7 +126,6 @@ func (s *Smr) Start() {
 
 // stop used to stop smr instance
 func (s *Smr) stop() {
-	// TODO: zq
 }
 
 // ProcessNewView used to process while view changed. There are three scenarios:

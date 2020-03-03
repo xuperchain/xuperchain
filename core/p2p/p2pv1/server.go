@@ -66,10 +66,12 @@ func (p *P2PServerV1) Init(cfg config.P2PConfig, lg log.Logger, extra map[string
 
 	hm, err := p2p_base.NewHandlerMap(lg)
 	if err != nil {
+		p.log.Error("Init P2PServerV1 NewHandlerMap error", "error", err)
 		return ErrCreateHandlerMap
 	}
 	cp, err := NewConnPool(lg, cfg)
 	if err != nil {
+		p.log.Error("Init P2PServerV1 NewConnPool error", "error", err)
 		return ErrConnPool
 	}
 	// set p2p server members
@@ -304,9 +306,36 @@ func (p *P2PServerV1) getCompress(opts *p2p_base.MsgOptions) bool {
 }
 
 func (p *P2PServerV1) getFilter(opts *p2p_base.MsgOptions) p2p_base.PeersFilter {
-	// All filtering strategies will invalid if
-	// TODO: support TargetPeerAddrs and TargetPeerIDs options
-	return &StaticNodeStrategy{isBroadCast: p.config.IsBroadCast, pSer: p, bcname: opts.Bcname}
+	fs := opts.Filters
+	bcname := opts.Bcname
+	peerids := make([]string, 0)
+	pfs := make([]p2p_base.PeersFilter, 0)
+	// TODO: support other filters in feature
+	for _, f := range fs {
+		var filter p2p_base.PeersFilter
+		switch f {
+		default:
+			filter = &StaticNodeStrategy{isBroadCast: p.config.IsBroadCast, pSer: p, bcname: bcname}
+		}
+		pfs = append(pfs, filter)
+	}
+	// process target peer addresses
+	// connect to extra target peers async
+	go p.ConnectToPeersByAddr(opts.TargetPeerAddrs)
+	// get corresponding peer ids
+	peerids = append(peerids, opts.TargetPeerAddrs...)
+	return NewMultiStrategy(pfs, peerids)
+}
+
+// ConnectToPeersByAddr establish contact with given nodes
+func (p *P2PServerV1) ConnectToPeersByAddr(addrs []string) {
+	for _, peer := range addrs {
+		// peer address connected before
+		_, err := p.connPool.Find(peer)
+		if err != nil {
+			p.log.Error("ConnectToPeersByAddr error", "addr", peer, "error", err)
+		}
+	}
 }
 
 // GetPeerUrls 查询所连接节点的信息
