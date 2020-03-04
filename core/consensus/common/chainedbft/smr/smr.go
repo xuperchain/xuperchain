@@ -307,7 +307,6 @@ func (s *Smr) handleReceivedVoteMsg(msg *p2p_pb.XuperMessage) error {
 			return ErrGetVotes
 		}
 		s.generateQC.SignInfos = v.(*pb.QCSignInfos)
-		s.slog.Debug("handleReceivedVoteMsg", "s.generateQC.SignInfos", s.generateQC.SignInfos)
 	}
 	return nil
 }
