@@ -3,11 +3,8 @@ package p2pv1
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"os"
 	"strconv"
@@ -16,7 +13,6 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/xuperchain/log15"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/reflection"
 
 	"github.com/xuperchain/xuperchain/core/common/config"
@@ -92,7 +88,7 @@ func (p *P2PServerV1) Init(cfg config.P2PConfig, lg log.Logger, extra map[string
 					continue
 				}
 
-				conn, err := NewConn(lg, peer, cfg.CertPath, cfg.ServiceName, (int)(cfg.MaxMessageSize)<<20)
+				conn, err := NewConn(lg, peer, cfg.CertPath, cfg.ServiceName, cfg.IsUseCert, (int)(cfg.MaxMessageSize)<<20)
 				if err != nil {
 					p.log.Warn("p2p connect to peer failed", "peer", peer, "error", err)
 					continue
@@ -344,41 +340,25 @@ func (p *P2PServerV1) SetXchainAddr(bcname string, info *p2p_base.XchainAddrInfo
 
 // startServer start p2p server
 func (p *P2PServerV1) startServer() {
-	certPath := p.config.CertPath
-	bs, err := ioutil.ReadFile(certPath + "/cacert.pem")
-	if err != nil {
-		panic(err)
-	}
-	certPool := x509.NewCertPool()
-	ok := certPool.AppendCertsFromPEM(bs)
-	if !ok {
-		panic(errors.New("AppendCertsFromPEM error"))
-	}
+	options := []grpc.ServerOption{}
 
-	certificate, err := tls.LoadX509KeyPair(certPath+"/cert.pem", certPath+"/private.key")
-	if err != nil {
-		panic(err)
+	if p.config.IsUseCert {
+		creds, err := genCreds(p.config.CertPath, p.config.ServiceName)
+		if err != nil {
+			panic(err)
+		}
+		options = append(options, grpc.Creds(creds))
 	}
-	creds := credentials.NewTLS(
-		&tls.Config{
-			ServerName:   p.config.ServiceName,
-			Certificates: []tls.Certificate{certificate},
-			RootCAs:      certPool,
-			ClientCAs:    certPool,
-			ClientAuth:   tls.RequireAndVerifyClientCert,
-		})
 
 	l, err := net.Listen("tcp", ":"+strconv.Itoa((int)(p.config.Port)))
 	if err != nil {
 		panic(err)
 	}
 
-	// TODO: zq add other option by config
-	options := append([]grpc.ServerOption{}, grpc.Creds(creds))
 	s := grpc.NewServer(options...)
 	p2pPb.RegisterP2PServiceServer(s, p)
 	reflection.Register(s)
-	log.Trace("start tls rpc server")
+	log.Trace("start p2p rpc server")
 	go func() {
 		err := s.Serve(l)
 		if err != nil {
