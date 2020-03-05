@@ -68,7 +68,7 @@ func (cp *ConnPool) Remove(conn *Conn) error {
 	return nil
 }
 
-// Find find conn from connpool
+// Find find conn from connpool, it will establish with the addr if haven't been connected
 func (cp *ConnPool) Find(addr string) (*Conn, error) {
 	if cp.conns[addr] != nil {
 		return cp.conns[addr], nil
