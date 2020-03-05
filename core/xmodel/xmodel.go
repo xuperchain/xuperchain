@@ -82,7 +82,9 @@ func (s *XModel) updateExtUtxo(tx *pb.Transaction, batch kvdb.Batch) error {
 
 // DoTx running a transaction and update extUtxoTable
 func (s *XModel) DoTx(tx *pb.Transaction, batch kvdb.Batch) error {
-	s.cleanCache(batch)
+	if tx.Blockid != nil {
+		s.cleanCache(batch)
+	}
 	err := s.verifyInputs(tx)
 	if err != nil {
 		return err
