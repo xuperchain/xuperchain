@@ -57,7 +57,7 @@ Clone the repository
 git clone https://github.com/xuperchain/xuperchain
 ```
 
-**Note**: `master` branch contains latest features but might be **unstable**. for production use, please checkout our release branch. the latest release branch is `v3.4`.
+**Note**: `master` branch contains latest features but might be **unstable**. for production use, please checkout our release branch. the latest release branch is `v3.6`.
 
 Enter the xuperchain folder and build the code:
 
@@ -123,6 +123,8 @@ docker exec -ti xchain bash
 
 Please refer to our [wiki](https://github.com/xuperchain/xuperchain/wiki) for more  information, including how to build multi-node network, transfer to others, deploy and invoke smart contract.
 
+We have new documentation of Chinese version at [XuperChain Chinese Docs](https://xuperchain.readthedocs.io/zh/latest/), the English version is comming soon.
+
 ## How to Contribute
 
 We encourage you to contribute to XuperChain.
@@ -179,7 +181,7 @@ XuperChain is under the [Apache License, Version 2.0](https://github.com/xuperch
 git clone https://github.com/xuperchain/xuperchain
 ```
 
-**注意**: `master` 分支是日常开发分支，会包含最新的功能，但是 **不稳定**。生产环境请使用最新的已发布分支，最新的已发布分支是`v3.4`。
+**注意**: `master` 分支是日常开发分支，会包含最新的功能，但是 **不稳定**。生产环境请使用最新的已发布分支，最新的已发布分支是`v3.6`。
 
 编译
 ```
@@ -225,7 +227,8 @@ docker exec -ti xchain bash
 
 ## 文档
 
-关于XuperChain更详细、更深入的使用方法链接：[wiki](https://github.com/xuperchain/xuperchain/wiki)
+
+关于XuperChain更详细、更深入的使用方法链接请查看[XuperChain文档库](https://xuperchain.readthedocs.io/zh/latest/)和[wiki](https://github.com/xuperchain/xuperchain/wiki)
 
 ## 如何参与开发
 1. 阅读源代码，了解我们当前的开发方向
