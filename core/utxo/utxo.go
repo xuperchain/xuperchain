@@ -1514,8 +1514,8 @@ func (uv *UtxoVM) processUnconfirmTxs(block *pb.InternalBlock, batch kvdb.Batch,
 				return
 			}
 			limit := len(sortTxList)
-			if limit > OfflineTxChanBuffer/3 {
-				limit = OfflineTxChanBuffer / 3
+			if limit > OfflineTxChanBuffer/2 {
+				limit = OfflineTxChanBuffer / 2
 			}
 			for _, txid := range sortTxList[:limit] {
 				if txidsInBlock[txid] || undoDone[txid] {
