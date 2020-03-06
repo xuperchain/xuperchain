@@ -1284,8 +1284,13 @@ func (uv *UtxoVM) doTxSync(tx *pb.Transaction) error {
 	uv.mutex.RLock()
 	defer uv.mutex.RUnlock() //lock guard
 	spLockKeys := uv.spLock.ExtractLockKeys(tx)
-	uv.spLock.Lock(spLockKeys)
-	defer uv.spLock.Unlock(spLockKeys)
+	succLockKeys, lockOK := uv.spLock.TryLock(spLockKeys)
+	if lockOK {
+		defer uv.spLock.Unlock(succLockKeys)
+	} else {
+		uv.xlog.Warn("failed to lock", spLockKeys)
+		return ErrDoubleSpent
+	}
 	waitTime := time.Now().Unix() - recvTime
 	if waitTime > TxWaitTimeout {
 		uv.xlog.Warn("dotx wait too long!", "waitTime", waitTime, "txid", fmt.Sprintf("%x", tx.Txid))
@@ -1509,7 +1514,11 @@ func (uv *UtxoVM) processUnconfirmTxs(block *pb.InternalBlock, batch kvdb.Batch,
 				uv.xlog.Warn("transaction conflicted", "unexpectedCyclic", unexpectedCyclic)
 				return
 			}
-			for _, txid := range sortTxList {
+			limit := len(sortTxList)
+			if limit > OfflineTxChanBuffer {
+				limit = OfflineTxChanBuffer / 2
+			}
+			for _, txid := range sortTxList[:limit] {
 				if txidsInBlock[txid] || undoDone[txid] {
 					continue
 				}

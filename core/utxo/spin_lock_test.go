@@ -48,10 +48,10 @@ func TestSpinLock(t *testing.T) {
 		t.Fatal("tx2 lock error")
 	}
 	go func() {
-		sp.Lock(lockKeys2)
-		t.Log("tx2 got lock")
+		succLks, ok := sp.TryLock(lockKeys2)
+		t.Log("tx2 got lock", succLks, ok)
 	}()
-	sp.Lock(lockKeys1)
+	sp.TryLock(lockKeys1)
 	time.Sleep(1 * time.Second)
 	sp.Unlock(lockKeys1)
 	t.Log("tx1 unlock")

@@ -74,9 +74,9 @@ var (
 
 const (
 	// MaxReposting max repost times for broadcats
-	MaxReposting = 300 // tx重试广播的最大并发，过多容易打爆对方的grpc连接数
+	MaxReposting = 1024 // tx重试广播的最大并发，过多容易打爆对方的grpc连接数
 	// RepostingInterval repost retry interval, ms
-	RepostingInterval = 50 // 重试广播间隔ms
+	RepostingInterval = 500 // 重试广播间隔ms
 	TxidCacheGcTime   = 180 * time.Second
 
 	// DefaultMessageCacheSize for p2p message
@@ -356,7 +356,7 @@ func (xc *XChainCore) repostOfflineTx() {
 			p2p_base.WithCompress(xc.enableCompress),
 			p2p_base.WithWhiteList(whiteList),
 		}
-		go xc.P2pSvr.SendMessage(context.Background(), msg, opts...) //p2p广播出去
+		xc.P2pSvr.SendMessage(context.Background(), msg, opts...) //p2p广播出去
 	}
 }
 
@@ -887,7 +887,6 @@ func (xc *XChainCore) PostTx(in *pb.TxStatus, hd *global.XContext) (*pb.CommonRe
 		xc.log.Debug("refused to accept a repeated transaction recently")
 		return out, false
 	}
-	xc.txidCache.Set(txidStr, true, xc.txidCacheExpiredTime)
 	// 对Tx进行的签名, 1 如果utxo属于用户，则走原来的验证逻辑 2 如果utxo属于账户，则走账户acl验证逻辑
 	txValid, validErr := xc.Utxovm.VerifyTx(in.Tx)
 	if !txValid {
@@ -923,6 +922,7 @@ func (xc *XChainCore) PostTx(in *pb.TxStatus, hd *global.XContext) (*pb.CommonRe
 	if xc.Utxovm.IsAsync() || xc.Utxovm.IsAsyncBlock() {
 		return out, false //no need to repost tx immediately
 	}
+	xc.txidCache.Set(txidStr, true, xc.txidCacheExpiredTime)
 	return out, true
 }
 

@@ -2,7 +2,6 @@ package utxo
 
 import "sync"
 import "sort"
-import "runtime"
 import "strconv"
 import "github.com/xuperchain/xuperchain/core/pb"
 
@@ -68,19 +67,20 @@ func (sp *SpinLock) ExtractLockKeys(tx *pb.Transaction) []*LockKey {
 	return keys[:lim]
 }
 
-func (sp *SpinLock) Lock(lockKeys []*LockKey) {
+func (sp *SpinLock) TryLock(lockKeys []*LockKey) ([]*LockKey, bool) {
+	succLocked := []*LockKey{}
 	for _, k := range lockKeys {
-		for {
-			if lkType, occupiedByOthers := sp.m.LoadOrStore(k.key, k.lockType); occupiedByOthers {
-				if lkType == SharedLock && k.lockType == SharedLock {
-					break
-				}
-				runtime.Gosched()
+		if lkType, occupiedByOthers := sp.m.LoadOrStore(k.key, k.lockType); occupiedByOthers {
+			if lkType == SharedLock && k.lockType == SharedLock {
+				succLocked = append(succLocked, k)
+				continue
 			} else {
-				break
+				return succLocked, false
 			}
 		}
+		succLocked = append(succLocked, k)
 	}
+	return succLocked, true
 }
 
 func (sp *SpinLock) Unlock(lockKeys []*LockKey) {
