@@ -1287,7 +1287,7 @@ func (uv *UtxoVM) doTxSync(tx *pb.Transaction) error {
 	succLockKeys, lockOK := uv.spLock.TryLock(spLockKeys)
 	defer uv.spLock.Unlock(succLockKeys)
 	if !lockOK {
-		uv.xlog.Warn("failed to lock", "keys", spLockKeys)
+		uv.xlog.Warn("failed to lock", "txid", global.F(tx.Txid))
 		return ErrDoubleSpent
 	}
 	waitTime := time.Now().Unix() - recvTime
