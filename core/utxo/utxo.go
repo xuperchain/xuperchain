@@ -1285,9 +1285,8 @@ func (uv *UtxoVM) doTxSync(tx *pb.Transaction) error {
 	defer uv.mutex.RUnlock() //lock guard
 	spLockKeys := uv.spLock.ExtractLockKeys(tx)
 	succLockKeys, lockOK := uv.spLock.TryLock(spLockKeys)
-	if lockOK {
-		defer uv.spLock.Unlock(succLockKeys)
-	} else {
+	defer uv.spLock.Unlock(succLockKeys)
+	if !lockOK {
 		uv.xlog.Warn("failed to lock", spLockKeys)
 		return ErrDoubleSpent
 	}
