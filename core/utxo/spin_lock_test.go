@@ -17,6 +17,12 @@ func TestSpinLock(t *testing.T) {
 				RefOffset: 1,
 			},
 		},
+		TxInputsExt: []*pb.TxInputExt{
+			&pb.TxInputExt{
+				Bucket: "bk2",
+				Key:    []byte("key2"),
+			},
+		},
 		TxOutputsExt: []*pb.TxOutputExt{
 			&pb.TxOutputExt{
 				Bucket: "bk1",
@@ -41,7 +47,7 @@ func TestSpinLock(t *testing.T) {
 	lockKeys2 := sp.ExtractLockKeys(tx2)
 	t.Log(lockKeys1)
 	t.Log(lockKeys2)
-	if fmt.Sprintf("%v", lockKeys1) != "[bk1/key1:X tx0_0:X tx3_1:X]" {
+	if fmt.Sprintf("%v", lockKeys1) != "[bk1/key1:X bk2/key2:S tx0_0:X tx3_1:X]" {
 		t.Fatal("tx1 lock error")
 	}
 	if fmt.Sprintf("%v", lockKeys2) != "[bk2/key2:S tx3_0:X]" {
@@ -50,6 +56,7 @@ func TestSpinLock(t *testing.T) {
 	go func() {
 		succLks, ok := sp.TryLock(lockKeys2)
 		t.Log("tx2 got lock", succLks, ok)
+		sp.Unlock(succLks)
 	}()
 	sp.TryLock(lockKeys1)
 	time.Sleep(1 * time.Second)
