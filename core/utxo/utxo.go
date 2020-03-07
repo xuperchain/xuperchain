@@ -238,7 +238,7 @@ func (uv *UtxoVM) checkInputEqualOutput(tx *pb.Transaction) error {
 			uBinary, findErr := uv.utxoTable.Get([]byte(utxoKey))
 			if findErr != nil {
 				if common.NormalizedKVError(findErr) == common.ErrKVNotFound {
-					uv.xlog.Warn("not found utxo key:", "utxoKey", utxoKey)
+					uv.xlog.Info("not found utxo key:", "utxoKey", utxoKey)
 					return ErrUTXONotFound
 				}
 				uv.xlog.Warn("unexpected leveldb error when do checkInputEqualOutput", "findErr", findErr)
@@ -1287,7 +1287,7 @@ func (uv *UtxoVM) doTxSync(tx *pb.Transaction) error {
 	succLockKeys, lockOK := uv.spLock.TryLock(spLockKeys)
 	defer uv.spLock.Unlock(succLockKeys)
 	if !lockOK {
-		uv.xlog.Warn("failed to lock", "txid", global.F(tx.Txid))
+		uv.xlog.Info("failed to lock", "txid", global.F(tx.Txid))
 		return ErrDoubleSpent
 	}
 	waitTime := time.Now().Unix() - recvTime
@@ -1302,7 +1302,7 @@ func (uv *UtxoVM) doTxSync(tx *pb.Transaction) error {
 	batch := uv.ldb.NewBatch()
 	doErr := uv.doTxInternal(tx, batch)
 	if doErr != nil {
-		uv.xlog.Warn("doTxInternal failed, when DoTx", "doErr", doErr)
+		uv.xlog.Info("doTxInternal failed, when DoTx", "doErr", doErr)
 		return doErr
 	}
 	batch.Put(append([]byte(pb.UnconfirmedTablePrefix), tx.Txid...), pbTxBuf)

@@ -914,7 +914,7 @@ func (xc *XChainCore) PostTx(in *pb.TxStatus, hd *global.XContext) (*pb.CommonRe
 	if err != nil {
 		out.Header.Error = HandlerUtxoError(err)
 		if err != utxo.ErrAlreadyInUnconfirmed {
-			xc.log.Warn("utxo vm do tx error", "logid", in.Header.Logid, "error", err)
+			xc.log.Info("utxo vm do tx error", "logid", in.Header.Logid, "error", err)
 		}
 		return out, false
 	}
