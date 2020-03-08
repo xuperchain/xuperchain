@@ -57,6 +57,10 @@ func (sp *SpinLock) ExtractLockKeys(tx *pb.Transaction) []*LockKey {
 		k := string(input.RefTxid) + "_" + strconv.Itoa(int(input.RefOffset))
 		keys = append(keys, &LockKey{key: k, lockType: ExclusiveLock})
 	}
+	for offset, _ := range tx.TxOutputs {
+		k := string(tx.Txid) + "_" + strconv.Itoa(offset)
+		keys = append(keys, &LockKey{key: k, lockType: ExclusiveLock})
+	}
 	readKeys := map[string]bool{}
 	writeKeys := map[string]bool{}
 	for _, input := range tx.TxInputsExt {

@@ -8,6 +8,7 @@ import "github.com/xuperchain/xuperchain/core/pb"
 func TestSpinLock(t *testing.T) {
 	sp := NewSpinLock()
 	tx1 := &pb.Transaction{
+		Txid: []byte("tx1"),
 		TxInputs: []*pb.TxInput{
 			&pb.TxInput{
 				RefTxid: []byte("tx0"),
@@ -16,6 +17,9 @@ func TestSpinLock(t *testing.T) {
 				RefTxid:   []byte("tx3"),
 				RefOffset: 1,
 			},
+		},
+		TxOutputs: []*pb.TxOutput{
+			&pb.TxOutput{},
 		},
 		TxInputsExt: []*pb.TxInputExt{
 			&pb.TxInputExt{
@@ -47,7 +51,7 @@ func TestSpinLock(t *testing.T) {
 	lockKeys2 := sp.ExtractLockKeys(tx2)
 	t.Log(lockKeys1)
 	t.Log(lockKeys2)
-	if fmt.Sprintf("%v", lockKeys1) != "[bk1/key1:X bk2/key2:S tx0_0:X tx3_1:X]" {
+	if fmt.Sprintf("%v", lockKeys1) != "[bk1/key1:X bk2/key2:S tx0_0:X tx1_0:X tx3_1:X]" {
 		t.Fatal("tx1 lock error")
 	}
 	if fmt.Sprintf("%v", lockKeys2) != "[bk2/key2:S tx3_0:X]" {
