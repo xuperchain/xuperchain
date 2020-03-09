@@ -113,3 +113,6 @@ wasm:
   enableUpgrade: false
   xvm:
     optLevel: 0
+
+# 是否开启默认的XEndorser背书服务
+enableXEndorser: false

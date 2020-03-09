@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 
 	crypto_client "github.com/xuperchain/xuperchain/core/crypto/client"
+	"github.com/xuperchain/xuperchain/core/crypto/hash"
 	"github.com/xuperchain/xuperchain/core/pb"
 	"github.com/xuperchain/xuperchain/core/utxo/txhash"
 )
@@ -28,6 +29,14 @@ type DefaultXEndorser struct {
 	svr         *server
 	requestType map[string]bool
 }
+
+var (
+	// DefaultKeyPath is the default key path
+	DefaultKeyPath = "./data/endorser/keys/"
+
+	// NodeKeyPath is the key path of xchain node
+	NodeKeyPath = "./data/keys/"
+)
 
 // NewDefaultXEndorser create instance of DefaultXEndorser
 func NewDefaultXEndorser(svr *server) *DefaultXEndorser {
@@ -63,7 +72,7 @@ func (dxe *DefaultXEndorser) EndorserCall(ctx context.Context, req *pb.EndorserR
 			resHeader.Error = errcode
 			return dxe.generateErrorResponse(req, resHeader, err)
 		}
-		addr, sign, err := dxe.generateSign(ctx, req)
+		addr, sign, err := dxe.generateTxSign(ctx, req)
 		if err != nil {
 			resHeader.Error = pb.XChainErrorEnum_SERVICE_REFUSED_ERROR
 			return dxe.generateErrorResponse(req, resHeader, err)
@@ -88,6 +97,21 @@ func (dxe *DefaultXEndorser) EndorserCall(ctx context.Context, req *pb.EndorserR
 			return dxe.generateErrorResponse(req, resHeader, err)
 		}
 		return dxe.generateSuccessResponse(req, resData, nil, nil, resHeader)
+
+	case "CrossQueryPreExec":
+		resData, errcode, err := dxe.getCrossQueryResult(ctx, req)
+		if err != nil {
+			resHeader.Error = errcode
+			return dxe.generateErrorResponse(req, resHeader, err)
+		}
+		data := append(req.RequestData[:], resData[:]...)
+		digest := hash.UsingSha256(data)
+		addr, sign, err := dxe.signData(ctx, digest, DefaultKeyPath)
+		if err != nil {
+			resHeader.Error = errcode
+			return dxe.generateErrorResponse(req, resHeader, err)
+		}
+		return dxe.generateSuccessResponse(req, resData, addr, sign, resHeader)
 	}
 
 	return nil, nil
@@ -109,6 +133,44 @@ func (dxe *DefaultXEndorser) getPreExecResult(ctx context.Context, req *pb.Endor
 	if err != nil {
 		return nil, pb.XChainErrorEnum_SERVICE_REFUSED_ERROR, err
 	}
+	return sData, pb.XChainErrorEnum_SUCCESS, nil
+}
+
+func (dxe *DefaultXEndorser) getCrossQueryResult(ctx context.Context, req *pb.EndorserRequest) ([]byte, pb.XChainErrorEnum, error) {
+	cqReq := &pb.CrossQueryRequest{}
+	err := json.Unmarshal(req.GetRequestData(), cqReq)
+	if err != nil {
+		return nil, pb.XChainErrorEnum_SERVICE_REFUSED_ERROR, err
+	}
+
+	preExecReq := &pb.InvokeRPCRequest{
+		Header:      req.GetHeader(),
+		Bcname:      cqReq.GetBcname(),
+		Initiator:   cqReq.GetInitiator(),
+		AuthRequire: cqReq.GetAuthRequire(),
+	}
+	preExecReq.Requests = append(preExecReq.Requests, cqReq.GetRequest())
+
+	preExecRes, err := dxe.svr.PreExec(ctx, preExecReq)
+	if err != nil {
+		return nil, preExecRes.GetHeader().GetError(), err
+	}
+
+	if preExecRes.GetHeader().GetError() != pb.XChainErrorEnum_SUCCESS {
+		return nil, preExecRes.GetHeader().GetError(), errors.New("PreExec not success")
+	}
+
+	res := &pb.CrossQueryResponse{}
+	contractRes := preExecRes.GetResponse().GetResponses()
+	if len(contractRes) > 0 {
+		res.Response = contractRes[len(contractRes)-1]
+	}
+
+	sData, err := json.Marshal(contractRes)
+	if err != nil {
+		return nil, pb.XChainErrorEnum_SERVICE_REFUSED_ERROR, err
+	}
+
 	return sData, pb.XChainErrorEnum_SUCCESS, nil
 }
 
@@ -134,12 +196,27 @@ func (dxe *DefaultXEndorser) processFee(ctx context.Context, req *pb.EndorserReq
 	return true, pb.XChainErrorEnum_SUCCESS, nil
 }
 
-func (dxe *DefaultXEndorser) generateSign(ctx context.Context, req *pb.EndorserRequest) ([]byte, *pb.SignatureInfo, error) {
+func (dxe *DefaultXEndorser) generateTxSign(ctx context.Context, req *pb.EndorserRequest) ([]byte, *pb.SignatureInfo, error) {
 	if req.GetRequestData() == nil {
 		return nil, nil, errors.New("request data is empty")
 	}
 
-	addr, jsonSKey, jsonAKey, err := dxe.getEndorserKey()
+	txStatus := &pb.TxStatus{}
+	err := json.Unmarshal(req.GetRequestData(), txStatus)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	digest, err := txhash.MakeTxDigestHash(txStatus.GetTx())
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return dxe.signData(ctx, digest, DefaultKeyPath)
+}
+
+func (dxe *DefaultXEndorser) signData(ctx context.Context, data []byte, keypath string) ([]byte, *pb.SignatureInfo, error) {
+	addr, jsonSKey, jsonAKey, err := dxe.getEndorserKey(keypath)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -154,18 +231,7 @@ func (dxe *DefaultXEndorser) generateSign(ctx context.Context, req *pb.EndorserR
 		return nil, nil, err
 	}
 
-	txStatus := &pb.TxStatus{}
-	err = json.Unmarshal(req.GetRequestData(), txStatus)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	digest, err := txhash.MakeTxDigestHash(txStatus.GetTx())
-	if err != nil {
-		return nil, nil, err
-	}
-
-	sign, err := cryptoClient.SignECDSA(privateKey, digest)
+	sign, err := cryptoClient.SignECDSA(privateKey, data)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -198,18 +264,17 @@ func (dxe *DefaultXEndorser) generateSuccessResponse(req *pb.EndorserRequest, re
 	return res, nil
 }
 
-func (dxe *DefaultXEndorser) getEndorserKey() ([]byte, []byte, []byte, error) {
-	defaultPath := "./data/endorser/keys/"
-	sk, err := ioutil.ReadFile(defaultPath + "private.key")
+func (dxe *DefaultXEndorser) getEndorserKey(keypath string) ([]byte, []byte, []byte, error) {
+	sk, err := ioutil.ReadFile(keypath + "private.key")
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
-	ak, err := ioutil.ReadFile(defaultPath + "public.key")
+	ak, err := ioutil.ReadFile(keypath + "public.key")
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
-	addr, err := ioutil.ReadFile(defaultPath + "address")
+	addr, err := ioutil.ReadFile(keypath + "address")
 	return addr, sk, ak, err
 }
