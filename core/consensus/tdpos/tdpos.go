@@ -889,6 +889,9 @@ func (tp *TDpos) isFirstblock(targetHeight int64) bool {
 func (tp *TDpos) Suspend() error {
 	tp.mutex.Lock()
 	tp.state = cons_base.SUSPEND
+	if tp.config.enableBFT {
+		tp.bftPaceMaker.GetChainedBFT().UnRegisterToNetwork()
+	}
 	tp.mutex.Unlock()
 	return nil
 }
@@ -897,6 +900,9 @@ func (tp *TDpos) Suspend() error {
 func (tp *TDpos) Activate() error {
 	tp.mutex.Lock()
 	tp.state = cons_base.RUNNING
+	if tp.config.enableBFT {
+		tp.bftPaceMaker.GetChainedBFT().RegisterToNetwork()
+	}
 	tp.mutex.Unlock()
 	return nil
 }
