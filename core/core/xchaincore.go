@@ -887,6 +887,7 @@ func (xc *XChainCore) PostTx(in *pb.TxStatus, hd *global.XContext) (*pb.CommonRe
 		xc.log.Debug("refused to accept a repeated transaction recently")
 		return out, false
 	}
+	xc.txidCache.Set(txidStr, true, xc.txidCacheExpiredTime)
 	// 对Tx进行的签名, 1 如果utxo属于用户，则走原来的验证逻辑 2 如果utxo属于账户，则走账户acl验证逻辑
 	txValid, validErr := xc.Utxovm.VerifyTx(in.Tx)
 	if !txValid {
@@ -914,6 +915,7 @@ func (xc *XChainCore) PostTx(in *pb.TxStatus, hd *global.XContext) (*pb.CommonRe
 	if err != nil {
 		out.Header.Error = HandlerUtxoError(err)
 		if err != utxo.ErrAlreadyInUnconfirmed {
+			xc.txidCache.Delete(txidStr)
 			xc.log.Info("utxo vm do tx error", "logid", in.Header.Logid, "error", err)
 		}
 		return out, false
@@ -922,7 +924,6 @@ func (xc *XChainCore) PostTx(in *pb.TxStatus, hd *global.XContext) (*pb.CommonRe
 	if xc.Utxovm.IsAsync() || xc.Utxovm.IsAsyncBlock() {
 		return out, false //no need to repost tx immediately
 	}
-	xc.txidCache.Set(txidStr, true, xc.txidCacheExpiredTime)
 	return out, true
 }
 
