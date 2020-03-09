@@ -695,7 +695,7 @@ func (l *Ledger) ConfirmBlock(block *pb.InternalBlock, isRoot bool) ConfirmStatu
 					"blockid", fmt.Sprintf("%x", oldBlock.Blockid))
 				return confirmStatus
 			} else if block.InTrunk {
-				l.xlog.Warn("change blockid of tx", "txid", fmt.Sprintf("%x", tx.Txid), "blockid", fmt.Sprintf("%x", block.Blockid))
+				l.xlog.Info("change blockid of tx", "txid", fmt.Sprintf("%x", tx.Txid), "blockid", fmt.Sprintf("%x", block.Blockid))
 				batchWrite.Put(append([]byte(pb.ConfirmedTablePrefix), tx.Txid...), pbTxBuf)
 			}
 		}
