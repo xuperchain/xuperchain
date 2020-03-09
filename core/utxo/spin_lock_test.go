@@ -63,6 +63,9 @@ func TestSpinLock(t *testing.T) {
 		sp.Unlock(succLks)
 	}()
 	sp.TryLock(lockKeys1)
+	if !sp.IsLocked("tx1_0") {
+		t.Fatal("tx1_0 is expected to be locked")
+	}
 	time.Sleep(1 * time.Second)
 	sp.Unlock(lockKeys1)
 	t.Log("tx1 unlock")

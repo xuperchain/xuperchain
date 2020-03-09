@@ -90,6 +90,11 @@ func (sp *SpinLock) ExtractLockKeys(tx *pb.Transaction) []*LockKey {
 	return keys[:lim]
 }
 
+func (sp *SpinLock) IsLocked(key string) bool {
+	_, locked := sp.m.Load(key)
+	return locked
+}
+
 func (sp *SpinLock) TryLock(lockKeys []*LockKey) ([]*LockKey, bool) {
 	succLocked := []*LockKey{}
 	for _, k := range lockKeys {
