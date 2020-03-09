@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"encoding/hex"
+
 	"github.com/xuperchain/xuperchain/core/contract"
 	"github.com/xuperchain/xuperchain/core/pb"
 )
