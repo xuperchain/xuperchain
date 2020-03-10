@@ -56,6 +56,15 @@ func (xcc XchainCryptoClient) ExportNewAccount(path string) error {
 	return account.ExportNewAccount(path, privateKey)
 }
 
+//ExportNewAccountEncryptPrivateKey 创建新账户, 私钥经过aes对称加密存储
+func (xcc XchainCryptoClient) ExportNewAccountEncryptPrivateKey(path string) error {
+	privateKey, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		return err
+	}
+	return account.ExportNewAccountEncryptPrivateKey(path, privateKey)
+}
+
 // CreateNewAccountWithMnemonic 创建含有助记词的新的账户
 // 返回的字段：（助记词、私钥的json、公钥的json、钱包地址） as ECDSAAccount，以及可能的错误信息
 func (xcc XchainCryptoClient) CreateNewAccountWithMnemonic(language int, strength uint8) (*account.ECDSAAccount, error) {

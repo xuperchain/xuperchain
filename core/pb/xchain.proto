@@ -75,6 +75,22 @@ service Xchain {
     };
   }
 
+  // UnLockPrivateKey
+   rpc UnLockPrivateKey(AccountData) returns (CommonReply) {
+     option (google.api.http) = {
+       post : "/v1/unlock_privatekey"
+       body : "*"
+     };
+   }
+
+  // LockPrivateKey
+   rpc LockPrivateKey(AccountData) returns (CommonReply) {
+     option (google.api.http) = {
+       post : "/v1/lock_privatekey"
+       body : "*"
+     };
+   }
+
   rpc QueryACL(AclStatus) returns (AclStatus) {
     option (google.api.http) = {
       post : "/v1/query_acl"
@@ -293,6 +309,11 @@ message TxStatus {
   TransactionStatus status = 4;  //当前状态
   int64 distance = 5;  //离主干末端的距离（如果在主干上)
   Transaction tx = 7;
+}
+
+message AccountData{
+    string keyPath=1;
+    string passCode=2;
 }
 
 message BatchTxs {

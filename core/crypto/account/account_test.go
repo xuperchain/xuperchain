@@ -1,6 +1,8 @@
 package account
 
 import (
+	"encoding/base64"
+	"fmt"
 	"testing"
 )
 
@@ -24,3 +26,25 @@ func Test_RetrieveAccountByMnem(t *testing.T) {
 	}
 	t.Logf("Generate account OK with old Mnem success, address=%s, private=%s\n", oldAccount.Address, oldAccount.JSONPrivateKey)
 }
+
+func Test_Encrpty(t *testing.T) {
+
+	msg :="gjjtestxzhtestestestguangdongzhongshanhuojukaifaqu"
+	key := randKey(msg)
+
+
+	fmt.Println("密钥:"+string(key))
+
+
+	bytes, _ := aesEncrypt([]byte(msg), key)
+
+
+	fmt.Println("对称加密私钥后的密文"+base64.StdEncoding.EncodeToString(bytes))
+
+	aes, _ := aesDecrypt(bytes, key)
+
+	fmt.Println("对称解密后的私钥"+string(aes))
+
+
+}
+

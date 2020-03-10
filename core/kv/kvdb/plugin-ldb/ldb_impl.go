@@ -43,7 +43,6 @@ func (db *LDBDatabase) Path() string {
 func (db *LDBDatabase) Put(key []byte, value []byte) error {
 	// Generate the data to write to disk, update the meter and write
 	//value = rle.Compress(value)
-
 	return db.db.Put(key, value, nil)
 }
 

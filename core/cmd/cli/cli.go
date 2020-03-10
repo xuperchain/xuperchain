@@ -262,7 +262,6 @@ func (c *Cli) Transfer(ctx context.Context, opt *TransferOptions) (string, error
 	if err != nil {
 		return "", err
 	}
-
 	// create crypto client
 	cryptoClient, cryptoErr := crypto_client.CreateCryptoClient(opt.CryptoType)
 	if cryptoErr != nil {

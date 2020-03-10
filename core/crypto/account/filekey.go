@@ -4,17 +4,17 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"github.com/xuperchain/xuperchain/core/crypto/config"
+	"github.com/xuperchain/xuperchain/core/crypto/utils"
+	walletRand "github.com/xuperchain/xuperchain/core/hdwallet/rand"
 	"io/ioutil"
 	"log"
 	"math/big"
 	"os"
 	"strings"
-
-	"github.com/xuperchain/xuperchain/core/crypto/config"
-	"github.com/xuperchain/xuperchain/core/crypto/utils"
-	walletRand "github.com/xuperchain/xuperchain/core/hdwallet/rand"
 )
 
 // 定义助记词的强度类型
@@ -349,6 +349,8 @@ func ExportNewAccount(path string, privateKey *ecdsa.PrivateKey) error {
 	if err != nil {
 		return err
 	}
+
+
 	//如果path不是以/结尾的，自动拼上
 	if strings.LastIndex(path, "/") != len([]rune(path))-1 {
 		path = path + "/"
@@ -370,6 +372,62 @@ func ExportNewAccount(path string, privateKey *ecdsa.PrivateKey) error {
 	}
 	return err
 }
+
+
+
+
+// ExportNewAccount creates new account ,encrypt privateKey, export to local file
+func ExportNewAccountEncryptPrivateKey(path string, privateKey *ecdsa.PrivateKey) error {
+	jsonPrivateKey, err := GetEcdsaPrivateKeyJSONFormat(privateKey)
+	if err != nil {
+		return err
+	}
+	jsonPublicKey, err := GetEcdsaPublicKeyJSONFormat(privateKey)
+	if err != nil {
+		return err
+	}
+	address, err := GetAddressFromPublicKey(&privateKey.PublicKey)
+	if err != nil {
+		return err
+	}
+
+	//利用私钥+当前时间戳进行hash得到其中16位hash值
+	passcode := randKey(jsonPrivateKey)
+	//对称加密私钥
+	privateKeyEncrypt, _ := aesEncrypt([]byte(jsonPrivateKey), passcode)
+	//加密后的密文重新赋值给私钥并写入本地磁盘
+	jsonPrivateKey=base64.StdEncoding.EncodeToString(privateKeyEncrypt)
+
+
+	//如果path不是以/结尾的，自动拼上
+	if strings.LastIndex(path, "/") != len([]rune(path))-1 {
+		path = path + "/"
+	}
+	err = writeFileUsingFilename(path+"private.key", []byte(jsonPrivateKey))
+	if err != nil {
+		log.Printf("Export private key file failed, the err is %v", err)
+		return err
+	}
+	err = writeFileUsingFilename(path+"public.key", []byte(jsonPublicKey))
+	if err != nil {
+		log.Printf("Export public key file failed, the err is %v", err)
+		return err
+	}
+	err = writeFileUsingFilename(path+"address", []byte(address))
+	if err != nil {
+		log.Printf("Export address file failed, the err is %v", err)
+		return err
+	}
+	fmt.Println("create account passcode is "+string(passcode)+"\n please keep the passcode perfectly by yourself")
+
+	return err
+}
+
+
+
+
+
+
 
 // GetEcdsaPrivateKeyFromJSON get ECDSA private key from json encoded data
 func GetEcdsaPrivateKeyFromJSON(jsonContent []byte) (*ecdsa.PrivateKey, error) {
