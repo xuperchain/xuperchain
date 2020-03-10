@@ -146,6 +146,11 @@ func encodeTxData(tx *pb.Transaction, includeSigns bool) ([]byte, error) {
 		return nil, err
 	}
 
+	if tx.Version >= 2 {
+		if err = encoder.Encode(tx.HDInfo); err != nil {
+			return nil, err
+		}
+	}
 	return buf.Bytes(), nil
 }
 
