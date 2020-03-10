@@ -70,7 +70,10 @@ func (c *testCommand) testPackage() error {
 	if err != nil {
 		return err
 	}
-	os.Chdir(root)
+	err = os.Chdir(root)
+	if err != nil {
+		return err
+	}
 
 	packageTestDir := filepath.Join(root, testDir)
 	testFiles, err := filepath.Glob(filepath.Join(packageTestDir, "*.test.js"))
