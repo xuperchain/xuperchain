@@ -74,9 +74,9 @@ var (
 
 const (
 	// MaxReposting max repost times for broadcats
-	MaxReposting = 300 // tx重试广播的最大并发，过多容易打爆对方的grpc连接数
+	MaxReposting = 3000 // tx重试广播的最大并发，过多容易打爆对方的grpc连接数
 	// RepostingInterval repost retry interval, ms
-	RepostingInterval = 50 // 重试广播间隔ms
+	RepostingInterval = 500 // 重试广播间隔ms
 	TxidCacheGcTime   = 180 * time.Second
 
 	// DefaultMessageCacheSize for p2p message
@@ -915,7 +915,8 @@ func (xc *XChainCore) PostTx(in *pb.TxStatus, hd *global.XContext) (*pb.CommonRe
 	if err != nil {
 		out.Header.Error = HandlerUtxoError(err)
 		if err != utxo.ErrAlreadyInUnconfirmed {
-			xc.log.Warn("utxo vm do tx error", "logid", in.Header.Logid, "error", err)
+			xc.txidCache.Delete(txidStr)
+			xc.log.Info("utxo vm do tx error", "logid", in.Header.Logid, "error", err)
 		}
 		return out, false
 	}
