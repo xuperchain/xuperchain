@@ -45,12 +45,12 @@ type XMCache struct {
 	outputsCache *memdb.DB
 	// 是否穿透到model层
 	isPenetrate bool
-	model       *XModel
+	model       XMReader
 	utxoCache   *UtxoCache
 }
 
 // NewXModelCache new an instance of XModel Cache
-func NewXModelCache(model *XModel, utxovm UtxoVM) (*XMCache, error) {
+func NewXModelCache(model XMReader, utxovm UtxoVM) (*XMCache, error) {
 	return &XMCache{
 		isPenetrate:  true,
 		model:        model,

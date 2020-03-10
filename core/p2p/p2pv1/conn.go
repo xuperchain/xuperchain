@@ -24,19 +24,22 @@ type Conn struct {
 	maxMsgSize  int
 	certPath    string
 	serviceName string
+	isUseCert   bool
 	quitCh      chan bool
 }
 
-func NewConn(lg log.Logger, addr string, certPath, serviceName string, maxMsgSize int) (*Conn, error) {
+// NewConn create new connection with addr
+func NewConn(lg log.Logger, addr string, certPath, serviceName string, isUseCert bool, maxMsgSize int) (*Conn, error) {
 	conn := &Conn{
 		id:          addr,
 		lg:          lg,
 		maxMsgSize:  maxMsgSize,
 		certPath:    certPath,
 		serviceName: serviceName,
+		isUseCert:   isUseCert,
 		quitCh:      make(chan bool, 1),
 	}
-	if err := conn.NewGrpcConn(); err != nil {
+	if err := conn.newGrpcConn(); err != nil {
 		lg.Error("NewConn error", "error", err.Error())
 		return nil, err
 	}
@@ -69,14 +72,22 @@ func genCreds(certPath, serviceName string) (credentials.TransportCredentials, e
 	return creds, nil
 }
 
-func (c *Conn) NewGrpcConn() error {
+func (c *Conn) newGrpcConn() error {
 	conn := &grpc.ClientConn{}
-	creds, err := genCreds(c.certPath, c.serviceName)
-	if err != nil {
-		return err
+	options := append([]grpc.DialOption{}, grpc.WithMaxMsgSize(c.maxMsgSize))
+	if c.isUseCert {
+		creds, err := genCreds(c.certPath, c.serviceName)
+		if err != nil {
+			return err
+		}
+		options = append(options, grpc.WithTransportCredentials(creds))
+	} else {
+		options = append(options, grpc.WithInsecure())
 	}
-	conn, err = grpc.Dial(c.id, grpc.WithTransportCredentials(creds), grpc.WithMaxMsgSize(c.maxMsgSize))
+
+	conn, err := grpc.Dial(c.id, options...)
 	if err != nil {
+		c.lg.Error("newGrpcConn error", "error", err)
 		return errors.New("New grpcs conn error")
 	}
 	c.conn = conn
@@ -88,7 +99,7 @@ func (c *Conn) newClient(ctx context.Context) (p2p_pb.P2PService_SendP2PMessageC
 	if connState == "TRANSIENT_FAILURE" || connState == "SHUTDOWN" || connState == "Invalid-State" {
 		c.lg.Error("newClient conn state not ready")
 		c.conn.Close()
-		err := c.NewGrpcConn()
+		err := c.newGrpcConn()
 		if err != nil {
 			return nil, err
 		}

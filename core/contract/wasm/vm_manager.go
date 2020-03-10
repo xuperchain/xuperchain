@@ -29,7 +29,7 @@ import (
 type VMManager struct {
 	basedir      string
 	config       *config.WasmConfig
-	xmodel       *xmodel.XModel
+	xmodel       xmodel.XMReader
 	syscall      *bridge.SyscallService
 	vmimpl       vm.InstanceCreator
 	xbridge      *bridge.XBridge
@@ -38,7 +38,7 @@ type VMManager struct {
 }
 
 // New instances a new VMManager
-func New(cfg *config.WasmConfig, basedir string, xbridge *bridge.XBridge, xmodel *xmodel.XModel) (*VMManager, error) {
+func New(cfg *config.WasmConfig, basedir string, xbridge *bridge.XBridge, xmodel xmodel.XMReader) (*VMManager, error) {
 	vmm := &VMManager{
 		basedir:      basedir,
 		config:       cfg,
@@ -47,12 +47,11 @@ func New(cfg *config.WasmConfig, basedir string, xbridge *bridge.XBridge, xmodel
 		codeProvider: newCodeProvider(xmodel),
 	}
 
-	pluginMgr, err := pluginmgr.GetPluginMgr()
-	if err != nil {
-		return nil, err
-	}
-
 	if cfg.External {
+		pluginMgr, err := pluginmgr.GetPluginMgr()
+		if err != nil {
+			return nil, err
+		}
 		if _, err = pluginMgr.PluginMgr.CreatePluginInstance("wasm", cfg.Driver); err != nil {
 			return nil, err
 		}
