@@ -195,6 +195,9 @@ func (s *XModel) GetUncommited(bucket string, key []byte) (*xmodel_pb.VersionedD
 
 // GetFromLedger get data directely from ledger
 func (s *XModel) GetFromLedger(txin *pb.TxInputExt) (*xmodel_pb.VersionedData, error) {
+	if txin.RefTxid == nil {
+		return s.makeEmptyVersionedData(txin.Bucket, txin.Key), nil
+	}
 	version := MakeVersion(txin.RefTxid, txin.RefOffset)
 	return s.fetchVersionedData(txin.Bucket, version)
 }
