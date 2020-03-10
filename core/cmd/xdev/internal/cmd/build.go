@@ -93,12 +93,12 @@ func (c *buildCommand) parsePackage(root string) error {
 }
 
 func (c *buildCommand) xchainRoot() (string, error) {
-	xroot := os.Getenv("XROOT")
+	xroot := os.Getenv("XCHAIN_ROOT")
 	if xroot == "" {
 		return "", nil
 	}
 	if !filepath.IsAbs(xroot) {
-		return "", errors.New("XROOT must be abspath")
+		return "", errors.New("XCHAIN_ROOT must be abspath")
 	}
 	return xroot, nil
 }
@@ -108,9 +108,9 @@ func (c *buildCommand) initCompileFlags(xroot string) error {
 	c.ldflags = append([]string{}, defaultLDFlags...)
 
 	var exportJsPath string
-	// 如果XROOT不为空，则使用XROOT的sdk
+	// 如果XCHAIN_ROOT不为空，则使用XCHAIN_ROOT的sdk
 	if xroot != "" {
-		sdkroot := filepath.Join(xroot, "core", "contractsdk", "cpp")
+		sdkroot := filepath.Join(xroot, "contractsdk", "cpp")
 		// 让sdk的include目录在最前面，最先找到xchain.h
 		c.cxxFlags = append([]string{"-I" + sdkroot}, c.cxxFlags...)
 		xchainLDFlags := []string{"-L" + filepath.Join(sdkroot, "build")}
