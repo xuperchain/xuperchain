@@ -66,7 +66,9 @@ func (s *XModel) updateExtUtxo(tx *pb.Transaction, batch kvdb.Batch) error {
 			batch.Put(putKey, []byte(valueVersion))
 			s.logger.Trace("    xmodel put", "putkey", string(putKey), "version", valueVersion)
 		}
-		s.batchCache.Store(string(bucketAndKey), valueVersion)
+		if len(tx.Blockid) > 0 {
+			s.batchCache.Store(string(bucketAndKey), valueVersion)
+		}
 		s.bucketCacheStore(txOut.Bucket, valueVersion, &xmodel_pb.VersionedData{
 			RefTxid:   tx.Txid,
 			RefOffset: int32(offset),
@@ -82,7 +84,7 @@ func (s *XModel) updateExtUtxo(tx *pb.Transaction, batch kvdb.Batch) error {
 
 // DoTx running a transaction and update extUtxoTable
 func (s *XModel) DoTx(tx *pb.Transaction, batch kvdb.Batch) error {
-	if tx.Blockid != nil {
+	if len(tx.Blockid) > 0 {
 		s.cleanCache(batch)
 	}
 	err := s.verifyInputs(tx)

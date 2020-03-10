@@ -1380,6 +1380,10 @@ func (uv *UtxoVM) DoTx(tx *pb.Transaction) error {
 		uv.xlog.Warn("coinbase tx can not be given by PostTx", "txid", global.F(tx.Txid))
 		return ErrUnexpected
 	}
+	if len(tx.Blockid) > 0 {
+		uv.xlog.Warn("tx from PostTx must not have blockid", "txid", global.F(tx.Txid))
+		return ErrUnexpected
+	}
 	if uv.asyncMode || uv.asyncBlockMode {
 		return uv.doTxAsync(tx)
 	}
