@@ -28,6 +28,7 @@ var (
 		"-s DETERMINISTIC=1",
 		"-s EXTRA_EXPORTED_RUNTIME_METHODS=[\"stackAlloc\"]",
 		"-L/usr/local/lib",
+		"-lxchain",
 		"-lprotobuf-lite",
 		"-lpthread",
 	}
@@ -43,6 +44,7 @@ type buildCommand struct {
 	makeFileOnly      bool
 	cleanBuild        bool
 	output            string
+	compiler          string
 }
 
 func newBuildCommand() *cobra.Command {
@@ -61,6 +63,7 @@ func newBuildCommand() *cobra.Command {
 	cmd.Flags().BoolVarP(&c.cleanBuild, "clean", "c", false, "clean stage directory")
 	cmd.Flags().BoolVarP(&c.genCompileCommand, "compile_command", "p", false, "generate compile_commands.json for IDE")
 	cmd.Flags().StringVarP(&c.output, "output", "o", "", "output file name")
+	cmd.Flags().StringVarP(&c.compiler, "compiler", "", "docker", "compiler env docker|host")
 	return cmd
 }
 
@@ -92,7 +95,7 @@ func (c *buildCommand) parsePackage(root string) error {
 func (c *buildCommand) xchainRoot() (string, error) {
 	xroot := os.Getenv("XROOT")
 	if xroot == "" {
-		return "", errors.New("missing XROOT env")
+		return "", nil
 	}
 	if !filepath.IsAbs(xroot) {
 		return "", errors.New("XROOT must be abspath")
@@ -102,17 +105,23 @@ func (c *buildCommand) xchainRoot() (string, error) {
 
 func (c *buildCommand) initCompileFlags(xroot string) error {
 	c.cxxFlags = append([]string{}, defaultCxxFlags...)
-	c.addCxxFlags("-I" + filepath.Join(xroot, "core", "contractsdk", "cpp"))
-	// -lxchain must be in front of -lprotobuf-lite
-	xchainLDFlags := []string{"-L" + filepath.Join(xroot, "core", "contractsdk", "cpp", "build"), "-lxchain"}
-	c.ldflags = append(xchainLDFlags, defaultLDFlags...)
-	exportJsPath := filepath.Join(xroot, "core", "contractsdk", "cpp", "xchain", "exports.js")
+	c.ldflags = append([]string{}, defaultLDFlags...)
+
+	var exportJsPath string
+	// 如果XROOT不为空，则使用XROOT的sdk
+	if xroot != "" {
+		sdkroot := filepath.Join(xroot, "core", "contractsdk", "cpp")
+		// 让sdk的include目录在最前面，最先找到xchain.h
+		c.cxxFlags = append([]string{"-I" + sdkroot}, c.cxxFlags...)
+		xchainLDFlags := []string{"-L" + filepath.Join(sdkroot, "build")}
+		// 让sdk的build目录在最前面，最先找到libxchain.a
+		c.ldflags = append(xchainLDFlags, c.ldflags...)
+		exportJsPath = filepath.Join(sdkroot, "xchain", "exports.js")
+	} else {
+		exportJsPath = "/usr/local/include/xchain/exports.js"
+	}
 	c.ldflags = append(c.ldflags, "--js-library "+exportJsPath)
 	return nil
-}
-
-func (c *buildCommand) addCxxFlags(flags ...string) {
-	c.cxxFlags = append(c.cxxFlags, flags...)
 }
 
 func (c *buildCommand) clean() error {
@@ -159,6 +168,7 @@ func (c *buildCommand) buildPackage(root string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	err = c.initCompileFlags(xroot)
 	if err != nil {
 		return "", err
@@ -196,6 +206,10 @@ func (c *buildCommand) buildPackage(root string) (string, error) {
 	runner := mkfile.NewRunner().
 		WithEntry(c.entryPkg).
 		WithXROOT(xroot)
+
+	if c.compiler != "docker" {
+		runner = runner.WithoutDocker()
+	}
 
 	err = runner.Make(".Makefile")
 	if err != nil {
