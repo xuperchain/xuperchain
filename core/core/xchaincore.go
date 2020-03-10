@@ -74,7 +74,7 @@ var (
 
 const (
 	// MaxReposting max repost times for broadcats
-	MaxReposting = 3000 // tx重试广播的最大并发，过多容易打爆对方的grpc连接数
+	MaxReposting = 3000 // tx重试广播的最大批次，过多容易打爆对方的grpc连接数
 	// RepostingInterval repost retry interval, ms
 	RepostingInterval = 500 // 重试广播间隔ms
 	TxidCacheGcTime   = 180 * time.Second
