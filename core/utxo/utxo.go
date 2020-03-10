@@ -672,9 +672,6 @@ func (uv *UtxoVM) SelectUtxos(fromAddr string, fromPubKey string, totalNeed *big
 			keyTuple := strings.Split(uKey[1:], "_") // [1:] 是为了剔除表名字前缀
 			refTxid, _ := hex.DecodeString(keyTuple[len(keyTuple)-2])
 			offset, _ := strconv.Atoi(keyTuple[len(keyTuple)-1])
-			if uv.spLock.IsLocked(string(refTxid) + "_" + strconv.Itoa(offset)) {
-				continue
-			}
 			if needLock {
 				if uv.tryLockKey([]byte(uKey)) {
 					willLockKeys = append(willLockKeys, []byte(uKey))
@@ -1118,7 +1115,7 @@ func (uv *UtxoVM) undoPayFee(tx *pb.Transaction, batch kvdb.Batch, block *pb.Int
 // doTxInternal 交易执行的核心逻辑
 // @tx: 要执行的transaction
 // @batch: 对数据的变更写入到batch对象
-func (uv *UtxoVM) doTxInternal(tx *pb.Transaction, batch kvdb.Batch) error {
+func (uv *UtxoVM) doTxInternal(tx *pb.Transaction, batch kvdb.Batch, cacheFiller *CacheFiller) error {
 	if !uv.asyncMode {
 		uv.xlog.Trace("  start to dotx", "txid", fmt.Sprintf("%x", tx.Txid))
 	}
@@ -1165,7 +1162,13 @@ func (uv *UtxoVM) doTxInternal(tx *pb.Transaction, batch kvdb.Batch) error {
 			return uErr
 		}
 		batch.Put([]byte(utxoKey), uItemBinary) // 插入本交易产生的utxo
-		uv.utxoCache.Insert(string(addr), utxoKey, uItem)
+		if cacheFiller != nil {
+			cacheFiller.Add(func() {
+				uv.utxoCache.Insert(string(addr), utxoKey, uItem)
+			})
+		} else {
+			uv.utxoCache.Insert(string(addr), utxoKey, uItem)
+		}
 		uv.addBalance(addr, uItem.Amount)
 		if !uv.asyncMode {
 			uv.xlog.Trace("    insert utxo key", "utxoKey", utxoKey, "amount", uItem.Amount.String())
@@ -1302,7 +1305,8 @@ func (uv *UtxoVM) doTxSync(tx *pb.Transaction) error {
 		return ErrAlreadyInUnconfirmed
 	}
 	batch := uv.ldb.NewBatch()
-	doErr := uv.doTxInternal(tx, batch)
+	cacheFiller := &CacheFiller{}
+	doErr := uv.doTxInternal(tx, batch, cacheFiller)
 	if doErr != nil {
 		uv.xlog.Info("doTxInternal failed, when DoTx", "doErr", doErr)
 		return doErr
@@ -1316,6 +1320,7 @@ func (uv *UtxoVM) doTxSync(tx *pb.Transaction) error {
 		return writeErr
 	}
 	uv.unconfirmTxInMem.Store(string(tx.Txid), tx)
+	cacheFiller.Commit()
 	return nil
 }
 
@@ -1574,11 +1579,13 @@ func (uv *UtxoVM) PlayAndRepost(blockid []byte, needRepost bool, isRootTx bool) 
 		tx := block.Transactions[idx]
 		txid := string(tx.Txid)
 		if unconfirmToConfirm[txid] == false { // 本地没预执行过的Tx, 从block中收到的，需要Play执行
-			err := uv.doTxInternal(tx, batch)
+			cacheFiller := &CacheFiller{}
+			err := uv.doTxInternal(tx, batch, cacheFiller)
 			if err != nil {
 				uv.xlog.Warn("dotx failed when Play", "txid", fmt.Sprintf("%x", tx.Txid), "err", err)
 				return err
 			}
+			cacheFiller.Commit()
 		}
 		feeErr := uv.payFee(tx, batch, block)
 		if feeErr != nil {
@@ -1648,7 +1655,7 @@ func (uv *UtxoVM) PlayForMiner(blockid []byte, batch kvdb.Batch) error {
 	for _, tx := range block.Transactions {
 		txid := string(tx.Txid)
 		if tx.Coinbase {
-			err = uv.doTxInternal(tx, batch)
+			err = uv.doTxInternal(tx, batch, nil)
 			if err != nil {
 				uv.xlog.Warn("dotx failed when PlayForMiner", "txid", fmt.Sprintf("%x", tx.Txid), "err", err)
 				return err
@@ -1834,11 +1841,13 @@ func (uv *UtxoVM) Walk(blockid []byte, ledgerPrune bool) error {
 					return errors.New("dotx failed to ImmediateVerifyTx error")
 				}
 			}
-			txErr := uv.doTxInternal(tx, batch)
+			cacheFiller := &CacheFiller{}
+			txErr := uv.doTxInternal(tx, batch, cacheFiller)
 			if txErr != nil {
 				uv.xlog.Warn("failed to do tx when Walk", "txErr", txErr, "txid", fmt.Sprintf("%x", tx.Txid))
 				return txErr
 			}
+			cacheFiller.Commit()
 			feeErr := uv.payFee(tx, batch, todoBlk)
 			if feeErr != nil {
 				uv.xlog.Warn("payFee failed", "feeErr", feeErr)

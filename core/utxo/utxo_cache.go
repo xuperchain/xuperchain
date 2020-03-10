@@ -10,6 +10,20 @@ type CacheItem struct {
 	ele *list.Element
 }
 
+type CacheFiller struct {
+	hooks []func()
+}
+
+func (cf *CacheFiller) Commit() {
+	for _, f := range cf.hooks {
+		f()
+	}
+}
+
+func (cf *CacheFiller) Add(f func()) {
+	cf.hooks = append(cf.hooks, f)
+}
+
 // UtxoCache is a in-memory cache of UTXO
 type UtxoCache struct {
 	// <ADDRESS, <UTXO_KEY, UTXO_ITEM>>
