@@ -905,7 +905,6 @@ func (xc *XChainCore) PostTx(in *pb.TxStatus, hd *global.XContext) (*pb.CommonRe
 		default:
 			out.Header.Error = pb.XChainErrorEnum_TX_VERIFICATION_ERROR
 		}
-		xc.txidCache.Delete(txidStr)
 		xc.log.Warn("post tx verify tx error", "txid", global.F(in.Tx.Txid),
 			"valid_err", validErr, "logid", in.Header.Logid)
 		return out, false
