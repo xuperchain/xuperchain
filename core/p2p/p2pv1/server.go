@@ -3,11 +3,8 @@ package p2pv1
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"os"
 	"strconv"
@@ -16,7 +13,6 @@ import (
 	"github.com/pkg/errors"
 	log "github.com/xuperchain/log15"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/reflection"
 
 	"github.com/xuperchain/xuperchain/core/common/config"
@@ -66,10 +62,12 @@ func (p *P2PServerV1) Init(cfg config.P2PConfig, lg log.Logger, extra map[string
 
 	hm, err := p2p_base.NewHandlerMap(lg)
 	if err != nil {
+		p.log.Error("Init P2PServerV1 NewHandlerMap error", "error", err)
 		return ErrCreateHandlerMap
 	}
 	cp, err := NewConnPool(lg, cfg)
 	if err != nil {
+		p.log.Error("Init P2PServerV1 NewConnPool error", "error", err)
 		return ErrConnPool
 	}
 	// set p2p server members
@@ -92,7 +90,7 @@ func (p *P2PServerV1) Init(cfg config.P2PConfig, lg log.Logger, extra map[string
 					continue
 				}
 
-				conn, err := NewConn(lg, peer, cfg.CertPath, cfg.ServiceName, (int)(cfg.MaxMessageSize)<<20)
+				conn, err := NewConn(lg, peer, cfg.CertPath, cfg.ServiceName, cfg.IsUseCert, (int)(cfg.MaxMessageSize)<<20)
 				if err != nil {
 					p.log.Warn("p2p connect to peer failed", "peer", peer, "error", err)
 					continue
@@ -304,9 +302,36 @@ func (p *P2PServerV1) getCompress(opts *p2p_base.MsgOptions) bool {
 }
 
 func (p *P2PServerV1) getFilter(opts *p2p_base.MsgOptions) p2p_base.PeersFilter {
-	// All filtering strategies will invalid if
-	// TODO: support TargetPeerAddrs and TargetPeerIDs options
-	return &StaticNodeStrategy{isBroadCast: p.config.IsBroadCast, pSer: p, bcname: opts.Bcname}
+	fs := opts.Filters
+	bcname := opts.Bcname
+	peerids := make([]string, 0)
+	pfs := make([]p2p_base.PeersFilter, 0)
+	// TODO: support other filters in feature
+	for _, f := range fs {
+		var filter p2p_base.PeersFilter
+		switch f {
+		default:
+			filter = &StaticNodeStrategy{isBroadCast: p.config.IsBroadCast, pSer: p, bcname: bcname}
+		}
+		pfs = append(pfs, filter)
+	}
+	// process target peer addresses
+	// connect to extra target peers async
+	go p.ConnectToPeersByAddr(opts.TargetPeerAddrs)
+	// get corresponding peer ids
+	peerids = append(peerids, opts.TargetPeerAddrs...)
+	return NewMultiStrategy(pfs, peerids)
+}
+
+// ConnectToPeersByAddr establish contact with given nodes
+func (p *P2PServerV1) ConnectToPeersByAddr(addrs []string) {
+	for _, peer := range addrs {
+		// peer address connected before
+		_, err := p.connPool.Find(peer)
+		if err != nil {
+			p.log.Error("ConnectToPeersByAddr error", "addr", peer, "error", err)
+		}
+	}
 }
 
 // GetPeerUrls 查询所连接节点的信息
@@ -344,41 +369,25 @@ func (p *P2PServerV1) SetXchainAddr(bcname string, info *p2p_base.XchainAddrInfo
 
 // startServer start p2p server
 func (p *P2PServerV1) startServer() {
-	certPath := p.config.CertPath
-	bs, err := ioutil.ReadFile(certPath + "/cacert.pem")
-	if err != nil {
-		panic(err)
-	}
-	certPool := x509.NewCertPool()
-	ok := certPool.AppendCertsFromPEM(bs)
-	if !ok {
-		panic(errors.New("AppendCertsFromPEM error"))
-	}
+	options := []grpc.ServerOption{}
 
-	certificate, err := tls.LoadX509KeyPair(certPath+"/cert.pem", certPath+"/private.key")
-	if err != nil {
-		panic(err)
+	if p.config.IsUseCert {
+		creds, err := genCreds(p.config.CertPath, p.config.ServiceName)
+		if err != nil {
+			panic(err)
+		}
+		options = append(options, grpc.Creds(creds))
 	}
-	creds := credentials.NewTLS(
-		&tls.Config{
-			ServerName:   p.config.ServiceName,
-			Certificates: []tls.Certificate{certificate},
-			RootCAs:      certPool,
-			ClientCAs:    certPool,
-			ClientAuth:   tls.RequireAndVerifyClientCert,
-		})
 
 	l, err := net.Listen("tcp", ":"+strconv.Itoa((int)(p.config.Port)))
 	if err != nil {
 		panic(err)
 	}
 
-	// TODO: zq add other option by config
-	options := append([]grpc.ServerOption{}, grpc.Creds(creds))
 	s := grpc.NewServer(options...)
 	p2pPb.RegisterP2PServiceServer(s, p)
 	reflection.Register(s)
-	log.Trace("start tls rpc server")
+	log.Trace("start p2p rpc server")
 	go func() {
 		err := s.Serve(l)
 		if err != nil {

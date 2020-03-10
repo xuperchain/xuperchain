@@ -108,8 +108,10 @@ type P2PConfig struct {
 	P2PDataPath string `yaml:"p2PDataPath,omitempty"`
 	// IsStorePeers determine wherther storing the peers infos
 	IsStorePeers bool `yaml:"isStorePeers,omitempty"`
-	// CertPath
+	// CertPath define the path of certificate
 	CertPath string `yaml:"certPath,omitempty"`
+	// IsUseCert define whether to use certificate, default true
+	IsUseCert bool `yaml:"isUseCert,omitempty"`
 	// ServiceName
 	ServiceName string `yaml:"serviceName,omitempty"`
 }
@@ -373,6 +375,7 @@ func newP2pConfigWithDefault() P2PConfig {
 		P2PDataPath:           DefaultP2PDataPath,
 		StaticNodes:           make(map[string][]string),
 		CertPath:              DefaultCertPath,
+		IsUseCert:             true,
 		ServiceName:           DefaultServiceName,
 		IsBroadCast:           DefaultIsBroadCast,
 	}
