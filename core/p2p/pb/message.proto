@@ -36,6 +36,9 @@ message XuperMessage {
 
         // broadcast new block id to other node
         NEW_BLOCKID = 18;
+
+        // new node used to add to network automatic
+        NEW_NODE = 19;
     }
     enum ErrorType {
         // success 
