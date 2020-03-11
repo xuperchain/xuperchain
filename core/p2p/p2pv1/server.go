@@ -8,11 +8,13 @@ import (
 	"net"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/pkg/errors"
 	log "github.com/xuperchain/log15"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/reflection"
 
 	"github.com/xuperchain/xuperchain/core/common/config"
@@ -42,10 +44,13 @@ type P2PServerV1 struct {
 	handlerMap *p2p_base.HandlerMap
 	connPool   *ConnPool
 	// key: "bcname", value: "id"
-	staticNodes map[string][]string
-	quitCh      chan bool
-	lock        sync.Mutex
-	localAddr   map[string]*p2p_base.XchainAddrInfo
+	staticNodes  map[string][]string
+	bootNodes    []string
+	dynamicNodes []string
+	msgChan      chan *p2pPb.XuperMessage
+	quitCh       chan bool
+	lock         sync.Mutex
+	localAddr    map[string]*p2p_base.XchainAddrInfo
 }
 
 // NewP2PServerV1 create P2PServerV1 instance
@@ -76,11 +81,12 @@ func (p *P2PServerV1) Init(cfg config.P2PConfig, lg log.Logger, extra map[string
 	p.handlerMap = hm
 	p.connPool = cp
 	p.quitCh = make(chan bool, 1)
+	p.msgChan = make(chan *p2pPb.XuperMessage, 5000)
 	p.localAddr = map[string]*p2p_base.XchainAddrInfo{}
 
 	peerids := []string{}
 	hasPeerMap := map[string]bool{}
-
+	p.bootNodes = cfg.BootNodes
 	if len(cfg.StaticNodes) > 0 {
 		// connect to all static nodes
 		for _, peers := range cfg.StaticNodes {
@@ -108,8 +114,26 @@ func (p *P2PServerV1) Init(cfg config.P2PConfig, lg log.Logger, extra map[string
 			p.staticNodes["xuper"] = peerids
 		}
 	}
-
+	p.connectToBootNodes()
+	p.registerSubscribe()
 	go p.Start()
+	go p.handleMsg()
+	return nil
+}
+
+// ConnectToBootNodes connect to bootnode
+func (p *P2PServerV1) connectToBootNodes() error {
+	msg, err := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion3, "", "", p2pPb.XuperMessage_NEW_NODE, []byte{}, p2pPb.XuperMessage_NONE)
+	if err != nil {
+		p.log.Error("ConnectToBootNodes NewXuperMessage error", "error", err)
+		return err
+	}
+	msg.Header.From = strconv.Itoa(int(p.config.Port))
+	p.ConnectToPeersByAddr(p.bootNodes)
+	opts := []p2p_base.MessageOption{
+		p2p_base.WithTargetPeerAddrs(p.bootNodes),
+	}
+	go p.SendMessage(context.Background(), msg, opts...)
 	return nil
 }
 
@@ -140,6 +164,7 @@ func (p *P2PServerV1) SendMessage(ctx context.Context, msg *p2pPb.XuperMessage,
 	msgOpts := p2p_base.GetMessageOption(opts)
 	filter := p.getFilter(msgOpts)
 	peers, _ := filter.Filter()
+	p.log.Info("testlog SendMessage", "peers", peers)
 	peerids, ok := peers.([]string)
 	if !ok {
 		p.log.Warn("p2p filter get peers failed, ignore this message",
@@ -166,6 +191,7 @@ func (p *P2PServerV1) SendMessageWithResponse(ctx context.Context, msg *p2pPb.Xu
 	msgOpts := p2p_base.GetMessageOption(opts)
 	filter := p.getFilter(msgOpts)
 	peers, _ := filter.Filter()
+	p.log.Info("testlog SendMessageWithResponse", "peers", peers)
 	percentage := msgOpts.Percentage
 	peerids, ok := peers.([]string)
 	if !ok {
@@ -369,8 +395,8 @@ func (p *P2PServerV1) SetXchainAddr(bcname string, info *p2p_base.XchainAddrInfo
 
 // startServer start p2p server
 func (p *P2PServerV1) startServer() {
-	options := []grpc.ServerOption{}
-
+	options := append([]grpc.ServerOption{}, grpc.MaxRecvMsgSize(int(p.config.MaxMessageSize)<<20),
+		grpc.MaxSendMsgSize(int(p.config.MaxMessageSize)<<20))
 	if p.config.IsUseCert {
 		creds, err := genCreds(p.config.CertPath, p.config.ServiceName)
 		if err != nil {
@@ -408,6 +434,19 @@ func (p *P2PServerV1) SendP2PMessage(str p2pPb.P2PService_SendP2PMessageServer) 
 		p.log.Warn("SendP2PMessage Recv msg error")
 		return err
 	}
+
+	if !strings.Contains(in.Header.From, ":") {
+		ip, _ := getRemoteIP(str.Context())
+		in.Header.From = ip + ":" + in.Header.From
+	}
 	p.handlerMap.HandleMessage(str, in)
 	return nil
+}
+
+func getRemoteIP(ctx context.Context) (string, error) {
+	pr, ok := peer.FromContext(ctx)
+	if ok && pr.Addr != net.Addr(nil) {
+		return strings.Split(pr.Addr.String(), ":")[0], nil
+	}
+	return "", errors.New("Get node addr error")
 }
