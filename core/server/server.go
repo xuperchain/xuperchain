@@ -10,13 +10,16 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
+	"github.com/xuperchain/xuperchain/core/crypto/account"
 	"github.com/xuperchain/xuperchain/core/pb"
 	"io/ioutil"
 	"math/big"
 	"net"
 	"net/http"
 	_ "net/http/pprof"
+	"path/filepath"
 	"strconv"
+	"time"
 
 	"github.com/golang/protobuf/proto"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
@@ -938,6 +941,103 @@ func (s *server) GetAccountByAK(ctx context.Context, request *pb.AK2AccountReque
 	out.Account = accounts
 	return out, err
 }
+
+// UnLockPrivateKey
+func(s *server)  UnLockPrivateKey(ctx context.Context, in *pb.AccountData) (*pb.CommonReply, error){
+	keyPath := in.KeyPath
+	PassCode := in.PassCode
+	timerTime:=time.Second * 60
+	out := &pb.CommonReply{Header: &pb.Header{Logid: in.Header.Logid}}
+	if keyPath==""{
+		return out, errors.New("keyPath is required")
+	}
+	if PassCode==""{
+		return out, errors.New("PassCode is required")
+	}
+
+	addressBytes, e := readKeys(filepath.Join(keyPath, "address"))
+	if e!=nil{
+		return out ,e
+	}
+	address:=string(addressBytes)
+
+	//生成用户密码 hash值做内存key
+	userKeyMd5 := common.MakeUserKeyName(address, PassCode)
+
+	//检查内存中是否已经有这个私钥用户，有则刷新定时器
+	usersKeyMem := common.GetUsersKey(userKeyMd5)
+	if usersKeyMem!=nil {
+		timer := usersKeyMem.Timer
+		//重置定时器
+		timer.Reset(timerTime)
+		return out,nil
+	}
+
+
+	encrptyPrivateKey,err := readKeys(filepath.Join(keyPath, "private.key"))
+
+	if err !=nil {
+		return out, err
+	}
+
+	//利用密钥解密 密文私钥得到明文私钥
+	privateKeyByte, err := account.AesDecrypt(encrptyPrivateKey, []byte(PassCode))
+
+	if err!=nil {
+		return out, errors.New("decrypt privateKey fail")
+	}
+	privateKey:=string(privateKeyByte)
+
+	//明文私钥存放到内存中 并启动时间窗口 时间一到 移除内存中的明文私钥
+	timer := time.NewTimer(timerTime)
+	usersKey := &common.UsersKey{
+		PrivateKey: privateKey,
+		Timer:      timer,
+	}
+	common.AddUsersKey(userKeyMd5,usersKey)
+	go func() {
+		<-timer.C
+		common.DelUsersKey(userKeyMd5)
+	}()
+	return out,nil
+}
+// LockPrivateKey
+func(s *server)  LockPrivateKey(ctx context.Context, in *pb.AccountData) (*pb.CommonReply, error){
+	keypath := in.KeyPath
+	PassCode := in.PassCode
+	out := &pb.CommonReply{Header: &pb.Header{Logid: in.Header.Logid}}
+	if keypath==""{
+		return out, errors.New("KeyPath is required")
+	}
+	if PassCode==""{
+		return out, errors.New("PassCode is required")
+	}
+	addressBytes, e := readKeys(filepath.Join(keypath, "address"))
+	if e!=nil{
+		return out ,e
+	}
+	address:=string(addressBytes)
+	//生成用户密码 hash值做内存key
+	userKeyMd5 := common.MakeUserKeyName(address, PassCode)
+
+	common.DelUsersKey(userKeyMd5)
+
+	return out,nil
+}
+
+
+
+
+func readKeys(file string) ([]byte,error) {
+	buf, err := ioutil.ReadFile(file)
+	if err!=nil{
+		return nil,err
+	}
+	buf = bytes.TrimSpace(buf)
+	return buf,nil
+}
+
+
 
 
 func startTCPServer(xchainmg *xchaincore.XChainMG) error {

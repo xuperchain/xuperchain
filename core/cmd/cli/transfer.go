@@ -7,8 +7,11 @@ package main
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/xuperchain/xuperchain/core/common"
+	"github.com/xuperchain/xuperchain/core/crypto/account"
 	"io/ioutil"
 	"path/filepath"
 
@@ -105,8 +108,34 @@ func readPublicKey(keypath string) (string, error) {
 	return readKeys(filepath.Join(keypath, "public.key"))
 }
 
-func readPrivateKey(keypath string) (string, error) {
-	return readKeys(filepath.Join(keypath, "private.key"))
+func readPrivateKey(keypath string,passcode string) (string, error) {
+	privateKey, err := readKeys(filepath.Join(keypath, "private.key"))
+	if err !=nil{
+		return privateKey,err
+	}
+
+	ecdsaPrivateKey := new(account.ECDSAPrivateKey)
+	errJsonUmarshal := json.Unmarshal([]byte(privateKey), ecdsaPrivateKey)
+	if errJsonUmarshal!=nil {
+		if passcode ==""{
+			return "",errors.New("passcode is empty")
+		}
+		//解析转换json该私钥失败，则代表该私钥是经过对称加密的
+		//读取内存获取明文私钥
+		address, err := readAddress(keypath)
+		if err != nil{
+			return "",err
+		}
+		userKeyName := common.MakeUserKeyName(address, passcode)
+		usersKey := common.GetUsersKey(userKeyName)
+		if usersKey ==nil {
+			//内存中没有用户私钥结构体,需要用户手动调用进行解锁私钥
+			return "",errors.New("please execute unlock privateKey")
+		}
+		privateKey = usersKey.PrivateKey
+	}
+
+	return privateKey,nil
 }
 
 type invokeRequestWraper struct {

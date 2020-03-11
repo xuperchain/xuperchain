@@ -113,6 +113,7 @@ func (c *MultisigGenCommand) generateTx(ctx context.Context) error {
 
 		ChainName:    c.cli.RootOptions.Name,
 		Keys:         c.cli.RootOptions.Keys,
+		Passcode:     c.cli.RootOptions.Passcode,
 		XchainClient: c.cli.XchainClient(),
 	}
 

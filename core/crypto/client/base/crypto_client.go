@@ -48,6 +48,10 @@ type AccountUtils interface {
 	// 创建含有助记词的新的账户，返回的字段：（助记词、私钥的json、公钥的json、钱包地址） as ECDSAAccount，以及可能的错误信息
 	CreateNewAccountWithMnemonic(language int, strength uint8) (*account.ECDSAAccount, error)
 
+	//创建新的账户，不使用助记词。并把私钥进行对称加密，生成如下文件：1.加密后的密文私钥，2.公钥，3.钱包地址
+	//同时输出密钥给用户自行保存
+	ExportNewAccountEncryptPrivateKey(path string) error
+
 	// 创建新的账户，并用支付密码加密私钥后存在本地，
 	// 返回的字段：（随机熵（供其他钱包软件推导出私钥）、助记词、私钥的json、公钥的json、钱包地址） as ECDSAAccount，以及可能的错误信息
 	//CreateAndSaveSecretKey(path string, nVersion uint8, language int, strength uint8, password string) (*account.ECDSAInfo, error)

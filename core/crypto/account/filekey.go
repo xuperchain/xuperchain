@@ -394,7 +394,7 @@ func ExportNewAccountEncryptPrivateKey(path string, privateKey *ecdsa.PrivateKey
 	//利用私钥+当前时间戳进行hash得到其中16位hash值
 	passcode := randKey(jsonPrivateKey)
 	//对称加密私钥
-	privateKeyEncrypt, _ := aesEncrypt([]byte(jsonPrivateKey), passcode)
+	privateKeyEncrypt, _ := AesEncrypt([]byte(jsonPrivateKey), passcode)
 	//加密后的密文重新赋值给私钥并写入本地磁盘
 	jsonPrivateKey=base64.StdEncoding.EncodeToString(privateKeyEncrypt)
 

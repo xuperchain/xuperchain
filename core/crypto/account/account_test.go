@@ -36,12 +36,12 @@ func Test_Encrpty(t *testing.T) {
 	fmt.Println("密钥:"+string(key))
 
 
-	bytes, _ := aesEncrypt([]byte(msg), key)
+	bytes, _ := AesEncrypt([]byte(msg), key)
 
 
 	fmt.Println("对称加密私钥后的密文"+base64.StdEncoding.EncodeToString(bytes))
 
-	aes, _ := aesDecrypt(bytes, key)
+	aes, _ := AesDecrypt(bytes, key)
 
 	fmt.Println("对称解密后的私钥"+string(aes))
 

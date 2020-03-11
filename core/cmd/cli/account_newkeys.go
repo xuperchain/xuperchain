@@ -23,6 +23,8 @@ type AccountNewkeysCommand struct {
 	lang         string
 	forceOveride bool
 	cryptoType   string
+
+	encryptKey 	 bool
 }
 
 // NewAccountNewkeysCommand new addr account cmd
@@ -45,6 +47,7 @@ func (c *AccountNewkeysCommand) addFlags() {
 	c.cmd.Flags().Uint8Var(&c.strength, "strength", 0, "using mnemonic with specific strength(easy:1 mid:2 hard:3)")
 	c.cmd.Flags().StringVar(&c.lang, "lang", "zh", "mnemonic language, zh|en")
 	c.cmd.Flags().BoolVarP(&c.forceOveride, "force", "f", false, "Force override existing account files")
+	c.cmd.Flags().BoolVar(&c.encryptKey, "encryptKey",false, "encrypt privateKey and export passcode")
 }
 
 func (c *AccountNewkeysCommand) createAccount() error {
@@ -72,7 +75,13 @@ func (c *AccountNewkeysCommand) createSimpleAccount() error {
 		return fmt.Errorf("fail to create crypto client, err:%s", cryptoErr)
 	}
 
-	err := cryptoClient.ExportNewAccount(c.outputdir)
+	var err error
+	if c.encryptKey {
+		err =cryptoClient.ExportNewAccountEncryptPrivateKey(c.outputdir)
+	}else{
+		err =cryptoClient.ExportNewAccount(c.outputdir)
+	}
+
 	if err != nil {
 		return err
 	}

@@ -57,6 +57,7 @@ func (c *NativeQueryCommand) query(ctx context.Context, codeName string) error {
 		Args:         make(map[string][]byte),
 		IsQuick:      false,
 		Keys:         c.cli.RootOptions.Keys,
+		Passcode:     c.cli.RootOptions.Passcode,
 		ChainName:    c.cli.RootOptions.Name,
 		XchainClient: c.cli.XchainClient(),
 	}

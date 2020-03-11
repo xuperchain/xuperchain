@@ -44,6 +44,7 @@ type RootOptions struct {
 	TLS        TLSOptions
 	CryptoType string
 	Xuper3     bool
+	Passcode   string
 }
 
 // TLSOptions TLS part
@@ -94,6 +95,7 @@ func (c *Cli) initFlags() error {
 	rootFlags.StringP("host", "H", "127.0.0.1:37101", "server node ip:port")
 	rootFlags.String("name", "xuper", "block chain name")
 	rootFlags.String("keys", "data/keys", "directory of keys")
+	rootFlags.String("passcode", "", "decrypt privateKey with passcode")
 	rootFlags.String("cryptotype", crypto_client.CryptoTypeDefault, "crypto type, eg. default")
 	viper.BindPFlags(rootFlags)
 
@@ -258,7 +260,7 @@ func (c *Cli) Transfer(ctx context.Context, opt *TransferOptions) (string, error
 		return "", err
 	}
 
-	fromScrkey, err := readPrivateKey(opt.KeyPath)
+	fromScrkey, err := readPrivateKey(opt.KeyPath,c.RootOptions.Passcode)
 	if err != nil {
 		return "", err
 	}
@@ -298,7 +300,9 @@ func (c *Cli) tansferSupportAccount(ctx context.Context, client pb.XchainClient,
 		Sign:      signTx,
 	}
 	txStatus.Tx.InitiatorSigns = append(txStatus.Tx.InitiatorSigns, signInfo)
-	txStatus.Tx.AuthRequireSigns, err = genAuthRequireSigns(opt, cryptoClient, txStatus.Tx, initScrkey, initPubkey)
+	txStatus.Tx.AuthRequireSigns, err = genAuthRequireSigns(opt, cryptoClient,
+		txStatus.Tx, initScrkey,
+		initPubkey,c.RootOptions.Passcode)
 	if err != nil {
 		return "", fmt.Errorf("Failed to genAuthRequireSigns %s", err)
 	}
@@ -420,7 +424,10 @@ func genAuthRequire(from, path string) ([]string, error) {
 	return authRequire, nil
 }
 
-func genAuthRequireSigns(opt *TransferOptions, cryptoClient crypto_base.CryptoClient, tx *pb.Transaction, initScrkey, initPubkey string) ([]*pb.SignatureInfo, error) {
+func genAuthRequireSigns(opt *TransferOptions,
+	cryptoClient crypto_base.CryptoClient,
+	tx *pb.Transaction, initScrkey,
+	initPubkey string,passcode string) ([]*pb.SignatureInfo, error) {
 	authRequireSigns := []*pb.SignatureInfo{}
 	if opt.AccountPath == "" {
 		signTx, err := txhash.ProcessSignTx(cryptoClient, tx, []byte(initScrkey))
@@ -441,7 +448,7 @@ func genAuthRequireSigns(opt *TransferOptions, cryptoClient crypto_base.CryptoCl
 	}
 	for _, fi := range dir {
 		if fi.IsDir() {
-			sk, err := readPrivateKey(opt.AccountPath + "/" + fi.Name())
+			sk, err := readPrivateKey(opt.AccountPath + "/" + fi.Name(),passcode)
 			if err != nil {
 				return nil, err
 			}

@@ -81,6 +81,7 @@ func (c *WasmInvokeCommand) invoke(ctx context.Context, codeName string) error {
 		Output:       c.output,
 		ChainName:    c.cli.RootOptions.Name,
 		Keys:         c.cli.RootOptions.Keys,
+		Passcode:     c.cli.RootOptions.Passcode,
 		XchainClient: c.cli.XchainClient(),
 		CryptoType:   c.cli.RootOptions.CryptoType,
 		DebugTx:      c.debug,

@@ -74,6 +74,7 @@ func (c *MergeUtxoCommand) mergeUtxo(ctx context.Context) error {
 		IsQuick:      false,
 		ChainName:    c.cli.RootOptions.Name,
 		Keys:         c.cli.RootOptions.Keys,
+		Passcode:     c.cli.RootOptions.Passcode,
 		XchainClient: c.cli.XchainClient(),
 		CryptoType:   c.cli.RootOptions.CryptoType,
 	}

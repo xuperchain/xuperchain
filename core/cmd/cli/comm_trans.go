@@ -50,6 +50,7 @@ type CommTrans struct {
 
 	ChainName    string
 	Keys         string
+	Passcode     string
 	XchainClient pb.XchainClient
 	CryptoType   string
 
@@ -433,7 +434,7 @@ func (c *CommTrans) genInitSign(tx *pb.Transaction) ([]*pb.SignatureInfo, error)
 	if err != nil {
 		return nil, errors.New("Create crypto client error")
 	}
-	fromScrkey, err := readPrivateKey(c.Keys)
+	fromScrkey, err := readPrivateKey(c.Keys,c.Passcode)
 	if err != nil {
 		return nil, err
 	}
@@ -466,7 +467,7 @@ func (c *CommTrans) genAuthRequireSignsFromPath(tx *pb.Transaction, path string)
 			return nil, err
 		}
 
-		initScrkey, err := readPrivateKey(c.Keys)
+		initScrkey, err := readPrivateKey(c.Keys,c.Passcode)
 		if err != nil {
 			return nil, err
 		}
@@ -487,7 +488,7 @@ func (c *CommTrans) genAuthRequireSignsFromPath(tx *pb.Transaction, path string)
 	}
 	for _, fi := range dir {
 		if fi.IsDir() {
-			sk, err := readPrivateKey(path + "/" + fi.Name())
+			sk, err := readPrivateKey(path + "/" + fi.Name(),c.Passcode)
 			if err != nil {
 				return nil, err
 			}

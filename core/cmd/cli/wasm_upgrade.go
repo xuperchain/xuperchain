@@ -68,6 +68,7 @@ func (c *WasmUpgradeCommand) upgrade(ctx context.Context, codepath string) error
 		IsQuick:      c.isMulti,
 		ChainName:    c.cli.RootOptions.Name,
 		Keys:         c.cli.RootOptions.Keys,
+		Passcode:     c.cli.RootOptions.Passcode,
 		XchainClient: c.cli.XchainClient(),
 		CryptoType:   c.cli.RootOptions.CryptoType,
 	}

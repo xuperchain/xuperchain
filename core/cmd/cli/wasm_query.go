@@ -64,6 +64,7 @@ func (c *WasmQueryCommand) query(ctx context.Context, codeName string) error {
 		Args:         make(map[string][]byte),
 		IsQuick:      c.isMulti,
 		Keys:         c.cli.RootOptions.Keys,
+		Passcode:     c.cli.RootOptions.Passcode,
 		MultiAddrs:   c.multiAddrs,
 
 		ChainName:    c.cli.RootOptions.Name,

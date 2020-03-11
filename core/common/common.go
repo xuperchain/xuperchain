@@ -6,12 +6,24 @@ package common
 
 import (
 	"bytes"
+	"crypto/md5"
+	"encoding/hex"
 	"io/ioutil"
+	"time"
 
 	"github.com/golang/protobuf/proto"
 
 	"github.com/xuperchain/xuperchain/core/pb"
 )
+
+type UsersKey struct {
+	PrivateKey string
+	Timer *time.Timer
+}
+
+var usersKeyMap=map[string]*UsersKey{}
+
+var usersKeySalt="8trJmFdlYxjGp34YEpcbSXxdMAss2hxz"
 
 // GetTxSerializedSize get size(in bytes) of a tx after being serialized
 // https://godoc.org/github.com/golang/protobuf/proto#Size
@@ -58,4 +70,23 @@ func GetFileContent(file string) string {
 	f, _ := ioutil.ReadFile(file)
 	f = bytes.TrimRight(f, "\n")
 	return string(f)
+}
+
+func AddUsersKey(user string,users *UsersKey){
+	usersKeyMap[user]=users
+}
+
+func GetUsersKey(user string) *UsersKey{
+	return usersKeyMap[user]
+}
+
+func DelUsersKey(user string){
+	delete(usersKeyMap,user)
+}
+
+func MakeUserKeyName(address string,passcode string) string{
+	md5h := md5.New()
+	md5h.Write([]byte(address+passcode+usersKeySalt))
+	userKeyMd5 := hex.EncodeToString(md5h.Sum(nil))
+	return userKeyMd5
 }
