@@ -13,10 +13,20 @@ type StaticNodeStrategy struct {
 
 // Filter return static nodes peers
 func (ss *StaticNodeStrategy) Filter() (interface{}, error) {
+	peers := []string{}
+
 	if ss.isBroadCast {
-		return ss.pSer.staticNodes["xuper"], nil
+		peers = append(peers, ss.pSer.staticNodes["xuper"]...)
+	} else {
+		peers = append(peers, ss.pSer.staticNodes[ss.bcname]...)
 	}
-	return ss.pSer.staticNodes[ss.bcname], nil
+	if len(ss.pSer.bootNodes) != 0 {
+		peers = append(peers, ss.pSer.bootNodes...)
+	}
+	if len(ss.pSer.dynamicNodes) != 0 {
+		peers = append(peers, ss.pSer.dynamicNodes...)
+	}
+	return peers, nil
 }
 
 // BucketsFilter define filter that get all peers in buckets
