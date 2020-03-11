@@ -89,7 +89,6 @@ const (
 	UTXOCacheSize             = 1000
 	OfflineTxChanBuffer       = 100000
 	TxVersion                 = 1
-	TxVersionV2               = 2
 	BetaTxVersion             = 2
 	StableTxVersion           = 1
 	RootTxVersion             = 0
