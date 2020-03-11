@@ -73,7 +73,7 @@ func (cp *ConnPool) Find(addr string) (*Conn, error) {
 	if cp.conns[addr] != nil {
 		return cp.conns[addr], nil
 	}
-	conn, err := NewConn(cp.log, addr, cp.config.CertPath, cp.config.ServiceName, cp.config.IsUseCert, int(cp.config.MaxMessageSize))
+	conn, err := NewConn(cp.log, addr, cp.config.CertPath, cp.config.ServiceName, cp.config.IsUseCert, int(cp.config.MaxMessageSize)<<20)
 	if err != nil {
 		cp.log.Error("Find NewConn error")
 		return nil, err
