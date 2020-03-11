@@ -1015,11 +1015,6 @@ message ContractStatData {
   int64 contractCount = 2;
 }
 
-message ChainMeta {
-  string type = 1;   // 链类型，如xuper
-  string policy = 2; // 背书策略
-}
-
 message CrossQueryRequest {
   string bcname = 1;
   int64 timestamp = 2;

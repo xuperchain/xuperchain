@@ -43,8 +43,9 @@ func NewDefaultXEndorser(svr *server) *DefaultXEndorser {
 	return &DefaultXEndorser{
 		svr: svr,
 		requestType: map[string]bool{
-			"PreExecWithFee":  true,
-			"ComplianceCheck": true,
+			"PreExecWithFee":    true,
+			"ComplianceCheck":   true,
+			"CrossQueryPreExec": true,
 		},
 	}
 }
