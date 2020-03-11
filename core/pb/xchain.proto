@@ -979,8 +979,8 @@ message ModifyBlock {
 }
 
 message HDInfo {
-  // index
-  bytes index = 1;
+  // HDPublickey
+  bytes hd_public_key = 1;
   // original_hash 
   bytes original_hash = 2;
 }
