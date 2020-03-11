@@ -3,6 +3,7 @@
 #include <string>
 #include <cstdint>
 #include <cstdlib>
+#include <memory>
 
 // 常量字符串: bucket, 分隔符, 编码等
 // 区块头Bucket
@@ -119,7 +120,7 @@ bool within3Confirms(xchain::Context* ctx, const std::string& blockid, const std
         }
         std::string blockHeaderStr;
         const std::string currBlockHeaderKey = std::string(blockHeaderBucket) + currBlockid;
-        relayer::InternalBlock* blockHeader = new(relayer::InternalBlock);
+        std::unique_ptr<relayer::InternalBlock> blockHeader(new relayer::InternalBlock);
         if (!ctx->get_object(currBlockHeaderKey, &blockHeaderStr)) {
             return false;
         }
@@ -149,7 +150,7 @@ bool handleFork(xchain::Context* ctx, const std::string& oldTip, const std::stri
         if (!ctx->get_object(pKey, &pBlockStr)) {
             return false;
         }
-        relayer::InternalBlock* pBlock = new(relayer::InternalBlock);
+        std::unique_ptr<relayer::InternalBlock> pBlock(new relayer::InternalBlock);
         pBlock->ParseFromString(pBlockStr);
         pBlock->set_in_trunk(false);
         pBlock->set_next_hash("");
@@ -159,7 +160,7 @@ bool handleFork(xchain::Context* ctx, const std::string& oldTip, const std::stri
         if (!ctx->get_object(qKey, &qBlockStr)) {
             return false;
         }
-        relayer::InternalBlock* qBlock = new(relayer::InternalBlock);
+        std::unique_ptr<relayer::InternalBlock> qBlock(new relayer::InternalBlock);
         qBlock->ParseFromString(qBlockStr);
         qBlock->set_in_trunk(true);
         qBlock->set_next_hash(nextHash);
@@ -186,7 +187,7 @@ bool handleFork(xchain::Context* ctx, const std::string& oldTip, const std::stri
     if (!ctx->get_object(splitKey, &splitBlockStr)) {
         return false;
     }
-    relayer::InternalBlock* splitBlock = new(relayer::InternalBlock);
+    std::unique_ptr<relayer::InternalBlock> splitBlock(new relayer::InternalBlock);
     splitBlock->ParseFromString(splitBlockStr);
     splitBlock->set_in_trunk(true);
     splitBlock->set_next_hash(nextHash);
@@ -201,8 +202,8 @@ bool handleFork(xchain::Context* ctx, const std::string& oldTip, const std::stri
 // 初始化工作，将锚点区块写入，初始化LedgerMeta
 DEFINE_METHOD(XuperRelayer, initialize) {
     xchain::Context* ctx = self.context();
-    relayer::LedgerMeta* meta = new(relayer::LedgerMeta);
-    relayer::InternalBlock* anchorBlockHeader = new(relayer::InternalBlock);
+    std::unique_ptr<relayer::LedgerMeta> meta(new relayer::LedgerMeta);
+    std::unique_ptr<relayer::InternalBlock> anchorBlockHeader(new relayer::InternalBlock);
     std::string anchorBlockHeaderStr = ctx->arg("blockHeader");
     if (anchorBlockHeaderStr.size()==0) {
         ctx->error("missing blockHeader");
@@ -238,8 +239,8 @@ DEFINE_METHOD(XuperRelayer, initialize) {
 
 DEFINE_METHOD(XuperRelayer, putBlockHeader) {
     xchain::Context* ctx = self.context();
-    relayer::LedgerMeta* meta = new(relayer::LedgerMeta);
-    relayer::InternalBlock* blockHeader = new(relayer::InternalBlock);
+    std::unique_ptr<relayer::LedgerMeta> meta(new relayer::LedgerMeta);
+    std::unique_ptr<relayer::InternalBlock> blockHeader(new relayer::InternalBlock);
     // 提取ledgerMeta
     std::string metaStr;
     const std::string metaKey = std::string(ledgerMetaBucket);
@@ -282,7 +283,7 @@ DEFINE_METHOD(XuperRelayer, putBlockHeader) {
     // 判断preBlockcHeader是否存在
     const std::string preBlockHeaderKey = std::string(blockHeaderBucket) + visualPreHash;
     std::string preBlockHeaderStr;
-    relayer::InternalBlock* preBlockHeader = new(relayer::InternalBlock);
+    std::unique_ptr<relayer::InternalBlock> preBlockHeader(new relayer::InternalBlock);
     if (!ctx->get_object(preBlockHeaderKey, &preBlockHeaderStr)) {
         ctx->error("missing preHash:" + visualPreHash);
         return;
@@ -379,7 +380,7 @@ DEFINE_METHOD(XuperRelayer, verifyTx) {
         ctx->error("get blockid failed");
         return;
     }
-    relayer::InternalBlock* blockHeader = new(relayer::InternalBlock);
+    std::unique_ptr<relayer::InternalBlock> blockHeader(new relayer::InternalBlock);
     blockHeader->ParseFromString(blockHeaderStr);
     if (blockHeader->in_trunk() == false) {
         ctx->error("blockid is not in trunk");
@@ -389,7 +390,7 @@ DEFINE_METHOD(XuperRelayer, verifyTx) {
     /*
     if (merkleRoot != blockHeader->merkle_root()) {
     }*/
-    relayer::LedgerMeta* meta = new(relayer::LedgerMeta);
+    std::unique_ptr<relayer::LedgerMeta> meta(new relayer::LedgerMeta);
     meta->ParseFromString(metaStr);
     bool confirmed = within3Confirms(ctx, blockid, meta->tip_blockid());
     if (!confirmed) {
@@ -415,7 +416,7 @@ DEFINE_METHOD(XuperRelayer, printBlockHeader) {
     std::string nextHash = std::string(64, 'o');
     std::string sign = std::string(144, 'o');
 
-    relayer::InternalBlock* blockHeader = new(relayer::InternalBlock);
+    std::unique_ptr<relayer::InternalBlock> blockHeader(new relayer::InternalBlock);
     bool succ = blockHeader->ParseFromString(blockHeaderStr);
     if (!succ) {
         ctx->error("parse block header error");
