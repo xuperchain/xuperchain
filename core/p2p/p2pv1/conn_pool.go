@@ -23,6 +23,7 @@ type ConnPool struct {
 	lock  sync.Mutex
 }
 
+// NewConnPool create new connection pool for p2pv1
 func NewConnPool(lg log.Logger, cfg config.P2PConfig) (*ConnPool, error) {
 	return &ConnPool{
 		log:    lg,
@@ -67,12 +68,12 @@ func (cp *ConnPool) Remove(conn *Conn) error {
 	return nil
 }
 
-// Find find conn from connpool
+// Find find conn from connpool, it will establish with the addr if haven't been connected
 func (cp *ConnPool) Find(addr string) (*Conn, error) {
 	if cp.conns[addr] != nil {
 		return cp.conns[addr], nil
 	}
-	conn, err := NewConn(cp.log, addr, cp.config.CertPath, cp.config.ServiceName, int(cp.config.MaxMessageSize))
+	conn, err := NewConn(cp.log, addr, cp.config.CertPath, cp.config.ServiceName, cp.config.IsUseCert, int(cp.config.MaxMessageSize)<<20)
 	if err != nil {
 		cp.log.Error("Find NewConn error")
 		return nil, err

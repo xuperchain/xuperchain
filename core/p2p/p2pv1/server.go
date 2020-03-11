@@ -3,20 +3,18 @@ package p2pv1
 
 import (
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/pkg/errors"
 	log "github.com/xuperchain/log15"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/peer"
 	"google.golang.org/grpc/reflection"
 
 	"github.com/xuperchain/xuperchain/core/common/config"
@@ -46,10 +44,13 @@ type P2PServerV1 struct {
 	handlerMap *p2p_base.HandlerMap
 	connPool   *ConnPool
 	// key: "bcname", value: "id"
-	staticNodes map[string][]string
-	quitCh      chan bool
-	lock        sync.Mutex
-	localAddr   map[string]*p2p_base.XchainAddrInfo
+	staticNodes  map[string][]string
+	bootNodes    []string
+	dynamicNodes []string
+	msgChan      chan *p2pPb.XuperMessage
+	quitCh       chan bool
+	lock         sync.Mutex
+	localAddr    map[string]*p2p_base.XchainAddrInfo
 }
 
 // NewP2PServerV1 create P2PServerV1 instance
@@ -66,10 +67,12 @@ func (p *P2PServerV1) Init(cfg config.P2PConfig, lg log.Logger, extra map[string
 
 	hm, err := p2p_base.NewHandlerMap(lg)
 	if err != nil {
+		p.log.Error("Init P2PServerV1 NewHandlerMap error", "error", err)
 		return ErrCreateHandlerMap
 	}
 	cp, err := NewConnPool(lg, cfg)
 	if err != nil {
+		p.log.Error("Init P2PServerV1 NewConnPool error", "error", err)
 		return ErrConnPool
 	}
 	// set p2p server members
@@ -78,11 +81,12 @@ func (p *P2PServerV1) Init(cfg config.P2PConfig, lg log.Logger, extra map[string
 	p.handlerMap = hm
 	p.connPool = cp
 	p.quitCh = make(chan bool, 1)
+	p.msgChan = make(chan *p2pPb.XuperMessage, 5000)
 	p.localAddr = map[string]*p2p_base.XchainAddrInfo{}
 
 	peerids := []string{}
 	hasPeerMap := map[string]bool{}
-
+	p.bootNodes = cfg.BootNodes
 	if len(cfg.StaticNodes) > 0 {
 		// connect to all static nodes
 		for _, peers := range cfg.StaticNodes {
@@ -92,7 +96,7 @@ func (p *P2PServerV1) Init(cfg config.P2PConfig, lg log.Logger, extra map[string
 					continue
 				}
 
-				conn, err := NewConn(lg, peer, cfg.CertPath, cfg.ServiceName, (int)(cfg.MaxMessageSize)<<20)
+				conn, err := NewConn(lg, peer, cfg.CertPath, cfg.ServiceName, cfg.IsUseCert, (int)(cfg.MaxMessageSize)<<20)
 				if err != nil {
 					p.log.Warn("p2p connect to peer failed", "peer", peer, "error", err)
 					continue
@@ -110,8 +114,26 @@ func (p *P2PServerV1) Init(cfg config.P2PConfig, lg log.Logger, extra map[string
 			p.staticNodes["xuper"] = peerids
 		}
 	}
-
+	p.connectToBootNodes()
+	p.registerSubscribe()
 	go p.Start()
+	go p.handleMsg()
+	return nil
+}
+
+// ConnectToBootNodes connect to bootnode
+func (p *P2PServerV1) connectToBootNodes() error {
+	msg, err := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion3, "", "", p2pPb.XuperMessage_NEW_NODE, []byte{}, p2pPb.XuperMessage_NONE)
+	if err != nil {
+		p.log.Error("ConnectToBootNodes NewXuperMessage error", "error", err)
+		return err
+	}
+	msg.Header.From = strconv.Itoa(int(p.config.Port))
+	p.ConnectToPeersByAddr(p.bootNodes)
+	opts := []p2p_base.MessageOption{
+		p2p_base.WithTargetPeerAddrs(p.bootNodes),
+	}
+	go p.SendMessage(context.Background(), msg, opts...)
 	return nil
 }
 
@@ -142,6 +164,7 @@ func (p *P2PServerV1) SendMessage(ctx context.Context, msg *p2pPb.XuperMessage,
 	msgOpts := p2p_base.GetMessageOption(opts)
 	filter := p.getFilter(msgOpts)
 	peers, _ := filter.Filter()
+	p.log.Info("testlog SendMessage", "peers", peers)
 	peerids, ok := peers.([]string)
 	if !ok {
 		p.log.Warn("p2p filter get peers failed, ignore this message",
@@ -168,6 +191,7 @@ func (p *P2PServerV1) SendMessageWithResponse(ctx context.Context, msg *p2pPb.Xu
 	msgOpts := p2p_base.GetMessageOption(opts)
 	filter := p.getFilter(msgOpts)
 	peers, _ := filter.Filter()
+	p.log.Info("testlog SendMessageWithResponse", "peers", peers)
 	percentage := msgOpts.Percentage
 	peerids, ok := peers.([]string)
 	if !ok {
@@ -304,9 +328,36 @@ func (p *P2PServerV1) getCompress(opts *p2p_base.MsgOptions) bool {
 }
 
 func (p *P2PServerV1) getFilter(opts *p2p_base.MsgOptions) p2p_base.PeersFilter {
-	// All filtering strategies will invalid if
-	// TODO: support TargetPeerAddrs and TargetPeerIDs options
-	return &StaticNodeStrategy{isBroadCast: p.config.IsBroadCast, pSer: p, bcname: opts.Bcname}
+	fs := opts.Filters
+	bcname := opts.Bcname
+	peerids := make([]string, 0)
+	pfs := make([]p2p_base.PeersFilter, 0)
+	// TODO: support other filters in feature
+	for _, f := range fs {
+		var filter p2p_base.PeersFilter
+		switch f {
+		default:
+			filter = &StaticNodeStrategy{isBroadCast: p.config.IsBroadCast, pSer: p, bcname: bcname}
+		}
+		pfs = append(pfs, filter)
+	}
+	// process target peer addresses
+	// connect to extra target peers async
+	go p.ConnectToPeersByAddr(opts.TargetPeerAddrs)
+	// get corresponding peer ids
+	peerids = append(peerids, opts.TargetPeerAddrs...)
+	return NewMultiStrategy(pfs, peerids)
+}
+
+// ConnectToPeersByAddr establish contact with given nodes
+func (p *P2PServerV1) ConnectToPeersByAddr(addrs []string) {
+	for _, peer := range addrs {
+		// peer address connected before
+		_, err := p.connPool.Find(peer)
+		if err != nil {
+			p.log.Error("ConnectToPeersByAddr error", "addr", peer, "error", err)
+		}
+	}
 }
 
 // GetPeerUrls 查询所连接节点的信息
@@ -344,41 +395,25 @@ func (p *P2PServerV1) SetXchainAddr(bcname string, info *p2p_base.XchainAddrInfo
 
 // startServer start p2p server
 func (p *P2PServerV1) startServer() {
-	certPath := p.config.CertPath
-	bs, err := ioutil.ReadFile(certPath + "/cacert.pem")
-	if err != nil {
-		panic(err)
+	options := append([]grpc.ServerOption{}, grpc.MaxRecvMsgSize(int(p.config.MaxMessageSize)<<20),
+		grpc.MaxSendMsgSize(int(p.config.MaxMessageSize)<<20))
+	if p.config.IsUseCert {
+		creds, err := genCreds(p.config.CertPath, p.config.ServiceName)
+		if err != nil {
+			panic(err)
+		}
+		options = append(options, grpc.Creds(creds))
 	}
-	certPool := x509.NewCertPool()
-	ok := certPool.AppendCertsFromPEM(bs)
-	if !ok {
-		panic(errors.New("AppendCertsFromPEM error"))
-	}
-
-	certificate, err := tls.LoadX509KeyPair(certPath+"/cert.pem", certPath+"/private.key")
-	if err != nil {
-		panic(err)
-	}
-	creds := credentials.NewTLS(
-		&tls.Config{
-			ServerName:   p.config.ServiceName,
-			Certificates: []tls.Certificate{certificate},
-			RootCAs:      certPool,
-			ClientCAs:    certPool,
-			ClientAuth:   tls.RequireAndVerifyClientCert,
-		})
 
 	l, err := net.Listen("tcp", ":"+strconv.Itoa((int)(p.config.Port)))
 	if err != nil {
 		panic(err)
 	}
 
-	// TODO: zq add other option by config
-	options := append([]grpc.ServerOption{}, grpc.Creds(creds))
 	s := grpc.NewServer(options...)
 	p2pPb.RegisterP2PServiceServer(s, p)
 	reflection.Register(s)
-	log.Trace("start tls rpc server")
+	log.Trace("start p2p rpc server")
 	go func() {
 		err := s.Serve(l)
 		if err != nil {
@@ -399,6 +434,19 @@ func (p *P2PServerV1) SendP2PMessage(str p2pPb.P2PService_SendP2PMessageServer) 
 		p.log.Warn("SendP2PMessage Recv msg error")
 		return err
 	}
+
+	if !strings.Contains(in.Header.From, ":") {
+		ip, _ := getRemoteIP(str.Context())
+		in.Header.From = ip + ":" + in.Header.From
+	}
 	p.handlerMap.HandleMessage(str, in)
 	return nil
+}
+
+func getRemoteIP(ctx context.Context) (string, error) {
+	pr, ok := peer.FromContext(ctx)
+	if ok && pr.Addr != net.Addr(nil) {
+		return strings.Split(pr.Addr.String(), ":")[0], nil
+	}
+	return "", errors.New("Get node addr error")
 }

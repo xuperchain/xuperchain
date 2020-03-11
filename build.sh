@@ -42,7 +42,7 @@ function buildpkg() {
 
 buildpkg xchain-cli github.com/xuperchain/xuperchain/core/cmd/cli
 buildpkg xchain github.com/xuperchain/xuperchain/core/cmd/xchain
-buildpkg xc github.com/xuperchain/xuperchain/core/contractsdk/xc
+buildpkg xdev github.com/xuperchain/xuperchain/core/cmd/xdev
 buildpkg xchain-httpgw github.com/xuperchain/xuperchain/core/gateway
 buildpkg dump_chain github.com/xuperchain/xuperchain/core/test
 buildpkg event_client github.com/xuperchain/xuperchain/core/test/pubsub
@@ -71,7 +71,7 @@ mv xchain-cli xchain ${output_dir}
 mv xchain-httpgw ${output_dir}
 mv wasm2c ${output_dir}
 mv dump_chain ${output_dir}
-mv xc ${output_dir}
+mv xdev ${output_dir}
 cp -rf core/plugins ${output_dir}
 cp -rf core/data ${output_dir}
 cp -rf core/conf ${output_dir}
