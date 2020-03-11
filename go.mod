@@ -3,7 +3,9 @@ module github.com/xuperchain/xuperchain
 go 1.12
 
 require (
+	github.com/BurntSushi/toml v0.3.1
 	github.com/btcsuite/btcutil v0.0.0-20190425235716-9e5f4b9a998d
+	github.com/ddliu/motto v0.3.1
 	github.com/dgraph-io/badger/v2 v2.0.0-rc.2
 	github.com/docker/go-connections v0.4.1-0.20180821093606-97c2040d34df
 	github.com/docker/go-units v0.4.0
@@ -29,6 +31,7 @@ require (
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pkg/errors v0.8.1
 	github.com/prometheus/client_golang v1.1.0
+	github.com/robertkrimen/otto v0.0.0-20191219234010-c382bd3c16ff
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.4.0
@@ -40,4 +43,5 @@ require (
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
 	google.golang.org/genproto v0.0.0-20190927181202-20e1ac93f88c
 	google.golang.org/grpc v1.24.0
+	gopkg.in/sourcemap.v1 v1.0.5 // indirect
 )

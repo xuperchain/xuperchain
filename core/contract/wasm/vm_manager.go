@@ -4,9 +4,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"path/filepath"
 	"reflect"
 	"strings"
+
+	log15 "github.com/xuperchain/log15"
 
 	"github.com/golang/protobuf/proto"
 
@@ -63,6 +66,10 @@ func New(cfg *config.WasmConfig, basedir string, xbridge *bridge.XBridge, xmodel
 			return nil, err
 		}
 		vmm.debugLogger = &debugLogger
+	} else {
+		logger := log15.Root().New()
+		logger.SetHandler(log15.DiscardHandler())
+		vmm.debugLogger = &log.Logger{Logger: logger}
 	}
 
 	return vmm, nil
@@ -262,6 +269,11 @@ func (v *VMManager) UpgradeContract(contextConfig *contract.ContextConfig, args 
 		}, contract.Limits{
 			Disk: modelCacheDiskUsed(store),
 		}, nil
+}
+
+// SetLogOutput set the output of contract log
+func (v *VMManager) SetLogOutput(w io.Writer) {
+	v.debugLogger.SetHandler(log15.StreamHandler(w, log15.LogfmtFormat()))
 }
 
 func modelCacheDiskUsed(cache *xmodel.XMCache) int64 {
