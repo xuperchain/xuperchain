@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/base64"
 	"errors"
 	"fmt"
 	"github.com/xuperchain/xuperchain/core/crypto/account"
@@ -982,11 +983,16 @@ func(s *server)  UnLockPrivateKey(ctx context.Context, in *pb.AccountData) (*pb.
 		return out, err
 	}
 
+	decodeString, err := base64.StdEncoding.DecodeString(string(encrptyPrivateKey))
+	if err!=nil{
+		return out,err
+	}
+
 	//利用密钥解密 密文私钥得到明文私钥
-	privateKeyByte, err := account.AesDecrypt(encrptyPrivateKey, []byte(PassCode))
+	privateKeyByte, err := account.AesDecrypt(decodeString, []byte(PassCode))
 
 	if err!=nil {
-		return out, errors.New("decrypt privateKey fail")
+		return out, errors.New("decrypt privateKey fail,please check your passcode")
 	}
 	privateKey:=string(privateKeyByte)
 
