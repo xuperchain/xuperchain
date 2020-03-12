@@ -1026,7 +1026,7 @@ func(s *server)  LockPrivateKey(ctx context.Context, in *pb.AccountData) (*pb.Co
 		return out ,e
 	}
 	address:=string(addressBytes)
-	
+
 	userKeyMd5 := common.MakeUserKeyName(address, PassCode)
 
 	common.DelUsersKey(userKeyMd5)
@@ -1055,7 +1055,7 @@ func (s *server) GetLockPrivateKey(ctx context.Context,in *pb.AccountData) (*pb.
 	usersKey := common.GetUsersKey(userKeyMd5)
 
 	if usersKey == nil{
-		return nil,errors.New("please execute unlock "+keypath+" privateKey")
+		return nil,errors.New("please execute unlock "+keypath+" privateKey or check your passcode")
 	}
 	privateKey := usersKey.PrivateKey
 

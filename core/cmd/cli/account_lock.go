@@ -38,7 +38,7 @@ func (c *AccountLockCommand)lock(ctx context.Context)error{
 	}
 	_, err := c.cli.xclient.LockPrivateKey(ctx, data)
 	if err ==nil{
-		fmt.Printf("lock privateKey success")
+		fmt.Println("lock privateKey success")
 	}
 	return err
 }
