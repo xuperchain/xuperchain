@@ -946,7 +946,9 @@ func (s *server) GetAccountByAK(ctx context.Context, request *pb.AK2AccountReque
 func(s *server)  UnLockPrivateKey(ctx context.Context, in *pb.AccountData) (*pb.CommonReply, error){
 	keyPath := in.KeyPath
 	PassCode := in.PassCode
-	timerTime:=time.Second * 60
+	expiredTime := in.ExpiredTime
+
+	timerTime:=time.Second * time.Duration(expiredTime)
 	out := &pb.CommonReply{Header: &pb.Header{Logid: in.Header.Logid}}
 	if keyPath==""{
 		return out, errors.New("keyPath is required")
