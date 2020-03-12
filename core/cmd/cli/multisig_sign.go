@@ -76,7 +76,7 @@ func (c *MultisigSignCommand) sign() error {
 		if err != nil {
 			return err
 		}
-		fromScrkey, err := readPrivateKey(c.cli.RootOptions.Keys,c.cli.RootOptions.Passcode,c.cli.xclient)
+		fromScrkey, err := readPrivateKey(c.cli.RootOptions.Keys, c.cli.RootOptions.Passcode, c.cli.xclient)
 		if err != nil {
 			return err
 		}
@@ -135,7 +135,7 @@ func (c *MultisigSignCommand) genSignTx(tx *pb.Transaction) ([]byte, error) {
 	if err != nil {
 		return nil, errors.New("Create crypto client error")
 	}
-	fromScrkey, err := readPrivateKey(c.cli.RootOptions.Keys,c.cli.RootOptions.Passcode,c.cli.xclient)
+	fromScrkey, err := readPrivateKey(c.cli.RootOptions.Keys, c.cli.RootOptions.Passcode, c.cli.xclient)
 	if err != nil {
 		return nil, err
 	}

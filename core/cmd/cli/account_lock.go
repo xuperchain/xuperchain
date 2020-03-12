@@ -13,7 +13,6 @@ type AccountLockCommand struct {
 	cmd *cobra.Command
 }
 
-
 func NewAccountLockCommand(cli *Cli) *cobra.Command {
 	c := new(AccountLockCommand)
 	c.cli = cli
@@ -28,7 +27,7 @@ func NewAccountLockCommand(cli *Cli) *cobra.Command {
 	return c.cmd
 }
 
-func (c *AccountLockCommand)lock(ctx context.Context)error{
+func (c *AccountLockCommand) lock(ctx context.Context) error {
 	keypath := c.cli.RootOptions.Keys
 	passcode := c.cli.RootOptions.Passcode
 	data := &pb.AccountData{
@@ -37,15 +36,8 @@ func (c *AccountLockCommand)lock(ctx context.Context)error{
 		Header:   global.GHeader(),
 	}
 	_, err := c.cli.xclient.LockPrivateKey(ctx, data)
-	if err ==nil{
+	if err == nil {
 		fmt.Println("lock privateKey success")
 	}
 	return err
 }
-
-
-
-
-
-
-

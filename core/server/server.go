@@ -47,7 +47,6 @@ type server struct {
 	dedupTimeLimit int
 }
 
-
 // PostTx Update db
 func (s *server) PostTx(ctx context.Context, in *pb.TxStatus) (*pb.CommonReply, error) {
 	if in.Header == nil {
@@ -945,57 +944,56 @@ func (s *server) GetAccountByAK(ctx context.Context, request *pb.AK2AccountReque
 }
 
 // UnLockPrivateKey
-func(s *server)  UnLockPrivateKey(ctx context.Context, in *pb.AccountData) (*pb.CommonReply, error){
+func (s *server) UnLockPrivateKey(ctx context.Context, in *pb.AccountData) (*pb.CommonReply, error) {
 	keyPath := in.KeyPath
 	PassCode := in.PassCode
 	expiredTime := in.ExpiredTime
 
-	timerTime:=time.Second * time.Duration(expiredTime)
+	timerTime := time.Second * time.Duration(expiredTime)
 	out := &pb.CommonReply{Header: &pb.Header{Logid: in.Header.Logid}}
-	if keyPath==""{
+	if keyPath == "" {
 		return out, errors.New("keyPath is required")
 	}
-	if PassCode==""{
+	if PassCode == "" {
 		return out, errors.New("PassCode is required")
 	}
 
 	addressBytes, e := readKeys(filepath.Join(keyPath, "address"))
-	if e!=nil{
-		return out ,e
+	if e != nil {
+		return out, e
 	}
-	address:=string(addressBytes)
+	address := string(addressBytes)
 
 	//生成用户密码 hash值做内存key
 	userKeyMd5 := common.MakeUserKeyName(address, PassCode)
 
 	//检查内存中是否已经有这个私钥用户，有则刷新定时器
 	usersKeyMem := common.GetUsersKey(userKeyMd5)
-	if usersKeyMem!=nil {
+	if usersKeyMem != nil {
 		timer := usersKeyMem.Timer
 		//重置定时器
 		timer.Reset(timerTime)
-		return out,nil
+		return out, nil
 	}
 
+	encrptyPrivateKey, err := readKeys(filepath.Join(keyPath, "private.key"))
 
-	encrptyPrivateKey,err := readKeys(filepath.Join(keyPath, "private.key"))
-
-	if err !=nil {
+	if err != nil {
 		return out, err
 	}
 
 	decodeString, err := base64.StdEncoding.DecodeString(string(encrptyPrivateKey))
-	if err!=nil{
-		return out,err
+	if err != nil {
+		return out, err
 	}
 
 	//利用密钥解密 密文私钥得到明文私钥
 	privateKeyByte, err := account.AesDecrypt(decodeString, []byte(PassCode))
 
-	if err!=nil {
+	if err != nil {
 		return out, errors.New("decrypt privateKey fail,please check your passcode")
 	}
-	privateKey:=string(privateKeyByte)
+	privateKey := string(privateKeyByte)
 
 	//明文私钥存放到内存中 并启动时间窗口 时间一到 移除内存中的明文私钥
 	timer := time.NewTimer(timerTime)
@@ -1003,88 +1001,80 @@ func(s *server)  UnLockPrivateKey(ctx context.Context, in *pb.AccountData) (*pb.
 		PrivateKey: privateKey,
 		Timer:      timer,
 	}
-	common.AddUsersKey(userKeyMd5,usersKey)
+	common.AddUsersKey(userKeyMd5, usersKey)
 	go func() {
 		<-timer.C
 		common.DelUsersKey(userKeyMd5)
 	}()
-	return out,nil
+	return out, nil
 }
+
 // LockPrivateKey
-func(s *server)  LockPrivateKey(ctx context.Context, in *pb.AccountData) (*pb.CommonReply, error){
+func (s *server) LockPrivateKey(ctx context.Context, in *pb.AccountData) (*pb.CommonReply, error) {
 	keypath := in.KeyPath
 	PassCode := in.PassCode
 	out := &pb.CommonReply{Header: &pb.Header{Logid: in.Header.Logid}}
-	if keypath==""{
+	if keypath == "" {
 		return out, errors.New("KeyPath is required")
 	}
-	if PassCode==""{
+	if PassCode == "" {
 		return out, errors.New("PassCode is required")
 	}
 	addressBytes, e := readKeys(filepath.Join(keypath, "address"))
-	if e!=nil{
-		return out ,e
+	if e != nil {
+		return out, e
 	}
-	address:=string(addressBytes)
+	address := string(addressBytes)
 
 	userKeyMd5 := common.MakeUserKeyName(address, PassCode)
 
 	usersKey := common.GetUsersKey(userKeyMd5)
-	if usersKey==nil{
-		return out ,errors.New("the account is locked or passcode is wrong")
+	if usersKey == nil {
+		return out, errors.New("the account is locked or passcode is wrong")
 	}
 	common.DelUsersKey(userKeyMd5)
 
-	return out,nil
+	return out, nil
 }
 
-func (s *server) GetLockPrivateKey(ctx context.Context,in *pb.AccountData) (*pb.PrivateKeyMsg, error) {
+func (s *server) GetLockPrivateKey(ctx context.Context, in *pb.AccountData) (*pb.PrivateKeyMsg, error) {
 	keypath := in.KeyPath
 	PassCode := in.PassCode
 
-	if keypath==""{
+	if keypath == "" {
 		return nil, errors.New("KeyPath is required")
 	}
-	if PassCode==""{
+	if PassCode == "" {
 		return nil, errors.New("PassCode is required")
 	}
 	addressBytes, e := readKeys(filepath.Join(keypath, "address"))
-	if e!=nil{
-		return nil ,e
+	if e != nil {
+		return nil, e
 	}
-	address:=string(addressBytes)
+	address := string(addressBytes)
 
 	userKeyMd5 := common.MakeUserKeyName(address, PassCode)
 
 	usersKey := common.GetUsersKey(userKeyMd5)
 
-	if usersKey == nil{
-		return nil,errors.New("please execute unlock "+keypath+" privateKey or check your passcode")
+	if usersKey == nil {
+		return nil, errors.New("please execute unlock " + keypath + " privateKey or check your passcode")
 	}
 	privateKey := usersKey.PrivateKey
 
 	return &pb.PrivateKeyMsg{
-		PrivateKey:  privateKey,
-	},nil
+		PrivateKey: privateKey,
+	}, nil
 }
 
-
-
-
-
-
-
-func readKeys(file string) ([]byte,error) {
+func readKeys(file string) ([]byte, error) {
 	buf, err := ioutil.ReadFile(file)
-	if err!=nil{
-		return nil,err
+	if err != nil {
+		return nil, err
 	}
 	buf = bytes.TrimSpace(buf)
-	return buf,nil
+	return buf, nil
 }
-
-
-
 
 func startTCPServer(xchainmg *xchaincore.XChainMG) error {
 	var (

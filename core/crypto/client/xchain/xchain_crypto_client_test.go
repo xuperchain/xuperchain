@@ -8,8 +8,4 @@ func TestXchainCryptoClient_ExportNewAccountEncryptPrivateKey(t *testing.T) {
 
 	client.ExportNewAccountEncryptPrivateKey("F:/file/tony")
 
-
 }
-
-
-

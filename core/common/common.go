@@ -18,12 +18,12 @@ import (
 
 type UsersKey struct {
 	PrivateKey string
-	Timer *time.Timer
+	Timer      *time.Timer
 }
 
-var usersKeyMap=map[string]*UsersKey{}
+var usersKeyMap = map[string]*UsersKey{}
 
-var usersKeySalt="8trJmFdlYxjGp34YEpcbSXxdMAss2hxz"
+var usersKeySalt = "8trJmFdlYxjGp34YEpcbSXxdMAss2hxz"
 
 // GetTxSerializedSize get size(in bytes) of a tx after being serialized
 // https://godoc.org/github.com/golang/protobuf/proto#Size
@@ -72,21 +72,21 @@ func GetFileContent(file string) string {
 	return string(f)
 }
 
-func AddUsersKey(user string,users *UsersKey){
-	usersKeyMap[user]=users
+func AddUsersKey(user string, users *UsersKey) {
+	usersKeyMap[user] = users
 }
 
-func GetUsersKey(user string) *UsersKey{
+func GetUsersKey(user string) *UsersKey {
 	return usersKeyMap[user]
 }
 
-func DelUsersKey(user string){
-	delete(usersKeyMap,user)
+func DelUsersKey(user string) {
+	delete(usersKeyMap, user)
 }
 
-func MakeUserKeyName(address string,passcode string) string{
+func MakeUserKeyName(address string, passcode string) string {
 	md5h := md5.New()
-	md5h.Write([]byte(address+passcode+usersKeySalt))
+	md5h.Write([]byte(address + passcode + usersKeySalt))
 	userKeyMd5 := hex.EncodeToString(md5h.Sum(nil))
 	return userKeyMd5
 }

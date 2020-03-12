@@ -88,7 +88,7 @@ func (c *NativeDeployCommand) deploy(ctx context.Context, codepath string) error
 	if err != nil {
 		return err
 	}
-	privkey, err := readPrivateKey(c.cli.RootOptions.Keys,c.cli.RootOptions.Passcode,c.cli.xclient)
+	privkey, err := readPrivateKey(c.cli.RootOptions.Keys, c.cli.RootOptions.Passcode, c.cli.xclient)
 	if err != nil {
 		return err
 	}

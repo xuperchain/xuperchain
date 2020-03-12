@@ -54,7 +54,7 @@ func (g *GenModBlockDescCommand) genDesc(ctx context.Context, txid string) error
 	if err != nil {
 		return errors.New("Create crypto client error")
 	}
-	fromScrkey, err := readPrivateKey(g.cli.RootOptions.Keys,g.cli.RootOptions.Passcode,g.cli.xclient)
+	fromScrkey, err := readPrivateKey(g.cli.RootOptions.Keys, g.cli.RootOptions.Passcode, g.cli.xclient)
 	if err != nil {
 		return err
 	}

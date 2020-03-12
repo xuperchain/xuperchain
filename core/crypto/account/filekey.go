@@ -350,7 +350,6 @@ func ExportNewAccount(path string, privateKey *ecdsa.PrivateKey) error {
 		return err
 	}
 
-
 	//如果path不是以/结尾的，自动拼上
 	if strings.LastIndex(path, "/") != len([]rune(path))-1 {
 		path = path + "/"
@@ -372,9 +371,6 @@ func ExportNewAccount(path string, privateKey *ecdsa.PrivateKey) error {
 	}
 	return err
 }
-
-
-
 
 // ExportNewAccount creates new account ,encrypt privateKey, export to local file
 func ExportNewAccountEncryptPrivateKey(path string, privateKey *ecdsa.PrivateKey) error {
@@ -396,8 +392,7 @@ func ExportNewAccountEncryptPrivateKey(path string, privateKey *ecdsa.PrivateKey
 	//对称加密私钥
 	privateKeyEncrypt, _ := AesEncrypt([]byte(jsonPrivateKey), passcode)
 	//加密后的密文重新赋值给私钥并写入本地磁盘
-	jsonPrivateKey=base64.StdEncoding.EncodeToString(privateKeyEncrypt)
-
+	jsonPrivateKey = base64.StdEncoding.EncodeToString(privateKeyEncrypt)
 
 	//如果path不是以/结尾的，自动拼上
 	if strings.LastIndex(path, "/") != len([]rune(path))-1 {
@@ -418,16 +413,10 @@ func ExportNewAccountEncryptPrivateKey(path string, privateKey *ecdsa.PrivateKey
 		log.Printf("Export address file failed, the err is %v", err)
 		return err
 	}
-	fmt.Println("create account passcode is "+string(passcode)+"\n please keep the passcode perfectly by yourself")
+	fmt.Println("create account passcode is " + string(passcode) + "\n please keep the passcode perfectly by yourself")
 
 	return err
 }
-
-
-
-
-
-
 
 // GetEcdsaPrivateKeyFromJSON get ECDSA private key from json encoded data
 func GetEcdsaPrivateKeyFromJSON(jsonContent []byte) (*ecdsa.PrivateKey, error) {

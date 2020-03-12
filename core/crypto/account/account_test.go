@@ -29,22 +29,17 @@ func Test_RetrieveAccountByMnem(t *testing.T) {
 
 func Test_Encrpty(t *testing.T) {
 
-	msg :="gjjtestxzhtestestestguangdongzhongshanhuojukaifaqu"
+	msg := "gjjtestxzhtestestestguangdongzhongshanhuojukaifaqu"
 	key := randKey(msg)
 
-
-	fmt.Println("密钥:"+string(key))
-
+	fmt.Println("密钥:" + string(key))
 
 	bytes, _ := AesEncrypt([]byte(msg), key)
 
-
-	fmt.Println("对称加密私钥后的密文"+base64.StdEncoding.EncodeToString(bytes))
+	fmt.Println("对称加密私钥后的密文" + base64.StdEncoding.EncodeToString(bytes))
 
 	aes, _ := AesDecrypt(bytes, key)
 
-	fmt.Println("对称解密后的私钥"+string(aes))
-
+	fmt.Println("对称解密后的私钥" + string(aes))
 
 }
-

@@ -107,18 +107,18 @@ func readPublicKey(keypath string) (string, error) {
 	return readKeys(filepath.Join(keypath, "public.key"))
 }
 
-func readPrivateKey(keypath string,passcode string,xclient pb.XchainClient) (string, error) {
+func readPrivateKey(keypath string, passcode string, xclient pb.XchainClient) (string, error) {
 
 	privateKey, err := readKeys(filepath.Join(keypath, "private.key"))
-	if err !=nil{
-		return privateKey,err
+	if err != nil {
+		return privateKey, err
 	}
 
 	ecdsaPrivateKey := new(account.ECDSAPrivateKey)
 	errJsonUmarshal := json.Unmarshal([]byte(privateKey), ecdsaPrivateKey)
-	if errJsonUmarshal!=nil {
-		if passcode ==""{
-			return "",errors.New("this "+keypath+" privateKey need to be decrypted ,so need passcode but the " +
+	if errJsonUmarshal != nil {
+		if passcode == "" {
+			return "", errors.New("this " + keypath + " privateKey need to be decrypted ,so need passcode but the " +
 				"passcode is empty")
 		}
 		todo := context.TODO()
@@ -127,13 +127,13 @@ func readPrivateKey(keypath string,passcode string,xclient pb.XchainClient) (str
 			PassCode: passcode,
 		}
 		privateKeyMsg, err := xclient.GetLockPrivateKey(todo, data)
-		if err!=nil{
-			return "",err
+		if err != nil {
+			return "", err
 		}
-		privateKey= privateKeyMsg.PrivateKey
+		privateKey = privateKeyMsg.PrivateKey
 	}
 
-	return privateKey,nil
+	return privateKey, nil
 }
 
 type invokeRequestWraper struct {
