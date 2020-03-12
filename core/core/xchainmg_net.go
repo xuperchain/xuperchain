@@ -508,6 +508,10 @@ func (xm *XChainMG) handleNewBlockID(msg *xuper_p2p.XuperMessage) {
 	// handle get blockidin xchaincore
 	bcname := block.GetBcname()
 	bc := xm.Get(bcname)
+	if bc == nil {
+		xm.Log.Warn("handleNewBlockID get bc is nil", "logid", msg.GetHeader().GetLogid())
+		return
+	}
 	ctx := context.Background()
 	blockRes, err := bc.handleNewBlockID(ctx, block.GetBlockid(), msg.GetHeader().GetFrom())
 	if err != nil {

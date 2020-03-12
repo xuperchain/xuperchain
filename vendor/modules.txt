@@ -3,6 +3,8 @@ github.com/AndreasBriese/bbloom
 # github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78
 github.com/Azure/go-ansiterm
 github.com/Azure/go-ansiterm/winterm
+# github.com/BurntSushi/toml v0.3.1
+github.com/BurntSushi/toml
 # github.com/Microsoft/go-winio v0.4.15-0.20190919025122-fc70bd9a86b5
 github.com/Microsoft/go-winio
 github.com/Microsoft/go-winio/pkg/guid
@@ -22,6 +24,9 @@ github.com/containerd/continuity/syscallx
 github.com/containerd/continuity/sysx
 # github.com/coreos/go-semver v0.3.0
 github.com/coreos/go-semver/semver
+# github.com/ddliu/motto v0.3.1
+github.com/ddliu/motto
+github.com/ddliu/motto/underscore
 # github.com/dgraph-io/badger/v2 v2.0.0-rc.2
 github.com/dgraph-io/badger/v2
 github.com/dgraph-io/badger/v2/options
@@ -335,6 +340,14 @@ github.com/prometheus/common/model
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
+# github.com/robertkrimen/otto v0.0.0-20191219234010-c382bd3c16ff
+github.com/robertkrimen/otto
+github.com/robertkrimen/otto/ast
+github.com/robertkrimen/otto/dbg
+github.com/robertkrimen/otto/file
+github.com/robertkrimen/otto/parser
+github.com/robertkrimen/otto/registry
+github.com/robertkrimen/otto/token
 # github.com/sirupsen/logrus v1.4.1
 github.com/sirupsen/logrus
 # github.com/spacemonkeygo/spacelog v0.0.0-20180420211403-2296661a0572
@@ -510,5 +523,8 @@ google.golang.org/grpc/serviceconfig
 google.golang.org/grpc/stats
 google.golang.org/grpc/status
 google.golang.org/grpc/tap
+# gopkg.in/sourcemap.v1 v1.0.5
+gopkg.in/sourcemap.v1
+gopkg.in/sourcemap.v1/base64vlq
 # gopkg.in/yaml.v2 v2.2.2
 gopkg.in/yaml.v2
