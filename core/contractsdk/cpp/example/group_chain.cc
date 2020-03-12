@@ -48,9 +48,9 @@ public:
             return;
         }
         const std::string ip = ctx->arg("ip");
+        const std::string addr = ctx->arg("address");
         std::string key = nodeBucket + bcname + endingSeparator + ip;
-        std::string value = ctx->initiator();
-        if (ctx->put_object(key, value)) {
+        if (ctx->put_object(key, addr)) {
             ctx->ok("add node succeed");
             return;
         }
