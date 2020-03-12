@@ -46,7 +46,7 @@ void split(const std::string& rawProofPath, std::vector<std::string>& proof) {
     return;
 }
 
-// encode, decode, fromHexChar
+// encodeHex, decodeFromHex, fromHexChar
 // 编解码作用，可读字符串与不可读字符串之间的转换
 bool fromHexChar(char src, char* dst) {
     if (src >= '0' && src <= '9') {
@@ -62,7 +62,7 @@ bool fromHexChar(char src, char* dst) {
     return true;
 }
 
-bool decode(const std::string& src, std::string& dst) {
+bool decodeFromHex(const std::string& src, std::string& dst) {
     int i = 0;
     int j = 1;
     int len = src.size();
@@ -92,7 +92,7 @@ bool decode(const std::string& src, std::string& dst) {
     return true;
 }
 
-bool encode(const std::string& src, std::string& dst) {
+bool encodeHex(const std::string& src, std::string& dst) {
     int len = src.size();
     if (len > 500) {
         return false;
@@ -127,7 +127,7 @@ bool within3Confirms(xchain::Context* ctx, const std::string& blockid, const std
         blockHeader->ParseFromString(blockHeaderStr);
         const std::string preHashStr = blockHeader->pre_hash();
         std::string preHash = std::string(64, 'o');
-        if (!encode(preHashStr, preHash)) {
+        if (!encodeHex(preHashStr, preHash)) {
             return false;
         }
         currBlockid = preHash;
@@ -167,10 +167,10 @@ bool handleFork(xchain::Context* ctx, const std::string& oldTip, const std::stri
 
         nextHash = qBlock->blockid();
         // 编码成可视化的blockid
-        if (!encode(pBlock->pre_hash(), p)) {
+        if (!encodeHex(pBlock->pre_hash(), p)) {
             return false;
         }
-        if (!encode(qBlock->pre_hash(), q)) {
+        if (!encodeHex(qBlock->pre_hash(), q)) {
             return false;
         }
 
@@ -217,8 +217,8 @@ DEFINE_METHOD(XuperRelayer, initialize) {
 
     std::string blockidBuf = anchorBlockHeader->blockid();
     std::string visualBlockid = std::string(64, '0');
-    if (!encode(blockidBuf, visualBlockid)) {
-        ctx->error("encode blockid failed");
+    if (!encodeHex(blockidBuf, visualBlockid)) {
+        ctx->error("encodeHex blockid failed");
         return;
     }
     std::string metaStr;
@@ -258,8 +258,8 @@ DEFINE_METHOD(XuperRelayer, putBlockHeader) {
     }
     std::string blockidBuf = blockHeader->blockid();
     std::string visualBlockid = std::string(64, 'o');
-    if (!encode(blockidBuf, visualBlockid)) {
-        ctx->error("encode blockid failed");
+    if (!encodeHex(blockidBuf, visualBlockid)) {
+        ctx->error("encodeHex blockid failed");
         return;
     }
     const std::string blockHeaderKey = std::string(blockHeaderBucket) + visualBlockid;
@@ -276,8 +276,8 @@ DEFINE_METHOD(XuperRelayer, putBlockHeader) {
         return;
     }
     std::string visualPreHash = std::string(64, 'o');
-    if (!encode(preHashBuf, visualPreHash)) {
-        ctx->error("encode preHash failed");
+    if (!encodeHex(preHashBuf, visualPreHash)) {
+        ctx->error("encodeHex preHash failed");
         return;
     }
     // 判断preBlockcHeader是否存在
@@ -294,6 +294,13 @@ DEFINE_METHOD(XuperRelayer, putBlockHeader) {
         preBlockHeader->set_next_hash(blockHeader->blockid());
         meta->set_tip_blockid(visualBlockid);
         meta->set_trunk_height(meta->trunk_height()+1);
+        // 更新preBlockHeader
+        preBlockHeaderStr = "";
+        preBlockHeader->SerializeToString(&preBlockHeaderStr);
+        if (!ctx->put_object(preBlockHeaderKey, preBlockHeaderStr)) {
+            ctx->error("put " + visualPreHash + " failed");
+            return;
+        }
     } else {
         // 在分支上添加
         if (preBlockHeader->height()+1 > meta->trunk_height()) {
@@ -353,14 +360,14 @@ DEFINE_METHOD(XuperRelayer, verifyTx) {
     std::string merkleRoot;
     // 将可读字符串编码为不可读字符串
     std::string txidEncode = std::string(32, 'o');
-    if (!decode(txid, txidEncode)) {
-        ctx->error("encode " + txid + " failed");
+    if (!decodeFromHex(txid, txidEncode)) {
+        ctx->error("encodeHex " + txid + " failed");
         return;
     }
     for (int i=0; i < proofPath.size(); i++) {
         std::string tmp = std::string(32, 'o');
-        if (!decode(proofPath[i], tmp)) {
-            ctx->error("encode proof path failed");
+        if (!decodeFromHex(proofPath[i], tmp)) {
+            ctx->error("encodeHex proof path failed");
             return;
         }
         proofPathEncode.push_back(tmp);
@@ -430,16 +437,16 @@ DEFINE_METHOD(XuperRelayer, printBlockHeader) {
     const std::string signBuf = blockHeader->sign();
     const std::string pubkeyBuf = blockHeader->pubkey();
     const std::string merkleRootBuf = blockHeader->merkle_root();
-    if (!encode(preHashBuf, preHash)) {
-        ctx->error("encode pre hash error");
+    if (!encodeHex(preHashBuf, preHash)) {
+        ctx->error("encodeHex pre hash error");
         return;
     }
-    if (!encode(merkleRootBuf, merkleRoot)) {
-        ctx->error("encode merkle root error");
+    if (!encodeHex(merkleRootBuf, merkleRoot)) {
+        ctx->error("encodeHex merkle root error");
         return;
     }
-    if (!encode(signBuf, sign)) {
-        ctx->error("encode sign error");
+    if (!encodeHex(signBuf, sign)) {
+        ctx->error("encodeHex sign error");
         return;
     }
     int64_t height = blockHeader->height();
@@ -450,8 +457,8 @@ DEFINE_METHOD(XuperRelayer, printBlockHeader) {
     int64_t curTerm = blockHeader->curterm();
     bool inTrunk = blockHeader->in_trunk();
     const std::string nextHashBuf = blockHeader->next_hash();
-    if (!encode(nextHashBuf, nextHash)) {
-        ctx->error("encode next hash error");
+    if (!encodeHex(nextHashBuf, nextHash)) {
+        ctx->error("encodeHex next hash error");
         return;
     }
 
