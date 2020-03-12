@@ -1,8 +1,8 @@
 syntax = "proto3";
 
-import "googleapis/google/api/annotations.proto";
-//
-//import "google/api/annotations.proto";
+//import "googleapis/google/api/annotations.proto";
+
+import "google/api/annotations.proto";
 import "chainedbft.proto";
 
 package pb;
