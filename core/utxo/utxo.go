@@ -148,7 +148,7 @@ type UtxoVM struct {
 	vatHandler           *vat.VATHandler  // Verifiable Autogen Tx 生成器
 	balanceCache         *common.LRUCache //余额cache,加速GetBalance查询
 	cacheSize            int              //记录构造utxo时传入的cachesize
-	balanceViewDirty     map[string]int   //balanceCache 标记dirty: addr->bool
+	balanceViewDirty     map[string]int   //balanceCache 标记dirty: addr -> sequence of view
 	contractExectionTime int
 	unconfirmTxInMem     *sync.Map //未确认Tx表的内存镜像
 	defaultTxVersion     int32     // 默认的tx version

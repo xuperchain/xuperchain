@@ -1,65 +1,72 @@
 package utxo
 
-import "sync"
-import "sort"
-import "strconv"
-import "github.com/xuperchain/xuperchain/core/pb"
-
-const (
-	SharedLock    = 1 //可共享的情况
-	ExclusiveLock = 2 //互斥的情况
+import (
+	"github.com/xuperchain/xuperchain/core/pb"
+	"sort"
+	"strconv"
+	"sync"
 )
 
-type RefCounter struct {
+const (
+	sharedLock    = 1 //可共享的情况
+	exclusiveLock = 2 //互斥的情况
+)
+
+type refCounter struct {
 	ctMap map[string]int
 	mu    sync.Mutex
 }
 
+//SpinLock is a collections of small locks on special keys
 type SpinLock struct {
 	m          *sync.Map
-	refCounter *RefCounter
+	refCounter *refCounter
 }
 
+// LockKey is a lock item with lock type and key
 type LockKey struct {
 	lockType int
 	key      string
 }
 
+// String returns readable string for a lock item
 func (lk *LockKey) String() string {
-	if lk.lockType == SharedLock {
+	if lk.lockType == sharedLock {
 		return lk.key + ":S"
-	} else if lk.lockType == ExclusiveLock {
+	} else if lk.lockType == exclusiveLock {
 		return lk.key + ":X"
 	}
 	return lk.key
 }
 
-func (rc *RefCounter) Add(key string) {
+func (rc *refCounter) Add(key string) {
 	rc.mu.Lock()
 	defer rc.mu.Unlock()
-	rc.ctMap[key] += 1
+	rc.ctMap[key]++
 }
 
-func (rc *RefCounter) Release(key string) int {
+func (rc *refCounter) Release(key string) int {
 	rc.mu.Lock()
 	defer rc.mu.Unlock()
-	rc.ctMap[key] -= 1
+	rc.ctMap[key]--
 	return rc.ctMap[key]
 }
 
+// NewSpinLock returns a new spinlock instance
 func NewSpinLock() *SpinLock {
-	return &SpinLock{m: &sync.Map{}, refCounter: &RefCounter{ctMap: map[string]int{}}}
+	return &SpinLock{m: &sync.Map{}, refCounter: &refCounter{ctMap: map[string]int{}}}
 }
 
+//ExtractLockKeys extract lock items from a transaction
 func (sp *SpinLock) ExtractLockKeys(tx *pb.Transaction) []*LockKey {
 	keys := []*LockKey{}
 	for _, input := range tx.TxInputs {
 		k := string(input.RefTxid) + "_" + strconv.Itoa(int(input.RefOffset))
-		keys = append(keys, &LockKey{key: k, lockType: ExclusiveLock})
+		keys = append(keys, &LockKey{key: k, lockType: exclusiveLock})
 	}
-	for offset, _ := range tx.TxOutputs {
+	for offset := range tx.TxOutputs {
 		k := string(tx.Txid) + "_" + strconv.Itoa(offset)
-		keys = append(keys, &LockKey{key: k, lockType: ExclusiveLock})
+		keys = append(keys, &LockKey{key: k, lockType: exclusiveLock})
 	}
 	readKeys := map[string]bool{}
 	writeKeys := map[string]bool{}
@@ -73,10 +80,10 @@ func (sp *SpinLock) ExtractLockKeys(tx *pb.Transaction) []*LockKey {
 		writeKeys[k] = true
 	}
 	for k := range readKeys {
-		keys = append(keys, &LockKey{key: k, lockType: SharedLock})
+		keys = append(keys, &LockKey{key: k, lockType: sharedLock})
 	}
 	for k := range writeKeys {
-		keys = append(keys, &LockKey{key: k, lockType: ExclusiveLock})
+		keys = append(keys, &LockKey{key: k, lockType: exclusiveLock})
 	}
 	sort.Slice(keys, func(i, j int) bool { return keys[i].key < keys[j].key })
 	lim := 0
@@ -90,16 +97,18 @@ func (sp *SpinLock) ExtractLockKeys(tx *pb.Transaction) []*LockKey {
 	return keys[:lim]
 }
 
+//IsLocked returns whether a key is locked
 func (sp *SpinLock) IsLocked(key string) bool {
 	_, locked := sp.m.Load(key)
 	return locked
 }
 
+//TryLock try to lock some keys
 func (sp *SpinLock) TryLock(lockKeys []*LockKey) ([]*LockKey, bool) {
 	succLocked := []*LockKey{}
 	for _, k := range lockKeys {
 		if lkType, occupiedByOthers := sp.m.LoadOrStore(k.key, k.lockType); occupiedByOthers {
-			if lkType == SharedLock && k.lockType == SharedLock { //读读共享
+			if lkType == sharedLock && k.lockType == sharedLock { //读读共享
 				sp.refCounter.Add(k.key)
 				succLocked = append(succLocked, k)
 				continue
@@ -107,7 +116,7 @@ func (sp *SpinLock) TryLock(lockKeys []*LockKey) ([]*LockKey, bool) {
 				return succLocked, false //读写冲突
 			}
 		}
-		if k.lockType == SharedLock {
+		if k.lockType == sharedLock {
 			sp.refCounter.Add(k.key)
 		}
 		succLocked = append(succLocked, k) //第一个抢到
@@ -115,14 +124,15 @@ func (sp *SpinLock) TryLock(lockKeys []*LockKey) ([]*LockKey, bool) {
 	return succLocked, true
 }
 
+//Unlock release the locks on some keys
 func (sp *SpinLock) Unlock(lockKeys []*LockKey) {
 	N := len(lockKeys)
 	for i := N - 1; i >= 0; i-- {
 		lkType := lockKeys[i].lockType
 		k := lockKeys[i].key
-		if lkType == ExclusiveLock {
+		if lkType == exclusiveLock {
 			sp.m.Delete(k)
-		} else if lkType == SharedLock { //共享锁要考虑引用计数
+		} else if lkType == sharedLock { //共享锁要考虑引用计数
 			if sp.refCounter.Release(k) == 0 {
 				sp.m.Delete(lockKeys[i].key)
 			}
