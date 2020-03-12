@@ -47,6 +47,7 @@ type server struct {
 	dedupTimeLimit int
 }
 
+
 // PostTx Update db
 func (s *server) PostTx(ctx context.Context, in *pb.TxStatus) (*pb.CommonReply, error) {
 	if in.Header == nil {
@@ -1025,13 +1026,46 @@ func(s *server)  LockPrivateKey(ctx context.Context, in *pb.AccountData) (*pb.Co
 		return out ,e
 	}
 	address:=string(addressBytes)
-	//生成用户密码 hash值做内存key
+	
 	userKeyMd5 := common.MakeUserKeyName(address, PassCode)
 
 	common.DelUsersKey(userKeyMd5)
 
 	return out,nil
 }
+
+func (s *server) GetLockPrivateKey(ctx context.Context,in *pb.AccountData) (*pb.PrivateKeyMsg, error) {
+	keypath := in.KeyPath
+	PassCode := in.PassCode
+
+	if keypath==""{
+		return nil, errors.New("KeyPath is required")
+	}
+	if PassCode==""{
+		return nil, errors.New("PassCode is required")
+	}
+	addressBytes, e := readKeys(filepath.Join(keypath, "address"))
+	if e!=nil{
+		return nil ,e
+	}
+	address:=string(addressBytes)
+
+	userKeyMd5 := common.MakeUserKeyName(address, PassCode)
+
+	usersKey := common.GetUsersKey(userKeyMd5)
+
+	if usersKey == nil{
+		return nil,errors.New("please execute unlock "+keypath+" privateKey")
+	}
+	privateKey := usersKey.PrivateKey
+
+	return &pb.PrivateKeyMsg{
+		PrivateKey:  privateKey,
+	},nil
+}
+
+
+
 
 
 

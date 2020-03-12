@@ -260,7 +260,7 @@ func (c *Cli) Transfer(ctx context.Context, opt *TransferOptions) (string, error
 		return "", err
 	}
 
-	fromScrkey, err := readPrivateKey(opt.KeyPath,c.RootOptions.Passcode)
+	fromScrkey, err := readPrivateKey(opt.KeyPath,c.RootOptions.Passcode,c.xclient)
 	if err != nil {
 		return "", err
 	}
@@ -302,7 +302,7 @@ func (c *Cli) tansferSupportAccount(ctx context.Context, client pb.XchainClient,
 	txStatus.Tx.InitiatorSigns = append(txStatus.Tx.InitiatorSigns, signInfo)
 	txStatus.Tx.AuthRequireSigns, err = genAuthRequireSigns(opt, cryptoClient,
 		txStatus.Tx, initScrkey,
-		initPubkey,c.RootOptions.Passcode)
+		initPubkey,c.RootOptions.Passcode,client)
 	if err != nil {
 		return "", fmt.Errorf("Failed to genAuthRequireSigns %s", err)
 	}
@@ -427,7 +427,7 @@ func genAuthRequire(from, path string) ([]string, error) {
 func genAuthRequireSigns(opt *TransferOptions,
 	cryptoClient crypto_base.CryptoClient,
 	tx *pb.Transaction, initScrkey,
-	initPubkey string,passcode string) ([]*pb.SignatureInfo, error) {
+	initPubkey string,passcode string, client pb.XchainClient) ([]*pb.SignatureInfo, error) {
 	authRequireSigns := []*pb.SignatureInfo{}
 	if opt.AccountPath == "" {
 		signTx, err := txhash.ProcessSignTx(cryptoClient, tx, []byte(initScrkey))
@@ -448,7 +448,7 @@ func genAuthRequireSigns(opt *TransferOptions,
 	}
 	for _, fi := range dir {
 		if fi.IsDir() {
-			sk, err := readPrivateKey(opt.AccountPath + "/" + fi.Name(),passcode)
+			sk, err := readPrivateKey(opt.AccountPath + "/" + fi.Name(),passcode,client)
 			if err != nil {
 				return nil, err
 			}

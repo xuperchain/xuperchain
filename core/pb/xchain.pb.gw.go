@@ -79,6 +79,23 @@ func request_Xchain_UnLockPrivateKey_0(ctx context.Context, marshaler runtime.Ma
 
 }
 
+func request_Xchain_GetLockPrivateKey_0(ctx context.Context, marshaler runtime.Marshaler, client XchainClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq AccountData
+	var metadata runtime.ServerMetadata
+
+	newReader, berr := utilities.IOReaderFactory(req.Body)
+	if berr != nil {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", berr)
+	}
+	if err := marshaler.NewDecoder(newReader()).Decode(&protoReq); err != nil && err != io.EOF {
+		return nil, metadata, status.Errorf(codes.InvalidArgument, "%v", err)
+	}
+
+	msg, err := client.GetLockPrivateKey(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
 func request_Xchain_LockPrivateKey_0(ctx context.Context, marshaler runtime.Marshaler, client XchainClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var protoReq AccountData
 	var metadata runtime.ServerMetadata
@@ -486,6 +503,26 @@ func RegisterXchainHandlerClient(ctx context.Context, mux *runtime.ServeMux, cli
 
 	})
 
+	mux.Handle("POST", pattern_Xchain_GetLockPrivateKey_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateContext(ctx, mux, req)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_Xchain_GetLockPrivateKey_0(rctx, inboundMarshaler, client, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_Xchain_GetLockPrivateKey_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
 	mux.Handle("POST", pattern_Xchain_LockPrivateKey_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
@@ -856,6 +893,8 @@ var (
 
 	pattern_Xchain_UnLockPrivateKey_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "unlock_privatekey"}, "", runtime.AssumeColonVerbOpt(true)))
 
+	pattern_Xchain_GetLockPrivateKey_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "get_lock_privatekey"}, "", runtime.AssumeColonVerbOpt(true)))
+
 	pattern_Xchain_LockPrivateKey_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "lock_privatekey"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_Xchain_QueryACL_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"v1", "query_acl"}, "", runtime.AssumeColonVerbOpt(true)))
@@ -899,6 +938,8 @@ var (
 	forward_Xchain_PostTx_0 = runtime.ForwardResponseMessage
 
 	forward_Xchain_UnLockPrivateKey_0 = runtime.ForwardResponseMessage
+
+	forward_Xchain_GetLockPrivateKey_0 = runtime.ForwardResponseMessage
 
 	forward_Xchain_LockPrivateKey_0 = runtime.ForwardResponseMessage
 

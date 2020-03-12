@@ -47,7 +47,7 @@ func (c *AccountUnLockCommand)unlock(ctx context.Context)error{
 	}
 	_, err := c.cli.xclient.UnLockPrivateKey(ctx, data)
 	if err ==nil{
-		fmt.Printf("unlock privateKey success,"+strconv.Itoa(expiredTime)+"s expired")
+		fmt.Println("unlock privateKey success,"+strconv.Itoa(expiredTime)+"s expired")
 	}
 	return err
 }

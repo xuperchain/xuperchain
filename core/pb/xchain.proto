@@ -86,6 +86,14 @@ service Xchain {
      };
     }
 
+    // GetLockPrivateKey
+    rpc GetLockPrivateKey (AccountData) returns (PrivateKeyMsg) {
+        option (google.api.http) = {
+       post : "/v1/get_lock_privatekey"
+       body : "*"
+     };
+    }
+
     // LockPrivateKey
     rpc LockPrivateKey (AccountData) returns (CommonReply) {
         option (google.api.http) = {
@@ -314,6 +322,9 @@ message AccountData {
     string passCode = 3; //密码
     int32  expiredTime=4; //过期时间
 
+}
+message PrivateKeyMsg {
+    string privateKey = 3; //密码
 }
 
 message BatchTxs {

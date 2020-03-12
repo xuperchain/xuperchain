@@ -10,7 +10,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/xuperchain/xuperchain/core/common"
 	"github.com/xuperchain/xuperchain/core/crypto/account"
 	"io/ioutil"
 	"path/filepath"
@@ -108,7 +107,8 @@ func readPublicKey(keypath string) (string, error) {
 	return readKeys(filepath.Join(keypath, "public.key"))
 }
 
-func readPrivateKey(keypath string,passcode string) (string, error) {
+func readPrivateKey(keypath string,passcode string,xclient pb.XchainClient) (string, error) {
+
 	privateKey, err := readKeys(filepath.Join(keypath, "private.key"))
 	if err !=nil{
 		return privateKey,err
@@ -118,21 +118,19 @@ func readPrivateKey(keypath string,passcode string) (string, error) {
 	errJsonUmarshal := json.Unmarshal([]byte(privateKey), ecdsaPrivateKey)
 	if errJsonUmarshal!=nil {
 		if passcode ==""{
-			return "",errors.New("passcode is empty")
+			return "",errors.New("this "+keypath+" privateKey need to be decrypted ,so need passcode but the " +
+				"passcode is empty")
 		}
-		//解析转换json该私钥失败，则代表该私钥是经过对称加密的
-		//读取内存获取明文私钥
-		address, err := readAddress(keypath)
-		if err != nil{
+		todo := context.TODO()
+		data := &pb.AccountData{
+			KeyPath:  keypath,
+			PassCode: passcode,
+		}
+		privateKeyMsg, err := xclient.GetLockPrivateKey(todo, data)
+		if err!=nil{
 			return "",err
 		}
-		userKeyName := common.MakeUserKeyName(address, passcode)
-		usersKey := common.GetUsersKey(userKeyName)
-		if usersKey ==nil {
-			//内存中没有用户私钥结构体,需要用户手动调用进行解锁私钥
-			return "",errors.New("please execute unlock privateKey")
-		}
-		privateKey = usersKey.PrivateKey
+		privateKey= privateKeyMsg.PrivateKey
 	}
 
 	return privateKey,nil
