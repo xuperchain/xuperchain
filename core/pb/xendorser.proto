@@ -1,8 +1,9 @@
 syntax = "proto3";
 package pb;
 
+import "googleapis/google/api/annotations.proto";
+//import "google/api/annotations.proto";
 import "xchain.proto";
-import "google/api/annotations.proto";
 
 // 请求参数
 message EndorserRequest {

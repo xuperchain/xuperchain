@@ -2,7 +2,8 @@ syntax = "proto3";
 
 package pb;
 
-import "google/api/annotations.proto";
+import "googleapis/google/api/annotations.proto";
+//import "google/api/annotations.proto";
 import "xchain.proto";
 
 // 助记词、私钥的json、公钥的json、钱包地址

@@ -1,2 +1,2 @@
-protoc -I core\pb --go_out=plugins=grpc:core\pb --grpc-gateway_out=logtostderr=true:core\pb  core\pb\xchain.proto core\pb\chainedbft.proto core\pb\event.proto core\pb\xchain_spv.proto core\pb\xcheck.proto core\pb\xendorser.proto 
+protoc -I core\pb core\pb\xchain.proto core\pb\chainedbft.proto core\pb\event.proto core\pb\xchain_spv.proto core\pb\xcheck.proto core\pb\xendorser.proto -I core/pb/googleapis --go_out=plugins=grpc:core\pb --grpc-gateway_out=logtostderr=true:core\pb    
 pause

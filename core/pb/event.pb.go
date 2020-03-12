@@ -8,6 +8,8 @@ import (
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
 	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
 	math "math"
 )
 
@@ -949,6 +951,17 @@ func (c *pubsubServiceClient) Unsubscribe(ctx context.Context, in *UnsubscribeRe
 type PubsubServiceServer interface {
 	Subscribe(*EventRequest, PubsubService_SubscribeServer) error
 	Unsubscribe(context.Context, *UnsubscribeRequest) (*UnsubscribeResponse, error)
+}
+
+// UnimplementedPubsubServiceServer can be embedded to have forward compatible implementations.
+type UnimplementedPubsubServiceServer struct {
+}
+
+func (*UnimplementedPubsubServiceServer) Subscribe(req *EventRequest, srv PubsubService_SubscribeServer) error {
+	return status.Errorf(codes.Unimplemented, "method Subscribe not implemented")
+}
+func (*UnimplementedPubsubServiceServer) Unsubscribe(ctx context.Context, req *UnsubscribeRequest) (*UnsubscribeResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Unsubscribe not implemented")
 }
 
 func RegisterPubsubServiceServer(s *grpc.Server, srv PubsubServiceServer) {

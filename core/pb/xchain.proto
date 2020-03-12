@@ -1,7 +1,10 @@
 syntax = "proto3";
 
 import "googleapis/google/api/annotations.proto";
+//
+//import "google/api/annotations.proto";
 import "chainedbft.proto";
+
 package pb;
 
 
@@ -309,6 +312,8 @@ message AccountData {
     Header header = 1;
     string keyPath = 2; //用户公私钥对地址所在目录
     string passCode = 3; //密码
+    int32  expiredTime=4; //过期时间
+
 }
 
 message BatchTxs {
