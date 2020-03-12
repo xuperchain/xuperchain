@@ -30,7 +30,7 @@ p2p:
   #certPath: ./data/tls/1
   #serviceName: saas_test.server.com
   #bootNodes:
-  #  - "/ip4/<ip>/tcp/<port>/p2p/<node_hash>"
+  #  - "/ip4/<ip>/tcp/<port>/p2p/<node_hash>" for p2pv2 or - "<ip>:<port>" for p2pv1
   #staticNodes:
   #  xuper:
   #    - "127.0.0.1:47102"

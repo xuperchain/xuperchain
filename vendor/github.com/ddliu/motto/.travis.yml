@@ -1,0 +1,11 @@
+language: go 
+
+go:
+ - 1.6.x
+ - tip
+
+before_install:
+  - "sudo apt-get update -qq"
+  - "sudo apt-get install -qq nodejs"
+before_script:
+  - "cd ./tests/npm && npm install && cd ../../"
