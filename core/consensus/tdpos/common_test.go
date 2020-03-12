@@ -219,7 +219,7 @@ func TestValidateRevokeVote(t *testing.T) {
 		t.Error("validRevoke error ", validErr.Error())
 	}
 
-	voteInfo, errValid := tdpos.validateVote(desc3)
+	voteInfo, errValid := tdpos.validateVote(desc3, false)
 	if errValid != nil {
 		t.Error("validateVote error ", errValid.Error(), desc3)
 	} else {

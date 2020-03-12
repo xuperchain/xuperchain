@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"encoding/hex"
+
 	"github.com/xuperchain/xuperchain/core/contract"
 	"github.com/xuperchain/xuperchain/core/pb"
 )
@@ -12,7 +13,7 @@ import (
 func (tp *TDpos) rollbackVote(desc *contract.TxDesc, block *pb.InternalBlock) error {
 	tp.log.Trace("Start to rollbackVote", "desc", desc)
 	// 验证选票信息有效性, 并解析选票参数
-	voteInfo, err := tp.validateVote(desc)
+	voteInfo, err := tp.validateVote(desc, true)
 	if err != nil {
 		tp.log.Warn("rollbackVote error", "error", err)
 		return nil

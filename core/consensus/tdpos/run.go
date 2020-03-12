@@ -19,7 +19,7 @@ import (
 func (tp *TDpos) runVote(desc *contract.TxDesc, block *pb.InternalBlock) error {
 	// 验证选票信息有效性, 并解析选票参数
 	tp.log.Trace("start to runVote desc", "desc", desc)
-	voteInfo, err := tp.validateVote(desc)
+	voteInfo, err := tp.validateVote(desc, true)
 	if err != nil {
 		tp.log.Warn("runVote error", "error", err)
 		return err
