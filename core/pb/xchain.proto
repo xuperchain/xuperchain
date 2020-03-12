@@ -324,7 +324,7 @@ message AccountData {
 
 }
 message PrivateKeyMsg {
-    string privateKey = 3; //密码
+    string privateKey = 3; //解密后的明文私钥
 }
 
 message BatchTxs {
@@ -429,46 +429,48 @@ message XuperSignature {
 
 // Transaction is the information of the transaction
 message Transaction {
-    // txid is the id of this transaction
-    bytes txid = 1;
-    // the blockid the transaction belong to
-    bytes blockid = 2;
-    // Transaction input list
-    repeated TxInput tx_inputs = 3;
-    // Transaction output list
-    repeated TxOutput tx_outputs = 4;
-    // Transaction description or system contract
-    bytes desc = 6;
-    // Mining rewards
-    bool coinbase = 7;
-    // Random number used to avoid replay attacks
-    string nonce = 8;
-    // Timestamp to launch the transaction
-    int64 timestamp = 9;
-    // tx format version; tx格式版本号
-    int32 version = 10;
-    // auto generated tx
-    bool autogen = 11;
+  // txid is the id of this transaction
+  bytes txid = 1;
+  // the blockid the transaction belong to
+  bytes blockid = 2;
+  // Transaction input list
+  repeated TxInput tx_inputs = 3;
+  // Transaction output list
+  repeated TxOutput tx_outputs = 4;
+  // Transaction description or system contract
+  bytes desc = 6;
+  // Mining rewards
+  bool coinbase = 7;
+  // Random number used to avoid replay attacks
+  string nonce = 8;
+  // Timestamp to launch the transaction
+  int64 timestamp = 9;
+  // tx format version; tx格式版本号
+  int32 version = 10;
+  // auto generated tx
+  bool autogen = 11;
 
-    repeated TxInputExt tx_inputs_ext = 23;
-    repeated TxOutputExt tx_outputs_ext = 24;
-    repeated InvokeRequest contract_requests = 25;
+  repeated TxInputExt tx_inputs_ext = 23;
+  repeated TxOutputExt tx_outputs_ext = 24;
+  repeated InvokeRequest contract_requests = 25;
 
-    // 权限系统新增字段
-    // 交易发起者, 可以是一个Address或者一个Account
-    string initiator = 26;
-    // 交易发起需要被收集签名的AddressURL集合信息，包括用于utxo转账和用于合约调用
-    repeated string auth_require = 27;
-    // 交易发起者对交易元数据签名，签名的内容包括auth_require字段
-    repeated SignatureInfo initiator_signs = 28;
-    // 收集到的签名
-    repeated SignatureInfo auth_require_signs = 29;
-    // 节点收到tx的时间戳，不参与签名
-    int64 received_timestamp = 30;
-    // 统一签名(支持多重签名/环签名等，与initiator_signs/auth_require_signs不同时使用)
-    XuperSignature xuper_sign = 31;
-    // 可修改区块链标记
-    ModifyBlock modify_block = 32;
+  // 权限系统新增字段
+  // 交易发起者, 可以是一个Address或者一个Account
+  string initiator = 26;
+  // 交易发起需要被收集签名的AddressURL集合信息，包括用于utxo转账和用于合约调用
+  repeated string auth_require = 27;
+  // 交易发起者对交易元数据签名，签名的内容包括auth_require字段
+  repeated SignatureInfo initiator_signs = 28;
+  // 收集到的签名
+  repeated SignatureInfo auth_require_signs = 29;
+  // 节点收到tx的时间戳，不参与签名
+  int64 received_timestamp = 30;
+  // 统一签名(支持多重签名/环签名等，与initiator_signs/auth_require_signs不同时使用)
+  XuperSignature xuper_sign = 31;
+  // 可修改区块链标记
+  ModifyBlock modify_block = 32;
+  // HD加解密相关信息
+  HDInfo HD_info = 33;
 }
 
 // Ledger metadata
@@ -1012,6 +1014,13 @@ message ModifyBlock {
     string public_key = 4;
     // 监管地址对修改的交易id的签名
     string sign = 5;
+}
+
+message HDInfo {
+  // HDPublickey
+  bytes hd_public_key = 1;
+  // original_hash 
+  bytes original_hash = 2;
 }
 
 message UtxoRecordDetail {
