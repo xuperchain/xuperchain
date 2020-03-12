@@ -50,7 +50,6 @@ func AesDecrypt(crypted, key []byte) ([]byte, error) {
 	return origData, nil
 }
 
-
 //返回一个32位md5加密后的字符串
 func getMD5Encode(data string) string {
 	h := md5.New()
@@ -59,9 +58,9 @@ func getMD5Encode(data string) string {
 }
 
 //返回一个16位md5加密后的字符串
-func get16MD5Encode(data string) string{
+func get16MD5Encode(data string) string {
 	t := time.Now().Unix()
-	data=data+strconv.FormatInt(t,10)
+	data = data + strconv.FormatInt(t, 10)
 	return getMD5Encode(data)[8:24]
 }
 
