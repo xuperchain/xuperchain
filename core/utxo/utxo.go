@@ -648,6 +648,25 @@ func GenerateRootTx(js []byte) (*pb.Transaction, error) {
 	return utxoTx, nil
 }
 
+// parseUtxoKeys extract (txid, offset) from utxo key item
+func (uv *UtxoVM) parseUtxoKeys(uKey string) ([]byte, int, error) {
+	keyTuple := strings.Split(uKey[1:], "_") // [1:] 是为了剔除表名字前缀
+	N := len(keyTuple)
+	if N < 2 {
+		uv.xlog.Warn("unexpected utxo key", "uKey", uKey)
+		return nil, 0, ErrUnexpected
+	}
+	refTxid, err := hex.DecodeString(keyTuple[N-2])
+	if err != nil {
+		return nil, 0, err
+	}
+	offset, err := strconv.Atoi(keyTuple[N-1])
+	if err != nil {
+		return nil, 0, err
+	}
+	return refTxid, offset, nil
+}
+
 //SelectUtxos 选择足够的utxo
 //输入: 转账人地址、公钥、金额、是否需要锁定utxo
 //输出：选出的utxo、utxo keys、实际构成的金额(可能大于需要的金额)、错误码
@@ -669,9 +688,10 @@ func (uv *UtxoVM) SelectUtxos(fromAddr string, fromPubKey string, totalNeed *big
 				uv.xlog.Trace("utxo still frozen, skip it", "uKey", uKey, " fheight", uItem.FrozenHeight)
 				continue
 			}
-			keyTuple := strings.Split(uKey[1:], "_") // [1:] 是为了剔除表名字前缀
-			refTxid, _ := hex.DecodeString(keyTuple[len(keyTuple)-2])
-			offset, _ := strconv.Atoi(keyTuple[len(keyTuple)-1])
+			refTxid, offset, err := uv.parseUtxoKeys(uKey)
+			if err != nil {
+				return nil, nil, nil, err
+			}
 			if needLock {
 				if uv.tryLockKey([]byte(uKey)) {
 					willLockKeys = append(willLockKeys, []byte(uKey))
@@ -732,9 +752,10 @@ func (uv *UtxoVM) SelectUtxos(fromAddr string, fromPubKey string, totalNeed *big
 				uv.xlog.Trace("utxo still frozen, skip it", "key", string(key), "fheight", uItem.FrozenHeight)
 				continue
 			}
-			keyTuple := bytes.Split(key[1:], []byte("_")) // [1:] 是为了剔除表名字前缀
-			refTxid, _ := hex.DecodeString(string(keyTuple[len(keyTuple)-2]))
-			offset, _ := strconv.Atoi(string(keyTuple[len(keyTuple)-1]))
+			refTxid, offset, err := uv.parseUtxoKeys(string(key))
+			if err != nil {
+				return nil, nil, nil, err
+			}
 			if needLock {
 				if uv.tryLockKey(key) {
 					willLockKeys = append(willLockKeys, key)
