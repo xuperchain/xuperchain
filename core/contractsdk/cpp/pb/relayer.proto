@@ -1,0 +1,151 @@
+syntax = "proto3";
+
+option optimize_for = LITE_RUNTIME;
+
+package relayer;
+
+message InternalBlock {
+  int32 version = 1;
+  int32 nonce = 2;
+  bytes blockid = 3;
+  bytes pre_hash = 4;
+  bytes proposer = 5;
+  bytes sign = 6;
+  bytes pubkey = 7;
+  bytes merkle_root = 8;
+  int64 height = 9;
+  int64 timestamp = 10;
+  repeated Transaction transactions = 11;
+  int32 tx_count = 12;
+  repeated bytes merkle_tree = 13;
+  int64 curTerm = 16;
+  int64 curBlockNum = 17;
+  map<string, string> failed_txs = 18;
+  int32 targetBits = 19;
+
+  QuorumCert Justify = 20;
+  bool in_trunk = 14;
+  bytes next_hash = 15;
+}
+
+message Transaction {
+  bytes txid = 1;
+  bytes blockid = 2;
+  repeated TxInput tx_inputs = 3;
+  repeated TxOutput tx_outputs = 4;
+  bytes desc = 6;
+  bool coinbase = 7;
+  string nonce = 8;
+  int64 timestamp = 9;
+  int32 version = 10;
+  bool autogen = 11;
+  repeated TxInputExt tx_inputs_ext = 23;
+  repeated TxOutputExt tx_outputs_ext = 24;
+  repeated InvokeRequest contract_requests = 25;
+  string initiator = 26;
+  repeated string auth_require = 27;
+  repeated SignatureInfo initiator_signs = 28;
+  repeated SignatureInfo auth_require_signs = 29;
+  int64 received_timestamp = 30;
+  XuperSignature xuper_sign = 31;
+  ModifyBlock modify_block = 32;
+}
+
+message TxInput {
+  bytes ref_txid = 1;
+  int32 ref_offset = 2;
+  bytes from_addr = 5;
+  bytes amount = 6;
+  int64 frozen_height = 7;
+}
+
+message TxOutput {
+  bytes amount = 1;
+  bytes to_addr = 2;
+  int64 frozen_height = 4;
+}
+
+message TxInputExt {
+  string bucket = 1;
+  bytes key = 2;
+  bytes ref_txid = 3;
+  int32 ref_offset = 4;
+}
+
+message TxOutputExt {
+  string bucket = 1;
+  bytes key = 2;
+  bytes value = 3;
+}
+
+message InvokeRequest {
+  string module_name = 1;
+  string contract_name = 2;
+  string method_name = 3;
+  map<string, bytes> args = 4;
+  repeated ResourceLimit resource_limits = 5;
+  string amount = 6;
+}
+
+message SignatureInfo {
+  string PublicKey = 1;
+  bytes Sign = 2;
+}
+
+message XuperSignature {
+  repeated bytes public_keys = 1;
+  bytes signature = 2;
+}
+
+message ModifyBlock {
+  string effective_txid = 1;
+  bool marked = 2;
+  int64 effective_height = 3;
+  string public_key = 4;
+  string sign = 5;
+}
+
+message ResourceLimit {
+  ResourceType type = 1;
+  int64 limit = 2;
+}
+
+enum ResourceType {
+  CPU = 0;
+  MEMORY = 1;
+  DISK = 2;
+  XFEE = 3;
+}
+
+message QuorumCert {
+  bytes ProposalId = 1;
+  bytes ProposalMsg = 2;
+  QCState Type = 3;
+  int64 ViewNumber = 4;
+  QCSignInfos SignInfos  = 5;
+}
+
+enum QCState {
+  NEW_VIEW = 0;
+  PREPARE = 1;
+  PRE_COMMIT = 2;
+  COMMIT = 3;
+  DECIDE = 4;
+}
+
+message QCSignInfos {
+  repeated SignInfo QCSignInfos = 1;
+}
+
+message SignInfo {
+  string Address = 1;
+  string PublicKey = 2;
+  bytes  Sign = 3;
+}
+
+
+message LedgerMeta {
+  string root_blockid = 1;
+  string tip_blockid = 2;
+  int64 trunk_height = 3;
+}
