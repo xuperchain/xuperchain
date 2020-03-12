@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/spf13/cobra"
+	"github.com/xuperchain/xuperchain/core/global"
 	"github.com/xuperchain/xuperchain/core/pb"
 	"strconv"
 )
@@ -42,6 +43,7 @@ func (c *AccountUnLockCommand)unlock(ctx context.Context)error{
 		KeyPath:  keypath,
 		PassCode: passcode,
 		ExpiredTime:int32(expiredTime),
+		Header:     global.GHeader(),
 	}
 	_, err := c.cli.xclient.UnLockPrivateKey(ctx, data)
 	if err ==nil{

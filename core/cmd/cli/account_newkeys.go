@@ -47,7 +47,7 @@ func (c *AccountNewkeysCommand) addFlags() {
 	c.cmd.Flags().Uint8Var(&c.strength, "strength", 0, "using mnemonic with specific strength(easy:1 mid:2 hard:3)")
 	c.cmd.Flags().StringVar(&c.lang, "lang", "zh", "mnemonic language, zh|en")
 	c.cmd.Flags().BoolVarP(&c.forceOveride, "force", "f", false, "Force override existing account files")
-	c.cmd.Flags().BoolVar(&c.encryptKey, "encryptKey",false, "encrypt privateKey and export passcode")
+	c.cmd.Flags().BoolVar(&c.encryptKey, "encryptKey",false, "encrypt privateKey and export passcode,true|false, default false")
 }
 
 func (c *AccountNewkeysCommand) createAccount() error {

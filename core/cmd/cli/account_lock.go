@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/spf13/cobra"
+	"github.com/xuperchain/xuperchain/core/global"
 	"github.com/xuperchain/xuperchain/core/pb"
 )
 
@@ -33,6 +34,7 @@ func (c *AccountLockCommand)lock(ctx context.Context)error{
 	data := &pb.AccountData{
 		KeyPath:  keypath,
 		PassCode: passcode,
+		Header:   global.GHeader(),
 	}
 	_, err := c.cli.xclient.LockPrivateKey(ctx, data)
 	if err ==nil{
