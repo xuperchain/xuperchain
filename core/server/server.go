@@ -1029,6 +1029,10 @@ func(s *server)  LockPrivateKey(ctx context.Context, in *pb.AccountData) (*pb.Co
 
 	userKeyMd5 := common.MakeUserKeyName(address, PassCode)
 
+	usersKey := common.GetUsersKey(userKeyMd5)
+	if usersKey==nil{
+		return out ,errors.New("the account is locked or passcode is wrong")
+	}
 	common.DelUsersKey(userKeyMd5)
 
 	return out,nil
