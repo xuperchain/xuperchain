@@ -27,6 +27,10 @@ type SchnorrCryptoClient struct {
 	base.CryptoClientCommonMultiSig
 }
 
+func (xcc SchnorrCryptoClient) ExportNewAccountEncryptPrivateKey(path string) error {
+	panic("implement me")
+}
+
 // GenerateKeyBySeed 通过随机数种子来生成椭圆曲线加密所需要的公钥和私钥
 func (xcc SchnorrCryptoClient) GenerateKeyBySeed(seed []byte) (*ecdsa.PrivateKey, error) {
 	curve := elliptic.P256()
