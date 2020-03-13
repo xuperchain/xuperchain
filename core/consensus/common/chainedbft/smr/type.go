@@ -38,6 +38,8 @@ type Smr struct {
 	p2p p2p_base.P2PServer
 	// p2pMsgChan is the msg channel registered to network
 	p2pMsgChan chan *xuper_p2p.XuperMessage
+	// subscribeList is the Subscriber list of the srm instance
+	subscribeList []p2p_base.Subscriber
 
 	// Hotstuff State of this nodes
 	// votedView is the last voted view, view changes with chain
