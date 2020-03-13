@@ -1,24 +1,36 @@
 package relayer
 
 import (
-	"context"
-	"encoding/hex"
-	"errors"
+	//"context"
+	//"encoding/hex"
+	//"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"google.golang.org/grpc"
+	//"github.com/golang/protobuf/proto"
 
-	"github.com/xuperchain/xuperchain/core/contract"
-	"github.com/xuperchain/xuperchain/core/global"
+	//"github.com/xuperchain/xuperchain/core/contract"
+	//"github.com/xuperchain/xuperchain/core/global"
 	"github.com/xuperchain/xuperchain/core/pb"
-	"github.com/xuperchain/xuperchain/core/utxo"
-	"github.com/xuperchain/xuperchain/core/utxo/txhash"
+	//"github.com/xuperchain/xuperchain/core/utxo"
+	//"github.com/xuperchain/xuperchain/core/utxo/txhash"
+	"github.com/xuperchain/xuperchain/core/common"
+	relayerpb "github.com/xuperchain/xuperchain/core/relayer/pb"
 )
 
+type QueryMetaRegister interface {
+	GetLastQueryBlockHeight() int64
+}
+
 type DeliverBlockCommand struct {
-	client pb.XchainClient
-	Cfg    ChainConfig
+	client            pb.XchainClient
+	Cfg               ChainConfig
+	meta              *relayerpb.DeliverMeta
+	AnchorBlockHeight int64
+	Storage           *Storage
+	QueryMeta         QueryMetaRegister
 }
 
 func (cmd *DeliverBlockCommand) InitXchainClient() error {
@@ -30,178 +42,160 @@ func (cmd *DeliverBlockCommand) InitXchainClient() error {
 	return nil
 }
 
-func (cmd *DeliverBlockCommand) DeliverAnchorBlockHeader(blockBuf []byte) error {
-	args := make(map[string][]byte)
-	args["blockHeader"] = blockBuf
-	// set preExe parameter
-	moduleName := cmd.Cfg.ContractConfig.ModuleName
-	contractName := cmd.Cfg.ContractConfig.ContractName
-	methodName := cmd.Cfg.ContractConfig.AnchorMethod
-	tx, err := cmd.PreExe(moduleName, contractName, methodName, args)
-	if err != nil {
-		return err
-	}
-	txid, err := cmd.SendTx(tx)
-	if err != nil {
-		return err
-	}
-	fmt.Println("txid:", txid)
-	return nil
-}
-
-func (cmd *DeliverBlockCommand) DeliverBlockHeader(blockBuf []byte) error {
-	// step1: fetch block header
-	// TODO
-	// step2: prepare exec
-	args := make(map[string][]byte)
-	args["blockHeader"] = blockBuf
-	// set preExe parameter
-	moduleName := cmd.Cfg.ContractConfig.ModuleName
-	contractName := cmd.Cfg.ContractConfig.ContractName
-	methodName := cmd.Cfg.ContractConfig.UpdateMethod
-	tx, err := cmd.PreExe(moduleName, contractName, methodName, args)
-	if err != nil {
-		return err
-	}
-	// step3: postTx
-	txid, err := cmd.SendTx(tx)
-	if err != nil {
-		return err
-	}
-	fmt.Println("txid:", txid)
-	return nil
-}
-
-func (cmd *DeliverBlockCommand) PreExe(moduleName, contractName, methodName string,
-	args map[string][]byte) (*pb.Transaction, error) {
-	preExeRPCRes, preExeReqs, err := cmd.GenPreExeRes(moduleName, contractName, methodName, args)
-	if err != nil {
-		return nil, err
-	}
-
-	return cmd.GenRawTx(preExeRPCRes.GetResponse(), preExeReqs)
-}
-
-func (cmd *DeliverBlockCommand) GenPreExeRes(moduleName, contractName, methodName string,
-	args map[string][]byte) (
-	*pb.InvokeRPCResponse, []*pb.InvokeRequest, error) {
-	preExeReqs := []*pb.InvokeRequest{}
-	preExeReqs = append(preExeReqs, &pb.InvokeRequest{
-		ModuleName:   moduleName,
-		ContractName: contractName,
-		MethodName:   methodName,
-		Args:         args,
-	})
-
-	preExeRPCReq := &pb.InvokeRPCRequest{
-		Bcname:   cmd.Cfg.Bcname,
-		Header:   global.GHeader(),
-		Requests: preExeReqs,
-	}
-
-	// 根据配置读取initiator以及authrequire
-	initiator, err := readAddress(cmd.Cfg.Keys)
-	if err != nil {
-		panic("read address error")
-	}
-	preExeRPCReq.Initiator = initiator
-	preExeRPCReq.AuthRequire = []string{initiator}
-
-	preExeRPCRes, err := cmd.client.PreExec(context.TODO(), preExeRPCReq)
-	if err != nil {
-		return nil, nil, fmt.Errorf("PreExe contract response : %v, logid:%s", err, preExeRPCReq.Header.Logid)
-	}
-	for _, res := range preExeRPCRes.Response.Responses {
-		if res.Status >= contract.StatusErrorThreshold {
-			return nil, nil, fmt.Errorf("contract error status:%d message:%s", res.Status, res.Message)
+func (cmd *DeliverBlockCommand) Deliver() error {
+	// 是否有必要调用DeliverAnchorBlockHeader()
+	meta, err := cmd.LoadDeliverMeta()
+	if common.NormalizedKVError(err) == common.ErrKVNotFound {
+		cmd.DeliverAnchorBlockHeader()
+	} else if err != nil {
+		panic("get deliver meta failed, err:" + err.Error())
+	} else {
+		cmd.meta = &relayerpb.DeliverMeta{
+			LastDeliverBlockHeight: meta.GetLastDeliverBlockHeight(),
 		}
-		fmt.Printf("contract response: %s\n", string(res.Body))
 	}
-
-	return preExeRPCRes, preExeRPCRes.Response.Requests, nil
+	cmd.DeliverBlockHeader()
+	return nil
 }
 
-func (cmd *DeliverBlockCommand) GenRawTx(preExeRes *pb.InvokeResponse, preExeReqs []*pb.InvokeRequest) (
-	*pb.Transaction, error) {
-	tx := &pb.Transaction{
-		Coinbase:  false,
-		Nonce:     global.GenNonce(),
-		Timestamp: time.Now().UnixNano(),
-		Version:   utxo.TxVersion,
+func (cmd *DeliverBlockCommand) DeliverAnchorBlockHeader() error {
+	for {
+		blockBuf, err := cmd.Storage.GetBlockHeaderByHeight(cmd.AnchorBlockHeight)
+		// 本地还没有存储AnchorBlock, 等待
+		if common.NormalizedKVError(err) == common.ErrKVNotFound {
+			time.Sleep(time.Duration(1) * time.Second)
+			continue
+		} else if err != nil {
+			panic("get anchor block header failed, err:" + err.Error())
+		}
+
+		args := make(map[string][]byte)
+		args["blockHeader"] = blockBuf
+		// set preExe parameter
+		moduleName := cmd.Cfg.ContractConfig.ModuleName
+		contractName := cmd.Cfg.ContractConfig.ContractName
+		methodName := cmd.Cfg.ContractConfig.AnchorMethod
+		tx, err := cmd.PreExe(moduleName, contractName, methodName, args)
+		// 如果之前已经调用过initAnchorBlockHeader，则跳过
+		if err != nil && strings.Contains(err.Error(), "only once") {
+			tmpDeliverMeta := &relayerpb.DeliverMeta{
+				LastDeliverBlockHeight: cmd.AnchorBlockHeight,
+			}
+			updateErr := cmd.UpdateDeliverMeta(tmpDeliverMeta)
+			if updateErr != nil {
+				panic("update deliver meta failed, err:" + updateErr.Error())
+			}
+			cmd.meta = &relayerpb.DeliverMeta{
+				LastDeliverBlockHeight: cmd.AnchorBlockHeight,
+			}
+			return err
+		} else if err != nil {
+			fmt.Println("[deliver] preExe for synchronzing anchor block failed, err:", err)
+			time.Sleep(time.Duration(1) * time.Second)
+			continue
+		}
+		txid, err := cmd.SendTx(tx)
+		if err != nil && strings.Contains(err.Error(), "only once") {
+			tmpDeliverMeta := &relayerpb.DeliverMeta{
+				LastDeliverBlockHeight: cmd.AnchorBlockHeight,
+			}
+			updateErr := cmd.UpdateDeliverMeta(tmpDeliverMeta)
+			if updateErr != nil {
+				panic("update deliver meta failed, err:" + updateErr.Error())
+			}
+			cmd.meta = &relayerpb.DeliverMeta{
+				LastDeliverBlockHeight: cmd.AnchorBlockHeight,
+			}
+			return err
+		} else if err != nil {
+			fmt.Println("[deliver] preExe for synchronzing anchor block failed, err:", err)
+			time.Sleep(time.Duration(1) * time.Second)
+			continue
+		}
+		fmt.Println("[deliver] txid:", txid)
+		// 更新DeliverMeta
+		tmpDeliverMeta := &relayerpb.DeliverMeta{
+			LastDeliverBlockHeight: cmd.AnchorBlockHeight,
+		}
+		updateErr := cmd.UpdateDeliverMeta(tmpDeliverMeta)
+		if updateErr != nil {
+			panic("update deliver meta failed, err:" + updateErr.Error())
+		}
+		cmd.meta = &relayerpb.DeliverMeta{
+			LastDeliverBlockHeight: cmd.AnchorBlockHeight,
+		}
+
+		break
 	}
 
-	var gasUsed int64
-	if preExeRes != nil {
-		gasUsed = preExeRes.GasUsed
-		fmt.Printf("The gas you consume is: %v\n", gasUsed)
-	}
-
-	txOutputs, totalNeed, err := cmd.GenTxOutputs(gasUsed)
-	if err != nil {
-		return nil, err
-	}
-	tx.TxOutputs = append(tx.TxOutputs, txOutputs...)
-	txInputs, deltaTxOutput, err := cmd.GenTxInputs(totalNeed)
-	if err != nil {
-		return nil, err
-	}
-	tx.TxInputs = append(tx.TxInputs, txInputs...)
-	if deltaTxOutput != nil {
-		tx.TxOutputs = append(tx.TxOutputs, deltaTxOutput)
-	}
-
-	// 填充contract预执行结果
-	if preExeRes != nil {
-		tx.TxInputsExt = preExeRes.GetInputs()
-		tx.TxOutputsExt = preExeRes.GetOutputs()
-		tx.ContractRequests = preExeReqs
-	}
-
-	// 填充交易发起者的addr
-	initiator, err := readAddress(cmd.Cfg.Keys)
-	if err != nil {
-		panic("read address error")
-	}
-	tx.Initiator = initiator
-
-	return tx, nil
+	return nil
 }
 
-func (cmd *DeliverBlockCommand) SendTx(tx *pb.Transaction) (string, error) {
-	initiator, err := readAddress(cmd.Cfg.Keys)
-	if err != nil {
-		panic("read address error")
+func (cmd *DeliverBlockCommand) DeliverBlockHeader() error {
+	// 持续获取本地区块头数据并转发给目标链的区块头合约
+	currHeight := cmd.meta.GetLastDeliverBlockHeight() + 1
+	for {
+		if currHeight+3 >= cmd.QueryMeta.GetLastQueryBlockHeight() {
+			// 需要等待几个区块再Deliver
+			fmt.Println("[deliver] should wait for seconds to deliver again", "currHeight:", currHeight, " deliverBlockHeight:", cmd.QueryMeta.GetLastQueryBlockHeight())
+			time.Sleep(time.Duration(1) * time.Second)
+			continue
+		}
+		// 按照高度获取本地区块头
+		blockBuf, getErr := cmd.Storage.GetBlockHeaderByHeight(currHeight)
+		// 本地没有该区块头, 稍等一会再重试
+		if common.NormalizedKVError(getErr) == common.ErrKVNotFound {
+			fmt.Println("[deliver] block is not found in the storage, err:", getErr)
+			time.Sleep(time.Duration(1) * time.Second)
+			continue
+		} else if getErr != nil {
+			panic("gey block failed, err:" + getErr.Error())
+		}
+		// prepare para for pre-exe
+		args := make(map[string][]byte)
+		args["blockHeader"] = blockBuf
+		// set preExe parameter
+		moduleName := cmd.Cfg.ContractConfig.ModuleName
+		contractName := cmd.Cfg.ContractConfig.ContractName
+		methodName := cmd.Cfg.ContractConfig.UpdateMethod
+		tx, err := cmd.PreExe(moduleName, contractName, methodName, args)
+		if err != nil {
+			if strings.Contains(err.Error(), "missing preHash") {
+				currHeight--
+				continue
+			}
+			if strings.Contains(err.Error(), "existed already") {
+				currHeight++
+				continue
+			}
+		}
+		// postTx
+		txid, sendErr := cmd.SendTx(tx)
+		if sendErr != nil {
+			fmt.Println("[deliver] send tx failed, err:", sendErr)
+			if strings.Contains(sendErr.Error(), "missing preHash") {
+				currHeight--
+				continue
+			}
+		}
+		fmt.Println("[deliver] txid:", txid)
+		// 更新deliverMeta
+		tmpDeliverMeta := &relayerpb.DeliverMeta{
+			LastDeliverBlockHeight: currHeight,
+		}
+		if err = cmd.UpdateDeliverMeta(tmpDeliverMeta); err != nil {
+			panic("update deliver meta failed, err:" + err.Error())
+		}
+		currHeight++
 	}
-	tx.AuthRequire = []string{initiator}
-	signInfos, err := cmd.GenInitSign(tx)
-	if err != nil {
-		return "", err
-	}
-	tx.InitiatorSigns = signInfos
-	tx.AuthRequireSigns = signInfos
 
-	tx.Txid, err = txhash.MakeTransactionID(tx)
-	if err != nil {
-		return "", errors.New("MakeTxDigestHash txid error")
-	}
+	return nil
+}
 
-	txStatus := &pb.TxStatus{
-		Bcname: cmd.Cfg.Bcname,
-		Status: pb.TransactionStatus_UNCONFIRM,
-		Tx:     tx,
-		Header: &pb.Header{
-			Logid: global.Glogid(),
-		},
-		Txid: tx.Txid,
-	}
+func (cmd *DeliverBlockCommand) LoadDeliverMeta() (*relayerpb.DeliverMeta, error) {
+	return cmd.Storage.LoadDeliverMeta()
+}
 
-	reply, err := cmd.client.PostTx(context.TODO(), txStatus)
-	if err != nil {
-		return "", err
-	}
-	if reply.Header.Error != pb.XChainErrorEnum_SUCCESS {
-		return "", fmt.Errorf("failed to post tx:%s, logid:%s", reply.Header.Error.String(), reply.Header.Logid)
-	}
-
-	return hex.EncodeToString(txStatus.Txid), nil
+func (cmd *DeliverBlockCommand) UpdateDeliverMeta(meta *relayerpb.DeliverMeta) error {
+	return cmd.Storage.UpdateDeliverMeta(meta)
 }

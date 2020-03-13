@@ -6,11 +6,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-// global config such as
-/*
-type GlobalConfig struct {
-}*/
-
 type NodeConfig struct {
 	Chains            CrossChainConfig `yaml:"chains,omitempty"`
 	AnchorBlockHeight int64            `yaml:"anchorBlockHeight,omitempty"`

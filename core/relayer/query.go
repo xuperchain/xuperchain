@@ -9,11 +9,13 @@ import (
 
 	"github.com/xuperchain/xuperchain/core/global"
 	"github.com/xuperchain/xuperchain/core/pb"
+	relayerpb "github.com/xuperchain/xuperchain/core/relayer/pb"
 )
 
 type QueryBlockCommand struct {
-	client pb.XchainClient
-	Cfg    ChainConfig
+	client  pb.XchainClient
+	Cfg     ChainConfig
+	Storage *Storage
 }
 
 func (cmd *QueryBlockCommand) InitXchainClient() error {
@@ -27,7 +29,7 @@ func (cmd *QueryBlockCommand) InitXchainClient() error {
 
 // 从原链获取指定高度区块
 func (cmd *QueryBlockCommand) QueryBlockByHeight(height int64) (*pb.InternalBlock, error) {
-	fmt.Println("prepare to query block from source chain")
+	fmt.Println("[query] prepare to query block from source chain")
 	blockHeightPB := &pb.BlockHeight{
 		Header: &pb.Header{
 			Logid: global.Glogid(),
@@ -45,16 +47,24 @@ func (cmd *QueryBlockCommand) QueryBlockByHeight(height int64) (*pb.InternalBloc
 	if block.Block == nil {
 		return nil, errors.New("block not found")
 	}
-	fmt.Println("query block by height success")
+	fmt.Println("[query] query block by height success")
 	return block.Block, nil
 }
 
-// FetchBlockFromSrcChain 从原链获取区块数据
 func (cmd *QueryBlockCommand) FetchBlockFromSrcChain(height int64) (*pb.InternalBlock, error) {
 	block, err := cmd.QueryBlockByHeight(height)
 	if err != nil {
-		fmt.Println("QueryBlockByHeight error:", err)
+		fmt.Println("[query] QueryBlockByHeight error:", err)
 		return nil, err
 	}
+
 	return block, nil
+}
+
+func (cmd *QueryBlockCommand) LoadQueryMeta() (*relayerpb.QueryMeta, error) {
+	return cmd.Storage.LoadQueryMeta()
+}
+
+func (cmd *QueryBlockCommand) UpdateQueryMeta(meta *relayerpb.QueryMeta) error {
+	return cmd.Storage.UpdateQueryMeta(meta)
 }
