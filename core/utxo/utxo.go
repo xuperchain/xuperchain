@@ -2351,6 +2351,7 @@ func (uv *UtxoVM) GetContractStatus(contractName string) (*pb.ContractStatus, er
 		return nil, err
 	}
 	res.Desc = tx.GetDesc()
+	res.Timestamp = tx.GetReceivedTimestamp()
 	// query if contract is bannded
 	res.IsBanned, err = uv.queryContractBannedStatus(contractName)
 	return res, nil
