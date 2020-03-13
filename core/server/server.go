@@ -202,7 +202,7 @@ func (s *server) GetAccountContracts(ctx context.Context, in *pb.GetAccountContr
 		s.log.Trace("refused a connection while GetAccountContracts", "logid", in.Header.Logid)
 		return out, nil
 	}
-	contractsStatus, err := bc.GetAccountContractsStatus(in.GetAccount())
+	contractsStatus, err := bc.GetAccountContractsStatus(in.GetAccount(), true)
 	if err != nil {
 		out.Header.Error = pb.XChainErrorEnum_ACCOUNT_CONTRACT_STATUS_ERROR
 		s.log.Warn("GetAccountContracts error", "logid", in.Header.Logid, "error", err.Error())
@@ -937,6 +937,50 @@ func (s *server) GetAccountByAK(ctx context.Context, request *pb.AK2AccountReque
 	}
 	out.Account = accounts
 	return out, err
+}
+
+// GetAddressContracts get contracts of accounts contain a specific address
+func (s *server) GetAddressContracts(ctx context.Context, request *pb.AddressContractsRequest) (*pb.AddressContractsResponse, error) {
+	if request.Header == nil {
+		request.Header = global.GHeader()
+	}
+	res := &pb.AddressContractsResponse{
+		Header: &pb.Header{
+			Error: pb.XChainErrorEnum_SUCCESS,
+			Logid: request.GetHeader().GetLogid(),
+		},
+	}
+	bc := s.mg.Get(request.GetBcname())
+	if bc == nil {
+		res.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE
+		s.log.Warn("GetAddressContracts:failed to get blockchain before query", "logid", res.Header.Logid)
+		return res, nil
+	}
+
+	// get all accounts which contains this address
+	accounts, err := bc.QueryAccountContainAK(request.GetAddress())
+	if err != nil || accounts == nil {
+		res.Header.Error = pb.XChainErrorEnum_SERVICE_REFUSED_ERROR
+		s.log.Warn("GetAddressContracts: error occurred", "logid", res.Header.Logid, "error", err)
+		return res, err
+	}
+
+	// get contracts for each account
+	res.Contracts = make(map[string]*pb.ContractList)
+	for _, account := range accounts {
+		contracts, err := bc.GetAccountContractsStatus(account, request.GetNeedContent())
+		if err != nil {
+			s.log.Warn("GetAddressContracts partial account error", "logid", res.Header.Logid, "error", err)
+			continue
+		}
+		if len(contracts) > 0 {
+			res.Contracts[account] = &pb.ContractList{
+				ContractStatus: contracts,
+			}
+		}
+	}
+
+	return res, nil
 }
 
 func startTCPServer(xchainmg *xchaincore.XChainMG) error {
