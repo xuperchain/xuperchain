@@ -2,9 +2,10 @@ package tdpos
 
 import (
 	"errors"
-	"github.com/xuperchain/xuperchain/core/consensus/tdpos/bft"
 	"math/big"
 	"sync"
+
+	"github.com/xuperchain/xuperchain/core/consensus/tdpos/bft"
 
 	log "github.com/xuperchain/log15"
 	cons_base "github.com/xuperchain/xuperchain/core/consensus/base"
@@ -44,6 +45,8 @@ type TDpos struct {
 	config tDposConfig
 	// tpos 版本信息, 要求是数字版本号, 避免由于用户指定字符版本导致取前缀有误
 	version int64
+	// state 共识实例状态, SUSPEND|RUNNING
+	state cons_base.ConsensusState
 	// tdpos start height, 共识起始高度
 	height int64
 	log    log.Logger
