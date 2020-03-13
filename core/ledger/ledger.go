@@ -646,6 +646,7 @@ func (l *Ledger) ConfirmBlock(block *pb.InternalBlock, isRoot bool) ConfirmStatu
 	}
 	txExist, txData := l.parallelCheckTx(realTransactions, block)
 	cbNum := 0
+	oldBlockCache := map[string]*pb.InternalBlock{}
 	for _, tx := range realTransactions {
 		if tx.Coinbase {
 			cbNum = cbNum + 1
@@ -675,17 +676,25 @@ func (l *Ledger) ConfirmBlock(block *pb.InternalBlock, isRoot bool) ConfirmStatu
 			if parserErr != nil {
 				confirmStatus.Succ = false
 				confirmStatus.Error = parserErr
-			}
-			oldPbBlockBuf, blockErr := l.blocksTable.Get(oldTx.Blockid)
-			if blockErr != nil {
-				confirmStatus.Succ = false
-				confirmStatus.Error = blockErr
+				return confirmStatus
 			}
 			oldBlock := &pb.InternalBlock{}
-			parserErr = proto.Unmarshal(oldPbBlockBuf, oldBlock)
-			if parserErr != nil {
-				confirmStatus.Succ = false
-				confirmStatus.Error = parserErr
+			if cachedBlk, cacheHit := oldBlockCache[string(oldTx.Blockid)]; cacheHit {
+				oldBlock = cachedBlk
+			} else {
+				oldPbBlockBuf, blockErr := l.blocksTable.Get(oldTx.Blockid)
+				if blockErr != nil {
+					confirmStatus.Succ = false
+					confirmStatus.Error = blockErr
+					return confirmStatus
+				}
+				parserErr = proto.Unmarshal(oldPbBlockBuf, oldBlock)
+				if parserErr != nil {
+					confirmStatus.Succ = false
+					confirmStatus.Error = parserErr
+					return confirmStatus
+				}
+				oldBlockCache[string(oldBlock.Blockid)] = oldBlock
 			}
 			if oldBlock.InTrunk && block.InTrunk && oldBlock.Height <= splitHeight {
 				confirmStatus.Succ = false
@@ -695,7 +704,7 @@ func (l *Ledger) ConfirmBlock(block *pb.InternalBlock, isRoot bool) ConfirmStatu
 					"blockid", fmt.Sprintf("%x", oldBlock.Blockid))
 				return confirmStatus
 			} else if block.InTrunk {
-				l.xlog.Warn("change blockid of tx", "txid", fmt.Sprintf("%x", tx.Txid), "blockid", fmt.Sprintf("%x", block.Blockid))
+				l.xlog.Info("change blockid of tx", "txid", fmt.Sprintf("%x", tx.Txid), "blockid", fmt.Sprintf("%x", block.Blockid))
 				batchWrite.Put(append([]byte(pb.ConfirmedTablePrefix), tx.Txid...), pbTxBuf)
 			}
 		}
