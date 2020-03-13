@@ -648,7 +648,7 @@ func GenerateRootTx(js []byte) (*pb.Transaction, error) {
 	return utxoTx, nil
 }
 
-// parseUtxoKeys extract (txid, offset) from utxo key item
+// parseUtxoKeys extract (txid, offset) from key of utxo item
 func (uv *UtxoVM) parseUtxoKeys(uKey string) ([]byte, int, error) {
 	keyTuple := strings.Split(uKey[1:], "_") // [1:] 是为了剔除表名字前缀
 	N := len(keyTuple)
