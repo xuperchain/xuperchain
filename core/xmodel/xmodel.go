@@ -66,7 +66,9 @@ func (s *XModel) updateExtUtxo(tx *pb.Transaction, batch kvdb.Batch) error {
 			batch.Put(putKey, []byte(valueVersion))
 			s.logger.Trace("    xmodel put", "putkey", string(putKey), "version", valueVersion)
 		}
-		s.batchCache.Store(string(bucketAndKey), valueVersion)
+		if len(tx.Blockid) > 0 {
+			s.batchCache.Store(string(bucketAndKey), valueVersion)
+		}
 		s.bucketCacheStore(txOut.Bucket, valueVersion, &xmodel_pb.VersionedData{
 			RefTxid:   tx.Txid,
 			RefOffset: int32(offset),
@@ -82,7 +84,9 @@ func (s *XModel) updateExtUtxo(tx *pb.Transaction, batch kvdb.Batch) error {
 
 // DoTx running a transaction and update extUtxoTable
 func (s *XModel) DoTx(tx *pb.Transaction, batch kvdb.Batch) error {
-	s.cleanCache(batch)
+	if len(tx.Blockid) > 0 {
+		s.cleanCache(batch)
+	}
 	err := s.verifyInputs(tx)
 	if err != nil {
 		return err
@@ -187,6 +191,15 @@ func (s *XModel) GetUncommited(bucket string, key []byte) (*xmodel_pb.VersionedD
 		return s.fetchVersionedData(bucket, version)
 	}
 	return s.Get(bucket, key)
+}
+
+// GetFromLedger get data directely from ledger
+func (s *XModel) GetFromLedger(txin *pb.TxInputExt) (*xmodel_pb.VersionedData, error) {
+	if txin.RefTxid == nil {
+		return s.makeEmptyVersionedData(txin.Bucket, txin.Key), nil
+	}
+	version := MakeVersion(txin.RefTxid, txin.RefOffset)
+	return s.fetchVersionedData(txin.Bucket, version)
 }
 
 // Get get value for specific key, return value with version

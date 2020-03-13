@@ -155,7 +155,7 @@ func (uv *UtxoVM) flushTxList(txList []*pb.Transaction) error {
 			pbTxList[i] = nil
 			continue
 		}
-		doErr := uv.doTxInternal(tx, batch)
+		doErr := uv.doTxInternal(tx, batch, nil)
 		if doErr != nil {
 			uv.xlog.Warn("doTxInternal failed, when DoTx", "doErr", doErr)
 			uv.asyncResult.Send(tx.Txid, doErr)
