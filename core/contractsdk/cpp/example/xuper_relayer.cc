@@ -298,7 +298,7 @@ DEFINE_METHOD(XuperRelayer, putBlockHeader) {
         ctx->error("missing preHash:" + visualPreHash);
         return;
     }
-    preBlockHeader->ParseFromString(preBlockHeaderStr)
+    preBlockHeader->ParseFromString(preBlockHeaderStr);
     // 在主干上添加
     if (meta->tip_blockid() == visualPreHash) {
         blockHeader->set_in_trunk(true);
