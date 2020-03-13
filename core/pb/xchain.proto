@@ -1,9 +1,8 @@
 syntax = "proto3";
- 
+
 import "google/api/annotations.proto";
 import "chainedbft.proto";
 package pb;
-
 
 enum XChainErrorEnum {
   SUCCESS = 0;
@@ -89,7 +88,8 @@ service Xchain {
     };
   }
 
-  rpc QueryContractStatData(ContractStatDataRequest) returns (ContractStatDataResponse) {
+  rpc QueryContractStatData(ContractStatDataRequest)
+      returns (ContractStatDataResponse) {
     option (google.api.http) = {
       post : "/v1/query_contract_stat_data"
       body : "*"
@@ -121,15 +121,15 @@ service Xchain {
       body : "*"
     };
   }
-  
+
   // GetFrozenBalance get two kinds of balance
   // 1. Still be frozen of an address
   // 2. Available now of an address
   // Address is required for this
   rpc GetBalanceDetail(AddressBalanceStatus) returns (AddressBalanceStatus) {
-  option (google.api.http) = {
-    post: "/v1/get_balance_detail"
-    body: "*"
+    option (google.api.http) = {
+      post : "/v1/get_balance_detail"
+      body : "*"
     };
   }
 
@@ -194,7 +194,8 @@ service Xchain {
   }
 
   // PreExecWithSelectUTXO preExec & selectUtxo
-  rpc PreExecWithSelectUTXO(PreExecWithSelectUTXORequest) returns (PreExecWithSelectUTXOResponse) {
+  rpc PreExecWithSelectUTXO(PreExecWithSelectUTXORequest)
+      returns (PreExecWithSelectUTXOResponse) {
     option (google.api.http) = {
       post : "/v1/preexec_select_utxo"
       body : "*"
@@ -249,14 +250,15 @@ service Xchain {
 }
 
 message Header {
-  string logid = 1;  //如果logid没填写，生成一个
-  string from_node = 2;  //call rpc client address，客户端可以为空，节点一定要写自己的address
+  string logid = 1; //如果logid没填写，生成一个
+  string from_node =
+      2; // call rpc client address，客户端可以为空，节点一定要写自己的address
   XChainErrorEnum error = 3;
 }
 
 message TxDataAccount {
-  string address = 1;  //地址
-  string amount = 2;  //金额
+  string address = 1;      //地址
+  string amount = 2;       //金额
   int64 frozen_height = 3; //冻结高度
 }
 
@@ -290,8 +292,8 @@ message TxStatus {
   Header header = 1;
   string bcname = 2;
   bytes txid = 3;
-  TransactionStatus status = 4;  //当前状态
-  int64 distance = 5;  //离主干末端的距离（如果在主干上)
+  TransactionStatus status = 4; //当前状态
+  int64 distance = 5;           //离主干末端的距离（如果在主干上)
   Transaction tx = 7;
 }
 
@@ -319,7 +321,7 @@ message BlockID {
   string bcname = 1;
   bytes blockid = 2;
   // if need content
-  bool need_content = 3;  //是否需要内容
+  bool need_content = 3; //是否需要内容
 }
 
 message BlockHeight {
@@ -344,21 +346,18 @@ message AddressStatus {
   repeated TokenDetail bcs = 3;
 }
 
-message TokenFrozenDetail
-{
+message TokenFrozenDetail {
   string balance = 1;
   bool isFrozen = 2;
 }
 
-message TokenFrozenDetails
-{
+message TokenFrozenDetails {
   string bcname = 1;
   repeated TokenFrozenDetail tfd = 2;
-  XChainErrorEnum error  = 3;
+  XChainErrorEnum error = 3;
 }
 
-message AddressBalanceStatus
-{
+message AddressBalanceStatus {
   Header header = 1;
   string address = 2;
   repeated TokenFrozenDetails tfds = 3;
@@ -454,17 +453,19 @@ message LedgerMeta {
 message UtxoMeta {
   bytes latest_blockid = 1; // utxo vm目前执行到的blockid
   repeated string lock_key_list = 2;
-  string utxo_total = 3;       // 当前utxo vm上的总资产
-  int64 avgDelay = 4;          // 平均上链延时
-  int64 unconfirmTxAmount = 5; // 待确认交易量
-  int64 max_block_size = 6;    // max block size
-  repeated InvokeRequest reserved_contracts = 7;       // preset contracts
-  InvokeRequest forbidden_contract = 8;        // reset forbidden contract configuration
-  int64 new_account_resource_amount = 9;	// the resource amount of creating an account
-  int64 irreversibleBlockHeight = 10;	// 当前不可逆区块高度，与utxo对齐
-  int64 irreversibleSlideWindow = 11;	// 当前不可逆区块高度调整窗口
+  string utxo_total = 3;                         // 当前utxo vm上的总资产
+  int64 avgDelay = 4;                            // 平均上链延时
+  int64 unconfirmTxAmount = 5;                   // 待确认交易量
+  int64 max_block_size = 6;                      // max block size
+  repeated InvokeRequest reserved_contracts = 7; // preset contracts
+  InvokeRequest forbidden_contract =
+      8; // reset forbidden contract configuration
+  int64 new_account_resource_amount =
+      9; // the resource amount of creating an account
+  int64 irreversibleBlockHeight = 10; // 当前不可逆区块高度，与utxo对齐
+  int64 irreversibleSlideWindow = 11; // 当前不可逆区块高度调整窗口
   GasPrice gasPrice = 12;
-  InvokeRequest group_chain_contract = 13;	// 群组合约相关
+  InvokeRequest group_chain_contract = 13; // 群组合约相关
 }
 
 message GasPrice {
@@ -510,7 +511,7 @@ message InternalBlock {
 
   // Justify used in chained-bft
   QuorumCert Justify = 20;
-  
+
   // 下面的属性会动态变化
   // If the block is on the trunk
   bool in_trunk = 14;
@@ -960,9 +961,9 @@ message PreExecWithSelectUTXOResponse {
 
 // ContractResponse is the response returnd by contract
 message ContractResponse {
-  int32  status = 1;
+  int32 status = 1;
   string message = 2;
-  bytes  body = 3;
+  bytes body = 3;
 }
 
 message ModifyBlock {
@@ -988,7 +989,7 @@ message HDInfo {
 message UtxoRecordDetail {
   Header header = 1;
   string bcname = 2;
-  string accountName = 3; 
+  string accountName = 3;
   UtxoRecord openUtxoRecord = 4;
   UtxoRecord lockedUtxoRecord = 5;
   UtxoRecord frozenUtxoRecord = 6;
@@ -1022,3 +1023,13 @@ message ContractStatData {
   int64 accountCount = 1;
   int64 contractCount = 2;
 }
+
+message CrossQueryRequest {
+  string bcname = 1;
+  int64 timestamp = 2;
+  string initiator = 3;
+  repeated string auth_require = 4;
+  InvokeRequest request = 5;
+}
+
+message CrossQueryResponse { ContractResponse response = 1; }
