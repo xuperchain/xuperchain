@@ -135,6 +135,7 @@ func NewPluggableConsensus(xlog log.Logger, cfg *config.NodeConfig, bcname strin
 	pc.cons = append(pc.cons, first)
 	meta := ledger.GetMeta()
 	if meta.TrunkHeight == 0 {
+		pc.cons[0].Conn.Activate()
 		return pc, nil
 	}
 	blockTip, err := ledger.QueryBlock(meta.TipBlockid)
@@ -168,6 +169,14 @@ func NewPluggableConsensus(xlog log.Logger, cfg *config.NodeConfig, bcname strin
 		}
 		cons.Txid = txid
 		pc.cons = append(pc.cons, cons)
+	}
+	// init pc state
+	for i := 0; i < len(pc.cons); i++ {
+		if i != len(pc.cons)-1 {
+			pc.cons[i].Conn.Suspend()
+			continue
+		}
+		pc.cons[i].Conn.Activate()
 	}
 	return pc, nil
 }
@@ -337,6 +346,11 @@ func (pc *PluggableConsensus) updateConsensus(name string, consConf map[string]i
 		pc.xlog.Error("new update consensus error", "error", err.Error())
 		return err
 	}
+	// Set consensus state
+	if len(pc.cons) >= 1 {
+		pc.cons[len(pc.cons)-1].Conn.Suspend()
+	}
+	cons.Conn.Activate()
 	cons.Txid = txid
 	pc.cons = append(pc.cons, cons)
 	key := genPlugConsKeyWithPrefix(height, block.Timestamp)
@@ -382,6 +396,10 @@ func (pc *PluggableConsensus) rollbackConsensus(name string, consConf map[string
 	err := pc.cons[flagIndex-1].Conn.InitCurrent(block)
 	if err != nil {
 		return err
+	}
+
+	if flagIndex >= 1 {
+		pc.cons[flagIndex-1].Conn.Activate()
 	}
 
 	if pc.cons[flagIndex-1].Conn.Type() == ConsensusTypeTdpos {

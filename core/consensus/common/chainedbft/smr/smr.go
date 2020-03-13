@@ -74,6 +74,7 @@ func NewSmr(
 		cryptoClient:  cryptoClient,
 		p2p:           p2p,
 		p2pMsgChan:    make(chan *p2p_pb.XuperMessage, cfg.NetMsgChanSize),
+		subscribeList: []p2p_base.Subscriber{},
 		localProposal: &sync.Map{},
 		qcVoteMsgs:    &sync.Map{},
 		newViewMsgs:   &sync.Map{},
@@ -84,29 +85,48 @@ func NewSmr(
 		slog.Error("smr updateQcStatus error", "error", err)
 		return nil, err
 	}
-	if err := smr.registerToNetwork(); err != nil {
-		slog.Error("smr registerToNetwork error", "error", err)
+	if err := smr.RegisterToNetwork(); err != nil {
+		slog.Error("smr RegisterToNetwork error", "error", err)
 		return nil, err
 	}
 	return smr, nil
 }
 
-// registerToNetwork register msg handler to p2p network
-func (s *Smr) registerToNetwork() error {
-	if _, err := s.p2p.Register(s.p2p.NewSubscriber(s.p2pMsgChan,
-		p2p_pb.XuperMessage_CHAINED_BFT_NEW_VIEW_MSG, nil, "", s.slog)); err != nil {
+// RegisterToNetwork register msg handler to p2p network
+func (s *Smr) RegisterToNetwork() error {
+	s.lk.Lock()
+	defer s.lk.Unlock()
+	subNewView, err := s.p2p.Register(s.p2p.NewSubscriber(s.p2pMsgChan,
+		p2p_pb.XuperMessage_CHAINED_BFT_NEW_VIEW_MSG, nil, "", s.slog))
+	if err != nil {
 		return err
 	}
+	s.subscribeList = append(s.subscribeList, subNewView)
 
-	if _, err := s.p2p.Register(s.p2p.NewSubscriber(s.p2pMsgChan,
-		p2p_pb.XuperMessage_CHAINED_BFT_NEW_PROPOSAL_MSG, nil, "", s.slog)); err != nil {
+	subNewProposal, err := s.p2p.Register(s.p2p.NewSubscriber(s.p2pMsgChan,
+		p2p_pb.XuperMessage_CHAINED_BFT_NEW_PROPOSAL_MSG, nil, "", s.slog))
+	if err != nil {
 		return err
 	}
+	s.subscribeList = append(s.subscribeList, subNewProposal)
 
-	if _, err := s.p2p.Register(s.p2p.NewSubscriber(s.p2pMsgChan,
-		p2p_pb.XuperMessage_CHAINED_BFT_VOTE_MSG, nil, "", s.slog)); err != nil {
+	subVote, err := s.p2p.Register(s.p2p.NewSubscriber(s.p2pMsgChan,
+		p2p_pb.XuperMessage_CHAINED_BFT_VOTE_MSG, nil, "", s.slog))
+	if err != nil {
 		return err
 	}
+	s.subscribeList = append(s.subscribeList, subVote)
+	return nil
+}
+
+// UnRegisterToNetwork unregister msg handler to p2p network
+func (s *Smr) UnRegisterToNetwork() error {
+	s.lk.Lock()
+	defer s.lk.Unlock()
+	for i := 0; i < len(s.subscribeList); i++ {
+		s.p2p.UnRegister(s.subscribeList[i])
+	}
+	s.subscribeList = []p2p_base.Subscriber{}
 	return nil
 }
 

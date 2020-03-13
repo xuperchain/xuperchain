@@ -435,6 +435,8 @@ message Transaction {
   XuperSignature xuper_sign = 31;
   // 可修改区块链标记
   ModifyBlock modify_block = 32;
+  // HD加解密相关信息
+  HDInfo HD_info = 33;
 }
 
 // Ledger metadata
@@ -975,6 +977,13 @@ message ModifyBlock {
   string public_key = 4;
   // 监管地址对修改的交易id的签名
   string sign = 5;
+}
+
+message HDInfo {
+  // HDPublickey
+  bytes hd_public_key = 1;
+  // original_hash 
+  bytes original_hash = 2;
 }
 
 message UtxoRecordDetail {
