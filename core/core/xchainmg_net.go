@@ -291,8 +291,8 @@ func (xm *XChainMG) handleBatchPostTx(msg *xuper_p2p.XuperMessage) {
 			xm.Log.Error("handleBatchPostTx Marshal txs error", "error", err)
 			return
 		}
-		msg.Data.MsgInfo = txsData
-		msg.Header.DataCheckSum = p2p_base.CalDataCheckSum(msg)
+		header := msg.GetHeader()
+		msg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion1, header.GetBcname(), header.GetLogid(), xuper_p2p.XuperMessage_BATCHPOSTTX, txsData, xuper_p2p.XuperMessage_SUCCESS)
 		opts := []p2p_base.MessageOption{
 			p2p_base.WithFilters([]p2p_base.FilterStrategy{p2p_base.DefaultStrategy}),
 			p2p_base.WithBcName(msg.GetHeader().GetBcname()),
@@ -508,6 +508,10 @@ func (xm *XChainMG) handleNewBlockID(msg *xuper_p2p.XuperMessage) {
 	// handle get blockidin xchaincore
 	bcname := block.GetBcname()
 	bc := xm.Get(bcname)
+	if bc == nil {
+		xm.Log.Warn("handleNewBlockID get bc is nil", "logid", msg.GetHeader().GetLogid())
+		return
+	}
 	ctx := context.Background()
 	blockRes, err := bc.handleNewBlockID(ctx, block.GetBlockid(), msg.GetHeader().GetFrom())
 	if err != nil {

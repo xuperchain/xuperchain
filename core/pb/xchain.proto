@@ -993,7 +993,7 @@ message ModifyBlock {
 message HDInfo {
   // HDPublickey
   bytes hd_public_key = 1;
-  // original_hash 
+  // original_hash
   bytes original_hash = 2;
 }
 
@@ -1050,3 +1050,12 @@ message AddressContractsResponse {
   Header header = 1;
   map<string, ContractList> contracts = 2;
 }
+message CrossQueryRequest {
+  string bcname = 1;
+  int64 timestamp = 2;
+  string initiator = 3;
+  repeated string auth_require = 4;
+  InvokeRequest request = 5;
+}
+
+message CrossQueryResponse { ContractResponse response = 1; }
