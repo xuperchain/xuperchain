@@ -236,3 +236,22 @@ var resolver = exec.MapResolver(map[string]interface{}{
 func errno(n int32) uint32 {
 	return *(*uint32)(unsafe.Pointer(&n))
 }
+
+// Malloc call malloc on contract runtime,
+// memory must be freed either by Free of by contract
+func Malloc(ctx exec.Context, size int) (uint32, error) {
+	ret, err := ctx.Exec("_malloc", []int64{int64(size)})
+	if err != nil {
+		return 0, err
+	}
+	if ret == 0 {
+		return 0, errors.New("run out of memory")
+	}
+	return uint32(ret), nil
+}
+
+// Free call free on contract runtime
+func Free(ctx exec.Context, ptr uint32) error {
+	_, err := ctx.Exec("_free", []int64{int64(ptr)})
+	return err
+}

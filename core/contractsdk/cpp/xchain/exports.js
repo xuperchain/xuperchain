@@ -4,4 +4,6 @@ mergeInto(LibraryManager.library, {
   call_method: function () { },
   fetch_response: function () { },
   xvm_hash: function () { },
+  xvm_encode: function () { },
+  xvm_decode: function () { },
 });

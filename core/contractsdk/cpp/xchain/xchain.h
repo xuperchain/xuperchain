@@ -8,7 +8,6 @@
 #include "xchain/account.h"
 #include "xchain/basic_iterator.h"
 #include "xchain/block.h"
-#include "xchain/builtins.h"
 #include "xchain/transaction.h"
 
 namespace xchain {
