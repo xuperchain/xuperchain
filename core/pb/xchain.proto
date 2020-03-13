@@ -240,6 +240,15 @@ service Xchain {
     };
   }
 
+  // GetAddressContracts get contracts of accounts contain a specific address
+  rpc GetAddressContracts(AddressContractsRequest)
+      returns (AddressContractsResponse) {
+    option (google.api.http) = {
+      post : "/v1/get_address_contracts"
+      body : "*"
+    };
+  }
+
   //预执行合约
   rpc PreExec(InvokeRPCRequest) returns (InvokeRPCResponse) {
     option (google.api.http) = {
@@ -937,6 +946,8 @@ message ContractStatus {
   string txid = 2;
   bytes desc = 3;
   bool is_banned = 4;
+  int64 timestamp = 5;
+  string runtime = 6;
 }
 
 // PreExecWithSelectUTXORequest preExec + selectUtxo for request
@@ -982,7 +993,7 @@ message ModifyBlock {
 message HDInfo {
   // HDPublickey
   bytes hd_public_key = 1;
-  // original_hash 
+  // original_hash
   bytes original_hash = 2;
 }
 
@@ -1024,6 +1035,21 @@ message ContractStatData {
   int64 contractCount = 2;
 }
 
+// Query address contracts request
+message AddressContractsRequest {
+  Header header = 1;
+  string bcname = 2;
+  string address = 3;
+  bool need_content = 4;
+}
+
+message ContractList { repeated ContractStatus contract_status = 1; }
+
+// Query address contracts response
+message AddressContractsResponse {
+  Header header = 1;
+  map<string, ContractList> contracts = 2;
+}
 message CrossQueryRequest {
   string bcname = 1;
   int64 timestamp = 2;
