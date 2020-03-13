@@ -1,0 +1,6 @@
+[package]
+name = "pkg2"
+
+[[dependencies]]
+name = "self"
+modules = ["m3"]
