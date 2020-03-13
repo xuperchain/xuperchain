@@ -7,6 +7,10 @@ package main
 import (
 	"bytes"
 	"errors"
+	"io/ioutil"
+	"math/big"
+	"strconv"
+
 	log "github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperchain/core/common/config"
 	cons_base "github.com/xuperchain/xuperchain/core/consensus/base"
@@ -14,9 +18,6 @@ import (
 	"github.com/xuperchain/xuperchain/core/global"
 	"github.com/xuperchain/xuperchain/core/ledger"
 	"github.com/xuperchain/xuperchain/core/pb"
-	"io/ioutil"
-	"math/big"
-	"strconv"
 )
 
 // TYPE is the type of the pow consensus
@@ -29,6 +30,7 @@ type PowConsensus struct {
 	config       powConfig
 	cryptoClient crypto_base.CryptoClient
 	ledger       *ledger.Ledger
+	state        cons_base.ConsensusState
 }
 
 // pow 共识机制的配置
@@ -287,4 +289,21 @@ func (pc *PowConsensus) GetCoreMiners() []*cons_base.MinerInfo {
 // GetStatus get current status of consensus
 func (pc *PowConsensus) GetStatus() *cons_base.ConsensusStatus {
 	return &cons_base.ConsensusStatus{}
+}
+
+// Suspend is the specific implementation of ConsensusInterface
+func (pc *PowConsensus) Suspend() error {
+	pc.state = cons_base.SUSPEND
+	return nil
+}
+
+// Activate is the specific implementation of ConsensusInterface
+func (pc *PowConsensus) Activate() error {
+	pc.state = cons_base.RUNNING
+	return nil
+}
+
+// IsActive return whether the state of consensus is active
+func (pc *PowConsensus) IsActive() bool {
+	return pc.state == cons_base.RUNNING
 }
