@@ -29,6 +29,7 @@ type SingleConsensus struct {
 	blockProducePeriod int64
 	isProduce          map[int64]bool
 	cryptoClient       crypto_base.CryptoClient
+	state              cons_base.ConsensusState
 }
 
 // GetInstance : implement plugin framework
@@ -188,4 +189,21 @@ func (sc *SingleConsensus) GetStatus() *cons_base.ConsensusStatus {
 	return &cons_base.ConsensusStatus{
 		Proposer: string(sc.masterAddr),
 	}
+}
+
+// Suspend is the specific implementation of ConsensusInterface
+func (sc *SingleConsensus) Suspend() error {
+	sc.state = cons_base.SUSPEND
+	return nil
+}
+
+// Activate is the specific implementation of ConsensusInterface
+func (sc *SingleConsensus) Activate() error {
+	sc.state = cons_base.RUNNING
+	return nil
+}
+
+// IsActive return whether the state of consensus is active
+func (sc *SingleConsensus) IsActive() bool {
+	return sc.state == cons_base.RUNNING
 }
