@@ -5,7 +5,7 @@
 
 namespace xchain {
 namespace crypto {
-// sha256 returns the sha256 sum of input as hex string
+// sha256 returns the sha256 sum of input as bytes
 std::string sha256(const std::string& input);
 // hex_encode returns the hex encoding of input
 std::string hex_encode(const std::string& intput);

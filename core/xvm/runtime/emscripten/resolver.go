@@ -237,8 +237,8 @@ func errno(n int32) uint32 {
 	return *(*uint32)(unsafe.Pointer(&n))
 }
 
-// Malloc call malloc on contract runtime,
-// memory must be freed either by Free of by contract
+// Malloc call malloc on wasm memory,
+// memory must be freed either by Free or by wasm runtime
 func Malloc(ctx exec.Context, size int) (uint32, error) {
 	ret, err := ctx.Exec("_malloc", []int64{int64(size)})
 	if err != nil {
@@ -250,7 +250,7 @@ func Malloc(ctx exec.Context, size int) (uint32, error) {
 	return uint32(ret), nil
 }
 
-// Free call free on contract runtime
+// Free call free on wasm runtime
 func Free(ctx exec.Context, ptr uint32) error {
 	_, err := ctx.Exec("_free", []int64{int64(ptr)})
 	return err
