@@ -48,6 +48,16 @@ func Throw(trap Trap) {
 	panic(trap)
 }
 
+// ThrowError throws an error as an trap
+func ThrowError(err error) {
+	Throw(NewTrap(err.Error()))
+}
+
+// ThrowMessage throws a string message as an trap
+func ThrowMessage(msg string) {
+	Throw(NewTrap(msg))
+}
+
 // CaptureTrap 用于捕获潜在的Trap，如果是其他panic则不会捕获
 func CaptureTrap(err *error) {
 	ret := recover()

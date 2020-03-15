@@ -1,11 +1,16 @@
 #ifndef XCHAIN_TRANSACTION_H
 #define XCHAIN_TRANSACTION_H
 
+#include <string>
+#include <vector>
+
 namespace xchain {
 namespace contract {
 namespace sdk {
-    class Transaction;
-}}}
+class Transaction;
+}
+}  // namespace contract
+}  // namespace xchain
 
 namespace xchain {
 
@@ -15,26 +20,23 @@ struct TxInput {
     std::string from_addr;
     std::string amount;
 
-    TxInput(const std::string& reftxid, int32_t refoffset, 
-            const std::string& fromaddr, const std::string& amou)  
-        : ref_txid(reftxid), ref_offset(refoffset), 
-          from_addr(fromaddr), amount(amou)
-    {    
-    }
+    TxInput(const std::string& reftxid, int32_t refoffset,
+            const std::string& fromaddr, const std::string& amou)
+        : ref_txid(reftxid),
+          ref_offset(refoffset),
+          from_addr(fromaddr),
+          amount(amou) {}
 };
 
 struct TxOutput {
     std::string amount;
     std::string to_addr;
 
-    TxOutput(const std::string& amou, const std::string& toaddr)  
-        : amount(amou), to_addr(toaddr) 
-    {    
-    }
+    TxOutput(const std::string& amou, const std::string& toaddr)
+        : amount(amou), to_addr(toaddr) {}
 };
 
 class Transaction {
-
 public:
     Transaction();
     virtual ~Transaction();
