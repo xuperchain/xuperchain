@@ -319,6 +319,10 @@ func (tp *TDpos) initCandidateBallots() error {
 
 // CompeteMaster is the specific implementation of ConsensusInterface
 func (tp *TDpos) CompeteMaster(height int64) (bool, bool) {
+	if !tp.IsActive() {
+		tp.log.Info("TDpos CompeteMaster consensus instance not active", "state", tp.state)
+		return false, false
+	}
 	sentNewView := false
 Again:
 	t := time.Now()
@@ -443,6 +447,10 @@ func (tp *TDpos) notifyTermChanged(term int64) error {
 
 // CheckMinerMatch is the specific implementation of ConsensusInterface
 func (tp *TDpos) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock) (bool, error) {
+	if !tp.IsActive() {
+		tp.log.Info("TDpos CheckMinerMatch consensus instance not active", "state", tp.state)
+		return false, nil
+	}
 	// 1 验证块信息是否合法
 	blkid, err := ledger.MakeBlockID(in)
 	if err != nil {
@@ -532,6 +540,10 @@ func (tp *TDpos) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock) (bool,
 
 // ProcessBeforeMiner is the specific implementation of ConsensusInterface
 func (tp *TDpos) ProcessBeforeMiner(timestamp int64) (map[string]interface{}, bool) {
+	if !tp.IsActive() {
+		tp.log.Info("TDpos ProcessBeforeMiner consensus instance not active", "state", tp.state)
+		return nil, false
+	}
 	res := make(map[string]interface{})
 	term, pos, blockPos := tp.minerScheduling(timestamp)
 	if term != tp.curTerm || blockPos > tp.config.blockNum || pos >= tp.config.proposerNum {
@@ -585,6 +597,10 @@ func (tp *TDpos) ProcessBeforeMiner(timestamp int64) (map[string]interface{}, bo
 
 // ProcessConfirmBlock is the specific implementation of ConsensusInterface
 func (tp *TDpos) ProcessConfirmBlock(block *pb.InternalBlock) error {
+	if !tp.IsActive() {
+		tp.log.Info("TDpos ProcessConfirmBlock consensus instance not active", "state", tp.state)
+		return errors.New("TDpos ProcessConfirmBlock consensus not active")
+	}
 	// send bft NewProposal if bft enable and it's the miner
 	if tp.config.enableBFT && bytes.Compare(block.GetProposer(), tp.address) == 0 {
 		blockData := &pb.Block{
@@ -604,11 +620,19 @@ func (tp *TDpos) ProcessConfirmBlock(block *pb.InternalBlock) error {
 
 // InitCurrent is the specific implementation of ConsensusInterface
 func (tp *TDpos) InitCurrent(block *pb.InternalBlock) error {
+	if !tp.IsActive() {
+		tp.log.Info("TDpos InitCurrent consensus instance not active", "state", tp.state)
+		return errors.New("TDpos InitCurrent consensus not active")
+	}
 	return nil
 }
 
 // Run is the specific implementation of interface contract
 func (tp *TDpos) Run(desc *contract.TxDesc) error {
+	if !tp.IsActive() {
+		tp.log.Info("TDpos Run consensus instance not active", "state", tp.state)
+		return errors.New("TDpos Run consensus not active")
+	}
 	switch desc.Method {
 	// 进行投票
 	case voteMethod:
@@ -629,6 +653,10 @@ func (tp *TDpos) Run(desc *contract.TxDesc) error {
 
 // Rollback is the specific implementation of interface contract
 func (tp *TDpos) Rollback(desc *contract.TxDesc) error {
+	if !tp.IsActive() {
+		tp.log.Info("TDpos Rollback consensus instance not active", "state", tp.state)
+		return errors.New("TDpos Rollback consensus not active")
+	}
 	switch desc.Method {
 	// 回滚投票
 	case voteMethod:
@@ -649,6 +677,10 @@ func (tp *TDpos) Rollback(desc *contract.TxDesc) error {
 
 // Finalize is the specific implementation of interface contract
 func (tp *TDpos) Finalize(blockid []byte) error {
+	if !tp.IsActive() {
+		tp.log.Info("TDpos Finalize consensus instance not active", "state", tp.state)
+		return errors.New("TDpos Finalize consensus not active")
+	}
 	tp.candidateBallotsCache.Range(func(k, v interface{}) bool {
 		key := k.(string)
 		value := v.(*candidateBallotsCacheValue)
@@ -666,6 +698,10 @@ func (tp *TDpos) Finalize(blockid []byte) error {
 
 // SetContext is the specific implementation of interface contract
 func (tp *TDpos) SetContext(context *contract.TxContext) error {
+	if !tp.IsActive() {
+		tp.log.Info("TDpos SetContext consensus instance not active", "state", tp.state)
+		return errors.New("TDpos SetContext consensus not active")
+	}
 	tp.context = context
 	tp.candidateBallotsCache = &sync.Map{}
 	tp.revokeCache = &sync.Map{}
@@ -686,6 +722,10 @@ func (tp *TDpos) ReadOutput(desc *contract.TxDesc) (contract.ContractOutputInter
 
 // GetVerifiableAutogenTx is the specific implementation of interface VAT
 func (tp *TDpos) GetVerifiableAutogenTx(blockHeight int64, maxCount int, timestamp int64) ([]*pb.Transaction, error) {
+	if !tp.IsActive() {
+		tp.log.Info("TDpos GetVerifiableAutogenTx consensus instance not active", "state", tp.state)
+		return nil, errors.New("TDpos GetVerifiableAutogenTx consensus not active")
+	}
 	term, _, _ := tp.minerScheduling(timestamp)
 
 	key := GenTermCheckKey(tp.version, term+1)
@@ -720,6 +760,10 @@ func (tp *TDpos) GetVATWhiteList() map[string]bool {
 
 // GetCoreMiners get the information of core miners
 func (tp *TDpos) GetCoreMiners() []*cons_base.MinerInfo {
+	if !tp.IsActive() {
+		tp.log.Info("TDpos GetCoreMiners consensus instance not active", "state", tp.state)
+		return nil
+	}
 	res := []*cons_base.MinerInfo{}
 	timestamp := time.Now().UnixNano()
 	term, _, _ := tp.minerScheduling(timestamp)
@@ -736,6 +780,10 @@ func (tp *TDpos) GetCoreMiners() []*cons_base.MinerInfo {
 
 // GetStatus get the current status of consensus
 func (tp *TDpos) GetStatus() *cons_base.ConsensusStatus {
+	if !tp.IsActive() {
+		tp.log.Info("TDpos GetStatus consensus instance not active", "state", tp.state)
+		return nil
+	}
 	timestamp := time.Now().UnixNano()
 	term, pos, blockPos := tp.minerScheduling(timestamp)
 	proposers := tp.getTermProposer(term)
@@ -835,4 +883,31 @@ func (tp *TDpos) isFirstblock(targetHeight int64) bool {
 	tp.log.Debug("isFirstblock check", "consStartHeight", consStartHeight,
 		"targetHeight", targetHeight)
 	return consStartHeight == targetHeight
+}
+
+// Suspend is the specific implementation of ConsensusInterface
+func (tp *TDpos) Suspend() error {
+	tp.mutex.Lock()
+	tp.state = cons_base.SUSPEND
+	if tp.config.enableBFT {
+		tp.bftPaceMaker.GetChainedBFT().UnRegisterToNetwork()
+	}
+	tp.mutex.Unlock()
+	return nil
+}
+
+// Activate is the specific implementation of ConsensusInterface
+func (tp *TDpos) Activate() error {
+	tp.mutex.Lock()
+	tp.state = cons_base.RUNNING
+	if tp.config.enableBFT {
+		tp.bftPaceMaker.GetChainedBFT().RegisterToNetwork()
+	}
+	tp.mutex.Unlock()
+	return nil
+}
+
+// IsActive return whether the state of consensus is active
+func (tp *TDpos) IsActive() bool {
+	return tp.state == cons_base.RUNNING
 }

@@ -99,3 +99,13 @@ func (cb *ChainedBft) UpdateValidateSets(validates []*cons_base.CandidateInfo) e
 func (cb *ChainedBft) IsQuorumCertValidate(qc *pb.QuorumCert) (bool, error) {
 	return cb.smr.IsQuorumCertValidate(qc)
 }
+
+// RegisterToNetwork register subscribe to p2p network
+func (cb *ChainedBft) RegisterToNetwork() error {
+	return cb.smr.RegisterToNetwork()
+}
+
+// UnRegisterToNetwork unregister subscribe to p2p network
+func (cb *ChainedBft) UnRegisterToNetwork() error {
+	return cb.smr.UnRegisterToNetwork()
+}

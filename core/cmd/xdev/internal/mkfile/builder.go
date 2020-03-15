@@ -5,29 +5,39 @@ import (
 	"fmt"
 	"hash/fnv"
 	"io"
-	"os"
+	"io/ioutil"
 	"path/filepath"
 	"strings"
 )
 
 const (
-	StageDir    = "build"
 	MainPackage = "main"
-	OutFileName = "a.wasm"
 )
 
-// Package is the basic compile unit
+// Package contains modules and deps
 type Package struct {
+	// The name of package
 	Name string
+	// The full path of package in local file system
 	Path string
-	Deps []*Package
+	// The modules will be compiled
+	Modules []Module
+	// The dep packages
+	Deps map[string]*Package
+}
+
+// Module is the basic compile unit
+type Module struct {
+	// The name of module
+	Name string
+	// The full path of module
+	Path string
 }
 
 // Builder generate makefile
 type Builder struct {
 	root     string
 	entry    *Package
-	pkgs     map[string]*Package
 	buildDir string
 	cxxflags []string
 	ldflags  []string
@@ -35,14 +45,13 @@ type Builder struct {
 	objfiles []string
 	srcfiles []string
 	depfiles []string
+	// the output path of output file
+	outPath string
 }
 
 // NewBuilder instance a build
 func NewBuilder() *Builder {
-	return &Builder{
-		buildDir: StageDir,
-		pkgs:     make(map[string]*Package),
-	}
+	return &Builder{}
 }
 
 // WithCxxFlags set the CXXFLAGS during compiling cxx file
@@ -57,6 +66,13 @@ func (b *Builder) WithLDFlags(flags []string) *Builder {
 	return b
 }
 
+// WithCacheDir set the stage dir
+func (b *Builder) WithCacheDir(xcache string) *Builder {
+	b.buildDir = xcache
+	return b
+}
+
+// Parse parse the package
 func (b *Builder) Parse(entry *Package) error {
 	var err error
 	b.root, err = filepath.Abs(entry.Path)
@@ -65,12 +81,12 @@ func (b *Builder) Parse(entry *Package) error {
 	}
 
 	b.entry = entry
-	b.pkgs[entry.Name] = entry
-	for _, pkg := range entry.Deps {
-		b.pkgs[pkg.Name] = pkg
+	err = b.parsePackage(entry)
+	if err != nil {
+		return err
 	}
 
-	for _, pkg := range b.pkgs {
+	for _, pkg := range entry.Deps {
 		err := b.parsePackage(pkg)
 		if err != nil {
 			return err
@@ -78,7 +94,18 @@ func (b *Builder) Parse(entry *Package) error {
 		includePath := b.externalPkgPath(filepath.Join(pkg.Path, "src"))
 		b.cxxflags = append(b.cxxflags, "-I"+includePath)
 	}
+	if entry.Name == MainPackage {
+		b.outPath = b.buildPath(fmt.Sprintf("%s.wasm", entry.Name))
+	} else {
+		b.outPath = b.buildPath(fmt.Sprintf("lib%s.a", entry.Name))
+	}
 	return nil
+}
+
+// OutputPath returns the output path of output file.
+// Must be called after Parse
+func (b *Builder) OutputPath() string {
+	return b.outPath
 }
 
 // GenerateMakeFile generates makefile to w
@@ -156,7 +183,7 @@ func (b *Builder) addObjectFileTask() error {
 			Deps:   []string{relsrc},
 			Actions: []string{
 				`@mkdir -p $(dir $@)`,
-				`@echo CC $<`,
+				`@echo CC $(notdir $<)`,
 				`@$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@`,
 			},
 		}
@@ -171,10 +198,10 @@ func (b *Builder) addBuildEntryTask() error {
 
 	if b.entry.Name == MainPackage {
 		wasmTask := &Task{
-			Target: b.buildPath(OutFileName),
+			Target: b.OutputPath(),
 			Deps:   b.objfiles,
 			Actions: []string{
-				`@echo LD a.wasm`,
+				`@echo LD wasm`,
 				fmt.Sprintf(`@$(CXX) -o $@ $^ $(LDFLAGS)`),
 			},
 		}
@@ -182,7 +209,7 @@ func (b *Builder) addBuildEntryTask() error {
 		buildTaskDep = wasmTask.Target
 	} else {
 		libTask := &Task{
-			Target: b.buildPath("liba.a"),
+			Target: b.OutputPath(),
 			Deps:   b.objfiles,
 			Actions: []string{
 				"@$(AR) -rc $@ $^",
@@ -224,11 +251,23 @@ func (b *Builder) relpath(p string) string {
 }
 
 func (b *Builder) objectFilePath(src string) string {
-	return b.buildPath(objectFileName(src))
+	objFileName := objectFileName(src)
+	prefix := objFileName[:2]
+	return b.buildPath(filepath.Join(prefix, objFileName))
 }
 
 func (b *Builder) parsePackage(pkg *Package) error {
-	srcs, objects := b.pkgObjectFiles(pkg)
+	for _, mod := range pkg.Modules {
+		err := b.parseModule(&mod)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (b *Builder) parseModule(mod *Module) error {
+	srcs, objects := b.modObjectFiles(mod)
 	for i, obj := range objects {
 		b.addDepFile(obj[:len(obj)-1] + "d")
 		b.addObjFile(obj)
@@ -238,26 +277,29 @@ func (b *Builder) parsePackage(pkg *Package) error {
 	return nil
 }
 
-func (b *Builder) pkgSourceFiles(pkg *Package) []string {
+func (b *Builder) modSourceFiles(mod *Module) []string {
 	var files []string
-	srcdir := filepath.Join(pkg.Path, "src")
-	filepath.Walk(srcdir, func(path string, info os.FileInfo, err error) error {
+	finfos, err := ioutil.ReadDir(mod.Path)
+	if err != nil {
+		return nil
+	}
+	for _, info := range finfos {
+		path := filepath.Join(mod.Path, info.Name())
 		if !info.Mode().IsRegular() {
-			return nil
+			continue
 		}
 		ext := filepath.Ext(path)
 		switch ext {
 		case ".cc", ".cpp", ".c":
 			files = append(files, path)
 		}
-		return nil
-	})
+	}
 	return files
 }
 
-func (b *Builder) pkgObjectFiles(pkg *Package) ([]string, []string) {
+func (b *Builder) modObjectFiles(mod *Module) ([]string, []string) {
 	var objects []string
-	srcs := b.pkgSourceFiles(pkg)
+	srcs := b.modSourceFiles(mod)
 	for _, src := range srcs {
 		object := b.objectFilePath(src)
 		objects = append(objects, object)
@@ -317,5 +359,5 @@ func (b *Builder) newLibraryCompileCommand() ([]*compileCommand, error) {
 func objectFileName(srcfile string) string {
 	h := fnv.New64a()
 	h.Write([]byte(srcfile))
-	return fmt.Sprintf("%d.o", h.Sum64())
+	return fmt.Sprintf("%016x.o", h.Sum64())
 }

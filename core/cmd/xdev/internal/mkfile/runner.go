@@ -8,9 +8,10 @@ import (
 )
 
 type Runner struct {
-	entry *Package
-	xroot string
-	image string
+	entry  *Package
+	xroot  string
+	xcache string
+	image  string
 
 	withoutDocker bool
 }
@@ -31,6 +32,11 @@ func (r *Runner) WithXROOT(xroot string) *Runner {
 	return r
 }
 
+func (r *Runner) WithCacheDir(xcache string) *Runner {
+	r.xcache = xcache
+	return r
+}
+
 func (r *Runner) WithoutDocker() *Runner {
 	r.withoutDocker = true
 	return r
@@ -39,6 +45,7 @@ func (r *Runner) WithoutDocker() *Runner {
 func (r *Runner) mountPaths() []string {
 	paths := []string{
 		"-v", r.entry.Path + ":/src",
+		"-v", r.xcache + ":" + r.xcache,
 	}
 	if r.xroot != "" {
 		paths = append(paths, "-v", r.xroot+":"+r.xroot)

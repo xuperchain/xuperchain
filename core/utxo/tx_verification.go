@@ -117,7 +117,6 @@ func (uv *UtxoVM) ImmediateVerifyTx(tx *pb.Transaction, isRootTx bool) (bool, er
 			uv.xlog.Warn("ImmediateVerifyTx: verifyRWSetPermission failed", "error", err)
 			return ok, ErrACLNotEnough
 		}
-
 		// verify RWSet(run contracts and compare RWSet)
 		ok, err = uv.verifyTxRWSets(tx)
 		if err != nil {
