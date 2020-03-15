@@ -1,0 +1,7 @@
+[[dependencies]]
+name = "pkg3"
+path = "../pkg3"
+
+[[dependencies]]
+name = "self"
+modules = ["m1"]

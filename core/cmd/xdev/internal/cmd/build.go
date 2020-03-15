@@ -28,7 +28,6 @@ var (
 		"-s DETERMINISTIC=1",
 		"-s EXTRA_EXPORTED_RUNTIME_METHODS=[\"stackAlloc\"]",
 		"-L/usr/local/lib",
-		"-lxchain",
 		"-lprotobuf-lite",
 		"-lpthread",
 	}
@@ -42,7 +41,6 @@ type buildCommand struct {
 
 	genCompileCommand bool
 	makeFileOnly      bool
-	cleanBuild        bool
 	output            string
 	compiler          string
 }
@@ -53,35 +51,36 @@ func newBuildCommand() *cobra.Command {
 		Use:   "build",
 		Short: "build command builds a project",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if c.cleanBuild {
-				return c.clean()
-			}
 			return c.build(args)
 		},
 	}
 	cmd.Flags().BoolVarP(&c.makeFileOnly, "makefile", "m", false, "generate makefile and exits")
-	cmd.Flags().BoolVarP(&c.cleanBuild, "clean", "c", false, "clean stage directory")
 	cmd.Flags().BoolVarP(&c.genCompileCommand, "compile_command", "p", false, "generate compile_commands.json for IDE")
 	cmd.Flags().StringVarP(&c.output, "output", "o", "", "output file name")
 	cmd.Flags().StringVarP(&c.compiler, "compiler", "", "docker", "compiler env docker|host")
 	return cmd
 }
 
-func (c *buildCommand) parsePackage(root string) error {
+func (c *buildCommand) parsePackage(root, xcache, xroot string) error {
 	abspath, err := filepath.Abs(root)
 	if err != nil {
 		return err
 	}
 
-	loader := mkfile.NewLoader()
-	pkg, err := loader.Load(abspath)
+	addons, err := addonModules(xroot, abspath)
+	if err != nil {
+		return err
+	}
+	loader := mkfile.NewLoader().WithXROOT(xroot)
+	pkg, err := loader.Load(abspath, addons)
 	if err != nil {
 		return err
 	}
 
 	b := mkfile.NewBuilder().
 		WithCxxFlags(c.cxxFlags).
-		WithLDFlags(c.ldflags)
+		WithLDFlags(c.ldflags).
+		WithCacheDir(xcache)
 
 	err = b.Parse(pkg)
 	if err != nil {
@@ -92,45 +91,38 @@ func (c *buildCommand) parsePackage(root string) error {
 	return nil
 }
 
-func (c *buildCommand) xchainRoot() (string, error) {
-	xroot := os.Getenv("XCHAIN_ROOT")
-	if xroot == "" {
-		return "", nil
+func (c *buildCommand) xdevRoot() (string, error) {
+	xroot := os.Getenv("XDEV_ROOT")
+	if xroot != "" {
+		return filepath.Abs(xroot)
 	}
-	if !filepath.IsAbs(xroot) {
-		return "", errors.New("XCHAIN_ROOT must be abspath")
+	xchainRoot := os.Getenv("XCHAIN_ROOT")
+	if xchainRoot == "" {
+		return "", errors.New("can not found XDEV_ROOT")
 	}
-	return xroot, nil
+	xroot = filepath.Join(xchainRoot, "contractsdk", "cpp")
+	return filepath.Abs(xroot)
+}
+
+func (c *buildCommand) xdevCacheDir() (string, error) {
+	xcache := os.Getenv("XDEV_CACHE")
+	if xcache != "" {
+		return filepath.Abs(xcache)
+	}
+	homedir, err := os.UserHomeDir()
+	if err != nil {
+		return "", err
+	}
+	return filepath.Join(homedir, ".xdev-cache"), nil
 }
 
 func (c *buildCommand) initCompileFlags(xroot string) error {
 	c.cxxFlags = append([]string{}, defaultCxxFlags...)
 	c.ldflags = append([]string{}, defaultLDFlags...)
 
-	var exportJsPath string
-	// 如果XCHAIN_ROOT不为空，则使用XCHAIN_ROOT的sdk
-	if xroot != "" {
-		sdkroot := filepath.Join(xroot, "contractsdk", "cpp")
-		// 让sdk的include目录在最前面，最先找到xchain.h
-		c.cxxFlags = append([]string{"-I" + sdkroot}, c.cxxFlags...)
-		xchainLDFlags := []string{"-L" + filepath.Join(sdkroot, "build")}
-		// 让sdk的build目录在最前面，最先找到libxchain.a
-		c.ldflags = append(xchainLDFlags, c.ldflags...)
-		exportJsPath = filepath.Join(sdkroot, "xchain", "exports.js")
-	} else {
-		exportJsPath = "/usr/local/include/xchain/exports.js"
-	}
+	exportJsPath := filepath.Join(xroot, "src", "xchain", "exports.js")
 	c.ldflags = append(c.ldflags, "--js-library "+exportJsPath)
 	return nil
-}
-
-func (c *buildCommand) clean() error {
-	root, err := findPackageRoot()
-	if err != nil {
-		return err
-	}
-	stageDir := filepath.Join(root, mkfile.StageDir)
-	return os.RemoveAll(stageDir)
 }
 
 func (c *buildCommand) build(args []string) error {
@@ -150,10 +142,34 @@ func (c *buildCommand) build(args []string) error {
 		if out == "" {
 			return nil
 		}
+		if strings.HasSuffix(out, ".a") {
+			return nil
+		}
 		return cpfile(output, out)
 	}
 
 	return c.buildFiles(args)
+}
+
+func xchainModule(xroot string) mkfile.DependencyDesc {
+	return mkfile.DependencyDesc{
+		Name: "xchain",
+		Path: xroot,
+		Modules: []string{
+			"xchain",
+		},
+	}
+}
+
+func addonModules(xroot, pkgpath string) ([]mkfile.DependencyDesc, error) {
+	desc, err := mkfile.ParsePackageDesc(pkgpath)
+	if err != nil {
+		return nil, err
+	}
+	if desc.Package.Name != mkfile.MainPackage {
+		return nil, nil
+	}
+	return []mkfile.DependencyDesc{xchainModule(xroot)}, nil
 }
 
 func (c *buildCommand) buildPackage(root string) (string, error) {
@@ -164,7 +180,17 @@ func (c *buildCommand) buildPackage(root string) (string, error) {
 	}
 	defer os.Chdir(wd)
 
-	xroot, err := c.xchainRoot()
+	xroot, err := c.xdevRoot()
+	if err != nil {
+		return "", err
+	}
+
+	xcache, err := c.xdevCacheDir()
+	if err != nil {
+		return "", err
+	}
+
+	err = os.MkdirAll(xcache, 0755)
 	if err != nil {
 		return "", err
 	}
@@ -174,7 +200,7 @@ func (c *buildCommand) buildPackage(root string) (string, error) {
 		return "", err
 	}
 
-	err = c.parsePackage(".")
+	err = c.parsePackage(".", xcache, xroot)
 	if err != nil {
 		return "", err
 	}
@@ -202,9 +228,11 @@ func (c *buildCommand) buildPackage(root string) (string, error) {
 		return "", err
 	}
 	makefile.Close()
+	defer os.Remove(".Makefile")
 
 	runner := mkfile.NewRunner().
 		WithEntry(c.entryPkg).
+		WithCacheDir(xcache).
 		WithXROOT(xroot)
 
 	if c.compiler != "docker" {
@@ -215,12 +243,7 @@ func (c *buildCommand) buildPackage(root string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
-	if c.entryPkg.Name != mkfile.MainPackage {
-		return "", nil
-	}
-
-	return filepath.Join(root, mkfile.StageDir, mkfile.OutFileName), nil
+	return c.builder.OutputPath(), nil
 }
 
 func convertWasmFileName(fname string) string {
