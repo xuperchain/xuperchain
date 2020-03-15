@@ -1,0 +1,14 @@
+[package]
+name = "pkg1"
+
+[[dependencies]]
+name = "pkg2"
+path = "../pkg2"
+modules = ["m1", "m2"]
+
+[[dependencies]]
+name = "pkg3"
+path = "../pkg3"
+
+[[dependencies]]
+name = "pkg4"

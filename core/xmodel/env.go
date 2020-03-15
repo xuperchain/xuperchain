@@ -20,7 +20,13 @@ func (s *XModel) PrepareEnv(tx *pb.Transaction) (*Env, error) {
 	env := &Env{}
 	s.logger.Trace("PrepareEnv", "tx.TxInputsExt", tx.TxInputsExt, "tx.TxOutputsExt", tx.TxOutputsExt)
 	for _, txIn := range tx.TxInputsExt {
-		verData, err := s.GetUncommited(txIn.Bucket, txIn.Key)
+		var verData *xmodel_pb.VersionedData
+		var err error
+		if len(tx.Blockid) == 0 {
+			verData, err = s.Get(txIn.Bucket, txIn.Key)
+		} else {
+			verData, err = s.GetFromLedger(txIn)
+		}
 		if err != nil {
 			return nil, err
 		}

@@ -7,6 +7,15 @@ import (
 	"github.com/xuperchain/xuperchain/core/pb"
 )
 
+// ConsensusState defines the state of consensus instance
+type ConsensusState string
+
+// state of consensus
+const (
+	SUSPEND ConsensusState = "SUSPEND"
+	RUNNING                = "RUNNING"
+)
+
 // ConsensusInterface is the interface of consensus
 type ConsensusInterface interface {
 	Type() string
@@ -28,4 +37,13 @@ type ConsensusInterface interface {
 
 	// Get consensus status
 	GetStatus() *ConsensusStatus
+
+	// Suspend will suspend the consensus instance while consensus update
+	Suspend() error
+
+	// Activate will activate the consensus instance while consensus rollback
+	Activate() error
+
+	// IsActive return whether the cosensus is active
+	IsActive() bool
 }

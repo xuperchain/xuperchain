@@ -485,6 +485,11 @@ func (vm *VM) ExecCode(fnIndex int64, args ...uint64) (rtrn interface{}, err err
 	if !ok {
 		panic(fmt.Sprintf("exec: function at index %d is not a compiled function", fnIndex))
 	}
+	savedCtx := vm.ctx
+	vm.ctx = context{}
+	defer func() {
+		vm.ctx = savedCtx
+	}()
 
 	depth := compiled.maxDepth + 1
 	if cap(vm.ctx.stack) < depth {
