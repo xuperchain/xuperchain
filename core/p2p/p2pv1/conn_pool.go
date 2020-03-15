@@ -52,6 +52,8 @@ func (cp *ConnPool) Update(conn *Conn) error {
 	}
 	cp.lock.Lock()
 	defer cp.lock.Unlock()
+	cp.conns[conn.GetConnID()].Close()
+	delete(cp.conns, conn.GetConnID())
 	cp.conns[conn.GetConnID()] = conn
 	return nil
 }
@@ -64,6 +66,7 @@ func (cp *ConnPool) Remove(conn *Conn) error {
 	}
 	cp.lock.Lock()
 	defer cp.lock.Unlock()
+	cp.conns[conn.GetConnID()].Close()
 	delete(cp.conns, conn.GetConnID())
 	return nil
 }

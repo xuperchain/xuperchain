@@ -110,7 +110,9 @@ func (c *Conn) newClient(ctx context.Context) (p2p_pb.P2PService_SendP2PMessageC
 
 // SendMessage send message to a peer
 func (c *Conn) SendMessage(ctx context.Context, msg *p2pPb.XuperMessage) error {
-	client, err := c.newClient(ctx)
+	ctxsm, cancel := context.WithCancel(ctx)
+	defer cancel()
+	client, err := c.newClient(ctxsm)
 	if err != nil {
 		c.lg.Error("SendMessage new client error")
 		return err
@@ -123,7 +125,9 @@ func (c *Conn) SendMessage(ctx context.Context, msg *p2pPb.XuperMessage) error {
 
 // SendMessageWithResponse send message to a peer with responce
 func (c *Conn) SendMessageWithResponse(ctx context.Context, msg *p2pPb.XuperMessage) (*p2pPb.XuperMessage, error) {
-	client, err := c.newClient(ctx)
+	ctxsm, cancel := context.WithCancel(ctx)
+	defer cancel()
+	client, err := c.newClient(ctxsm)
 	if err != nil {
 		c.lg.Error("SendMessageWithResponse new client error", err.Error())
 		return nil, err
