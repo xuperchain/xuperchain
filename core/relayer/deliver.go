@@ -176,6 +176,10 @@ func (cmd *DeliverBlockCommand) DeliverBlockHeader() error {
 			currHeight++
 			continue
 		}
+		if err != nil {
+			fmt.Println("[deliver] preExe failed, err:", err)
+			panic("preExe failed, err:" + err.Error())
+		}
 		// postTx
 		txid, sendErr := cmd.SendTx(tx)
 		if NormalizedBlockHeaderTxError(sendErr) == ErrBlockHeaderTxMissingPreHash {
