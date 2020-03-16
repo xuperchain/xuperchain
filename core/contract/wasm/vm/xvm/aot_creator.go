@@ -104,7 +104,9 @@ func (x *xvmCreator) MakeExecCode(libpath string) (exec.Code, error) {
 	resolver := exec.NewMultiResolver(
 		gowasm.NewResolver(),
 		emscripten.NewResolver(),
-		newSyscallResolver(x.config.SyscallService))
+		newSyscallResolver(x.config.SyscallService),
+		builtinResolver,
+	)
 	return exec.NewAOTCode(libpath, resolver)
 }
 
