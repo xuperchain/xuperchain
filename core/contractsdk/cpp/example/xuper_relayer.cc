@@ -1,4 +1,5 @@
 #include "xchain/xchain.h"
+#include "xchain/crypto.h"
 #include "pb/relayer.pb.h"
 #include <string>
 #include <cstdint>
@@ -16,6 +17,137 @@ const char* hextable = "0123456789abcdef";
 const char delimiter = ',';
 
 struct XuperRelayer : public xchain::Contract {}; 
+
+void write_bytes(void* dst, const void* src, std::size_t count, int32_t& offset) {
+    std::memcpy(dst, src, count);
+    offset += count;
+}
+
+void calc_blockid(const std::unique_ptr<relayer::InternalBlock>& blockHeader,
+                  std::string& blockidCal) {
+    char resultHash[9000];
+    int32_t offset = 0;
+    // add version
+    int32_t version = blockHeader->version();
+    write_bytes(resultHash+offset, &version, sizeof(version), offset);
+    // add once
+    int32_t nonce = blockHeader->nonce();
+    write_bytes(resultHash+offset, &nonce, sizeof(nonce), offset);
+    // add txCount
+    int32_t txCount = blockHeader->tx_count();
+    write_bytes(resultHash+offset, &txCount, sizeof(txCount), offset);
+    // add proposer
+    std::string proposer = blockHeader->proposer();
+    if (proposer.size() != 0) {
+        write_bytes(resultHash+offset, &proposer[0], proposer.size(), offset);
+    }
+    // add timestamp
+    int64_t timestamp = blockHeader->timestamp();
+    write_bytes(resultHash+offset, &timestamp, sizeof(timestamp), offset);
+    // add pubkey
+    std::string pubkey = blockHeader->pubkey();
+    if (pubkey.size() != 0) {
+        write_bytes(resultHash+offset, &pubkey[0], pubkey.size(), offset);
+    }
+    // add prehash
+    std::string prehash = blockHeader->pre_hash();
+    write_bytes(resultHash+offset, &prehash[0], prehash.size(), offset);
+    // add merkle root
+    std::string merkleRoot = blockHeader->merkle_root();
+    write_bytes(resultHash+offset, &merkleRoot[0], merkleRoot.size(), offset);
+    // add failed txs
+    std::map<std::string, std::string> failedTx(blockHeader->failed_txs().begin(),
+                                                blockHeader->failed_txs().end());
+    std::map<std::string, std::string>::iterator it = failedTx.begin();
+    std::vector<std::string> txid;
+    for (; it != failedTx.end(); ++it) {
+        txid.push_back(it->first);
+    }
+    if (txid.size() > 0) {
+        std::sort(txid.begin(), txid.end());
+        std::vector<std::string>::iterator txidIter = txid.begin();
+        for (int i = 0; i < txid.size(); i++) {
+            std::string err = failedTx[txid[i]];
+            write_bytes(resultHash+offset, &err[0], err.size(), offset);
+        }
+    }
+    // add curterm
+    int64_t curterm = blockHeader->curterm();
+    write_bytes(resultHash+offset, &curterm, sizeof(curterm), offset);
+    // add cur block num
+    int64_t curBlockNum = blockHeader->curblocknum();
+    write_bytes(resultHash+offset, &curBlockNum, sizeof(curBlockNum), offset);
+    // add targetBits
+    int64_t targetBits = blockHeader->targetbits();
+    if (targetBits > 0) {
+        write_bytes(resultHash+offset, &targetBits, sizeof(targetBits), offset);
+    }
+    // add justify
+    if (blockHeader->has_justify()) {
+        const relayer::QuorumCert& justify = blockHeader->justify();
+        // add proposalID
+        std::string proposalID = justify.proposalid();
+        write_bytes(resultHash+offset, &proposalID[0], proposalID.size(), offset);
+        // add proposalMsg
+        std::string proposalMsg = justify.proposalmsg();
+        write_bytes(resultHash+offset, &proposalMsg[0], proposalMsg.size(), offset);
+        // add type
+        int32_t type = (int32_t)justify.type();
+        write_bytes(resultHash+offset, &type, sizeof(type), offset);
+        // add view number
+        int64_t viewNumber = justify.viewnumber();
+        write_bytes(resultHash+offset, &viewNumber, sizeof(viewNumber), offset);
+        if (justify.has_signinfos()) {
+            const std::vector<relayer::SignInfo> signInfos(justify.signinfos().qcsigninfos().begin(),
+                                                           justify.signinfos().qcsigninfos().end());
+            for (int i=0; i < signInfos.size(); i++) {
+                // add address
+                std::string address = signInfos[i].address();
+                write_bytes(resultHash+offset, &address[0], address.size(), offset);
+                // add pubkey
+                std::string pubkey = signInfos[i].publickey();
+                write_bytes(resultHash+offset, &pubkey[0], pubkey.size(), offset);
+                // add sign
+                std::string sign = signInfos[i].sign();
+                write_bytes(resultHash+offset, &sign[0], sign.size(), offset);
+            }
+        }
+    }
+    // calc double sha256
+    std::string tmp = std::string(offset, 'o');
+    std::copy(resultHash, resultHash+offset, &tmp[0]);
+    blockidCal = xchain::crypto::sha256(tmp);
+    blockidCal = xchain::crypto::sha256(tmp);
+
+    return;
+}
+
+void calc_merkle_root(const std::string& txid, int txIndex,
+                      const std::vector<std::string>& sibling, std::string& merkleRoot) {
+    merkleRoot = txid;
+    int siblingLen = sibling.size();
+    int i = 0;
+    std::string left;
+    std::string right;
+    std::string siblingProof;
+    while (i < siblingLen) {
+        siblingProof = sibling[i];
+        int childType = txIndex % 2;
+        if (childType == 0) {
+            left = merkleRoot;
+            right = siblingProof;
+        } else {
+            left = siblingProof;
+            right = merkleRoot;
+        }
+        merkleRoot = xchain::crypto::sha256(left+right);
+        merkleRoot = xchain::crypto::sha256(merkleRoot);
+        txIndex /= 2;
+        i += 1;
+    }
+
+    return;
+}
 
 // 将sibling拆分出来，客户端以','分割输入
 void split(const std::string& rawProofPath, std::vector<std::string>& proof) {
@@ -278,6 +410,17 @@ DEFINE_METHOD(XuperRelayer, putBlockHeader) {
         ctx->error(visualBlockid + " has existed already");
         return;
     }
+    // 验证blockid
+    std::string blockidCalc = std::string(32, 'o');
+    calc_blockid(blockHeader, blockidCalc);
+    std::string visualBlockidCalc = std::string(64, 'o');
+    if (!encodeHex(blockidCalc, visualBlockidCalc)) {
+        ctx->error("encode blockidCalc failed");
+        return;
+    }
+    if (blockidCalc != blockHeader->blockid()) {
+        ctx->error(std::string("block has been modified.") + std::string("expect:") + visualBlockid + std::string("actual:") + visualBlockidCalc);
+    }
     // 判断区块类型
     std::string preHashBuf = blockHeader->pre_hash();
     // root链
@@ -405,9 +548,11 @@ DEFINE_METHOD(XuperRelayer, verifyTx) {
         return;
     }
     // merkle compare
-    /*
+    calc_merkle_root(txidEncode, txIndex, proofPathEncode, merkleRoot);
     if (merkleRoot != blockHeader->merkle_root()) {
-    }*/
+        ctx->error("merkle root not ok");
+        return;
+    }
     std::unique_ptr<relayer::LedgerMeta> meta(new relayer::LedgerMeta);
     meta->ParseFromString(metaStr);
     bool confirmed = within3Confirms(ctx, blockid, meta->tip_blockid());
