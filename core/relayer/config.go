@@ -6,11 +6,18 @@ import (
 	"github.com/spf13/viper"
 )
 
+// NodeConfig dst and src chain config
+// Chains for dst and src chain, and AnchorBlockHeight as initial block header to synchronize
 type NodeConfig struct {
 	Chains            CrossChainConfig `yaml:"chains,omitempty"`
 	AnchorBlockHeight int64            `yaml:"anchorBlockHeight,omitempty"`
 }
 
+// ChainConfig config parameters of a chain to be required for relayer
+// RPCAddr: chain's rpc infos, such as localhost:37101
+// Bcname: chain name to synchronize
+// Keys: address to generate tx to synchronize block header for a relayer
+// ContractConfig: parameter for synchronization block header contract
 type ChainConfig struct {
 	RPCAddr        string         `yaml:"rpcAddr,omitempty"`
 	Bcname         string         `yaml:"bcname,omitempty"`
@@ -18,6 +25,8 @@ type ChainConfig struct {
 	ContractConfig ContractConfig `yaml:"contractConfig,omitempty"`
 }
 
+// ContractConfig parameters of block header synchronization contract to be required for a relayer
+// ModuleName: default as "wasm"
 type ContractConfig struct {
 	ModuleName   string `yaml:"moduleName,omitempty"`
 	ContractName string `yaml:"contractName,omitempty"`
@@ -25,19 +34,20 @@ type ContractConfig struct {
 	AnchorMethod string `yaml:"anchorMethod,omitempty"`
 }
 
-// parameter about chains including src and dst chain
-//
+// CrossChainConfig parameter about chains including src and dst chain
 type CrossChainConfig struct {
 	SrcChain ChainConfig `yaml:"srcChain,omitempty"`
 	DstChain ChainConfig `yaml:"dstChain,omitempty"`
 }
 
+// NewNodeConfig new a NodeConfig instance
 func NewNodeConfig() *NodeConfig {
 	nodeConfig := &NodeConfig{}
 	nodeConfig.defaultNodeConfig()
 	return nodeConfig
 }
 
+// LoadConfig load Node Config from the specific path/file
 func (nc *NodeConfig) LoadConfig() {
 	confPath := "conf"
 	confName := "relayer"

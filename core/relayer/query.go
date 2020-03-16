@@ -12,12 +12,18 @@ import (
 	relayerpb "github.com/xuperchain/xuperchain/core/relayer/pb"
 )
 
+// QueryBlockCommand parameter of QueryBlockCommand to be required
+// client: a tool to communicate with source chain
+// Cfg: chain config for realyer
+// Storage: a place to store block data received from source chain
 type QueryBlockCommand struct {
 	client  pb.XchainClient
 	Cfg     ChainConfig
 	Storage *Storage
 }
 
+// InitXchainClient initialize the communication client
+// Set MaxMsgSize as 32MB
 func (cmd *QueryBlockCommand) InitXchainClient() error {
 	conn, err := grpc.Dial(cmd.Cfg.RPCAddr, grpc.WithInsecure(), grpc.WithMaxMsgSize(64<<20-1))
 	if err != nil {
@@ -25,6 +31,28 @@ func (cmd *QueryBlockCommand) InitXchainClient() error {
 	}
 	cmd.client = pb.NewXchainClient(conn)
 	return nil
+}
+
+func (cmd *QueryBlockCommand) GetLatestBlockHeightFromSrcChain() (int64, error) {
+	fmt.Println("[query] prepare to query latest block height from source chain")
+	bcStatusPB := &pb.BCStatus{
+		Header: &pb.Header{
+			Logid: global.Glogid(),
+		},
+		Bcname: cmd.Cfg.Bcname,
+	}
+	bcStatus, err := cmd.client.GetBlockChainStatus(context.TODO(), bcStatusPB)
+	if err != nil {
+		return 0, err
+	}
+	if bcStatus.Header.Error != pb.XChainErrorEnum_SUCCESS {
+		return 0, errors.New(bcStatus.Header.Error.String())
+	}
+	if bcStatus.GetMeta() == nil {
+		return 0, errors.New("can't get ledger meta")
+	}
+	fmt.Println("[query] the latest block height in source chain is ", bcStatus.GetMeta().GetTrunkHeight())
+	return bcStatus.GetMeta().GetTrunkHeight(), nil
 }
 
 // 从原链获取指定高度区块
@@ -61,10 +89,12 @@ func (cmd *QueryBlockCommand) FetchBlockFromSrcChain(height int64) (*pb.Internal
 	return block, nil
 }
 
+// LoadQueryMeta load query meta
 func (cmd *QueryBlockCommand) LoadQueryMeta() (*relayerpb.QueryMeta, error) {
 	return cmd.Storage.LoadQueryMeta()
 }
 
+// UpdateQueryMeta update query meta
 func (cmd *QueryBlockCommand) UpdateQueryMeta(meta *relayerpb.QueryMeta) error {
 	return cmd.Storage.UpdateQueryMeta(meta)
 }

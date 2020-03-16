@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	//"strings"
 	"path/filepath"
 	"time"
 
@@ -13,6 +12,11 @@ import (
 	relayerpb "github.com/xuperchain/xuperchain/core/relayer/pb"
 )
 
+// Relayer parameters for a relayer to be required
+// deliverBlockCmd deliver involved
+// queryBlockCmd query involved
+// storage data involved
+// queryMeta query meta involved
 type Relayer struct {
 	deliverBlockCmd *relay.DeliverBlockCommand
 	queryBlockCmd   *relay.QueryBlockCommand
@@ -20,16 +24,37 @@ type Relayer struct {
 	queryMeta       *relayerpb.QueryMeta
 }
 
+// GetLastQueryBlockHeight return latest query block height
+// deliver routine needs it
 func (relayer *Relayer) GetLastQueryBlockHeight() int64 {
 	return relayer.queryMeta.GetLastQueryBlockHeight()
 }
 
+// SaveBlockLoop save block header received from source chain
 func (relayer *Relayer) SaveBlockLoop() {
+	for {
+		relayer.saveBlockLoop()
+	}
+}
+func (relayer *Relayer) saveBlockLoop() {
 	// 获取下一个需要获取的区块高度
 	currHeight := relayer.queryMeta.GetLastQueryBlockHeight() + 1
 	fmt.Println("[relayer] the beignning height:", currHeight)
-	// 持续从原链获取区块头(按照高度)
+	// 获取截止高度
+	endHeight := currHeight + 1
+	var err error
 	for {
+		endHeight, err = relayer.queryBlockCmd.GetLatestBlockHeightFromSrcChain()
+		if err != nil {
+			fmt.Println("[relayer] get latest block height failed, err:", err)
+			time.Sleep(time.Duration(12) * time.Second)
+			continue
+		}
+		break
+	}
+	fmt.Println("[relayer] latest block height in source chain is ", endHeight, "currHeight is ", currHeight)
+	// 持续从原链获取区块头(按照高度)
+	for currHeight < endHeight-3 && currHeight >= 0 {
 		block, err := relayer.queryBlockCmd.FetchBlockFromSrcChain(currHeight)
 		// 如果是not found, 可以等待
 		// 如果是原链挂掉了, 需要重启换节点
@@ -46,7 +71,8 @@ func (relayer *Relayer) SaveBlockLoop() {
 		// 相关字段置空
 		block.Transactions = nil
 		block.MerkleTree = nil
-		block.FailedTxs = nil
+		// failedTxs has been consideration into blockid
+		//block.FailedTxs = nil
 
 		blockBuf, pbErr := proto.Marshal(block)
 		// 序列化数据有问题, 重新获取区块
