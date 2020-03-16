@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"io"
 	"io/ioutil"
+	"time"
 
 	"github.com/pkg/errors"
 	log "github.com/xuperchain/log15"
@@ -25,11 +26,12 @@ type Conn struct {
 	certPath    string
 	serviceName string
 	isUseCert   bool
+	timeOut     int64
 	quitCh      chan bool
 }
 
 // NewConn create new connection with addr
-func NewConn(lg log.Logger, addr string, certPath, serviceName string, isUseCert bool, maxMsgSize int) (*Conn, error) {
+func NewConn(lg log.Logger, addr string, certPath, serviceName string, isUseCert bool, maxMsgSize int, timeOut int64) (*Conn, error) {
 	conn := &Conn{
 		id:          addr,
 		lg:          lg,
@@ -110,6 +112,8 @@ func (c *Conn) newClient(ctx context.Context) (p2p_pb.P2PService_SendP2PMessageC
 
 // SendMessage send message to a peer
 func (c *Conn) SendMessage(ctx context.Context, msg *p2pPb.XuperMessage) error {
+	ctx, cancel := context.WithTimeout(ctx, time.Duration(c.timeOut)*time.Second)
+	defer cancel()
 	client, err := c.newClient(ctx)
 	if err != nil {
 		c.lg.Error("SendMessage new client error")
@@ -123,6 +127,8 @@ func (c *Conn) SendMessage(ctx context.Context, msg *p2pPb.XuperMessage) error {
 
 // SendMessageWithResponse send message to a peer with responce
 func (c *Conn) SendMessageWithResponse(ctx context.Context, msg *p2pPb.XuperMessage) (*p2pPb.XuperMessage, error) {
+	ctx, cancel := context.WithTimeout(ctx, time.Duration(c.timeOut)*time.Second)
+	defer cancel()
 	client, err := c.newClient(ctx)
 	if err != nil {
 		c.lg.Error("SendMessageWithResponse new client error", err.Error())
