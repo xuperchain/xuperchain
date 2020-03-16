@@ -202,18 +202,23 @@ bool handleFork(xchain::Context* ctx, const std::string& oldTip, const std::stri
 // 初始化工作，将锚点区块写入，初始化LedgerMeta
 DEFINE_METHOD(XuperRelayer, initialize) {
     xchain::Context* ctx = self.context();
+    ctx->ok("initialize succeed");
+}
+
+DEFINE_METHOD(XuperRelayer, initAnchorBlockHeader) {
+    xchain::Context* ctx = self.context();
     std::unique_ptr<relayer::LedgerMeta> meta(new relayer::LedgerMeta);
     std::unique_ptr<relayer::InternalBlock> anchorBlockHeader(new relayer::InternalBlock);
     std::string anchorBlockHeaderStr = ctx->arg("blockHeader");
     if (anchorBlockHeaderStr.size()==0) {
         ctx->error("missing blockHeader");
         return;
-    }
+    }   
     bool succ = anchorBlockHeader->ParseFromString(anchorBlockHeaderStr);
     if (!succ) {
         ctx->error("parse from string error");
         return;
-    }
+    }   
 
     std::string blockidBuf = anchorBlockHeader->blockid();
     std::string visualBlockid = std::string(64, '0');
@@ -221,8 +226,13 @@ DEFINE_METHOD(XuperRelayer, initialize) {
         ctx->error("encodeHex blockid failed");
         return;
     }
+
     std::string metaStr;
     const std::string metaKey = std::string(ledgerMetaBucket);
+    if (ctx->get_object(metaKey, &metaStr)) {
+        ctx->error("initAnchorBlockHeader should be called only once");
+        return;
+    }
     const std::string anchorBlockHeaderKey = std::string(blockHeaderBucket) + visualBlockid;
     meta->set_root_blockid(visualBlockid);
     meta->set_tip_blockid(visualBlockid);
@@ -231,10 +241,10 @@ DEFINE_METHOD(XuperRelayer, initialize) {
     if (!ctx->put_object(anchorBlockHeaderKey, anchorBlockHeaderStr) ||
         !ctx->put_object(metaKey, metaStr)) {
         ctx->error("put anchorBlockHeader or ledgerMeta failed");
-        return;    
+        return;
     }
 
-    ctx->ok("initialize succeed");
+    ctx->ok("initAnchorBlockHeader succeed");
 }
 
 DEFINE_METHOD(XuperRelayer, putBlockHeader) {
@@ -288,6 +298,7 @@ DEFINE_METHOD(XuperRelayer, putBlockHeader) {
         ctx->error("missing preHash:" + visualPreHash);
         return;
     }
+    preBlockHeader->ParseFromString(preBlockHeaderStr);
     // 在主干上添加
     if (meta->tip_blockid() == visualPreHash) {
         blockHeader->set_in_trunk(true);

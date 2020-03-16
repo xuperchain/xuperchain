@@ -2,13 +2,13 @@
 #define XCHAIN_XCHAIN_H
 
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
-#include "xchain/transaction.h"
-#include "xchain/block.h"
-#include "xchain/basic_iterator.h"
 #include "xchain/account.h"
+#include "xchain/basic_iterator.h"
+#include "xchain/block.h"
+#include "xchain/transaction.h"
 
 namespace xchain {
 
@@ -32,12 +32,13 @@ public:
     virtual bool put_object(const std::string& key,
                             const std::string& value) = 0;
     virtual bool delete_object(const std::string& key) = 0;
-    virtual bool query_tx(const std::string &txid, Transaction* tx) = 0;
-    virtual bool query_block(const std::string &blockid, Block* block) = 0;
+    virtual bool query_tx(const std::string& txid, Transaction* tx) = 0;
+    virtual bool query_block(const std::string& blockid, Block* block) = 0;
     virtual void ok(const std::string& body) = 0;
     virtual void error(const std::string& body) = 0;
     virtual Response* mutable_response() = 0;
-    virtual std::unique_ptr<Iterator> new_iterator(const std::string& start, const std::string& limit) = 0;
+    virtual std::unique_ptr<Iterator> new_iterator(
+        const std::string& start, const std::string& limit) = 0;
     virtual Account& sender() = 0;
     virtual const std::string& transfer_amount() const = 0;
     virtual bool call(const std::string& module, const std::string& contract,
