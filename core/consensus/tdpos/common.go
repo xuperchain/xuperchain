@@ -236,7 +236,7 @@ func calAmount(tx *pb.Transaction) (*big.Int, error) {
 }
 
 // 验证选票是否合法
-func (tp *TDpos) validateVote(desc *contract.TxDesc) (*voteInfo, error) {
+func (tp *TDpos) validateVote(desc *contract.TxDesc, isVote bool) (*voteInfo, error) {
 	voteInfo := &voteInfo{}
 	// 解析冻结高度和冻结的amount
 	amount, err := calAmount(desc.Tx)
@@ -264,12 +264,14 @@ func (tp *TDpos) validateVote(desc *contract.TxDesc) (*voteInfo, error) {
 		voteInfo.candidates = append(voteInfo.candidates, v.(string))
 	}
 	voteInfo.candidates = common.UniqSlice(voteInfo.candidates)
-	for i := 0; i < len(voteInfo.candidates); i++ {
-		tp.log.Trace("validateVote inCandidate", "voteInfo.candidates", voteInfo.candidates[i], "i", i)
-		ok := tp.inCandidate(voteInfo.candidates[i])
-		if !ok {
-			tp.log.Warn("The candidate not in candidates", "candidate", voteInfo.candidates[i])
-			return nil, errors.New("The candidate not in candidates")
+	if isVote {
+		for i := 0; i < len(voteInfo.candidates); i++ {
+			tp.log.Trace("validateVote inCandidate", "voteInfo.candidates", voteInfo.candidates[i], "i", i)
+			ok := tp.inCandidate(voteInfo.candidates[i])
+			if !ok {
+				tp.log.Warn("The candidate not in candidates", "candidate", voteInfo.candidates[i])
+				return nil, errors.New("The candidate not in candidates")
+			}
 		}
 	}
 
@@ -316,7 +318,7 @@ func (tp *TDpos) validateRevokeVote(desc *contract.TxDesc) (*voteInfo, string, e
 		return nil, "", err
 	}
 
-	voteInfo, err := tp.validateVote(descRaw)
+	voteInfo, err := tp.validateVote(descRaw, false)
 	if err != nil {
 		return nil, "", err
 	}
