@@ -18,9 +18,9 @@ const char delimiter = ',';
 
 struct XuperRelayer : public xchain::Contract {}; 
 
-void write_bytes(void* dst, const void* src, std::size_t count, int32_t& offset) {
+void write_bytes(void* dst, const void* src, std::size_t count, int32_t* offset) {
     std::memcpy(dst, src, count);
-    offset += count;
+    (*offset) += count;
 }
 
 void calc_blockid(const std::unique_ptr<relayer::InternalBlock>& blockHeader,
@@ -29,32 +29,32 @@ void calc_blockid(const std::unique_ptr<relayer::InternalBlock>& blockHeader,
     int32_t offset = 0;
     // add version
     int32_t version = blockHeader->version();
-    write_bytes(resultHash+offset, &version, sizeof(version), offset);
+    write_bytes(resultHash+offset, &version, sizeof(version), &offset);
     // add once
     int32_t nonce = blockHeader->nonce();
-    write_bytes(resultHash+offset, &nonce, sizeof(nonce), offset);
+    write_bytes(resultHash+offset, &nonce, sizeof(nonce), &offset);
     // add txCount
     int32_t txCount = blockHeader->tx_count();
-    write_bytes(resultHash+offset, &txCount, sizeof(txCount), offset);
+    write_bytes(resultHash+offset, &txCount, sizeof(txCount), &offset);
     // add proposer
     std::string proposer = blockHeader->proposer();
     if (proposer.size() != 0) {
-        write_bytes(resultHash+offset, &proposer[0], proposer.size(), offset);
+        write_bytes(resultHash+offset, &proposer[0], proposer.size(), &offset);
     }
     // add timestamp
     int64_t timestamp = blockHeader->timestamp();
-    write_bytes(resultHash+offset, &timestamp, sizeof(timestamp), offset);
+    write_bytes(resultHash+offset, &timestamp, sizeof(timestamp), &offset);
     // add pubkey
     std::string pubkey = blockHeader->pubkey();
     if (pubkey.size() != 0) {
-        write_bytes(resultHash+offset, &pubkey[0], pubkey.size(), offset);
+        write_bytes(resultHash+offset, &pubkey[0], pubkey.size(), &offset);
     }
     // add prehash
     std::string prehash = blockHeader->pre_hash();
-    write_bytes(resultHash+offset, &prehash[0], prehash.size(), offset);
+    write_bytes(resultHash+offset, &prehash[0], prehash.size(), &offset);
     // add merkle root
     std::string merkleRoot = blockHeader->merkle_root();
-    write_bytes(resultHash+offset, &merkleRoot[0], merkleRoot.size(), offset);
+    write_bytes(resultHash+offset, &merkleRoot[0], merkleRoot.size(), &offset);
     // add failed txs
     std::map<std::string, std::string> failedTx(blockHeader->failed_txs().begin(),
                                                 blockHeader->failed_txs().end());
@@ -68,48 +68,48 @@ void calc_blockid(const std::unique_ptr<relayer::InternalBlock>& blockHeader,
         std::vector<std::string>::iterator txidIter = txid.begin();
         for (int i = 0; i < txid.size(); i++) {
             std::string err = failedTx[txid[i]];
-            write_bytes(resultHash+offset, &err[0], err.size(), offset);
+            write_bytes(resultHash+offset, &err[0], err.size(), &offset);
         }
     }
     // add curterm
     int64_t curterm = blockHeader->curterm();
-    write_bytes(resultHash+offset, &curterm, sizeof(curterm), offset);
+    write_bytes(resultHash+offset, &curterm, sizeof(curterm), &offset);
     // add cur block num
     int64_t curBlockNum = blockHeader->curblocknum();
-    write_bytes(resultHash+offset, &curBlockNum, sizeof(curBlockNum), offset);
+    write_bytes(resultHash+offset, &curBlockNum, sizeof(curBlockNum), &offset);
     // add targetBits
     int64_t targetBits = blockHeader->targetbits();
     if (targetBits > 0) {
-        write_bytes(resultHash+offset, &targetBits, sizeof(targetBits), offset);
+        write_bytes(resultHash+offset, &targetBits, sizeof(targetBits), &offset);
     }
     // add justify
     if (blockHeader->has_justify()) {
         const relayer::QuorumCert& justify = blockHeader->justify();
         // add proposalID
         std::string proposalID = justify.proposalid();
-        write_bytes(resultHash+offset, &proposalID[0], proposalID.size(), offset);
+        write_bytes(resultHash+offset, &proposalID[0], proposalID.size(), &offset);
         // add proposalMsg
         std::string proposalMsg = justify.proposalmsg();
-        write_bytes(resultHash+offset, &proposalMsg[0], proposalMsg.size(), offset);
+        write_bytes(resultHash+offset, &proposalMsg[0], proposalMsg.size(), &offset);
         // add type
         int32_t type = (int32_t)justify.type();
-        write_bytes(resultHash+offset, &type, sizeof(type), offset);
+        write_bytes(resultHash+offset, &type, sizeof(type), &offset);
         // add view number
         int64_t viewNumber = justify.viewnumber();
-        write_bytes(resultHash+offset, &viewNumber, sizeof(viewNumber), offset);
+        write_bytes(resultHash+offset, &viewNumber, sizeof(viewNumber), &offset);
         if (justify.has_signinfos()) {
             const std::vector<relayer::SignInfo> signInfos(justify.signinfos().qcsigninfos().begin(),
                                                            justify.signinfos().qcsigninfos().end());
             for (int i=0; i < signInfos.size(); i++) {
                 // add address
                 std::string address = signInfos[i].address();
-                write_bytes(resultHash+offset, &address[0], address.size(), offset);
+                write_bytes(resultHash+offset, &address[0], address.size(), &offset);
                 // add pubkey
                 std::string pubkey = signInfos[i].publickey();
-                write_bytes(resultHash+offset, &pubkey[0], pubkey.size(), offset);
+                write_bytes(resultHash+offset, &pubkey[0], pubkey.size(), &offset);
                 // add sign
                 std::string sign = signInfos[i].sign();
-                write_bytes(resultHash+offset, &sign[0], sign.size(), offset);
+                write_bytes(resultHash+offset, &sign[0], sign.size(), &offset);
             }
         }
     }
@@ -117,7 +117,7 @@ void calc_blockid(const std::unique_ptr<relayer::InternalBlock>& blockHeader,
     std::string tmp = std::string(offset, 'o');
     std::copy(resultHash, resultHash+offset, &tmp[0]);
     blockidCal = xchain::crypto::sha256(tmp);
-    blockidCal = xchain::crypto::sha256(tmp);
+    blockidCal = xchain::crypto::sha256(blockidCal);
 
     return;
 }
@@ -419,7 +419,7 @@ DEFINE_METHOD(XuperRelayer, putBlockHeader) {
         return;
     }
     if (blockidCalc != blockHeader->blockid()) {
-        ctx->error(std::string("block has been modified.") + std::string("expect:") + visualBlockid + std::string("actual:") + visualBlockidCalc);
+        ctx->error(std::string("block has been modified.") + std::string(" expect:") + visualBlockid + std::string(" actual:") + visualBlockidCalc);
     }
     // 判断区块类型
     std::string preHashBuf = blockHeader->pre_hash();
