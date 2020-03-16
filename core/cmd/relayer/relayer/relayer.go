@@ -9,10 +9,10 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
+	relay "github.com/xuperchain/xuperchain/core/cmd/relayer"
+	relayerpb "github.com/xuperchain/xuperchain/core/cmd/relayer/pb"
 	"github.com/xuperchain/xuperchain/core/common"
 	"github.com/xuperchain/xuperchain/core/kv/kvdb"
-	relay "github.com/xuperchain/xuperchain/core/relayer"
-	relayerpb "github.com/xuperchain/xuperchain/core/relayer/pb"
 )
 
 // Relayer parameters for a relayer to be required

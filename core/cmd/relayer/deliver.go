@@ -6,9 +6,9 @@ import (
 
 	"google.golang.org/grpc"
 
+	relayerpb "github.com/xuperchain/xuperchain/core/cmd/relayer/pb"
 	"github.com/xuperchain/xuperchain/core/common"
 	"github.com/xuperchain/xuperchain/core/pb"
-	relayerpb "github.com/xuperchain/xuperchain/core/relayer/pb"
 )
 
 // QueryMetaRegister deliver routine needs to get lastest query block height

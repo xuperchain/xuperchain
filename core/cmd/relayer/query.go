@@ -7,9 +7,9 @@ import (
 
 	"google.golang.org/grpc"
 
+	relayerpb "github.com/xuperchain/xuperchain/core/cmd/relayer/pb"
 	"github.com/xuperchain/xuperchain/core/global"
 	"github.com/xuperchain/xuperchain/core/pb"
-	relayerpb "github.com/xuperchain/xuperchain/core/relayer/pb"
 )
 
 // QueryBlockCommand parameter of QueryBlockCommand to be required

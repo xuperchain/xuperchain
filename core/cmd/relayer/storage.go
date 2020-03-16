@@ -6,8 +6,8 @@ import (
 
 	"github.com/golang/protobuf/proto"
 
+	relayerpb "github.com/xuperchain/xuperchain/core/cmd/relayer/pb"
 	"github.com/xuperchain/xuperchain/core/kv/kvdb"
-	relayerpb "github.com/xuperchain/xuperchain/core/relayer/pb"
 )
 
 /*
