@@ -191,6 +191,7 @@ func main() {
 		select {
 		case <-sigc:
 			fmt.Println("Got terminate, start to shutting down, please wait...")
+			return
 		}
 	}
 	return
