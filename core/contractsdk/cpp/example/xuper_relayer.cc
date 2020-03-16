@@ -18,6 +18,54 @@ const char delimiter = ',';
 
 struct XuperRelayer : public xchain::Contract {}; 
 
+std::size_t bytes_to_verify_blockid(const std::unique_ptr<relayer::InternalBlock>& blockHeader) {
+    std::size_t result = 0;
+    result += sizeof(blockHeader->version());
+    result += sizeof(blockHeader->nonce());
+    result += sizeof(blockHeader->tx_count());
+    std::string proposer = blockHeader->proposer();
+    result += proposer.size();
+    result += sizeof(blockHeader->timestamp());
+    std::string pubkey = blockHeader->pubkey();
+    result += pubkey.size();
+    std::string prehash = blockHeader->pre_hash();
+    result += prehash.size();
+    std::string merkleRoot = blockHeader->merkle_root();
+    result += merkleRoot.size();
+    // failedTxs
+    std::map<std::string, std::string> failedTx(blockHeader->failed_txs().begin(),
+                                                blockHeader->failed_txs().end());
+    std::map<std::string, std::string>::iterator iter = failedTx.begin();
+    for (; iter != failedTx.end(); ++iter) {
+        result += (iter->second).size();
+    }
+    result += sizeof(blockHeader->curterm());
+    result += sizeof(blockHeader->curblocknum());
+    int64_t targetBits = blockHeader->targetbits();
+    if (targetBits > 0) {
+        result += sizeof(targetBits);
+    }
+    // justify
+    if (blockHeader->has_justify()) {
+        const relayer::QuorumCert& justify = blockHeader->justify();
+        result += justify.proposalid().size();
+        result += justify.proposalmsg().size();
+        result += sizeof((int32_t)justify.type());
+        result += sizeof(justify.viewnumber());
+        if (justify.has_signinfos()) {
+            const std::vector<relayer::SignInfo> signInfos(justify.signinfos().qcsigninfos().begin(),
+                                                              justify.signinfos().qcsigninfos().end());
+            for (int i=0; i < signInfos.size(); i++) {
+                result += signInfos[i].address().size();
+                result += signInfos[i].publickey().size();
+                result += signInfos[i].sign().size();
+            }
+        }
+    }
+
+    return result;
+}
+
 void write_bytes(void* dst, const void* src, std::size_t count, int32_t* offset) {
     std::memcpy(dst, src, count);
     (*offset) += count;
@@ -25,7 +73,10 @@ void write_bytes(void* dst, const void* src, std::size_t count, int32_t* offset)
 
 void calc_blockid(const std::unique_ptr<relayer::InternalBlock>& blockHeader,
                   std::string& blockidCal) {
-    char resultHash[9000];
+    //char resultHash[9000];
+    std::size_t result = bytes_to_verify_blockid(blockHeader);
+    char* resultHash = (char*)malloc(result+1);
+    //std::string resultHash;
     int32_t offset = 0;
     // add version
     int32_t version = blockHeader->version();
@@ -112,6 +163,9 @@ void calc_blockid(const std::unique_ptr<relayer::InternalBlock>& blockHeader,
                 write_bytes(resultHash+offset, &sign[0], sign.size(), &offset);
             }
         }
+    }
+    if (offset > 9000) {
+        blockidCal = "UNKNOWN";
     }
     // calc double sha256
     std::string tmp = std::string(offset, 'o');
