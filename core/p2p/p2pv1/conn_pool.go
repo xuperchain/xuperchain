@@ -51,6 +51,8 @@ func (cp *ConnPool) Update(conn *Conn) error {
 	}
 	cp.lock.Lock()
 	defer cp.lock.Unlock()
+	cp.conns[conn.GetConnID()].Close()
+	delete(cp.conns, conn.GetConnID())
 	cp.conns[conn.GetConnID()] = conn
 	return nil
 }
@@ -63,6 +65,7 @@ func (cp *ConnPool) Remove(conn *Conn) error {
 	}
 	cp.lock.Lock()
 	defer cp.lock.Unlock()
+	cp.conns[conn.GetConnID()].Close()
 	delete(cp.conns, conn.GetConnID())
 	return nil
 }
@@ -72,7 +75,7 @@ func (cp *ConnPool) Find(addr string) (*Conn, error) {
 	if cp.conns[addr] != nil {
 		return cp.conns[addr], nil
 	}
-	conn, err := NewConn(cp.log, addr, cp.config.CertPath, cp.config.ServiceName, int(cp.config.MaxMessageSize))
+	conn, err := NewConn(cp.log, addr, cp.config.CertPath, cp.config.ServiceName, int(cp.config.MaxMessageSize)<<20, cp.config.Timeout)
 	if err != nil {
 		cp.log.Error("Find NewConn error")
 		return nil, err
