@@ -1,0 +1,14 @@
+anchorBlockHeight: 20
+chains:
+  srcChain:
+    rpcAddr: "localhost:6718"
+    bcname: "xuper"
+  dstChain:
+    rpcAddr: "localhost:6720"
+    bcname: "xuper"
+    keys: "./data/keys"
+    contractConfig:
+      moduleName: "wasm"
+      contractName: "relayer20"
+      updateMethod: "putBlockHeader"
+      anchorMethod: "initAnchorBlockHeader"
