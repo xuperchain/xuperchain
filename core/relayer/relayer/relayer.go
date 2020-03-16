@@ -2,7 +2,10 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"os/signal"
 	"path/filepath"
+	"syscall"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -179,7 +182,16 @@ func main() {
 	// 开始向目标链发送区块头
 	go relayer.deliverBlockCmd.Deliver()
 
-	end := make(chan int, 1)
-	<-end
+	// 注册优雅关停信号，包括ctrl + C 和kill信号
+	sigc := make(chan os.Signal, 1)
+	signal.Notify(sigc, os.Interrupt, syscall.SIGTERM)
+	defer signal.Stop(sigc)
+
+	for {
+		select {
+		case <-sigc:
+			fmt.Println("Got terminate, start to shutting down, please wait...")
+		}
+	}
 	return
 }
