@@ -73,7 +73,6 @@ void write_bytes(void* dst, const void* src, std::size_t count, int32_t* offset)
 
 void calc_blockid(const std::unique_ptr<relayer::InternalBlock>& blockHeader,
                   std::string& blockidCal) {
-    //char resultHash[9000];
     std::size_t result = bytes_to_verify_blockid(blockHeader);
     char* resultHash = (char*)malloc(result+1);
     //std::string resultHash;
@@ -163,9 +162,6 @@ void calc_blockid(const std::unique_ptr<relayer::InternalBlock>& blockHeader,
                 write_bytes(resultHash+offset, &sign[0], sign.size(), &offset);
             }
         }
-    }
-    if (offset > 9000) {
-        blockidCal = "UNKNOWN";
     }
     // calc double sha256
     std::string tmp = std::string(offset, 'o');
