@@ -40,7 +40,9 @@ func (x *xvmInterpCreator) makeExecCode(codepath string) (exec.Code, error) {
 	resolver := exec.NewMultiResolver(
 		gowasm.NewResolver(),
 		emscripten.NewResolver(),
-		newSyscallResolver(x.config.SyscallService))
+		newSyscallResolver(x.config.SyscallService),
+		builtinResolver,
+	)
 	return exec.NewInterpCode(codebuf, resolver)
 }
 
