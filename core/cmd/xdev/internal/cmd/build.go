@@ -98,7 +98,9 @@ func (c *buildCommand) xdevRoot() (string, error) {
 	}
 	xchainRoot := os.Getenv("XCHAIN_ROOT")
 	if xchainRoot == "" {
-		return "", errors.New("can not found XDEV_ROOT")
+		return "", errors.New(`XDEV_ROOT and XCHAIN_ROOT must be set one.
+XCHAIN_ROOT is the path of $xuperchain_project_root/core.
+XDEV_ROOT is the path of $xuperchain_project_root/core/contractsdk/cpp`)
 	}
 	xroot = filepath.Join(xchainRoot, "contractsdk", "cpp")
 	return filepath.Abs(xroot)

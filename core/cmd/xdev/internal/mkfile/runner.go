@@ -7,6 +7,10 @@ import (
 	"strings"
 )
 
+const (
+	defaultDockerImage = "hub.baidubce.com/xchain/emcc"
+)
+
 type Runner struct {
 	entry  *Package
 	xroot  string
@@ -17,8 +21,12 @@ type Runner struct {
 }
 
 func NewRunner() *Runner {
+	img := os.Getenv("XDEV_CC_IMAGE")
+	if img == "" {
+		img = defaultDockerImage
+	}
 	return &Runner{
-		image: "hub.baidubce.com/xchain/xcompiler-cpp:v3.6",
+		image: img,
 	}
 }
 
