@@ -1,5 +1,5 @@
 #include "xchain/xchain.h"
-#include "pb/relayer.pb.h"
+#include "relayer.pb.h"
 #include <string>
 #include <cstdint>
 #include <cstdlib>
