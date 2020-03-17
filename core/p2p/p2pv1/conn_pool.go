@@ -54,7 +54,6 @@ func (cp *ConnPool) Update(conn *Conn) error {
 		cp.log.Error("Update conn error", "error", ErrNotExist.Error())
 		return ErrNotExist
 	}
-
 	cp.conns[conn.GetConnID()].Close()
 	delete(cp.conns, conn.GetConnID())
 	cp.conns[conn.GetConnID()] = conn
