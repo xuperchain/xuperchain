@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -21,7 +22,12 @@ func newTestCommand() *cobra.Command {
 		Use:   "test [contract.test.js]",
 		Short: "test perform unit test",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return c.test(args)
+			err := c.test(args)
+			if err != nil {
+				fmt.Fprintf(os.Stderr, "%s\n", err)
+				os.Exit(-1)
+			}
+			return nil
 		},
 	}
 	c.addFlags()
