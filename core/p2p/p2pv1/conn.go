@@ -6,7 +6,6 @@ import (
 	"crypto/x509"
 	"io"
 	"io/ioutil"
-	"time"
 
 	"github.com/pkg/errors"
 	log "github.com/xuperchain/log15"
@@ -113,8 +112,6 @@ func (c *Conn) newClient(ctx context.Context) (p2p_pb.P2PService_SendP2PMessageC
 
 // SendMessage send message to a peer
 func (c *Conn) SendMessage(ctx context.Context, msg *p2pPb.XuperMessage) error {
-	ctx, cancel := context.WithTimeout(ctx, time.Duration(c.timeOut)*time.Second)
-	defer cancel()
 	client, err := c.newClient(ctx)
 	if err != nil {
 		c.lg.Error("SendMessage new client error", "error", err.Error(), "id", c.id)
@@ -128,8 +125,6 @@ func (c *Conn) SendMessage(ctx context.Context, msg *p2pPb.XuperMessage) error {
 
 // SendMessageWithResponse send message to a peer with responce
 func (c *Conn) SendMessageWithResponse(ctx context.Context, msg *p2pPb.XuperMessage) (*p2pPb.XuperMessage, error) {
-	ctx, cancel := context.WithTimeout(ctx, time.Duration(c.timeOut)*time.Second)
-	defer cancel()
 	client, err := c.newClient(ctx)
 	if err != nil {
 		c.lg.Error("SendMessageWithResponse new client error", "error", err.Error(), "id", c.id)
