@@ -15,7 +15,7 @@ matrix:
 script:
   - diff -u <(echo -n) <(gofmt -d $(find . -type f -name '*.go' -not -path "./vendor/*")) 
   - make && make test
-  - XDEV_IMAGE=xuper/emcc:1.38.30 make contractsdk
+  - [ command -v docker ] && XDEV_CC_IMAGE=xuper/emcc:1.38.30 make contractsdk
   - cd ./core/test && bash ci_pipeline.sh
 
 cache:
