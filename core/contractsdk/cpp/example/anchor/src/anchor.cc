@@ -1,8 +1,8 @@
 #include <inttypes.h>
 #include "xchain/xchain.h"
-#include "table/types.h"
-#include "table/table.tpl.h"
-#include "pb/anchor.pb.h"
+#include "xchain/table/types.h"
+#include "xchain/table/table.tpl.h"
+#include "anchor.pb.h"
 
 //data anchoring
 struct Anchor : public xchain::Contract {

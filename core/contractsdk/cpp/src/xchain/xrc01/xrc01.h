@@ -1,8 +1,8 @@
 #pragma once
 
-#include "pb/xrc01.pb.h"
-#include "table/table.tpl.h"
-#include "table/types.h"
+#include "xrc01.pb.h"
+#include "xchain/table/table.tpl.h"
+#include "xchain/table/types.h"
 #include "xchain/xchain.h"
 
 // XRC01 is the implement of XRC-01 multi token standard
