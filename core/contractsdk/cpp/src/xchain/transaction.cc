@@ -1,4 +1,5 @@
 #include "xchain/transaction.h"
+#include <memory>
 #include "xchain/contract.pb.h"
 
 extern "C" int xvm_make_tx(const char* txptr, int txlen, char** outpptr);
@@ -38,11 +39,11 @@ bool Transaction::from_raw(const std::string& raw_tx) {
     if (ret != 0) {
         return false;
     }
+    std::unique_ptr<char> mem_guard(buf);
     pb::Transaction tx;
     if (!tx.ParseFromString(buf)) {
         return false;
     }
-    free(buf);
     init(tx);
     return true;
 }
