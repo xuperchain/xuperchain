@@ -1050,12 +1050,36 @@ message AddressContractsResponse {
   Header header = 1;
   map<string, ContractList> contracts = 2;
 }
+
 message CrossQueryRequest {
   string bcname = 1;
   int64 timestamp = 2;
   string initiator = 3;
   repeated string auth_require = 4;
   InvokeRequest request = 5;
+  CrossChainMeta cross_chain_meta = 6;
+  repeated CrossEndorsorInfo cross_endorsor_infos = 7;
 }
 
-message CrossQueryResponse { ContractResponse response = 1; }
+message CrossQueryResponse {
+  ContractResponse response = 1;
+  SignatureInfo signatureInfo = 2;
+}
+
+message CrossChainMeta {
+  string type = 1;
+  int64 min_endorsor_num = 2;
+}
+
+message CrossEndorsorInfo {
+  string address = 1;
+  string pub_key = 2;
+  // ip+port
+  string host = 3;
+  SignatureInfo signatureInfo = 4;
+}
+
+message CrossQuery {
+  CrossQueryRequest cross_query_request = 1;
+  ContractResponse cross_query_response = 2;
+}
