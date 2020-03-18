@@ -25,11 +25,12 @@ type Conn struct {
 	certPath    string
 	serviceName string
 	isUseCert   bool
+	timeOut     int64
 	quitCh      chan bool
 }
 
 // NewConn create new connection with addr
-func NewConn(lg log.Logger, addr string, certPath, serviceName string, isUseCert bool, maxMsgSize int) (*Conn, error) {
+func NewConn(lg log.Logger, addr string, certPath, serviceName string, isUseCert bool, maxMsgSize int, timeOut int64) (*Conn, error) {
 	conn := &Conn{
 		id:          addr,
 		lg:          lg,
@@ -87,7 +88,7 @@ func (c *Conn) newGrpcConn() error {
 
 	conn, err := grpc.Dial(c.id, options...)
 	if err != nil {
-		c.lg.Error("newGrpcConn error", "error", err)
+		c.lg.Error("newGrpcConn error", "error", err, "id", c.id)
 		return errors.New("New grpcs conn error")
 	}
 	c.conn = conn
@@ -97,10 +98,11 @@ func (c *Conn) newGrpcConn() error {
 func (c *Conn) newClient(ctx context.Context) (p2p_pb.P2PService_SendP2PMessageClient, error) {
 	connState := c.conn.GetState().String()
 	if connState == "TRANSIENT_FAILURE" || connState == "SHUTDOWN" || connState == "Invalid-State" {
-		c.lg.Error("newClient conn state not ready")
-		c.conn.Close()
+		c.lg.Error("newClient conn state not ready", "state", connState, "id", c.id)
+		c.Close()
 		err := c.newGrpcConn()
 		if err != nil {
+			c.lg.Error("newClient newGrpcConn error", "error", err.Error(), "id", c.id)
 			return nil, err
 		}
 	}
@@ -112,10 +114,10 @@ func (c *Conn) newClient(ctx context.Context) (p2p_pb.P2PService_SendP2PMessageC
 func (c *Conn) SendMessage(ctx context.Context, msg *p2pPb.XuperMessage) error {
 	client, err := c.newClient(ctx)
 	if err != nil {
-		c.lg.Error("SendMessage new client error")
+		c.lg.Error("SendMessage new client error", "error", err.Error(), "id", c.id)
 		return err
 	}
-	c.lg.Trace("SendMessage", "logid", msg.GetHeader().GetLogid(), "type", msg.GetHeader().GetType())
+	c.lg.Trace("SendMessage", "logid", msg.GetHeader().GetLogid(), "type", msg.GetHeader().GetType(), "id", c.id)
 	err = client.Send(msg)
 	client.CloseSend()
 	return err
@@ -125,7 +127,7 @@ func (c *Conn) SendMessage(ctx context.Context, msg *p2pPb.XuperMessage) error {
 func (c *Conn) SendMessageWithResponse(ctx context.Context, msg *p2pPb.XuperMessage) (*p2pPb.XuperMessage, error) {
 	client, err := c.newClient(ctx)
 	if err != nil {
-		c.lg.Error("SendMessageWithResponse new client error", err.Error())
+		c.lg.Error("SendMessageWithResponse new client error", "error", err.Error(), "id", c.id)
 		return nil, err
 	}
 
@@ -149,19 +151,20 @@ func (c *Conn) SendMessageWithResponse(ctx context.Context, msg *p2pPb.XuperMess
 			}
 		}
 	}()
-	c.lg.Trace("SendMessageWithResponse", "logid", msg.GetHeader().GetLogid(), "type", msg.GetHeader().GetType())
+	c.lg.Trace("SendMessageWithResponse", "logid", msg.GetHeader().GetLogid(), "type", msg.GetHeader().GetType(), "id", c.id)
 	err = client.Send(msg)
 	if err != nil {
-		c.lg.Error("SendMessageWithResponse error", "error", err.Error())
+		c.lg.Error("SendMessageWithResponse error", "error", err.Error(), "id", c.id)
 		return nil, err
 	}
 	client.CloseSend()
 	<-waitc
-	c.lg.Trace("SendMessageWithResponse return ", "logid", res.GetHeader().GetLogid(), "res", res)
+	c.lg.Trace("SendMessageWithResponse return ", "logid", res.GetHeader().GetLogid(), "res", res, "id", c.id)
 	return res, err
 }
 
 func (c *Conn) Close() {
+	c.lg.Info("Conn Close", "id", c.id)
 	c.conn.Close()
 }
 

@@ -96,7 +96,7 @@ func (p *P2PServerV1) Init(cfg config.P2PConfig, lg log.Logger, extra map[string
 					continue
 				}
 
-				conn, err := NewConn(lg, peer, cfg.CertPath, cfg.ServiceName, cfg.IsUseCert, (int)(cfg.MaxMessageSize)<<20)
+				conn, err := NewConn(lg, peer, cfg.CertPath, cfg.ServiceName, cfg.IsUseCert, (int)(cfg.MaxMessageSize)<<20, p.config.Timeout)
 				if err != nil {
 					p.log.Warn("p2p connect to peer failed", "peer", peer, "error", err)
 					continue
@@ -289,7 +289,7 @@ func (p *P2PServerV1) sendMessageWithRes(ctx context.Context, msg *p2pPb.XuperMe
 			defer wg.Done()
 			res, err := conn.SendMessageWithResponse(ctx, msg)
 			if err != nil {
-				p.log.Error("SendMessage to peer error", "logid", msg.GetHeader().GetLogid(),
+				p.log.Error("sendMessageWithRes to peer error", "logid", msg.GetHeader().GetLogid(),
 					"peerid", conn.id, "error", err)
 			}
 			msgChan <- res

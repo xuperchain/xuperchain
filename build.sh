@@ -23,7 +23,8 @@ protoc -I core/contractsdk/pb core/contractsdk/pb/contract_service.proto \
        --go_out=plugins=grpc,paths=source_relative:core/contractsdk/go/pbrpc
 protoc -I core/contractsdk/pb core/contractsdk/pb/contract.proto \
        --go_out=paths=source_relative:core/contractsdk/go/pb
-
+protoc -I core/cmd/relayer/pb core/cmd/relayer/pb/relayer.proto \
+       --go_out=core/cmd/relayer/pb
 !
 
 # build wasm2c
@@ -46,6 +47,7 @@ buildpkg xdev github.com/xuperchain/xuperchain/core/cmd/xdev
 buildpkg xchain-httpgw github.com/xuperchain/xuperchain/core/gateway
 buildpkg dump_chain github.com/xuperchain/xuperchain/core/test
 buildpkg event_client github.com/xuperchain/xuperchain/core/test/pubsub
+buildpkg relayer github.com/xuperchain/xuperchain/core/cmd/relayer/relayer
 
 # build plugins
 echo "OS:"${PLATFORM}
@@ -72,6 +74,7 @@ mv xchain-httpgw ${output_dir}
 mv wasm2c ${output_dir}
 mv dump_chain ${output_dir}
 mv xdev ${output_dir}
+mv relayer ${output_dir}
 cp -rf core/plugins ${output_dir}
 cp -rf core/data ${output_dir}
 cp -rf core/conf ${output_dir}
