@@ -18,7 +18,7 @@ for elem in `ls example`; do
     # build package
     if [[ -d $cc ]]; then
         echo "build $cc"
-        bash -c "cd $cc && xdev build && mv $elem.wasm ../build"
+        bash -c "cd $cc && xdev build && mv -v $elem.wasm ../../build/"
     fi
     echo 
 done

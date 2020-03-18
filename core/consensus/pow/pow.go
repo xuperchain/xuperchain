@@ -1,6 +1,6 @@
 /**
  * @filename pow.go
- * @desc pow共识, 固定难度系数
+ * @desc pow共识, 弹性难度系数
 **/
 package main
 
