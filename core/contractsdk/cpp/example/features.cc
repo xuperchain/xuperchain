@@ -1,6 +1,6 @@
 #include "xchain/xchain.h"
 
-struct Features : xchain::Contract{};
+struct Features : xchain::Contract {};
 
 DEFINE_METHOD(Features, initialize) {
     xchain::Context* ctx = self.context();
@@ -15,7 +15,7 @@ DEFINE_METHOD(Features, logging) {
 
 DEFINE_METHOD(Features, put) {
     xchain::Context* ctx = self.context();
-    for (const auto& elem: ctx->args()) {
+    for (const auto& elem : ctx->args()) {
         ctx->put_object(elem.first, elem.second);
     }
     ctx->ok("ok");
@@ -39,7 +39,7 @@ DEFINE_METHOD(Features, iterator) {
     std::string ret;
     auto iter = ctx->new_iterator(start, limit);
     xchain::ElemType elem;
-    while(iter->next()) {
+    while (iter->next()) {
         iter->get(&elem);
         ret += elem.first + ":" + elem.second + ", ";
     }
@@ -63,4 +63,3 @@ DEFINE_METHOD(Features, call) {
     }
     *ctx->mutable_response() = resp;
 }
-
