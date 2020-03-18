@@ -53,6 +53,8 @@ type ChainCore interface {
 	QueryTransaction(txid []byte) (*pb.Transaction, error)
 	// QueryBlock query block
 	QueryBlock(blockid []byte) (*pb.InternalBlock, error)
+	// ResolveChain resolve chain endorsorinfos
+	ResolveChain(chainName string) (*pb.CrossChainMeta, []*pb.EndorsorInfo, error)
 }
 
 // ContextConfig define the config of context

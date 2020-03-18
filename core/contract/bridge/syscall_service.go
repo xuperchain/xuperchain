@@ -16,14 +16,18 @@ import (
 )
 
 var (
+	// ErrOutOfDiskLimit define OutOfDiskLimit Error
 	ErrOutOfDiskLimit = errors.New("out of disk limit")
 )
 
 const (
-	DefaultCap           = 1000
+	// DefaultCap define default cap of NewIterator
+	DefaultCap = 1000
+	// MaxContractCallDepth define max contract call depth
 	MaxContractCallDepth = 10
 )
 
+// VmManager define the virtual machine interface
 type VmManager interface {
 	GetVirtualMachine(name string) (contract.VirtualMachine, bool)
 }
@@ -203,6 +207,27 @@ func (c *SyscallService) ContractCall(ctx context.Context, in *pb.ContractCallRe
 		}}, nil
 }
 
+// CrossContractQuery implements Syscall interface
+func (c *SyscallService) CrossContractQuery(ctx context.Context, in *pb.CrossContractQueryRequest) (*pb.CrossContractQueryResponse, error) {
+	nctx, ok := c.ctxmgr.Context(in.GetHeader().Ctxid)
+	if !ok {
+		return nil, fmt.Errorf("bad ctx id:%d", in.Header.Ctxid)
+	}
+
+	crossChainURI, err := ParseCrossChainURI(in.GetUri())
+	if err != nil {
+		return nil, fmt.Errorf("ParseCrossChainURI error, err:%s ctx id:%d", err.Error(), in.Header.Ctxid)
+	}
+
+	crossChainMeta, endorsorInfos, err := nctx.Core.ResolveChain(crossChainURI.GetChainName())
+	if err != nil {
+		return nil, fmt.Errorf("ResolveChain error, err:%s ctx id:%d", err.Error(), in.Header.Ctxid)
+	}
+	// 访问ModelCache
+
+	return &pb.CrossContractQueryResponse{}, nil
+}
+
 // PutObject implements Syscall interface
 func (c *SyscallService) PutObject(ctx context.Context, in *pb.PutRequest) (*pb.PutResponse, error) {
 	nctx, ok := c.ctxmgr.Context(in.GetHeader().Ctxid)
@@ -320,6 +345,7 @@ func (c *SyscallService) SetOutput(ctx context.Context, in *pb.SetOutputRequest)
 	return new(pb.SetOutputResponse), nil
 }
 
+// GetAccountAddresses mplements Syscall interface
 func (c *SyscallService) GetAccountAddresses(ctx context.Context, in *pb.GetAccountAddressesRequest) (*pb.GetAccountAddressesResponse, error) {
 	nctx, ok := c.ctxmgr.Context(in.GetHeader().Ctxid)
 	if !ok {
@@ -334,6 +360,7 @@ func (c *SyscallService) GetAccountAddresses(ctx context.Context, in *pb.GetAcco
 	}, nil
 }
 
+// ConvertTxToSDKTx mplements Syscall interface
 func ConvertTxToSDKTx(tx *xchainpb.Transaction) *pb.Transaction {
 	txIns := []*pb.TxInput{}
 	for _, in := range tx.TxInputs {
@@ -370,6 +397,7 @@ func ConvertTxToSDKTx(tx *xchainpb.Transaction) *pb.Transaction {
 	return txsdk
 }
 
+// AmountBytesToString conver amount bytes to string
 func AmountBytesToString(buf []byte) string {
 	n := new(big.Int)
 	n.SetBytes(buf)

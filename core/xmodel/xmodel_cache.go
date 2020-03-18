@@ -44,9 +44,10 @@ type XMCache struct {
 	// Key: bucket_key; Value: PureData
 	outputsCache *memdb.DB
 	// 是否穿透到model层
-	isPenetrate bool
-	model       XMReader
-	utxoCache   *UtxoCache
+	isPenetrate  bool
+	model        XMReader
+	utxoCache    *UtxoCache
+	crossQueries *CrossQuery
 }
 
 // NewXModelCache new an instance of XModel Cache
@@ -60,6 +61,7 @@ func NewXModelCache(model XMReader, utxovm UtxoVM) (*XMCache, error) {
 	}, nil
 }
 
+// NewXModelCacheWithInputs make new XModelCache with Inputs
 func NewXModelCacheWithInputs(vdatas []*xmodel_pb.VersionedData, utxoInputs []*pb.TxInput) *XMCache {
 	xc := &XMCache{
 		isPenetrate:  false,
@@ -268,6 +270,7 @@ func (xc *XMCache) GetUtxoRWSets() ([]*pb.TxInput, []*pb.TxOutput) {
 	return xc.utxoCache.GetRWSets()
 }
 
+// PutUtxos put utxos to TransientBucket
 func (xc *XMCache) PutUtxos(inputs []*pb.TxInput, outputs []*pb.TxOutput) error {
 	var in, out []byte
 	var err error
@@ -298,7 +301,7 @@ func (xc *XMCache) PutUtxos(inputs []*pb.TxInput, outputs []*pb.TxOutput) error 
 	return nil
 }
 
-// ParseContractUtxo parse contract utxo inputs from tx write sets
+// ParseContractUtxoInputs parse contract utxo inputs from tx write sets
 func ParseContractUtxoInputs(tx *pb.Transaction) ([]*pb.TxInput, error) {
 	var (
 		utxoInputs []*pb.TxInput
