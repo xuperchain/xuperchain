@@ -1057,13 +1057,10 @@ message CrossQueryRequest {
   string initiator = 3;
   repeated string auth_require = 4;
   InvokeRequest request = 5;
-  CrossChainMeta cross_chain_meta = 6;
-  repeated CrossEndorsorInfo cross_endorsor_infos = 7;
 }
 
 message CrossQueryResponse {
   ContractResponse response = 1;
-  SignatureInfo signatureInfo = 2;
 }
 
 message CrossChainMeta {
@@ -1076,10 +1073,10 @@ message CrossEndorsorInfo {
   string pub_key = 2;
   // ip+port
   string host = 3;
-  SignatureInfo signatureInfo = 4;
 }
 
 message CrossQuery {
   CrossQueryRequest cross_query_request = 1;
   ContractResponse cross_query_response = 2;
+  repeated SignatureInfo signatureInfos = 3;
 }
