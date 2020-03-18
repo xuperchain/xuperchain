@@ -12,6 +12,10 @@ std::string hex_encode(const std::string& intput);
 // hex_decode returns the hex decoding of input
 // if ret false, input is an invalid hex string
 bool hex_decode(const std::string& intput, std::string* output);
+// ecverify verify elliptic curve signature
+// pubkey is the format of json in tx and block
+bool ecverify(const std::string& pubkey, const std::string& sign,
+              const std::string& hash);
 }  // namespace crypto
 }  // namespace xchain
 
