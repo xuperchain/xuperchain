@@ -1068,7 +1068,7 @@ message CrossChainMeta {
   int64 min_endorsor_num = 2;
 }
 
-message CrossEndorsorInfo {
+message CrossEndorsor {
   string address = 1;
   string pub_key = 2;
   // ip+port
@@ -1076,8 +1076,8 @@ message CrossEndorsorInfo {
 }
 
 message CrossQueryMeta {
-  CrossChainMeta cross_chain_meta = 1;
-  CrossEndorsorInfo cross_endorsor_info = 2;
+  CrossChainMeta chain_meta = 1;
+  repeated CrossEndorsor endorsors = 2;
 }
 
 message CrossQueryInfo {
