@@ -1,7 +1,7 @@
 
 var assert = require("assert");
 
-Test("hello", function (t) {
+Test("naming", function (t) {
     var contract;
     t.Run("deploy", function (tt) {
         contract = xchain.Deploy({
@@ -13,7 +13,11 @@ Test("hello", function (t) {
     });
 
     t.Run("invoke", function (tt) {
-        resp = contract.Invoke("RegisterChain", {});
-        assert.equal(resp, "hello world");
+        resp = contract.Invoke("RegisterChain", {"name":"mainnet.xuper","type":"xuper", "min_endorsor_num":"2"});
+	resp2 = contract.Invoke("GetChainMeta", {"name":"mainnet.xuper"})
+	console.log(resp2.Body)
+	obj = JSON.parse(resp2.Body)
+        assert.equal(obj["type"], "xuper") 
+	assert.equal(obj["min_endorsor_num"], "2")
     })
 })
