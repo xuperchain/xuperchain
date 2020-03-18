@@ -1075,8 +1075,13 @@ message CrossEndorsorInfo {
   string host = 3;
 }
 
-message CrossQuery {
-  CrossQueryRequest cross_query_request = 1;
-  ContractResponse cross_query_response = 2;
-  repeated SignatureInfo signatureInfos = 3;
+message CrossQueryMeta {
+  CrossChainMeta cross_chain_meta = 1;
+  CrossEndorsorInfo cross_endorsor_info = 2;
+}
+
+message CrossQueryInfo {
+  CrossQueryRequest request = 1;
+  ContractResponse response = 2;
+  repeated SignatureInfo signs = 3;
 }
