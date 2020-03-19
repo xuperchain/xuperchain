@@ -72,6 +72,12 @@ func (b *Builder) WithCacheDir(xcache string) *Builder {
 	return b
 }
 
+// WithOutput set the output of package
+func (b *Builder) WithOutput(out string) *Builder {
+	b.outPath = out
+	return b
+}
+
 // Parse parse the package
 func (b *Builder) Parse(entry *Package) error {
 	var err error
@@ -93,11 +99,6 @@ func (b *Builder) Parse(entry *Package) error {
 		}
 		includePath := b.externalPkgPath(filepath.Join(pkg.Path, "src"))
 		b.cxxflags = append(b.cxxflags, "-I"+includePath)
-	}
-	if entry.Name == MainPackage {
-		b.outPath = b.buildPath(fmt.Sprintf("%s.wasm", entry.Name))
-	} else {
-		b.outPath = b.buildPath(fmt.Sprintf("lib%s.a", entry.Name))
 	}
 	return nil
 }
@@ -194,8 +195,6 @@ func (b *Builder) addObjectFileTask() error {
 }
 
 func (b *Builder) addBuildEntryTask() error {
-	var buildTaskDep string
-
 	if b.entry.Name == MainPackage {
 		wasmTask := &Task{
 			Target: b.OutputPath(),
@@ -206,23 +205,35 @@ func (b *Builder) addBuildEntryTask() error {
 			},
 		}
 		b.addTask(wasmTask)
-		buildTaskDep = wasmTask.Target
-	} else {
-		libTask := &Task{
-			Target: b.OutputPath(),
-			Deps:   b.objfiles,
-			Actions: []string{
-				"@$(AR) -rc $@ $^",
-				"@$(RANLIB) $@",
-			},
-		}
-		b.addTask(libTask)
-		buildTaskDep = libTask.Target
+		b.addTask(&Task{
+			Target: "build",
+			Deps:   []string{wasmTask.Target},
+		})
+		return nil
 	}
 
+	// 如果当前package为library package，且没有指定输出名字，只编译相应的object文件
+	if b.OutputPath() == "" {
+		b.addTask(&Task{
+			Target: "build",
+			Deps:   b.objfiles,
+		})
+		return nil
+	}
+
+	// 按照指定的output名字把所有的object文件打包成lib库
+	libTask := &Task{
+		Target: b.OutputPath(),
+		Deps:   b.objfiles,
+		Actions: []string{
+			"@$(AR) -rc $@ $^",
+			"@$(RANLIB) $@",
+		},
+	}
+	b.addTask(libTask)
 	b.addTask(&Task{
 		Target: "build",
-		Deps:   []string{buildTaskDep},
+		Deps:   []string{libTask.Target},
 	})
 	return nil
 }
