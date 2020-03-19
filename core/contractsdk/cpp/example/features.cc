@@ -1,6 +1,7 @@
+#include "xchain/json/json.h"
 #include "xchain/xchain.h"
 
-struct Features : xchain::Contract{};
+struct Features : xchain::Contract {};
 
 DEFINE_METHOD(Features, initialize) {
     xchain::Context* ctx = self.context();
@@ -15,7 +16,7 @@ DEFINE_METHOD(Features, logging) {
 
 DEFINE_METHOD(Features, put) {
     xchain::Context* ctx = self.context();
-    for (const auto& elem: ctx->args()) {
+    for (const auto& elem : ctx->args()) {
         ctx->put_object(elem.first, elem.second);
     }
     ctx->ok("ok");
@@ -39,7 +40,7 @@ DEFINE_METHOD(Features, iterator) {
     std::string ret;
     auto iter = ctx->new_iterator(start, limit);
     xchain::ElemType elem;
-    while(iter->next()) {
+    while (iter->next()) {
         iter->get(&elem);
         ret += elem.first + ":" + elem.second + ", ";
     }
@@ -64,3 +65,24 @@ DEFINE_METHOD(Features, call) {
     *ctx->mutable_response() = resp;
 }
 
+DEFINE_METHOD(Features, json_load_dump) {
+    xchain::Context* ctx = self.context();
+    const std::string v = ctx->arg("value");
+    auto j = xchain::json::parse(v);
+    ctx->ok(j.dump());
+}
+
+DEFINE_METHOD(Features, json_literal) {
+    xchain::Context* ctx = self.context();
+    xchain::json j = {
+        {"int", 3},
+        {"float", 3.14},
+        {"string", "hello"},
+        {"array", {"hello", "world"}},
+        {"object", {{"key", "value"}}},
+        {"true", true},
+        {"false", false},
+        {"null", nullptr},
+    };
+    ctx->ok(j.dump());
+}

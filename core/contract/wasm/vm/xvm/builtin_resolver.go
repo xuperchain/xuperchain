@@ -7,6 +7,12 @@ import (
 	"hash"
 	"unsafe"
 
+	"github.com/golang/protobuf/proto"
+	"github.com/xuperchain/xuperchain/core/contract/bridge"
+	"github.com/xuperchain/xuperchain/core/crypto/account"
+	"github.com/xuperchain/xuperchain/core/crypto/sign"
+	"github.com/xuperchain/xuperchain/core/pb"
+	"github.com/xuperchain/xuperchain/core/utxo/txhash"
 	"github.com/xuperchain/xuperchain/core/xvm/exec"
 	"github.com/xuperchain/xuperchain/core/xvm/runtime/emscripten"
 )
@@ -125,8 +131,56 @@ func xvmDecode(ctx exec.Context,
 	return 0
 }
 
+func xvmECVerify(ctx exec.Context,
+	pubptr, publen,
+	sigptr, siglen, hashptr, hashlen uint32) uint32 {
+	codec := exec.NewCodec(ctx)
+
+	pubkeyJSON := codec.Bytes(pubptr, publen)
+	sig := codec.Bytes(sigptr, siglen)
+	hash := codec.Bytes(hashptr, hashlen)
+	pubkey, err := account.GetEcdsaPublicKeyFromJSON(pubkeyJSON)
+	if err != nil {
+		return touint32(-1)
+	}
+
+	ok, _ := sign.VerifyECDSA(pubkey, sig, hash)
+	if ok {
+		return 0
+	}
+	return touint32(-1)
+}
+
+func xvmMakeTx(ctx exec.Context, txptr, txlen, outpptr uint32) uint32 {
+	codec := exec.NewCodec(ctx)
+	txbuf := codec.Bytes(txptr, txlen)
+	tx := new(pb.Transaction)
+	err := proto.Unmarshal(txbuf, tx)
+	if err != nil {
+		return touint32(-1)
+	}
+	txid, err := txhash.MakeTransactionID(tx)
+	if err != nil {
+		return touint32(-1)
+	}
+	outpb := bridge.ConvertTxToSDKTx(tx)
+	outpb.Txid = hex.EncodeToString(txid)
+
+	buf, _ := proto.Marshal(outpb)
+	memptr, err := emscripten.Malloc(ctx, len(buf))
+	if err != nil {
+		exec.ThrowError(err)
+	}
+	mem := codec.Bytes(memptr, uint32(len(buf)))
+	copy(mem, buf)
+	codec.SetUint32(outpptr, memptr)
+	return 0
+}
+
 var builtinResolver = exec.MapResolver(map[string]interface{}{
-	"env._xvm_hash":   xvmHash,
-	"env._xvm_encode": xvmEncode,
-	"env._xvm_decode": xvmDecode,
+	"env._xvm_hash":     xvmHash,
+	"env._xvm_encode":   xvmEncode,
+	"env._xvm_decode":   xvmDecode,
+	"env._xvm_ecverify": xvmECVerify,
+	"env._xvm_make_tx":  xvmMakeTx,
 })
