@@ -8,7 +8,7 @@ import (
 	"github.com/xuperchain/xuperchain/core/crypto/ecies"
 	"github.com/xuperchain/xuperchain/core/hdwallet/keychain"
 
-	walletRand "github.com/xuperchain/xuperchain/core/crypto/hdwallet/rand"
+	walletRand "github.com/xuperchain/xuperchain/core/hdwallet/rand"
 )
 
 const (
