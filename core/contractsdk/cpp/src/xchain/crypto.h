@@ -16,6 +16,8 @@ bool hex_decode(const std::string& intput, std::string* output);
 // pubkey is the format of json in tx and block
 bool ecverify(const std::string& pubkey, const std::string& sign,
               const std::string& hash);
+// addr_from_pubkey recover address from public key
+bool addr_from_pubkey(const std::string& pubkey, std::string* addr);
 }  // namespace crypto
 }  // namespace xchain
 

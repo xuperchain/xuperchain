@@ -91,13 +91,8 @@ func xvmEncode(ctx exec.Context,
 		exec.ThrowMessage(fmt.Sprintf("codec %s not found", name))
 	}
 	out := c.Encode(input)
-	memptr, err := emscripten.Malloc(ctx, len(out))
-	if err != nil {
-		exec.ThrowError(err)
-	}
-	mem := codec.Bytes(memptr, uint32(len(out)))
-	copy(mem, out)
-	codec.SetUint32(outputpptr, memptr)
+
+	codec.SetUint32(outputpptr, bytesdup(ctx, out))
 	codec.SetUint32(outputLenPtr, uint32(len(out)))
 	return 0
 }
@@ -120,13 +115,7 @@ func xvmDecode(ctx exec.Context,
 		return 1
 	}
 
-	memptr, err := emscripten.Malloc(ctx, len(out))
-	if err != nil {
-		exec.ThrowError(err)
-	}
-	mem := codec.Bytes(memptr, uint32(len(out)))
-	copy(mem, out)
-	codec.SetUint32(outputpptr, memptr)
+	codec.SetUint32(outputpptr, bytesdup(ctx, out))
 	codec.SetUint32(outputLenPtr, uint32(len(out)))
 	return 0
 }
@@ -151,7 +140,7 @@ func xvmECVerify(ctx exec.Context,
 	return touint32(-1)
 }
 
-func xvmMakeTx(ctx exec.Context, txptr, txlen, outpptr uint32) uint32 {
+func xvmMakeTx(ctx exec.Context, txptr, txlen, outpptr, outlenPtr uint32) uint32 {
 	codec := exec.NewCodec(ctx)
 	txbuf := codec.Bytes(txptr, txlen)
 	tx := new(pb.Transaction)
@@ -167,20 +156,57 @@ func xvmMakeTx(ctx exec.Context, txptr, txlen, outpptr uint32) uint32 {
 	outpb.Txid = hex.EncodeToString(txid)
 
 	buf, _ := proto.Marshal(outpb)
-	memptr, err := emscripten.Malloc(ctx, len(buf))
-	if err != nil {
-		exec.ThrowError(err)
-	}
-	mem := codec.Bytes(memptr, uint32(len(buf)))
-	copy(mem, buf)
-	codec.SetUint32(outpptr, memptr)
+	codec.SetUint32(outpptr, bytesdup(ctx, buf))
+	codec.SetUint32(outlenPtr, uint32(len(buf)))
 	return 0
 }
 
+func xvmAddressFromPubkey(ctx exec.Context, pubptr, publen uint32) uint32 {
+	codec := exec.NewCodec(ctx)
+	pubkeystr := codec.Bytes(pubptr, publen)
+	pubkey, err := account.GetEcdsaPublicKeyFromJSON(pubkeystr)
+	if err != nil {
+		return 0
+	}
+	addr, err := account.GetAddressFromPublicKey(pubkey)
+	if err != nil {
+		return 0
+	}
+	return strdup(ctx, addr)
+}
+
+// Returns a pointer to a bytes, which is a duplicate of b.
+// The returned pointer must be passed to free to avoid a memory leak
+func bytesdup(ctx exec.Context, b []byte) uint32 {
+	codec := exec.NewCodec(ctx)
+	memptr, err := emscripten.Malloc(ctx, len(b))
+	if err != nil {
+		exec.ThrowError(err)
+	}
+	mem := codec.Bytes(memptr, uint32(len(b)))
+	copy(mem, b)
+	return memptr
+}
+
+// Returns a pointer to a null-terminated string, which is a duplicate of the string s.
+// The returned pointer must be passed to free to avoid a memory leak
+func strdup(ctx exec.Context, s string) uint32 {
+	codec := exec.NewCodec(ctx)
+	memptr, err := emscripten.Malloc(ctx, len(s)+1)
+	if err != nil {
+		exec.ThrowError(err)
+	}
+	mem := codec.Bytes(memptr, uint32(len(s)+1))
+	copy(mem, s)
+	mem[len(s)] = 0
+	return memptr
+}
+
 var builtinResolver = exec.MapResolver(map[string]interface{}{
-	"env._xvm_hash":     xvmHash,
-	"env._xvm_encode":   xvmEncode,
-	"env._xvm_decode":   xvmDecode,
-	"env._xvm_ecverify": xvmECVerify,
-	"env._xvm_make_tx":  xvmMakeTx,
+	"env._xvm_hash":             xvmHash,
+	"env._xvm_encode":           xvmEncode,
+	"env._xvm_decode":           xvmDecode,
+	"env._xvm_ecverify":         xvmECVerify,
+	"env._xvm_make_tx":          xvmMakeTx,
+	"env._xvm_addr_from_pubkey": xvmAddressFromPubkey,
 })
