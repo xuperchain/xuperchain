@@ -8,4 +8,5 @@ mergeInto(LibraryManager.library, {
   xvm_decode: function () { },
   xvm_ecverify: function () { },
   xvm_make_tx: function () { },
+  xvm_addr_from_pubkey: function () { },
 });

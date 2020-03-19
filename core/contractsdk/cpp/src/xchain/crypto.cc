@@ -9,6 +9,7 @@ extern "C" int xvm_decode(const char* name, const char* inputptr, int inputlen,
                           char** outputpptr, int* outlen);
 extern "C" int xvm_ecverify(const char* pubptr, int publen, const char* sigptr,
                             int siglen, const char* hashptr, int hashlen);
+extern "C" char* xvm_addr_from_pubkey(const char* pubptr, int publen);
 
 namespace xchain {
 namespace crypto {
@@ -43,7 +44,6 @@ bool hex_decode(const std::string& input, std::string* output) {
 
 bool ecverify(const std::string& pubkey, const std::string& sign,
               const std::string& hash) {
-    const char* curveptr = NULL;
     int ret = 0;
     ret = xvm_ecverify((const char*)&pubkey[0], pubkey.size(),
                        (const char*)&sign[0], sign.size(),
@@ -51,6 +51,17 @@ bool ecverify(const std::string& pubkey, const std::string& sign,
     if (ret != 0) {
         return false;
     }
+    return true;
+}
+
+bool addr_from_pubkey(const std::string& pubkey, std::string* addr) {
+    char* out = NULL;
+    out = xvm_addr_from_pubkey((const char*)&pubkey[0], pubkey.size());
+    if (out == NULL) {
+        return false;
+    }
+    addr->assign(out);
+    free(out);
     return true;
 }
 
