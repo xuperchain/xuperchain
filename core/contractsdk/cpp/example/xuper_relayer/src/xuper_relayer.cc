@@ -580,7 +580,8 @@ DEFINE_METHOD(XuperRelayer, putBlockHeader) {
         for (int iter = 0; iter < qcSigns.qcsigninfos_size(); iter++) {
             const relayer::SignInfo& qcSign = qcSigns.qcsigninfos(iter);
             if (!check_signature(qcSign.address(), qcSign.publickey(),
-                                 blockHeader->blockid(), qcSign.sign())) {
+                                 blockHeader->justify().proposalid(),
+                                 qcSign.sign())) {
                 ctx->error("bft quorum cert signature check failed");
                 return;
             }
