@@ -3,6 +3,7 @@ package mkfile
 import (
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -16,6 +17,7 @@ type Runner struct {
 	xroot  string
 	xcache string
 	image  string
+	output string
 
 	withoutDocker bool
 }
@@ -50,6 +52,11 @@ func (r *Runner) WithoutDocker() *Runner {
 	return r
 }
 
+func (r *Runner) WithOutput(out string) *Runner {
+	r.output = out
+	return r
+}
+
 func (r *Runner) mountPaths() []string {
 	paths := []string{
 		"-v", r.entry.Path + ":/src",
@@ -57,6 +64,10 @@ func (r *Runner) mountPaths() []string {
 	}
 	if r.xroot != "" {
 		paths = append(paths, "-v", r.xroot+":"+r.xroot)
+	}
+	if r.output != "" {
+		outdir := filepath.Dir(r.output)
+		paths = append(paths, "-v", outdir+":"+outdir)
 	}
 	// 对于不在当前package目录下的依赖package，需要mount其根目录
 	for _, dep := range r.entry.Deps {
@@ -80,7 +91,7 @@ func (r *Runner) makeUsingDocker(mkfile string) error {
 	mountpaths := r.mountPaths()
 	runargs := []string{
 		"run",
-		"-u", strconv.Itoa(os.Getuid()),
+		"-u", strconv.Itoa(os.Getuid()) + ":" + strconv.Itoa(os.Getgid()),
 		"--rm",
 	}
 	runargs = append(runargs, mountpaths...)
