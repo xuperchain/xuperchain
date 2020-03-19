@@ -110,3 +110,29 @@ Test("call", function (t) {
         assert.equal(resp.Body, "v1")
     })
 })
+
+Test("json", function (t) {
+    var c = deploy()
+    var value = {
+        "int": 3,
+        "float": 3.14,
+        "string": "hello",
+        "array": ["hello", "world"],
+        "object": { "key": "value" },
+        "true": true,
+        "false": false,
+        "null": null,
+    }
+
+    t.Run("load_dump", function (tt) {
+        var resp = c.Invoke("json_load_dump", {
+            "value": JSON.stringify(value),
+        });
+        assert.deepStrictEqual(value, JSON.parse(resp.Body))
+    })
+
+    t.Run("literal", function (tt) {
+        var resp = c.Invoke("json_literal", {});
+        assert.deepStrictEqual(value, JSON.parse(resp.Body))
+    })
+})

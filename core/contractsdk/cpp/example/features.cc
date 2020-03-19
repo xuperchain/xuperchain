@@ -1,3 +1,4 @@
+#include "xchain/json/json.h"
 #include "xchain/xchain.h"
 
 struct Features : xchain::Contract {};
@@ -62,4 +63,26 @@ DEFINE_METHOD(Features, call) {
         return;
     }
     *ctx->mutable_response() = resp;
+}
+
+DEFINE_METHOD(Features, json_load_dump) {
+    xchain::Context* ctx = self.context();
+    const std::string v = ctx->arg("value");
+    auto j = xchain::json::parse(v);
+    ctx->ok(j.dump());
+}
+
+DEFINE_METHOD(Features, json_literal) {
+    xchain::Context* ctx = self.context();
+    xchain::json j = {
+        {"int", 3},
+        {"float", 3.14},
+        {"string", "hello"},
+        {"array", {"hello", "world"}},
+        {"object", {{"key", "value"}}},
+        {"true", true},
+        {"false", false},
+        {"null", nullptr},
+    };
+    ctx->ok(j.dump());
 }
