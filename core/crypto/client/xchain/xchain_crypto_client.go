@@ -16,6 +16,8 @@ import (
 	"github.com/xuperchain/xuperchain/core/crypto/sign"
 	"github.com/xuperchain/xuperchain/core/crypto/utils"
 	"github.com/xuperchain/xuperchain/core/hdwallet/key"
+
+	hd "github.com/xuperchain/xuperchain/core/hdwallet/api"
 	walletRand "github.com/xuperchain/xuperchain/core/hdwallet/rand"
 )
 
@@ -195,3 +197,32 @@ func (xcc XchainCryptoClient) XuperVerify(keys []*ecdsa.PublicKey, sig []byte, m
 		return false, err
 	}
 }
+
+// --- 	hierarchical deterministic 分层确定性算法相关 start ---
+
+// 通过助记词恢复出分层确定性根密钥
+func (xcc XchainCryptoClient) GenerateMasterKeyByMnemonic(mnemonic string, language int) (string, error) {
+	return hd.GenerateMasterKeyByMnemonic(mnemonic, language)
+}
+
+// 通过分层确定性私钥/公钥（如根私钥）推导出子私钥/公钥
+func (xcc XchainCryptoClient) GenerateChildKey(parentKey string, index uint32) (string, error) {
+	return hd.GenerateChildKey(parentKey, index)
+}
+
+// 将分层确定性私钥转化为公钥
+func (xcc XchainCryptoClient) ConvertPrvKeyToPubKey(privateKey string) (string, error) {
+	return hd.ConvertPrvKeyToPubKey(privateKey)
+}
+
+// 使用子公钥加密
+func (xcc XchainCryptoClient) EncryptByHdKey(publicKey, msg string) (string, error) {
+	return hd.Encrypt(publicKey, msg)
+}
+
+// 使用子公钥和祖先私钥（可以是推导出该子公钥的任何一级祖先私钥）解密
+func (xcc XchainCryptoClient) DecryptByHdKey(publicKey, privateAncestorKey, cypherText string) (string, error) {
+	return hd.Decrypt(publicKey, privateAncestorKey, cypherText)
+}
+
+// --- 	hierarchical deterministic 分层确定性算法相关 end ---
