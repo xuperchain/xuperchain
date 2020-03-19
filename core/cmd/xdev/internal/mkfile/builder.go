@@ -213,7 +213,7 @@ func (b *Builder) addBuildEntryTask() error {
 	}
 
 	// 如果当前package为library package，且没有指定输出名字，只编译相应的object文件
-	if b.OutputPath() != "" {
+	if b.OutputPath() == "" {
 		b.addTask(&Task{
 			Target: "build",
 			Deps:   b.objfiles,
