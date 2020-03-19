@@ -14,11 +14,11 @@ Test("naming", function (t) {
 
     t.Run("Register", function (tt) {
         resp = contract.Invoke("RegisterChain", {"name":"mainnet.xuper","type":"xuper", "min_endorsor_num":"2"});
-        resp2 = contract.Invoke("GetChainMeta", {"name":"mainnet.xuper"})
+        resp2 = contract.Invoke("Resolve", {"name":"mainnet.xuper"})
         console.log(resp2.Body)
-        obj = JSON.parse(resp2.Body)
-        assert.equal(obj["type"], "xuper") 
-        assert.equal(obj["min_endorsor_num"], 2)
+        meta = JSON.parse(resp2.Body)["chain_meta"]
+        assert.equal(meta["type"], "xuper") 
+        assert.equal(meta["min_endorsor_num"], 2)
         r3 = contract.Invoke("UpdateChain", {"name":"mainnet.xuper", "type":"xuper", "min_endorsor_num":"aaaa"})
         assert.equal(r3.Message, "invalid min_endorsor_num, it should be greater than 0")
     })
@@ -30,7 +30,8 @@ Test("naming", function (t) {
         assert.equal(r2.Message, "endorsor already exists")
         r3 = contract.Invoke("AddEndorsor", {"name":"mainnet.xuper", "address":"alicefff", "host":"192.168.9.9:37101", "pub_key":"xxxxx"})
         resp = contract.Invoke("Resolve", {"name":"mainnet.xuper"})
-        nodes = JSON.parse(resp.Body)
+        console.log(resp.Body)
+        nodes = JSON.parse(resp.Body)["endorsors"]
         assert.equal(nodes[0].address, "alicefff")
         assert.equal(nodes[1].address, "bobfffff")
     })

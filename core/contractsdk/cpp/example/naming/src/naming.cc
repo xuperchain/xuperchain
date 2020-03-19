@@ -73,28 +73,23 @@ DEFINE_METHOD(Naming, UpdateChain) {
     ctx->ok(data);
 }
 
-DEFINE_METHOD(Naming, GetChainMeta) {
+DEFINE_METHOD(Naming, Resolve) {
     xchain::Context* ctx = self.context();
     CHECK_ARG(name);
     std::string chain_meta;
+    xchain::json j;
     if (!ctx->get_object(Meta(name), &chain_meta)) {
         ctx->error("chain name does not exist");
         return;
     }
-    ctx->ok(chain_meta);
-}
-
-DEFINE_METHOD(Naming, Resolve) {
-    xchain::Context* ctx = self.context();
-    CHECK_ARG(name);
+    j["chain_meta"] = xchain::json::parse(chain_meta);
     std::unique_ptr<xchain::Iterator> iter =
         ctx->new_iterator(Endorsor(name, ""), Endorsor(name, "~"));
-    xchain::json j;
     while (iter->next()) {
         std::pair<std::string, std::string> kv;
         iter->get(&kv);
         auto one = xchain::json::parse(kv.second);
-        j.push_back(one);
+        j["endorsors"].push_back(one);
     }
     auto result = j.dump();
     ctx->ok(result);
