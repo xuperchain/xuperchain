@@ -1,6 +1,6 @@
 #include <assert.h>
 #include "xchain/xchain.h"
-#include "xrc01.h"
+#include "xchain/xrc01/xrc01.h"
 
 // XRC是超级链协议标准族
 // XRC_01是XRC协议家族中的第一个协议，支持在超级链中发行通用资产
