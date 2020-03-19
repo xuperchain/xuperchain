@@ -31,3 +31,14 @@ DEFINE_METHOD(Crypto, ecverify) {
     }
     ctx->ok("ok");
 }
+
+DEFINE_METHOD(Crypto, addr_from_pubkey) {
+    xchain::Context* ctx = self.context();
+    const std::string& pubkey = ctx->arg("pubkey");
+    std::string addr;
+    if (!addr_from_pubkey(pubkey, &addr)) {
+        ctx->error("fail");
+        return;
+    }
+    ctx->ok(addr);
+}

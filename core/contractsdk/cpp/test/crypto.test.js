@@ -26,3 +26,11 @@ Test("ecverify", function (t) {
     });
     assert.equal(resp.Status, 200, resp.Message);
 })
+
+Test("address_from_pubkey", function (t) {
+    var c = deploy();
+    var resp = c.Invoke("addr_from_pubkey", {
+        "pubkey": "{\"Curvname\":\"P-256\",\"X\":22906815976227871521975920646394124690640348668649121566560042772744241642538,\"Y\":108155450333976935776175836418819691128727398689901106691260413632387093305373}",
+    });
+    assert.equal(resp.Body, "QMB1XGYH2vK3gT1BWuaJdKTmcVZ9YBvV8", resp.Message);
+})
