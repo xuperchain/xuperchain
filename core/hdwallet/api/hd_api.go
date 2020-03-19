@@ -23,7 +23,7 @@ const (
 // 通过助记词恢复出分层确定性根密钥
 func GenerateMasterKeyByMnemonic(mnemonic string, language int) (string, error) {
 	// 判断密码学算法是否支持
-	cryptography, err := account.GetCryptoByteFromMnemonic(mnemonic, language)
+	_, cryptography, err := account.GetCryptoByteFromMnemonic(mnemonic, language)
 	if err != nil {
 		//		log.Printf("GetCryptoByteFromMnemonic failed, Mnemonic might be invalid")
 		return "", err
