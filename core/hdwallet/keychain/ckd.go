@@ -397,7 +397,7 @@ func (k *ExtendedKey) Child(i uint32) (*ExtendedKey, error) {
 	if err != nil {
 		return nil, err
 	}
-	parentFP := hash.HashUsingRipemd160(pubKeyBytes)[:4]
+	parentFP := hash.UsingRipemd160(pubKeyBytes)[:4]
 
 	var accountNum map[uint8]uint32 = map[uint8]uint32{}
 	if len(k.AccountNum) != 0 {
