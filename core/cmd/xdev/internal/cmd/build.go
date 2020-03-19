@@ -62,25 +62,39 @@ func newBuildCommand() *cobra.Command {
 }
 
 func (c *buildCommand) parsePackage(root, xcache, xroot string) error {
-	abspath, err := filepath.Abs(root)
+	absroot, err := filepath.Abs(root)
 	if err != nil {
 		return err
 	}
 
-	addons, err := addonModules(xroot, abspath)
+	addons, err := addonModules(xroot, absroot)
 	if err != nil {
 		return err
 	}
 	loader := mkfile.NewLoader().WithXROOT(xroot)
-	pkg, err := loader.Load(abspath, addons)
+	pkg, err := loader.Load(absroot, addons)
 	if err != nil {
 		return err
+	}
+
+	output := c.output
+	// 如果没有指定输出，且为main package，则用package目录名+wasm后缀作为输出名字s
+	if output == "" && pkg.Name == mkfile.MainPackage {
+		output = filepath.Base(absroot) + ".wasm"
+	}
+
+	if output != "" {
+		c.output, err = filepath.Abs(output)
+		if err != nil {
+			return err
+		}
 	}
 
 	b := mkfile.NewBuilder().
 		WithCxxFlags(c.cxxFlags).
 		WithLDFlags(c.ldflags).
-		WithCacheDir(xcache)
+		WithCacheDir(xcache).
+		WithOutput(c.output)
 
 	err = b.Parse(pkg)
 	if err != nil {
@@ -128,26 +142,20 @@ func (c *buildCommand) initCompileFlags(xroot string) error {
 }
 
 func (c *buildCommand) build(args []string) error {
+	var err error
+	if c.output != "" && !filepath.IsAbs(c.output) {
+		c.output, err = filepath.Abs(c.output)
+		if err != nil {
+			return err
+		}
+	}
+
 	if len(args) == 0 {
 		root, err := findPackageRoot()
 		if err != nil {
 			return err
 		}
-		output := c.output
-		if output == "" {
-			output = filepath.Base(root) + ".wasm"
-		}
-		out, err := c.buildPackage(root)
-		if err != nil {
-			return err
-		}
-		if out == "" {
-			return nil
-		}
-		if strings.HasSuffix(out, ".a") {
-			return nil
-		}
-		return cpfile(output, out)
+		return c.buildPackage(root)
 	}
 
 	return c.buildFiles(args)
@@ -174,47 +182,47 @@ func addonModules(xroot, pkgpath string) ([]mkfile.DependencyDesc, error) {
 	return []mkfile.DependencyDesc{xchainModule(xroot)}, nil
 }
 
-func (c *buildCommand) buildPackage(root string) (string, error) {
+func (c *buildCommand) buildPackage(root string) error {
 	wd, _ := os.Getwd()
 	err := os.Chdir(root)
 	if err != nil {
-		return "", err
+		return err
 	}
 	defer os.Chdir(wd)
 
 	xroot, err := c.xdevRoot()
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	xcache, err := c.xdevCacheDir()
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	err = os.MkdirAll(xcache, 0755)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	err = c.initCompileFlags(xroot)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	err = c.parsePackage(".", xcache, xroot)
 	if err != nil {
-		return "", err
+		return err
 	}
 
 	if c.makeFileOnly {
-		return "", c.builder.GenerateMakeFile(os.Stdout)
+		return c.builder.GenerateMakeFile(os.Stdout)
 	}
 
 	if c.genCompileCommand {
 		cfile, err := os.Create("compile_commands.json")
 		if err != nil {
-			return "", err
+			return err
 		}
 		c.builder.GenerateCompileCommands(cfile)
 		cfile.Close()
@@ -222,12 +230,12 @@ func (c *buildCommand) buildPackage(root string) (string, error) {
 
 	makefile, err := os.Create(".Makefile")
 	if err != nil {
-		return "", err
+		return err
 	}
 	err = c.builder.GenerateMakeFile(makefile)
 	if err != nil {
 		makefile.Close()
-		return "", err
+		return err
 	}
 	makefile.Close()
 	defer os.Remove(".Makefile")
@@ -235,7 +243,8 @@ func (c *buildCommand) buildPackage(root string) (string, error) {
 	runner := mkfile.NewRunner().
 		WithEntry(c.entryPkg).
 		WithCacheDir(xcache).
-		WithXROOT(xroot)
+		WithXROOT(xroot).
+		WithOutput(c.output)
 
 	if c.compiler != "docker" {
 		runner = runner.WithoutDocker()
@@ -243,9 +252,9 @@ func (c *buildCommand) buildPackage(root string) (string, error) {
 
 	err = runner.Make(".Makefile")
 	if err != nil {
-		return "", err
+		return err
 	}
-	return c.builder.OutputPath(), nil
+	return nil
 }
 
 func convertWasmFileName(fname string) string {
@@ -264,9 +273,11 @@ func (c *buildCommand) buildFiles(files []string) error {
 	}
 	defer os.RemoveAll(basedir)
 
-	output := c.output
-	if output == "" {
-		output = convertWasmFileName(filepath.Base(files[0]))
+	if c.output == "" {
+		c.output, err = filepath.Abs(convertWasmFileName(filepath.Base(files[0])))
+		if err != nil {
+			return err
+		}
 	}
 
 	pkgDescFile := filepath.Join(basedir, mkfile.PkgDescFile)
@@ -291,11 +302,11 @@ func (c *buildCommand) buildFiles(files []string) error {
 		}
 	}
 
-	out, err := c.buildPackage(basedir)
+	err = c.buildPackage(basedir)
 	if err != nil {
 		return err
 	}
-	return cpfile(output, out)
+	return nil
 }
 
 func cpfile(dest, src string) error {
