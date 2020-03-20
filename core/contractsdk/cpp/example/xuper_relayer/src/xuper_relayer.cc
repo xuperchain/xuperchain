@@ -511,6 +511,7 @@ DEFINE_METHOD(XuperRelayer, putBlockHeader) {
         ctx->error(std::string("block has been modified.") +
                    std::string(" expect:") + visualBlockid +
                    std::string(" actual:") + visualBlockidCalc);
+        return;
     }
     // 判断区块类型
     std::string preHashBuf = blockHeader->pre_hash();
@@ -549,19 +550,21 @@ DEFINE_METHOD(XuperRelayer, putBlockHeader) {
             return;
         }
     } else {
-        // 在分支上添加
+        // 在分支上添加，默认in_trunk是false
+        blockHeader->set_in_trunk(false);
+        // 如果分支高度比当前主干高，发生主干切换
         if (preBlockHeader->height() + 1 > meta->trunk_height()) {
             // 分支变主干
-            meta->set_trunk_height(preBlockHeader->height() + 1);
-            meta->set_tip_blockid(visualBlockid);
-            blockHeader->set_in_trunk(true);
-            // 处理分叉
             bool succ = handleFork(ctx, meta->tip_blockid(), visualPreHash,
                                    blockHeader->blockid());
             if (!succ) {
                 ctx->error("handle fork failed");
                 return;
             }
+            // 更新meta信息
+            blockHeader->set_in_trunk(true);
+            meta->set_trunk_height(preBlockHeader->height() + 1);
+            meta->set_tip_blockid(visualBlockid);
         }
     }
     // 判断矿工签名是否正确
@@ -600,6 +603,7 @@ DEFINE_METHOD(XuperRelayer, putBlockHeader) {
         ctx->error("put ledger meta failed");
         return;
     }
+    ctx->ok("success");
 }
 
 DEFINE_METHOD(XuperRelayer, verifyTx) {
