@@ -76,6 +76,9 @@ func makeWagonModule(resolver Resolver) wasm.ResolveModuleFunc {
 		export := wasm.NewModule()
 		export.Export.Entries = map[string]wasm.ExportEntry{}
 		for _, importEntry := range main.Import.Entries {
+			if module != importEntry.ModuleName {
+				continue
+			}
 			field := importEntry.FieldName
 
 			switch importEntry.Type.Kind() {

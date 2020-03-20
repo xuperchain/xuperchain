@@ -1,8 +1,11 @@
 package mkfile
 
 import (
+	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -16,8 +19,12 @@ type Runner struct {
 	xroot  string
 	xcache string
 	image  string
+	output string
 
 	withoutDocker bool
+	makeFlags     []string
+
+	*log.Logger
 }
 
 func NewRunner() *Runner {
@@ -50,22 +57,41 @@ func (r *Runner) WithoutDocker() *Runner {
 	return r
 }
 
+func (r *Runner) WithOutput(out string) *Runner {
+	r.output = out
+	return r
+}
+
+// WithMakeFlags set extra flags passing to make command
+func (r *Runner) WithMakeFlags(flags []string) *Runner {
+	r.makeFlags = flags
+	return r
+}
+
+// WithLogger set the debug logger
+func (r *Runner) WithLogger(logger *log.Logger) *Runner {
+	r.Logger = logger
+	return r
+}
+
 func (r *Runner) mountPaths() []string {
-	paths := []string{
-		"-v", r.entry.Path + ":/src",
-		"-v", r.xcache + ":" + r.xcache,
-	}
+	paths := []string{r.entry.Path, r.xcache}
 	if r.xroot != "" {
-		paths = append(paths, "-v", r.xroot+":"+r.xroot)
+		paths = append(paths, r.xroot)
 	}
-	// 对于不在当前package目录下的依赖package，需要mount其根目录
+	if r.output != "" {
+		outdir := filepath.Dir(r.output)
+		paths = append(paths, outdir)
+	}
 	for _, dep := range r.entry.Deps {
-		if strings.HasPrefix(dep.Path, r.entry.Path) {
-			continue
-		}
-		paths = append(paths, "-v", dep.Path+":"+dep.Path)
+		paths = append(paths, dep.Path)
 	}
-	return paths
+	paths = prefixPaths(paths)
+	mounts := make([]string, 0, len(paths))
+	for _, path := range paths {
+		mounts = append(mounts, "-v"+path+":"+path)
+	}
+	return mounts
 }
 
 func (r *Runner) Make(mkfile string) error {
@@ -80,13 +106,16 @@ func (r *Runner) makeUsingDocker(mkfile string) error {
 	mountpaths := r.mountPaths()
 	runargs := []string{
 		"run",
-		"-u", strconv.Itoa(os.Getuid()),
+		"-u", strconv.Itoa(os.Getuid()) + ":" + strconv.Itoa(os.Getgid()),
 		"--rm",
+		"-w", r.entry.Path,
 	}
 	runargs = append(runargs, mountpaths...)
 	runargs = append(runargs, r.image)
 	runargs = append(runargs, "emmake", "make", "build", "-f", mkfile)
+	runargs = append(runargs, r.makeFlags...)
 
+	r.Printf("docker %s", strings.Join(runargs, " "))
 	cmd := exec.Command("docker", runargs...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
@@ -98,7 +127,12 @@ func (r *Runner) makeUsingDocker(mkfile string) error {
 }
 
 func (r *Runner) makeUsingHost(mkfile string) error {
-	cmd := exec.Command("emmake", "make", "build", "-f", mkfile)
+	runargs := []string{
+		"make", "build", "-f", mkfile,
+	}
+	runargs = append(runargs, r.makeFlags...)
+	r.Printf("emmake %s", strings.Join(runargs, " "))
+	cmd := exec.Command("emmake", runargs...)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err := cmd.Run()
@@ -106,4 +140,19 @@ func (r *Runner) makeUsingHost(mkfile string) error {
 		return err
 	}
 	return nil
+}
+
+// prefixPaths 合并多个路径，剔除有公共前缀的路径，返回所有的最短前缀路径
+// 如 /home /lib/a/b /lib/a 最终只会返回 /home和/lib/a
+func prefixPaths(paths []string) []string {
+	ret := make([]string, 0, len(paths))
+	sort.Strings(paths)
+	prefix := "\xFF"
+	for _, v := range paths {
+		if !strings.HasPrefix(v, prefix) {
+			ret = append(ret, v)
+			prefix = v
+		}
+	}
+	return ret
 }

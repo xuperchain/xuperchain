@@ -1050,7 +1050,6 @@ message AddressContractsResponse {
   map<string, ContractList> contracts = 2;
 }
 
-
 message CrossQueryRequest {
   string bcname = 1;
   int64 timestamp = 2;
