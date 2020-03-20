@@ -17,6 +17,9 @@ script:
   - make && make test
   - if command -v docker; then XDEV_CC_IMAGE=xuper/emcc:1.38.30 make contractsdk; fi
   - cd ./core/test && bash ci_pipeline.sh
+  
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
 
 cache:
   directories:
