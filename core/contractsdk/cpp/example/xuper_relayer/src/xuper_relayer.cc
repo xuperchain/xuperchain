@@ -553,16 +553,16 @@ DEFINE_METHOD(XuperRelayer, putBlockHeader) {
         // 在分支上添加
         if (preBlockHeader->height() + 1 > meta->trunk_height()) {
             // 分支变主干
-            meta->set_trunk_height(preBlockHeader->height() + 1);
-            meta->set_tip_blockid(visualBlockid);
-            blockHeader->set_in_trunk(true);
-            // 处理分叉
             bool succ = handleFork(ctx, meta->tip_blockid(), visualPreHash,
                                    blockHeader->blockid());
             if (!succ) {
                 ctx->error("handle fork failed");
                 return;
             }
+            // 更新meta信息
+            blockHeader->set_in_trunk(true);
+            meta->set_trunk_height(preBlockHeader->height() + 1);
+            meta->set_tip_blockid(visualBlockid);
         }
     }
     // 判断矿工签名是否正确
