@@ -19,7 +19,7 @@ script:
   - cd ./core/test && bash ci_pipeline.sh
   
 after_success:
-  - bash <(curl -s https://codecov.io/bash)
+  - bash <(curl -s https://codecov.io/bash)  -y .github/codecov.yml
 
 cache:
   directories:
