@@ -36,7 +36,7 @@ public:
                       const std::map<std::string, std::string>& args,
                       Response* response);
     virtual bool cross_query(const std::string& uri, const std::map<std::string, std::string>& args,
-                    Response* response) = 0;                   
+                    Response* response);                   
     virtual void logf(const char* fmt, ...);
 
 private:

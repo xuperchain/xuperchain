@@ -219,13 +219,28 @@ func (c *SyscallService) CrossContractQuery(ctx context.Context, in *pb.CrossCon
 		return nil, fmt.Errorf("ParseCrossChainURI error, err:%s ctx id:%d", err.Error(), in.Header.Ctxid)
 	}
 
-	crossChainMeta, endorsorInfos, err := nctx.Core.ResolveChain(crossChainURI.GetChainName())
+	crossQueryMeta, err := nctx.Core.ResolveChain(crossChainURI.GetChainName())
 	if err != nil {
 		return nil, fmt.Errorf("ResolveChain error, err:%s ctx id:%d", err.Error(), in.Header.Ctxid)
 	}
-	// 访问ModelCache
 
-	return &pb.CrossContractQueryResponse{}, nil
+	// Assemble crossQueryRequest
+	crossQueryRequest := &xchainpb.CrossQueryRequest{}
+	crossScheme := GetChainScheme(crossChainURI.GetScheme())
+	crossQueryRequest, err = crossScheme.GetCrossQueryRequest(crossChainURI, in.GetArgs(), nctx.GetInitiator(), nctx.GetAuthRequire())
+	if err != nil {
+		return nil, fmt.Errorf("GetCrossQueryRequest error, err:%s ctx id: %d", err.Error(), in.Header.Ctxid)
+	}
+
+	// CrossQuery cross query from other chain
+	contractResponse, err := nctx.Cache.CrossQuery(crossQueryRequest, crossQueryMeta)
+	return &pb.CrossContractQueryResponse{
+		Response: &pb.Response{
+			Status:  contractResponse.GetStatus(),
+			Message: contractResponse.GetMessage(),
+			Body:    contractResponse.GetBody(),
+		},
+	}, err
 }
 
 // PutObject implements Syscall interface

@@ -37,3 +37,8 @@ func (c *chainCore) QueryTransaction(txid []byte) (*pb.Transaction, error) {
 func (c *chainCore) QueryBlock(blockid []byte) (*pb.InternalBlock, error) {
 	return new(pb.InternalBlock), nil
 }
+
+// CrossQuery query contract from otherchain
+func (c *chainCore) ResolveChain(chainName string) (*pb.CrossQueryMeta, error) {
+	return new(pb.CrossQueryMeta), nil
+}

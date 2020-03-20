@@ -3,6 +3,7 @@ package hash
 
 import (
 	"crypto/sha256"
+
 	"golang.org/x/crypto/ripemd160"
 )
 

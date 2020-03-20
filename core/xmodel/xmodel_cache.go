@@ -18,6 +18,7 @@ import (
 const (
 	// DefaultMemDBSize 默认内存db大小
 	DefaultMemDBSize = 32
+	CrossTimeWindow
 )
 
 var (
@@ -30,6 +31,7 @@ var (
 var (
 	contractUtxoInputKey  = []byte("ContractUtxo.Inputs")
 	contractUtxoOutputKey = []byte("ContractUtxo.Outputs")
+	crossQueryInfosKey    = []byte("CrossQueryInfos")
 )
 
 // UtxoVM manages utxos
@@ -44,25 +46,26 @@ type XMCache struct {
 	// Key: bucket_key; Value: PureData
 	outputsCache *memdb.DB
 	// 是否穿透到model层
-	isPenetrate  bool
-	model        XMReader
-	utxoCache    *UtxoCache
-	crossQueries *CrossQuery
+	isPenetrate     bool
+	model           XMReader
+	utxoCache       *UtxoCache
+	crossQueryCache *CrossQueryCache
 }
 
 // NewXModelCache new an instance of XModel Cache
 func NewXModelCache(model XMReader, utxovm UtxoVM) (*XMCache, error) {
 	return &XMCache{
-		isPenetrate:  true,
-		model:        model,
-		inputsCache:  memdb.New(comparer.DefaultComparer, DefaultMemDBSize),
-		outputsCache: memdb.New(comparer.DefaultComparer, DefaultMemDBSize),
-		utxoCache:    NewUtxoCache(utxovm),
+		isPenetrate:     true,
+		model:           model,
+		inputsCache:     memdb.New(comparer.DefaultComparer, DefaultMemDBSize),
+		outputsCache:    memdb.New(comparer.DefaultComparer, DefaultMemDBSize),
+		utxoCache:       NewUtxoCache(utxovm),
+		crossQueryCache: NewCrossQueryCache(),
 	}, nil
 }
 
 // NewXModelCacheWithInputs make new XModelCache with Inputs
-func NewXModelCacheWithInputs(vdatas []*xmodel_pb.VersionedData, utxoInputs []*pb.TxInput) *XMCache {
+func NewXModelCacheWithInputs(vdatas []*xmodel_pb.VersionedData, utxoInputs []*pb.TxInput, crossQueries []*pb.CrossQueryInfo) *XMCache {
 	xc := &XMCache{
 		isPenetrate:  false,
 		inputsCache:  memdb.New(comparer.DefaultComparer, DefaultMemDBSize),
@@ -76,6 +79,7 @@ func NewXModelCacheWithInputs(vdatas []*xmodel_pb.VersionedData, utxoInputs []*p
 		xc.inputsCache.Put(rawKey, valBuf)
 	}
 	xc.utxoCache = NewUtxoCacheWithInputs(utxoInputs)
+	xc.crossQueryCache = NewCrossQueryCacheWirthData(crossQueries)
 	return xc
 }
 
@@ -408,4 +412,62 @@ func IsContractUtxoEffective(contractTxInputs []*pb.TxInput, contractTxOutputs [
 		return false
 	}
 	return true
+}
+
+// CrossQuery will query contract from other chain
+func (xc *XMCache) CrossQuery(crossQueryRequest *pb.CrossQueryRequest, queryMeta *pb.CrossQueryMeta) (*pb.ContractResponse, error) {
+	return xc.crossQueryCache.CrossQuery(crossQueryRequest, queryMeta)
+}
+
+// GetCrossQueryRWSets get cross query rwsets
+func (xc *XMCache) GetCrossQueryRWSets() []*pb.CrossQueryInfo {
+	return xc.crossQueryCache.GetCrossQueryRWSets()
+}
+
+// ParseCrossQuery parse cross query from tx
+func ParseCrossQuery(tx *pb.Transaction) ([]*pb.CrossQueryInfo, error) {
+	var (
+		crossQueryInfos []*pb.CrossQueryInfo
+		queryInfos      []byte
+	)
+	for _, out := range tx.GetTxOutputsExt() {
+		if out.GetBucket() != TransientBucket {
+			continue
+		}
+		if bytes.Equal(out.GetKey(), crossQueryInfosKey) {
+			queryInfos = out.GetValue()
+		}
+	}
+	if queryInfos != nil {
+		err := unmsarshalMessages(queryInfos, &crossQueryInfos)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return crossQueryInfos, nil
+}
+
+// IsCrossQueryEffective check if crossQueryInfos effective
+// TODO: zq
+func IsCrossQueryEffective(cqi []*pb.CrossQueryInfo, tx *pb.Transaction) bool {
+	return true
+}
+
+// PutCrossQueries put queryInfos to db
+func (xc *XMCache) PutCrossQueries(queryInfos []*pb.CrossQueryInfo) error {
+	var qi []byte
+	var err error
+	if len(queryInfos) != 0 {
+		qi, err = marshalMessages(queryInfos)
+		if err != nil {
+			return err
+		}
+	}
+	if qi != nil {
+		err = xc.Put(TransientBucket, crossQueryInfosKey, qi)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
