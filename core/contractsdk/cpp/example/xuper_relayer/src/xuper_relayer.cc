@@ -511,6 +511,7 @@ DEFINE_METHOD(XuperRelayer, putBlockHeader) {
         ctx->error(std::string("block has been modified.") +
                    std::string(" expect:") + visualBlockid +
                    std::string(" actual:") + visualBlockidCalc);
+        return;
     }
     // 判断区块类型
     std::string preHashBuf = blockHeader->pre_hash();
@@ -600,6 +601,7 @@ DEFINE_METHOD(XuperRelayer, putBlockHeader) {
         ctx->error("put ledger meta failed");
         return;
     }
+    ctx->ok("success");
 }
 
 DEFINE_METHOD(XuperRelayer, verifyTx) {
