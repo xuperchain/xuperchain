@@ -24,6 +24,8 @@ Test("naming", function (t) {
     })
 
     t.Run("AddEndorsor", function(tt) {
+        r0 = contract.Invoke("AddEndorsor", {"name":"testnet", "address":"foo", "host":"127.0.0.1", "pub_key":"xxx"})
+        assert.equal(r0.Message, "chain name does not exist")
         r1 = contract.Invoke("AddEndorsor", {"name":"mainnet.xuper", "address":"bobfffff", "host":"192.168.8.8:37101", "pub_key":"xxxxx"})
         console.log(r1.Body)
         r2 = contract.Invoke("AddEndorsor", {"name":"mainnet.xuper", "address":"bobfffff", "host":"192.168.9.9:37101", "pub_key":"xxxxx"})
