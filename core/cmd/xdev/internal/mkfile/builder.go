@@ -97,7 +97,7 @@ func (b *Builder) Parse(entry *Package) error {
 		if err != nil {
 			return err
 		}
-		includePath := b.externalPkgPath(filepath.Join(pkg.Path, "src"))
+		includePath := filepath.Join(pkg.Path, "src")
 		b.cxxflags = append(b.cxxflags, "-I"+includePath)
 	}
 	return nil
@@ -177,11 +177,10 @@ func (b *Builder) addPhonyTasks() error {
 func (b *Builder) addObjectFileTask() error {
 	for i := range b.srcfiles {
 		src := b.srcfiles[i]
-		relsrc := b.externalPkgPath(src)
 		obj := b.objfiles[i]
 		task := &Task{
 			Target: obj,
-			Deps:   []string{relsrc},
+			Deps:   []string{src},
 			Actions: []string{
 				`@mkdir -p $(dir $@)`,
 				`@echo CC $(notdir $<)`,
@@ -240,20 +239,6 @@ func (b *Builder) addBuildEntryTask() error {
 
 func (b *Builder) buildPath(fpath string) string {
 	return filepath.Join(b.buildDir, fpath)
-}
-
-func (b *Builder) buildLibpath(name string) string {
-	return b.buildPath("lib" + name + ".a")
-}
-
-// 如果path是entry package的子目录，则返回相对目录
-// 否则返回原目录
-// 否则在编译容器里面找不到对应的目录
-func (b *Builder) externalPkgPath(path string) string {
-	if strings.HasPrefix(path, b.root) {
-		return b.relpath(path)
-	}
-	return path
 }
 
 func (b *Builder) relpath(p string) string {
