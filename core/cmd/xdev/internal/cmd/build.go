@@ -43,6 +43,7 @@ type buildCommand struct {
 	makeFileOnly      bool
 	output            string
 	compiler          string
+	makeFlags         string
 }
 
 func newBuildCommand() *cobra.Command {
@@ -58,6 +59,7 @@ func newBuildCommand() *cobra.Command {
 	cmd.Flags().BoolVarP(&c.genCompileCommand, "compile_command", "p", false, "generate compile_commands.json for IDE")
 	cmd.Flags().StringVarP(&c.output, "output", "o", "", "output file name")
 	cmd.Flags().StringVarP(&c.compiler, "compiler", "", "docker", "compiler env docker|host")
+	cmd.Flags().StringVarP(&c.makeFlags, "mkflags", "", "", "extra flags passing to make command")
 	return cmd
 }
 
@@ -244,7 +246,9 @@ func (c *buildCommand) buildPackage(root string) error {
 		WithEntry(c.entryPkg).
 		WithCacheDir(xcache).
 		WithXROOT(xroot).
-		WithOutput(c.output)
+		WithOutput(c.output).
+		WithMakeFlags(strings.Fields(c.makeFlags)).
+		WithLogger(logger)
 
 	if c.compiler != "docker" {
 		runner = runner.WithoutDocker()
