@@ -1,9 +1,8 @@
 package vm
 
 import (
-	"github.com/xuperdata/teesdk"
-
 	"github.com/xuperchain/xuperchain/core/common/log"
+	"github.com/xuperchain/xuperchain/core/common/config"
 	"github.com/xuperchain/xuperchain/core/contract"
 	"github.com/xuperchain/xuperchain/core/contract/bridge"
 	"github.com/xuperchain/xuperchain/core/pb"
@@ -16,7 +15,7 @@ type InstanceCreatorConfig struct {
 	// VMConfig is the config of vm driver
 	VMConfig    interface{}
 	DebugLogger *log.Logger
-	TEEConfig   *teesdk.TEEConfig
+	TEEConfig   *config.TEEConfig
 }
 
 // NewInstanceCreatorFunc instances a new InstanceCreator from InstanceCreatorConfig

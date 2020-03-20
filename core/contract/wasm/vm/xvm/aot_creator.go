@@ -108,12 +108,16 @@ func (x *xvmCreator) MakeExecCode(libpath string) (exec.Code, error) {
 		newSyscallResolver(x.config.SyscallService),
 		builtinResolver,
 	}
-	//AOT only for experiment; 
+	//AOT only for experiment;
 	if x.config.TEEConfig != nil && x.config.TEEConfig.Enable {
-		resolvers = append(resolvers, teevm.NewTrustFunctionResolver(x.config.TEEConfig));
+		teeResolver, err := teevm.NewTrustFunctionResolver(x.config.TEEConfig)
+		if err != nil {
+			return nil, err
+		}
+		resolvers = append(resolvers, teeResolver)
 	}
 	resolver := exec.NewMultiResolver(
-		resolvers...
+		resolvers...,
 	)
 	return exec.NewAOTCode(libpath, resolver)
 }

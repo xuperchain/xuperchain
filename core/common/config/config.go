@@ -6,7 +6,6 @@ import (
 
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
-	"github.com/xuperdata/teesdk"
 	"github.com/syndtr/goleveldb/leveldb/errors"
 )
 
@@ -178,7 +177,24 @@ type WasmConfig struct {
 	EnableDebugLog bool
 	DebugLog       LogConfig
 	EnableUpgrade  bool
-	TEEConfig      *teesdk.TEEConfig  `yaml:"-"`
+	TEEConfig      *TEEConfig `yaml:"-"`
+}
+
+// copy from https://github.com/xuperdata/teesdk/blob/master/config.go to keep code clear 
+type TEEConfig struct {
+	Svn      uint32         `yaml:"svn"`
+	Enable   bool           `yaml:"enable"`
+	TMSPort  int32          `yaml:"tmsport"`
+	TDFSPort int32          `yaml:"tdfsport"`
+	Uid      string         `yaml:"uid"`
+	Token    string         `yaml:"token"`
+	Auditors []*TEEAuditors `yaml:"auditors"`
+}
+
+type TEEAuditors struct {
+	PublicDer         string `yaml:"publicder"`
+	Sign              string `yaml:"sign"`
+	EnclaveInfoConfig string `yaml:"enclaveinfoconfig"`
 }
 
 func (w *WasmConfig) applyFlags(flags *pflag.FlagSet) {
@@ -246,8 +262,8 @@ type NodeConfig struct {
 	//  2. 一种是问询式块广播模式(Interactive_BroadCast_Mode)，即先广播新块的头部给相邻节点，
 	//     相邻节点在没有相同块的情况下通过GetBlock主动获取块数据.
 	//  3. Mixed_BroadCast_Mode是指出块节点将新块用Full_BroadCast_Mode模式广播，其他节点使用Interactive_BroadCast_Mode
-	BlockBroadcaseMode uint8 `yaml:"blockBroadcaseMode,omitempty"`
-	TEEConfig      teesdk.TEEConfig `yaml:"teeConfig,omitempty"`
+	BlockBroadcaseMode uint8     `yaml:"blockBroadcaseMode,omitempty"`
+	TEEConfig          TEEConfig `yaml:"teeConfig,omitempty"`
 }
 
 // KernelConfig kernel config

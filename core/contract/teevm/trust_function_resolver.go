@@ -7,6 +7,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/xuperdata/teesdk"
 
+	"github.com/xuperchain/xuperchain/core/common/config"
 	"github.com/xuperchain/xuperchain/core/common/log"
 	"github.com/xuperchain/xuperchain/core/contract/teevm/pb"
 	"github.com/xuperchain/xuperchain/core/xvm/exec"
@@ -15,13 +16,29 @@ import (
 
 // TrustFunctionResolver
 type TrustFunctionResolver struct {
-	client *teesdk.TEEClient
-	config *teesdk.TEEConfig
+	client  *teesdk.TEEClient
+	tconfig *teesdk.TEEConfig
+}
+
+func configConvert(conf *config.TEEConfig) (*teesdk.TEEConfig, error) {
+	data, err := json.Marshal(conf)
+	if err != nil {
+		return nil, err
+	}
+	var tcfg teesdk.TEEConfig
+	if err := json.Unmarshal(data, &tcfg); err != nil {
+		return nil, err
+	}
+	return &tcfg, nil
 }
 
 var _ exec.Resolver = (*TrustFunctionResolver)(nil)
 
-func NewTrustFunctionResolver(cfg *teesdk.TEEConfig) *TrustFunctionResolver {
+func NewTrustFunctionResolver(conf *config.TEEConfig) (*TrustFunctionResolver, error) {
+	cfg, err := configConvert(conf)
+	if err != nil {
+		return nil, err
+	}
 	client := teesdk.NewTEEClient(cfg.Uid,
 		cfg.Token,
 		cfg.Auditors[0].PublicDer,
@@ -30,8 +47,8 @@ func NewTrustFunctionResolver(cfg *teesdk.TEEConfig) *TrustFunctionResolver {
 		cfg.TMSPort,
 		cfg.TDFSPort)
 	return &TrustFunctionResolver{
-		client: client,
-		config: cfg}
+		client:  client,
+		tconfig: cfg}, nil
 }
 
 func (tf *TrustFunctionResolver) ResolveGlobal(module, name string) (int64, bool) {
@@ -63,7 +80,7 @@ func (tf *TrustFunctionResolver) tfcall(ctx exec.Context, inptr, inlen, outpptr,
 	if err = proto.Unmarshal(requestBuf, in); err != nil {
 		goto ret
 	}
-	if tf.config != nil && !tf.config.Enable || tf.client == nil {
+	if tf.tconfig != nil && !tf.tconfig.Enable || tf.client == nil {
 		err = fmt.Errorf("IsTFCEnabled is false, this node doest not enable TEE")
 		goto ret
 	}
