@@ -1081,6 +1081,6 @@ message CrossQueryMeta {
 
 message CrossQueryInfo {
   CrossQueryRequest request = 1;
-  ContractResponse response = 2;
+  CrossQueryResponse response = 2;
   repeated SignatureInfo signs = 3;
 }

@@ -5,8 +5,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os"
 	"sync"
+	"time"
 
+	log "github.com/xuperchain/log15"
 	crypto_client "github.com/xuperchain/xuperchain/core/crypto/client"
 	"github.com/xuperchain/xuperchain/core/crypto/hash"
 	"github.com/xuperchain/xuperchain/core/pb"
@@ -18,26 +21,33 @@ const (
 
 // CrossQueryCache cross query struct
 type CrossQueryCache struct {
+	lg               log.Logger
 	crossQueryCaches []*pb.CrossQueryInfo
 	crossQueryIdx    int
 	isPenetrate      bool
 }
 
 type queryRes struct {
-	*pb.ContractResponse
+	*pb.CrossQueryResponse
 	*pb.SignatureInfo
 }
 
 // NewCrossQueryCache return CrossQuery instance while preexec
 func NewCrossQueryCache() *CrossQueryCache {
+	lg := log.New("module", "cross_query_cache")
+	lg.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
 	return &CrossQueryCache{
+		lg:          lg,
 		isPenetrate: true,
 	}
 }
 
 // NewCrossQueryCacheWirthData return CrossQuery instance while posttx
 func NewCrossQueryCacheWirthData(crossQueries []*pb.CrossQueryInfo) *CrossQueryCache {
+	lg := log.New("module", "cross_query_cache")
+	lg.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
 	return &CrossQueryCache{
+		lg:               lg,
 		crossQueryCaches: crossQueries,
 		isPenetrate:      false,
 	}
@@ -47,28 +57,30 @@ func NewCrossQueryCacheWirthData(crossQueries []*pb.CrossQueryInfo) *CrossQueryC
 func (cqc *CrossQueryCache) CrossQuery(
 	crossQueryRequest *pb.CrossQueryRequest,
 	queryMeta *pb.CrossQueryMeta) (*pb.ContractResponse, error) {
+	cqc.lg.Info("Receive CrossQuery", "crossQueryRequest", crossQueryRequest, "queryMeta", queryMeta)
 	if !isQueryMetaValid(queryMeta) {
 		return nil, fmt.Errorf("isQueryParamValid check failed")
 	}
 	// Call endorsor for responce
 	if cqc.isPenetrate {
-		queryInfo, err := crossQueryFromEndorsor(crossQueryRequest, queryMeta)
+		queryInfo, err := cqc.crossQueryFromEndorsor(crossQueryRequest, queryMeta)
 		if err != nil {
+			cqc.lg.Info("crossQueryFromEndorsor error", "error", err.Error())
 			return nil, err
 		}
 		cqc.crossQueryCaches = append(cqc.crossQueryCaches, queryInfo)
-		return queryInfo.GetResponse(), nil
+		return queryInfo.GetResponse().GetResponse(), nil
 	}
 
 	// 验证背书规则、参数有效性、时间戳有效性
 	crossQuery := cqc.crossQueryCaches[cqc.crossQueryIdx]
 
 	// 验证request、签名等信息
-	for isCossQueryValid(crossQueryRequest, queryMeta, crossQuery) {
+	for !cqc.isCossQueryValid(crossQueryRequest, queryMeta, crossQuery) {
 		return nil, fmt.Errorf("isCossQueryValid check failed")
 	}
 	cqc.crossQueryIdx++
-	return crossQuery.GetResponse(), nil
+	return crossQuery.GetResponse().GetResponse(), nil
 }
 
 // isQueryParamValid 验证 query meta 背书策略是否有效
@@ -77,7 +89,7 @@ func isQueryMetaValid(queryMeta *pb.CrossQueryMeta) bool {
 }
 
 // crossQueryFromEndorsor will query cross from endorsor
-func crossQueryFromEndorsor(
+func (cqc *CrossQueryCache) crossQueryFromEndorsor(
 	crossQueryRequest *pb.CrossQueryRequest,
 	queryMeta *pb.CrossQueryMeta) (*pb.CrossQueryInfo, error) {
 
@@ -92,7 +104,7 @@ func crossQueryFromEndorsor(
 		RequestData: reqData,
 	}
 
-	res, signs, err := endorsorQueryWithGroup(req, queryMeta)
+	res, signs, err := cqc.endorsorQueryWithGroup(req, queryMeta)
 	if err != nil {
 		return nil, err
 	}
@@ -103,7 +115,7 @@ func crossQueryFromEndorsor(
 	}, nil
 }
 
-func endorsorQueryWithGroup(req *pb.EndorserRequest, queryMeta *pb.CrossQueryMeta) (*pb.ContractResponse, []*pb.SignatureInfo, error) {
+func (cqc *CrossQueryCache) endorsorQueryWithGroup(req *pb.EndorserRequest, queryMeta *pb.CrossQueryMeta) (*pb.CrossQueryResponse, []*pb.SignatureInfo, error) {
 	wg := sync.WaitGroup{}
 	msgChan := make(chan *queryRes, len(queryMeta.GetEndorsors()))
 
@@ -111,7 +123,7 @@ func endorsorQueryWithGroup(req *pb.EndorserRequest, queryMeta *pb.CrossQueryMet
 		wg.Add(1)
 		go func(req *pb.EndorserRequest, ce *pb.CrossEndorsor) {
 			defer wg.Done()
-			res, err := endorsorQuery(req, ce)
+			res, err := cqc.endorsorQuery(req, ce)
 			if err != nil {
 				return
 			}
@@ -120,73 +132,85 @@ func endorsorQueryWithGroup(req *pb.EndorserRequest, queryMeta *pb.CrossQueryMet
 	}
 	wg.Wait()
 	// 处理所有请求结果
+	signs := []*pb.SignatureInfo{}
+	var conRes *pb.CrossQueryResponse
 	lenCh := len(msgChan)
 	if lenCh <= 0 {
 		return nil, nil, errors.New("endorsorQueryWithGroup res is nil")
 	}
-	signs := []*pb.SignatureInfo{}
-	var conRes *pb.ContractResponse
+
 	i := 0
 	for r := range msgChan {
 		if i == 0 {
-			conRes = r.ContractResponse
+			conRes = r.CrossQueryResponse
 		} else {
-			if !isMsgEqual(conRes, r.ContractResponse) {
+			if !isMsgEqual(conRes, r.CrossQueryResponse) {
 				return conRes, signs, errors.New("endorsorQueryWithGroup ContractResponse different")
 			}
 		}
 		signs = append(signs, r.SignatureInfo)
+		if i >= lenCh-1 {
+			break
+		}
+		i++
 	}
-
 	return conRes, signs, nil
 }
 
-func endorsorQuery(req *pb.EndorserRequest, ce *pb.CrossEndorsor) (*queryRes, error) {
-	ctx, _ := context.WithTimeout(context.TODO(), timeOut)
-	cli, err := NewEndorsorClient(ce.GetHost())
+func (cqc *CrossQueryCache) endorsorQuery(req *pb.EndorserRequest, ce *pb.CrossEndorsor) (*queryRes, error) {
+	ctx, _ := context.WithTimeout(context.TODO(), timeOut*time.Second)
+	conn, err := NewEndorsorConn(ce.GetHost())
 	if err != nil {
+		cqc.lg.Info("endorsorQuery NewEndorsorClient error", "err", err.Error())
 		return nil, err
 	}
+	defer conn.Close()
+	cli := pb.NewXendorserClient(conn)
 	endorsorRes, err := cli.EndorserCall(ctx, req)
 	if err != nil {
+		cqc.lg.Info("endorsorQuery EndorserCall error", "err", err.Error())
 		return nil, err
 	}
-	res := &pb.ContractResponse{}
+	res := &pb.CrossQueryResponse{}
 	err = json.Unmarshal(endorsorRes.GetResponseData(), res)
 	if err != nil {
+		cqc.lg.Info("endorsorQuery Unmarshal error", "err", err)
 		return nil, err
 	}
-
-	return &queryRes{
+	queryRes := &queryRes{
 		res,
 		endorsorRes.GetEndorserSign(),
-	}, nil
+	}
+	return queryRes, nil
 }
 
 // 验证CrossQuery背书信息
-func isCossQueryValid(
+func (cqc *CrossQueryCache) isCossQueryValid(
 	crossQueryRequest *pb.CrossQueryRequest,
 	queryMeta *pb.CrossQueryMeta,
 	queryInfo *pb.CrossQueryInfo) bool {
 	// check req from bridge and req from preexec
 	if !isMsgEqual(crossQueryRequest, queryInfo.GetRequest()) {
+		cqc.lg.Info("isCossQueryValid isMsgEqual not equal")
 		return false
 	}
 
 	// check endorsor info
-	signs, ok := isEndorsorInfoValid(queryMeta, queryInfo.GetSigns())
+	signs, ok := cqc.isEndorsorInfoValid(queryMeta, queryInfo.GetSigns())
 	if !ok {
+		cqc.lg.Info("isEndorsorInfoValid not ok")
 		return false
 	}
 
 	// check endorsor sign
-	if !isEndorsorSignValid(signs, queryInfo) {
+	if !cqc.isEndorsorSignValid(signs, queryInfo) {
+		cqc.lg.Info("isEndorsorSignValid not ok")
 		return false
 	}
 	return true
 }
 
-func isEndorsorInfoValid(queryMeta *pb.CrossQueryMeta, signs []*pb.SignatureInfo) ([]*pb.SignatureInfo, bool) {
+func (cqc *CrossQueryCache) isEndorsorInfoValid(queryMeta *pb.CrossQueryMeta, signs []*pb.SignatureInfo) ([]*pb.SignatureInfo, bool) {
 	signMap := map[string]*pb.SignatureInfo{}
 	for idx := range signs {
 		signMap[signs[idx].GetPublicKey()] = signs[idx]
@@ -204,18 +228,21 @@ func isEndorsorInfoValid(queryMeta *pb.CrossQueryMeta, signs []*pb.SignatureInfo
 		}
 	}
 	if len(signsValid) < int(queryMeta.GetChainMeta().GetMinEndorsorNum()) {
+		cqc.lg.Info("isEndorsorInfoValid failed")
 		return nil, false
 	}
 	return signsValid, true
 }
 
-func isEndorsorSignValid(signsValid []*pb.SignatureInfo, queryInfo *pb.CrossQueryInfo) bool {
+func (cqc *CrossQueryCache) isEndorsorSignValid(signsValid []*pb.SignatureInfo, queryInfo *pb.CrossQueryInfo) bool {
 	reqData, err := json.Marshal(queryInfo.GetRequest())
 	if err != nil {
+		cqc.lg.Info("Marshal Request failed", "err", err)
 		return false
 	}
-	resData, err := json.Marshal(queryInfo.GetRequest())
+	resData, err := json.Marshal(queryInfo.GetResponse())
 	if err != nil {
+		cqc.lg.Info("Marshal Response failed", "err", err)
 		return false
 	}
 	cryptoClient, err := crypto_client.CreateCryptoClient(crypto_client.CryptoTypeDefault)
@@ -224,10 +251,12 @@ func isEndorsorSignValid(signsValid []*pb.SignatureInfo, queryInfo *pb.CrossQuer
 	for idx := range signsValid {
 		pk, err := cryptoClient.GetEcdsaPublicKeyFromJSON([]byte(signsValid[idx].GetPublicKey()))
 		if err != nil {
+			cqc.lg.Info("GetEcdsaPublicKeyFromJSON failed")
 			return false
 		}
 		ok, err := cryptoClient.VerifyECDSA(pk, signsValid[idx].GetSign(), digest)
 		if !ok || err != nil {
+			cqc.lg.Info("VerifyECDSA failed", "ok", ok, "err", err)
 			return false
 		}
 	}

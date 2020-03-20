@@ -575,7 +575,11 @@ func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-
+	crossQuery := env.GetModelCache().GetCrossQueryRWSets()
+	err = env.GetModelCache().PutCrossQueries(crossQuery)
+	if err != nil {
+		return false, err
+	}
 	_, writeSet, err := env.GetModelCache().GetRWSets()
 	if err != nil {
 		return false, err
