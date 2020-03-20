@@ -214,6 +214,19 @@ void calc_merkle_root(const std::string& txid, int txIndex,
     return;
 }
 
+bool check_signature(std::string addr, std::string pubkey, std::string digest,
+                     std::string sign) {
+    std::string calcAddr;
+    if (!xchain::crypto::addr_from_pubkey(pubkey, &calcAddr) ||
+        addr != calcAddr) {
+        return false;
+    }
+    if (!xchain::crypto::ecverify(pubkey, sign, digest)) {
+        return false;
+    }
+    return true;
+}
+
 // 将sibling拆分出来，客户端以','分割输入
 void split(const std::string& rawProofPath, std::vector<std::string>& proof) {
     if (rawProofPath == "") {
@@ -486,7 +499,7 @@ DEFINE_METHOD(XuperRelayer, putBlockHeader) {
         ctx->error(visualBlockid + " has existed already");
         return;
     }
-    // 验证blockid
+    // 验证blockid,判断blockid是否正确
     std::string blockidCalc = std::string(32, 'o');
     calc_blockid(blockHeader, blockidCalc);
     std::string visualBlockidCalc = std::string(64, 'o');
@@ -551,9 +564,29 @@ DEFINE_METHOD(XuperRelayer, putBlockHeader) {
             }
         }
     }
-    // 判断blockid是否正确
     // 判断矿工签名是否正确
-    // 判断2/3签名是否正确
+    // TODO: 判断proposer是合法的DPoS出块节点
+    if (!check_signature(blockHeader->proposer(), blockHeader->pubkey(),
+                         blockHeader->blockid(), blockHeader->sign())) {
+        ctx->error("proposer signature check failed");
+        return;
+    }
+
+    // 判断BFT的2/3签名是否正确
+    if (blockHeader->has_justify() && blockHeader->justify().has_signinfos()) {
+        // TODO: 判断BFT种的address是合法的DPoS出块节点
+        const relayer::QCSignInfos& qcSigns =
+            blockHeader->justify().signinfos();
+        for (int iter = 0; iter < qcSigns.qcsigninfos_size(); iter++) {
+            const relayer::SignInfo& qcSign = qcSigns.qcsigninfos(iter);
+            if (!check_signature(qcSign.address(), qcSign.publickey(),
+                                 blockHeader->justify().proposalid(),
+                                 qcSign.sign())) {
+                ctx->error("bft quorum cert signature check failed");
+                return;
+            }
+        }
+    }
 
     // 更新区块头信息
     blockHeader->SerializeToString(&blockHeaderStr);
