@@ -95,6 +95,7 @@ func (v *VMManager) RegisterSyscallService(syscall *bridge.SyscallService) {
 		SyscallService: syscall,
 		VMConfig:       vmconfig,
 		DebugLogger:    v.debugLogger,
+		TEEConfig:      v.config.TEEConfig,
 	})
 	if err != nil {
 		panic(err)

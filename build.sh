@@ -25,6 +25,8 @@ protoc -I core/contractsdk/pb core/contractsdk/pb/contract.proto \
        --go_out=paths=source_relative:core/contractsdk/go/pb
 protoc -I core/cmd/relayer/pb core/cmd/relayer/pb/relayer.proto \
        --go_out=core/cmd/relayer/pb
+protoc -I core/contract/teevm/pb core/contract/teevm/pb/tf.proto \
+       --go_out=paths=source_relative:core/contract/teevm/pb
 !
 
 # build wasm2c

@@ -501,6 +501,8 @@ github.com/xuperchain/wagon v0.6.1-0.20200121123450-b08562bb5f9a h1:VuqjnruTw/8h
 github.com/xuperchain/wagon v0.6.1-0.20200121123450-b08562bb5f9a/go.mod h1:PjShksGcTLuvtHxudQ7nOdlvlw2NdbZrTn8jvdY9Mkw=
 github.com/xuperchain/wagon v0.6.1-0.20200313164333-db544e251599 h1:xh8MpzUZFmNOpeJyiiBCYOJq7gq7nRBU647y6e78Qms=
 github.com/xuperchain/wagon v0.6.1-0.20200313164333-db544e251599/go.mod h1:PjShksGcTLuvtHxudQ7nOdlvlw2NdbZrTn8jvdY9Mkw=
+github.com/xuperdata/teesdk v0.0.5 h1:MRCbV0bZCjP5dskE4e5XYI0ZnQepN7WjuOF1aIue3Sc=
+github.com/xuperdata/teesdk v0.0.5/go.mod h1:JRg0I3jjEix5CGNw6RjjK0B3ouok3YRkSjjMaO+IekQ=
 go.etcd.io/bbolt v1.3.2/go.mod h1:IbVyRI1SCnLcuJnV2u8VeU0CEYM7e686BmAb1XKL+uU=
 go.opencensus.io v0.21.0/go.mod h1:mSImk1erAIZhrmZN+AvHh14ztQfjbGwt4TtuofqLduU=
 go.opencensus.io v0.22.0/go.mod h1:+kGneAE2xo2IficOXnaByMWTGM9T73dGwxeWcUqIpI8=

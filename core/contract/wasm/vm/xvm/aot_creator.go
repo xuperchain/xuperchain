@@ -10,6 +10,7 @@ import (
 	"github.com/xuperchain/xuperchain/core/common/config"
 	"github.com/xuperchain/xuperchain/core/common/log"
 	"github.com/xuperchain/xuperchain/core/contract/bridge"
+	"github.com/xuperchain/xuperchain/core/contract/teevm"
 	"github.com/xuperchain/xuperchain/core/contract/wasm/vm"
 	"github.com/xuperchain/xuperchain/core/xvm/compile"
 	"github.com/xuperchain/xuperchain/core/xvm/exec"
@@ -101,11 +102,18 @@ func (x *xvmCreator) getContractCodeCache(name string, cp vm.ContractCodeProvide
 }
 
 func (x *xvmCreator) MakeExecCode(libpath string) (exec.Code, error) {
-	resolver := exec.NewMultiResolver(
+	resolvers := []exec.Resolver{
 		gowasm.NewResolver(),
 		emscripten.NewResolver(),
 		newSyscallResolver(x.config.SyscallService),
 		builtinResolver,
+	}
+	//AOT only for experiment; 
+	if x.config.TEEConfig != nil && x.config.TEEConfig.Enable {
+		resolvers = append(resolvers, teevm.NewTrustFunctionResolver(x.config.TEEConfig));
+	}
+	resolver := exec.NewMultiResolver(
+		resolvers...
 	)
 	return exec.NewAOTCode(libpath, resolver)
 }

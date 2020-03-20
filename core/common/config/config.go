@@ -6,6 +6,7 @@ import (
 
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
+	"github.com/xuperdata/teesdk"
 	"github.com/syndtr/goleveldb/leveldb/errors"
 )
 
@@ -177,6 +178,7 @@ type WasmConfig struct {
 	EnableDebugLog bool
 	DebugLog       LogConfig
 	EnableUpgrade  bool
+	TEEConfig      *teesdk.TEEConfig  `yaml:"-"`
 }
 
 func (w *WasmConfig) applyFlags(flags *pflag.FlagSet) {
@@ -245,6 +247,7 @@ type NodeConfig struct {
 	//     相邻节点在没有相同块的情况下通过GetBlock主动获取块数据.
 	//  3. Mixed_BroadCast_Mode是指出块节点将新块用Full_BroadCast_Mode模式广播，其他节点使用Interactive_BroadCast_Mode
 	BlockBroadcaseMode uint8 `yaml:"blockBroadcaseMode,omitempty"`
+	TEEConfig      teesdk.TEEConfig `yaml:"teeConfig,omitempty"`
 }
 
 // KernelConfig kernel config
@@ -401,6 +404,7 @@ func (nc *NodeConfig) loadConfigFile(configPath string, confName string) error {
 		fmt.Println("Unmarshal config from file error! error=", err.Error())
 		return err
 	}
+	nc.Wasm.TEEConfig = &nc.TEEConfig
 	return nil
 }
 

@@ -1,0 +1,36 @@
+syntax = "proto3";
+option optimize_for = LITE_RUNTIME;
+option go_package = "github.com/xuperchain/core/teevm/pb";
+
+//package xchain.contract.sdk;
+
+message SyscallHeader {
+  int64 ctxid = 1;
+}
+
+
+message TrustFunctionCallRequest {
+  SyscallHeader header = 1;
+  string method = 2;
+  string args = 3;
+  uint32 svn = 4;
+  string address = 5;
+}
+
+message KVPair {
+  string key = 1;
+  string value = 2;
+}
+
+message KVPairs {
+  repeated KVPair kv = 1;
+}
+
+// result of trust call must return a key-value array, key is plain, and value is cipher,
+// then be persisted by put_object.
+message TrustFunctionCallResponse {
+  oneof results {
+    string plaintext = 2;
+    KVPairs kvs = 3;
+  }
+}
