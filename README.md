@@ -8,6 +8,9 @@
 
 [![Build Status](https://travis-ci.org/xuperchain/xuperchain.svg?branch=master)](https://travis-ci.org/xuperchain/xuperchain)
 [![Go Report Card](https://goreportcard.com/badge/github.com/xuperchain/xuperchain)](https://goreportcard.com/report/github.com/xuperchain/xuperchain)
+[![GolangCI](https://golangci.com/badges/github.com/golangci/golangci-lint.svg)](https://golangci.com)
+[![License](https://img.shields.io/github/license/xuperchain/xuperchain?style=flat-square)](/LICENSE)
+[![Release](https://img.shields.io/github/v/release/xuperchain/xuperchain?style=flat-square)](https://github.com/xuperchain/xuperchain/releases/latest)
 
 [中文说明](#中文说明-1)
 -----
