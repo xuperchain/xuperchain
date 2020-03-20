@@ -550,7 +550,9 @@ DEFINE_METHOD(XuperRelayer, putBlockHeader) {
             return;
         }
     } else {
-        // 在分支上添加
+        // 在分支上添加，默认in_trunk是false
+        blockHeader->set_in_trunk(false);
+        // 如果分支高度比当前主干高，发生主干切换
         if (preBlockHeader->height() + 1 > meta->trunk_height()) {
             // 分支变主干
             bool succ = handleFork(ctx, meta->tip_blockid(), visualPreHash,
