@@ -2,6 +2,9 @@ package cmd
 
 import (
 	"fmt"
+	"io/ioutil"
+	"log"
+	"os"
 
 	"github.com/spf13/cobra"
 )
@@ -11,6 +14,10 @@ var (
 
 	rootOptions RootOptions
 	version     string
+)
+
+var (
+	logger = log.New(ioutil.Discard, "xdev ", log.LstdFlags|log.Lshortfile)
 )
 
 type RootOptions struct {
@@ -27,10 +34,22 @@ func rootCommand() *cobra.Command {
 		SilenceUsage:  true,
 		Version:       version,
 	}
+	initRootCommand(rootCmd)
 	for _, cmdFunc := range commandFuncs {
 		rootCmd.AddCommand(cmdFunc())
 	}
 	return rootCmd
+}
+
+func initRootCommand(cmd *cobra.Command) {
+	var verbose bool
+	rootFlags := cmd.PersistentFlags()
+	rootFlags.BoolVarP(&verbose, "verbose", "v", false, "show debug message")
+	cobra.OnInitialize(func() {
+		if verbose {
+			logger.SetOutput(os.Stderr)
+		}
+	})
 }
 
 func SetVersion(ver, date, commit string) {

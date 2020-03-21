@@ -2,7 +2,8 @@
 #include <memory>
 #include "xchain/contract.pb.h"
 
-extern "C" int xvm_make_tx(const char* txptr, int txlen, char** outpptr);
+extern "C" int xvm_make_tx(const char* txptr, int txlen, char** outpptr,
+                           int* outlen);
 
 namespace pb = xchain::contract::sdk;
 
@@ -35,13 +36,15 @@ void Transaction::init(const pb::Transaction& pbtx) {
 
 bool Transaction::from_raw(const std::string& raw_tx) {
     char* buf = NULL;
-    int ret = xvm_make_tx((const char*)&raw_tx[0], raw_tx.size(), &buf);
+    int buflen = 0;
+    int ret = 0;
+    ret = xvm_make_tx((const char*)&raw_tx[0], raw_tx.size(), &buf, &buflen);
     if (ret != 0) {
         return false;
     }
     std::unique_ptr<char> mem_guard(buf);
     pb::Transaction tx;
-    if (!tx.ParseFromString(buf)) {
+    if (!tx.ParseFromArray(buf, buflen)) {
         return false;
     }
     init(tx);

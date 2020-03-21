@@ -1,0 +1,14 @@
+coverage:
+  precision: 2
+  round: down
+  range: "30...80"
+
+parsers:
+  gcov:
+    branch_detection:
+      conditional: yes
+      loop: yes
+      method: no
+      macro: no
+
+comment: false
