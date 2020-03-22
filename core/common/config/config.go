@@ -182,13 +182,14 @@ type WasmConfig struct {
 
 // copy from https://github.com/xuperdata/teesdk/blob/master/config.go to keep code clear 
 type TEEConfig struct {
-	Svn      uint32         `yaml:"svn"`
-	Enable   bool           `yaml:"enable"`
-	TMSPort  int32          `yaml:"tmsport"`
-	TDFSPort int32          `yaml:"tdfsport"`
-	Uid      string         `yaml:"uid"`
-	Token    string         `yaml:"token"`
-	Auditors []*TEEAuditors `yaml:"auditors"`
+	Svn        uint32         `yaml:"svn"`
+	Enable     bool           `yaml:"enable"`
+	TMSPort    int32          `yaml:"tmsport"`
+	TDFSPort   int32          `yaml:"tdfsport"`
+	Uid        string         `yaml:"uid"`
+	Token      string         `yaml:"token"`
+	Auditors   []*TEEAuditors `yaml:"auditors"`
+	PluginPath string	  `yaml:"pluginPath"`
 }
 
 type TEEAuditors struct {

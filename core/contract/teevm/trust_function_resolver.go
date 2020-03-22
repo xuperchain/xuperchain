@@ -2,53 +2,49 @@ package teevm
 
 import (
 	"encoding/json"
-	"fmt"
-
-	"github.com/golang/protobuf/proto"
-	"github.com/xuperdata/teesdk"
+	"errors"
+	"plugin"
 
 	"github.com/xuperchain/xuperchain/core/common/config"
 	"github.com/xuperchain/xuperchain/core/common/log"
-	"github.com/xuperchain/xuperchain/core/contract/teevm/pb"
 	"github.com/xuperchain/xuperchain/core/xvm/exec"
 	"github.com/xuperchain/xuperchain/core/xvm/runtime/emscripten"
 )
 
 // TrustFunctionResolver
 type TrustFunctionResolver struct {
-	client  *teesdk.TEEClient
-	tconfig *teesdk.TEEConfig
-}
-
-func configConvert(conf *config.TEEConfig) (*teesdk.TEEConfig, error) {
-	data, err := json.Marshal(conf)
-	if err != nil {
-		return nil, err
-	}
-	var tcfg teesdk.TEEConfig
-	if err := json.Unmarshal(data, &tcfg); err != nil {
-		return nil, err
-	}
-	return &tcfg, nil
+	handler *plugin.Plugin
+	runFunc func([]byte) ([]byte, error)
 }
 
 var _ exec.Resolver = (*TrustFunctionResolver)(nil)
 
+//
+//
 func NewTrustFunctionResolver(conf *config.TEEConfig) (*TrustFunctionResolver, error) {
-	cfg, err := configConvert(conf)
+	if conf.Enable == false {
+		return nil, errors.New("private ledger is not enabled")
+	}
+	data, err := json.Marshal(conf)
 	if err != nil {
 		return nil, err
 	}
-	client := teesdk.NewTEEClient(cfg.Uid,
-		cfg.Token,
-		cfg.Auditors[0].PublicDer,
-		cfg.Auditors[0].Sign,
-		cfg.Auditors[0].EnclaveInfoConfig,
-		cfg.TMSPort,
-		cfg.TDFSPort)
-	return &TrustFunctionResolver{
-		client:  client,
-		tconfig: cfg}, nil
+	p, err := plugin.Open(conf.PluginPath)
+	if err != nil {
+		return nil, err
+	}
+	initFunc, err := p.Lookup("Init")
+	if err != nil {
+		return nil, err
+	}
+	if err := initFunc.(func(string) error)(string(data)); err != nil {
+		return nil, err
+	}
+	runFunc, err := p.Lookup("Run")
+	if err != nil {
+		return nil, err
+	}
+	return &TrustFunctionResolver{handler: p, runFunc: runFunc.(func([]byte) ([]byte, error))}, nil
 }
 
 func (tf *TrustFunctionResolver) ResolveGlobal(module, name string) (int64, bool) {
@@ -67,46 +63,14 @@ func (tf *TrustFunctionResolver) ResolveFunc(module, name string) (interface{}, 
 
 func (tf *TrustFunctionResolver) tfcall(ctx exec.Context, inptr, inlen, outpptr, outlenptr uint32) uint32 {
 	var (
-		responseBuf, tmpbuf []byte
-		err                 error
-		kvs                 *pb.TrustFunctionCallResponse_Kvs
-		k, v, tmpbufstr     string
-		plainMap            map[string]string
-		retCode             uint32 = 0
+		retCode uint32 = 0
 	)
 	codec := exec.NewCodec(ctx)
 	requestBuf := codec.Bytes(inptr, inlen)
-	in := &pb.TrustFunctionCallRequest{}
-	if err = proto.Unmarshal(requestBuf, in); err != nil {
-		goto ret
-	}
-	if tf.tconfig != nil && !tf.tconfig.Enable || tf.client == nil {
-		err = fmt.Errorf("IsTFCEnabled is false, this node doest not enable TEE")
-		goto ret
-	}
-	if tmpbuf, err = json.Marshal(teesdk.FuncCaller{
-		Method: in.Method, Args: in.Args, Svn: in.Svn,
-		Address: in.Address}); err != nil {
-		goto ret
-	}
-	if tmpbufstr, err = tf.client.Submit("xchaintf", string(tmpbuf)); err != nil {
-		goto ret
-	}
-	if err = json.Unmarshal([]byte(tmpbufstr), &plainMap); err != nil {
-		goto ret
-	}
-	kvs = &pb.TrustFunctionCallResponse_Kvs{
-		Kvs: &pb.KVPairs{},
-	}
-	for k, v = range plainMap {
-		kvs.Kvs.Kv = append(kvs.Kvs.Kv, &pb.KVPair{Key: k, Value: v})
-	}
-	responseBuf, err = proto.Marshal(&pb.TrustFunctionCallResponse{Results: kvs})
+	responseBuf, err := tf.runFunc(requestBuf)
 
-ret:
 	if err != nil {
-		err = fmt.Errorf("TrustFunctionCall: " + err.Error())
-		log.Error("contract trust function call error", "method", in.Method, "error", err)
+		log.Error("contract trust function call error", "error", err)
 		copy(responseBuf, []byte(err.Error()))
 		retCode = 1
 	}

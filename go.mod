@@ -38,7 +38,6 @@ require (
 	github.com/syndtr/goleveldb v1.0.0
 	github.com/xuperchain/log15 v0.0.0-20190620081506-bc88a9198230
 	github.com/xuperchain/wagon v0.6.1-0.20200313164333-db544e251599
-	github.com/xuperdata/teesdk v0.0.5
 	golang.org/x/crypto v0.0.0-20190927123631-a832865fa7ad
 	golang.org/x/net v0.0.0-20190926025831-c00fd9afed17
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
