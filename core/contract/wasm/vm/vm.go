@@ -1,8 +1,8 @@
 package vm
 
 import (
-	"github.com/xuperchain/xuperchain/core/common/log"
 	"github.com/xuperchain/xuperchain/core/common/config"
+	"github.com/xuperchain/xuperchain/core/common/log"
 	"github.com/xuperchain/xuperchain/core/contract"
 	"github.com/xuperchain/xuperchain/core/contract/bridge"
 	"github.com/xuperchain/xuperchain/core/pb"

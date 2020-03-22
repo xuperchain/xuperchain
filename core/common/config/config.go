@@ -180,7 +180,7 @@ type WasmConfig struct {
 	TEEConfig      *TEEConfig `yaml:"-"`
 }
 
-// copy from https://github.com/xuperdata/teesdk/blob/master/config.go to keep code clear 
+// copy from https://github.com/xuperdata/teesdk/blob/master/config.go to keep code clear
 type TEEConfig struct {
 	Svn        uint32         `yaml:"svn"`
 	Enable     bool           `yaml:"enable"`
@@ -189,7 +189,7 @@ type TEEConfig struct {
 	Uid        string         `yaml:"uid"`
 	Token      string         `yaml:"token"`
 	Auditors   []*TEEAuditors `yaml:"auditors"`
-	PluginPath string	  `yaml:"pluginPath"`
+	PluginPath string         `yaml:"pluginPath"`
 }
 
 type TEEAuditors struct {
