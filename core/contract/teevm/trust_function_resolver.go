@@ -33,18 +33,26 @@ func NewTrustFunctionResolver(conf *config.TEEConfig) (*TrustFunctionResolver, e
 	if err != nil {
 		return nil, err
 	}
-	initFunc, err := p.Lookup("Init")
+	initFuncRaw, err := p.Lookup("Init")
 	if err != nil {
 		return nil, err
 	}
-	if err := initFunc.(func(string) error)(string(data)); err != nil {
+	initFunc, ok := initFuncRaw.(func(string) error)
+	if !ok {
+		return nil, errors.New(conf.PluginPath + " doesn't implement Init(string) error")
+	}
+	if err := initFunc(string(data)); err != nil {
 		return nil, err
 	}
-	runFunc, err := p.Lookup("Run")
+	runFuncRaw, err := p.Lookup("Run")
 	if err != nil {
 		return nil, err
 	}
-	return &TrustFunctionResolver{handler: p, runFunc: runFunc.(func([]byte) ([]byte, error))}, nil
+	runFunc, ok := runFuncRaw.(func([]byte) ([]byte, error))
+	if !ok {
+		return nil, errors.New(conf.PluginPath + " doesn't implement Run([]byte) ([]byte, error)")
+	}
+	return &TrustFunctionResolver{handler: p, runFunc: runFunc}, nil
 }
 
 func (tf *TrustFunctionResolver) ResolveGlobal(module, name string) (int64, bool) {
