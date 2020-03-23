@@ -177,6 +177,14 @@ type WasmConfig struct {
 	EnableDebugLog bool
 	DebugLog       LogConfig
 	EnableUpgrade  bool
+	TEEConfig      TEEConfig `yaml:"teeConfig,omitempty"`
+}
+
+// TEEConfig sets up the private ledger
+type TEEConfig struct {
+	Enable     bool   `yaml:"enable"`     // enable: on or off to enable private ledger
+	PluginPath string `yaml:"pluginPath"` // path to dynamic library
+	ConfigPath string `yaml:"configPath"` // config path for the dynamic
 }
 
 func (w *WasmConfig) applyFlags(flags *pflag.FlagSet) {
