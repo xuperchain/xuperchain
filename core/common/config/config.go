@@ -177,25 +177,14 @@ type WasmConfig struct {
 	EnableDebugLog bool
 	DebugLog       LogConfig
 	EnableUpgrade  bool
-	TEEConfig      *TEEConfig `yaml:"-"`
+	TEEConfig      TEEConfig `yaml:"teeConfig,omitempty"`
 }
 
-// copy from https://github.com/xuperdata/teesdk/blob/master/config.go to keep code clear
+// TEEConfig sets up the private ledger
 type TEEConfig struct {
-	Svn        uint32         `yaml:"svn"`
-	Enable     bool           `yaml:"enable"`
-	TMSPort    int32          `yaml:"tmsport"`
-	TDFSPort   int32          `yaml:"tdfsport"`
-	Uid        string         `yaml:"uid"`
-	Token      string         `yaml:"token"`
-	Auditors   []*TEEAuditors `yaml:"auditors"`
-	PluginPath string         `yaml:"pluginPath"`
-}
-
-type TEEAuditors struct {
-	PublicDer         string `yaml:"publicder"`
-	Sign              string `yaml:"sign"`
-	EnclaveInfoConfig string `yaml:"enclaveinfoconfig"`
+	Enable     bool   `yaml:"enable"`     // enable: on or off to enable private ledger
+	PluginPath string `yaml:"pluginPath"` // path to dynamic library
+	ConfigPath string `yaml:"configPath"` // config path for the dynamic
 }
 
 func (w *WasmConfig) applyFlags(flags *pflag.FlagSet) {
@@ -263,8 +252,7 @@ type NodeConfig struct {
 	//  2. 一种是问询式块广播模式(Interactive_BroadCast_Mode)，即先广播新块的头部给相邻节点，
 	//     相邻节点在没有相同块的情况下通过GetBlock主动获取块数据.
 	//  3. Mixed_BroadCast_Mode是指出块节点将新块用Full_BroadCast_Mode模式广播，其他节点使用Interactive_BroadCast_Mode
-	BlockBroadcaseMode uint8     `yaml:"blockBroadcaseMode,omitempty"`
-	TEEConfig          TEEConfig `yaml:"teeConfig,omitempty"`
+	BlockBroadcaseMode uint8 `yaml:"blockBroadcaseMode,omitempty"`
 }
 
 // KernelConfig kernel config
@@ -421,7 +409,6 @@ func (nc *NodeConfig) loadConfigFile(configPath string, confName string) error {
 		fmt.Println("Unmarshal config from file error! error=", err.Error())
 		return err
 	}
-	nc.Wasm.TEEConfig = &nc.TEEConfig
 	return nil
 }
 

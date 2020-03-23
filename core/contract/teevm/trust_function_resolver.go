@@ -1,7 +1,6 @@
 package teevm
 
 import (
-	"encoding/json"
 	"errors"
 	"plugin"
 
@@ -21,13 +20,9 @@ var _ exec.Resolver = (*TrustFunctionResolver)(nil)
 
 //
 //
-func NewTrustFunctionResolver(conf *config.TEEConfig) (*TrustFunctionResolver, error) {
+func NewTrustFunctionResolver(conf config.TEEConfig) (*TrustFunctionResolver, error) {
 	if conf.Enable == false {
 		return nil, errors.New("private ledger is not enabled")
-	}
-	data, err := json.Marshal(conf)
-	if err != nil {
-		return nil, err
 	}
 	p, err := plugin.Open(conf.PluginPath)
 	if err != nil {
@@ -41,7 +36,7 @@ func NewTrustFunctionResolver(conf *config.TEEConfig) (*TrustFunctionResolver, e
 	if !ok {
 		return nil, errors.New(conf.PluginPath + " doesn't implement Init(string) error")
 	}
-	if err := initFunc(string(data)); err != nil {
+	if err := initFunc(conf.ConfigPath); err != nil {
 		return nil, err
 	}
 	runFuncRaw, err := p.Lookup("Run")

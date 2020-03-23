@@ -15,20 +15,13 @@ DEFINE_METHOD(Counter, initialize) {
     ctx->ok("initialize succeed");
 }
 
-DEFINE_METHOD(Counter, increase) {
+DEFINE_METHOD(Counter, store) {
     xchain::Context* ctx = self.context();
     const std::string& key = ctx->arg("data");
-    std::cout << "duanbing data: " << key.c_str() << std::endl;
     TrustOperators to(ctx->initiator());
-    std::map<std::string, std::string> values;
-    auto ok = to.store(0, key, &values);
-    std::cout << "duanbing store ok: " << ok << std::endl; 
-    std::string debug;
-    for (auto &one : values) { 
-        ctx->put_object(one.first, one.second);
-        debug += one.first + ":" + one.second + ",";
-    }
-    std::cout << "duanbing increase done " << debug.c_str() << std::endl;
+    auto ok = to.store(ctx, 0, key);
+    std::string debug = "done";
+    if (!ok) {  debug = "error"; } 
     ctx->ok(debug);
 }
 

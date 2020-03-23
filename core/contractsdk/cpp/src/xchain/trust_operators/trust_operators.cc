@@ -21,8 +21,7 @@ bool tfcall(const TrustFunctionCallRequest& request, TrustFunctionCallResponse* 
 
 TrustOperators::TrustOperators(const std::string& addr):_address(addr){}
 
-bool TrustOperators::store(const uint32_t svn, const std::string& args,
-                           std::map<std::string, std::string>* out) {
+bool TrustOperators::store(xchain::Context* ctx, const uint32_t svn, const std::string& args) {
     TrustFunctionCallRequest req;
     req.set_method("store");
     req.set_args(args);
@@ -35,7 +34,10 @@ bool TrustOperators::store(const uint32_t svn, const std::string& args,
     assert(resp.has_kvs()); 
     auto kvs = resp.kvs();
     for (int i = 0; i < kvs.kv_size(); i++) {
-        out->insert({kvs.kv(i).key(), kvs.kv(i).value()});
+        auto ok = ctx->put_object(kvs.kv(i).key(), kvs.kv(i).value());
+	if (!ok) {
+	    return false;
+	}
     }
     return true;
 }

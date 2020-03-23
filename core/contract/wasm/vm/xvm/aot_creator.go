@@ -109,7 +109,7 @@ func (x *xvmCreator) MakeExecCode(libpath string) (exec.Code, error) {
 		builtinResolver,
 	}
 	//AOT only for experiment;
-	if x.config.TEEConfig != nil && x.config.TEEConfig.Enable {
+	if x.config.TEEConfig.Enable {
 		teeResolver, err := teevm.NewTrustFunctionResolver(x.config.TEEConfig)
 		if err != nil {
 			return nil, err
