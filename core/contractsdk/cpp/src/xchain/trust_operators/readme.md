@@ -1,2 +1,2 @@
 # Usage
-protoc  --cpp_out=. -I../../../../../contract/teevm/pb tf.proto
+tf.proto is from https://github.com/xuperdata/teesdk/tree/master/xchain_plugin/pb
