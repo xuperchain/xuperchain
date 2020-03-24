@@ -34,15 +34,15 @@ type ChainRegister interface {
 
 // Kernel is the kernel contract
 type Kernel struct {
-	datapath          string
-	log               log.Logger
-	register          ChainRegister
-	context           *contract.TxContext
-	minNewChainAmount *big.Int        //创建平行链的最小花费
-	newChainWhiteList map[string]bool //能创建链的address白名单
-	isCreateChain     bool            //是否允许任何人创建链
-	mutex             *sync.Mutex
-	bcName            string
+	datapath                   string
+	log                        log.Logger
+	register                   ChainRegister
+	context                    *contract.TxContext
+	minNewChainAmount          *big.Int        //创建平行链的最小花费
+	newChainWhiteList          map[string]bool //能创建链的address白名单
+	enableCreateChainWhiteList bool            //是否允许任何人创建链
+	mutex                      *sync.Mutex
+	bcName                     string
 }
 
 var (
@@ -84,9 +84,9 @@ func (k *Kernel) SetNewChainWhiteList(whiteList map[string]bool) {
 	k.newChainWhiteList = whiteList
 }
 
-// SetIsCreateChain set if isCreateChain config, if true, that any address can create new chain
-func (k *Kernel) SetIsCreateChain(isCreateChain bool) {
-	k.isCreateChain = isCreateChain
+// SetEnableCreateChainWhiteList set if isCreateChain config, if true, that any address can create new chain
+func (k *Kernel) SetEnableCreateChainWhiteList(enableCreateChainWhiteList bool) {
+	k.enableCreateChainWhiteList = enableCreateChainWhiteList
 }
 
 // GetKVEngineType get kv engine type from xuper.json
@@ -503,8 +503,8 @@ func (k *Kernel) Run(desc *contract.TxDesc) error {
 			return ErrPermissionDenied
 		}
 
-		if !desc.Tx.FromAddrInList(k.newChainWhiteList) && !k.isCreateChain {
-			k.log.Warn("tx from addr not in whitelist to create blockchain", "isCreateChain", k.isCreateChain)
+		if !desc.Tx.FromAddrInList(k.newChainWhiteList) && !k.enableCreateChainWhiteList {
+			k.log.Warn("tx from addr not in whitelist to create blockchain", "enableCreateChainWhiteList", k.enableCreateChainWhiteList)
 			return ErrAddrNotInWhiteList
 		}
 		investment := desc.Tx.GetAmountByAddress(bcName)
