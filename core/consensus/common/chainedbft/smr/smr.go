@@ -261,7 +261,6 @@ func (s *Smr) ProcessProposal(viewNumber int64, proposalID,
 
 // handleReceivedMsg used to process msg received from network
 func (s *Smr) handleReceivedMsg(msg *p2p_pb.XuperMessage) error {
-	s.slog.Warn("handleReceivedMsg", "lenSubscribeList", len(s.subscribeList))
 	s.slog.Info("handleReceivedMsg receive msg", "logid",
 		msg.GetHeader().GetLogid(), "type", msg.GetHeader().GetType())
 
