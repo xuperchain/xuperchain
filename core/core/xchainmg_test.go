@@ -406,6 +406,7 @@ func InitCreateBlockChain(t *testing.T) {
 	kLogger.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
 	kl.Init(workSpace, kLogger, nil, "xuper")
 	kl.SetNewChainWhiteList(map[string]bool{BobAddress: true})
+	kl.SetIsCreateChain(false)
 	/*
 		utxoVM, _ := utxo.MakeUtxoVM("xuper", ledger, workSpace, "", "", []byte(""), nil, 5000, 60, 500, nil, false, DefaultKvEngine, crypto_client.CryptoTypeDefault)
 		utxoVM.RegisterVM("kernel", kl, global.VMPrivRing0)*/
