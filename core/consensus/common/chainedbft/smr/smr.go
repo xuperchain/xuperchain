@@ -85,10 +85,6 @@ func NewSmr(
 		slog.Error("smr updateQcStatus error", "error", err)
 		return nil, err
 	}
-	if err := smr.RegisterToNetwork(); err != nil {
-		slog.Error("smr RegisterToNetwork error", "error", err)
-		return nil, err
-	}
 	return smr, nil
 }
 
@@ -214,7 +210,8 @@ func (s *Smr) GetGenerateQC() (*pb.QuorumCert, error) {
 			res.SignInfos = v.(*pb.QCSignInfos)
 		}
 	}
-	s.slog.Debug("GetGenerateQC res", "ProposalId", hex.EncodeToString(res.GetProposalId()), "res", res)
+	s.slog.Info("GetGenerateQC res", "ProposalId", hex.EncodeToString(res.GetProposalId()),
+		"lockedQCId", hex.EncodeToString(s.lockedQC.GetProposalId()))
 	return res, nil
 }
 
@@ -253,7 +250,7 @@ func (s *Smr) ProcessProposal(viewNumber int64, proposalID,
 	}
 	netMsg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion3, s.bcname, "",
 		p2p_pb.XuperMessage_CHAINED_BFT_NEW_PROPOSAL_MSG, msgBuf, p2p_pb.XuperMessage_NONE)
-	s.slog.Debug("ProcessProposal proposal msg", "netMsg", netMsg)
+	s.slog.Info("ProcessProposal proposal msg", "netMsg", netMsg)
 	opts := []p2p_base.MessageOption{
 		p2p_base.WithBcName(s.bcname),
 		p2p_base.WithTargetPeerAddrs(s.getReplicasURL()),
@@ -264,6 +261,7 @@ func (s *Smr) ProcessProposal(viewNumber int64, proposalID,
 
 // handleReceivedMsg used to process msg received from network
 func (s *Smr) handleReceivedMsg(msg *p2p_pb.XuperMessage) error {
+	s.slog.Warn("handleReceivedMsg", "lenSubscribeList", len(s.subscribeList))
 	s.slog.Info("handleReceivedMsg receive msg", "logid",
 		msg.GetHeader().GetLogid(), "type", msg.GetHeader().GetType())
 
@@ -358,7 +356,7 @@ func (s *Smr) handleReceivedProposal(msg *p2p_pb.XuperMessage) error {
 	// prePropsQC is the propsQC's ProposalMsg's JustifyQC
 	// prePrePropsQC <- prePropsQC <- propsQC
 	propsQC := propMsg.GetProposalQC()
-	s.slog.Debug("handleReceivedProposal propsQC", "propsQC", propsQC)
+	s.slog.Info("handleReceivedProposal propsQC", "propsQC", propsQC)
 
 	prePropsQC, isFirstProposal, err := s.callPreQcWithStatus(propsQC)
 	if err != nil {
@@ -412,7 +410,7 @@ func (s *Smr) callPreQcWithStatus(qc *pb.QuorumCert) (*pb.QuorumCert, bool, erro
 	}
 
 	prePropsQC, err := s.externalCons.CallPreQc(qc)
-	s.slog.Debug("callPreQcWithStatus get prePropsQC", "prePropsQC", prePropsQC)
+	s.slog.Info("callPreQcWithStatus get prePropsQC", "prePropsQC", prePropsQC)
 	if err != nil {
 		s.slog.Error("callPreQcWithStatus CallPreQc call prePropsQC error", "err", err)
 		return nil, false, err
@@ -437,11 +435,11 @@ func (s *Smr) updateQcStatus(proposalQC, generateQC, lockedQC *pb.QuorumCert) er
 	s.lockedQC = lockedQC
 	s.generateQC = generateQC
 	s.proposalQC = proposalQC
-	s.lk.Unlock()
 	// debuglog
-	s.slog.Debug("updateQcStatus result", "proposalQCId", hex.EncodeToString(proposalQC.GetProposalId()))
-	s.slog.Debug("updateQcStatus result", "generateQCId", hex.EncodeToString(generateQC.GetProposalId()))
-	s.slog.Debug("updateQcStatus result", "lockedQCId", hex.EncodeToString(lockedQC.GetProposalId()))
+	s.slog.Info("updateQcStatus result", "proposalQCId", hex.EncodeToString(proposalQC.GetProposalId()))
+	s.slog.Info("updateQcStatus result", "generateQCId", hex.EncodeToString(generateQC.GetProposalId()))
+	s.slog.Info("updateQcStatus result", "lockedQCId", hex.EncodeToString(lockedQC.GetProposalId()))
+	s.lk.Unlock()
 	return nil
 }
 
@@ -502,11 +500,11 @@ func (s *Smr) addViewMsg(msg *pb.ChainedBftPhaseMessage) error {
 	// add JustifyQC
 	justify := msg.GetJustifyQC()
 	if justify != nil {
-		s.slog.Debug("addViewMsg GetJustifyQC not nil", "justifyId", hex.EncodeToString(justify.GetProposalId()),
+		s.slog.Info("addViewMsg GetJustifyQC not nil", "justifyId", hex.EncodeToString(justify.GetProposalId()),
 			"proposalId", hex.EncodeToString(s.proposalQC.GetProposalId()), "GetJustifyQC.SignInfos", justify.GetSignInfos())
 		if s.proposalQC != nil && bytes.Equal(s.proposalQC.GetProposalId(), justify.GetProposalId()) {
 			if ok, _ := s.IsQuorumCertValidate(justify); ok {
-				s.slog.Debug("addViewMsg update local as a new leader")
+				s.slog.Info("addViewMsg update local as a new leader")
 				s.updateQcStatus(nil, s.proposalQC, s.generateQC)
 				s.qcVoteMsgs.Store(string(justify.GetProposalId()), justify.GetSignInfos())
 			}
@@ -572,12 +570,12 @@ func (s *Smr) checkVoteNum(proposalID []byte) bool {
 		return false
 	}
 	voteMsgs := v.(*pb.QCSignInfos)
-	s.slog.Debug("checkVoteNum", "actual", len(voteMsgs.GetQCSignInfos()), "require", (len(s.validates)-1)*2/3)
+	s.slog.Info("checkVoteNum", "actual", len(voteMsgs.GetQCSignInfos()), "require", (len(s.validates)-1)*2/3)
 	if len(voteMsgs.GetQCSignInfos()) > (len(s.validates)-1)*2/3 {
-		s.slog.Debug("checkVoteNum", "res", true, "proposalID", hex.EncodeToString(proposalID))
+		s.slog.Info("checkVoteNum", "res", true, "proposalID", hex.EncodeToString(proposalID))
 		return true
 	}
-	s.slog.Debug("checkVoteNum", "res", false, "proposalID", hex.EncodeToString(proposalID))
+	s.slog.Info("checkVoteNum", "res", false, "proposalID", hex.EncodeToString(proposalID))
 	return false
 }
 

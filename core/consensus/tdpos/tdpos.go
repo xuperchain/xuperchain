@@ -576,14 +576,14 @@ func (tp *TDpos) ProcessBeforeMiner(timestamp int64) (map[string]interface{}, bo
 					tp.log.Warn("ProcessBeforeMiner ledger truncate failed", "error", err)
 					return nil, false
 				}
-			}
-		}
 
-		qc, err := tp.bftPaceMaker.CurrentQCHigh([]byte(""))
-		if err != nil {
-			return nil, false
+			}
+			qc, err := tp.bftPaceMaker.CurrentQCHigh([]byte(""))
+			if err != nil || qc == nil {
+				return nil, false
+			}
+			res["quorum_cert"] = qc
 		}
-		res["quorum_cert"] = qc
 	}
 
 	res["type"] = TYPE
