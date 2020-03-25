@@ -37,9 +37,5 @@ func (uv *UtxoVM) ResolveChain(chainName string) (*pb.CrossQueryMeta, error) {
 	ctx.Release()
 	res := &pb.CrossQueryMeta{}
 	err = json.Unmarshal(invokeRes.Body, res)
-	uv.xlog.Info("ResolveChain get chain meta", "res", res)
-	if err != nil {
-		return nil, err
-	}
-	return res, nil
+	return res, err
 }

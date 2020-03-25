@@ -1,13 +1,13 @@
 #include "xchain/xchain.h"
 
-struct Hello : public xchain::Contract {};
+struct CrossQueryDemo : public xchain::Contract {};
 
-DEFINE_METHOD(Hello, initialize) {
+DEFINE_METHOD(CrossQueryDemo, initialize) {
     xchain::Context* ctx = self.context();
     ctx->ok("initialize succeed");
 }
 
-DEFINE_METHOD(Hello, cross_query) {
+DEFINE_METHOD(CrossQueryDemo, cross_query) {
     xchain::Context* ctx = self.context();
     xchain::Response response;
     ctx->cross_query("xuper://test.xuper?module=wasm&bcname=xuper&contract_name=counter&method_name=get", {{"key", "zq"}}, &response);

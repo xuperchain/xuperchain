@@ -8,8 +8,6 @@ import (
 	xchainpb "github.com/xuperchain/xuperchain/core/pb"
 )
 
-// TODO:zq
-
 const (
 	// XuperScheme define the xuper scheme
 	XuperScheme = "xuper"
@@ -56,6 +54,7 @@ func (ccu *CrossChainURI) GetQuery() url.Values {
 
 // CrossChainScheme define the interface of CrossChainScheme
 type CrossChainScheme interface {
+	GetName() string
 	GetCrossQueryRequest(*CrossChainURI, []*pb.ArgPair, string, []string) (*xchainpb.CrossQueryRequest, error)
 }
 
@@ -97,6 +96,11 @@ func (cxs *CrossXuperScheme) GetCrossQueryRequest(crossChainURI *CrossChainURI,
 		},
 	}
 	return crossQueryRequest, nil
+}
+
+// GetName return cross xuper scheme name
+func (cxs *CrossXuperScheme) GetName() string {
+	return XuperScheme
 }
 
 // GetChainScheme return chain scheme by scheme

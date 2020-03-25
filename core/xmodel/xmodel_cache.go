@@ -79,7 +79,7 @@ func NewXModelCacheWithInputs(vdatas []*xmodel_pb.VersionedData, utxoInputs []*p
 		xc.inputsCache.Put(rawKey, valBuf)
 	}
 	xc.utxoCache = NewUtxoCacheWithInputs(utxoInputs)
-	xc.crossQueryCache = NewCrossQueryCacheWirthData(crossQueries)
+	xc.crossQueryCache = NewCrossQueryCacheWithData(crossQueries)
 	return xc
 }
 
