@@ -257,8 +257,9 @@ type NodeConfig struct {
 
 // KernelConfig kernel config
 type KernelConfig struct {
-	MinNewChainAmount string          `yaml:"minNewChainAmount,omitempty"`
-	NewChainWhiteList map[string]bool `yaml:"newChainWhiteList,omitempty"`
+	MinNewChainAmount           string          `yaml:"minNewChainAmount,omitempty"`
+	NewChainWhiteList           map[string]bool `yaml:"newChainWhiteList,omitempty"`
+	DisableCreateChainWhiteList bool            `yaml:"disableCreateChainWhiteList,omitempty"`
 }
 
 // PruneOption ledger prune option
@@ -321,7 +322,8 @@ func (nc *NodeConfig) defaultNodeConfig() {
 	}
 	nc.DedupCacheSize = 50000
 	nc.Kernel = KernelConfig{
-		MinNewChainAmount: "0",
+		MinNewChainAmount:           "0",
+		DisableCreateChainWhiteList: false,
 	}
 	nc.DBCache = DBCacheConfig{
 		MemCacheSize: 128,  //MB for each leveldb
