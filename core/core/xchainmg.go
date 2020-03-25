@@ -96,6 +96,7 @@ func (xm *XChainMG) Init(log log.Logger, cfg *config.NodeConfig,
 	}
 	xm.rootKernel.SetNewChainWhiteList(cfg.Kernel.NewChainWhiteList)
 	xm.rootKernel.SetMinNewChainAmount(cfg.Kernel.MinNewChainAmount)
+	xm.rootKernel.SetDisableCreateChainWhiteList(cfg.Kernel.DisableCreateChainWhiteList)
 	/*for _, x := range xm.chains {
 		go x.SyncBlocks()
 	}*/
