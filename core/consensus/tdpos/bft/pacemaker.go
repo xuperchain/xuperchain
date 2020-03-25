@@ -55,13 +55,15 @@ func (dpm *DPoSPaceMaker) CurrentView() int64 {
 // NextNewView is used submit NewView event to bft network
 // in most case it means leader changed
 func (dpm *DPoSPaceMaker) NextNewView(viewNum int64, proposer, preProposer string) error {
-	if viewNum < dpm.currentView {
+	dpm.log.Info("NextNewView", "viewNum", viewNum, "dpm.currentView", dpm.currentView, "proposer", proposer, "preProposer", preProposer)
+	if viewNum < dpm.currentView-1 {
 		return fmt.Errorf("next view cannot smaller than current view number")
 	}
-
-	dpm.currentView = viewNum
 	err := dpm.cbft.ProcessNewView(viewNum, proposer, preProposer)
-	dpm.log.Info("bft NewView", "viewNum", viewNum, "proposer", proposer, "preProposer", preProposer)
+	if err == nil {
+		dpm.currentView = viewNum
+	}
+	dpm.log.Info("bft NewView", "viewNum", viewNum, "dpm.currentView", dpm.currentView, "proposer", proposer, "preProposer", preProposer, "err", err)
 	return err
 }
 
@@ -82,8 +84,7 @@ func (dpm *DPoSPaceMaker) NextNewProposal(proposalID []byte, data interface{}) e
 		return err
 	}
 	// set current view number to block height
-	dpm.currentView = block.GetBlock().GetHeight()
-	_, err = dpm.cbft.ProcessProposal(dpm.currentView, blockid, blockMsg)
+	_, err = dpm.cbft.ProcessProposal(block.GetBlock().GetHeight(), blockid, blockMsg)
 	if err != nil {
 		dpm.log.Warn("ProcessProposal failed", "error", err)
 		return err
@@ -120,8 +121,12 @@ func (dpm *DPoSPaceMaker) IsFirstProposal(qc *pb.QuorumCert) bool {
 func (dpm *DPoSPaceMaker) IsLastViewConfirmed() (bool, error) {
 	tipID := dpm.ledger.GetMeta().GetTipBlockid()
 	qc, err := dpm.cbft.GetGenerateQC()
-	// dpm.log.Debug("IsLastViewConfirmed get generate qc", "qc", qc,
-	// 	"proposalID", hex.EncodeToString(qc.GetProposalId()))
+	dpm.log.Info("IsLastViewConfirmed get generate qc",
+		"tipID", hex.EncodeToString(tipID))
+	if qc != nil {
+		dpm.log.Info("IsLastViewConfirmed get generate qc",
+			"proposalID", hex.EncodeToString(qc.GetProposalId()))
+	}
 	// qc is not valid or qc is valid but it's not the same with last block
 	if err != nil || bytes.Compare(qc.GetProposalId(), tipID) != 0 {
 		dpm.log.Warn("IsLastViewConfirmed check failed", "error", err)
