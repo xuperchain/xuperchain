@@ -73,9 +73,6 @@ var (
 )
 
 const (
-	// MaxReposting max repost times for broadcats
-	MaxReposting = 3000 // tx重试广播的最大批次，过多容易打爆对方的grpc连接数
-
 	TxidCacheGcTime = 180 * time.Second
 
 	// DefaultMessageCacheSize for p2p message

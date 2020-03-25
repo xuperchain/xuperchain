@@ -3,17 +3,13 @@ package utxo
 //交易依赖关系图
 type TxGraph map[string][]string
 
-/*
-*  说明：
-*  'tx3' --> ['tx1', 'tx2']  tx3依赖了tx1,tx2, 也可以表示反向依赖关系:tx3被tx1,tx2依赖
-*  'tx2' --> ['tx0', 'tx1']
- */
-//对依赖关系图进行拓扑排序
+//TopSortDFS 对依赖关系图进行拓扑排序
 // 输入：依赖关系图，就是个map
 // 输出: order: 排序后的有序数组，依赖者排在前面，被依赖的排在后面
 //       cyclic: 如果发现有环形依赖关系则输出这个数组
 //
 // 实现参考： https://rosettacode.org/wiki/Topological_sort#Go
+// 在我们映射中，RefTx是边的源点
 func TopSortDFS(g TxGraph) (order []string, cyclic bool, childDAGSize []int) {
 	reverseG := TxGraph{}
 	for n, outputs := range g {
@@ -71,6 +67,7 @@ func TopSortDFS(g TxGraph) (order []string, cyclic bool, childDAGSize []int) {
 		}
 		subG = append(subG, n)
 	}
+	// dfs变量切分出多个连通的子图
 	for n := range g {
 		if marked[n] {
 			continue
@@ -82,6 +79,7 @@ func TopSortDFS(g TxGraph) (order []string, cyclic bool, childDAGSize []int) {
 
 	childDAGSize = make([]int, len(subGraphs))
 	for i, g := range subGraphs {
+		//记录每个DAG子图的大小
 		childDAGSize[len(subGraphs)-i-1] = len(g)
 		for _, n := range g {
 			if perm[n] {
