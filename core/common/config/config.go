@@ -177,6 +177,14 @@ type WasmConfig struct {
 	EnableDebugLog bool
 	DebugLog       LogConfig
 	EnableUpgrade  bool
+	TEEConfig      TEEConfig `yaml:"teeConfig,omitempty"`
+}
+
+// TEEConfig sets up the private ledger
+type TEEConfig struct {
+	Enable     bool   `yaml:"enable"`     // enable: on or off to enable private ledger
+	PluginPath string `yaml:"pluginPath"` // path to dynamic library
+	ConfigPath string `yaml:"configPath"` // config path for the dynamic
 }
 
 func (w *WasmConfig) applyFlags(flags *pflag.FlagSet) {
@@ -249,8 +257,9 @@ type NodeConfig struct {
 
 // KernelConfig kernel config
 type KernelConfig struct {
-	MinNewChainAmount string          `yaml:"minNewChainAmount,omitempty"`
-	NewChainWhiteList map[string]bool `yaml:"newChainWhiteList,omitempty"`
+	MinNewChainAmount           string          `yaml:"minNewChainAmount,omitempty"`
+	NewChainWhiteList           map[string]bool `yaml:"newChainWhiteList,omitempty"`
+	DisableCreateChainWhiteList bool            `yaml:"disableCreateChainWhiteList,omitempty"`
 }
 
 // PruneOption ledger prune option
@@ -313,7 +322,8 @@ func (nc *NodeConfig) defaultNodeConfig() {
 	}
 	nc.DedupCacheSize = 50000
 	nc.Kernel = KernelConfig{
-		MinNewChainAmount: "0",
+		MinNewChainAmount:           "0",
+		DisableCreateChainWhiteList: false,
 	}
 	nc.DBCache = DBCacheConfig{
 		MemCacheSize: 128,  //MB for each leveldb

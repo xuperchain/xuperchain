@@ -101,6 +101,11 @@ DEFINE_METHOD(Naming, AddEndorsor) {
     CHECK_ARG(address);
     CHECK_ARG(pub_key);
     CHECK_ARG(host);
+    std::string meta;
+    if (!ctx->get_object(Meta(name), &meta)) {
+        ctx->error("chain name does not exist");
+        return;
+    }
     std::string _;
     if (ctx->get_object(Endorsor(name, address), &_)) {
         ctx->error("endorsor already exists");
