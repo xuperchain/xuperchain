@@ -66,6 +66,9 @@ func (cqc *CrossQueryCache) CrossQuery(
 	}
 
 	// 验证背书规则、参数有效性、时间戳有效性
+	if cqc.crossQueryIdx > len(cqc.crossQueryCaches)-1 {
+		return nil, fmt.Errorf("len of crossQueryCaches not match the contract")
+	}
 	crossQuery := cqc.crossQueryCaches[cqc.crossQueryIdx]
 
 	// 验证request、签名等信息
