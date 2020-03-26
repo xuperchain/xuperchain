@@ -310,6 +310,8 @@ func (xm *XChainMG) ProcessBatchTx(batchTx *pb.BatchTxs) (*pb.BatchTxs, error) {
 		_, needRepost, _ := xm.ProcessTx(v)
 		if needRepost {
 			succTxs = append(succTxs, v)
+		} else {
+			break // no need to continue
 		}
 	}
 	batchTx.Txs = succTxs
