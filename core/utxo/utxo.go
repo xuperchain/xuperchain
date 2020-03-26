@@ -121,7 +121,7 @@ type UtxoVM struct {
 	metaTable         kvdb.Database            // 元数据表，会持久化保存latestBlockid
 	withdrawTable     kvdb.Database            // 平行币赎回表, 记录已经赎回的destroy proof
 	smartContract     *contract.SmartContract  // 智能合约执行机
-	OfflineTxChan     chan *pb.Transaction     // 未确认tx的通知chan
+	OfflineTxChan     chan []*pb.Transaction   // 未确认tx的通知chan
 	prevFoundKeyCache *common.LRUCache         // 上一次找到的可用utxo key，用于加速GenerateTx
 	utxoTotal         *big.Int                 // 总资产
 	cryptoClient      crypto_base.CryptoClient // 加密实例
@@ -415,7 +415,7 @@ func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, priv
 		utxoCache:         NewUtxoCache(cachesize),
 		smartContract:     contract.NewSmartContract(),
 		vatHandler:        vat.NewVATHandler(),
-		OfflineTxChan:     make(chan *pb.Transaction, OfflineTxChanBuffer),
+		OfflineTxChan:     make(chan []*pb.Transaction, OfflineTxChanBuffer),
 		prevFoundKeyCache: common.NewLRUCache(cachesize),
 		utxoTotal:         big.NewInt(0),
 		minerAddress:      address,
@@ -1546,21 +1546,26 @@ func (uv *UtxoVM) processUnconfirmTxs(block *pb.InternalBlock, batch kvdb.Batch,
 	}
 	if needRepost {
 		go func() {
-			sortTxList, unexpectedCyclic, _ := TopSortDFS(unconfirmTxGraph)
+			sortTxList, unexpectedCyclic, dagSizeList := TopSortDFS(unconfirmTxGraph)
 			if unexpectedCyclic {
 				uv.xlog.Warn("transaction conflicted", "unexpectedCyclic", unexpectedCyclic)
 				return
 			}
-			limit := len(sortTxList)
-			if limit > OfflineTxChanBuffer/2 {
-				limit = OfflineTxChanBuffer / 2
-			}
-			for _, txid := range sortTxList[:limit] {
-				if txidsInBlock[txid] || undoDone[txid] {
-					continue
+			dagNo := 0
+			uv.xlog.Info("parallel group of reposting", "dagGroupEach", dagSizeList)
+			for start := 0; start < len(sortTxList); {
+				dagsize := dagSizeList[dagNo]
+				batchTx := []*pb.Transaction{}
+				for _, txid := range sortTxList[start : start+dagsize] {
+					if txidsInBlock[txid] || undoDone[txid] {
+						continue
+					}
+					offlineTx := unconfirmTxMap[txid]
+					batchTx = append(batchTx, offlineTx)
 				}
-				offlineTx := unconfirmTxMap[txid]
-				uv.OfflineTxChan <- offlineTx
+				uv.OfflineTxChan <- batchTx
+				start += dagsize
+				dagNo++
 			}
 		}()
 	}

@@ -73,11 +73,7 @@ var (
 )
 
 const (
-	// MaxReposting max repost times for broadcats
-	MaxReposting = 3000 // tx重试广播的最大批次，过多容易打爆对方的grpc连接数
-	// RepostingInterval repost retry interval, ms
-	RepostingInterval = 500 // 重试广播间隔ms
-	TxidCacheGcTime   = 180 * time.Second
+	TxidCacheGcTime = 180 * time.Second
 
 	// DefaultMessageCacheSize for p2p message
 	DefaultMessageCacheSize = 1000
@@ -324,8 +320,7 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 
 //周期repost本地未上链的交易
 func (xc *XChainCore) repostOfflineTx() {
-	batchChan := common.NewBatchChan(MaxReposting, RepostingInterval, xc.Utxovm.OfflineTxChan)
-	for txList := range batchChan.GetQueue() {
+	for txList := range xc.Utxovm.OfflineTxChan {
 		header := &pb.Header{Logid: global.Glogid()}
 		batchTxMsg := &pb.BatchTxs{Header: header}
 		//将txList包装为rpc message
