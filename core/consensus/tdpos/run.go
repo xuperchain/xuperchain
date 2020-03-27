@@ -107,8 +107,7 @@ func (tp *TDpos) runRevokeVote(desc *contract.TxDesc, block *pb.InternalBlock) e
 				tp.log.Trace("runRevokeVote minus ballots after cal", "ballots", canBal.ballots)
 				tp.candidateBallotsCache.Store(keyCanBal, canBal)
 			} else {
-				tp.log.Warn("runRevokeVote error", "error", "the candidate was revoked!")
-				return errors.New("runRevokeVote error, the candidate was revoked")
+				tp.log.Warn("runRevokeVote no need to cal ballot for the candidate was revoked!")
 			}
 		} else {
 			// 尝试从内存里load出来再进行票撤销
@@ -124,8 +123,7 @@ func (tp *TDpos) runRevokeVote(desc *contract.TxDesc, block *pb.InternalBlock) e
 				tp.candidateBallotsCache.Store(keyCanBal, canBal)
 			} else {
 				// 候选人不在内存中, 说明已经被删除了
-				tp.log.Warn("runRevokeVote error", "error", "the candidate not found!")
-				return errors.New("runRevokeVote error, the candidate not found")
+				tp.log.Warn("runRevokeVote no need to cal ballot for the candidate was revoked!")
 			}
 		}
 		// 清除某个候选人被谁投了票的记录

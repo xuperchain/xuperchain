@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"sync"
 
@@ -585,6 +586,9 @@ func (s *Smr) UpdateValidateSets(validates []*cons_base.CandidateInfo) error {
 	s.preValidates = s.validates
 	s.validates = validates
 	s.vscView = s.votedView
+	preStr, _ := json.Marshal(s.preValidates)
+	curStr, _ := json.Marshal(s.preValidates)
+	s.slog.Trace("UpdateValidateSets", "preValidates", string(preStr), "validates", string(curStr), "vscView", s.vscView)
 	return nil
 }
 
