@@ -155,3 +155,8 @@ func (dpm *DPoSPaceMaker) Start() error {
 func (dpm *DPoSPaceMaker) Stop() error {
 	return dpm.cbft.Stop()
 }
+
+// UpdateSmrState update smr status of chainedbft
+func (dpm *DPoSPaceMaker) UpdateSmrState(generateQC *pb.QuorumCert) {
+	dpm.cbft.UpdateSmrState(generateQC)
+}

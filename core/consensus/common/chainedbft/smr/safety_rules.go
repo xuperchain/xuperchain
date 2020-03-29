@@ -43,7 +43,8 @@ func (s *Smr) IsQuorumCertValidate(justify *pb.QuorumCert) (bool, error) {
 	}
 	justifySigns := justify.GetSignInfos().GetQCSignInfos()
 	// verify justify sign
-	if justify.GetViewNumber() == s.vscView {
+	s.slog.Info("IsQuorumCertValidate verify justify sign", "view", justify.GetViewNumber(), "vscView", s.vscView)
+	if justify.GetViewNumber() <= s.vscView {
 		return s.verifyVotes(justifySigns, s.preValidates, justify.GetProposalId())
 	}
 	return s.verifyVotes(justifySigns, s.validates, justify.GetProposalId())

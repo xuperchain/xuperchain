@@ -583,12 +583,17 @@ func (s *Smr) checkVoteNum(proposalID []byte) bool {
 func (s *Smr) UpdateValidateSets(validates []*cons_base.CandidateInfo) error {
 	s.lk.Lock()
 	defer s.lk.Unlock()
+	if !utils.IsInValidateSets(s.validates, s.address) {
+		s.vscView = s.votedView + 1
+	} else {
+		s.vscView = s.votedView
+	}
 	s.preValidates = s.validates
 	s.validates = validates
-	s.vscView = s.votedView
 	preStr, _ := json.Marshal(s.preValidates)
-	curStr, _ := json.Marshal(s.preValidates)
-	s.slog.Trace("UpdateValidateSets", "preValidates", string(preStr), "validates", string(curStr), "vscView", s.vscView)
+	curStr, _ := json.Marshal(s.validates)
+	s.slog.Trace("UpdateValidateSets", "preValidates", string(preStr), "validates", string(curStr))
+	s.slog.Trace("UpdateValidateSets", "s.vscView", s.vscView, "s.votedView", s.votedView)
 	return nil
 }
 
@@ -619,4 +624,10 @@ func (s *Smr) getAddressPeerURL(address string) string {
 // addLocalProposal add local proposal
 func (s *Smr) addLocalProposal(qc *pb.QuorumCert) {
 	s.localProposal.Store(string(qc.GetProposalId()), qc)
+}
+
+// UpdateSmrState update state of smr
+func (s *Smr) UpdateSmrState(generateQC *pb.QuorumCert) {
+	s.slog.Info("UpdateSmrState after block confirmed")
+	s.updateQcStatus(nil, generateQC, s.generateQC)
 }
