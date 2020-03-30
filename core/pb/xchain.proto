@@ -869,8 +869,7 @@ message AkSet {
 }
 message AkSets {
   map<string, AkSet> sets = 1; // 公钥or账户名集
-  string expression =
-      2; // 表达式，一期不支持表达式，默认集合内是and，集合间是or
+  string expression = 2; // 表达式，一期不支持表达式，默认集合内是and，集合间是or
 }
 
 // Acl实际使用的结构
@@ -1082,6 +1081,6 @@ message CrossQueryMeta {
 
 message CrossQueryInfo {
   CrossQueryRequest request = 1;
-  ContractResponse response = 2;
+  CrossQueryResponse response = 2;
   repeated SignatureInfo signs = 3;
 }

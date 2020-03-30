@@ -40,7 +40,7 @@ struct TableStruct_contract_2eproto {
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
   static const ::google::protobuf::internal::AuxillaryParseTableField aux[]
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
-  static const ::google::protobuf::internal::ParseTable schema[34]
+  static const ::google::protobuf::internal::ParseTable schema[36]
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
   static const ::google::protobuf::internal::FieldMetadata field_metadata[];
   static const ::google::protobuf::internal::SerializationTable serialization_table[];
@@ -64,6 +64,12 @@ extern ContractCallRequestDefaultTypeInternal _ContractCallRequest_default_insta
 class ContractCallResponse;
 class ContractCallResponseDefaultTypeInternal;
 extern ContractCallResponseDefaultTypeInternal _ContractCallResponse_default_instance_;
+class CrossContractQueryRequest;
+class CrossContractQueryRequestDefaultTypeInternal;
+extern CrossContractQueryRequestDefaultTypeInternal _CrossContractQueryRequest_default_instance_;
+class CrossContractQueryResponse;
+class CrossContractQueryResponseDefaultTypeInternal;
+extern CrossContractQueryResponseDefaultTypeInternal _CrossContractQueryResponse_default_instance_;
 class DeleteRequest;
 class DeleteRequestDefaultTypeInternal;
 extern DeleteRequestDefaultTypeInternal _DeleteRequest_default_instance_;
@@ -161,6 +167,8 @@ template<> ::xchain::contract::sdk::Block* Arena::CreateMaybeMessage<::xchain::c
 template<> ::xchain::contract::sdk::CallArgs* Arena::CreateMaybeMessage<::xchain::contract::sdk::CallArgs>(Arena*);
 template<> ::xchain::contract::sdk::ContractCallRequest* Arena::CreateMaybeMessage<::xchain::contract::sdk::ContractCallRequest>(Arena*);
 template<> ::xchain::contract::sdk::ContractCallResponse* Arena::CreateMaybeMessage<::xchain::contract::sdk::ContractCallResponse>(Arena*);
+template<> ::xchain::contract::sdk::CrossContractQueryRequest* Arena::CreateMaybeMessage<::xchain::contract::sdk::CrossContractQueryRequest>(Arena*);
+template<> ::xchain::contract::sdk::CrossContractQueryResponse* Arena::CreateMaybeMessage<::xchain::contract::sdk::CrossContractQueryResponse>(Arena*);
 template<> ::xchain::contract::sdk::DeleteRequest* Arena::CreateMaybeMessage<::xchain::contract::sdk::DeleteRequest>(Arena*);
 template<> ::xchain::contract::sdk::DeleteResponse* Arena::CreateMaybeMessage<::xchain::contract::sdk::DeleteResponse>(Arena*);
 template<> ::xchain::contract::sdk::GetAccountAddressesRequest* Arena::CreateMaybeMessage<::xchain::contract::sdk::GetAccountAddressesRequest>(Arena*);
@@ -3145,6 +3153,256 @@ class ContractCallResponse :
 };
 // -------------------------------------------------------------------
 
+class CrossContractQueryRequest :
+    public ::google::protobuf::MessageLite /* @@protoc_insertion_point(class_definition:xchain.contract.sdk.CrossContractQueryRequest) */ {
+ public:
+  CrossContractQueryRequest();
+  virtual ~CrossContractQueryRequest();
+
+  CrossContractQueryRequest(const CrossContractQueryRequest& from);
+
+  inline CrossContractQueryRequest& operator=(const CrossContractQueryRequest& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  CrossContractQueryRequest(CrossContractQueryRequest&& from) noexcept
+    : CrossContractQueryRequest() {
+    *this = ::std::move(from);
+  }
+
+  inline CrossContractQueryRequest& operator=(CrossContractQueryRequest&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const CrossContractQueryRequest& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const CrossContractQueryRequest* internal_default_instance() {
+    return reinterpret_cast<const CrossContractQueryRequest*>(
+               &_CrossContractQueryRequest_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    24;
+
+  void Swap(CrossContractQueryRequest* other);
+  friend void swap(CrossContractQueryRequest& a, CrossContractQueryRequest& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline CrossContractQueryRequest* New() const final {
+    return CreateMaybeMessage<CrossContractQueryRequest>(nullptr);
+  }
+
+  CrossContractQueryRequest* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<CrossContractQueryRequest>(arena);
+  }
+  void CheckTypeAndMergeFrom(const ::google::protobuf::MessageLite& from)
+    final;
+  void CopyFrom(const CrossContractQueryRequest& from);
+  void MergeFrom(const CrossContractQueryRequest& from);
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  #if GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+  static const char* _InternalParse(const char* begin, const char* end, void* object, ::google::protobuf::internal::ParseContext* ctx);
+  ::google::protobuf::internal::ParseFunc _ParseFunc() const final { return _InternalParse; }
+  #else
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  #endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  void DiscardUnknownFields();
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  void InternalSwap(CrossContractQueryRequest* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return nullptr;
+  }
+  inline void* MaybeArenaPtr() const {
+    return nullptr;
+  }
+  public:
+
+  ::std::string GetTypeName() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // repeated .xchain.contract.sdk.ArgPair args = 5;
+  int args_size() const;
+  void clear_args();
+  static const int kArgsFieldNumber = 5;
+  ::xchain::contract::sdk::ArgPair* mutable_args(int index);
+  ::google::protobuf::RepeatedPtrField< ::xchain::contract::sdk::ArgPair >*
+      mutable_args();
+  const ::xchain::contract::sdk::ArgPair& args(int index) const;
+  ::xchain::contract::sdk::ArgPair* add_args();
+  const ::google::protobuf::RepeatedPtrField< ::xchain::contract::sdk::ArgPair >&
+      args() const;
+
+  // string uri = 2;
+  void clear_uri();
+  static const int kUriFieldNumber = 2;
+  const ::std::string& uri() const;
+  void set_uri(const ::std::string& value);
+  #if LANG_CXX11
+  void set_uri(::std::string&& value);
+  #endif
+  void set_uri(const char* value);
+  void set_uri(const char* value, size_t size);
+  ::std::string* mutable_uri();
+  ::std::string* release_uri();
+  void set_allocated_uri(::std::string* uri);
+
+  // .xchain.contract.sdk.SyscallHeader header = 1;
+  bool has_header() const;
+  void clear_header();
+  static const int kHeaderFieldNumber = 1;
+  const ::xchain::contract::sdk::SyscallHeader& header() const;
+  ::xchain::contract::sdk::SyscallHeader* release_header();
+  ::xchain::contract::sdk::SyscallHeader* mutable_header();
+  void set_allocated_header(::xchain::contract::sdk::SyscallHeader* header);
+
+  // @@protoc_insertion_point(class_scope:xchain.contract.sdk.CrossContractQueryRequest)
+ private:
+  class HasBitSetters;
+
+  ::google::protobuf::internal::InternalMetadataWithArenaLite _internal_metadata_;
+  ::google::protobuf::RepeatedPtrField< ::xchain::contract::sdk::ArgPair > args_;
+  ::google::protobuf::internal::ArenaStringPtr uri_;
+  ::xchain::contract::sdk::SyscallHeader* header_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  friend struct ::TableStruct_contract_2eproto;
+};
+// -------------------------------------------------------------------
+
+class CrossContractQueryResponse :
+    public ::google::protobuf::MessageLite /* @@protoc_insertion_point(class_definition:xchain.contract.sdk.CrossContractQueryResponse) */ {
+ public:
+  CrossContractQueryResponse();
+  virtual ~CrossContractQueryResponse();
+
+  CrossContractQueryResponse(const CrossContractQueryResponse& from);
+
+  inline CrossContractQueryResponse& operator=(const CrossContractQueryResponse& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  CrossContractQueryResponse(CrossContractQueryResponse&& from) noexcept
+    : CrossContractQueryResponse() {
+    *this = ::std::move(from);
+  }
+
+  inline CrossContractQueryResponse& operator=(CrossContractQueryResponse&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const CrossContractQueryResponse& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const CrossContractQueryResponse* internal_default_instance() {
+    return reinterpret_cast<const CrossContractQueryResponse*>(
+               &_CrossContractQueryResponse_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    25;
+
+  void Swap(CrossContractQueryResponse* other);
+  friend void swap(CrossContractQueryResponse& a, CrossContractQueryResponse& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline CrossContractQueryResponse* New() const final {
+    return CreateMaybeMessage<CrossContractQueryResponse>(nullptr);
+  }
+
+  CrossContractQueryResponse* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<CrossContractQueryResponse>(arena);
+  }
+  void CheckTypeAndMergeFrom(const ::google::protobuf::MessageLite& from)
+    final;
+  void CopyFrom(const CrossContractQueryResponse& from);
+  void MergeFrom(const CrossContractQueryResponse& from);
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  #if GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+  static const char* _InternalParse(const char* begin, const char* end, void* object, ::google::protobuf::internal::ParseContext* ctx);
+  ::google::protobuf::internal::ParseFunc _ParseFunc() const final { return _InternalParse; }
+  #else
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  #endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  void DiscardUnknownFields();
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  void InternalSwap(CrossContractQueryResponse* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return nullptr;
+  }
+  inline void* MaybeArenaPtr() const {
+    return nullptr;
+  }
+  public:
+
+  ::std::string GetTypeName() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // .xchain.contract.sdk.Response response = 1;
+  bool has_response() const;
+  void clear_response();
+  static const int kResponseFieldNumber = 1;
+  const ::xchain::contract::sdk::Response& response() const;
+  ::xchain::contract::sdk::Response* release_response();
+  ::xchain::contract::sdk::Response* mutable_response();
+  void set_allocated_response(::xchain::contract::sdk::Response* response);
+
+  // @@protoc_insertion_point(class_scope:xchain.contract.sdk.CrossContractQueryResponse)
+ private:
+  class HasBitSetters;
+
+  ::google::protobuf::internal::InternalMetadataWithArenaLite _internal_metadata_;
+  ::xchain::contract::sdk::Response* response_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  friend struct ::TableStruct_contract_2eproto;
+};
+// -------------------------------------------------------------------
+
 class Response :
     public ::google::protobuf::MessageLite /* @@protoc_insertion_point(class_definition:xchain.contract.sdk.Response) */ {
  public:
@@ -3180,7 +3438,7 @@ class Response :
                &_Response_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    24;
+    26;
 
   void Swap(Response* other);
   friend void swap(Response& a, Response& b) {
@@ -3318,7 +3576,7 @@ class SetOutputRequest :
                &_SetOutputRequest_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    25;
+    27;
 
   void Swap(SetOutputRequest* other);
   friend void swap(SetOutputRequest& a, SetOutputRequest& b) {
@@ -3439,7 +3697,7 @@ class SetOutputResponse :
                &_SetOutputResponse_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    26;
+    28;
 
   void Swap(SetOutputResponse* other);
   friend void swap(SetOutputResponse& a, SetOutputResponse& b) {
@@ -3540,7 +3798,7 @@ class GetCallArgsRequest :
                &_GetCallArgsRequest_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    27;
+    29;
 
   void Swap(GetCallArgsRequest* other);
   friend void swap(GetCallArgsRequest& a, GetCallArgsRequest& b) {
@@ -3651,7 +3909,7 @@ class TxInput :
                &_TxInput_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    28;
+    30;
 
   void Swap(TxInput* other);
   friend void swap(TxInput& a, TxInput& b) {
@@ -3811,7 +4069,7 @@ class TxOutput :
                &_TxOutput_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    29;
+    31;
 
   void Swap(TxOutput* other);
   friend void swap(TxOutput& a, TxOutput& b) {
@@ -3949,7 +4207,7 @@ class Transaction :
                &_Transaction_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    30;
+    32;
 
   void Swap(Transaction* other);
   friend void swap(Transaction& a, Transaction& b) {
@@ -4159,7 +4417,7 @@ class Block :
                &_Block_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    31;
+    33;
 
   void Swap(Block* other);
   friend void swap(Block& a, Block& b) {
@@ -4394,7 +4652,7 @@ class GetAccountAddressesRequest :
                &_GetAccountAddressesRequest_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    32;
+    34;
 
   void Swap(GetAccountAddressesRequest* other);
   friend void swap(GetAccountAddressesRequest& a, GetAccountAddressesRequest& b) {
@@ -4520,7 +4778,7 @@ class GetAccountAddressesResponse :
                &_GetAccountAddressesResponse_default_instance_);
   }
   static constexpr int kIndexInFileMessages =
-    33;
+    35;
 
   void Swap(GetAccountAddressesResponse* other);
   friend void swap(GetAccountAddressesResponse& a, GetAccountAddressesResponse& b) {
@@ -6640,6 +6898,199 @@ inline void ContractCallResponse::set_allocated_response(::xchain::contract::sdk
 
 // -------------------------------------------------------------------
 
+// CrossContractQueryRequest
+
+// .xchain.contract.sdk.SyscallHeader header = 1;
+inline bool CrossContractQueryRequest::has_header() const {
+  return this != internal_default_instance() && header_ != nullptr;
+}
+inline void CrossContractQueryRequest::clear_header() {
+  if (GetArenaNoVirtual() == nullptr && header_ != nullptr) {
+    delete header_;
+  }
+  header_ = nullptr;
+}
+inline const ::xchain::contract::sdk::SyscallHeader& CrossContractQueryRequest::header() const {
+  const ::xchain::contract::sdk::SyscallHeader* p = header_;
+  // @@protoc_insertion_point(field_get:xchain.contract.sdk.CrossContractQueryRequest.header)
+  return p != nullptr ? *p : *reinterpret_cast<const ::xchain::contract::sdk::SyscallHeader*>(
+      &::xchain::contract::sdk::_SyscallHeader_default_instance_);
+}
+inline ::xchain::contract::sdk::SyscallHeader* CrossContractQueryRequest::release_header() {
+  // @@protoc_insertion_point(field_release:xchain.contract.sdk.CrossContractQueryRequest.header)
+  
+  ::xchain::contract::sdk::SyscallHeader* temp = header_;
+  header_ = nullptr;
+  return temp;
+}
+inline ::xchain::contract::sdk::SyscallHeader* CrossContractQueryRequest::mutable_header() {
+  
+  if (header_ == nullptr) {
+    auto* p = CreateMaybeMessage<::xchain::contract::sdk::SyscallHeader>(GetArenaNoVirtual());
+    header_ = p;
+  }
+  // @@protoc_insertion_point(field_mutable:xchain.contract.sdk.CrossContractQueryRequest.header)
+  return header_;
+}
+inline void CrossContractQueryRequest::set_allocated_header(::xchain::contract::sdk::SyscallHeader* header) {
+  ::google::protobuf::Arena* message_arena = GetArenaNoVirtual();
+  if (message_arena == nullptr) {
+    delete header_;
+  }
+  if (header) {
+    ::google::protobuf::Arena* submessage_arena = nullptr;
+    if (message_arena != submessage_arena) {
+      header = ::google::protobuf::internal::GetOwnedMessage(
+          message_arena, header, submessage_arena);
+    }
+    
+  } else {
+    
+  }
+  header_ = header;
+  // @@protoc_insertion_point(field_set_allocated:xchain.contract.sdk.CrossContractQueryRequest.header)
+}
+
+// string uri = 2;
+inline void CrossContractQueryRequest::clear_uri() {
+  uri_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& CrossContractQueryRequest::uri() const {
+  // @@protoc_insertion_point(field_get:xchain.contract.sdk.CrossContractQueryRequest.uri)
+  return uri_.GetNoArena();
+}
+inline void CrossContractQueryRequest::set_uri(const ::std::string& value) {
+  
+  uri_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:xchain.contract.sdk.CrossContractQueryRequest.uri)
+}
+#if LANG_CXX11
+inline void CrossContractQueryRequest::set_uri(::std::string&& value) {
+  
+  uri_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:xchain.contract.sdk.CrossContractQueryRequest.uri)
+}
+#endif
+inline void CrossContractQueryRequest::set_uri(const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  
+  uri_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:xchain.contract.sdk.CrossContractQueryRequest.uri)
+}
+inline void CrossContractQueryRequest::set_uri(const char* value, size_t size) {
+  
+  uri_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:xchain.contract.sdk.CrossContractQueryRequest.uri)
+}
+inline ::std::string* CrossContractQueryRequest::mutable_uri() {
+  
+  // @@protoc_insertion_point(field_mutable:xchain.contract.sdk.CrossContractQueryRequest.uri)
+  return uri_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* CrossContractQueryRequest::release_uri() {
+  // @@protoc_insertion_point(field_release:xchain.contract.sdk.CrossContractQueryRequest.uri)
+  
+  return uri_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void CrossContractQueryRequest::set_allocated_uri(::std::string* uri) {
+  if (uri != nullptr) {
+    
+  } else {
+    
+  }
+  uri_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), uri);
+  // @@protoc_insertion_point(field_set_allocated:xchain.contract.sdk.CrossContractQueryRequest.uri)
+}
+
+// repeated .xchain.contract.sdk.ArgPair args = 5;
+inline int CrossContractQueryRequest::args_size() const {
+  return args_.size();
+}
+inline void CrossContractQueryRequest::clear_args() {
+  args_.Clear();
+}
+inline ::xchain::contract::sdk::ArgPair* CrossContractQueryRequest::mutable_args(int index) {
+  // @@protoc_insertion_point(field_mutable:xchain.contract.sdk.CrossContractQueryRequest.args)
+  return args_.Mutable(index);
+}
+inline ::google::protobuf::RepeatedPtrField< ::xchain::contract::sdk::ArgPair >*
+CrossContractQueryRequest::mutable_args() {
+  // @@protoc_insertion_point(field_mutable_list:xchain.contract.sdk.CrossContractQueryRequest.args)
+  return &args_;
+}
+inline const ::xchain::contract::sdk::ArgPair& CrossContractQueryRequest::args(int index) const {
+  // @@protoc_insertion_point(field_get:xchain.contract.sdk.CrossContractQueryRequest.args)
+  return args_.Get(index);
+}
+inline ::xchain::contract::sdk::ArgPair* CrossContractQueryRequest::add_args() {
+  // @@protoc_insertion_point(field_add:xchain.contract.sdk.CrossContractQueryRequest.args)
+  return args_.Add();
+}
+inline const ::google::protobuf::RepeatedPtrField< ::xchain::contract::sdk::ArgPair >&
+CrossContractQueryRequest::args() const {
+  // @@protoc_insertion_point(field_list:xchain.contract.sdk.CrossContractQueryRequest.args)
+  return args_;
+}
+
+// -------------------------------------------------------------------
+
+// CrossContractQueryResponse
+
+// .xchain.contract.sdk.Response response = 1;
+inline bool CrossContractQueryResponse::has_response() const {
+  return this != internal_default_instance() && response_ != nullptr;
+}
+inline void CrossContractQueryResponse::clear_response() {
+  if (GetArenaNoVirtual() == nullptr && response_ != nullptr) {
+    delete response_;
+  }
+  response_ = nullptr;
+}
+inline const ::xchain::contract::sdk::Response& CrossContractQueryResponse::response() const {
+  const ::xchain::contract::sdk::Response* p = response_;
+  // @@protoc_insertion_point(field_get:xchain.contract.sdk.CrossContractQueryResponse.response)
+  return p != nullptr ? *p : *reinterpret_cast<const ::xchain::contract::sdk::Response*>(
+      &::xchain::contract::sdk::_Response_default_instance_);
+}
+inline ::xchain::contract::sdk::Response* CrossContractQueryResponse::release_response() {
+  // @@protoc_insertion_point(field_release:xchain.contract.sdk.CrossContractQueryResponse.response)
+  
+  ::xchain::contract::sdk::Response* temp = response_;
+  response_ = nullptr;
+  return temp;
+}
+inline ::xchain::contract::sdk::Response* CrossContractQueryResponse::mutable_response() {
+  
+  if (response_ == nullptr) {
+    auto* p = CreateMaybeMessage<::xchain::contract::sdk::Response>(GetArenaNoVirtual());
+    response_ = p;
+  }
+  // @@protoc_insertion_point(field_mutable:xchain.contract.sdk.CrossContractQueryResponse.response)
+  return response_;
+}
+inline void CrossContractQueryResponse::set_allocated_response(::xchain::contract::sdk::Response* response) {
+  ::google::protobuf::Arena* message_arena = GetArenaNoVirtual();
+  if (message_arena == nullptr) {
+    delete response_;
+  }
+  if (response) {
+    ::google::protobuf::Arena* submessage_arena = nullptr;
+    if (message_arena != submessage_arena) {
+      response = ::google::protobuf::internal::GetOwnedMessage(
+          message_arena, response, submessage_arena);
+    }
+    
+  } else {
+    
+  }
+  response_ = response;
+  // @@protoc_insertion_point(field_set_allocated:xchain.contract.sdk.CrossContractQueryResponse.response)
+}
+
+// -------------------------------------------------------------------
+
 // Response
 
 // int32 status = 1;
@@ -8204,6 +8655,10 @@ GetAccountAddressesResponse::mutable_addresses() {
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

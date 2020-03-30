@@ -929,6 +929,12 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 		return nil, err
 	}
 
+	crossQuery := modelCache.GetCrossQueryRWSets()
+	err = modelCache.PutCrossQueries(crossQuery)
+	if err != nil {
+		return nil, err
+	}
+
 	inputs, outputs, err := modelCache.GetRWSets()
 	if err != nil {
 		return nil, err

@@ -318,11 +318,13 @@ func (s *XModel) bucketCacheGet(bucket, version string) (*xmodel_pb.VersionedDat
 	return value.(*xmodel_pb.VersionedData), true
 }
 
+// BucketCacheDelete gen write key with perfix
 func (s *XModel) BucketCacheDelete(bucket, version string) {
 	cache := s.bucketCache(bucket)
 	cache.Del(version)
 }
 
+// GenWriteKeyWithPrefix gen write key with perfix
 func GenWriteKeyWithPrefix(txOutputExt *pb.TxOutputExt) string {
 	bucket := txOutputExt.GetBucket()
 	key := txOutputExt.GetKey()
