@@ -615,7 +615,21 @@ func (tp *TDpos) ProcessConfirmBlock(block *pb.InternalBlock) error {
 			return err
 		}
 	}
+	// update bft smr status
+	if tp.config.enableBFT && !tp.isInValidateSets() {
+		tp.bftPaceMaker.UpdateSmrState(block.GetJustify())
+	}
 	return nil
+}
+
+func (tp *TDpos) isInValidateSets() bool {
+	proposers := tp.getTermProposer(tp.curTerm)
+	for idx := range proposers {
+		if string(tp.address) == proposers[idx].Address {
+			return true
+		}
+	}
+	return false
 }
 
 // InitCurrent is the specific implementation of ConsensusInterface
@@ -845,7 +859,8 @@ func (tp *TDpos) initBFT(cfg *config.NodeConfig) error {
 			}
 		}
 	}
-
+	term, _, _ := tp.minerScheduling(time.Now().UnixNano())
+	proposers := tp.getTermProposer(term)
 	cbft, err := chainedbft.NewChainedBft(
 		tp.log,
 		tp.config.bftConfig,
@@ -853,7 +868,7 @@ func (tp *TDpos) initBFT(cfg *config.NodeConfig) error {
 		string(tp.address),
 		string(pkJSON),
 		sk,
-		tp.config.initProposer[1],
+		proposers,
 		bridge,
 		tp.cryptoClient,
 		tp.p2psvr,
