@@ -684,6 +684,11 @@ func (l *Ledger) ConfirmBlock(block *pb.InternalBlock, isRoot bool) ConfirmStatu
 			} else {
 				oldPbBlockBuf, blockErr := l.blocksTable.Get(oldTx.Blockid)
 				if blockErr != nil {
+					if common.NormalizedKVError(blockErr) == common.ErrKVNotFound {
+						l.xlog.Warn("old block that contains the tx has been truncated", "txid", global.F(tx.Txid), "blockid", global.F(oldTx.Blockid))
+						batchWrite.Put(append([]byte(pb.ConfirmedTablePrefix), tx.Txid...), pbTxBuf) //overwrite with newtx
+						continue
+					}
 					confirmStatus.Succ = false
 					confirmStatus.Error = blockErr
 					return confirmStatus
