@@ -120,6 +120,14 @@ class ContractCallResponseDefaultTypeInternal {
  public:
   ::google::protobuf::internal::ExplicitlyConstructed<ContractCallResponse> _instance;
 } _ContractCallResponse_default_instance_;
+class CrossContractQueryRequestDefaultTypeInternal {
+ public:
+  ::google::protobuf::internal::ExplicitlyConstructed<CrossContractQueryRequest> _instance;
+} _CrossContractQueryRequest_default_instance_;
+class CrossContractQueryResponseDefaultTypeInternal {
+ public:
+  ::google::protobuf::internal::ExplicitlyConstructed<CrossContractQueryResponse> _instance;
+} _CrossContractQueryResponse_default_instance_;
 class ResponseDefaultTypeInternal {
  public:
   ::google::protobuf::internal::ExplicitlyConstructed<Response> _instance;
@@ -511,6 +519,37 @@ static void InitDefaultsContractCallResponse_contract_2eproto() {
 
 ::google::protobuf::internal::SCCInfo<1> scc_info_ContractCallResponse_contract_2eproto =
     {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 1, InitDefaultsContractCallResponse_contract_2eproto}, {
+      &scc_info_Response_contract_2eproto.base,}};
+
+static void InitDefaultsCrossContractQueryRequest_contract_2eproto() {
+  GOOGLE_PROTOBUF_VERIFY_VERSION;
+
+  {
+    void* ptr = &::xchain::contract::sdk::_CrossContractQueryRequest_default_instance_;
+    new (ptr) ::xchain::contract::sdk::CrossContractQueryRequest();
+    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
+  }
+  ::xchain::contract::sdk::CrossContractQueryRequest::InitAsDefaultInstance();
+}
+
+::google::protobuf::internal::SCCInfo<2> scc_info_CrossContractQueryRequest_contract_2eproto =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 2, InitDefaultsCrossContractQueryRequest_contract_2eproto}, {
+      &scc_info_SyscallHeader_contract_2eproto.base,
+      &scc_info_ArgPair_contract_2eproto.base,}};
+
+static void InitDefaultsCrossContractQueryResponse_contract_2eproto() {
+  GOOGLE_PROTOBUF_VERIFY_VERSION;
+
+  {
+    void* ptr = &::xchain::contract::sdk::_CrossContractQueryResponse_default_instance_;
+    new (ptr) ::xchain::contract::sdk::CrossContractQueryResponse();
+    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
+  }
+  ::xchain::contract::sdk::CrossContractQueryResponse::InitAsDefaultInstance();
+}
+
+::google::protobuf::internal::SCCInfo<1> scc_info_CrossContractQueryResponse_contract_2eproto =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 1, InitDefaultsCrossContractQueryResponse_contract_2eproto}, {
       &scc_info_Response_contract_2eproto.base,}};
 
 static void InitDefaultsResponse_contract_2eproto() {
@@ -7442,6 +7481,622 @@ void ContractCallResponse::InternalSwap(ContractCallResponse* other) {
 
 // ===================================================================
 
+void CrossContractQueryRequest::InitAsDefaultInstance() {
+  ::xchain::contract::sdk::_CrossContractQueryRequest_default_instance_._instance.get_mutable()->header_ = const_cast< ::xchain::contract::sdk::SyscallHeader*>(
+      ::xchain::contract::sdk::SyscallHeader::internal_default_instance());
+}
+class CrossContractQueryRequest::HasBitSetters {
+ public:
+  static const ::xchain::contract::sdk::SyscallHeader& header(const CrossContractQueryRequest* msg);
+};
+
+const ::xchain::contract::sdk::SyscallHeader&
+CrossContractQueryRequest::HasBitSetters::header(const CrossContractQueryRequest* msg) {
+  return *msg->header_;
+}
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
+const int CrossContractQueryRequest::kHeaderFieldNumber;
+const int CrossContractQueryRequest::kUriFieldNumber;
+const int CrossContractQueryRequest::kArgsFieldNumber;
+#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+
+CrossContractQueryRequest::CrossContractQueryRequest()
+  : ::google::protobuf::MessageLite(), _internal_metadata_(nullptr) {
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:xchain.contract.sdk.CrossContractQueryRequest)
+}
+CrossContractQueryRequest::CrossContractQueryRequest(const CrossContractQueryRequest& from)
+  : ::google::protobuf::MessageLite(),
+      _internal_metadata_(nullptr),
+      args_(from.args_) {
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  uri_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.uri().size() > 0) {
+    uri_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.uri_);
+  }
+  if (from.has_header()) {
+    header_ = new ::xchain::contract::sdk::SyscallHeader(*from.header_);
+  } else {
+    header_ = nullptr;
+  }
+  // @@protoc_insertion_point(copy_constructor:xchain.contract.sdk.CrossContractQueryRequest)
+}
+
+void CrossContractQueryRequest::SharedCtor() {
+  ::google::protobuf::internal::InitSCC(
+      &scc_info_CrossContractQueryRequest_contract_2eproto.base);
+  uri_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  header_ = nullptr;
+}
+
+CrossContractQueryRequest::~CrossContractQueryRequest() {
+  // @@protoc_insertion_point(destructor:xchain.contract.sdk.CrossContractQueryRequest)
+  SharedDtor();
+}
+
+void CrossContractQueryRequest::SharedDtor() {
+  uri_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (this != internal_default_instance()) delete header_;
+}
+
+void CrossContractQueryRequest::SetCachedSize(int size) const {
+  _cached_size_.Set(size);
+}
+const CrossContractQueryRequest& CrossContractQueryRequest::default_instance() {
+  ::google::protobuf::internal::InitSCC(&::scc_info_CrossContractQueryRequest_contract_2eproto.base);
+  return *internal_default_instance();
+}
+
+
+void CrossContractQueryRequest::Clear() {
+// @@protoc_insertion_point(message_clear_start:xchain.contract.sdk.CrossContractQueryRequest)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  args_.Clear();
+  uri_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (GetArenaNoVirtual() == nullptr && header_ != nullptr) {
+    delete header_;
+  }
+  header_ = nullptr;
+  _internal_metadata_.Clear();
+}
+
+#if GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+const char* CrossContractQueryRequest::_InternalParse(const char* begin, const char* end, void* object,
+                  ::google::protobuf::internal::ParseContext* ctx) {
+  auto msg = static_cast<CrossContractQueryRequest*>(object);
+  ::google::protobuf::int32 size; (void)size;
+  int depth; (void)depth;
+  ::google::protobuf::uint32 tag;
+  ::google::protobuf::internal::ParseFunc parser_till_end; (void)parser_till_end;
+  auto ptr = begin;
+  while (ptr < end) {
+    ptr = ::google::protobuf::io::Parse32(ptr, &tag);
+    GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+    switch (tag >> 3) {
+      // .xchain.contract.sdk.SyscallHeader header = 1;
+      case 1: {
+        if (static_cast<::google::protobuf::uint8>(tag) != 10) goto handle_unusual;
+        ptr = ::google::protobuf::io::ReadSize(ptr, &size);
+        GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+        parser_till_end = ::xchain::contract::sdk::SyscallHeader::_InternalParse;
+        object = msg->mutable_header();
+        if (size > end - ptr) goto len_delim_till_end;
+        ptr += size;
+        GOOGLE_PROTOBUF_PARSER_ASSERT(ctx->ParseExactRange(
+            {parser_till_end, object}, ptr - size, ptr));
+        break;
+      }
+      // string uri = 2;
+      case 2: {
+        if (static_cast<::google::protobuf::uint8>(tag) != 18) goto handle_unusual;
+        ptr = ::google::protobuf::io::ReadSize(ptr, &size);
+        GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+        ctx->extra_parse_data().SetFieldName(nullptr);
+        object = msg->mutable_uri();
+        if (size > end - ptr + ::google::protobuf::internal::ParseContext::kSlopBytes) {
+          parser_till_end = ::google::protobuf::internal::GreedyStringParserUTF8;
+          goto string_till_end;
+        }
+        GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheckUTF8(ptr, size, ctx));
+        ::google::protobuf::internal::InlineGreedyStringParser(object, ptr, size, ctx);
+        ptr += size;
+        break;
+      }
+      // repeated .xchain.contract.sdk.ArgPair args = 5;
+      case 5: {
+        if (static_cast<::google::protobuf::uint8>(tag) != 42) goto handle_unusual;
+        do {
+          ptr = ::google::protobuf::io::ReadSize(ptr, &size);
+          GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+          parser_till_end = ::xchain::contract::sdk::ArgPair::_InternalParse;
+          object = msg->add_args();
+          if (size > end - ptr) goto len_delim_till_end;
+          ptr += size;
+          GOOGLE_PROTOBUF_PARSER_ASSERT(ctx->ParseExactRange(
+              {parser_till_end, object}, ptr - size, ptr));
+          if (ptr >= end) break;
+        } while ((::google::protobuf::io::UnalignedLoad<::google::protobuf::uint64>(ptr) & 255) == 42 && (ptr += 1));
+        break;
+      }
+      default: {
+      handle_unusual:
+        if ((tag & 7) == 4 || tag == 0) {
+          ctx->EndGroup(tag);
+          return ptr;
+        }
+        auto res = UnknownFieldParse(tag, {_InternalParse, msg},
+          ptr, end, msg->_internal_metadata_.mutable_unknown_fields(), ctx);
+        ptr = res.first;
+        GOOGLE_PROTOBUF_PARSER_ASSERT(ptr != nullptr);
+        if (res.second) return ptr;
+      }
+    }  // switch
+  }  // while
+  return ptr;
+string_till_end:
+  static_cast<::std::string*>(object)->clear();
+  static_cast<::std::string*>(object)->reserve(size);
+  goto len_delim_till_end;
+len_delim_till_end:
+  return ctx->StoreAndTailCall(ptr, end, {_InternalParse, msg},
+                               {parser_till_end, object}, size);
+}
+#else  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+bool CrossContractQueryRequest::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!PROTOBUF_PREDICT_TRUE(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  ::google::protobuf::internal::LiteUnknownFieldSetter unknown_fields_setter(
+      &_internal_metadata_);
+  ::google::protobuf::io::StringOutputStream unknown_fields_output(
+      unknown_fields_setter.buffer());
+  ::google::protobuf::io::CodedOutputStream unknown_fields_stream(
+      &unknown_fields_output, false);
+  // @@protoc_insertion_point(parse_start:xchain.contract.sdk.CrossContractQueryRequest)
+  for (;;) {
+    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // .xchain.contract.sdk.SyscallHeader header = 1;
+      case 1: {
+        if (static_cast< ::google::protobuf::uint8>(tag) == (10 & 0xFF)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
+               input, mutable_header()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // string uri = 2;
+      case 2: {
+        if (static_cast< ::google::protobuf::uint8>(tag) == (18 & 0xFF)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_uri()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->uri().data(), static_cast<int>(this->uri().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "xchain.contract.sdk.CrossContractQueryRequest.uri"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // repeated .xchain.contract.sdk.ArgPair args = 5;
+      case 5: {
+        if (static_cast< ::google::protobuf::uint8>(tag) == (42 & 0xFF)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
+                input, add_args()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormatLite::SkipField(
+            input, tag, &unknown_fields_stream));
+        break;
+      }
+    }
+  }
+success:
+  // @@protoc_insertion_point(parse_success:xchain.contract.sdk.CrossContractQueryRequest)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:xchain.contract.sdk.CrossContractQueryRequest)
+  return false;
+#undef DO_
+}
+#endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+
+void CrossContractQueryRequest::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:xchain.contract.sdk.CrossContractQueryRequest)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // .xchain.contract.sdk.SyscallHeader header = 1;
+  if (this->has_header()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessage(
+      1, HasBitSetters::header(this), output);
+  }
+
+  // string uri = 2;
+  if (this->uri().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->uri().data(), static_cast<int>(this->uri().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "xchain.contract.sdk.CrossContractQueryRequest.uri");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      2, this->uri(), output);
+  }
+
+  // repeated .xchain.contract.sdk.ArgPair args = 5;
+  for (unsigned int i = 0,
+      n = static_cast<unsigned int>(this->args_size()); i < n; i++) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessage(
+      5,
+      this->args(static_cast<int>(i)),
+      output);
+  }
+
+  output->WriteRaw(_internal_metadata_.unknown_fields().data(),
+                   static_cast<int>(_internal_metadata_.unknown_fields().size()));
+  // @@protoc_insertion_point(serialize_end:xchain.contract.sdk.CrossContractQueryRequest)
+}
+
+size_t CrossContractQueryRequest::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:xchain.contract.sdk.CrossContractQueryRequest)
+  size_t total_size = 0;
+
+  total_size += _internal_metadata_.unknown_fields().size();
+
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  // repeated .xchain.contract.sdk.ArgPair args = 5;
+  {
+    unsigned int count = static_cast<unsigned int>(this->args_size());
+    total_size += 1UL * count;
+    for (unsigned int i = 0; i < count; i++) {
+      total_size +=
+        ::google::protobuf::internal::WireFormatLite::MessageSize(
+          this->args(static_cast<int>(i)));
+    }
+  }
+
+  // string uri = 2;
+  if (this->uri().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::StringSize(
+        this->uri());
+  }
+
+  // .xchain.contract.sdk.SyscallHeader header = 1;
+  if (this->has_header()) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::MessageSize(
+        *header_);
+  }
+
+  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  SetCachedSize(cached_size);
+  return total_size;
+}
+
+void CrossContractQueryRequest::CheckTypeAndMergeFrom(
+    const ::google::protobuf::MessageLite& from) {
+  MergeFrom(*::google::protobuf::down_cast<const CrossContractQueryRequest*>(&from));
+}
+
+void CrossContractQueryRequest::MergeFrom(const CrossContractQueryRequest& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:xchain.contract.sdk.CrossContractQueryRequest)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  args_.MergeFrom(from.args_);
+  if (from.uri().size() > 0) {
+
+    uri_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.uri_);
+  }
+  if (from.has_header()) {
+    mutable_header()->::xchain::contract::sdk::SyscallHeader::MergeFrom(from.header());
+  }
+}
+
+void CrossContractQueryRequest::CopyFrom(const CrossContractQueryRequest& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:xchain.contract.sdk.CrossContractQueryRequest)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool CrossContractQueryRequest::IsInitialized() const {
+  return true;
+}
+
+void CrossContractQueryRequest::Swap(CrossContractQueryRequest* other) {
+  if (other == this) return;
+  InternalSwap(other);
+}
+void CrossContractQueryRequest::InternalSwap(CrossContractQueryRequest* other) {
+  using std::swap;
+  _internal_metadata_.Swap(&other->_internal_metadata_);
+  CastToBase(&args_)->InternalSwap(CastToBase(&other->args_));
+  uri_.Swap(&other->uri_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+    GetArenaNoVirtual());
+  swap(header_, other->header_);
+}
+
+::std::string CrossContractQueryRequest::GetTypeName() const {
+  return "xchain.contract.sdk.CrossContractQueryRequest";
+}
+
+
+// ===================================================================
+
+void CrossContractQueryResponse::InitAsDefaultInstance() {
+  ::xchain::contract::sdk::_CrossContractQueryResponse_default_instance_._instance.get_mutable()->response_ = const_cast< ::xchain::contract::sdk::Response*>(
+      ::xchain::contract::sdk::Response::internal_default_instance());
+}
+class CrossContractQueryResponse::HasBitSetters {
+ public:
+  static const ::xchain::contract::sdk::Response& response(const CrossContractQueryResponse* msg);
+};
+
+const ::xchain::contract::sdk::Response&
+CrossContractQueryResponse::HasBitSetters::response(const CrossContractQueryResponse* msg) {
+  return *msg->response_;
+}
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
+const int CrossContractQueryResponse::kResponseFieldNumber;
+#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+
+CrossContractQueryResponse::CrossContractQueryResponse()
+  : ::google::protobuf::MessageLite(), _internal_metadata_(nullptr) {
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:xchain.contract.sdk.CrossContractQueryResponse)
+}
+CrossContractQueryResponse::CrossContractQueryResponse(const CrossContractQueryResponse& from)
+  : ::google::protobuf::MessageLite(),
+      _internal_metadata_(nullptr) {
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  if (from.has_response()) {
+    response_ = new ::xchain::contract::sdk::Response(*from.response_);
+  } else {
+    response_ = nullptr;
+  }
+  // @@protoc_insertion_point(copy_constructor:xchain.contract.sdk.CrossContractQueryResponse)
+}
+
+void CrossContractQueryResponse::SharedCtor() {
+  ::google::protobuf::internal::InitSCC(
+      &scc_info_CrossContractQueryResponse_contract_2eproto.base);
+  response_ = nullptr;
+}
+
+CrossContractQueryResponse::~CrossContractQueryResponse() {
+  // @@protoc_insertion_point(destructor:xchain.contract.sdk.CrossContractQueryResponse)
+  SharedDtor();
+}
+
+void CrossContractQueryResponse::SharedDtor() {
+  if (this != internal_default_instance()) delete response_;
+}
+
+void CrossContractQueryResponse::SetCachedSize(int size) const {
+  _cached_size_.Set(size);
+}
+const CrossContractQueryResponse& CrossContractQueryResponse::default_instance() {
+  ::google::protobuf::internal::InitSCC(&::scc_info_CrossContractQueryResponse_contract_2eproto.base);
+  return *internal_default_instance();
+}
+
+
+void CrossContractQueryResponse::Clear() {
+// @@protoc_insertion_point(message_clear_start:xchain.contract.sdk.CrossContractQueryResponse)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  if (GetArenaNoVirtual() == nullptr && response_ != nullptr) {
+    delete response_;
+  }
+  response_ = nullptr;
+  _internal_metadata_.Clear();
+}
+
+#if GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+const char* CrossContractQueryResponse::_InternalParse(const char* begin, const char* end, void* object,
+                  ::google::protobuf::internal::ParseContext* ctx) {
+  auto msg = static_cast<CrossContractQueryResponse*>(object);
+  ::google::protobuf::int32 size; (void)size;
+  int depth; (void)depth;
+  ::google::protobuf::uint32 tag;
+  ::google::protobuf::internal::ParseFunc parser_till_end; (void)parser_till_end;
+  auto ptr = begin;
+  while (ptr < end) {
+    ptr = ::google::protobuf::io::Parse32(ptr, &tag);
+    GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+    switch (tag >> 3) {
+      // .xchain.contract.sdk.Response response = 1;
+      case 1: {
+        if (static_cast<::google::protobuf::uint8>(tag) != 10) goto handle_unusual;
+        ptr = ::google::protobuf::io::ReadSize(ptr, &size);
+        GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+        parser_till_end = ::xchain::contract::sdk::Response::_InternalParse;
+        object = msg->mutable_response();
+        if (size > end - ptr) goto len_delim_till_end;
+        ptr += size;
+        GOOGLE_PROTOBUF_PARSER_ASSERT(ctx->ParseExactRange(
+            {parser_till_end, object}, ptr - size, ptr));
+        break;
+      }
+      default: {
+      handle_unusual:
+        if ((tag & 7) == 4 || tag == 0) {
+          ctx->EndGroup(tag);
+          return ptr;
+        }
+        auto res = UnknownFieldParse(tag, {_InternalParse, msg},
+          ptr, end, msg->_internal_metadata_.mutable_unknown_fields(), ctx);
+        ptr = res.first;
+        GOOGLE_PROTOBUF_PARSER_ASSERT(ptr != nullptr);
+        if (res.second) return ptr;
+      }
+    }  // switch
+  }  // while
+  return ptr;
+len_delim_till_end:
+  return ctx->StoreAndTailCall(ptr, end, {_InternalParse, msg},
+                               {parser_till_end, object}, size);
+}
+#else  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+bool CrossContractQueryResponse::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!PROTOBUF_PREDICT_TRUE(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  ::google::protobuf::internal::LiteUnknownFieldSetter unknown_fields_setter(
+      &_internal_metadata_);
+  ::google::protobuf::io::StringOutputStream unknown_fields_output(
+      unknown_fields_setter.buffer());
+  ::google::protobuf::io::CodedOutputStream unknown_fields_stream(
+      &unknown_fields_output, false);
+  // @@protoc_insertion_point(parse_start:xchain.contract.sdk.CrossContractQueryResponse)
+  for (;;) {
+    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // .xchain.contract.sdk.Response response = 1;
+      case 1: {
+        if (static_cast< ::google::protobuf::uint8>(tag) == (10 & 0xFF)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
+               input, mutable_response()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormatLite::SkipField(
+            input, tag, &unknown_fields_stream));
+        break;
+      }
+    }
+  }
+success:
+  // @@protoc_insertion_point(parse_success:xchain.contract.sdk.CrossContractQueryResponse)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:xchain.contract.sdk.CrossContractQueryResponse)
+  return false;
+#undef DO_
+}
+#endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+
+void CrossContractQueryResponse::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:xchain.contract.sdk.CrossContractQueryResponse)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // .xchain.contract.sdk.Response response = 1;
+  if (this->has_response()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessage(
+      1, HasBitSetters::response(this), output);
+  }
+
+  output->WriteRaw(_internal_metadata_.unknown_fields().data(),
+                   static_cast<int>(_internal_metadata_.unknown_fields().size()));
+  // @@protoc_insertion_point(serialize_end:xchain.contract.sdk.CrossContractQueryResponse)
+}
+
+size_t CrossContractQueryResponse::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:xchain.contract.sdk.CrossContractQueryResponse)
+  size_t total_size = 0;
+
+  total_size += _internal_metadata_.unknown_fields().size();
+
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  // .xchain.contract.sdk.Response response = 1;
+  if (this->has_response()) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::MessageSize(
+        *response_);
+  }
+
+  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  SetCachedSize(cached_size);
+  return total_size;
+}
+
+void CrossContractQueryResponse::CheckTypeAndMergeFrom(
+    const ::google::protobuf::MessageLite& from) {
+  MergeFrom(*::google::protobuf::down_cast<const CrossContractQueryResponse*>(&from));
+}
+
+void CrossContractQueryResponse::MergeFrom(const CrossContractQueryResponse& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:xchain.contract.sdk.CrossContractQueryResponse)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from.has_response()) {
+    mutable_response()->::xchain::contract::sdk::Response::MergeFrom(from.response());
+  }
+}
+
+void CrossContractQueryResponse::CopyFrom(const CrossContractQueryResponse& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:xchain.contract.sdk.CrossContractQueryResponse)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool CrossContractQueryResponse::IsInitialized() const {
+  return true;
+}
+
+void CrossContractQueryResponse::Swap(CrossContractQueryResponse* other) {
+  if (other == this) return;
+  InternalSwap(other);
+}
+void CrossContractQueryResponse::InternalSwap(CrossContractQueryResponse* other) {
+  using std::swap;
+  _internal_metadata_.Swap(&other->_internal_metadata_);
+  swap(response_, other->response_);
+}
+
+::std::string CrossContractQueryResponse::GetTypeName() const {
+  return "xchain.contract.sdk.CrossContractQueryResponse";
+}
+
+
+// ===================================================================
+
 void Response::InitAsDefaultInstance() {
 }
 class Response::HasBitSetters {
@@ -11286,6 +11941,12 @@ template<> PROTOBUF_NOINLINE ::xchain::contract::sdk::ContractCallRequest* Arena
 }
 template<> PROTOBUF_NOINLINE ::xchain::contract::sdk::ContractCallResponse* Arena::CreateMaybeMessage< ::xchain::contract::sdk::ContractCallResponse >(Arena* arena) {
   return Arena::CreateInternal< ::xchain::contract::sdk::ContractCallResponse >(arena);
+}
+template<> PROTOBUF_NOINLINE ::xchain::contract::sdk::CrossContractQueryRequest* Arena::CreateMaybeMessage< ::xchain::contract::sdk::CrossContractQueryRequest >(Arena* arena) {
+  return Arena::CreateInternal< ::xchain::contract::sdk::CrossContractQueryRequest >(arena);
+}
+template<> PROTOBUF_NOINLINE ::xchain::contract::sdk::CrossContractQueryResponse* Arena::CreateMaybeMessage< ::xchain::contract::sdk::CrossContractQueryResponse >(Arena* arena) {
+  return Arena::CreateInternal< ::xchain::contract::sdk::CrossContractQueryResponse >(arena);
 }
 template<> PROTOBUF_NOINLINE ::xchain::contract::sdk::Response* Arena::CreateMaybeMessage< ::xchain::contract::sdk::Response >(Arena* arena) {
   return Arena::CreateInternal< ::xchain::contract::sdk::Response >(arena);

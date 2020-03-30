@@ -112,3 +112,19 @@ func (n *ContextManager) DestroyContext(ctx *Context) {
 	defer n.ctxlock.Unlock()
 	delete(n.ctxs, ctx.ID)
 }
+
+// GetInitiator return initiator
+func (c *Context) GetInitiator() string {
+	if c != nil {
+		return c.Initiator
+	}
+	return ""
+}
+
+// GetAuthRequire return initiator
+func (c *Context) GetAuthRequire() []string {
+	if c != nil {
+		return c.AuthRequire
+	}
+	return nil
+}

@@ -35,6 +35,8 @@ public:
                       const std::string& method,
                       const std::map<std::string, std::string>& args,
                       Response* response);
+    virtual bool cross_query(const std::string& uri, const std::map<std::string, std::string>& args,
+                    Response* response);                   
     virtual void logf(const char* fmt, ...);
 
 private:

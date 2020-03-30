@@ -3,6 +3,7 @@ package xmodel
 import (
 	"errors"
 	"fmt"
+
 	"github.com/xuperchain/xuperchain/core/pb"
 	xmodel_pb "github.com/xuperchain/xuperchain/core/xmodel/pb"
 )
@@ -48,7 +49,18 @@ func (s *XModel) PrepareEnv(tx *pb.Transaction) (*Env, error) {
 		s.logger.Warn("PrepareEnv CheckConUtxoEffective error")
 		return nil, errors.New("PrepareEnv CheckConUtxoEffective error")
 	}
-	env.modelCache = NewXModelCacheWithInputs(inputs, utxoInputs)
+
+	crossQueries, err := ParseCrossQuery(tx)
+	if err != nil {
+		s.logger.Warn("PrepareEnv ParseCrossQuery error", "err", err.Error())
+		return nil, err
+	}
+	if ok := IsCrossQueryEffective(crossQueries, tx); !ok {
+		s.logger.Warn("PrepareEnv IsCrossQueryEffective error")
+		return nil, errors.New("PrepareEnv CheckCrossQueryEffective error")
+	}
+
+	env.modelCache = NewXModelCacheWithInputs(inputs, utxoInputs, crossQueries)
 	env.outputs = outputs
 	s.logger.Trace("PrepareEnv done!", "env", env)
 	return env, nil

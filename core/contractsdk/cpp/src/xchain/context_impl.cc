@@ -166,6 +166,27 @@ bool ContextImpl::call(const std::string& module, const std::string& contract,
     return true;
 }
 
+bool ContextImpl::cross_query(const std::string& uri,
+                      const std::map<std::string, std::string>& args,
+                      Response* xresponse) {
+    pb::CrossContractQueryRequest request;
+    pb::CrossContractQueryResponse response;
+    request.set_uri(uri);
+    for (auto it=args.begin(); it!=args.end(); it++) {
+        auto arg = request.add_args();
+        arg->set_key(it->first);
+        arg->set_value(it->second);
+    }
+    bool ok = syscall("CrossContractQuery", request, &response);
+    if (!ok) {
+        return false;
+    }
+    xresponse->status = response.response().status();
+    xresponse->message = response.response().message();
+    xresponse->body = response.response().body();
+    return true;
+}
+
 void ContextImpl::logf(const char* fmt, ...) {
     va_list args;
     va_start(args, fmt);

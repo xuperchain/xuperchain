@@ -3,8 +3,9 @@ package server
 import (
 	"encoding/json"
 	"errors"
-	context "golang.org/x/net/context"
 	"io/ioutil"
+
+	context "golang.org/x/net/context"
 
 	crypto_client "github.com/xuperchain/xuperchain/core/crypto/client"
 	"github.com/xuperchain/xuperchain/core/crypto/hash"
@@ -167,7 +168,7 @@ func (dxe *DefaultXEndorser) getCrossQueryResult(ctx context.Context, req *pb.En
 		res.Response = contractRes[len(contractRes)-1]
 	}
 
-	sData, err := json.Marshal(contractRes)
+	sData, err := json.Marshal(res)
 	if err != nil {
 		return nil, pb.XChainErrorEnum_SERVICE_REFUSED_ERROR, err
 	}

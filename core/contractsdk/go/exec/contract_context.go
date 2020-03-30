@@ -10,16 +10,17 @@ import (
 )
 
 const (
-	methodPut          = "PutObject"
-	methodGet          = "GetObject"
-	methodDelete       = "DeleteObject"
-	methodOutput       = "SetOutput"
-	methodGetCallArgs  = "GetCallArgs"
-	methodTransfer     = "Transfer"
-	methodContractCall = "ContractCall"
-	methodQueryTx      = "QueryTx"
-	methodQueryBlock   = "QueryBlock"
-	methodNewIterator  = "NewIterator"
+	methodPut               = "PutObject"
+	methodGet               = "GetObject"
+	methodDelete            = "DeleteObject"
+	methodOutput            = "SetOutput"
+	methodGetCallArgs       = "GetCallArgs"
+	methodTransfer          = "Transfer"
+	methodContractCall      = "ContractCall"
+	methodCrossContractCall = "CrossContractCall"
+	methodQueryTx           = "QueryTx"
+	methodQueryBlock        = "QueryBlock"
+	methodNewIterator       = "NewIterator"
 )
 
 var (
@@ -172,6 +173,31 @@ func (c *contractContext) Call(module, contract, method string, args map[string]
 	}
 	rep := new(pb.ContractCallResponse)
 	err := c.bridgeCallFunc(methodContractCall, req, rep)
+	if err != nil {
+		return nil, err
+	}
+	return &code.Response{
+		Status:  int(rep.Response.Status),
+		Message: rep.Response.Message,
+		Body:    rep.Response.Body,
+	}, nil
+}
+
+func (c *contractContext) CrossQuery(uri string, args map[string][]byte) (*code.Response, error) {
+	var argPairs []*pb.ArgPair
+	for key, value := range args {
+		argPairs = append(argPairs, &pb.ArgPair{
+			Key:   key,
+			Value: value,
+		})
+	}
+	req := &pb.CrossContractQueryRequest{
+		Header: &c.header,
+		Uri:    uri,
+		Args:   argPairs,
+	}
+	rep := new(pb.CrossContractQueryResponse)
+	err := c.bridgeCallFunc(methodCrossContractCall, req, rep)
 	if err != nil {
 		return nil, err
 	}

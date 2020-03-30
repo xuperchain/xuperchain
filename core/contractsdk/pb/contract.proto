@@ -121,6 +121,16 @@ message ContractCallResponse {
   Response response = 1;
 }
 
+message CrossContractQueryRequest {
+  SyscallHeader header = 1;
+  string uri = 2;
+  repeated ArgPair args = 5;
+}
+
+message CrossContractQueryResponse {
+  Response response = 1;
+}
+
 message Response {
   int32  status = 1;
   string message = 2;
