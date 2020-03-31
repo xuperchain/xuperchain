@@ -129,10 +129,10 @@ func (tp *TDpos) getTermProposer(term int64) []*cons_base.CandidateInfo {
 		tp.log.Error("TDpos getTermProposer vote result error", "term", term, "error", err)
 		return nil
 	} else if common.NormalizedKVError(err) == common.ErrKVNotFound {
-		it := tp.utxoVM.ScanWithPrefix([]byte(genTermCheckKeyPrefix(tp.version)))
+		it := tp.utxoVM.ScanWithPrefix([]byte(GenTermCheckKeyPrefix(tp.version)))
 		defer it.Release()
 		if it.Last() {
-			termLast, err := parseTermCheckKey(string(it.Key()))
+			termLast, err := ParseTermCheckKey(string(it.Key()))
 			tp.log.Trace("TDpos getTermProposer ", "termLast", string(it.Key()))
 			if err != nil {
 				tp.log.Warn("TDpos getTermProposer parseTermCheckKey error", "error", err)
@@ -203,7 +203,7 @@ func (tp *TDpos) genTermProposer() ([]*cons_base.CandidateInfo, error) {
 	for i := int64(0); i < tp.config.proposerNum; i++ {
 		tp.log.Trace("genTermVote sort result", "address", termBallotSli[i].Address, "ballot", termBallotSli[i].Ballots)
 		addr := termBallotSli[i].Address
-		keyCanInfo := genCandidateInfoKey(addr)
+		keyCanInfo := GenCandidateInfoKey(addr)
 		ciValue, err := tp.utxoVM.GetFromTable(nil, []byte(keyCanInfo))
 		if err != nil {
 			return nil, err
@@ -327,11 +327,11 @@ func (tp *TDpos) validateRevokeVote(desc *contract.TxDesc) (*voteInfo, string, e
 
 // 是否在候选人池中
 func (tp *TDpos) inCandidate(candidate string) bool {
-	keyBl := genCandidateBallotsKey(candidate)
+	keyBl := GenCandidateBallotsKey(candidate)
 	val, ok := tp.candidateBallotsCache.Load(keyBl)
 	if ok {
 		tp.log.Trace("inCandidate load candidateBallotsCache ok ", "val", val)
-		blVal := val.(*candidateBallotsCacheValue)
+		blVal := val.(*candidateBallotsValue)
 		if blVal.isDel == true {
 			return false
 		}
