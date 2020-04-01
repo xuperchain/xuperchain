@@ -3,8 +3,9 @@ package tdpos
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/xuperchain/xuperchain/core/contract"
 	"testing"
+
+	"github.com/xuperchain/xuperchain/core/contract"
 )
 
 func TestRollBackVote(t *testing.T) {
@@ -33,7 +34,7 @@ func TestRollBackVote(t *testing.T) {
 		t.Error("roll back vote error ", rollBackVoteErr.Error())
 	}
 	// add cache
-	canBal := &candidateBallotsCacheValue{
+	canBal := &candidateBallotsValue{
 		ballots: int64(1),
 		isDel:   false,
 	}

@@ -3,7 +3,7 @@ package tdpos
 import "testing"
 
 func TestGenCandidateBallotsKey(t *testing.T) {
-	res := genCandidateBallotsKey("addr1")
+	res := GenCandidateBallotsKey("addr1")
 	if res != "D_candidate_ballots_addr1" {
 		t.Error("genCandidateBallotsKey error")
 	}
@@ -40,7 +40,7 @@ func TestGenCandidateNominateKey(t *testing.T) {
 }
 
 func TestGenCandidateVoteKey(t *testing.T) {
-	res := genCandidateVoteKey("addrCandi", "addrVoter", "ahvcqeuhcjhv")
+	res := GenCandidateVoteKey("addrCandi", "addrVoter", "ahvcqeuhcjhv")
 	expected := "D_candidate_vote_addrCandi_addrVoter_ahvcqeuhcjhv"
 	if res != expected {
 		t.Error("genCandidateVoteKey error")
@@ -57,7 +57,7 @@ func TestParseCandidateVoteKey(t *testing.T) {
 }
 
 func TestGenVoteCandidateKey(t *testing.T) {
-	res := genVoteCandidateKey("addrVoter", "addrCandi", "ahvcqeuhcjhv")
+	res := GenVoteCandidateKey("addrVoter", "addrCandi", "ahvcqeuhcjhv")
 	expected := "D_vote_candidate_addrVoter_addrCandi_ahvcqeuhcjhv"
 	if res != expected {
 		t.Error("genVoteCandidateKey error")
@@ -73,12 +73,12 @@ func TestParseVoteCandidateKey(t *testing.T) {
 }
 
 func TestGenRevokeKey(t *testing.T) {
-	res := genRevokeCandidateKey("addr1", "ahvcqeuhcjhv")
+	res := GenRevokeCandidateKey("addr1", "ahvcqeuhcjhv")
 	if res != "D_candidate_revoke_addr1_ahvcqeuhcjhv" {
 		t.Error("genRevokeKey error")
 	}
 
-	res2 := genRevokeKey("ahvcqeuhcjhv")
+	res2 := GenRevokeKey("ahvcqeuhcjhv")
 	expect := "D_revoke_ahvcqeuhcjhv"
 	if res2 != expect {
 		t.Error("genRevokeKey error")
@@ -97,7 +97,7 @@ func TestGenTermCheckKey(t *testing.T) {
 
 func TestParseTermCheckKey(t *testing.T) {
 	key := "D_11_00000000000000000012"
-	term, _ := parseTermCheckKey(key)
+	term, _ := ParseTermCheckKey(key)
 	if term != 12 {
 		t.Error("TestParseTermCheckKey error")
 	}

@@ -15,7 +15,8 @@ func GenCandidateBallotsPrefix() string {
 	return pb.ConsTDposPrefix + "_candidate_ballots_"
 }
 
-func genCandidateBallotsKey(address string) string {
+//GenCandidateBallotsKey generate candidate ballot key
+func GenCandidateBallotsKey(address string) string {
 	baseKey := GenCandidateBallotsPrefix()
 	return baseKey + address
 }
@@ -25,7 +26,8 @@ func GetCandidateInfoPrefix() string {
 	return pb.ConsTDposPrefix + "_candidate_info_"
 }
 
-func genCandidateInfoKey(address string) string {
+// GenCandidateInfoKey gen candidate info key
+func GenCandidateInfoKey(address string) string {
 	baseKey := GetCandidateInfoPrefix()
 	return baseKey + address
 }
@@ -59,14 +61,24 @@ func ParseNominateRecordsKey(key string) (string, string, error) {
 	return subKeys[4], subKeys[5], nil
 }
 
-func genCandidateNominatePrefix() string {
+// GenCandidateNominatePrefix generate nominate prefix
+func GenCandidateNominatePrefix() string {
 	return pb.ConsTDposPrefix + "_candidate_nominate_"
 }
 
 //GenCandidateNominateKey generate candidate nominate key
 func GenCandidateNominateKey(address string) string {
-	baseKey := genCandidateNominatePrefix()
+	baseKey := GenCandidateNominatePrefix()
 	return baseKey + address
+}
+
+//ParseCandidateNominateKey parse candidate nominate key 候选人池子
+func ParseCandidateNominateKey(key string) (string, error) {
+	subKeys := strings.Split(key, "_")
+	if len(subKeys) != 4 {
+		return "", errors.New("parse candidate nominate key error")
+	}
+	return subKeys[3], nil
 }
 
 //GenCandidateVotePrefix generate candidate vote prefix
@@ -74,7 +86,8 @@ func GenCandidateVotePrefix(addrCandi string) string {
 	return pb.ConsTDposPrefix + "_candidate_vote_" + addrCandi + "_"
 }
 
-func genCandidateVoteKey(addrCandi, addrVoter, txid string) string {
+// GenCandidateVoteKey generate candidate vote key
+func GenCandidateVoteKey(addrCandi, addrVoter, txid string) string {
 	baseKey := GenCandidateVotePrefix(addrCandi)
 	return baseKey + addrVoter + "_" + txid
 }
@@ -93,7 +106,8 @@ func GenVoteCandidatePrefix(addrVoter string) string {
 	return pb.ConsTDposPrefix + "_vote_candidate_" + addrVoter + "_"
 }
 
-func genVoteCandidateKey(addrVoter, addrCandi, txid string) string {
+//GenVoteCandidateKey generate vote candidate key
+func GenVoteCandidateKey(addrVoter, addrCandi, txid string) string {
 	baseKey := GenVoteCandidatePrefix(addrVoter)
 	return baseKey + addrCandi + "_" + txid
 }
@@ -107,17 +121,18 @@ func ParseVoteCandidateKey(key string) (string, string, error) {
 	return subKeys[4], subKeys[5], nil
 }
 
-// 检票信息, 与版本有关
-func genTermCheckKeyPrefix(version int64) string {
+// GenTermCheckKeyPrefix gen term check key 检票信息, 与版本有关
+func GenTermCheckKeyPrefix(version int64) string {
 	return pb.ConsTDposPrefix + fmt.Sprintf("_%d", version)
 }
 
 //GenTermCheckKey generate term check key
 func GenTermCheckKey(version, term int64) string {
-	return fmt.Sprintf("%s_%020d", genTermCheckKeyPrefix(version), term)
+	return fmt.Sprintf("%s_%020d", GenTermCheckKeyPrefix(version), term)
 }
 
-func parseTermCheckKey(key string) (int64, error) {
+// ParseTermCheckKey parse term check key
+func ParseTermCheckKey(key string) (int64, error) {
 	subKeys := strings.Split(key, "_")
 	if len(subKeys) != 3 {
 		return 0, errors.New("parse parseTermCheckKey error")
@@ -125,14 +140,14 @@ func parseTermCheckKey(key string) (int64, error) {
 	return strconv.ParseInt(subKeys[2], 10, 64)
 }
 
-// 候选人退出前投票记录, 便于回滚时恢复
-func genRevokeCandidateKey(address, txid string) string {
+// GenRevokeCandidateKey generate revoke candidate key 候选人退出前投票记录, 便于回滚时恢复
+func GenRevokeCandidateKey(address, txid string) string {
 	baseKey := fmt.Sprintf("%s_%s", address, txid)
 	return pb.ConsTDposPrefix + "_candidate_revoke_" + baseKey
 }
 
-// 生成撤销存储,避免重复撤销
-func genRevokeKey(txid string) string {
+// GenRevokeKey generate 生成撤销存储,避免重复撤销
+func GenRevokeKey(txid string) string {
 	return pb.ConsTDposPrefix + "_revoke_" + txid
 }
 
