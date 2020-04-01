@@ -9,7 +9,6 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"os"
-	Exec "os/exec"
 	"path/filepath"
 	"runtime"
 	"sync"
@@ -47,6 +46,8 @@ type codeManager struct {
 
 func newCodeManager(basedir string, compile compileFunc, makeExec makeExecCodeFunc) (*codeManager, error) {
 	runDirFull := filepath.Join(basedir, "var", "run")
+	// clean all contract.so file in the run dir
+	os.RemoveAll(runDirFull)
 	cacheDirFull := filepath.Join(basedir, "var", "cache")
 	if err := os.MkdirAll(runDirFull, 0755); err != nil {
 		return nil, err
@@ -88,9 +89,6 @@ func (c *codeManager) makeMemCache(name, libpath string, desc *pb.WasmCodeDesc) 
 	// 创建临时文件，这样每个合约版本独享一个so文件，不会相互影响
 	tmpfile := fmt.Sprintf("%s-%d-%d.so", name, time.Now().UnixNano(), rand.Int()%10000)
 	libpathFull := filepath.Join(c.rundir, tmpfile)
-	deleteCmdStr := fmt.Sprintf("rm %s", filepath.Join(c.rundir, name+"-*"))
-	deleteCmd := Exec.Command("sh", "-c", deleteCmdStr)
-	deleteCmd.Output()
 	err := cpfile(libpathFull, libpath)
 	if err != nil {
 		return nil, err
