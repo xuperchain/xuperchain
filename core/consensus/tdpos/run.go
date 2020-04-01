@@ -26,15 +26,15 @@ func (tp *TDpos) runVote(desc *contract.TxDesc, block *pb.InternalBlock) error {
 	}
 
 	for i := 0; i < len(voteInfo.candidates); i++ {
-		keyCanBal := genCandidateBallotsKey(voteInfo.candidates[i])
-		keyCandidateVote := genCandidateVoteKey(voteInfo.candidates[i], voteInfo.voter, hex.EncodeToString(desc.Tx.Txid))
+		keyCanBal := GenCandidateBallotsKey(voteInfo.candidates[i])
+		keyCandidateVote := GenCandidateVoteKey(voteInfo.candidates[i], voteInfo.voter, hex.EncodeToString(desc.Tx.Txid))
 		tp.log.Trace("runVote genCandidateVoteKey", "keyCandidateVote", keyCandidateVote)
-		keyVoteCandidate := genVoteCandidateKey(voteInfo.voter, voteInfo.candidates[i], hex.EncodeToString(desc.Tx.Txid))
+		keyVoteCandidate := GenVoteCandidateKey(voteInfo.voter, voteInfo.candidates[i], hex.EncodeToString(desc.Tx.Txid))
 		tp.log.Trace("runVote genVoteCandidateKey", "genVoteCandidateKey", keyCandidateVote)
 		// 先看一下缓存里有没有,有的话则直接处理缓存
 		if val, ok := tp.candidateBallotsCache.Load(keyCanBal); ok {
 			tp.log.Trace("runVote get from cache ok", "val", val)
-			canBal := val.(*candidateBallotsCacheValue)
+			canBal := val.(*candidateBallotsValue)
 			if !canBal.isDel {
 				tp.log.Trace("runVote add ballots before cal", "ballots", canBal.ballots)
 				canBal.ballots += voteInfo.ballots
@@ -51,7 +51,7 @@ func (tp *TDpos) runVote(desc *contract.TxDesc, block *pb.InternalBlock) error {
 				tp.log.Trace("runVote add ballots before cal", "ballots", bal.(int64))
 				bals := bal.(int64) + voteInfo.ballots
 				tp.log.Trace("runVote add ballots after cal", "ballots", bals)
-				canBal := &candidateBallotsCacheValue{
+				canBal := &candidateBallotsValue{
 					ballots: bals,
 					isDel:   false,
 				}
@@ -79,7 +79,7 @@ func (tp *TDpos) runRevokeVote(desc *contract.TxDesc, block *pb.InternalBlock) e
 		return err
 	}
 
-	keyRevoke := genRevokeKey(txVote)
+	keyRevoke := GenRevokeKey(txVote)
 	if _, ok := tp.revokeCache.Load(txVote); ok {
 		tp.log.Warn("runRevokeVote error", "error", "revoke repeated")
 		return errors.New("runRevokeVote error revoke repeated")
@@ -92,38 +92,47 @@ func (tp *TDpos) runRevokeVote(desc *contract.TxDesc, block *pb.InternalBlock) e
 	}
 
 	for i := 0; i < len(voteInfo.candidates); i++ {
-		keyCanBal := genCandidateBallotsKey(voteInfo.candidates[i])
-		keyCandidateVote := genCandidateVoteKey(voteInfo.candidates[i], voteInfo.voter, txVote)
+		keyCanBal := GenCandidateBallotsKey(voteInfo.candidates[i])
+		keyCandidateVote := GenCandidateVoteKey(voteInfo.candidates[i], voteInfo.voter, txVote)
 		tp.log.Trace("runRevokeVote genCandidateVoteKey", "keyCandidateVote", keyCandidateVote)
-		keyVoteCandidate := genVoteCandidateKey(voteInfo.voter, voteInfo.candidates[i], txVote)
+		keyVoteCandidate := GenVoteCandidateKey(voteInfo.voter, voteInfo.candidates[i], txVote)
 		tp.log.Trace("runRevokeVote genVoteCandidateKey", "genVoteCandidateKey", keyCandidateVote)
 		// 先看一下缓存里有没有,有的话则直接处理缓存
 		if val, ok := tp.candidateBallotsCache.Load(keyCanBal); ok {
 			tp.log.Trace("runRevokeVote get from cache ok", "val", val)
-			canBal := val.(*candidateBallotsCacheValue)
-			if !canBal.isDel {
-				tp.log.Trace("runRevokeVote minus ballots before cal", "ballots", canBal.ballots)
-				canBal.ballots -= voteInfo.ballots
-				tp.log.Trace("runRevokeVote minus ballots after cal", "ballots", canBal.ballots)
-				tp.candidateBallotsCache.Store(keyCanBal, canBal)
-			} else {
-				tp.log.Warn("runRevokeVote no need to cal ballot for the candidate was revoked!")
-			}
+			canBal := val.(*candidateBallotsValue)
+			tp.log.Trace("runRevokeVote minus ballots before cal", "ballots", canBal.ballots)
+			canBal.ballots -= voteInfo.ballots
+			tp.log.Trace("runRevokeVote minus ballots after cal", "ballots", canBal.ballots)
+			tp.candidateBallotsCache.Store(keyCanBal, canBal)
 		} else {
-			// 尝试从内存里load出来再进行票撤销
+			// 尝试从内存里load出来再进行票撤销, 说明还处于候选人池中
 			if bal, ok := tp.candidateBallots.Load(keyCanBal); ok {
 				tp.log.Trace("runRevokeVote get from men ok", "val", bal)
 				tp.log.Trace("runRevokeVote add ballots before cal", "ballots", bal.(int64))
 				bals := bal.(int64) - voteInfo.ballots
 				tp.log.Trace("runRevokeVote add ballots after cal", "ballots", bals)
-				canBal := &candidateBallotsCacheValue{
+				canBal := &candidateBallotsValue{
 					ballots: bals,
 					isDel:   false,
 				}
 				tp.candidateBallotsCache.Store(keyCanBal, canBal)
 			} else {
-				// 候选人不在内存中, 说明已经被删除了
-				tp.log.Warn("runRevokeVote no need to cal ballot for the candidate was revoked!")
+				// 不在候选人池中，则从DB里load出来投票
+				tp.log.Trace("runRevokeVote load from db")
+				balVal, _ := tp.utxoVM.GetFromTable(nil, []byte(keyCanBal))
+				if val != nil {
+					ballots, err := strconv.ParseInt(string(balVal), 10, 64)
+					if err != nil {
+						tp.log.Warn("runRevokeVote load from db parse error")
+					} else {
+						canBal := &candidateBallotsValue{
+							ballots: ballots - voteInfo.ballots,
+							isDel:   true,
+						}
+						tp.candidateBallotsCache.Store(keyCanBal, canBal)
+					}
+				}
 			}
 		}
 		// 清除某个候选人被谁投了票的记录
@@ -146,9 +155,9 @@ func (tp *TDpos) runNominateCandidate(desc *contract.TxDesc, block *pb.InternalB
 		return err
 	}
 	candidate := canInfo.Address
-	key := GenCandidateNominateKey(candidate)
-	keyCanBal := genCandidateBallotsKey(candidate)
-	keyCanInfo := genCandidateInfoKey(candidate)
+	keyConNom := GenCandidateNominateKey(candidate)
+	keyCanBal := GenCandidateBallotsKey(candidate)
+	keyCanInfo := GenCandidateInfoKey(candidate)
 	keyNominateRecord := GenNominateRecordsKey(fromAddr, candidate, hex.EncodeToString(desc.Tx.Txid))
 
 	canInfoValue, err := json.Marshal(canInfo)
@@ -161,20 +170,19 @@ func (tp *TDpos) runNominateCandidate(desc *contract.TxDesc, block *pb.InternalB
 	val, ok := tp.candidateBallotsCache.Load(keyCanBal)
 	if ok {
 		tp.log.Trace("runNominateCandidate get from cache ok", "val", val)
-		canBal := val.(*candidateBallotsCacheValue)
+		canBal := val.(*candidateBallotsValue)
 		if !canBal.isDel {
 			tp.log.Warn("runNominateCandidate this candidate had been nominate!")
-			return errors.New("runNominateCandidate this candidate had been nominate!")
+			return errors.New("runNominateCandidate this candidate had been nominate")
 		}
 		tp.log.Trace("runNominateCandidate recover candidate!", "key", keyCanBal)
 		canBal.isDel = false
-		canBal.ballots = 0
+		// canBal.ballots = 0
 		tp.candidateBallotsCache.Store(keyCanBal, canBal)
-		tp.context.UtxoBatch.Put([]byte(key), desc.Tx.Txid)
+		tp.context.UtxoBatch.Put([]byte(keyConNom), desc.Tx.Txid)
 		tp.context.UtxoBatch.Put([]byte(keyNominateRecord), desc.Tx.Txid)
 		tp.context.UtxoBatch.Put([]byte(keyCanInfo), []byte(canInfoValue))
 		return nil
-
 	}
 	// 从内存中load出该候选人的记录
 	_, ok = tp.candidateBallots.Load(keyCanBal)
@@ -188,11 +196,23 @@ func (tp *TDpos) runNominateCandidate(desc *contract.TxDesc, block *pb.InternalB
 		}
 		tp.log.Trace("runNominateCandidate candidate!", "key", keyCanBal)
 		// 如果内存中没有, 则说明该候选人可以被提名并进行提名
-		canBal := &candidateBallotsCacheValue{}
+		canBal := &candidateBallotsValue{}
 		canBal.isDel = false
-		canBal.ballots = 0
+		// 如果之前被提名过，投票池中可能有投票信息
+		balVal, err := tp.utxoVM.GetFromTable(nil, []byte(keyCanBal))
+		if common.NormalizedKVError(err) == common.ErrKVNotFound {
+			canBal.ballots = 0
+		} else {
+			ballots, err := strconv.ParseInt(string(balVal), 10, 64)
+			if err != nil {
+				tp.log.Warn("runNominateCandidate ParseInt error", "err:", err.Error())
+				return err
+			}
+			canBal.ballots = ballots
+		}
+		tp.log.Trace("runNominateCandidate candidate!", "canBal", canBal)
 		tp.candidateBallotsCache.Store(keyCanBal, canBal)
-		tp.context.UtxoBatch.Put([]byte(key), desc.Tx.Txid)
+		tp.context.UtxoBatch.Put([]byte(keyConNom), desc.Tx.Txid)
 		tp.context.UtxoBatch.Put([]byte(keyNominateRecord), desc.Tx.Txid)
 		tp.context.UtxoBatch.Put([]byte(keyCanInfo), []byte(canInfoValue))
 		return nil
@@ -211,7 +231,7 @@ func (tp *TDpos) runRevokeCandidate(desc *contract.TxDesc, block *pb.InternalBlo
 		return err
 	}
 
-	keyRevoke := genRevokeKey(txNom)
+	keyRevoke := GenRevokeKey(txNom)
 	if _, ok := tp.revokeCache.Load(txNom); ok {
 		tp.log.Warn("runRevokeCandidate error", "error", "revoke repeated")
 		return errors.New("runRevokeCandidate error revoke repeated")
@@ -223,12 +243,13 @@ func (tp *TDpos) runRevokeCandidate(desc *contract.TxDesc, block *pb.InternalBlo
 		return errors.New("runRevokeCandidate error revoke repeated or get revoke key from db error")
 	}
 
-	key := GenCandidateNominateKey(candidate)
-	keyBal := genCandidateBallotsKey(candidate)
-	revokeKey := genRevokeCandidateKey(candidate, hex.EncodeToString(desc.Tx.Txid))
-	keyNominateRecord := GenNominateRecordsKey(fromAddr, candidate, txNom)
+	keyConNom := GenCandidateNominateKey(candidate.Address)
+	keyBal := GenCandidateBallotsKey(candidate.Address)
+	revokeKey := GenRevokeCandidateKey(candidate.Address, hex.EncodeToString(desc.Tx.Txid))
+	keyCanInfo := GenCandidateInfoKey(candidate.Address)
+	keyNominateRecord := GenNominateRecordsKey(fromAddr, candidate.Address, txNom)
 
-	txid, _ := tp.utxoVM.GetFromTable(nil, []byte(key))
+	txid, _ := tp.utxoVM.GetFromTable(nil, []byte(keyConNom))
 	if hex.EncodeToString(txid) != txNom {
 		tp.log.Warn("runRevokeCandidate GetFromTable error, txid not match!", "txid", hex.EncodeToString(txid), "txNom", txNom)
 		return errors.New("runRevokeCandidate GetFromTable error, txid not match")
@@ -236,13 +257,13 @@ func (tp *TDpos) runRevokeCandidate(desc *contract.TxDesc, block *pb.InternalBlo
 
 	kal, ok := tp.candidateBallotsCache.Load(keyBal)
 	if ok {
-		blVal := kal.(*candidateBallotsCacheValue)
+		blVal := kal.(*candidateBallotsValue)
 		tp.log.Trace("runRevokeCandidate get from cache ok", "kal", blVal)
-		tp.context.UtxoBatch.Delete([]byte(key))
+		tp.context.UtxoBatch.Delete([]byte(keyConNom))
 		tp.context.UtxoBatch.Delete([]byte(keyNominateRecord))
+		tp.context.UtxoBatch.Delete([]byte(keyCanInfo))
 		tp.context.UtxoBatch.Put([]byte(revokeKey), []byte(strconv.FormatInt(blVal.ballots, 10)))
 		blVal.isDel = true
-		blVal.ballots = 0
 		tp.candidateBallotsCache.Store(keyBal, blVal)
 		// 记录撤销记录
 		tp.revokeCache.Store(keyRevoke, true)
@@ -255,12 +276,13 @@ func (tp *TDpos) runRevokeCandidate(desc *contract.TxDesc, block *pb.InternalBlo
 	if ok {
 		val := bal.(int64)
 		tp.log.Trace("runRevokeCandidate get from mem ok", "val", val)
-		blVal := &candidateBallotsCacheValue{}
-		tp.context.UtxoBatch.Delete([]byte(key))
+		blVal := &candidateBallotsValue{}
+		tp.context.UtxoBatch.Delete([]byte(keyConNom))
 		tp.context.UtxoBatch.Delete([]byte(keyNominateRecord))
+		tp.context.UtxoBatch.Delete([]byte(keyCanInfo))
 		tp.context.UtxoBatch.Put([]byte(revokeKey), []byte(strconv.FormatInt(val, 10)))
 		blVal.isDel = true
-		blVal.ballots = 0
+		blVal.ballots = val
 		tp.candidateBallotsCache.Store(keyBal, blVal)
 		// 记录撤销记录
 		tp.revokeCache.Store(keyRevoke, true)

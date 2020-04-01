@@ -129,10 +129,10 @@ func (tp *TDpos) getTermProposer(term int64) []*cons_base.CandidateInfo {
 		tp.log.Error("TDpos getTermProposer vote result error", "term", term, "error", err)
 		return nil
 	} else if common.NormalizedKVError(err) == common.ErrKVNotFound {
-		it := tp.utxoVM.ScanWithPrefix([]byte(genTermCheckKeyPrefix(tp.version)))
+		it := tp.utxoVM.ScanWithPrefix([]byte(GenTermCheckKeyPrefix(tp.version)))
 		defer it.Release()
 		if it.Last() {
-			termLast, err := parseTermCheckKey(string(it.Key()))
+			termLast, err := ParseTermCheckKey(string(it.Key()))
 			tp.log.Trace("TDpos getTermProposer ", "termLast", string(it.Key()))
 			if err != nil {
 				tp.log.Warn("TDpos getTermProposer parseTermCheckKey error", "error", err)
@@ -203,7 +203,7 @@ func (tp *TDpos) genTermProposer() ([]*cons_base.CandidateInfo, error) {
 	for i := int64(0); i < tp.config.proposerNum; i++ {
 		tp.log.Trace("genTermVote sort result", "address", termBallotSli[i].Address, "ballot", termBallotSli[i].Ballots)
 		addr := termBallotSli[i].Address
-		keyCanInfo := genCandidateInfoKey(addr)
+		keyCanInfo := GenCandidateInfoKey(addr)
 		ciValue, err := tp.utxoVM.GetFromTable(nil, []byte(keyCanInfo))
 		if err != nil {
 			return nil, err
@@ -327,11 +327,11 @@ func (tp *TDpos) validateRevokeVote(desc *contract.TxDesc) (*voteInfo, string, e
 
 // 是否在候选人池中
 func (tp *TDpos) inCandidate(candidate string) bool {
-	keyBl := genCandidateBallotsKey(candidate)
+	keyBl := GenCandidateBallotsKey(candidate)
 	val, ok := tp.candidateBallotsCache.Load(keyBl)
 	if ok {
 		tp.log.Trace("inCandidate load candidateBallotsCache ok ", "val", val)
-		blVal := val.(*candidateBallotsCacheValue)
+		blVal := val.(*candidateBallotsValue)
 		if blVal.isDel == true {
 			return false
 		}
@@ -399,29 +399,47 @@ func (tp *TDpos) validateNominateCandidate(desc *contract.TxDesc) (*cons_base.Ca
 }
 
 // 验证撤销候选人是否合法
-func (tp *TDpos) validateRevokeCandidate(desc *contract.TxDesc) (string, string, string, error) {
+func (tp *TDpos) validateRevokeCandidate(desc *contract.TxDesc) (*cons_base.CandidateInfo, string, string, error) {
 	descNom, err := tp.validRevoke(desc)
 	if err != nil {
 		tp.log.Warn("validRevoke error", "error", err)
-		return "", "", "", err
+		return nil, "", "", err
 	}
 	if descNom == nil || descNom.Module != "tdpos" || descNom.Method != nominateCandidateMethod {
 		tp.log.Warn("validateRevokeCandidate error descNom not match", "descNom", descNom)
-		return "", "", "", errors.New("validateRevokeCandidate error descNom not match")
+		return nil, "", "", errors.New("validateRevokeCandidate error descNom not match")
+	}
+	if len(descNom.Tx.TxInputs) <= 0 {
+		return nil, "", "", errors.New("when validateRevokeCandidate, TxInputs should not be nil")
 	}
 
+	canInfo := &cons_base.CandidateInfo{}
+
 	if descNom.Args["candidate"] == nil {
-		return "", "", "", errors.New("Vote candidate can not be null")
+		return nil, "", "", errors.New("Vote candidate can not be null")
 	}
 	candidate, ok := descNom.Args["candidate"].(string)
 	if !ok {
-		return "", "", "", errors.New("candidates should be string")
+		return nil, "", "", errors.New("candidates should be string")
 	}
-	if len(descNom.Tx.TxInputs) <= 0 {
-		return "", "", "", errors.New("when validateRevokeCandidate, TxInputs should not be nil")
+	canInfo.Address = candidate
+	// process candidate peerid
+	if desc.Args["neturl"] == nil {
+		tp.log.Warn("validateRevokeCandidate candidate have no neturl info",
+			"address", canInfo.Address)
+		// neturl could not be empty when core peers' connection is enabled
+		if tp.config.needNetURL {
+			return nil, "", "", errors.New("validateRevokeCandidate neturl could not be empty")
+		}
+	} else {
+		if peerid, ok := desc.Args["neturl"].(string); ok {
+			canInfo.PeerAddr = peerid
+		} else {
+			return nil, "", "", errors.New("validateRevokeCandidate neturl should be string")
+		}
 	}
 	fromAddr := string(descNom.Tx.TxInputs[0].FromAddr)
-	return candidate, fromAddr, hex.EncodeToString(descNom.Tx.Txid), nil
+	return canInfo, fromAddr, hex.EncodeToString(descNom.Tx.Txid), nil
 }
 
 // 验证检票参数是否合法

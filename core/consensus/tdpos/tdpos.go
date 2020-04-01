@@ -134,6 +134,7 @@ func (tp *TDpos) Configure(xlog log.Logger, cfg *config.NodeConfig, consCfg map[
 	}
 
 	if err = tp.initCandidateBallots(); err != nil {
+		xlog.Warn("initCandidateBallots failed!", "error", err)
 		return err
 	}
 	tp.log.Trace("Configure", "TDpos", tp)
@@ -297,22 +298,26 @@ func (tp *TDpos) buildConfigs(xlog log.Logger, cfg *config.NodeConfig, consCfg m
 }
 
 func (tp *TDpos) initCandidateBallots() error {
-	it := tp.utxoVM.ScanWithPrefix([]byte(GenCandidateBallotsPrefix()))
+	// it := tp.utxoVM.ScanWithPrefix([]byte(GenCandidateBallotsPrefix()))
+	it := tp.utxoVM.ScanWithPrefix([]byte(GenCandidateNominatePrefix()))
 	defer it.Release()
 	for it.Next() {
 		key := string(it.Key())
-		address, err := ParseCandidateBallotsKey(key)
+		address, err := ParseCandidateNominateKey(key)
 		tp.log.Trace("initCandidateBallots", "key", key, "address", address)
 		if err != nil {
-			tp.log.Warn("initCandidateBallots parseCandidateBallotsKey error", "key", key)
+			tp.log.Warn("initCandidateBallots ParseCandidateNominateKey error", "key", key)
 			return err
 		}
-		ballots, err := strconv.ParseInt(string(it.Value()), 10, 64)
-		tp.log.Trace("initCandidateBallots", "key", key, "address", address, "ballots", ballots)
+		balKey := GenCandidateBallotsKey(address)
+		val, err := tp.utxoVM.GetFromTable(nil, []byte(balKey))
+		ballots, err := strconv.ParseInt(string(val), 10, 64)
+		tp.log.Trace("initCandidateBallots", "balKey", balKey, "address", address, "ballots", ballots)
 		if err != nil {
+			tp.log.Warn("initCandidateBallots parse int error", "err", err.Error())
 			return err
 		}
-		tp.candidateBallots.Store(key, ballots)
+		tp.candidateBallots.Store(balKey, ballots)
 	}
 	return nil
 }
@@ -697,14 +702,13 @@ func (tp *TDpos) Finalize(blockid []byte) error {
 	}
 	tp.candidateBallotsCache.Range(func(k, v interface{}) bool {
 		key := k.(string)
-		value := v.(*candidateBallotsCacheValue)
+		value := v.(*candidateBallotsValue)
 		if value.isDel {
-			tp.context.UtxoBatch.Delete([]byte(key))
 			tp.candidateBallots.Delete(key)
 		} else {
-			tp.context.UtxoBatch.Put([]byte(key), []byte(strconv.FormatInt(value.ballots, 10)))
 			tp.candidateBallots.Store(key, value.ballots)
 		}
+		tp.context.UtxoBatch.Put([]byte(key), []byte(strconv.FormatInt(value.ballots, 10)))
 		return true
 	})
 	return nil
