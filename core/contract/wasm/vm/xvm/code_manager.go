@@ -46,6 +46,8 @@ type codeManager struct {
 
 func newCodeManager(basedir string, compile compileFunc, makeExec makeExecCodeFunc) (*codeManager, error) {
 	runDirFull := filepath.Join(basedir, "var", "run")
+	// clean all contract.so file in the run dir
+	os.RemoveAll(runDirFull)
 	cacheDirFull := filepath.Join(basedir, "var", "cache")
 	if err := os.MkdirAll(runDirFull, 0755); err != nil {
 		return nil, err
