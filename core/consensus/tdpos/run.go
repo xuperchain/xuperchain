@@ -243,11 +243,11 @@ func (tp *TDpos) runRevokeCandidate(desc *contract.TxDesc, block *pb.InternalBlo
 		return errors.New("runRevokeCandidate error revoke repeated or get revoke key from db error")
 	}
 
-	keyConNom := GenCandidateNominateKey(candidate)
-	keyBal := GenCandidateBallotsKey(candidate)
-	revokeKey := GenRevokeCandidateKey(candidate, hex.EncodeToString(desc.Tx.Txid))
-	keyCanInfo := GenCandidateInfoKey(candidate)
-	keyNominateRecord := GenNominateRecordsKey(fromAddr, candidate, txNom)
+	keyConNom := GenCandidateNominateKey(candidate.Address)
+	keyBal := GenCandidateBallotsKey(candidate.Address)
+	revokeKey := GenRevokeCandidateKey(candidate.Address, hex.EncodeToString(desc.Tx.Txid))
+	keyCanInfo := GenCandidateInfoKey(candidate.Address)
+	keyNominateRecord := GenNominateRecordsKey(fromAddr, candidate.Address, txNom)
 
 	txid, _ := tp.utxoVM.GetFromTable(nil, []byte(keyConNom))
 	if hex.EncodeToString(txid) != txNom {

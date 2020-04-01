@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	"encoding/hex"
+	"encoding/json"
 
 	"github.com/xuperchain/xuperchain/core/contract"
 	"github.com/xuperchain/xuperchain/core/pb"
@@ -142,7 +143,6 @@ func (tp *TDpos) rollbackNominateCandidate(desc *contract.TxDesc, block *pb.Inte
 		canBal := val.(*candidateBallotsValue)
 		if !canBal.isDel {
 			canBal.isDel = true
-			canBal.ballots = 0
 		}
 		tp.candidateBallotsCache.Store(keyBl, canBal)
 		tp.context.UtxoBatch.Delete([]byte(key))
@@ -151,11 +151,11 @@ func (tp *TDpos) rollbackNominateCandidate(desc *contract.TxDesc, block *pb.Inte
 		return nil
 	}
 
-	_, ok = tp.candidateBallots.Load(keyBl)
+	ballots, ok := tp.candidateBallots.Load(keyBl)
 	if ok {
 		canBal := &candidateBallotsValue{}
 		canBal.isDel = true
-		canBal.ballots = 0
+		canBal.ballots = ballots.(int64)
 		tp.candidateBallotsCache.Store(keyBl, canBal)
 		tp.context.UtxoBatch.Delete([]byte(key))
 		tp.context.UtxoBatch.Delete([]byte(keyNominateRecord))
@@ -166,7 +166,7 @@ func (tp *TDpos) rollbackNominateCandidate(desc *contract.TxDesc, block *pb.Inte
 	return nil
 }
 
-// 回滚候选人提名
+// 回滚撤销候选人提名
 func (tp *TDpos) rollbackRevokeCandidate(desc *contract.TxDesc, block *pb.InternalBlock) error {
 	tp.log.Trace("Start to rollbackRevokeCandidate", "desc", desc)
 	candidate, fromAddr, txNom, err := tp.validateRevokeCandidate(desc)
@@ -186,19 +186,27 @@ func (tp *TDpos) rollbackRevokeCandidate(desc *contract.TxDesc, block *pb.Intern
 		return nil
 	}
 
-	key := GenCandidateNominateKey(candidate)
-	keyBl := GenCandidateBallotsKey(candidate)
-	keyNominateRecord := GenNominateRecordsKey(fromAddr, candidate, txNom)
-	revokeCandidateKey := GenRevokeCandidateKey(candidate, hex.EncodeToString(desc.Tx.Txid))
+	key := GenCandidateNominateKey(candidate.Address)
+	keyBl := GenCandidateBallotsKey(candidate.Address)
+	keyCanInfo := GenCandidateInfoKey(candidate.Address)
+	keyNominateRecord := GenNominateRecordsKey(fromAddr, candidate.Address, txNom)
+	revokeCandidateKey := GenRevokeCandidateKey(candidate.Address, hex.EncodeToString(desc.Tx.Txid))
 
 	tp.context.UtxoBatch.Put([]byte(key), []byte(txNom))
 	tp.context.UtxoBatch.Put([]byte(keyNominateRecord), []byte(txNom))
+	canInfoValue, err := json.Marshal(candidate)
+	if err != nil {
+		tp.log.Warn("rollbackRevokeCandidate json marshal failed", "err", err)
+		return err
+	}
+	tp.context.UtxoBatch.Put([]byte(keyCanInfo), []byte(canInfoValue))
+
 	bals := int64(0)
 	val, err = tp.utxoVM.GetFromTable(nil, []byte(revokeCandidateKey))
 	if val != nil {
 		bals, err = strconv.ParseInt(string(val), 10, 64)
 		if err != nil {
-			tp.log.Warn("Parse revokeCandidate ballots before revokeCandidate error", "error", err)
+			tp.log.Warn("Parse rollbackRevokeCandidate ballots error", "error", err)
 			return err
 		}
 	}
@@ -209,6 +217,7 @@ func (tp *TDpos) rollbackRevokeCandidate(desc *contract.TxDesc, block *pb.Intern
 	tp.candidateBallotsCache.Store(keyBl, blVal)
 	tp.context.UtxoBatch.Delete([]byte(revokeCandidateKey))
 	tp.context.UtxoBatch.Delete([]byte(revokeCandidateKey))
+
 	// 删除revoke记录
 	tp.context.UtxoBatch.Delete([]byte(keyRevoke))
 	return nil

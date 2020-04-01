@@ -399,29 +399,47 @@ func (tp *TDpos) validateNominateCandidate(desc *contract.TxDesc) (*cons_base.Ca
 }
 
 // 验证撤销候选人是否合法
-func (tp *TDpos) validateRevokeCandidate(desc *contract.TxDesc) (string, string, string, error) {
+func (tp *TDpos) validateRevokeCandidate(desc *contract.TxDesc) (*cons_base.CandidateInfo, string, string, error) {
 	descNom, err := tp.validRevoke(desc)
 	if err != nil {
 		tp.log.Warn("validRevoke error", "error", err)
-		return "", "", "", err
+		return nil, "", "", err
 	}
 	if descNom == nil || descNom.Module != "tdpos" || descNom.Method != nominateCandidateMethod {
 		tp.log.Warn("validateRevokeCandidate error descNom not match", "descNom", descNom)
-		return "", "", "", errors.New("validateRevokeCandidate error descNom not match")
+		return nil, "", "", errors.New("validateRevokeCandidate error descNom not match")
+	}
+	if len(descNom.Tx.TxInputs) <= 0 {
+		return nil, "", "", errors.New("when validateRevokeCandidate, TxInputs should not be nil")
 	}
 
+	canInfo := &cons_base.CandidateInfo{}
+
 	if descNom.Args["candidate"] == nil {
-		return "", "", "", errors.New("Vote candidate can not be null")
+		return nil, "", "", errors.New("Vote candidate can not be null")
 	}
 	candidate, ok := descNom.Args["candidate"].(string)
 	if !ok {
-		return "", "", "", errors.New("candidates should be string")
+		return nil, "", "", errors.New("candidates should be string")
 	}
-	if len(descNom.Tx.TxInputs) <= 0 {
-		return "", "", "", errors.New("when validateRevokeCandidate, TxInputs should not be nil")
+	canInfo.Address = candidate
+	// process candidate peerid
+	if desc.Args["neturl"] == nil {
+		tp.log.Warn("validateRevokeCandidate candidate have no neturl info",
+			"address", canInfo.Address)
+		// neturl could not be empty when core peers' connection is enabled
+		if tp.config.needNetURL {
+			return nil, "", "", errors.New("validateRevokeCandidate neturl could not be empty")
+		}
+	} else {
+		if peerid, ok := desc.Args["neturl"].(string); ok {
+			canInfo.PeerAddr = peerid
+		} else {
+			return nil, "", "", errors.New("validateRevokeCandidate neturl should be string")
+		}
 	}
 	fromAddr := string(descNom.Tx.TxInputs[0].FromAddr)
-	return candidate, fromAddr, hex.EncodeToString(descNom.Tx.Txid), nil
+	return canInfo, fromAddr, hex.EncodeToString(descNom.Tx.Txid), nil
 }
 
 // 验证检票参数是否合法
