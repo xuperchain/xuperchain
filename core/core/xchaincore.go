@@ -1186,7 +1186,7 @@ func (xc *XChainCore) GetFrozenBalance(addr string) (string, error) {
 	return bint.String(), nil
 }
 
-// GetFrozenBalance get balance that still be frozen from utxo
+// GetBalanceDetail get balance that still be frozen from utxo
 func (xc *XChainCore) GetBalanceDetail(addr string) (*pb.TokenFrozenDetails, error) {
 	if xc.Status() != global.Normal {
 		return nil, ErrNotReady
@@ -1212,11 +1212,11 @@ func (xc *XChainCore) GetConsType() string {
 // GetDposCandidates get all candidates
 func (xc *XChainCore) GetDposCandidates() ([]string, error) {
 	candidates := []string{}
-	it := xc.Utxovm.ScanWithPrefix([]byte(tdpos.GenCandidateBallotsPrefix()))
+	it := xc.Utxovm.ScanWithPrefix([]byte(tdpos.GenCandidateNominatePrefix()))
 	defer it.Release()
 	for it.Next() {
 		key := string(it.Key())
-		addr, err := tdpos.ParseCandidateBallotsKey(key)
+		addr, err := tdpos.ParseCandidateNominateKey(key)
 		if err != nil {
 			return nil, err
 		}
