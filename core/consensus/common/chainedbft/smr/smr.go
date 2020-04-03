@@ -34,6 +34,8 @@ var (
 	ErrJustifySignNotEnough = errors.New("proposal justify sign not enough error")
 	// ErrVerifyVoteSign return verify vote sign error
 	ErrVerifyVoteSign = errors.New("verify justify sign error")
+	// ErrVerifyVote return verify vote error
+	ErrVerifyVote = errors.New("verify justify error")
 	// ErrInValidateSets return in validate sets error
 	ErrInValidateSets = errors.New("in validate sets error")
 	// ErrCheckDataSum return check data sum error
