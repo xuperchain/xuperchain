@@ -419,7 +419,7 @@ func TestTruncate(t *testing.T) {
 	layers, _ := ledger.Dump()
 	t.Log("Before truncate", layers)
 	if len(layers) != 3 {
-		t.Log("layers unexpected", len(layers))
+		t.Fatal("layers unexpected", len(layers))
 	}
 	err = ledger.Truncate(block1.Blockid)
 	if err != nil {
@@ -427,7 +427,7 @@ func TestTruncate(t *testing.T) {
 	}
 	layers, _ = ledger.Dump()
 	if len(layers) != 1 {
-		t.Log("layers unexpected", len(layers))
+		t.Fatal("layers unexpected", len(layers))
 	}
 	t.Log("After truncate", layers)
 
