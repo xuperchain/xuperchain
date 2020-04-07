@@ -107,13 +107,16 @@ func encodeJustify(buf *bytes.Buffer, block *pb.InternalBlock) error {
 	return nil
 }
 
+// VerifyMerkle
 func VerifyMerkle(block *pb.InternalBlock)error{
 	blockid := block.Blockid
 	merkleTree := MakeMerkleTree(block.Transactions)
 	if len(merkleTree) > 0 {
 		merkleRoot := merkleTree[len(merkleTree)-1]
-		if global.F(block.MerkleRoot) != global.F(merkleRoot) {
-			return errors.New("merkle root is wrong, block id:"+global.F(blockid))
+		blockMerkleRoot := global.F(block.MerkleRoot)
+		makeMerkleRoot := global.F(merkleRoot)
+		if blockMerkleRoot != makeMerkleRoot {
+			return errors.New("merkle root is wrong, block id:"+global.F(blockid)+",block merkle root:"+blockMerkleRoot+", make merkle root:"+makeMerkleRoot)
 		}
 		return nil
 	}else{

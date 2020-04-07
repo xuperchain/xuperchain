@@ -457,15 +457,6 @@ func (tp *TDpos) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock) (bool,
 		return false, nil
 	}
 	// 1 验证块信息是否合法
-	tp.log.Info("Verify block info ")
-	err := ledger.VerifyMerkle(in)
-	tp.log.Info("Verify merkle tree ,blockid: "+global.F(in.Blockid)+", merkleroot:"+global.F(in.MerkleRoot))
-	if err !=nil {
-		tp.log.Warn("VerifyMerkle error", "logid", header.Logid, "error", err)
-		return false, nil
-	}
-
-
 	blkid, err := ledger.MakeBlockID(in)
 	if err != nil {
 		tp.log.Warn("CheckMinerMatch MakeBlockID error", "logid", header.Logid, "error", err)
@@ -474,6 +465,12 @@ func (tp *TDpos) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock) (bool,
 	if !(bytes.Equal(blkid, in.Blockid)) {
 		tp.log.Warn("CheckMinerMatch equal blockid error", "logid", header.Logid, "redo blockid", global.F(blkid),
 			"get blockid", global.F(in.Blockid))
+		return false, nil
+	}
+
+	errv := ledger.VerifyMerkle(in)
+	if errv !=nil {
+		tp.log.Warn("VerifyMerkle error", "logid", header.Logid, "error", errv)
 		return false, nil
 	}
 
