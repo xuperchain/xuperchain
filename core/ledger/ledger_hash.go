@@ -3,7 +3,9 @@ package ledger
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"fmt"
+	"github.com/xuperchain/xuperchain/core/global"
 	"math"
 	"sort"
 
@@ -104,6 +106,22 @@ func encodeJustify(buf *bytes.Buffer, block *pb.InternalBlock) error {
 	}
 	return nil
 }
+
+func VerifyMerkle(block *pb.InternalBlock)error{
+	blockid := block.Blockid
+	merkleTree := MakeMerkleTree(block.Transactions)
+	if len(merkleTree) > 0 {
+		merkleRoot := merkleTree[len(merkleTree)-1]
+		if global.F(block.MerkleRoot) != global.F(merkleRoot) {
+			return errors.New("merkle root is wrong, block id:"+global.F(blockid))
+		}
+		return nil
+	}else{
+		return errors.New("can not make merkle tree , block id:"+global.F(blockid))
+	}
+}
+
+
 
 // MakeBlockID generate BlockID
 func MakeBlockID(block *pb.InternalBlock) ([]byte, error) {

@@ -126,6 +126,12 @@ Again:
 
 // CheckMinerMatch is the specific implementation of ConsensusInterface
 func (sc *SingleConsensus) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock) (bool, error) {
+	err := ledger.VerifyMerkle(in)
+	if err !=nil {
+		sc.log.Warn("VerifyMerkle error", "logid", header.Logid, "error", err)
+		return false, nil
+	}
+
 	blkid, err := ledger.MakeBlockID(in)
 	if err != nil {
 		sc.log.Warn("MakeBlockID error", "logid", header.Logid, "error", err)
