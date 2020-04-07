@@ -138,7 +138,7 @@ func (sc *SingleConsensus) CheckMinerMatch(header *pb.Header, in *pb.InternalBlo
 	}
 
 	errv := ledger.VerifyMerkle(in)
-	if errv !=nil {
+	if errv != nil {
 		sc.log.Warn("VerifyMerkle error", "logid", header.Logid, "error", errv)
 		return false, nil
 	}

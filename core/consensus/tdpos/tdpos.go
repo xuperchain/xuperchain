@@ -469,7 +469,7 @@ func (tp *TDpos) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock) (bool,
 	}
 
 	errv := ledger.VerifyMerkle(in)
-	if errv !=nil {
+	if errv != nil {
 		tp.log.Warn("VerifyMerkle error", "logid", header.Logid, "error", errv)
 		return false, nil
 	}

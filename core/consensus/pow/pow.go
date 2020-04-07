@@ -143,7 +143,6 @@ func (pc *PowConsensus) CompeteMaster(height int64) (bool, bool) {
 // CheckMinerMatch is the specific implementation of ConsensusInterface
 func (pc *PowConsensus) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock) (bool, error) {
 
-
 	blkid, err := ledger.MakeBlockID(in)
 	if err != nil {
 		pc.log.Warn("MakeBlockID error", "logid", header.Logid, "error", err)
@@ -155,11 +154,10 @@ func (pc *PowConsensus) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock)
 	}
 
 	errv := ledger.VerifyMerkle(in)
-	if errv !=nil {
+	if errv != nil {
 		pc.log.Warn("VerifyMerkle error", "logid", header.Logid, "error", errv)
 		return false, nil
 	}
-
 
 	targetBits := pc.calDifficulty(in)
 	if targetBits != in.TargetBits {
