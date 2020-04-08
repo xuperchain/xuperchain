@@ -468,6 +468,12 @@ func (tp *TDpos) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock) (bool,
 		return false, nil
 	}
 
+	errv := ledger.VerifyMerkle(in)
+	if errv != nil {
+		tp.log.Warn("VerifyMerkle error", "logid", header.Logid, "error", errv)
+		return false, nil
+	}
+
 	k, err := tp.cryptoClient.GetEcdsaPublicKeyFromJSON(in.Pubkey)
 	if err != nil {
 		tp.log.Warn("CheckMinerMatch get ecdsa from block error", "logid", header.Logid, "error", err)
