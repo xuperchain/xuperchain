@@ -87,9 +87,9 @@ func (r *Runner) mountPaths() []string {
 		paths = append(paths, dep.Path)
 	}
 	paths = prefixPaths(paths)
-	mounts := make([]string, 0, len(paths))
+	mounts := make([]string, 0, len(paths)*2)
 	for _, path := range paths {
-		mounts = append(mounts, "-v"+path+":"+path)
+		mounts = append(mounts, "-v", path+":"+path)
 	}
 	return mounts
 }

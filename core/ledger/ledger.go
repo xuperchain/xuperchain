@@ -612,14 +612,14 @@ func (l *Ledger) ConfirmBlock(block *pb.InternalBlock, isRoot bool) ConfirmStatu
 				newMeta.TipBlockid = block.Blockid
 				block.InTrunk = true
 				splitBlock, splitErr := l.handleFork(oldTip, preBlock.Blockid, block.Blockid, batchWrite) //处理分叉
-				splitHeight = splitBlock.Height
-				confirmStatus.Split = true
-				confirmStatus.TrunkSwitch = true
 				if splitErr != nil {
 					l.xlog.Warn("handle split failed", "splitErr", splitErr)
 					confirmStatus.Succ = false
 					return confirmStatus
 				}
+				splitHeight = splitBlock.Height
+				confirmStatus.Split = true
+				confirmStatus.TrunkSwitch = true
 				l.xlog.Info("handle split successfully", "splitBlock", fmt.Sprintf("%x", splitBlock.Blockid))
 			} else {
 				// 添加在分支上, 对preblock没有影响
@@ -1088,7 +1088,7 @@ func (l *Ledger) removeBlocks(fromBlockid []byte, toBlockid []byte, batch kvdb.B
 		fromBlock, findErr = l.fetchBlock(fromBlock.PreHash)
 		if findErr != nil {
 			l.xlog.Warn("failed to find prev block", "findErr", findErr)
-			return findErr
+			return nil //ignore orphan block
 		}
 	}
 	return nil
@@ -1108,11 +1108,24 @@ func (l *Ledger) Truncate(utxovmLastID []byte) error {
 		l.xlog.Warn("failed to find utxovm last block", "findErr", findErr)
 		return findErr
 	}
-	deletedBlockid := l.meta.TipBlockid
-	rmErr := l.removeBlocks(l.meta.TipBlockid, block.Blockid, batchWrite)
-	if rmErr != nil {
-		l.xlog.Warn("failed to remove garbage blocks", "from", global.F(l.meta.TipBlockid), "to", global.F(block.Blockid))
-		return rmErr
+	branchTips, err := l.GetBranchInfo(block.Blockid, block.Height)
+	if err != nil {
+		l.xlog.Warn("failed to find all branch tips", "err", err)
+		return err
+	}
+	for _, branchTip := range branchTips {
+		deletedBlockid := []byte(branchTip)
+		rmErr := l.removeBlocks(deletedBlockid, block.Blockid, batchWrite)
+		if rmErr != nil {
+			l.xlog.Warn("failed to remove garbage blocks", "from", global.F(l.meta.TipBlockid), "to", global.F(block.Blockid))
+			return rmErr
+		}
+		// update branch head
+		updateBranchErr := l.updateBranchInfo(block.Blockid, deletedBlockid, block.Height, batchWrite)
+		if updateBranchErr != nil {
+			l.xlog.Warn("Truncated failed when calling updateBranchInfo", "updateBranchErr", updateBranchErr)
+			return updateBranchErr
+		}
 	}
 	newMeta.TrunkHeight = block.Height
 	metaBuf, pbErr := proto.Marshal(newMeta)
@@ -1121,12 +1134,6 @@ func (l *Ledger) Truncate(utxovmLastID []byte) error {
 		return pbErr
 	}
 	batchWrite.Put([]byte(pb.MetaTablePrefix), metaBuf)
-	// update branch head
-	updateBranchErr := l.updateBranchInfo(block.Blockid, deletedBlockid, block.Height, batchWrite)
-	if updateBranchErr != nil {
-		l.xlog.Warn("Truncated failed when calling updateBranchInfo", "updateBranchErr", updateBranchErr)
-		return updateBranchErr
-	}
 	kvErr := batchWrite.Write()
 	if kvErr != nil {
 		l.xlog.Warn("batch write failed when Truncate", "kvErr", kvErr)
