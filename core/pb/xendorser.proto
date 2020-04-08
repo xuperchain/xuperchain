@@ -23,7 +23,7 @@ message EndorserResponse {
 service xendorser {
   rpc EndorserCall(EndorserRequest) returns (EndorserResponse) {
     option (google.api.http) = {
-      post : "/v1/endorsorcall"
+      post : "/v1/endorsercall"
       body : "*"
     };
   }
