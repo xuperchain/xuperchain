@@ -14,6 +14,8 @@ var (
 	rpcEndpoint = flag.String("gateway_endpoint", "localhost:37101", "endpoint of grpc service forward to")
 	// http port
 	httpEndpoint = flag.String("http_endpoint", ":8098", "endpoint of http service")
+	// enable default xendorser
+	enableEndorser = flag.Bool("enable_endorser", false, "is enable xendorser")
 	// InitialWindowSize window size
 	InitialWindowSize int32 = 128 << 10
 	// InitialConnWindowSize connection window size
@@ -33,6 +35,12 @@ func run() error {
 	err := pb.RegisterXchainHandlerFromEndpoint(ctx, mux, *rpcEndpoint, opts)
 	if err != nil {
 		return err
+	}
+	if *enableEndorser {
+		err = pb.RegisterXendorserHandlerFromEndpoint(ctx, mux, *rpcEndpoint, opts)
+		if err != nil {
+			return err
+		}
 	}
 
 	return http.ListenAndServe(*httpEndpoint, mux)
