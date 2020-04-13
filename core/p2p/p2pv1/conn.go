@@ -123,9 +123,32 @@ func (c *Conn) SendMessage(ctx context.Context, msg *p2pPb.XuperMessage) error {
 		c.lg.Error("SendMessage new stream error", "error", err.Error(), "id", c.id)
 		return err
 	}
+	waitc := make(chan struct{})
+	go func() {
+		for {
+			_, err = stream.Recv()
+			if err == io.EOF {
+				close(waitc)
+				return
+			}
+			if err != nil {
+				c.lg.Error("SendMessage Recv error", "error", err.Error())
+				close(waitc)
+				return
+			}
+		}
+	}()
 	c.lg.Trace("SendMessage", "logid", msg.GetHeader().GetLogid(), "type", msg.GetHeader().GetType(), "id", c.id)
 	err = stream.Send(msg)
+	if err != nil {
+		c.lg.Error("SendMessage Send error", "error", err.Error(), "id", c.id)
+		return err
+	}
 	stream.CloseSend()
+	<-waitc
+	if err == io.EOF {
+		return nil
+	}
 	return err
 }
 

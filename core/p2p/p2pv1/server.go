@@ -431,7 +431,7 @@ func (p *P2PServerV1) SendP2PMessage(str p2pPb.P2PService_SendP2PMessageServer) 
 		return nil
 	}
 	if err != nil {
-		p.log.Warn("SendP2PMessage Recv msg error")
+		p.log.Warn("SendP2PMessage Recv msg error", in.GetHeader().GetLogid(), "type", in.GetHeader().GetType(), "error", err)
 		return err
 	}
 
