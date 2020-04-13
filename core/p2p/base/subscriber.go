@@ -64,8 +64,6 @@ func (ms *MultiSubscriber) unRegister(sub Subscriber) error {
 }
 
 func (ms *MultiSubscriber) handleMessage(stream interface{}, msg *xuperp2p.XuperMessage) {
-	ms.lk.Lock()
-	defer ms.lk.Unlock()
 	for e := ms.elem.Front(); e != nil; e = e.Next() {
 		if sub, ok := e.Value.(Subscriber); !ok {
 			continue
