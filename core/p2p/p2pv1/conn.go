@@ -87,7 +87,7 @@ func (c *Conn) NewGrpcConn() error {
 	return nil
 }
 
-func (c *Conn) newClient(ctx context.Context) (p2p_pb.P2PService_SendP2PMessageClient, error) {
+func (c *Conn) newClient() (p2p_pb.P2PServiceClient, error) {
 	connState := c.conn.GetState().String()
 	if connState == "TRANSIENT_FAILURE" || connState == "SHUTDOWN" || connState == "Invalid-State" {
 		c.lg.Error("newClient conn state not ready", "state", connState, "id", c.id)
@@ -98,36 +98,71 @@ func (c *Conn) newClient(ctx context.Context) (p2p_pb.P2PService_SendP2PMessageC
 			return nil, err
 		}
 	}
-	client := p2p_pb.NewP2PServiceClient(c.conn)
-	return client.SendP2PMessage(ctx)
+	return p2p_pb.NewP2PServiceClient(c.conn), nil
 }
 
 // SendMessage send message to a peer
 func (c *Conn) SendMessage(ctx context.Context, msg *p2pPb.XuperMessage) error {
-	client, err := c.newClient(ctx)
+	client, err := c.newClient()
 	if err != nil {
 		c.lg.Error("SendMessage new client error", "error", err.Error(), "id", c.id)
 		return err
 	}
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	stream, err := client.SendP2PMessage(ctx)
+	if err != nil {
+		c.lg.Error("SendMessage new stream error", "error", err.Error(), "id", c.id)
+		return err
+	}
+	waitc := make(chan struct{})
+	go func() {
+		for {
+			_, err = stream.Recv()
+			if err == io.EOF {
+				close(waitc)
+				return
+			}
+			if err != nil {
+				c.lg.Error("SendMessage Recv error", "error", err.Error())
+				close(waitc)
+				return
+			}
+		}
+	}()
 	c.lg.Trace("SendMessage", "logid", msg.GetHeader().GetLogid(), "type", msg.GetHeader().GetType(), "id", c.id)
-	err = client.Send(msg)
-	client.CloseSend()
+	err = stream.Send(msg)
+	if err != nil {
+		c.lg.Error("SendMessage Send error", "error", err.Error(), "id", c.id)
+		return err
+	}
+	stream.CloseSend()
+	<-waitc
+	if err == io.EOF {
+		return nil
+	}
 	return err
 }
 
 // SendMessageWithResponse send message to a peer with responce
 func (c *Conn) SendMessageWithResponse(ctx context.Context, msg *p2pPb.XuperMessage) (*p2pPb.XuperMessage, error) {
-	client, err := c.newClient(ctx)
+	client, err := c.newClient()
 	if err != nil {
 		c.lg.Error("SendMessageWithResponse new client error", "error", err.Error(), "id", c.id)
 		return nil, err
 	}
-
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	stream, err := client.SendP2PMessage(ctx)
+	if err != nil {
+		c.lg.Error("SendMessageWithResponse new stream error", "error", err.Error(), "id", c.id)
+		return nil, err
+	}
 	res := &p2pPb.XuperMessage{}
 	waitc := make(chan struct{})
 	go func() {
 		for {
-			res, err = client.Recv()
+			res, err = stream.Recv()
 			if err == io.EOF {
 				close(waitc)
 				return
@@ -144,22 +179,24 @@ func (c *Conn) SendMessageWithResponse(ctx context.Context, msg *p2pPb.XuperMess
 		}
 	}()
 	c.lg.Trace("SendMessageWithResponse", "logid", msg.GetHeader().GetLogid(), "type", msg.GetHeader().GetType(), "id", c.id)
-	err = client.Send(msg)
+	err = stream.Send(msg)
 	if err != nil {
 		c.lg.Error("SendMessageWithResponse error", "error", err.Error(), "id", c.id)
 		return nil, err
 	}
-	client.CloseSend()
+	stream.CloseSend()
 	<-waitc
 	c.lg.Trace("SendMessageWithResponse return ", "logid", res.GetHeader().GetLogid(), "res", res, "id", c.id)
 	return res, err
 }
 
+// Close close this conn
 func (c *Conn) Close() {
 	c.lg.Info("Conn Close", "id", c.id)
 	c.conn.Close()
 }
 
+// GetConnID return conn id
 func (c *Conn) GetConnID() string {
 	return c.id
 }
