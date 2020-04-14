@@ -23,6 +23,7 @@ type Context interface {
 	Transfer(to string, amount *big.Int) error
 	TransferAmount() (*big.Int, error)
 	Call(module, contract, method string, args map[string][]byte) (*Response, error)
+	CrossQuery(uri string, args map[string][]byte) (*Response, error)
 
 	Logf(fmt string, args ...interface{})
 }
