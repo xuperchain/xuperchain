@@ -17,13 +17,19 @@ public:
     // 参数: userid - 学生的主键id
     // 返回值: data - 学生的成绩信息(json格式string)
     virtual void queryScore() = 0;
+
+    // 查询具有写权限的账户
+    // 返回值: 具有写权限的address
+    virtual void queryOwner() = 0;
 };
 
 struct ScoreRecordDemo : public ScoreRecord, public xchain::Contract {
 private:
+    // define the key prefix of buckets
     const std::string OWNER_KEY = "Owner";
     const std::string RECORD_KEY = "R_";
 
+    // check if caller is the owner of this contract
     bool isOwner(xchain::Context* ctx, const std::string& caller) {
         std::string owner;
         if (!ctx->get_object(OWNER_KEY, &owner)) {
@@ -110,6 +116,19 @@ public:
         // 执行成功，返回status code 200
         ctx->ok(data);
     }
+
+    void queryOwner() {
+        // 获取合约上下文对象
+        xchain::Context* ctx = this->context();
+        std::string owner;
+        if (!ctx->get_object(OWNER_KEY, &owner)) {
+            // 没查到owner信息，可能
+            ctx->error("get owner failed");
+            return;
+        }
+        // 执行成功，返回owner address
+        ctx->ok(owner);
+    }
 };
 
 DEFINE_METHOD(ScoreRecordDemo, initialize) { self.initialize(); }
@@ -117,3 +136,5 @@ DEFINE_METHOD(ScoreRecordDemo, initialize) { self.initialize(); }
 DEFINE_METHOD(ScoreRecordDemo, addScore) { self.addScore(); }
 
 DEFINE_METHOD(ScoreRecordDemo, queryScore) { self.queryScore(); }
+
+DEFINE_METHOD(ScoreRecordDemo, queryOwner) { self.queryOwner(); }
