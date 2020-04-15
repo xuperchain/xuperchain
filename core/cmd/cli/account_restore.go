@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/xuperchain/xuperchain/core/crypto/account"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -69,6 +70,12 @@ func (c *AccountRestoreCommand) restoreAccount() error {
 	}
 
 	if outputdir != "" {
+		if _, err := os.Stat(outputdir); err == nil {
+			return fmt.Errorf("output directory exists, abort")
+		}
+		if err := os.MkdirAll(outputdir, os.ModePerm); nil != err {
+			return fmt.Errorf("failed to create output dir before restore account:%s", err)
+		}
 		if strings.LastIndex(outputdir, "/") != len([]rune(outputdir))-1 {
 			outputdir = outputdir + "/"
 		}
