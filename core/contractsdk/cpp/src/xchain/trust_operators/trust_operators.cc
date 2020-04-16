@@ -21,14 +21,14 @@ bool tfcall(const TrustFunctionCallRequest& request, TrustFunctionCallResponse* 
 
 TrustOperators::TrustOperators(xchain::Context* ctx, const uint32_t svn): _ctx(ctx), _svn(svn) {}
 
-std::string Map_to_String(std::map<std::string, std::string> strMap) {
+// map_to_string convert a <string, string>map to a string
+std::string map_to_string(std::map<std::string, std::string> strMap) {
         std::map<std::string, std::string>::iterator it;
         std::string str = "{";
         for(it = strMap.begin(); it != strMap.end(); ++it) {
             if (it != strMap.begin()) {
                 str = str + ",";
             }
-
             str = str + '"' + it->first + '"';
             str = str + ":";
             str = str + '"' + it->second + '"';
@@ -37,77 +37,32 @@ std::string Map_to_String(std::map<std::string, std::string> strMap) {
         return str;
 }
 
-std::string TrustOperators::add(std::string left_value, const std::string right_value, const std::string output_key) {
+/*
+    ops supports encrypted data operations;
+    op is one of {add, sub, mul};
+    left_value is left operand(encrypted), right_value is right operand(encrypted);
+    output_key is the key to put encrypted result.
+*/
+bool TrustOperators::ops(const std::string op, const std::string left_value, const std::string right_value, const std::string output_key) {
     TrustFunctionCallRequest req;
-    req.set_method("add");
+    req.set_method(op);
     std::map<std::string, std::string> argsMap;
     argsMap["l"] = left_value;
     argsMap["r"] = right_value;
     argsMap["o"] = output_key;
-    req.set_args(Map_to_String(argsMap));
+    req.set_args(map_to_string(argsMap));
 
     req.set_svn(_svn);
     req.set_address(_ctx->initiator());
     TrustFunctionCallResponse resp;
     if (!tfcall(req, &resp)) {
-        return "error";
+        return false;
     }
     assert(resp.has_kvs());
+    // tfcall only returns one kv pair {output_key: encrypted_result}
     auto ok = _ctx->put_object(resp.kvs().kv(0).key(), resp.kvs().kv(0).value());
     if (!ok) {
-         return "error";
+         return false;
     }
-    std::map<std::string, std::string> retMap;
-    retMap[resp.kvs().kv(0).key()] = resp.kvs().kv(0).value();
-    return Map_to_String(retMap);
-}
-
-std::string TrustOperators::sub(const std::string left_value, const std::string right_value, const std::string output_key) {
-     TrustFunctionCallRequest req;
-     req.set_method("sub");
-     std::map<std::string, std::string> argsMap;
-     argsMap["l"] = left_value;
-     argsMap["r"] = right_value;
-     argsMap["o"] = output_key;
-     req.set_args(Map_to_String(argsMap));
-
-     req.set_svn(_svn);
-     req.set_address(_ctx->initiator());
-     TrustFunctionCallResponse resp;
-     if (!tfcall(req, &resp)) {
-         return "error";
-     }
-     assert(resp.has_kvs());
-     auto ok = _ctx->put_object(resp.kvs().kv(0).key(), resp.kvs().kv(0).value());
-     if (!ok) {
-         return "error";
-     }
-     std::map<std::string, std::string> retMap;
-     retMap[resp.kvs().kv(0).key()] = resp.kvs().kv(0).value();
-     return Map_to_String(retMap);
-}
-
-std::string TrustOperators::mul(const std::string left_value, const std::string right_value, const std::string output_key) {
-     TrustFunctionCallRequest req;
-     req.set_method("mul");
-     std::map<std::string, std::string> argsMap;
-     argsMap["l"] = left_value;
-     argsMap["r"] = right_value;
-     argsMap["o"] = output_key;
-     req.set_args(Map_to_String(argsMap));
-
-     req.set_svn(_svn);
-     req.set_address(_ctx->initiator());
-     TrustFunctionCallResponse resp;
-     if (!tfcall(req, &resp)) {
-         return "error";
-     }
-    assert(resp.has_kvs());
-    auto ok = _ctx->put_object(resp.kvs().kv(0).key(), resp.kvs().kv(0).value());
-    if (!ok) {
-         return "error";
-    }
-    std::map<std::string, std::string> retMap;
-    retMap[resp.kvs().kv(0).key()] = resp.kvs().kv(0).value();
-    return Map_to_String(retMap);
+    return true;
 }
