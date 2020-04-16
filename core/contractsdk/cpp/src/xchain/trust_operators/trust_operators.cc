@@ -19,120 +19,9 @@ bool tfcall(const TrustFunctionCallRequest& request, TrustFunctionCallResponse* 
     return ret;
 }
 
-TrustOperators::TrustOperators(const std::string& addr):_address(addr){}
+TrustOperators::TrustOperators(xchain::Context* ctx, const uint32_t svn): _ctx(ctx), _svn(svn) {}
 
-/*
-bool TrustOperators::store(xchain::Context* ctx, const uint32_t svn, const std::string& args) {
-    TrustFunctionCallRequest req;
-    req.set_method("store");
-    req.set_args(args);
-    req.set_svn(svn);
-    req.set_address(_address);
-    TrustFunctionCallResponse resp;
-    if (!tfcall(req, &resp)) {
-        return false;
-    }
-    assert(resp.has_kvs()); 
-    auto kvs = resp.kvs();
-    for (int i = 0; i < kvs.kv_size(); i++) {
-        auto ok = ctx->put_object(kvs.kv(i).key(), kvs.kv(i).value());
-	    if (!ok) {
-	        return false;
-	    }
-    }
-    return true;
-}
-*/
-
-std::string TrustOperators::debug(xchain::Context* ctx, const uint32_t svn, const std::string& args) {
-    TrustFunctionCallRequest req;
-    req.set_method("debug");
-    req.set_args(args);
-    req.set_svn(svn);
-    req.set_address(_address);
-    TrustFunctionCallResponse resp;
-    if (!tfcall(req, &resp)) {
-        return "error";
-    }
-    assert(resp.has_kvs());
-    auto kvs = resp.kvs();
-    std::map<std::string, std::string> retMap;
-    for (int i = 0; i < kvs.kv_size(); i++) {
-        retMap[kvs.kv(i).key()] = kvs.kv(i).value();
-    }
-    return TrustOperators::MapToString(retMap);
-}
-
-std::string TrustOperators::add(xchain::Context* ctx, const uint32_t svn, const std::string& args) {
-    TrustFunctionCallRequest req;
-    req.set_method("add");
-    req.set_args(args);
-    req.set_svn(svn);
-    req.set_address(_address);
-    TrustFunctionCallResponse resp;
-    if (!tfcall(req, &resp)) {
-        return "error";
-    }
-    assert(resp.has_kvs());
-    auto kvs = resp.kvs();
-    std::map<std::string, std::string> retMap;
-    for (int i = 0; i < kvs.kv_size(); i++) {
-        auto ok = ctx->put_object(kvs.kv(i).key(), kvs.kv(i).value());
-	    if (!ok) {
-	        return "error";
-	    }
-	    retMap[kvs.kv(i).key()] = kvs.kv(i).value();
-    }
-    return TrustOperators::MapToString(retMap);
-}
-
-std::string TrustOperators::sub(xchain::Context* ctx, const uint32_t svn, const std::string& args) {
-    TrustFunctionCallRequest req;
-    req.set_method("sub");
-    req.set_args(args);
-    req.set_svn(svn);
-    req.set_address(_address);
-    TrustFunctionCallResponse resp;
-    if (!tfcall(req, &resp)) {
-        return "error";
-    }
-    assert(resp.has_kvs());
-    auto kvs = resp.kvs();
-    std::map<std::string, std::string> retMap;
-    for (int i = 0; i < kvs.kv_size(); i++) {
-        auto ok = ctx->put_object(kvs.kv(i).key(), kvs.kv(i).value());
-	    if (!ok) {
-	        return "error";
-	    }
-	    retMap[kvs.kv(i).key()] = kvs.kv(i).value();
-    }
-    return TrustOperators::MapToString(retMap);
-}
-
-std::string TrustOperators::mul(xchain::Context* ctx, const uint32_t svn, const std::string& args) {
-    TrustFunctionCallRequest req;
-    req.set_method("mul");
-    req.set_args(args);
-    req.set_svn(svn);
-    req.set_address(_address);
-    TrustFunctionCallResponse resp;
-    if (!tfcall(req, &resp)) {
-        return "error";
-    }
-    assert(resp.has_kvs());
-    auto kvs = resp.kvs();
-    std::map<std::string, std::string> retMap;
-    for (int i = 0; i < kvs.kv_size(); i++) {
-        auto ok = ctx->put_object(kvs.kv(i).key(), kvs.kv(i).value());
-	    if (!ok) {
-	        return "error";
-	    }
-	    retMap[kvs.kv(i).key()] = kvs.kv(i).value();
-    }
-    return TrustOperators::MapToString(retMap);
-}
-
-std::string TrustOperators::MapToString(std::map<std::string, std::string> strMap) {
+std::string Map_to_String(std::map<std::string, std::string> strMap) {
         std::map<std::string, std::string>::iterator it;
         std::string str = "{";
         for(it = strMap.begin(); it != strMap.end(); ++it) {
@@ -146,4 +35,79 @@ std::string TrustOperators::MapToString(std::map<std::string, std::string> strMa
         }
         str = str + "}";
         return str;
+}
+
+std::string TrustOperators::add(std::string left_value, const std::string right_value, const std::string output_key) {
+    TrustFunctionCallRequest req;
+    req.set_method("add");
+    std::map<std::string, std::string> argsMap;
+    argsMap["l"] = left_value;
+    argsMap["r"] = right_value;
+    argsMap["o"] = output_key;
+    req.set_args(Map_to_String(argsMap));
+
+    req.set_svn(_svn);
+    req.set_address(_ctx->initiator());
+    TrustFunctionCallResponse resp;
+    if (!tfcall(req, &resp)) {
+        return "error";
+    }
+    assert(resp.has_kvs());
+    auto ok = _ctx->put_object(resp.kvs().kv(0).key(), resp.kvs().kv(0).value());
+    if (!ok) {
+         return "error";
+    }
+    std::map<std::string, std::string> retMap;
+    retMap[resp.kvs().kv(0).key()] = resp.kvs().kv(0).value();
+    return Map_to_String(retMap);
+}
+
+std::string TrustOperators::sub(const std::string left_value, const std::string right_value, const std::string output_key) {
+     TrustFunctionCallRequest req;
+     req.set_method("sub");
+     std::map<std::string, std::string> argsMap;
+     argsMap["l"] = left_value;
+     argsMap["r"] = right_value;
+     argsMap["o"] = output_key;
+     req.set_args(Map_to_String(argsMap));
+
+     req.set_svn(_svn);
+     req.set_address(_ctx->initiator());
+     TrustFunctionCallResponse resp;
+     if (!tfcall(req, &resp)) {
+         return "error";
+     }
+     assert(resp.has_kvs());
+     auto ok = _ctx->put_object(resp.kvs().kv(0).key(), resp.kvs().kv(0).value());
+     if (!ok) {
+         return "error";
+     }
+     std::map<std::string, std::string> retMap;
+     retMap[resp.kvs().kv(0).key()] = resp.kvs().kv(0).value();
+     return Map_to_String(retMap);
+}
+
+std::string TrustOperators::mul(const std::string left_value, const std::string right_value, const std::string output_key) {
+     TrustFunctionCallRequest req;
+     req.set_method("mul");
+     std::map<std::string, std::string> argsMap;
+     argsMap["l"] = left_value;
+     argsMap["r"] = right_value;
+     argsMap["o"] = output_key;
+     req.set_args(Map_to_String(argsMap));
+
+     req.set_svn(_svn);
+     req.set_address(_ctx->initiator());
+     TrustFunctionCallResponse resp;
+     if (!tfcall(req, &resp)) {
+         return "error";
+     }
+    assert(resp.has_kvs());
+    auto ok = _ctx->put_object(resp.kvs().kv(0).key(), resp.kvs().kv(0).value());
+    if (!ok) {
+         return "error";
+    }
+    std::map<std::string, std::string> retMap;
+    retMap[resp.kvs().kv(0).key()] = resp.kvs().kv(0).value();
+    return Map_to_String(retMap);
 }

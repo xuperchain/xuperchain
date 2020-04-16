@@ -37,26 +37,9 @@ DEFINE_METHOD(Counter, store) {
     ctx->ok("done");
 }
 
-DEFINE_METHOD(Counter, debug) {
-    xchain::Context* ctx = self.context();
-    TrustOperators to(ctx->initiator());
-
-    std::map<std::string, std::string> argsMap;
-    for(auto it = ctx->args().begin(); it != ctx->args().end(); ++it) {
-        std::string value;
-        // get each encrypted value
-        ctx->get_object(it->second, &value);
-        argsMap[it->second] = value;
-    }
-
-    std::string args = TrustOperators::MapToString(argsMap);
-    auto ok = to.debug(ctx, 0, args);
-    ctx->ok(ok);
-}
-
 DEFINE_METHOD(Counter, add) {
     xchain::Context* ctx = self.context();
-    TrustOperators to(ctx->initiator());
+    TrustOperators to(ctx, 0);
 
     std::map<std::string, std::string> argsMap;
     for(auto it = ctx->args().begin(); it != ctx->args().end(); ++it) {
@@ -69,14 +52,14 @@ DEFINE_METHOD(Counter, add) {
             argsMap[it->first] = it->second;
         }
     }
-    std::string args = TrustOperators::MapToString(argsMap);
-    auto ok = to.add(ctx, 0, args);
+
+    auto ok = to.add(argsMap["l"], argsMap["r"], argsMap["o"]);
     ctx->ok(ok);
 }
 
 DEFINE_METHOD(Counter, sub) {
    xchain::Context* ctx = self.context();
-    TrustOperators to(ctx->initiator());
+    TrustOperators to(ctx, 0);
 
     std::map<std::string, std::string> argsMap;
     for(auto it = ctx->args().begin(); it != ctx->args().end(); ++it) {
@@ -89,15 +72,15 @@ DEFINE_METHOD(Counter, sub) {
             argsMap[it->first] = it->second;
         }
     }
-    std::string args = TrustOperators::MapToString(argsMap);
-    auto ok = to.sub(ctx, 0, args);
+
+    auto ok = to.sub(argsMap["l"], argsMap["r"], argsMap["o"]);
     ctx->ok(ok);
 }
 
 
 DEFINE_METHOD(Counter, mul) {
    xchain::Context* ctx = self.context();
-    TrustOperators to(ctx->initiator());
+    TrustOperators to(ctx, 0);
 
     std::map<std::string, std::string> argsMap;
     for(auto it = ctx->args().begin(); it != ctx->args().end(); ++it) {
@@ -110,7 +93,7 @@ DEFINE_METHOD(Counter, mul) {
             argsMap[it->first] = it->second;
         }
     }
-    std::string args = TrustOperators::MapToString(argsMap);
-    auto ok = to.mul(ctx, 0, args);
+
+    auto ok = to.mul(argsMap["l"], argsMap["r"], argsMap["o"]);
     ctx->ok(ok);
 }

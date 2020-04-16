@@ -6,18 +6,14 @@
 
 class TrustOperators {
 public:
-    TrustOperators(const std::string&);
-//    bool store(xchain::Context* ctx, const uint32_t svn, const std::string& args);
-    std::string debug(xchain::Context* ctx, const uint32_t svn, const std::string& args);
-    std::string add(xchain::Context* ctx, const uint32_t svn, const std::string& args);
-    std::string sub(xchain::Context* ctx, const uint32_t svn, const std::string& args);
-    std::string mul(xchain::Context* ctx, const uint32_t svn, const std::string& args);
+    TrustOperators(xchain::Context*, const uint32_t);
 
-    static std::string MapToString(std::map<std::string, std::string> strMap);
+    std::string add(const std::string left_value, const std::string right_value, const std::string output_key);
+    std::string sub(const std::string left_value, const std::string right_value, const std::string output_key);
+    std::string mul(const std::string left_value, const std::string right_value, const std::string output_key);
    
-private: 
-    const std::string& _address;
-//    xchain::Context* _ctx;
-//   const uint32_t _svn;
+private:
+    xchain::Context* _ctx;
+    const uint32_t _svn;
 };
 
