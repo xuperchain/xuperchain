@@ -1,6 +1,5 @@
 #include <iostream>
 #include "xchain/xchain.h"
-#include "xchain/trust_operators/tf.pb.h"
 #include "xchain/trust_operators/trust_operators.h"
 
 struct Counter : public xchain::Contract {};
