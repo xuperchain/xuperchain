@@ -6,9 +6,7 @@ import (
 	"log"
 	"os"
 	"strings"
-
 	"github.com/spf13/cobra"
-
 	crypto_client "github.com/xuperchain/xuperchain/core/crypto/client"
 )
 
