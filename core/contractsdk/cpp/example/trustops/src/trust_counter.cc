@@ -51,10 +51,7 @@ DEFINE_METHOD(Counter, debug) {
 
     std::string args = TrustOperators::MapToString(argsMap);
     auto ok = to.debug(ctx, 0, args);
-
-    std::string debugs = "done";
-    if (!ok) {  debugs = "error"; }
-    ctx->ok(debugs);
+    ctx->ok(ok);
 }
 
 DEFINE_METHOD(Counter, add) {
@@ -94,10 +91,7 @@ DEFINE_METHOD(Counter, sub) {
     }
     std::string args = TrustOperators::MapToString(argsMap);
     auto ok = to.sub(ctx, 0, args);
-
-    std::string debug = "done";
-    if (!ok) {  debug = "error"; }
-    ctx->ok(debug);
+    ctx->ok(ok);
 }
 
 
@@ -118,8 +112,5 @@ DEFINE_METHOD(Counter, mul) {
     }
     std::string args = TrustOperators::MapToString(argsMap);
     auto ok = to.mul(ctx, 0, args);
-
-    std::string debug = "done";
-    if (!ok) {  debug = "error"; }
-    ctx->ok(debug);
+    ctx->ok(ok);
 }
