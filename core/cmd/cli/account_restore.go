@@ -2,12 +2,12 @@ package main
 
 import (
 	"fmt"
+	"github.com/spf13/cobra"
 	"github.com/xuperchain/xuperchain/core/crypto/account"
+	crypto_client "github.com/xuperchain/xuperchain/core/crypto/client"
 	"log"
 	"os"
 	"strings"
-	"github.com/spf13/cobra"
-	crypto_client "github.com/xuperchain/xuperchain/core/crypto/client"
 )
 
 // AccountRestoreCommand restore account by mnemonic
