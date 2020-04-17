@@ -14,9 +14,12 @@ import (
 	"github.com/syndtr/goleveldb/leveldb/storage"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"os"
 	"path"
 	"sync"
+	"syscall"
+	"time"
 )
 
 var errFileOpen = errors.New("leveldb/storage: file still open")
@@ -59,40 +62,49 @@ type S3Storage struct {
 
 // NewS3Storage returns a new s3-backed storage implementation.
 func NewS3Storage(opt OpenOption) (storage.Storage, error) {
+	rand.Seed(int64(time.Now().Nanosecond()))
 	s3Client, err := GetS3Client(opt)
 	if err != nil {
 		return nil, err
 	}
 	if opt.LocalCacheDir != "" {
 		opt.LocalCacheDir = path.Join(opt.LocalCacheDir, opt.Path)
-		err := os.MkdirAll(opt.LocalCacheDir, 0755)
-		if err != nil {
-			return nil, err
-		}
-		logFiles, err := ioutil.ReadDir(opt.LocalCacheDir)
-		for _, logF := range logFiles {
-			fullName := path.Join(opt.LocalCacheDir, logF.Name())
-			content, err := ioutil.ReadFile(fullName)
-			if err != nil {
-				return nil, err
-			}
-			log.Println("Upload", fullName)
-			fd, _ := fsParseName(logF.Name())
-			err = s3Client.PutBytes(fd.String(), content)
-			if err != nil {
-				return nil, err
-			}
-			os.Remove(fullName)
-		}
 	} else {
 		return nil, errors.New("need a local cache dir for s3 storage")
 	}
 	ramFileCache, _ := lru.New(CacheSize)
-	return &S3Storage{
+	ms := &S3Storage{
 		objStore: s3Client,
 		ramFiles: ramFileCache,
 		opt:      opt,
-	}, nil
+	}
+	return ms, nil
+}
+
+func (ms *S3Storage) uploadFiles() error {
+	err := os.MkdirAll(ms.opt.LocalCacheDir, 0755)
+	if err != nil {
+		return err
+	}
+	logFiles, err := ioutil.ReadDir(ms.opt.LocalCacheDir)
+	for _, logF := range logFiles {
+		if logF.Name() == "LOCK" {
+			continue
+		}
+		fullName := path.Join(ms.opt.LocalCacheDir, logF.Name())
+		content, err := ioutil.ReadFile(fullName)
+		if err != nil {
+			return err
+		}
+		log.Println("Upload", fullName)
+		fd, _ := fsParseName(logF.Name())
+		err = ms.objStore.PutBytes(fd.String(), content)
+		if err != nil {
+			return err
+		}
+		os.Remove(fullName)
+	}
+	return nil
 }
 
 func (ms *S3Storage) Lock() (storage.Locker, error) {
@@ -103,14 +115,33 @@ func (ms *S3Storage) Lock() (storage.Locker, error) {
 		return nil, storage.ErrLocked
 	}
 	locked, _ := ms.objStore.GetBytes("LOCK")
-	if string(locked) == "locked" {
+	lockFileName := path.Join(ms.opt.LocalCacheDir, "LOCK")
+	localSession, _ := ioutil.ReadFile(lockFileName)
+	if string(locked) != string(localSession) && len(locked) > 0 {
 		return nil, storage.ErrLocked
 	}
-	err := ms.objStore.PutBytes("LOCK", []byte("locked"))
+	if len(localSession) > 0 {
+		var owerPid, rnd int
+		fmt.Sscanf(string(localSession), "%d %d", &rnd, &owerPid)
+		selfPid := os.Getpid()
+		if owerPid != selfPid && syscall.Kill(owerPid, 0) == nil {
+			return nil, storage.ErrLocked
+		}
+	}
+	newSession := fmt.Sprintf("%d %d", rand.Int(), os.Getpid())
+	err := ms.objStore.PutBytes("LOCK", []byte(newSession))
+	if err != nil {
+		return nil, storage.ErrLocked
+	}
+	err = ioutil.WriteFile(lockFileName, []byte(newSession), 0644)
+	if err != nil {
+		return nil, storage.ErrLocked
+	}
+	ms.slock = &S3StorageLock{ms: ms}
+	err = ms.uploadFiles()
 	if err != nil {
 		return nil, err
 	}
-	ms.slock = &S3StorageLock{ms: ms}
 	return ms.slock, nil
 }
 
