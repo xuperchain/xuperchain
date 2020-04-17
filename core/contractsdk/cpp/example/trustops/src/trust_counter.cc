@@ -45,19 +45,19 @@ DEFINE_METHOD(Counter, add) {
     xchain::Context* ctx = self.context();
     TrustOperators to(ctx, 0);
 
-    std::map<std::string, std::string> argsMap;
+    std::map<std::string, std::string> args_map;
     for(auto it = ctx->args().begin(); it != ctx->args().end(); ++it) {
         std::string value;
         // get each encrypted value
         if (it->first != "o") {
             ctx->get_object(it->second, &value);
-            argsMap[it->first] = value;
+            args_map[it->first] = value;
         } else {
-            argsMap[it->first] = it->second;
+            args_map[it->first] = it->second;
         }
     }
 
-    auto ok = to.ops("add", argsMap["l"], argsMap["r"], argsMap["o"]);
+    auto ok = to.add(args_map["l"], args_map["r"], args_map["o"]);
     std::string debug = "done";
     if (!ok) { debug = "error"; }
     ctx->ok(debug);
@@ -69,19 +69,19 @@ DEFINE_METHOD(Counter, sub) {
    xchain::Context* ctx = self.context();
     TrustOperators to(ctx, 0);
 
-    std::map<std::string, std::string> argsMap;
+    std::map<std::string, std::string> args_map;
     for(auto it = ctx->args().begin(); it != ctx->args().end(); ++it) {
         std::string value;
         // get each encrypted value
         if (it->first != "o") {
             ctx->get_object(it->second, &value);
-            argsMap[it->first] = value;
+            args_map[it->first] = value;
         } else {
-            argsMap[it->first] = it->second;
+            args_map[it->first] = it->second;
         }
     }
 
-    auto ok = to.ops("sub", argsMap["l"], argsMap["r"], argsMap["o"]);
+    auto ok = to.sub(args_map["l"], args_map["r"], args_map["o"]);
     std::string debug = "done";
     if (!ok) { debug = "error"; }
     ctx->ok(debug);
@@ -93,19 +93,19 @@ DEFINE_METHOD(Counter, mul) {
    xchain::Context* ctx = self.context();
     TrustOperators to(ctx, 0);
 
-    std::map<std::string, std::string> argsMap;
+    std::map<std::string, std::string> args_map;
     for(auto it = ctx->args().begin(); it != ctx->args().end(); ++it) {
         std::string value;
         // get each encrypted value
         if (it->first != "o") {
             ctx->get_object(it->second, &value);
-            argsMap[it->first] = value;
+            args_map[it->first] = value;
         } else {
-            argsMap[it->first] = it->second;
+            args_map[it->first] = it->second;
         }
     }
 
-    auto ok = to.ops("mul", argsMap["l"], argsMap["r"], argsMap["o"]);
+    auto ok = to.mul(args_map["l"], args_map["r"], args_map["o"]);
     std::string debug = "done";
     if (!ok) { debug = "error"; }
     ctx->ok(debug);
