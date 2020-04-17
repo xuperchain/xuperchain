@@ -13,7 +13,6 @@ import (
 	"github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperchain/core/common/config"
 	"github.com/xuperchain/xuperchain/core/kv/s3"
-	pt "path"
 )
 
 // Open opens an instance of LDB with parameters (ldb path and other options)
@@ -33,7 +32,7 @@ func (ldb *LDBDatabase) Open(path string, options map[string]interface{}) error 
 		Sk:            cfg.CloudStorage.Sk,
 		Region:        cfg.CloudStorage.Region,
 		Endpoint:      cfg.CloudStorage.Endpoint,
-		LocalCacheDir: pt.Join(cfg.CloudStorage.LocalCacheDir, path),
+		LocalCacheDir: cfg.CloudStorage.LocalCacheDir,
 	}
 	st, err := levels3.NewS3Storage(s3opt)
 	if err != nil {
