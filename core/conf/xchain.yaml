@@ -116,3 +116,14 @@ wasm:
 
 # 是否开启默认的XEndorser背书服务
 enableXEndorser: false
+
+
+# 云存储配置(AWS S3接口兼容)
+cloudStorage:
+  bucket: "node1"
+  ak: ""
+  sk: ""
+  region: "bj"
+  endpoint: "s3.bj.bcebos.com"
+  localCacheDir: "./data/cache"
+

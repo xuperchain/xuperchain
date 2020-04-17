@@ -187,6 +187,15 @@ type TEEConfig struct {
 	ConfigPath string `yaml:"configPath"` // config path for the dynamic
 }
 
+type CloudStorageConfig struct {
+	Bucket        string `yaml:"bucket"`        //bucket name of s3 or bos
+	Ak            string `yaml:"ak"`            //access key
+	Sk            string `yaml:"sk"`            //secrete key
+	Region        string `yaml:"region"`        //region, eg. bj
+	Endpoint      string `yaml:"endpoint"`      //endpoint, eg. s3.bj.bcebos.com
+	LocalCacheDir string `yaml:"localCacheDir"` //cache directory on local disk
+}
+
 func (w *WasmConfig) applyFlags(flags *pflag.FlagSet) {
 	flags.StringVar(&w.Driver, "vm", w.Driver, "contract vm driver")
 }
@@ -253,6 +262,8 @@ type NodeConfig struct {
 	//     相邻节点在没有相同块的情况下通过GetBlock主动获取块数据.
 	//  3. Mixed_BroadCast_Mode是指出块节点将新块用Full_BroadCast_Mode模式广播，其他节点使用Interactive_BroadCast_Mode
 	BlockBroadcaseMode uint8 `yaml:"blockBroadcaseMode,omitempty"`
+	// cloud storage config
+	CloudStorage CloudStorageConfig `yaml:"cloudStorage,omitempty"`
 }
 
 // KernelConfig kernel config

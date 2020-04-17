@@ -858,6 +858,7 @@ func (xc *XChainCore) updateIsCoreMiner() {
 // Stop stop one xchain instance
 func (xc *XChainCore) Stop() {
 	xc.Utxovm.Close()
+	xc.Ledger.Close()
 	xc.stopFlag = true
 }
 
