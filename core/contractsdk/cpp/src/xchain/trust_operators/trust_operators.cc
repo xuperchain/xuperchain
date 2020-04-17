@@ -22,11 +22,11 @@ bool tfcall(const TrustFunctionCallRequest& request, TrustFunctionCallResponse* 
 TrustOperators::TrustOperators(xchain::Context* ctx, const uint32_t svn): _ctx(ctx), _svn(svn) {}
 
 // map_to_string convert a <string, string>map to a string
-std::string map_to_string(std::map<std::string, std::string> strMap) {
+std::string map_to_string(std::map<std::string, std::string> str_map) {
         std::map<std::string, std::string>::iterator it;
         std::string str = "{";
-        for(it = strMap.begin(); it != strMap.end(); ++it) {
-            if (it != strMap.begin()) {
+        for(it = str_map.begin(); it != str_map.end(); ++it) {
+            if (it != str_map.begin()) {
                 str = str + ",";
             }
             str = str + '"' + it->first + '"';
@@ -43,14 +43,12 @@ std::string map_to_string(std::map<std::string, std::string> strMap) {
     left_value is left operand(encrypted), right_value is right operand(encrypted);
     output_key is the key to put encrypted result.
 */
-bool TrustOperators::ops(const std::string op, const std::string left_value, const std::string right_value, const std::string output_key) {
+bool TrustOperators::binary_ops(const std::string op, const std::string left_value, const std::string right_value, const std::string output_key) {
     TrustFunctionCallRequest req;
     req.set_method(op);
-    std::map<std::string, std::string> argsMap;
-    argsMap["l"] = left_value;
-    argsMap["r"] = right_value;
-    argsMap["o"] = output_key;
-    req.set_args(map_to_string(argsMap));
+    std::map<std::string, std::string> args_map;
+    args_map = {{"l", left_value}, {"r", right_value}, {"o",output_key}};
+    req.set_args(map_to_string(args_map));
 
     req.set_svn(_svn);
     req.set_address(_ctx->initiator());
@@ -65,4 +63,16 @@ bool TrustOperators::ops(const std::string op, const std::string left_value, con
          return false;
     }
     return true;
+}
+
+bool TrustOperators::add(const std::string left_value, const std::string right_value, const std::string output_key) {
+    return binary_ops("add", left_value, right_value, output_key);
+}
+
+bool TrustOperators::sub(const std::string left_value, const std::string right_value, const std::string output_key) {
+    return binary_ops("sub", left_value, right_value, output_key);
+}
+
+bool TrustOperators::mul(const std::string left_value, const std::string right_value, const std::string output_key) {
+    return binary_ops("mul", left_value, right_value, output_key);
 }
