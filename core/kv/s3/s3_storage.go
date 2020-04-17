@@ -229,12 +229,10 @@ func (ms *S3Storage) Remove(fd storage.FileDesc) error {
 	defer ms.mu.Unlock()
 	ms.ramFiles.Remove(fd.String())
 	os.Remove(path.Join(ms.opt.LocalCacheDir, fd.String()))
-	go func() {
-		err := ms.objStore.Remove(fd.String())
-		if err != nil {
-			return
-		}
-	}()
+	err := ms.objStore.Remove(fd.String())
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
