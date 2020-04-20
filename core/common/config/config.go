@@ -189,6 +189,7 @@ type TEEConfig struct {
 
 type CloudStorageConfig struct {
 	Bucket        string `yaml:"bucket"`        //bucket name of s3 or bos
+	Path          string `yaml:"path"`          //path in the bucket
 	Ak            string `yaml:"ak"`            //access key
 	Sk            string `yaml:"sk"`            //secrete key
 	Region        string `yaml:"region"`        //region, eg. bj

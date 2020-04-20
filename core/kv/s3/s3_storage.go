@@ -82,11 +82,7 @@ func NewS3Storage(opt OpenOption) (storage.Storage, error) {
 }
 
 func (ms *S3Storage) uploadFiles() error {
-	err := os.MkdirAll(ms.opt.LocalCacheDir, 0755)
-	if err != nil {
-		return err
-	}
-	logFiles, err := ioutil.ReadDir(ms.opt.LocalCacheDir)
+	logFiles, _ := ioutil.ReadDir(ms.opt.LocalCacheDir)
 	for _, logF := range logFiles {
 		if logF.Name() == "LOCK" {
 			continue
@@ -114,10 +110,16 @@ func (ms *S3Storage) Lock() (storage.Locker, error) {
 	if ms.slock != nil {
 		return nil, storage.ErrLocked
 	}
+	err := os.MkdirAll(ms.opt.LocalCacheDir, 0755)
+	if err != nil {
+		log.Println("LOCK fail", err)
+		return nil, storage.ErrLocked
+	}
 	locked, _ := ms.objStore.GetBytes("LOCK")
 	lockFileName := path.Join(ms.opt.LocalCacheDir, "LOCK")
 	localSession, _ := ioutil.ReadFile(lockFileName)
 	if string(locked) != string(localSession) && len(locked) > 0 {
+		log.Println("miss match", string(locked), string(localSession))
 		return nil, storage.ErrLocked
 	}
 	if len(localSession) > 0 {
@@ -125,16 +127,19 @@ func (ms *S3Storage) Lock() (storage.Locker, error) {
 		fmt.Sscanf(string(localSession), "%d %d", &rnd, &owerPid)
 		selfPid := os.Getpid()
 		if owerPid != selfPid && syscall.Kill(owerPid, 0) == nil {
+			log.Println("locked by another process", "pid", owerPid)
 			return nil, storage.ErrLocked
 		}
 	}
 	newSession := fmt.Sprintf("%d %d", rand.Int(), os.Getpid())
-	err := ms.objStore.PutBytes("LOCK", []byte(newSession))
+	err = ms.objStore.PutBytes("LOCK", []byte(newSession))
 	if err != nil {
+		log.Println("LOCK fail", err)
 		return nil, storage.ErrLocked
 	}
 	err = ioutil.WriteFile(lockFileName, []byte(newSession), 0644)
 	if err != nil {
+		log.Println("LOCK fail", err)
 		return nil, storage.ErrLocked
 	}
 	ms.slock = &S3StorageLock{ms: ms}

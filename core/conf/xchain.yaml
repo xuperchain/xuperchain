@@ -120,7 +120,8 @@ enableXEndorser: false
 
 # 云存储配置(AWS S3接口兼容)
 cloudStorage:
-  bucket: "node1"
+  bucket: "xchain-cloud-test"
+  path: "node1"
   ak: ""
   sk: ""
   region: "bj"

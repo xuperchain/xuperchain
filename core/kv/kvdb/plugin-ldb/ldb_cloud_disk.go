@@ -13,6 +13,7 @@ import (
 	"github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperchain/core/common/config"
 	"github.com/xuperchain/xuperchain/core/kv/s3"
+	pt "path"
 )
 
 // Open opens an instance of LDB with parameters (ldb path and other options)
@@ -27,7 +28,7 @@ func (ldb *LDBDatabase) Open(path string, options map[string]interface{}) error 
 	//cloud storage
 	s3opt := levels3.OpenOption{
 		Bucket:        cfg.CloudStorage.Bucket,
-		Path:          path,
+		Path:          pt.Join(cfg.CloudStorage.Path, path),
 		Ak:            cfg.CloudStorage.Ak,
 		Sk:            cfg.CloudStorage.Sk,
 		Region:        cfg.CloudStorage.Region,
