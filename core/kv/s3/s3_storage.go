@@ -110,6 +110,14 @@ func (ms *S3Storage) Lock() (storage.Locker, error) {
 	if ms.slock != nil {
 		return nil, storage.ErrLocked
 	}
+	cacheDir, _ := ioutil.ReadDir(ms.opt.LocalCacheDir)
+	if len(cacheDir) > 0 {
+		current, _ := ms.objStore.GetBytes("CURRENT")
+		if len(current) == 0 {
+			log.Println("remove dirty cache files")
+			os.RemoveAll(ms.opt.LocalCacheDir)
+		}
+	}
 	err := os.MkdirAll(ms.opt.LocalCacheDir, 0755)
 	if err != nil {
 		log.Println("LOCK fail", err)
