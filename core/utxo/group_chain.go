@@ -1,7 +1,6 @@
 package utxo
 
 import (
-	"fmt"
 	"strings"
 
 	"github.com/xuperchain/xuperchain/core/contract"
@@ -30,7 +29,7 @@ func (uv *UtxoVM) getIPsInList(bcname string) map[string]bool {
 	contractName := groupChainContract.ContractName
 	methodName := groupChainContract.MethodName + "Node"
 
-	fmt.Println("============>", "moduleName:", moduleName, "contractName:", contractName, "methodName:", methodName)
+	uv.xlog.Trace("check IP list of group", "moduleName:", moduleName, "contractName:", contractName, "methodName:", methodName, "bcname", bcname)
 
 	if moduleName == "" && contractName == "" && methodName == "" {
 		return ipMap
