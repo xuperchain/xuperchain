@@ -123,8 +123,14 @@ func (c *AccountDecryptCommand) decrypt(ctx context.Context) error {
 	}
 
 	// print address
-	fmt.Println("address:", addr)
-	return c.saveAccount([]byte(addr), []byte(pk), sk)
+	fmt.Println("decrypted address:", addr)
+	err = c.saveAccount([]byte(addr), []byte(pk), sk)
+	if err != nil {
+		fmt.Println("failed to save account")
+		return err
+	}
+	fmt.Println("account decrypted successfully, account info saved at ", c.output)
+	return nil
 }
 
 // save account info into output folder
