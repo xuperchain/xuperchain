@@ -7,12 +7,12 @@ class TrustOperators {
 public:
   TrustOperators(xchain::Context *, const uint32_t);
 
-  struct operand {
+  struct Operand {
     std::string cipher;
     std::string commitment;
   };
 
-  struct auth_info {
+  struct AuthInfo {
     std::string data;
     std::string to;
     std::string pubkey;
@@ -20,21 +20,21 @@ public:
     std::string kind;
   };
 
-  bool add(const operand &left_op, const operand &right_op,
+  bool add(const Operand &left_op, const Operand &right_op,
            std::map<std::string, std::string> *result);
-  bool sub(const operand &left_op, const operand &right_op,
+  bool sub(const Operand &left_op, const Operand &right_op,
            std::map<std::string, std::string> *result);
-  bool mul(const operand &left_op, const operand &right_op,
+  bool mul(const Operand &left_op, const Operand &right_op,
            std::map<std::string, std::string> *result);
 
-  bool authorize(const auth_info &auth,
+  bool authorize(const AuthInfo &auth,
                  std::map<std::string, std::string> *result);
 
 private:
   xchain::Context *_ctx;
   const uint32_t _svn;
 
-  bool binary_ops(const std::string op, const operand &left_op,
-                  const operand &right_op,
+  bool binary_ops(const std::string op, const Operand &left_op,
+                  const Operand &right_op,
                   std::map<std::string, std::string> *result);
 };

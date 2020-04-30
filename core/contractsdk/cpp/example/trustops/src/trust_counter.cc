@@ -49,7 +49,7 @@ DEFINE_METHOD(Counter, add) {
   TrustOperators to(ctx, 0);
   std::string value;
 
-  TrustOperators::operand left_op, right_op;
+  TrustOperators::Operand left_op, right_op;
   // get left operand
   if (ctx->arg("l").empty() || ctx->arg("commitment").empty()) {
       ctx->error("missing left operand parameter ");
@@ -77,7 +77,11 @@ DEFINE_METHOD(Counter, add) {
   std::map<std::string, std::string> result;
   auto ok = to.add(left_op, right_op, &result);
   if (ok) {
-    if(!ctx->put_object(ctx->arg("o"), result["key"])) {
+    if (result["key"] == "") {
+        ctx->ok("error");
+        return;
+    }
+    if (!ctx->put_object(ctx->arg("o"), result["key"])) {
         ctx->ok("error");
         return;
     }
@@ -95,7 +99,7 @@ DEFINE_METHOD(Counter, sub) {
   TrustOperators to(ctx, 0);
   std::string value;
 
-  TrustOperators::operand left_op, right_op;
+  TrustOperators::Operand left_op, right_op;
   // get left operand
   if (ctx->arg("l").empty() || ctx->arg("commitment").empty()) {
       ctx->error("missing left operand parameter ");
@@ -123,7 +127,11 @@ DEFINE_METHOD(Counter, sub) {
   std::map<std::string, std::string> result;
   auto ok = to.sub(left_op, right_op, &result);
   if (ok) {
-    if(!ctx->put_object(ctx->arg("o"), result["key"])) {
+    if (result["key"] == "") {
+        ctx->ok("error");
+        return;
+    }
+    if (!ctx->put_object(ctx->arg("o"), result["key"])) {
         ctx->ok("error");
         return;
     }
@@ -141,7 +149,7 @@ DEFINE_METHOD(Counter, mul) {
   TrustOperators to(ctx, 0);
   std::string value;
 
-  TrustOperators::operand left_op, right_op;
+  TrustOperators::Operand left_op, right_op;
   // get left operand
   if (ctx->arg("l").empty() || ctx->arg("commitment").empty()) {
       ctx->error("missing left operand parameter ");
@@ -169,7 +177,11 @@ DEFINE_METHOD(Counter, mul) {
   std::map<std::string, std::string> result;
   auto ok = to.mul(left_op, right_op, &result);
   if (ok) {
-    if(!ctx->put_object(ctx->arg("o"), result["key"])) {
+    if (result["key"] == "") {
+        ctx->ok("error");
+        return;
+    }
+    if (!ctx->put_object(ctx->arg("o"), result["key"])) {
         ctx->ok("error");
         return;
     }

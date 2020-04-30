@@ -125,14 +125,15 @@ DEFINE_METHOD(DataAuth, authorize) {
     return;
   }
 
-  // get auth_info
-  TrustOperators::auth_info auth;
+  // get authorization information
+  TrustOperators::AuthInfo auth;
   auth.data = dat.content();
   auth.to = user;
   auth.pubkey = pubkey;
   auth.signature = signature;
   auth.kind = "commitment";
   // call trust operator to compute the commitment for user
+  // kind = "commitment"，返回{{"commitment": commitment}}
   TrustOperators to(ctx, 0);
   std::map<std::string, std::string> result;
   auto debug = to.authorize(auth, &result);
@@ -182,14 +183,15 @@ DEFINE_METHOD(DataAuth, share) {
     return;
   }
 
-  // get auth_info
-  TrustOperators::auth_info auth;
+  // get share information
+  TrustOperators::AuthInfo auth;
   auth.data = dat.content();
   auth.to = addr;
   auth.pubkey = pubkey;
   auth.signature = signature;
   auth.kind = "ownership";
-  // call trust operator to compute new cipher for user
+  // call trust operator to compute the commitment for user
+  // 若kind = "ownership"，返回{{"cipher": ciphertext}}
   TrustOperators to(ctx, 0);
   std::map<std::string, std::string> result;
   auto debug = to.authorize(auth, &result);
@@ -239,12 +241,12 @@ DEFINE_METHOD(DataAuth, add) {
   }
 
   // get left and right operands
-  TrustOperators::operand left_op, right_op;
+  TrustOperators::Operand left_op, right_op;
   left_op.cipher = dat1.content();
   left_op.commitment = dat1.commitment();
   right_op.cipher = dat2.content();
   right_op.commitment = dat2.commitment();
-  // call trust operator to add
+  // call trust operator to add, returns {{"key", enc_result}}
   TrustOperators to(ctx, 0);
   std::map<std::string, std::string> result;
   auto debug = to.add(left_op, right_op, &result);
@@ -299,12 +301,12 @@ DEFINE_METHOD(DataAuth, sub) {
   }
 
   // get left and right operands
-  TrustOperators::operand left_op, right_op;
+  TrustOperators::Operand left_op, right_op;
   left_op.cipher = dat1.content();
   left_op.commitment = dat1.commitment();
   right_op.cipher = dat2.content();
   right_op.commitment = dat2.commitment();
-  // call trust operator to sub
+  // call trust operator to sub, returns {{"key", enc_result}}
   TrustOperators to(ctx, 0);
   std::map<std::string, std::string> result;
   auto debug = to.sub(left_op, right_op, &result);
@@ -359,12 +361,12 @@ DEFINE_METHOD(DataAuth, mul) {
   }
 
   // get left and right operands
-  TrustOperators::operand left_op, right_op;
+  TrustOperators::Operand left_op, right_op;
   left_op.cipher = dat1.content();
   left_op.commitment = dat1.commitment();
   right_op.cipher = dat2.content();
   right_op.commitment = dat2.commitment();
-  // call trust operator to mul
+  // call trust operator to mul, return {{"key", enc_result}}
   TrustOperators to(ctx, 0);
   std::map<std::string, std::string> result;
   auto debug = to.mul(left_op, right_op, &result);
