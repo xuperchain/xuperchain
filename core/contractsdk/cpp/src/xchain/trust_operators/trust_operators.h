@@ -21,18 +21,20 @@ public:
   };
 
   bool add(const operand &left_op, const operand &right_op,
-           std::string *result);
+           std::map<std::string, std::string> *result);
   bool sub(const operand &left_op, const operand &right_op,
-           std::string *result);
+           std::map<std::string, std::string> *result);
   bool mul(const operand &left_op, const operand &right_op,
-           std::string *result);
+           std::map<std::string, std::string> *result);
 
-  bool authorize(const auth_info &auth, std::string *result);
+  bool authorize(const auth_info &auth,
+                 std::map<std::string, std::string> *result);
 
 private:
   xchain::Context *_ctx;
   const uint32_t _svn;
 
   bool binary_ops(const std::string op, const operand &left_op,
-                  const operand &right_op, std::string *result);
+                  const operand &right_op,
+                  std::map<std::string, std::string> *result);
 };

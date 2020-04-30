@@ -46,7 +46,8 @@ std::string map_to_string(std::map<std::string, std::string> str_map) {
     operand(cipher2 | commitment2).
 */
 bool TrustOperators::binary_ops(const std::string op, const operand &left_op,
-                                const operand &right_op, std::string *result) {
+                                const operand &right_op,
+                                std::map<std::string, std::string> *result) {
   TrustFunctionCallRequest req;
   req.set_method(op);
   std::map<std::string, std::string> args_map;
@@ -65,31 +66,29 @@ bool TrustOperators::binary_ops(const std::string op, const operand &left_op,
   }
   assert(resp.has_kvs());
   // tfcall only returns one kv pair {"key": encrypted_result}
-  if (resp.kvs().kv(0).key() == "key") {
-    *result = resp.kvs().kv(0).value();
-    return true;
-  }
-  return false;
+  (*result)["key"] = resp.kvs().kv(0).value();
+  return true;
 }
 
 bool TrustOperators::add(const operand &left_op, const operand &right_op,
-                         std::string *result) {
+                         std::map<std::string, std::string> *result) {
   return binary_ops("add", left_op, right_op, result);
 }
 
 bool TrustOperators::sub(const operand &left_op, const operand &right_op,
-                         std::string *result) {
+                         std::map<std::string, std::string> *result) {
   return binary_ops("sub", left_op, right_op, result);
 }
 
 bool TrustOperators::mul(const operand &left_op, const operand &right_op,
-                         std::string *result) {
+                         std::map<std::string, std::string> *result) {
   return binary_ops("mul", left_op, right_op, result);
 }
 
 // kind = "commitment" -> authorize a user to use data, return a commitment.
 // kind = "ownership"  -> share data to a user, return re-encrypted data.
-bool TrustOperators::authorize(const auth_info &auth, std::string *result) {
+bool TrustOperators::authorize(const auth_info &auth,
+                               std::map<std::string, std::string> *result) {
   TrustFunctionCallRequest req;
   req.set_method("authorize");
   std::map<std::string, std::string> args_map;
@@ -107,21 +106,8 @@ bool TrustOperators::authorize(const auth_info &auth, std::string *result) {
 
   assert(resp.has_kvs());
 
-  // kind == "commitment"
-  // 返回{{"commitment": cm}}
-  if (auth.kind == "commitment") {
-    if (resp.kvs().kv(0).key() == "commitment") {
-      *result = resp.kvs().kv(0).value();
-      return true;
-    }
-    return false;
-  }
-
-  // kind == "ownership"
-  // 返回{{"cipher": c}}
-  if (resp.kvs().kv(0).key() == "cipher") {
-    *result = resp.kvs().kv(0).value();
-    return true;
-  }
-  return false;
+  // 若kind = "commitment"，返回{{"commitment": commitment}}
+  // 若kind = "ownership"，返回{{"cipher": ciphertext}}
+  (*result)[resp.kvs().kv(0).key()] = resp.kvs().kv(0).value();
+  return true;
 }

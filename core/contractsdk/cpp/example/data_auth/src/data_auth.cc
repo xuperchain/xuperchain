@@ -134,9 +134,14 @@ DEFINE_METHOD(DataAuth, authorize) {
   auth.kind = "commitment";
   // call trust operator to compute the commitment for user
   TrustOperators to(ctx, 0);
-  std::string commitment;
-  auto debug = to.authorize(auth, &commitment);
+  std::map<std::string, std::string> result;
+  auto debug = to.authorize(auth, &result);
   if (!debug) {
+    ctx->error("failed to authorize data " + dataid);
+    return;
+  }
+  const std::string commitment = result["commitment"];
+  if (commitment == "") {
     ctx->error("failed to authorize data " + dataid);
     return;
   }
@@ -186,9 +191,14 @@ DEFINE_METHOD(DataAuth, share) {
   auth.kind = "ownership";
   // call trust operator to compute new cipher for user
   TrustOperators to(ctx, 0);
-  std::string new_data;
-  auto debug = to.authorize(auth, &new_data);
+  std::map<std::string, std::string> result;
+  auto debug = to.authorize(auth, &result);
   if (!debug) {
+    ctx->error("failed to share data " + dataid);
+    return;
+  }
+  const std::string new_data = result["cipher"];
+  if (new_data == "") {
     ctx->error("failed to share data " + dataid);
     return;
   }
@@ -236,9 +246,14 @@ DEFINE_METHOD(DataAuth, add) {
   right_op.commitment = dat2.commitment();
   // call trust operator to add
   TrustOperators to(ctx, 0);
-  std::string result;
+  std::map<std::string, std::string> result;
   auto debug = to.add(left_op, right_op, &result);
   if (!debug) {
+    ctx->error("failed to add " + data1 + " and " + data2);
+    return;
+  }
+  const std::string new_data = result["key"];
+  if (new_data == "") {
     ctx->error("failed to add " + data1 + " and " + data2);
     return;
   }
@@ -247,7 +262,7 @@ DEFINE_METHOD(DataAuth, add) {
   DataAuth::data newdat;
   newdat.set_dataid(std::stoll(newid));
   newdat.set_owner(ctx->initiator());
-  newdat.set_content(result);
+  newdat.set_content(new_data);
   newdat.set_user(ctx->initiator());
   // expire set to be the most recently expire date of two operands
   if (dat1.expire() < dat2.expire()) {
@@ -291,9 +306,14 @@ DEFINE_METHOD(DataAuth, sub) {
   right_op.commitment = dat2.commitment();
   // call trust operator to sub
   TrustOperators to(ctx, 0);
-  std::string result;
+  std::map<std::string, std::string> result;
   auto debug = to.sub(left_op, right_op, &result);
   if (!debug) {
+    ctx->error("failed to sub " + data1 + " and " + data2);
+    return;
+  }
+  const std::string new_data = result["key"];
+  if (new_data == "") {
     ctx->error("failed to sub " + data1 + " and " + data2);
     return;
   }
@@ -302,7 +322,7 @@ DEFINE_METHOD(DataAuth, sub) {
   DataAuth::data newdat;
   newdat.set_dataid(std::stoll(newid));
   newdat.set_owner(ctx->initiator());
-  newdat.set_content(result);
+  newdat.set_content(new_data);
   newdat.set_user(ctx->initiator());
   // expire set to be the most recently expire date of two operands
   if (dat1.expire() < dat2.expire()) {
@@ -346,9 +366,14 @@ DEFINE_METHOD(DataAuth, mul) {
   right_op.commitment = dat2.commitment();
   // call trust operator to mul
   TrustOperators to(ctx, 0);
-  std::string result;
+  std::map<std::string, std::string> result;
   auto debug = to.mul(left_op, right_op, &result);
   if (!debug) {
+    ctx->error("failed to mul " + data1 + " and " + data2);
+    return;
+  }
+  const std::string new_data = result["key"];
+  if (new_data == "") {
     ctx->error("failed to mul " + data1 + " and " + data2);
     return;
   }
@@ -357,7 +382,7 @@ DEFINE_METHOD(DataAuth, mul) {
   DataAuth::data newdat;
   newdat.set_dataid(std::stoll(newid));
   newdat.set_owner(ctx->initiator());
-  newdat.set_content(result);
+  newdat.set_content(new_data);
   newdat.set_user(ctx->initiator());
   // expire set to be the most recently expire date of two operands
   if (dat1.expire() < dat2.expire()) {

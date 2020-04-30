@@ -73,11 +73,11 @@ DEFINE_METHOD(Counter, add) {
   right_op.cipher = ctx->arg("r");
   right_op.commitment = ctx->arg("commitment2");
 
-  // call trust operator to add
-  std::string result;
+  // call trust operator to add, return {{"key", enc_result}}
+  std::map<std::string, std::string> result;
   auto ok = to.add(left_op, right_op, &result);
   if (ok) {
-    if(!ctx->put_object(ctx->arg("o"), result)) {
+    if(!ctx->put_object(ctx->arg("o"), result["key"])) {
         ctx->ok("error");
         return;
     }
@@ -119,11 +119,11 @@ DEFINE_METHOD(Counter, sub) {
   right_op.cipher = ctx->arg("r");
   right_op.commitment = ctx->arg("commitment2");
 
-  // call trust operator to sub
-  std::string result;
+  // call trust operator to sub, return {{"key", enc_result}}
+  std::map<std::string, std::string> result;
   auto ok = to.sub(left_op, right_op, &result);
   if (ok) {
-    if(!ctx->put_object(ctx->arg("o"), result)) {
+    if(!ctx->put_object(ctx->arg("o"), result["key"])) {
         ctx->ok("error");
         return;
     }
@@ -165,11 +165,11 @@ DEFINE_METHOD(Counter, mul) {
   right_op.cipher = ctx->arg("r");
   right_op.commitment = ctx->arg("commitment2");
 
-  // call trust operator to mul
-  std::string result;
+  // call trust operator to mul, return {{"key", enc_result}}
+  std::map<std::string, std::string> result;
   auto ok = to.mul(left_op, right_op, &result);
   if (ok) {
-    if(!ctx->put_object(ctx->arg("o"), result)) {
+    if(!ctx->put_object(ctx->arg("o"), result["key"])) {
         ctx->ok("error");
         return;
     }
