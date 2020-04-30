@@ -42,7 +42,8 @@ DEFINE_METHOD(Counter, store) {
 }
 
 // add adds two encrypted numbers
-// input is in format {"l":"key_l", "r":"key_r", "o":"key_output"}
+// input is in format {"l":"key_l", "r":"key_r", "o":"key_output",
+//                     "commitment": c1, "commitment2": c2}
 DEFINE_METHOD(Counter, add) {
   xchain::Context *ctx = self.context();
   TrustOperators to(ctx, 0);
@@ -50,25 +51,35 @@ DEFINE_METHOD(Counter, add) {
   std::map<std::string, std::string> args_map;
   for (auto it = ctx->args().begin(); it != ctx->args().end(); ++it) {
     std::string value;
-    // get each encrypted value
-    if (it->first != "o") {
-      ctx->get_object(it->second, &value);
+    // get args map
+    if (it->first == "l" || it->first == "r") {
+      if (!ctx->get_object(it->second, &value)) {
+        ctx->error("get object error");
+        return;
+      }
       args_map[it->first] = value;
     } else {
       args_map[it->first] = it->second;
     }
   }
 
-  auto ok = to.add(args_map["l"], args_map["r"], args_map["o"]);
-  std::string debug = "done";
-  if (!ok) {
-    debug = "error";
+  std::string result;
+  auto ok = to.add(args_map["l"], args_map["r"], args_map["o"],
+                   args_map["commitment"], args_map["commitment2"], &result);
+  if (ok) {
+    if(!ctx->put_object(args_map["o"], result)) {
+        ctx->ok("error");
+        return;
+    }
+    ctx->ok("done");
+    return;
   }
-  ctx->ok(debug);
+  ctx->ok("error");
 }
 
 // sub substracts one number from another
-// input is in format {"l":"key_l", "r":"key_r", "o":"key_output"}
+// input is in format {"l":"key_l", "r":"key_r", "o":"key_output",
+//                     "commitment": c1, "commitment2": c2}
 DEFINE_METHOD(Counter, sub) {
   xchain::Context *ctx = self.context();
   TrustOperators to(ctx, 0);
@@ -76,25 +87,35 @@ DEFINE_METHOD(Counter, sub) {
   std::map<std::string, std::string> args_map;
   for (auto it = ctx->args().begin(); it != ctx->args().end(); ++it) {
     std::string value;
-    // get each encrypted value
-    if (it->first != "o") {
-      ctx->get_object(it->second, &value);
+    // get args map
+    if (it->first == "l" || it->first == "r") {
+      if (!ctx->get_object(it->second, &value)) {
+        ctx->error("get object error");
+        return;
+      }
       args_map[it->first] = value;
     } else {
       args_map[it->first] = it->second;
     }
   }
 
-  auto ok = to.sub(args_map["l"], args_map["r"], args_map["o"]);
-  std::string debug = "done";
-  if (!ok) {
-    debug = "error";
+  std::string result;
+  auto ok = to.sub(args_map["l"], args_map["r"], args_map["o"],
+                   args_map["commitment"], args_map["commitment2"], &result);
+  if (ok) {
+    if(!ctx->put_object(args_map["o"], result)) {
+        ctx->ok("error");
+        return;
+    }
+    ctx->ok("done");
+    return;
   }
-  ctx->ok(debug);
+  ctx->ok("error");
 }
 
 // mul multiplies two encrypted numbers
 // input is in format {"l":"key_l", "r":"key_r", "o":"key_output"}
+//                     "commitment": c1, "commitment2": c2}
 DEFINE_METHOD(Counter, mul) {
   xchain::Context *ctx = self.context();
   TrustOperators to(ctx, 0);
@@ -102,19 +123,28 @@ DEFINE_METHOD(Counter, mul) {
   std::map<std::string, std::string> args_map;
   for (auto it = ctx->args().begin(); it != ctx->args().end(); ++it) {
     std::string value;
-    // get each encrypted value
-    if (it->first != "o") {
-      ctx->get_object(it->second, &value);
+    // get args map
+    if (it->first == "l" || it->first == "r") {
+      if (!ctx->get_object(it->second, &value)) {
+        ctx->error("get object error");
+        return;
+      }
       args_map[it->first] = value;
     } else {
       args_map[it->first] = it->second;
     }
   }
 
-  auto ok = to.mul(args_map["l"], args_map["r"], args_map["o"]);
-  std::string debug = "done";
-  if (!ok) {
-    debug = "error";
+  std::string result;
+  auto ok = to.mul(args_map["l"], args_map["r"], args_map["o"],
+                   args_map["commitment"], args_map["commitment2"], &result);
+  if (ok) {
+    if(!ctx->put_object(args_map["o"], result)) {
+        ctx->ok("error");
+        return;
+    }
+    ctx->ok("done");
+    return;
   }
-  ctx->ok(debug);
+  ctx->ok("error");
 }
