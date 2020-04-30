@@ -48,11 +48,18 @@ std::string map_to_string(std::map<std::string, std::string> str_map) {
 bool TrustOperators::binary_ops(const std::string op,
                                 const std::string &left_value,
                                 const std::string &right_value,
-                                const std::string &output_key) {
+                                const std::string &output_key,
+                                const std::string &commitment,
+                                const std::string &commitment2,
+                                std::string *result) {
   TrustFunctionCallRequest req;
   req.set_method(op);
   std::map<std::string, std::string> args_map;
-  args_map = {{"l", left_value}, {"r", right_value}, {"o", output_key}};
+  args_map = {{"l", left_value},
+              {"r", right_value},
+              {"o", output_key},
+              {"commitment", commitment},
+              {"commitment2", commitment2}};
   req.set_args(map_to_string(args_map));
 
   req.set_svn(_svn);
@@ -63,27 +70,79 @@ bool TrustOperators::binary_ops(const std::string op,
   }
   assert(resp.has_kvs());
   // tfcall only returns one kv pair {output_key: encrypted_result}
-  auto ok = _ctx->put_object(resp.kvs().kv(0).key(), resp.kvs().kv(0).value());
-  if (!ok) {
-    return false;
+  if (resp.kvs().kv(0).key() == output_key) {
+    *result = resp.kvs().kv(0).value();
+    return true;
   }
-  return true;
+  return false;
 }
 
 bool TrustOperators::add(const std::string &left_value,
                          const std::string &right_value,
-                         const std::string &output_key) {
-  return binary_ops("add", left_value, right_value, output_key);
+                         const std::string &output_key,
+                         const std::string &commitment,
+                         const std::string &commitment2, std::string *result) {
+  return binary_ops("add", left_value, right_value, output_key, commitment,
+                    commitment2, result);
 }
 
 bool TrustOperators::sub(const std::string &left_value,
                          const std::string &right_value,
-                         const std::string &output_key) {
-  return binary_ops("sub", left_value, right_value, output_key);
+                         const std::string &output_key,
+                         const std::string &commitment,
+                         const std::string &commitment2, std::string *result) {
+  return binary_ops("sub", left_value, right_value, output_key, commitment,
+                    commitment2, result);
 }
 
 bool TrustOperators::mul(const std::string &left_value,
                          const std::string &right_value,
-                         const std::string &output_key) {
-  return binary_ops("mul", left_value, right_value, output_key);
+                         const std::string &output_key,
+                         const std::string &commitment,
+                         const std::string &commitment2, std::string *result) {
+  return binary_ops("mul", left_value, right_value, output_key, commitment,
+                    commitment2, result);
+}
+
+// kind = "commitment" -> authorize a user to use data, return a commitment.
+// kind = "ownership"  -> share data to a user, return re-encrypted data.
+bool TrustOperators::authorize(const std::string &data,
+                               const std::string &address,
+                               const std::string &pubkey,
+                               const std::string &signature,
+                               const std::string &kind, std::string *result) {
+  TrustFunctionCallRequest req;
+  req.set_method("authorize");
+  std::map<std::string, std::string> args_map;
+  args_map = {{"ciphertext", data}, {"to", address}, {"kind", kind}};
+
+  req.set_args(map_to_string(args_map));
+  req.set_svn(_svn);
+  req.set_address(_ctx->initiator());
+  req.set_publickey(pubkey);
+  req.set_signature(signature);
+  TrustFunctionCallResponse resp;
+  if (!tfcall(req, &resp)) {
+    return false;
+  }
+
+  assert(resp.has_kvs());
+
+  // kind == "commitment"
+  // 返回{{"commitment": cm}}
+  if (kind == "commitment") {
+    if (resp.kvs().kv(0).key() == "commitment") {
+      *result = resp.kvs().kv(0).value();
+      return true;
+    }
+    return false;
+  }
+
+  // kind == "ownership"
+  // 返回{{"cipher": c}}
+  if (resp.kvs().kv(0).key() == "cipher") {
+    *result = resp.kvs().kv(0).value();
+    return true;
+  }
+  return false;
 }
