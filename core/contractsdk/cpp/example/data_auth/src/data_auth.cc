@@ -124,15 +124,23 @@ DEFINE_METHOD(DataAuth, authorize) {
     ctx->error("permission denied to authorize " + dataid);
     return;
   }
+
+  // get auth_info
+  TrustOperators::auth_info auth;
+  auth.data = dat.content();
+  auth.to = user;
+  auth.pubkey = pubkey;
+  auth.signature = signature;
+  auth.kind = "commitment";
   // call trust operator to compute the commitment for user
   TrustOperators to(ctx, 0);
   std::string commitment;
-  auto debug = to.authorize(dat.content(), user, pubkey, signature,
-                            "commitment", &commitment);
+  auto debug = to.authorize(auth, &commitment);
   if (!debug) {
     ctx->error("failed to authorize data " + dataid);
     return;
   }
+
   // put a new record, dataid, owner, content, expire, user, commitment
   DataAuth::data newdat;
   newdat.set_dataid(std::stoll(dataid));
@@ -168,15 +176,23 @@ DEFINE_METHOD(DataAuth, share) {
     ctx->error("permission denied to share " + dataid);
     return;
   }
-  // call trustoperators to re-encrypt data
+
+  // get auth_info
+  TrustOperators::auth_info auth;
+  auth.data = dat.content();
+  auth.to = addr;
+  auth.pubkey = pubkey;
+  auth.signature = signature;
+  auth.kind = "ownership";
+  // call trust operator to compute new cipher for user
   TrustOperators to(ctx, 0);
   std::string new_data;
-  auto debug = to.authorize(dat.content(), addr, pubkey, signature, "ownership",
-                            &new_data);
+  auto debug = to.authorize(auth, &new_data);
   if (!debug) {
     ctx->error("failed to share data " + dataid);
     return;
   }
+
   // put new_data into table
   DataAuth::data newdat;
   newdat.set_dataid(std::stoll(newid));
@@ -212,15 +228,21 @@ DEFINE_METHOD(DataAuth, add) {
     return;
   }
 
+  // get left and right operands
+  TrustOperators::operand left_op, right_op;
+  left_op.cipher = dat1.content();
+  left_op.commitment = dat1.commitment();
+  right_op.cipher = dat2.content();
+  right_op.commitment = dat2.commitment();
   // call trust operator to add
   TrustOperators to(ctx, 0);
   std::string result;
-  auto debug = to.add(dat1.content(), dat2.content(), newid, dat1.commitment(),
-                      dat2.commitment(), &result);
+  auto debug = to.add(left_op, right_op, &result);
   if (!debug) {
     ctx->error("failed to add " + data1 + " and " + data2);
     return;
   }
+
   // put result into table, owner is the user
   DataAuth::data newdat;
   newdat.set_dataid(std::stoll(newid));
@@ -261,15 +283,21 @@ DEFINE_METHOD(DataAuth, sub) {
     return;
   }
 
+  // get left and right operands
+  TrustOperators::operand left_op, right_op;
+  left_op.cipher = dat1.content();
+  left_op.commitment = dat1.commitment();
+  right_op.cipher = dat2.content();
+  right_op.commitment = dat2.commitment();
   // call trust operator to sub
   TrustOperators to(ctx, 0);
   std::string result;
-  auto debug = to.sub(dat1.content(), dat2.content(), newid, dat1.commitment(),
-                      dat2.commitment(), &result);
+  auto debug = to.sub(left_op, right_op, &result);
   if (!debug) {
     ctx->error("failed to sub " + data1 + " and " + data2);
     return;
   }
+
   // put result into table, owner is the user
   DataAuth::data newdat;
   newdat.set_dataid(std::stoll(newid));
@@ -310,15 +338,21 @@ DEFINE_METHOD(DataAuth, mul) {
     return;
   }
 
-  // call trust operator to multiply
+  // get left and right operands
+  TrustOperators::operand left_op, right_op;
+  left_op.cipher = dat1.content();
+  left_op.commitment = dat1.commitment();
+  right_op.cipher = dat2.content();
+  right_op.commitment = dat2.commitment();
+  // call trust operator to mul
   TrustOperators to(ctx, 0);
   std::string result;
-  auto debug = to.mul(dat1.content(), dat2.content(), newid, dat1.commitment(),
-                      dat2.commitment(), &result);
+  auto debug = to.mul(left_op, right_op, &result);
   if (!debug) {
     ctx->error("failed to mul " + data1 + " and " + data2);
     return;
   }
+
   // put result into table, owner is the user
   DataAuth::data newdat;
   newdat.set_dataid(std::stoll(newid));

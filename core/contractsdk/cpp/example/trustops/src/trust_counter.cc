@@ -42,32 +42,42 @@ DEFINE_METHOD(Counter, store) {
 }
 
 // add adds two encrypted numbers
-// input is in format {"l":"key_l", "r":"key_r", "o":"key_output",
-//                     "commitment": c1, "commitment2": c2}
+// input format: {"l":"key_l", "r":"key_r", "commitment": c1,
+//                "commitment2": c2}
 DEFINE_METHOD(Counter, add) {
   xchain::Context *ctx = self.context();
   TrustOperators to(ctx, 0);
+  std::string value;
 
-  std::map<std::string, std::string> args_map;
-  for (auto it = ctx->args().begin(); it != ctx->args().end(); ++it) {
-    std::string value;
-    // get args map
-    if (it->first == "l" || it->first == "r") {
-      if (!ctx->get_object(it->second, &value)) {
-        ctx->error("get object error");
-        return;
-      }
-      args_map[it->first] = value;
-    } else {
-      args_map[it->first] = it->second;
-    }
+  TrustOperators::operand left_op, right_op;
+  // get left operand
+  if (ctx->arg("l").empty() || ctx->arg("commitment").empty()) {
+      ctx->error("missing left operand parameter ");
+      return;
   }
+  if (!ctx->get_object(ctx->arg("l"), &value)) {
+      ctx->error("get left operand error ");
+      return;
+  }
+  left_op.cipher = value;
+  left_op.commitment = ctx->arg("commitment");
+  // get right operand
+  if (ctx->arg("r").empty() || ctx->arg("commitment2").empty()) {
+      ctx->error("missing right operand parameter ");
+      return;
+  }
+  if (!ctx->get_object(ctx->arg("r"), &value)) {
+      ctx->error("get right operand error ");
+      return;
+  }
+  right_op.cipher = ctx->arg("r");
+  right_op.commitment = ctx->arg("commitment2");
 
+  // call trust operator to add
   std::string result;
-  auto ok = to.add(args_map["l"], args_map["r"], args_map["o"],
-                   args_map["commitment"], args_map["commitment2"], &result);
+  auto ok = to.add(left_op, right_op, &result);
   if (ok) {
-    if(!ctx->put_object(args_map["o"], result)) {
+    if(!ctx->put_object(ctx->arg("o"), result)) {
         ctx->ok("error");
         return;
     }
@@ -78,32 +88,42 @@ DEFINE_METHOD(Counter, add) {
 }
 
 // sub substracts one number from another
-// input is in format {"l":"key_l", "r":"key_r", "o":"key_output",
-//                     "commitment": c1, "commitment2": c2}
+// input format: {"l":"key_l", "r":"key_r", "commitment": c1,
+//                "commitment2": c2}
 DEFINE_METHOD(Counter, sub) {
   xchain::Context *ctx = self.context();
   TrustOperators to(ctx, 0);
+  std::string value;
 
-  std::map<std::string, std::string> args_map;
-  for (auto it = ctx->args().begin(); it != ctx->args().end(); ++it) {
-    std::string value;
-    // get args map
-    if (it->first == "l" || it->first == "r") {
-      if (!ctx->get_object(it->second, &value)) {
-        ctx->error("get object error");
-        return;
-      }
-      args_map[it->first] = value;
-    } else {
-      args_map[it->first] = it->second;
-    }
+  TrustOperators::operand left_op, right_op;
+  // get left operand
+  if (ctx->arg("l").empty() || ctx->arg("commitment").empty()) {
+      ctx->error("missing left operand parameter ");
+      return;
   }
+  if (!ctx->get_object(ctx->arg("l"), &value)) {
+      ctx->error("get left operand error ");
+      return;
+  }
+  left_op.cipher = value;
+  left_op.commitment = ctx->arg("commitment");
+  // get right operand
+  if (ctx->arg("r").empty() || ctx->arg("commitment2").empty()) {
+      ctx->error("missing right operand parameter ");
+      return;
+  }
+  if (!ctx->get_object(ctx->arg("r"), &value)) {
+      ctx->error("get right operand error ");
+      return;
+  }
+  right_op.cipher = ctx->arg("r");
+  right_op.commitment = ctx->arg("commitment2");
 
+  // call trust operator to sub
   std::string result;
-  auto ok = to.sub(args_map["l"], args_map["r"], args_map["o"],
-                   args_map["commitment"], args_map["commitment2"], &result);
+  auto ok = to.sub(left_op, right_op, &result);
   if (ok) {
-    if(!ctx->put_object(args_map["o"], result)) {
+    if(!ctx->put_object(ctx->arg("o"), result)) {
         ctx->ok("error");
         return;
     }
@@ -114,32 +134,42 @@ DEFINE_METHOD(Counter, sub) {
 }
 
 // mul multiplies two encrypted numbers
-// input is in format {"l":"key_l", "r":"key_r", "o":"key_output"}
-//                     "commitment": c1, "commitment2": c2}
+// input format: {"l":"key_l", "r":"key_r", "commitment": c1,
+//                "commitment2": c2}
 DEFINE_METHOD(Counter, mul) {
   xchain::Context *ctx = self.context();
   TrustOperators to(ctx, 0);
+  std::string value;
 
-  std::map<std::string, std::string> args_map;
-  for (auto it = ctx->args().begin(); it != ctx->args().end(); ++it) {
-    std::string value;
-    // get args map
-    if (it->first == "l" || it->first == "r") {
-      if (!ctx->get_object(it->second, &value)) {
-        ctx->error("get object error");
-        return;
-      }
-      args_map[it->first] = value;
-    } else {
-      args_map[it->first] = it->second;
-    }
+  TrustOperators::operand left_op, right_op;
+  // get left operand
+  if (ctx->arg("l").empty() || ctx->arg("commitment").empty()) {
+      ctx->error("missing left operand parameter ");
+      return;
   }
+  if (!ctx->get_object(ctx->arg("l"), &value)) {
+      ctx->error("get left operand error ");
+      return;
+  }
+  left_op.cipher = value;
+  left_op.commitment = ctx->arg("commitment");
+  // get right operand
+  if (ctx->arg("r").empty() || ctx->arg("commitment2").empty()) {
+      ctx->error("missing right operand parameter ");
+      return;
+  }
+  if (!ctx->get_object(ctx->arg("r"), &value)) {
+      ctx->error("get right operand error ");
+      return;
+  }
+  right_op.cipher = ctx->arg("r");
+  right_op.commitment = ctx->arg("commitment2");
 
+  // call trust operator to mul
   std::string result;
-  auto ok = to.mul(args_map["l"], args_map["r"], args_map["o"],
-                   args_map["commitment"], args_map["commitment2"], &result);
+  auto ok = to.mul(left_op, right_op, &result);
   if (ok) {
-    if(!ctx->put_object(args_map["o"], result)) {
+    if(!ctx->put_object(ctx->arg("o"), result)) {
         ctx->ok("error");
         return;
     }

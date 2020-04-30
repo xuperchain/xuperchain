@@ -7,26 +7,32 @@ class TrustOperators {
 public:
   TrustOperators(xchain::Context *, const uint32_t);
 
-  bool add(const std::string &left_value, const std::string &right_value,
-           const std::string &output_key, const std::string &commitment,
-           const std::string &commitment2, std::string *result);
-  bool sub(const std::string &left_value, const std::string &right_value,
-           const std::string &output_key, const std::string &commitment,
-           const std::string &commitment2, std::string *result);
-  bool mul(const std::string &left_value, const std::string &right_value,
-           const std::string &output_key, const std::string &commitment,
-           const std::string &commitment2, std::string *result);
+  struct operand {
+    std::string cipher;
+    std::string commitment;
+  };
 
-  bool authorize(const std::string &data, const std::string &address,
-                 const std::string &pubkey, const std::string &signature,
-                 const std::string &kind, std::string *result);
+  struct auth_info {
+    std::string data;
+    std::string to;
+    std::string pubkey;
+    std::string signature;
+    std::string kind;
+  };
+
+  bool add(const operand &left_op, const operand &right_op,
+           std::string *result);
+  bool sub(const operand &left_op, const operand &right_op,
+           std::string *result);
+  bool mul(const operand &left_op, const operand &right_op,
+           std::string *result);
+
+  bool authorize(const auth_info &auth, std::string *result);
 
 private:
   xchain::Context *_ctx;
   const uint32_t _svn;
 
-  bool binary_ops(const std::string op, const std::string &left_value,
-                  const std::string &right_value, const std::string &output_key,
-                  const std::string &commitment, const std::string &commitment2,
-                  std::string *result);
+  bool binary_ops(const std::string op, const operand &left_op,
+                  const operand &right_op, std::string *result);
 };
