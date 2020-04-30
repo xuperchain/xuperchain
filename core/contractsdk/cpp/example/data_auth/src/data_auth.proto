@@ -1,0 +1,14 @@
+syntax = "proto3";
+option optimize_for = LITE_RUNTIME;
+
+package data_auth;
+
+message Data {
+    int64 dataid = 1;
+    string owner = 2;
+    string content = 3;
+    int64 expire = 4;
+    string user = 5;
+    string commitment = 6;
+}
+
