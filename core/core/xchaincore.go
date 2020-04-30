@@ -223,9 +223,9 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	xc.log.Debug("+++++++setbefore", "P2PSvr", xc.P2pSvr, "xchainAddrInfo", xchainAddrInfo)
 	xc.P2pSvr.SetXchainAddr(xc.bcname, xchainAddrInfo)
 
-	xc.Ledger, err = ledger.NewLedger(datapath, xc.log, datapathOthers, kvEngineType, cryptoType)
+	xc.Ledger, err = ledger.OpenLedger(datapath, xc.log, datapathOthers, kvEngineType, cryptoType)
 	if err != nil {
-		xc.log.Warn("NewLedger error", "bc", xc.bcname, "datapath", datapath, "dataPathOhters", datapathOthers)
+		xc.log.Warn("OpenLedger error", "bc", xc.bcname, "datapath", datapath, "dataPathOhters", datapathOthers)
 		return err
 	}
 
@@ -858,6 +858,7 @@ func (xc *XChainCore) updateIsCoreMiner() {
 // Stop stop one xchain instance
 func (xc *XChainCore) Stop() {
 	xc.Utxovm.Close()
+	xc.Ledger.Close()
 	xc.stopFlag = true
 }
 

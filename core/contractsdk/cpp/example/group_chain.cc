@@ -127,7 +127,7 @@ public:
             std::string target = res.first;
             int offset = nodeBucket.length() + 1;
             int length = target.length() - offset;
-            result += target.substr(offset, length);
+            result += target.substr(offset, length) + endingSeparator;
         }   
         ctx->ok(result);
     }

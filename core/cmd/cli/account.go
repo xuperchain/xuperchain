@@ -18,13 +18,14 @@ func NewAccountCommand(cli *Cli) *cobra.Command {
 	c.cli = cli
 	c.cmd = &cobra.Command{
 		Use:   "account",
-		Short: "Operate an account or address: balance|new|newkeys|split|merge|list-utxo.",
+		Short: "Operate an account or address: balance|new|newkeys|split|merge|list-utxo|restore.",
 	}
 	c.cmd.AddCommand(NewAccountBalanceCommand(cli))
 	c.cmd.AddCommand(NewAccountNewkeysCommand(cli))
 	c.cmd.AddCommand(NewAccountNewCommand(cli))
 	c.cmd.AddCommand(NewAccountContractsCommand(cli))
 	c.cmd.AddCommand(NewAccountQueryCommand(cli))
+	c.cmd.AddCommand(NewAccountRestoreCommand(cli))
 	return c.cmd
 }
 

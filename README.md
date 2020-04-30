@@ -1,9 +1,3 @@
-# 福利啦！只要2分钟，赢取小度在家等大奖！
-
-> 2020年已来，百度超级链也要立新一年的flag啦！新年工作计划的制定，离不开各位的反馈和建议。欢迎填写问卷，点赞或拍砖，我们照单全收。完成后即可获得一份免费的区块链学习大礼包。除此之外，还有机会获得价值500元的小度在家、100元京东卡、小米充电宝等惊喜礼品！
-
-> 问卷链接：https://iwenjuan.baidu.com/?code=cf9hir 
-
 # XuperChain
 
 [![Build Status](https://travis-ci.org/xuperchain/xuperchain.svg?branch=master)](https://travis-ci.org/xuperchain/xuperchain)
@@ -60,7 +54,7 @@ Clone the repository
 git clone https://github.com/xuperchain/xuperchain
 ```
 
-**Note**: `master` branch contains latest features but might be **unstable**. for production use, please checkout our release branch. the latest release branch is `v3.6`.
+**Note**: `master` branch contains latest features but might be **unstable**. for production use, please checkout our release branch. the latest release branch is `v3.7`.
 
 Enter the xuperchain folder and build the code:
 
@@ -184,7 +178,7 @@ XuperChain is under the [Apache License, Version 2.0](https://github.com/xuperch
 git clone https://github.com/xuperchain/xuperchain
 ```
 
-**注意**: `master` 分支是日常开发分支，会包含最新的功能，但是 **不稳定**。生产环境请使用最新的已发布分支，最新的已发布分支是`v3.6`。
+**注意**: `master` 分支是日常开发分支，会包含最新的功能，但是 **不稳定**。生产环境请使用最新的已发布分支，最新的已发布分支是`v3.7`。
 
 编译
 ```
