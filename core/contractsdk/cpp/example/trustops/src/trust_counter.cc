@@ -46,10 +46,6 @@ DEFINE_METHOD(Counter, store) {
 //                "commitment2": c2}
 DEFINE_METHOD(Counter, add) {
   xchain::Context *ctx = self.context();
-  TrustOperators to(ctx, 0);
-  std::string value;
-
-  TrustOperators::Operand left_op, right_op;
   if (ctx->arg("l").empty() || ctx->arg("commitment").empty()) {
       ctx->error("missing left operand parameter ");
       return;
@@ -58,6 +54,10 @@ DEFINE_METHOD(Counter, add) {
       ctx->error("missing right operand parameter ");
       return;
   }
+
+  TrustOperators to(ctx, 0);
+  std::string value;
+  TrustOperators::Operand left_op, right_op;
   // get left operand
   if (!ctx->get_object(ctx->arg("l"), &value)) {
       ctx->error("get left operand error ");
@@ -96,10 +96,6 @@ DEFINE_METHOD(Counter, add) {
 //                "commitment2": c2}
 DEFINE_METHOD(Counter, sub) {
   xchain::Context *ctx = self.context();
-  TrustOperators to(ctx, 0);
-  std::string value;
-
-  TrustOperators::Operand left_op, right_op;
   if (ctx->arg("l").empty() || ctx->arg("commitment").empty()) {
       ctx->error("missing left operand parameter ");
       return;
@@ -108,6 +104,10 @@ DEFINE_METHOD(Counter, sub) {
       ctx->error("missing right operand parameter ");
       return;
   }
+
+  TrustOperators to(ctx, 0);
+  std::string value;
+  TrustOperators::Operand left_op, right_op;
   // get left operand
   if (!ctx->get_object(ctx->arg("l"), &value)) {
       ctx->error("get left operand error ");
@@ -146,10 +146,6 @@ DEFINE_METHOD(Counter, sub) {
 //                "commitment2": c2}
 DEFINE_METHOD(Counter, mul) {
   xchain::Context *ctx = self.context();
-  TrustOperators to(ctx, 0);
-  std::string value;
-
-  TrustOperators::Operand left_op, right_op;
   if (ctx->arg("l").empty() || ctx->arg("commitment").empty()) {
       ctx->error("missing left operand parameter ");
       return;
@@ -158,6 +154,10 @@ DEFINE_METHOD(Counter, mul) {
       ctx->error("missing right operand parameter ");
       return;
   }
+
+  TrustOperators to(ctx, 0);
+  std::string value;
+  TrustOperators::Operand left_op, right_op;
   // get left operand
   if (!ctx->get_object(ctx->arg("l"), &value)) {
       ctx->error("get left operand error ");
