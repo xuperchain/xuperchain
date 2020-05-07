@@ -50,11 +50,15 @@ DEFINE_METHOD(Counter, add) {
   std::string value;
 
   TrustOperators::Operand left_op, right_op;
-  // get left operand
   if (ctx->arg("l").empty() || ctx->arg("commitment").empty()) {
       ctx->error("missing left operand parameter ");
       return;
   }
+  if (ctx->arg("r").empty() || ctx->arg("commitment2").empty()) {
+      ctx->error("missing right operand parameter ");
+      return;
+  }
+  // get left operand
   if (!ctx->get_object(ctx->arg("l"), &value)) {
       ctx->error("get left operand error ");
       return;
@@ -62,10 +66,6 @@ DEFINE_METHOD(Counter, add) {
   left_op.cipher = value;
   left_op.commitment = ctx->arg("commitment");
   // get right operand
-  if (ctx->arg("r").empty() || ctx->arg("commitment2").empty()) {
-      ctx->error("missing right operand parameter ");
-      return;
-  }
   if (!ctx->get_object(ctx->arg("r"), &value)) {
       ctx->error("get right operand error ");
       return;
@@ -78,17 +78,17 @@ DEFINE_METHOD(Counter, add) {
   auto ok = to.add(left_op, right_op, &result);
   if (ok) {
     if (result["key"] == "") {
-        ctx->ok("error");
+        ctx->error("error");
         return;
     }
     if (!ctx->put_object(ctx->arg("o"), result["key"])) {
-        ctx->ok("error");
+        ctx->error("error");
         return;
     }
     ctx->ok("done");
     return;
   }
-  ctx->ok("error");
+  ctx->error("error");
 }
 
 // sub substracts one number from another
@@ -100,11 +100,15 @@ DEFINE_METHOD(Counter, sub) {
   std::string value;
 
   TrustOperators::Operand left_op, right_op;
-  // get left operand
   if (ctx->arg("l").empty() || ctx->arg("commitment").empty()) {
       ctx->error("missing left operand parameter ");
       return;
   }
+  if (ctx->arg("r").empty() || ctx->arg("commitment2").empty()) {
+      ctx->error("missing right operand parameter ");
+      return;
+  }
+  // get left operand
   if (!ctx->get_object(ctx->arg("l"), &value)) {
       ctx->error("get left operand error ");
       return;
@@ -112,10 +116,6 @@ DEFINE_METHOD(Counter, sub) {
   left_op.cipher = value;
   left_op.commitment = ctx->arg("commitment");
   // get right operand
-  if (ctx->arg("r").empty() || ctx->arg("commitment2").empty()) {
-      ctx->error("missing right operand parameter ");
-      return;
-  }
   if (!ctx->get_object(ctx->arg("r"), &value)) {
       ctx->error("get right operand error ");
       return;
@@ -128,17 +128,17 @@ DEFINE_METHOD(Counter, sub) {
   auto ok = to.sub(left_op, right_op, &result);
   if (ok) {
     if (result["key"] == "") {
-        ctx->ok("error");
+        ctx->error("error");
         return;
     }
     if (!ctx->put_object(ctx->arg("o"), result["key"])) {
-        ctx->ok("error");
+        ctx->error("error");
         return;
     }
     ctx->ok("done");
     return;
   }
-  ctx->ok("error");
+  ctx->error("error");
 }
 
 // mul multiplies two encrypted numbers
@@ -150,11 +150,15 @@ DEFINE_METHOD(Counter, mul) {
   std::string value;
 
   TrustOperators::Operand left_op, right_op;
-  // get left operand
   if (ctx->arg("l").empty() || ctx->arg("commitment").empty()) {
       ctx->error("missing left operand parameter ");
       return;
   }
+  if (ctx->arg("r").empty() || ctx->arg("commitment2").empty()) {
+      ctx->error("missing right operand parameter ");
+      return;
+  }
+  // get left operand
   if (!ctx->get_object(ctx->arg("l"), &value)) {
       ctx->error("get left operand error ");
       return;
@@ -162,10 +166,6 @@ DEFINE_METHOD(Counter, mul) {
   left_op.cipher = value;
   left_op.commitment = ctx->arg("commitment");
   // get right operand
-  if (ctx->arg("r").empty() || ctx->arg("commitment2").empty()) {
-      ctx->error("missing right operand parameter ");
-      return;
-  }
   if (!ctx->get_object(ctx->arg("r"), &value)) {
       ctx->error("get right operand error ");
       return;
@@ -178,15 +178,15 @@ DEFINE_METHOD(Counter, mul) {
   auto ok = to.mul(left_op, right_op, &result);
   if (ok) {
     if (result["key"] == "") {
-        ctx->ok("error");
+        ctx->error("error");
         return;
     }
     if (!ctx->put_object(ctx->arg("o"), result["key"])) {
-        ctx->ok("error");
+        ctx->error("error");
         return;
     }
     ctx->ok("done");
     return;
   }
-  ctx->ok("error");
+  ctx->error("error");
 }
