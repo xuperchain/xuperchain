@@ -12,6 +12,13 @@ outputpath=$(cd `dirname $0`; cd ../..; pwd)
 echo "--------> basepath=$basepath"
 echo "--------> outputpath=$outputpath"
 
+function spawn_process()
+{
+    name=$1
+    cmd=$2
+    bash -c "$cmd 2>&1 | sed -e 's/^/[$name] /;'" &
+}
+
 function get_addrs()
 {
 	addr1=$(cat $basepath/node1/data/keys/address)
@@ -56,19 +63,19 @@ function deploy_env()
             cp $basepath/node1/data/config/xuper.json $basepath/node3/data/config/xuper.json
 			cd $basepath/node$i
 			cd $basepath/node$i && $basepath/node$i/xchain-cli createChain
-			nohup $basepath/node$i/xchain &
+			spawn_process "node$i" $basepath/node$i/xchain
 			sleep 5
 			netUrl=$($basepath/node$i/xchain-cli netURL get)
 			echo $netUrl > $basepath/node$i/neturl.txt
-			hostname=`ifconfig -a | grep inet | grep -v 127.0.0.1 | grep -v inet6 | awk '{print $2}' | tr -d "addrs:"`
-			sed -i'' -e 's/127.0.0.1/'"$hostname"'/' $basepath/node$i/neturl.txt
+			#hostname=`ifconfig -a | grep inet | grep -v 127.0.0.1 | grep -v inet6 | awk '{print $2}' | tr -d "addrs:"`
+			#sed -i'' -e 's/127.0.0.1/'"$hostname"'/' $basepath/node$i/neturl.txt
 		fi
     }
 	sed -i'' -e "s/#bootNodes/bootNodes/; s@#  - \"/ip4/<ip>.*@  - $(cat $basepath/node1/neturl.txt)@" $basepath/node2/conf/xchain.yaml
     sed -i'' -e "s/#bootNodes/bootNodes/; s@#  - \"/ip4/<ip>.*@  - $(cat $basepath/node1/neturl.txt)@" $basepath/node3/conf/xchain.yaml
     ##node2,3节点创建链并启动
-	cd $basepath/node2 && $basepath/node2/xchain-cli createChain && nohup $basepath/node2/xchain &
-	cd $basepath/node3 && $basepath/node3/xchain-cli createChain && nohup $basepath/node3/xchain &
+	cd $basepath/node2 && $basepath/node2/xchain-cli createChain && spawn_process node2 $basepath/node2/xchain
+	cd $basepath/node3 && $basepath/node3/xchain-cli createChain && spawn_process node3 $basepath/node3/xchain
 	sleep 12
 	get_height
 	get_addrs
