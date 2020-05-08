@@ -19,6 +19,19 @@ function spawn_process()
     bash -c "pwd && $cmd 2>&1 | sed -e 's/^/[$name] /;'" &
 }
 
+function wait_cond()
+{
+    timeout=$1
+    cmd=$2
+    for i in `seq 1 $timeout`; do
+        if $cmd; then
+            return
+        else
+            sleep 1
+        fi
+    done
+}
+
 function get_addrs()
 {
 	addr1=$(cat $basepath/node1/data/keys/address)
@@ -64,7 +77,7 @@ function deploy_env()
 			cd $basepath/node$i
 			cd $basepath/node$i && $basepath/node$i/xchain-cli createChain
 			spawn_process "node$i" $basepath/node$i/xchain
-			sleep 5
+			wait_cond 10 "nc -vz 127.0.0.1 37101"
 			netUrl=$($basepath/node$i/xchain-cli netURL get)
 			echo $netUrl > $basepath/node$i/neturl.txt
 			#hostname=`ifconfig -a | grep inet | grep -v 127.0.0.1 | grep -v inet6 | awk '{print $2}' | tr -d "addrs:"`
@@ -76,7 +89,9 @@ function deploy_env()
     ##node2,3节点创建链并启动
 	cd $basepath/node2 && $basepath/node2/xchain-cli createChain && spawn_process node2 $basepath/node2/xchain
 	cd $basepath/node3 && $basepath/node3/xchain-cli createChain && spawn_process node3 $basepath/node3/xchain
-	sleep 12
+	wait_cond 10 "nc -vz 127.0.0.1 37102"
+	wait_cond 10 "nc -vz 127.0.0.1 37103"
+
 	get_height
 	get_addrs
 }
