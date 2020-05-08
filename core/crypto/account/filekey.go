@@ -87,6 +87,13 @@ func writeFileUsingFilename(filename string, content []byte) error {
 	return err
 }
 
+/*
+ *	生成文件 调用内部方法 外部提供给其它包使用
+ */
+func WriteToFile(filename string, content []byte) error {
+	return writeFileUsingFilename(filename, content)
+}
+
 /**
  * 读取文件
  */

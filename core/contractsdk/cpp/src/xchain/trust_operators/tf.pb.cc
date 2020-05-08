@@ -357,6 +357,8 @@ const int TrustFunctionCallRequest::kMethodFieldNumber;
 const int TrustFunctionCallRequest::kArgsFieldNumber;
 const int TrustFunctionCallRequest::kSvnFieldNumber;
 const int TrustFunctionCallRequest::kAddressFieldNumber;
+const int TrustFunctionCallRequest::kPublicKeyFieldNumber;
+const int TrustFunctionCallRequest::kSignatureFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 TrustFunctionCallRequest::TrustFunctionCallRequest()
@@ -380,6 +382,14 @@ TrustFunctionCallRequest::TrustFunctionCallRequest(const TrustFunctionCallReques
   if (from.address().size() > 0) {
     address_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.address_);
   }
+  publickey_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.publickey().size() > 0) {
+    publickey_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.publickey_);
+  }
+  signature_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.signature().size() > 0) {
+    signature_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.signature_);
+  }
   if (from.has_header()) {
     header_ = new ::SyscallHeader(*from.header_);
   } else {
@@ -395,6 +405,8 @@ void TrustFunctionCallRequest::SharedCtor() {
   method_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   args_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   address_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  publickey_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  signature_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   ::memset(&header_, 0, static_cast<size_t>(
       reinterpret_cast<char*>(&svn_) -
       reinterpret_cast<char*>(&header_)) + sizeof(svn_));
@@ -409,6 +421,8 @@ void TrustFunctionCallRequest::SharedDtor() {
   method_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   args_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   address_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  publickey_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  signature_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (this != internal_default_instance()) delete header_;
 }
 
@@ -430,6 +444,8 @@ void TrustFunctionCallRequest::Clear() {
   method_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   args_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   address_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  publickey_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  signature_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (GetArenaNoVirtual() == nullptr && header_ != nullptr) {
     delete header_;
   }
@@ -510,6 +526,38 @@ const char* TrustFunctionCallRequest::_InternalParse(const char* begin, const ch
         GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
         ctx->extra_parse_data().SetFieldName(nullptr);
         object = msg->mutable_address();
+        if (size > end - ptr + ::google::protobuf::internal::ParseContext::kSlopBytes) {
+          parser_till_end = ::google::protobuf::internal::GreedyStringParserUTF8;
+          goto string_till_end;
+        }
+        GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheckUTF8(ptr, size, ctx));
+        ::google::protobuf::internal::InlineGreedyStringParser(object, ptr, size, ctx);
+        ptr += size;
+        break;
+      }
+      // string publicKey = 6;
+      case 6: {
+        if (static_cast<::google::protobuf::uint8>(tag) != 50) goto handle_unusual;
+        ptr = ::google::protobuf::io::ReadSize(ptr, &size);
+        GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+        ctx->extra_parse_data().SetFieldName(nullptr);
+        object = msg->mutable_publickey();
+        if (size > end - ptr + ::google::protobuf::internal::ParseContext::kSlopBytes) {
+          parser_till_end = ::google::protobuf::internal::GreedyStringParserUTF8;
+          goto string_till_end;
+        }
+        GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheckUTF8(ptr, size, ctx));
+        ::google::protobuf::internal::InlineGreedyStringParser(object, ptr, size, ctx);
+        ptr += size;
+        break;
+      }
+      // string signature = 7;
+      case 7: {
+        if (static_cast<::google::protobuf::uint8>(tag) != 58) goto handle_unusual;
+        ptr = ::google::protobuf::io::ReadSize(ptr, &size);
+        GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+        ctx->extra_parse_data().SetFieldName(nullptr);
+        object = msg->mutable_signature();
         if (size > end - ptr + ::google::protobuf::internal::ParseContext::kSlopBytes) {
           parser_till_end = ::google::protobuf::internal::GreedyStringParserUTF8;
           goto string_till_end;
@@ -628,6 +676,36 @@ bool TrustFunctionCallRequest::MergePartialFromCodedStream(
         break;
       }
 
+      // string publicKey = 6;
+      case 6: {
+        if (static_cast< ::google::protobuf::uint8>(tag) == (50 & 0xFF)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_publickey()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->publickey().data(), static_cast<int>(this->publickey().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "TrustFunctionCallRequest.publicKey"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // string signature = 7;
+      case 7: {
+        if (static_cast< ::google::protobuf::uint8>(tag) == (58 & 0xFF)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_signature()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->signature().data(), static_cast<int>(this->signature().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "TrustFunctionCallRequest.signature"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
       default: {
       handle_unusual:
         if (tag == 0) {
@@ -696,6 +774,26 @@ void TrustFunctionCallRequest::SerializeWithCachedSizes(
       5, this->address(), output);
   }
 
+  // string publicKey = 6;
+  if (this->publickey().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->publickey().data(), static_cast<int>(this->publickey().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "TrustFunctionCallRequest.publicKey");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      6, this->publickey(), output);
+  }
+
+  // string signature = 7;
+  if (this->signature().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->signature().data(), static_cast<int>(this->signature().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "TrustFunctionCallRequest.signature");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      7, this->signature(), output);
+  }
+
   output->WriteRaw(_internal_metadata_.unknown_fields().data(),
                    static_cast<int>(_internal_metadata_.unknown_fields().size()));
   // @@protoc_insertion_point(serialize_end:TrustFunctionCallRequest)
@@ -730,6 +828,20 @@ size_t TrustFunctionCallRequest::ByteSizeLong() const {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::StringSize(
         this->address());
+  }
+
+  // string publicKey = 6;
+  if (this->publickey().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::StringSize(
+        this->publickey());
+  }
+
+  // string signature = 7;
+  if (this->signature().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::StringSize(
+        this->signature());
   }
 
   // .SyscallHeader header = 1;
@@ -775,6 +887,14 @@ void TrustFunctionCallRequest::MergeFrom(const TrustFunctionCallRequest& from) {
 
     address_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.address_);
   }
+  if (from.publickey().size() > 0) {
+
+    publickey_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.publickey_);
+  }
+  if (from.signature().size() > 0) {
+
+    signature_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.signature_);
+  }
   if (from.has_header()) {
     mutable_header()->::SyscallHeader::MergeFrom(from.header());
   }
@@ -806,6 +926,10 @@ void TrustFunctionCallRequest::InternalSwap(TrustFunctionCallRequest* other) {
   args_.Swap(&other->args_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
     GetArenaNoVirtual());
   address_.Swap(&other->address_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+    GetArenaNoVirtual());
+  publickey_.Swap(&other->publickey_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+    GetArenaNoVirtual());
+  signature_.Swap(&other->signature_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
     GetArenaNoVirtual());
   swap(header_, other->header_);
   swap(svn_, other->svn_);

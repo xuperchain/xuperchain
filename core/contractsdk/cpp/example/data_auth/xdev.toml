@@ -1,0 +1,6 @@
+[package]
+name = "main"
+
+[[dependencies]]
+name = "xchain"
+modules = ["xchain/trust_operators"]

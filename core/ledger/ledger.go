@@ -95,6 +95,15 @@ type ConfirmStatus struct {
 
 // NewLedger create an empty ledger, if it already exists, open it directly
 func NewLedger(storePath string, xlog log.Logger, otherPaths []string, kvEngineType string, cryptoType string) (*Ledger, error) {
+	return newLedger(storePath, xlog, otherPaths, kvEngineType, cryptoType, true)
+}
+
+// OpenLedger open ledger which already exists
+func OpenLedger(storePath string, xlog log.Logger, otherPaths []string, kvEngineType string, cryptoType string) (*Ledger, error) {
+	return newLedger(storePath, xlog, otherPaths, kvEngineType, cryptoType, false)
+}
+
+func newLedger(storePath string, xlog log.Logger, otherPaths []string, kvEngineType string, cryptoType string, createIfMissing bool) (*Ledger, error) {
 	ledger := &Ledger{}
 	ledger.mutex = &sync.RWMutex{}
 	ledger.powMutex = &sync.Mutex{}
@@ -139,7 +148,7 @@ func NewLedger(storePath string, xlog log.Logger, otherPaths []string, kvEngineT
 	ledger.confirmBatch = baseDB.NewBatch()
 	metaBuf, metaErr := ledger.metaTable.Get([]byte(""))
 	emptyLedger := false
-	if metaErr != nil && common.NormalizedKVError(metaErr) == common.ErrKVNotFound { //说明是新创建的账本
+	if metaErr != nil && common.NormalizedKVError(metaErr) == common.ErrKVNotFound && createIfMissing { //说明是新创建的账本
 		metaBuf, pbErr := proto.Marshal(ledger.meta)
 		if pbErr != nil {
 			xlog.Warn("marshal meta fail", "pb_err", pbErr)
