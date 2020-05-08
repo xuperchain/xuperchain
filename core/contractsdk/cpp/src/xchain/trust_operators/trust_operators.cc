@@ -42,17 +42,21 @@ std::string map_to_string(std::map<std::string, std::string> str_map) {
 /*
     ops supports encrypted data operations;
     op is one of {add, sub, mul};
-    left_value is left operand(encrypted), right_value is right
-   operand(encrypted); output_key is the key to put encrypted result.
-*/
-bool TrustOperators::binary_ops(const std::string op,
-                                const std::string &left_value,
-                                const std::string &right_value,
-                                const std::string &output_key) {
+    left_op is left operand(cipher1 | commitment1), right_op is right
+    operand(cipher2 | commitment2),
+    return {{"key", "enc_result"}}
+ */
+bool TrustOperators::binary_ops(const std::string op, const Operand &left_op,
+                                const Operand &right_op,
+                                std::map<std::string, std::string> *result) {
   TrustFunctionCallRequest req;
   req.set_method(op);
   std::map<std::string, std::string> args_map;
-  args_map = {{"l", left_value}, {"r", right_value}, {"o", output_key}};
+  args_map = {{"l", left_op.cipher},
+              {"r", right_op.cipher},
+              {"o", "key"},
+              {"commitment", left_op.commitment},
+              {"commitment2", right_op.commitment}};
   req.set_args(map_to_string(args_map));
 
   req.set_svn(_svn);
@@ -62,28 +66,54 @@ bool TrustOperators::binary_ops(const std::string op,
     return false;
   }
   assert(resp.has_kvs());
-  // tfcall only returns one kv pair {output_key: encrypted_result}
-  auto ok = _ctx->put_object(resp.kvs().kv(0).key(), resp.kvs().kv(0).value());
-  if (!ok) {
-    return false;
+
+  auto kvs = resp.kvs();
+  for (int i = 0; i < kvs.kv_size(); i++) {
+    (*result)[kvs.kv(i).key()] = kvs.kv(i).value();
   }
   return true;
 }
 
-bool TrustOperators::add(const std::string &left_value,
-                         const std::string &right_value,
-                         const std::string &output_key) {
-  return binary_ops("add", left_value, right_value, output_key);
+bool TrustOperators::add(const Operand &left_op, const Operand &right_op,
+                         std::map<std::string, std::string> *result) {
+  return binary_ops("add", left_op, right_op, result);
 }
 
-bool TrustOperators::sub(const std::string &left_value,
-                         const std::string &right_value,
-                         const std::string &output_key) {
-  return binary_ops("sub", left_value, right_value, output_key);
+bool TrustOperators::sub(const Operand &left_op, const Operand &right_op,
+                         std::map<std::string, std::string> *result) {
+  return binary_ops("sub", left_op, right_op, result);
 }
 
-bool TrustOperators::mul(const std::string &left_value,
-                         const std::string &right_value,
-                         const std::string &output_key) {
-  return binary_ops("mul", left_value, right_value, output_key);
+bool TrustOperators::mul(const Operand &left_op, const Operand &right_op,
+                         std::map<std::string, std::string> *result) {
+  return binary_ops("mul", left_op, right_op, result);
+}
+
+/*
+  kind = "commitment" -> authorize a user to use data, return a commitment.
+  kind = "ownership"  -> share data to a user, return re-encrypted data.
+ */
+bool TrustOperators::authorize(const AuthInfo &auth,
+                               std::map<std::string, std::string> *result) {
+  TrustFunctionCallRequest req;
+  req.set_method("authorize");
+  std::map<std::string, std::string> args_map;
+  args_map = {{"ciphertext", auth.data}, {"to", auth.to}, {"kind", auth.kind}};
+
+  req.set_args(map_to_string(args_map));
+  req.set_svn(_svn);
+  req.set_address(_ctx->initiator());
+  req.set_publickey(auth.pubkey);
+  req.set_signature(auth.signature);
+  TrustFunctionCallResponse resp;
+  if (!tfcall(req, &resp)) {
+    return false;
+  }
+
+  assert(resp.has_kvs());
+  auto kvs = resp.kvs();
+  for (int i = 0; i < kvs.kv_size(); i++) {
+    (*result)[kvs.kv(i).key()] = kvs.kv(i).value();
+  }
+  return true;
 }
