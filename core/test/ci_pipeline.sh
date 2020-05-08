@@ -14,15 +14,16 @@ echo "--------> outputpath=$outputpath"
 
 function spawn_process()
 {
-    name=$1
-    cmd=$2
+    local name=$1
+    local cmd=$2
     bash -c "pwd && $cmd 2>&1 | sed -e 's/^/[$name] /;'" &
 }
 
 function wait_cond()
 {
-    timeout=$1
-    cmd=$2
+    local timeout=$1
+    local cmd=$2
+	local i
     for i in `seq 1 $timeout`; do
         if $cmd; then
             return
