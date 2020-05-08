@@ -16,7 +16,7 @@ function spawn_process()
 {
     name=$1
     cmd=$2
-    bash -c "$cmd 2>&1 | sed -e 's/^/[$name] /;'" &
+    bash -c "pwd && $cmd 2>&1 | sed -e 's/^/[$name] /;'" &
 }
 
 function get_addrs()
