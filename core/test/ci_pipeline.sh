@@ -188,6 +188,8 @@ function vote_nominate()
 	cd $basepath/node1
 	nominate_list=("$addr2\",\"$addr3" "$addr1\",\"$addr3")
 	echo "--------> ${nominate_list[0]} ${nominate_list[1]}"
+	before_term=$(get_term)
+	before_proposers=$(get_proposer)
 	for ((i=0;i<=1;i++))
 	{
 		sed -i'' -e "4s/\".*/\"${nominate_list[$i]}\"/" $basepath/relate_file/vote.json
@@ -195,12 +197,11 @@ function vote_nominate()
 		echo $txid_out > $basepath/relate_file/txid.txt
 		sleep 1
 	}
-	before_term=$(get_term)
-	before_proposers=$(get_proposer)
+	
 	if [ $before_term = 1 ];then
 		before_term=$[$before_term+1]
 	fi
-	after_term2=$[$before_term+1]
+	after_term2=$[$before_term+2]
 	wait_term 120 $after_term2
 
 	result1_out=$(./xchain-cli tdpos query-checkResult -t=$before_term)
@@ -214,6 +215,8 @@ function vote_nominate()
 	if [ "$result2" = "$expected_results" ] || [ "$result2" = "$expected_results2" ];then
 		echo -e "\033[42;30m  vote result is right~~~\033[0m \n"
 	else
+		echo "result $result2"
+		echo "expect $expected_results or $expected_results2"
 		echo -e "\033[43;35m  vote result is not right!!!\033[0m \n"
 		exit 1
 	fi
@@ -255,13 +258,14 @@ function get_proposer()
 function tdpos_revoke()
 {
 	cd $basepath/node1
+	before_term=$(get_term)
+	after_term=$[$before_term+2]
 	while read -r line
 	do
 		sed -i'' -e 's/\("txid": "\).*/\1'"$line"'"/' $basepath/relate_file/revoke.json
 		./xchain-cli transfer --to=$(cat ./data/keys/address) --desc=$basepath/relate_file/revoke.json --amount=1
 	done < $basepath/relate_file/txid.txt
-	before_term=$(get_term)
-	after_term=$[$before_term+3]
+	
 	wait_term 120 $after_term
 
 	term1_out=$(./xchain-cli tdpos query-checkResult -t=$before_term)
@@ -276,7 +280,7 @@ function tdpos_revoke()
 		echo "result2=$result2 expected_results=$expected_results"
 		echo -e "\033[42;30m  revoke result is right~~~\033[0m \n"
 	else
-		echo "result2=$result2 expected_results=$expected_results"
+		echo "result2=$result2 expected_results=$expected_results or $expected_results2"
 		echo -e "\033[43;35m  revoke result is not right!!!\033[0m \n"
 		exit 1
 	fi
