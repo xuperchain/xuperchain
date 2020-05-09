@@ -51,6 +51,8 @@ function deploy_env()
 		metric_port="3720$i"
         p2p_port="4710$i"
 		cp -r $outputpath/output/* $basepath/node$i
+		sed -i'' -e 's/level:.*/level: info/' $basepath/node$i/conf/xchain.yaml
+
 		if [ $i -ge 2 ];then
 			rm -rf $basepath/node$i/data/keys && rm -rf $basepath/node$i/data/netkeys
 			cd $basepath/node$i
