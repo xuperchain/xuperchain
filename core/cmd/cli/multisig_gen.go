@@ -67,7 +67,7 @@ func (c *MultisigGenCommand) addFlags() {
 	c.cmd.Flags().StringVarP(&c.output, "output", "o", "./tx.out", "Serialized transaction data file.")
 	c.cmd.Flags().StringVarP(&c.multiAddrs, "multiAddrs", "A", "data/acl/addrs", "MultiAddrs to fill required accounts/addresses.")
 	c.cmd.Flags().StringVarP(&c.pubkeys, "publickeys", "P", "data/acl/pubkeys", "public keys of initiator and auth_require addresses.")
-	c.cmd.Flags().StringVar(&c.signType, "signtype", "", "type of signature, support multi/ring")
+	c.cmd.Flags().StringVar(&c.signType, "signtype", "", "type of signature, support multi/ring(Note: this is a demo feature, do NOT use it in production environment)")
 	c.cmd.Flags().StringVar(&c.from, "from", "", "Initiator of an transaction.")
 	c.cmd.Flags().StringVar(&c.moduleName, "module", "", "Contract type: xkernel or wasm or native, native is deprecated.")
 	c.cmd.Flags().StringVar(&c.contractName, "contract", "", "Contract name to be called.")
@@ -80,6 +80,8 @@ func (c *MultisigGenCommand) generateTx(ctx context.Context) error {
 	var msd *MultisigData
 	if c.signType == "multi" {
 		// multisig, use XuperSign
+		// this is a demo feature in cli since it may have security concern, so do NOT use in production environment.
+		fmt.Println("Note: this is a demo feature, do NOT use it in production environment.")
 		pubkeys, err := c.readPublicKeysFromFile(c.pubkeys)
 		if err != nil {
 			return err

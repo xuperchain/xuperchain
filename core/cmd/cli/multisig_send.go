@@ -43,11 +43,12 @@ If signtype is empty:
 	arg1: Initiator signature array, separated with commas; 
 	arg2: AuthRequire signature array, separated with commas.
 If signtype is "multi":
-    arg1: The signature array, separated with commas.`,
+    arg1: The signature array, separated with commas(Note: this is a demo feature, do NOT use it in production environment).`,
 		Args: cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := context.TODO()
 			if c.signType == "multi" {
+				fmt.Println("Note: this is a demo feature, do NOT use it in production environment.")
 				return c.sendXuper(ctx, args[0])
 			} else if c.signType != "" {
 				return fmt.Errorf("SignType[%s] is not supported", c.signType)
