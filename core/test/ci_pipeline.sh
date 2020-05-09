@@ -23,14 +23,31 @@ function wait_cond()
 {
     local timeout=$1
     local cmd=$2
-	local i
+    local i
     for i in `seq 1 $timeout`; do
-        if $cmd; then
+        if eval "$cmd"; then
             return
         else
             sleep 1
         fi
     done
+	echo "run $cmd timeout"
+	exit -1
+}
+
+function wait_port()
+{
+	local timeout=$1
+	local port=$2
+	wait_cond $timeout "nc -vz 127.0.0.1 $port"
+}
+
+function wait_term()
+{
+	local timeout=$1
+	local term=$2
+	local cmd=$(printf '[ $(get_term) -eq %s ]' $term)
+	wait_cond $timeout "$cmd"
 }
 
 function get_addrs()
@@ -51,7 +68,8 @@ function deploy_env()
 		metric_port="3720$i"
         p2p_port="4710$i"
 		cp -r $outputpath/output/* $basepath/node$i
-		sed -i'' -e 's/level:.*/level: info/' $basepath/node$i/conf/xchain.yaml
+		local log_level="info"
+		sed -i'' -e "s/level:.*/level: $log_level/" $basepath/node$i/conf/xchain.yaml
 
 		if [ $i -ge 2 ];then
 			rm -rf $basepath/node$i/data/keys && rm -rf $basepath/node$i/data/netkeys
@@ -69,10 +87,12 @@ function deploy_env()
 			neturl2=`cd $basepath/node2 && ./xchain-cli netURL preview --port 47102`
 			timestamp=`date +%s`
 			proposer_num=2
+			block_num=5
 		    echo "timestamp=$timestamp proposer_num=$proposer_num addr2=$addr2 neturl2=$neturl2"
 			cp $basepath/relate_file/xuper.json $basepath/node$i/data/config/xuper.json
 			sed -i'' -e 's/\("timestamp": "\).*/\1'"$timestamp"'000000000"\,/' $basepath/node$i/data/config/xuper.json
 			sed -i'' -e 's/\("proposer_num": "\).*/\1'"$proposer_num"'"\,/' $basepath/node$i/data/config/xuper.json
+			sed -i'' -e 's/\("block_num": "\).*/\1'"$block_num"'"\,/' $basepath/node$i/data/config/xuper.json
 			sed -i'' -e "s/nodeaddress/$addr2/" $basepath/node$i/data/config/xuper.json
             sed -i'' -e "s@nodeneturl@$neturl2@" $basepath/node$i/data/config/xuper.json
             cp $basepath/node1/data/config/xuper.json $basepath/node2/data/config/xuper.json
@@ -80,7 +100,7 @@ function deploy_env()
 			cd $basepath/node$i
 			cd $basepath/node$i && $basepath/node$i/xchain-cli createChain
 			spawn_process "node$i" $basepath/node$i/xchain
-			wait_cond 10 "nc -vz 127.0.0.1 37101"
+			wait_port 10 37101
 			netUrl=$($basepath/node$i/xchain-cli netURL get)
 			echo $netUrl > $basepath/node$i/neturl.txt
 			#hostname=`ifconfig -a | grep inet | grep -v 127.0.0.1 | grep -v inet6 | awk '{print $2}' | tr -d "addrs:"`
@@ -92,8 +112,8 @@ function deploy_env()
     ##node2,3节点创建链并启动
 	cd $basepath/node2 && $basepath/node2/xchain-cli createChain && spawn_process node2 $basepath/node2/xchain
 	cd $basepath/node3 && $basepath/node3/xchain-cli createChain && spawn_process node3 $basepath/node3/xchain
-	wait_cond 10 "nc -vz 127.0.0.1 37102"
-	wait_cond 10 "nc -vz 127.0.0.1 37103"
+	wait_port 10 37102
+	wait_port 10 37103
 
 	get_height
 	get_addrs
@@ -168,8 +188,6 @@ function vote_nominate()
 	cd $basepath/node1
 	nominate_list=("$addr2\",\"$addr3" "$addr1\",\"$addr3")
 	echo "--------> ${nominate_list[0]} ${nominate_list[1]}"
-	before_info=$(get_TermProposer)
-	echo "--------> $before_info"
 	for ((i=0;i<=1;i++))
 	{
 		sed -i'' -e "4s/\".*/\"${nominate_list[$i]}\"/" $basepath/relate_file/vote.json
@@ -177,20 +195,14 @@ function vote_nominate()
 		echo $txid_out > $basepath/relate_file/txid.txt
 		sleep 1
 	}
-	before_term=$(echo $before_info | awk -F"=| " '{print $(NF-3)}')
-	before_proposers=$(echo $before_info | awk -F"proposers=" '{print $NF}')
+	before_term=$(get_term)
+	before_proposers=$(get_proposer)
 	if [ $before_term = 1 ];then
 		before_term=$[$before_term+1]
 	fi
 	after_term2=$[$before_term+1]
-	for ((i=1;i<=43;i++))
-	{
-	    for ch in - \\ \| /
-	    {
-	        printf "%ds waiting...%s\r" $[$i*4] $ch
-	        sleep 1
-	    }
-	}
+	wait_term 120 $after_term2
+
 	result1_out=$(./xchain-cli tdpos query-checkResult -t=$before_term)
 	result1=$(echo $result1_out | awk -F':' '{print $3}')
 	result2_out=$(./xchain-cli tdpos query-checkResult -t=$after_term2)
@@ -207,20 +219,38 @@ function vote_nominate()
 	fi
 }
 
-function get_TermProposer()
+function get_tdpos_status()
 {
 	cd $basepath/node1
-	while((1))
-	do
-		log_out=$(tail -30 ./logs/xchain.log | grep "getTermProposer" 2>&1)
-		if [ "$log_out" = "" ];then
-			continue
+	local status_out
+	local i
+	for i in `seq 1 10`; do
+		status_out=$(./xchain-cli tdpos status)
+		if [ $? -eq 0 ]; then
+			echo $status_out
+			return
 		else
-			echo "$log_out"
-			break
+			sleep 1
 		fi
 	done
+	echo "wait tdpos status timeout"
+	exit -1
 }
+
+function get_term()
+{
+	cd $basepath/node1
+	local status=`get_tdpos_status`
+	echo $status | python -c "import sys, json; print(json.load(sys.stdin)['term'])"
+}
+
+function get_proposer()
+{
+	cd $basepath/node1
+	local status=`get_tdpos_status`
+	echo $status | python -c "import sys, json; print(json.load(sys.stdin)['proposer'])"
+}
+
 #revoke结束：node2，node3出块
 function tdpos_revoke()
 {
@@ -230,17 +260,10 @@ function tdpos_revoke()
 		sed -i'' -e 's/\("txid": "\).*/\1'"$line"'"/' $basepath/relate_file/revoke.json
 		./xchain-cli transfer --to=$(cat ./data/keys/address) --desc=$basepath/relate_file/revoke.json --amount=1
 	done < $basepath/relate_file/txid.txt
-    before_revoke=$(get_TermProposer)
-	before_term=$(echo $before_revoke | awk -F"=| " '{print $(NF-3)}')
+	before_term=$(get_term)
 	after_term=$[$before_term+3]
-	for ((i=1;i<=80;i++))
-	{
-	    for ch in - \\ \| /
-	    {
-	        printf "%ds waiting...%s\r" $[$i*4] $ch
-	        sleep 1
-	    }
-	}
+	wait_term 120 $after_term
+
 	term1_out=$(./xchain-cli tdpos query-checkResult -t=$before_term)
 	term2_out=$(./xchain-cli tdpos query-checkResult -t=$after_term)
 	result1=$(echo $term1_out | awk -F':' '{print $3}')
