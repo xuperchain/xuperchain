@@ -1452,7 +1452,7 @@ func (uv *UtxoVM) processUnconfirmTxs(block *pb.InternalBlock, batch kvdb.Batch,
 	}
 	txidsInBlock := map[string]bool{}    // block里面所有的txid
 	UTXOKeysInBlock := map[string]bool{} // block里面所有的交易需要用掉的utxo
-	keysVersioinInBlock := map[string]string{}
+	keysVersionInBlock := map[string]string{}
 	uv.mutex.Unlock()
 	for _, tx := range block.Transactions {
 		txidsInBlock[string(tx.Txid)] = true
@@ -1468,7 +1468,7 @@ func (uv *UtxoVM) processUnconfirmTxs(block *pb.InternalBlock, batch kvdb.Batch,
 		for txOutOffset, txOut := range tx.TxOutputsExt {
 			valueVersion := xmodel.MakeVersion(tx.Txid, int32(txOutOffset))
 			bucketAndKey := xmodel.MakeRawKey(txOut.Bucket, txOut.Key)
-			keysVersioinInBlock[string(bucketAndKey)] = valueVersion
+			keysVersionInBlock[string(bucketAndKey)] = valueVersion
 		}
 	}
 	uv.mutex.Lock()
@@ -1507,7 +1507,7 @@ func (uv *UtxoVM) processUnconfirmTxs(block *pb.InternalBlock, batch kvdb.Batch,
 		for _, txInputExt := range unconfirmTx.TxInputsExt {
 			bucketAndKey := xmodel.MakeRawKey(txInputExt.Bucket, txInputExt.Key)
 			localVersion := xmodel.MakeVersion(txInputExt.RefTxid, txInputExt.RefOffset)
-			remoteVersion := keysVersioinInBlock[string(bucketAndKey)]
+			remoteVersion := keysVersionInBlock[string(bucketAndKey)]
 			if localVersion != remoteVersion && remoteVersion != "" {
 				txidInVer := xmodel.GetTxidFromVersion(remoteVersion)
 				if _, known := unconfirmTxMap[string(txidInVer)]; known {
@@ -1521,7 +1521,7 @@ func (uv *UtxoVM) processUnconfirmTxs(block *pb.InternalBlock, batch kvdb.Batch,
 		for txOutOffset, txOut := range unconfirmTx.TxOutputsExt {
 			bucketAndKey := xmodel.MakeRawKey(txOut.Bucket, txOut.Key)
 			localVersion := xmodel.MakeVersion(unconfirmTx.Txid, int32(txOutOffset))
-			remoteVersion := keysVersioinInBlock[string(bucketAndKey)]
+			remoteVersion := keysVersionInBlock[string(bucketAndKey)]
 			if localVersion != remoteVersion && remoteVersion != "" {
 				txidInVer := xmodel.GetTxidFromVersion(remoteVersion)
 				if _, known := unconfirmTxMap[string(txidInVer)]; known {
