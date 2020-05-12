@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 
@@ -24,8 +23,7 @@ func newTestCommand() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) error {
 			err := c.test(args)
 			if err != nil {
-				fmt.Fprintf(os.Stderr, "%s\n", err)
-				os.Exit(-1)
+				return err
 			}
 			return nil
 		},

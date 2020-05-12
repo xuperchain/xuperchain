@@ -58,6 +58,9 @@ func SetVersion(ver, date, commit string) {
 
 func Main() {
 	root := rootCommand()
-	root.Execute()
-
+	err := root.Execute()
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(-1)
+	}
 }
