@@ -31,6 +31,9 @@ service Syscall {
   // Heartbeat
   rpc Ping(xchain.contract.sdk.PingRequest) returns (xchain.contract.sdk.PingResponse);
 
+  // Post log
+  rpc PostLog(xchain.contract.sdk.PostLogRequest) returns (xchain.contract.sdk.PostLogResponse);
+
   rpc GetCallArgs(xchain.contract.sdk.GetCallArgsRequest) returns (xchain.contract.sdk.CallArgs);
   rpc SetOutput(xchain.contract.sdk.SetOutputRequest) returns (xchain.contract.sdk.SetOutputResponse);
 } 

@@ -1,7 +1,6 @@
 package native
 
 import (
-	"flag"
 	"log"
 	"net"
 	"os"
@@ -20,6 +19,8 @@ import (
 const (
 	xchainUnixSocketGid = "XCHAIN_UNIXSOCK_GID"
 	xchainPingTimeout   = "XCHAIN_PING_TIMEOUT"
+	xchainCodeSock      = "XCHAIN_CODE_SOCK"
+	xchainChainSock     = "XCHAIN_CHAIN_SOCK"
 )
 
 func redirectStderr() {
@@ -40,39 +41,23 @@ func New() code.Driver {
 
 func (d *driver) Serve(contract code.Contract) {
 	redirectStderr()
+	chainSockPath := os.Getenv(xchainChainSock)
+	codeSockPath := os.Getenv(xchainCodeSock)
 
-	var (
-		flagset       = flag.NewFlagSet(os.Args[0], flag.ExitOnError)
-		sockpath      = flagset.String("sock", "", "the path of unix socket file(if use unix socket)")
-		chainSockpath = flagset.String("chain-sock", "", "the path of block chain service unix socket file(if use unix socket)")
-		listenport    = flagset.String("port", "", "the listen port(if use tcp)")
-	)
-	flagset.Parse(os.Args[1:])
-
-	nativeCodeService := newNativeCodeService(*chainSockpath, contract)
+	nativeCodeService := newNativeCodeService(chainSockPath, contract)
 	rpcServer := grpc.NewServer()
 	pbrpc.RegisterNativeCodeServer(rpcServer, nativeCodeService)
 
-	var err error
 	var listener net.Listener
-	if *sockpath != "" {
-		uid := os.Getuid()
-		gid := getUnixSocketGroupid()
-		relpath, err := relPathOfCWD(*sockpath)
-		if err != nil {
-			panic(err)
-		}
-		listener, err = sockets.NewUnixSocketWithOpts(relpath, sockets.WithChown(uid, gid), sockets.WithChmod(0660))
-		if err != nil {
-			panic(err)
-		}
-	} else if *listenport != "" {
-		listener, err = sockets.NewTCPSocket(":"+*listenport, nil)
-		if err != nil {
-			panic(err)
-		}
-	} else {
-		panic("empty --sock and --port")
+	uid := os.Getuid()
+	gid := getUnixSocketGroupid()
+	relpath, err := relPathOfCWD(codeSockPath)
+	if err != nil {
+		panic(err)
+	}
+	listener, err = sockets.NewUnixSocketWithOpts(relpath, sockets.WithChown(uid, gid), sockets.WithChmod(0660))
+	if err != nil {
+		panic(err)
 	}
 
 	go rpcServer.Serve(listener)

@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"github.com/xuperchain/xuperchain/core/common/log"
-	"github.com/xuperchain/xuperchain/core/contract/wasm/vm"
+	"github.com/xuperchain/xuperchain/core/contract/bridge"
 	"github.com/xuperchain/xuperchain/core/pb"
 	"github.com/xuperchain/xuperchain/core/xvm/compile"
 	"github.com/xuperchain/xuperchain/core/xvm/exec"
@@ -166,7 +166,7 @@ func (c *codeManager) makeDiskCache(name string, desc *pb.WasmCodeDesc, codebuf 
 	return libpath, nil
 }
 
-func (c *codeManager) GetExecCode(name string, cp vm.ContractCodeProvider) (*contractCode, error) {
+func (c *codeManager) GetExecCode(name string, cp bridge.ContractCodeProvider) (*contractCode, error) {
 	desc, err := cp.GetContractCodeDesc(name)
 	if err != nil {
 		return nil, err

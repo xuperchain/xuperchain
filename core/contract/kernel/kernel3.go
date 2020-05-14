@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/xuperchain/xuperchain/core/contract"
-	"github.com/xuperchain/xuperchain/core/contract/wasm"
+	"github.com/xuperchain/xuperchain/core/contract/bridge"
 	"github.com/xuperchain/xuperchain/core/xmodel"
 )
 
@@ -43,9 +43,9 @@ type KContext struct {
 }
 
 // NewKernel new an instance of XuperKernel, initialized with kernel contract method
-func NewKernel(vmm *wasm.VMManager) (*XuperKernel, error) {
+func NewKernel(xbridge *bridge.XBridge) (*XuperKernel, error) {
 	contractMethods := &contractMethods{
-		vmm: vmm,
+		xbridge: xbridge,
 	}
 	return &XuperKernel{
 		methods: map[string]Method{

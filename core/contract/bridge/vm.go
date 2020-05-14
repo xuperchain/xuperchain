@@ -1,21 +1,21 @@
-package vm
+package bridge
 
 import (
-	"github.com/xuperchain/xuperchain/core/common/config"
-	"github.com/xuperchain/xuperchain/core/common/log"
 	"github.com/xuperchain/xuperchain/core/contract"
-	"github.com/xuperchain/xuperchain/core/contract/bridge"
 	"github.com/xuperchain/xuperchain/core/pb"
 )
+
+type VMConfig interface {
+	DriverName() string
+	IsEnable() bool
+}
 
 // InstanceCreatorConfig configures InstanceCreator
 type InstanceCreatorConfig struct {
 	Basedir        string
-	SyscallService *bridge.SyscallService
+	SyscallService *SyscallService
 	// VMConfig is the config of vm driver
-	VMConfig    interface{}
-	DebugLogger *log.Logger
-	TEEConfig   config.TEEConfig
+	VMConfig VMConfig
 }
 
 // NewInstanceCreatorFunc instances a new InstanceCreator from InstanceCreatorConfig
@@ -27,16 +27,16 @@ type ContractCodeProvider interface {
 	GetContractCode(name string) ([]byte, error)
 }
 
-// InstanceCreator is the creator of wasm virtual machine instance
+// InstanceCreator is the creator of contract virtual machine instance
 type InstanceCreator interface {
 	// CreateInstance instances a wasm virtual machine instance which can run a single contract call
-	CreateInstance(ctx *bridge.Context, cp ContractCodeProvider) (Instance, error)
+	CreateInstance(ctx *Context, cp ContractCodeProvider) (Instance, error)
 	RemoveCache(name string)
 }
 
-// Instance is a wasm virtual machine instance which can run a single contract call
+// Instance is a contract virtual machine instance which can run a single contract call
 type Instance interface {
-	Exec(function string) error
+	Exec() error
 	ResourceUsed() contract.Limits
 	Release()
 	Abort(msg string)

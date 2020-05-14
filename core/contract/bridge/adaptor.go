@@ -73,9 +73,10 @@ func (v *vmContextImpl) Release() error {
 // vmImpl 为vm.VirtualMachine的实现
 // 它是vmContextImpl的工厂类，根据不同的虚拟机类型(Executor)生成对应的vmContextImpl
 type vmImpl struct {
-	ctxmgr *ContextManager
-	name   string
-	exec   Executor
+	ctxmgr       *ContextManager
+	xbridge      *XBridge
+	name         string
+	codeProvider ContractCodeProvider
 }
 
 func (v *vmImpl) GetName() string {
@@ -83,6 +84,28 @@ func (v *vmImpl) GetName() string {
 }
 
 func (v *vmImpl) NewContext(ctxCfg *contract.ContextConfig) (contract.Context, error) {
+	// test if contract exists
+	desc, err := newCodeProvider(ctxCfg.XMCache).GetContractCodeDesc(ctxCfg.ContractName)
+	if err != nil {
+		return nil, err
+	}
+	tp, err := getContractType(desc)
+	if err != nil {
+		return nil, err
+	}
+	vm := v.xbridge.getCreator(tp)
+	if vm == nil {
+		return nil, fmt.Errorf("vm for contract type %s not supported", tp)
+	}
+	var cp ContractCodeProvider
+	// 如果当前在部署合约，合约代码从cache获取
+	// 合约调用的情况则从model中拿取合约代码，避免交易中包含合约代码的引用。
+	if ctxCfg.ContractCodeFromCache {
+		cp = newCodeProvider(ctxCfg.XMCache)
+	} else {
+		cp = newDescProvider(v.codeProvider, desc)
+	}
+
 	ctx := v.ctxmgr.MakeContext()
 	ctx.Cache = ctxCfg.XMCache
 	ctx.ContractName = ctxCfg.ContractName
@@ -97,10 +120,12 @@ func (v *vmImpl) NewContext(ctxCfg *contract.ContextConfig) (contract.Context, e
 		ctx.ContractSet = make(map[string]bool)
 		ctx.ContractSet[ctx.ContractName] = true
 	}
+	ctx.Logger = v.xbridge.debugLogger.New("contract", ctx.ContractName, "ctxid", ctx.ID)
 	release := func() {
 		v.ctxmgr.DestroyContext(ctx)
 	}
-	instance, err := v.exec.NewInstance(ctx)
+
+	instance, err := vm.CreateInstance(ctx, cp)
 	if err != nil {
 		v.ctxmgr.DestroyContext(ctx)
 		return nil, err

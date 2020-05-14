@@ -4,6 +4,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"sync"
 	"syscall"
 	"time"
 
@@ -12,6 +13,11 @@ import (
 	units "github.com/docker/go-units"
 	log "github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperchain/core/common/config"
+)
+
+var (
+	dockerOnce   sync.Once
+	dockerClient *docker.Client
 )
 
 const (
@@ -29,15 +35,13 @@ type Process interface {
 
 // DockerProcess is the process running as a docker container
 type DockerProcess struct {
-	basedir       string
-	binpath       string
-	sockpath      string
-	chainSockPath string
+	basedir  string
+	startcmd string
+	envs     []string
+	mounts   []string
+	cfg      *config.NativeDockerConfig
 
-	cfg *config.NativeDockerConfig
-
-	id     string
-	client *docker.Client
+	id string
 	log.Logger
 }
 
@@ -58,19 +62,26 @@ func (d *DockerProcess) resourceConfig() (int64, int64, error) {
 
 // Start implements process interface
 func (d *DockerProcess) Start() error {
-	volumes := map[string]struct{}{
-		d.basedir:       {},
-		d.chainSockPath: {},
+	client, err := getDockerClient()
+	if err != nil {
+		return err
 	}
-	gid := strconv.Itoa(os.Getgid())
-	cmd := []string{
-		d.binpath,
-		"--sock", d.sockpath,
-		"--chain-sock", d.chainSockPath,
+	volumes := map[string]struct{}{}
+	for _, mount := range d.mounts {
+		volumes[mount] = struct{}{}
 	}
 
-	env := []string{"XCHAIN_UNIXSOCK_GID=" + gid,
-		"XCHAIN_PING_TIMEOUT=" + strconv.Itoa(pingTimeoutSecond)}
+	gid := strconv.Itoa(os.Getgid())
+	cmd := []string{
+		"sh", "-c",
+		d.startcmd,
+	}
+
+	env := []string{
+		"XCHAIN_UNIXSOCK_GID=" + gid,
+		"XCHAIN_PING_TIMEOUT=" + strconv.Itoa(pingTimeoutSecond),
+	}
+	env = append(env, d.envs...)
 
 	user := strconv.Itoa(os.Getuid()) + ":" + strconv.Itoa(os.Getgid())
 
@@ -79,6 +90,10 @@ func (d *DockerProcess) Start() error {
 		return err
 	}
 
+	binds := make([]string, len(d.mounts))
+	for i := range d.mounts {
+		binds[i] = d.mounts[i] + ":" + d.mounts[i]
+	}
 	opts := docker.CreateContainerOptions{
 		Config: &docker.Config{
 			Volumes:         volumes,
@@ -91,19 +106,16 @@ func (d *DockerProcess) Start() error {
 		},
 		HostConfig: &docker.HostConfig{
 			AutoRemove: true,
-			Binds: []string{
-				d.basedir + ":" + d.basedir,
-				d.chainSockPath + ":" + d.chainSockPath,
-			},
-			CPUPeriod: cpulimit,
-			Memory:    memlimit,
+			Binds:      binds,
+			CPUPeriod:  cpulimit,
+			Memory:     memlimit,
 		},
 	}
-	container, err := d.client.CreateContainer(opts)
+	container, err := client.CreateContainer(opts)
 	d.Info("create container success", "id", container.ID)
 	d.id = container.ID
 
-	err = d.client.StartContainer(d.id, nil)
+	err = client.StartContainer(d.id, nil)
 	if err != nil {
 		return err
 	}
@@ -113,22 +125,25 @@ func (d *DockerProcess) Start() error {
 
 // Stop implements process interface
 func (d *DockerProcess) Stop(timeout time.Duration) error {
-	err := d.client.StopContainer(d.id, uint(timeout.Seconds()))
+	client, err := getDockerClient()
+	if err != nil {
+		return err
+	}
+	err = client.StopContainer(d.id, uint(timeout.Seconds()))
 	if err != nil {
 		return err
 	}
 	d.Info("stop container success", "id", d.id)
-	d.client.WaitContainer(d.id)
+	client.WaitContainer(d.id)
 	d.Info("wait container success", "id", d.id)
 	return nil
 }
 
 // HostProcess is the process running as a native process
 type HostProcess struct {
-	basedir       string
-	binpath       string
-	sockpath      string
-	chainSockPath string
+	basedir  string
+	startcmd string
+	envs     []string
 
 	cmd *exec.Cmd
 	log.Logger
@@ -136,16 +151,14 @@ type HostProcess struct {
 
 // Start implements process interface
 func (h *HostProcess) Start() error {
-	cmd := exec.Command(h.binpath,
-		"--sock", h.sockpath,
-		"--chain-sock", h.chainSockPath,
-	)
+	cmd := exec.Command("sh", "-c", h.startcmd)
 	cmd.Dir = h.basedir
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Setsid: true,
 		Pgid:   0,
 	}
 	cmd.Env = []string{"XCHAIN_PING_TIMEOUT=" + strconv.Itoa(pingTimeoutSecond)}
+	cmd.Env = append(cmd.Env, h.envs...)
 
 	if err := cmd.Start(); err != nil {
 		return err
@@ -175,4 +188,15 @@ func (h *HostProcess) Stop(timeout time.Duration) error {
 	}
 	h.Info("stop command success", "pid", h.cmd.Process.Pid)
 	return h.cmd.Wait()
+}
+
+func getDockerClient() (*docker.Client, error) {
+	var err error
+	dockerOnce.Do(func() {
+		dockerClient, err = docker.NewClientFromEnv()
+	})
+	if err != nil {
+		return nil, err
+	}
+	return dockerClient, nil
 }
