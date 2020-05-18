@@ -26,6 +26,9 @@ type SplitUtxoCommand struct {
 	num     int64
 	// while spliting a Account, it can not be null
 	accountPath string
+	isGenRawTx  bool
+	multiAddrs  string
+	output      string
 }
 
 // NewSplitUtxoCommand return
@@ -48,6 +51,9 @@ func (c *SplitUtxoCommand) addFlags() {
 	c.cmd.Flags().StringVarP(&c.account, "account", "A", "", "The account/address to be splited (default ./data/keys/address).")
 	c.cmd.Flags().Int64VarP(&c.num, "num", "N", 1, "The number to split.")
 	c.cmd.Flags().StringVarP(&c.accountPath, "accountPath", "P", "", "The account path, which is required for an account.")
+	c.cmd.Flags().BoolVarP(&c.isGenRawTx, "raw", "m", false, "Is only generate raw tx output.")
+	c.cmd.Flags().StringVarP(&c.output, "output", "o", "./tx.out", "Serialized transaction data file.")
+	c.cmd.Flags().StringVarP(&c.multiAddrs, "multiAddrs", "M", "data/acl/addrs", "MultiAddrs to fill required accounts/addresses.")
 }
 
 func (c *SplitUtxoCommand) splitUtxo(ctx context.Context) error {
@@ -90,6 +96,8 @@ func (c *SplitUtxoCommand) splitUtxo(ctx context.Context) error {
 		Keys:         c.cli.RootOptions.Keys,
 		XchainClient: c.cli.XchainClient(),
 		CryptoType:   c.cli.RootOptions.CryptoType,
+		MultiAddrs:   c.multiAddrs,
+		Output:       c.output,
 	}
 
 	totalNeed, ok := big.NewInt(0).SetString(amount, 10)
@@ -109,10 +117,20 @@ func (c *SplitUtxoCommand) splitUtxo(ctx context.Context) error {
 	}
 	tx.TxOutputs = txOutputs
 
-	tx.AuthRequire, err = genAuthRequire(c.account, c.accountPath)
-	if err != nil {
-		return errors.New("genAuthRequire error")
+	if c.isGenRawTx {
+		// 填充需要多重签名的addr
+		multiAddrs, err := ct.GenAuthRequire(c.multiAddrs)
+		if err != nil {
+			return err
+		}
+		tx.AuthRequire = multiAddrs
+	} else {
+		tx.AuthRequire, err = genAuthRequire(c.account, c.accountPath)
+		if err != nil {
+			return errors.New("genAuthRequire error")
+		}
 	}
+
 	// preExec
 	preExeRPCReq := &pb.InvokeRPCRequest{
 		Bcname:      c.cli.RootOptions.Name,
@@ -128,6 +146,10 @@ func (c *SplitUtxoCommand) splitUtxo(ctx context.Context) error {
 	tx.ContractRequests = preExeRes.GetResponse().GetRequests()
 	tx.TxInputsExt = preExeRes.GetResponse().GetInputs()
 	tx.TxOutputsExt = preExeRes.GetResponse().GetOutputs()
+	if c.isGenRawTx {
+		// 直接输出原始交易内容到文件
+		return ct.GenTxFile(tx)
+	}
 
 	tx.InitiatorSigns, err = ct.genInitSign(tx)
 	if err != nil {
