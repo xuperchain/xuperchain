@@ -352,7 +352,7 @@ func (s *server) GetBlockChainStatus(ctx context.Context, in *pb.BCStatus) (*pb.
 		out.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
 		return &out, nil
 	}
-	return bc.GetBlockChainStatus(in), nil
+	return bc.GetBlockChainStatus(in, pb.ViewOption_NONE), nil
 }
 
 // ConfirmBlockChainStatus confirm is_trunk
@@ -399,7 +399,7 @@ func (s *server) GetSystemStatus(ctx context.Context, in *pb.CommonIn) (*pb.Syst
 	for _, v := range bcs {
 		bc := s.mg.Get(v)
 		tmpBcs := &pb.BCStatus{Header: in.Header, Bcname: v}
-		bcst := bc.GetBlockChainStatus(tmpBcs)
+		bcst := bc.GetBlockChainStatus(tmpBcs, in.ViewOption)
 		if _, ok := systemsStatus.Speeds.BcSpeeds[v]; !ok {
 			systemsStatus.Speeds.BcSpeeds[v] = &pb.BCSpeeds{}
 			systemsStatus.Speeds.BcSpeeds[v].BcSpeed = bc.Speed.GetMaxSpeed()
@@ -407,7 +407,9 @@ func (s *server) GetSystemStatus(ctx context.Context, in *pb.CommonIn) (*pb.Syst
 		systemsStatus.BcsStatus = append(systemsStatus.BcsStatus, bcst)
 	}
 	systemsStatus.Speeds.SumSpeeds = s.mg.Speed.GetMaxSpeed()
-	systemsStatus.PeerUrls = s.mg.P2pSvr.GetPeerUrls()
+	if in.ViewOption == pb.ViewOption_NONE || in.ViewOption == pb.ViewOption_PEERS {
+		systemsStatus.PeerUrls = s.mg.P2pSvr.GetPeerUrls()
+	}
 	out.SystemsStatus = systemsStatus
 	return out, nil
 }

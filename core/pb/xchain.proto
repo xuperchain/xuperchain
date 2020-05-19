@@ -55,6 +55,20 @@ enum TransactionStatus {
   FAILED = 5;
 }
 
+// View option to be choosed (only used in status filter currently)
+enum ViewOption {
+  // Without any flag: Default
+  NONE = 0;
+  // Ledger flag: Get Ledger Info
+  LEDGER = 1;
+  // Utxo flag: Get UTXO Info
+  UTXOINFO = 2;
+  // Branch flag: Get BranchId Info
+  BRANCHINFO = 3;
+  // Peers flag: Get Peers Info
+  PEERS = 4;
+}
+
 // Xchain is the main interfaces
 service Xchain {
 
@@ -341,7 +355,10 @@ message BlockHeight {
 
 message CommonReply { Header header = 1; }
 
-message CommonIn { Header header = 1; }
+message CommonIn { 
+  Header header = 1; 
+  ViewOption view_option = 2;
+}
 
 message TokenDetail {
   string bcname = 1;
