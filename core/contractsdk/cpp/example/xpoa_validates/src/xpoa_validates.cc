@@ -99,21 +99,6 @@ DEFINE_METHOD(Hello, add_validate) {
  */
 DEFINE_METHOD(Hello, del_validate) {
     xchain::Context* ctx = self.context();
-
-    // std::vector<std::string> validates;
-    // std::unique_ptr<xchain::Iterator> iter =
-    //     ctx->new_iterator(Validate(""), Validate("~"));
-    // while (iter->next()) {
-    //     std::pair<std::string, std::string> kv;
-    //     iter->get(&kv);
-    //     auto one = xchain::json::parse(kv.first);
-    //     validates.push_back(one);
-    // }
-    // if (validates.size() <= 3) {
-    //     ctx->error("at least three validates");
-    //     return;
-    // }
-
     CHECK_ARG(address);
     std::string old_data;
     if (!ctx->get_object(Validate(address), &old_data)) {
