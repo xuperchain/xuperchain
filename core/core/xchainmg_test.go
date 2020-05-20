@@ -344,7 +344,7 @@ func TestXChainMgBasic(t *testing.T) {
 		Header: &pb.Header{},
 		Bcname: "xuper",
 	}
-	out := rootXCore.GetBlockChainStatus(blkStatus)
+	out := rootXCore.GetBlockChainStatus(blkStatus, pb.ViewOption_NONE)
 	t.Log("out:  ", out)
 	out2 := rootXCore.ConfirmTipBlockChainStatus(blkStatus)
 	t.Log("out: ", out2)

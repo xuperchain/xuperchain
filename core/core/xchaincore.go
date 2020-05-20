@@ -223,9 +223,9 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	xc.log.Debug("+++++++setbefore", "P2PSvr", xc.P2pSvr, "xchainAddrInfo", xchainAddrInfo)
 	xc.P2pSvr.SetXchainAddr(xc.bcname, xchainAddrInfo)
 
-	xc.Ledger, err = ledger.NewLedger(datapath, xc.log, datapathOthers, kvEngineType, cryptoType)
+	xc.Ledger, err = ledger.OpenLedger(datapath, xc.log, datapathOthers, kvEngineType, cryptoType)
 	if err != nil {
-		xc.log.Warn("NewLedger error", "bc", xc.bcname, "datapath", datapath, "dataPathOhters", datapathOthers)
+		xc.log.Warn("OpenLedger error", "bc", xc.bcname, "datapath", datapath, "dataPathOhters", datapathOthers)
 		return err
 	}
 
@@ -863,6 +863,7 @@ func (xc *XChainCore) updateIsCoreMiner() {
 // Stop stop one xchain instance
 func (xc *XChainCore) Stop() {
 	xc.Utxovm.Close()
+	xc.Ledger.Close()
 	xc.stopFlag = true
 }
 
@@ -1023,7 +1024,7 @@ func (xc *XChainCore) GetBlock(in *pb.BlockID) *pb.Block {
 }
 
 // GetBlockChainStatus get block status from ledger
-func (xc *XChainCore) GetBlockChainStatus(in *pb.BCStatus) *pb.BCStatus {
+func (xc *XChainCore) GetBlockChainStatus(in *pb.BCStatus, viewOption pb.ViewOption) *pb.BCStatus {
 	if in.GetHeader() == nil {
 		in.Header = global.GHeader()
 	}
@@ -1037,26 +1038,32 @@ func (xc *XChainCore) GetBlockChainStatus(in *pb.BCStatus) *pb.BCStatus {
 	}
 
 	meta := xc.Ledger.GetMeta()
-	out.Meta = meta
-	utxoMeta := xc.Utxovm.GetMeta()
-	out.UtxoMeta = utxoMeta
-
+	if viewOption == pb.ViewOption_NONE || viewOption == pb.ViewOption_LEDGER || viewOption == pb.ViewOption_BRANCHINFO {
+		out.Meta = meta
+	}
+	if viewOption == pb.ViewOption_NONE || viewOption == pb.ViewOption_UTXOINFO {
+		utxoMeta := xc.Utxovm.GetMeta()
+		out.UtxoMeta = utxoMeta
+	}
 	ib, err := xc.Ledger.QueryBlock(meta.TipBlockid)
 	if err != nil {
 		out.Header.Error = HandlerLedgerError(err)
 		return out
 	}
-	out.Block = ib
-	// fetch all branches info
-	branchManager, branchErr := xc.Ledger.GetBranchInfo([]byte("0"), int64(0))
-	if branchErr != nil {
-		out.Header.Error = HandlerLedgerError(branchErr)
-		return out
+	if viewOption == pb.ViewOption_NONE {
+		out.Block = ib
 	}
-	for _, branchID := range branchManager {
-		out.BranchBlockid = append(out.BranchBlockid, fmt.Sprintf("%x", branchID))
+	if viewOption == pb.ViewOption_NONE || viewOption == pb.ViewOption_BRANCHINFO {
+		// fetch all branches info
+		branchManager, branchErr := xc.Ledger.GetBranchInfo([]byte("0"), int64(0))
+		if branchErr != nil {
+			out.Header.Error = HandlerLedgerError(branchErr)
+			return out
+		}
+		for _, branchID := range branchManager {
+			out.BranchBlockid = append(out.BranchBlockid, fmt.Sprintf("%x", branchID))
+		}
 	}
-
 	return out
 }
 

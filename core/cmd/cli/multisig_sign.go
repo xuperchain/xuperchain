@@ -45,7 +45,7 @@ func NewMultisigSignCommand(cli *Cli) *cobra.Command {
 
 func (c *MultisigSignCommand) addFlags() {
 	c.cmd.Flags().StringVar(&c.tx, "tx", "./tx.out", "Raw serialized transaction data file")
-	c.cmd.Flags().StringVar(&c.signType, "signtype", "", "type of signature, support multi/ring")
+	c.cmd.Flags().StringVar(&c.signType, "signtype", "", "type of signature, support multi/ring(Note: this is a demo feature, do NOT use it in production environment)")
 	c.cmd.Flags().StringVar(&c.output, "output", "./sign.out", "Generate signature file for a transaction.")
 }
 
@@ -67,6 +67,7 @@ func (c *MultisigSignCommand) sign() error {
 	}
 
 	if c.signType == "multi" {
+		fmt.Println("Note: this is a demo feature, do NOT use it in production environment.")
 		signData, err := ioutil.ReadFile(c.tx + ".ext")
 		if err != nil {
 			return err

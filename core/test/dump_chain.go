@@ -20,6 +20,7 @@ func main() {
 	if err != nil {
 		fmt.Println(err, workspace, dataPathOthers)
 	}
+	defer lg.Close()
 	blocks, bErr := lg.Dump()
 	if bErr != nil {
 		fmt.Println(bErr)

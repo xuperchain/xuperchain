@@ -77,7 +77,7 @@ type ContractOutputInterface interface {
 
 // ContractInterface is the interface to implement a contract driver
 type ContractInterface interface {
-	//TX界别的接口
+	//TX级别的接口
 	Run(desc *TxDesc) error
 	Rollback(desc *TxDesc) error
 	//获取执行合约的结果

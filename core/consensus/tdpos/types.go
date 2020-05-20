@@ -104,7 +104,7 @@ type tDposConfig struct {
 	// this is read from config need_neturl
 	needNetURL bool
 
-	// BTF related config
+	// BFT related config
 	enableBFT bool
 	bftConfig *bft_config.Config
 }
