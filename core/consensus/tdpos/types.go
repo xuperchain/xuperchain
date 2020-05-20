@@ -5,10 +5,9 @@ import (
 	"math/big"
 	"sync"
 
-	"github.com/xuperchain/xuperchain/core/consensus/tdpos/bft"
-
 	log "github.com/xuperchain/log15"
 	cons_base "github.com/xuperchain/xuperchain/core/consensus/base"
+	bft "github.com/xuperchain/xuperchain/core/consensus/common/chainedbft"
 	bft_config "github.com/xuperchain/xuperchain/core/consensus/common/chainedbft/config"
 	"github.com/xuperchain/xuperchain/core/contract"
 	crypto_base "github.com/xuperchain/xuperchain/core/crypto/client/base"
@@ -81,7 +80,7 @@ type TDpos struct {
 	context *contract.TxContext
 	mutex   *sync.RWMutex
 	// BFT module
-	bftPaceMaker *bft.DPoSPaceMaker
+	bftPaceMaker bft.PacemakerInterface
 	p2psvr       p2p_base.P2PServer
 }
 

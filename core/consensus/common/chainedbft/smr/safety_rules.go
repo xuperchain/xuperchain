@@ -38,6 +38,10 @@ func (s *Smr) safeProposal(propsQC, justify *pb.QuorumCert) (bool, error) {
 // IsQuorumCertValidate return whether QC is validated
 func (s *Smr) IsQuorumCertValidate(justify *pb.QuorumCert) (bool, error) {
 	s.slog.Debug("IsQuorumCertValidate", "justify.ProposalId", hex.EncodeToString(justify.GetProposalId()))
+	if justify == nil && len(s.validates) == 1 {
+		s.slog.Info("IsQuorumCertValidate len of validates is 0")
+		return true, nil
+	}
 	if justify == nil || justify.GetSignInfos() == nil || justify.GetProposalId() == nil {
 		return false, ErrParams
 	}

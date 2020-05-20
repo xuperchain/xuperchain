@@ -1,9 +1,4 @@
 #!/bin/bash
-#####
-#兄弟，你是不是忘了今天是愚人节
-#如果你对区块链感兴趣，欢迎添加小助手微信（image-baidu）进入开发者交流群
-#:-)
-#####
 set -e -x
 
 cd `dirname $0`
@@ -66,6 +61,7 @@ go build --buildmode=plugin -o core/plugins/crypto/crypto-gm.so.1.0.0 github.com
 go build --buildmode=plugin -o core/plugins/consensus/consensus-pow.so.1.0.0 github.com/xuperchain/xuperchain/core/consensus/pow
 go build --buildmode=plugin -o core/plugins/consensus/consensus-single.so.1.0.0 github.com/xuperchain/xuperchain/core/consensus/single
 go build --buildmode=plugin -o core/plugins/consensus/consensus-tdpos.so.1.0.0 github.com/xuperchain/xuperchain/core/consensus/tdpos/main
+go build --buildmode=plugin -o core/plugins/consensus/consensus-xpoa.so.1.0.0 github.com/xuperchain/xuperchain/core/consensus/xpoa/main
 go build --buildmode=plugin -o core/plugins/p2p/p2p-p2pv1.so.1.0.0 github.com/xuperchain/xuperchain/core/p2p/p2pv1/plugin_impl
 go build --buildmode=plugin -o core/plugins/p2p/p2p-p2pv2.so.1.0.0 github.com/xuperchain/xuperchain/core/p2p/p2pv2/plugin_impl
 

@@ -133,7 +133,8 @@ func (sc *SingleConsensus) CheckMinerMatch(header *pb.Header, in *pb.InternalBlo
 		return false, nil
 	}
 	if !(bytes.Equal(blkid, in.Blockid) && bytes.Equal(in.Proposer, sc.masterAddr)) {
-		sc.log.Warn("equal blockid error", "logid", header.Logid, "redo blockid", global.F(blkid), "get blockid", global.F(in.Blockid), "in.proposer", global.F(in.Proposer), "proposer", global.F(sc.masterAddr))
+		sc.log.Warn("equal blockid error", "logid", header.Logid, "redo blockid", global.F(blkid),
+			"get blockid", global.F(in.Blockid), "in.proposer", global.F(in.Proposer), "proposer", global.F(sc.masterAddr))
 		return false, nil
 	}
 

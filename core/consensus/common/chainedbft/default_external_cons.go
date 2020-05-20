@@ -1,29 +1,30 @@
-package bft
+package chainedbft
 
 import (
 	"encoding/hex"
 	"fmt"
 
+	log "github.com/xuperchain/log15"
+
 	"github.com/golang/protobuf/proto"
 
-	"github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperchain/core/consensus/base"
 	"github.com/xuperchain/xuperchain/core/ledger"
 	"github.com/xuperchain/xuperchain/core/pb"
 )
 
-// CbftBridge implements ExternalInterface that chainedbft can communicate with TDPoS
-type CbftBridge struct {
+// DefaultCbftBridge implements ExternalInterface that chainedbft can communicate
+type DefaultCbftBridge struct {
 	bcname    string
 	ledger    *ledger.Ledger
 	log       log.Logger
 	cons      base.ConsensusInterface
-	paceMaker *DPoSPaceMaker
+	paceMaker *DefaultPaceMaker
 }
 
-// NewCbftBridge create new instance of CbftBridge
-func NewCbftBridge(bcname string, ledger *ledger.Ledger, xlog log.Logger, cons base.ConsensusInterface) *CbftBridge {
-	return &CbftBridge{
+// NewDefaultCbftBridge create new instance of CbftBridge
+func NewDefaultCbftBridge(bcname string, ledger *ledger.Ledger, xlog log.Logger, cons base.ConsensusInterface) *DefaultCbftBridge {
+	return &DefaultCbftBridge{
 		bcname: bcname,
 		ledger: ledger,
 		log:    xlog,
@@ -32,20 +33,22 @@ func NewCbftBridge(bcname string, ledger *ledger.Ledger, xlog log.Logger, cons b
 }
 
 // SetPaceMaker set pacemaker
-func (cb *CbftBridge) SetPaceMaker(paceMaker *DPoSPaceMaker) {
+func (cb *DefaultCbftBridge) SetPaceMaker(paceMaker *DefaultPaceMaker) {
 	cb.paceMaker = paceMaker
 }
 
 // CallPreQc call external consensus for the PreQc with the given Qc
 //  PreQc is the the given QC's ProposalMsg's JustifyQC
-func (cb *CbftBridge) CallPreQc(qc *pb.QuorumCert) (*pb.QuorumCert, error) {
+func (cb *DefaultCbftBridge) CallPreQc(qc *pb.QuorumCert) (*pb.QuorumCert, error) {
 	if qc == nil {
 		return nil, fmt.Errorf("invalid params")
 	}
 
 	block := &pb.Block{}
 	err := proto.Unmarshal(qc.GetProposalMsg(), block)
+	cb.log.Warn("CallPreQc", "blockid", hex.EncodeToString(block.GetBlockid()))
 	if err != nil {
+		cb.log.Warn("CallPreQc Unmarshal error", "error", err.Error())
 		return nil, err
 	}
 
@@ -53,11 +56,11 @@ func (cb *CbftBridge) CallPreQc(qc *pb.QuorumCert) (*pb.QuorumCert, error) {
 		return nil, fmt.Errorf("CallPreQC block content is not complete")
 	}
 
-	return block.Block.Justify, nil
+	return block.Block.GetJustify(), nil
 }
 
 // CallPreProposalMsg call external consensus for the marshal format of proposalMsg's parent block
-func (cb *CbftBridge) CallPreProposalMsg(proposalMsg []byte) ([]byte, error) {
+func (cb *DefaultCbftBridge) CallPreProposalMsg(proposalMsg []byte) ([]byte, error) {
 	block := &pb.Block{}
 	err := proto.Unmarshal(proposalMsg, block)
 	if err != nil || block.GetBlock() == nil {
@@ -86,7 +89,7 @@ func (cb *CbftBridge) CallPreProposalMsg(proposalMsg []byte) ([]byte, error) {
 }
 
 // CallPrePreProposalMsg call external consensus for the marshal format of proposalMsg's grandpa's block
-func (cb *CbftBridge) CallPrePreProposalMsg(proposalMsg []byte) ([]byte, error) {
+func (cb *DefaultCbftBridge) CallPrePreProposalMsg(proposalMsg []byte) ([]byte, error) {
 	block := &pb.Block{}
 	err := proto.Unmarshal(proposalMsg, block)
 	if err != nil || block.GetBlock() == nil {
@@ -125,7 +128,7 @@ func (cb *CbftBridge) CallPrePreProposalMsg(proposalMsg []byte) ([]byte, error) 
 }
 
 // CallVerifyQc call external consensus for proposalMsg verify with the given QC
-func (cb *CbftBridge) CallVerifyQc(qc *pb.QuorumCert) (bool, error) {
+func (cb *DefaultCbftBridge) CallVerifyQc(qc *pb.QuorumCert) (bool, error) {
 	if qc == nil || qc.GetProposalMsg() == nil {
 		return false, fmt.Errorf("invalid params")
 	}
@@ -148,7 +151,7 @@ func (cb *CbftBridge) CallVerifyQc(qc *pb.QuorumCert) (bool, error) {
 }
 
 // CallProposalMsgWithProposalID call  external consensus for proposalMsg  with the given ProposalID
-func (cb *CbftBridge) CallProposalMsgWithProposalID(proposalID []byte) ([]byte, error) {
+func (cb *DefaultCbftBridge) CallProposalMsgWithProposalID(proposalID []byte) ([]byte, error) {
 	blockContent, err := cb.ledger.QueryBlock(proposalID)
 	if err != nil {
 		cb.log.Warn("CallProposalMsgWithProposalID cannot found block", "block",
@@ -171,7 +174,7 @@ func (cb *CbftBridge) CallProposalMsgWithProposalID(proposalID []byte) ([]byte, 
 
 // IsFirstProposal return true if current proposal is the first proposal of bft
 // First proposal could have empty or nil PreQC
-func (cb *CbftBridge) IsFirstProposal(qc *pb.QuorumCert) (bool, error) {
+func (cb *DefaultCbftBridge) IsFirstProposal(qc *pb.QuorumCert) (bool, error) {
 	if qc == nil {
 		return false, fmt.Errorf("invalid params")
 	}

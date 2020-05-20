@@ -30,6 +30,7 @@ const (
 	ConsensusTypeTdpos    = "tdpos"
 	ConsensusTypePow      = "pow"
 	ConsensusTypeSingle   = "single"
+	ConsensusTypeXpoa     = "xpoa"
 )
 
 // StepConsensus is the struct stored the consensus instance
@@ -89,7 +90,7 @@ func (pc *PluggableConsensus) makeFirstCons(xlog log.Logger, cfg *config.NodeCon
 	}
 	height := int64(0)
 	timestamp := int64(0)
-	if name == ConsensusTypeTdpos {
+	if name == ConsensusTypeTdpos || name == ConsensusTypeXpoa {
 		if consConf["timestamp"] == nil {
 			return nil, errors.New("Genious consensus tdpos's timestamp can not be null")
 		}
@@ -266,6 +267,17 @@ func (pc *PluggableConsensus) postUpdateConsensusActions(name string, sc *StepCo
 		pc.xlog.Trace("Register Tdpos utxovm after updateTDPosConsensus", "name", "Tdpos")
 	}
 
+	if name == ConsensusTypeXpoa {
+		cons := sc.Conn
+		for _, v := range pc.cons {
+			if v.Conn.Type() == ConsensusTypeTdpos {
+				if v.Conn.Version() == cons.Version() {
+					pc.xlog.Warn("This version of xpoa already exist", "version", v.Conn.Version())
+					return errors.New("This version of xpoa already exist")
+				}
+			}
+		}
+	}
 	return nil
 }
 
@@ -313,6 +325,13 @@ func (pc *PluggableConsensus) newUpdateConsensus(name string, height int64, time
 		extParams["height"] = height
 	} else if name == ConsensusTypePow {
 		extParams["ledger"] = pc.ledger
+	} else if name == ConsensusTypeXpoa {
+		extParams["bcname"] = pc.bcname
+		extParams["ledger"] = pc.ledger
+		extParams["timestamp"] = timestamp
+		extParams["utxovm"] = pc.utxoVM
+		extParams["p2psvr"] = pc.p2psvr
+		extParams["height"] = height
 	}
 	// create and config consensus instance
 	cons, err := pc.updateConsensusByName(name, height, consConf, extParams)

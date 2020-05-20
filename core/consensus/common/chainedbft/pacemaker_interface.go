@@ -1,4 +1,4 @@
-package liveness
+package chainedbft
 
 import (
 	cons_base "github.com/xuperchain/xuperchain/core/consensus/base"
@@ -19,8 +19,15 @@ type PacemakerInterface interface {
 	//UpdateQCHigh() error
 	// CurretQCHigh return current QuorumCert high of this node.
 	CurrentQCHigh(proposalID []byte) (*pb.QuorumCert, error)
-	// CurrentView return current vie of this node.
+	// CurrentView return current view of this node.
 	CurrentView() int64
 	// UpdateValidatorSet update the validator set of BFT
 	UpdateValidatorSet(validators []*cons_base.CandidateInfo) error
+	// UpdateSmrState update smr status of chainedbft
+	UpdateSmrState(generateQC *pb.QuorumCert)
+	// IsLastViewConfirmed check if last block is confirmed
+	IsLastViewConfirmed() (bool, error)
+	GetChainedBFT() *ChainedBft
+	Start() error
+	Stop() error
 }
