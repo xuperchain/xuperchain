@@ -78,7 +78,7 @@ func (s *Server) CallMethod(ctx context.Context, ctxid int64, method string, req
 	if !ok {
 		return nil, ErrMethodNotFound
 	}
-	// m.Type.In(2) 为指针类型，取完Elem()之后就编程非指针类型，再经过New就变成原来的指针类型
+	// m.Type.In(2) 为指针类型，取完Elem()之后就变成非指针类型，再经过New就变成原来的指针类型
 	request := reflect.New(m.Type.In(2).Elem())
 	reqmsg := request.Interface().(proto.Message)
 	err := proto.Unmarshal(requestBuf, reqmsg)
