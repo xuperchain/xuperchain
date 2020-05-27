@@ -1,3 +1,18 @@
+### 免费线上沙龙：百度超级链学院·大讲堂 来啦！
+本期活动邀请到来自百度、微众、趣链的技术大咖，谈“跨链”！
+
+他们讲技术、讲应用、讲需求、讲前景。
+
+主题分享+沙龙对话，干货满满。
+
+直播时间：5月26日19:30  
+
+直播主题：“跨链”技术价值与应用生态
+
+预约链接：http://abcxueyuan.cloud.baidu.com/#/live_detail?liveId=236&linkToken=ajIYf
+
+添加超级链小助手微信（image-baidu），回复“跨链”，进群与专家面对面互动~
+
 # XuperChain
 
 [![Build Status](https://travis-ci.org/xuperchain/xuperchain.svg?branch=master)](https://travis-ci.org/xuperchain/xuperchain)
