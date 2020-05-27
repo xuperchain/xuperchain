@@ -21,6 +21,11 @@ import (
 	pb "github.com/xuperchain/xuperchain/core/pb"
 )
 
+const (
+	// DefaultNetMsgChanSize is the default size of network msg channel
+	DefaultNetMsgChanSize = 1000
+)
+
 var (
 	// ErrNewViewNum used to return error new view number
 	ErrNewViewNum = errors.New("new view number error")
@@ -74,7 +79,7 @@ func NewSmr(
 		externalCons:  externalCons,
 		cryptoClient:  cryptoClient,
 		p2p:           p2p,
-		p2pMsgChan:    make(chan *p2p_pb.XuperMessage, cfg.NetMsgChanSize),
+		p2pMsgChan:    make(chan *p2p_pb.XuperMessage, DefaultNetMsgChanSize),
 		subscribeList: []p2p_base.Subscriber{},
 		localProposal: &sync.Map{},
 		qcVoteMsgs:    &sync.Map{},
@@ -360,21 +365,21 @@ func (s *Smr) handleReceivedProposal(msg *p2p_pb.XuperMessage) error {
 
 	prePropsQC, isFirstProposal, err := s.callPreQcWithStatus(propsQC)
 	if err != nil {
-		s.slog.Error("handleReceivedProposal call prePropsQC error", "error", err)
+		s.slog.Error("handleReceivedProposal call prePropsQC error", "logid", msg.GetHeader().GetLogid(), "error", err)
 		return err
 	}
 
 	// Step2: judge safety
 	ok, err := s.safeProposal(propsQC, prePropsQC)
 	if !ok || err != nil {
-		s.slog.Error("handleReceivedProposal safeProposal error!", "ok", ok, "error", err)
+		s.slog.Error("handleReceivedProposal safeProposal error!", "logid", msg.GetHeader().GetLogid(), "ok", ok, "error", err)
 		return ErrSafeProposal
 	}
 
 	// Step3: vote justify
 	err = s.voteProposal(propsQC, propMsg.GetSignature().GetAddress(), msg.GetHeader().GetLogid())
 	if err != nil {
-		s.slog.Error("handleReceivedProposal voteProposal error", "error", err)
+		s.slog.Error("handleReceivedProposal voteProposal error", "logid", msg.GetHeader().GetLogid(), "error", err)
 		return err
 	}
 
@@ -393,7 +398,7 @@ func (s *Smr) handleReceivedProposal(msg *p2p_pb.XuperMessage) error {
 	// prePrePropsQC is the prePropsQC's ProposalMsg's JustifyQC
 	prePrePropsQC, isFirstProposal, err := s.callPreQcWithStatus(prePropsQC)
 	if err != nil {
-		s.slog.Error("handleReceivedProposal call prePrePropsQC error", "error", err)
+		s.slog.Error("handleReceivedProposal call prePrePropsQC error", "logid", msg.GetHeader().GetLogid(), "error", err)
 		return err
 	}
 	s.updateQcStatus(propsQC, prePropsQC, prePrePropsQC)
@@ -403,7 +408,7 @@ func (s *Smr) handleReceivedProposal(msg *p2p_pb.XuperMessage) error {
 // callPreQcWithStatus call externel consensus for preQc status
 func (s *Smr) callPreQcWithStatus(qc *pb.QuorumCert) (*pb.QuorumCert, bool, error) {
 	ok, err := s.externalCons.IsFirstProposal(qc)
-	s.slog.Warn("callPreQcWithStatus IsFirstProposal status",
+	s.slog.Trace("callPreQcWithStatus IsFirstProposal status",
 		"proposalId", hex.EncodeToString(qc.GetProposalId()), "ok", ok, "err", err)
 	if ok || err != nil {
 		return nil, ok, err

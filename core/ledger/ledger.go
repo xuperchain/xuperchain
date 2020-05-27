@@ -33,6 +33,8 @@ var (
 	ErrRootBlockAlreadyExist = errors.New("this ledger already has genesis block")
 	// ErrMinerInterrupt is returned when IsEnablePowMinning is false
 	ErrMinerInterrupt = errors.New("new block interrupts the process of the miner")
+	// ErrTxNotConfirmed return tx not confirmed error
+	ErrTxNotConfirmed = errors.New("transaction not confirmed")
 	// NumCPU returns the number of CPU cores for the current system
 	NumCPU = runtime.NumCPU()
 )
@@ -1173,4 +1175,54 @@ func (l *Ledger) IsEnablePowMinning() bool {
 	l.powMutex.Lock()
 	defer l.powMutex.Unlock()
 	return l.enablePowMinning
+}
+
+// VerifyBlock verify block
+func (l *Ledger) VerifyBlock(block *pb.InternalBlock, logid string) (bool, error) {
+	blkid, err := MakeBlockID(block)
+	if err != nil {
+		l.xlog.Warn("VerifyBlock MakeBlockID error", "logid", logid, "error", err)
+		return false, nil
+	}
+	if !(bytes.Equal(blkid, block.Blockid)) {
+		l.xlog.Warn("VerifyBlock equal blockid error", "logid", logid, "redo blockid", global.F(blkid),
+			"get blockid", global.F(block.Blockid))
+		return false, nil
+	}
+
+	errv := VerifyMerkle(block)
+	if errv != nil {
+		l.xlog.Warn("VerifyMerkle error", "logid", logid, "error", errv)
+		return false, nil
+	}
+
+	k, err := l.cryptoClient.GetEcdsaPublicKeyFromJSON(block.Pubkey)
+	if err != nil {
+		l.xlog.Warn("VerifyBlock get ecdsa from block error", "logid", logid, "error", err)
+		return false, nil
+	}
+	chkResult, _ := l.cryptoClient.VerifyAddressUsingPublicKey(string(block.Proposer), k)
+	if chkResult == false {
+		l.xlog.Warn("VerifyBlock address is not match publickey", "logid", logid)
+		return false, nil
+	}
+
+	valid, err := l.cryptoClient.VerifyECDSA(k, block.Sign, block.Blockid)
+	if err != nil || !valid {
+		l.xlog.Warn("VerifyBlock VerifyECDSA error", "logid", logid, "error", err)
+		return false, nil
+	}
+	return true, nil
+}
+
+// QueryBlockByTxid query block by txid after it has confirmed
+func (l *Ledger) QueryBlockByTxid(txid []byte) (*pb.InternalBlock, error) {
+	if exit, _ := l.HasTransaction(txid); !exit {
+		return nil, ErrTxNotConfirmed
+	}
+	tx, err := l.QueryTransaction(txid)
+	if err != nil {
+		return nil, err
+	}
+	return l.queryBlock(tx.GetBlockid(), false)
 }
