@@ -28,7 +28,8 @@ public:
     void listNode() {
         xchain::Context* ctx = this->context();
         std::string key = nodeBucket + ctx->arg("bcname") + endingSeparator;
-        std::unique_ptr<xchain::Iterator> iter = ctx->new_iterator(key, key + "～");
+        std::unique_ptr<xchain::Iterator> iter =
+            ctx->new_iterator(key, key + "～");
         std::string result;
         while (iter->next()) {
             std::pair<std::string, std::string> res;
@@ -37,12 +38,12 @@ public:
             int offset = key.length();
             int length = target.length() - offset;
             result += target.substr(offset, length) + endingSeparator;
-        }   
+        }
         ctx->ok(result);
     }
     void addNode() {
         xchain::Context* ctx = this->context();
-        const std::string bcname  = ctx->arg("bcname");
+        const std::string bcname = ctx->arg("bcname");
         if (bcname == "xuper") {
             ctx->error("xuper is forbidden");
             return;
@@ -58,7 +59,8 @@ public:
     }
     void delNode() {
         xchain::Context* ctx = this->context();
-        std::string key = nodeBucket + ctx->arg("bcname") + endingSeparator + ctx->arg("ip");
+        std::string key =
+            nodeBucket + ctx->arg("bcname") + endingSeparator + ctx->arg("ip");
         if (ctx->delete_object(key)) {
             ctx->ok("delete node succeed");
             return;
@@ -67,7 +69,8 @@ public:
     }
     void getNode() {
         xchain::Context* ctx = this->context();
-        std::string key = nodeBucket + ctx->arg("bcname") + endingSeparator + ctx->arg("ip");
+        std::string key =
+            nodeBucket + ctx->arg("bcname") + endingSeparator + ctx->arg("ip");
         std::string value;
         if (ctx->get_object(key, &value)) {
             ctx->ok(value);
@@ -77,8 +80,10 @@ public:
     }
     void changeIP() {
         xchain::Context* ctx = this->context();
-        std::string old_key = nodeBucket + ctx->arg("bcname") + endingSeparator + ctx->arg("old_ip");
-        std::string new_key = nodeBucket + ctx->arg("bcname") + endingSeparator + ctx->arg("new_ip");
+        std::string old_key = nodeBucket + ctx->arg("bcname") +
+                              endingSeparator + ctx->arg("old_ip");
+        std::string new_key = nodeBucket + ctx->arg("bcname") +
+                              endingSeparator + ctx->arg("new_ip");
         std::string value;
         if (ctx->get_object(old_key, &value) && value == ctx->initiator() &&
             ctx->delete_object(old_key) && ctx->put_object(new_key, value)) {
@@ -86,7 +91,6 @@ public:
             return;
         }
         ctx->error("change ip failed");
-        
     }
     void getChain() {
         xchain::Context* ctx = this->context();
@@ -119,7 +123,8 @@ public:
     void listChain() {
         xchain::Context* ctx = this->context();
         std::string key = chainBucket;
-        std::unique_ptr<xchain::Iterator> iter = ctx->new_iterator(key, key + "～");
+        std::unique_ptr<xchain::Iterator> iter =
+            ctx->new_iterator(key, key + "～");
         std::string result;
         while (iter->next()) {
             std::pair<std::string, std::string> res;
@@ -128,47 +133,27 @@ public:
             int offset = nodeBucket.length() + 1;
             int length = target.length() - offset;
             result += target.substr(offset, length) + endingSeparator;
-        }   
+        }
         ctx->ok(result);
     }
 };
 
-DEFINE_METHOD(GroupChain, initialize) {
-    self.initialize();
-}
+DEFINE_METHOD(GroupChain, initialize) { self.initialize(); }
 
-DEFINE_METHOD(GroupChain, listNode) {
-    self.listNode();
-}
+DEFINE_METHOD(GroupChain, listNode) { self.listNode(); }
 
-DEFINE_METHOD(GroupChain, addNode) {
-    self.addNode();
-}
+DEFINE_METHOD(GroupChain, addNode) { self.addNode(); }
 
-DEFINE_METHOD(GroupChain, delNode) {
-    self.delNode();
-}
+DEFINE_METHOD(GroupChain, delNode) { self.delNode(); }
 
-DEFINE_METHOD(GroupChain, getNode) {
-    self.getNode();
-}
+DEFINE_METHOD(GroupChain, getNode) { self.getNode(); }
 
-DEFINE_METHOD(GroupChain, changeIP) {
-    self.changeIP();
-}
+DEFINE_METHOD(GroupChain, changeIP) { self.changeIP(); }
 
-DEFINE_METHOD(GroupChain, getChain) {
-    self.getChain();
-}
+DEFINE_METHOD(GroupChain, getChain) { self.getChain(); }
 
-DEFINE_METHOD(GroupChain, addChain) {
-    self.addChain();
-}
+DEFINE_METHOD(GroupChain, addChain) { self.addChain(); }
 
-DEFINE_METHOD(GroupChain, delChain) {
-    self.delChain();
-}
+DEFINE_METHOD(GroupChain, delChain) { self.delChain(); }
 
-DEFINE_METHOD(GroupChain, listChain) {
-    self.listChain();
-}
+DEFINE_METHOD(GroupChain, listChain) { self.listChain(); }

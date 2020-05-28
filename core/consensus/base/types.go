@@ -23,6 +23,26 @@ type ConsensusStatus struct {
 
 // CandidateInfo define the candidate info
 type CandidateInfo struct {
-	Address  string
-	PeerAddr string
+	// Address of node
+	Address string `json:"address"`
+	// Neturl of node
+	PeerAddr string `json:"neturl"`
+}
+
+// CandidateInfoEqual return whether candidate info is equal
+func CandidateInfoEqual(left, right []*CandidateInfo) bool {
+	if len(left) != len(right) {
+		return false
+	}
+	for idx := 0; idx < len(left); idx++ {
+		if left[idx].Address != right[idx].Address || left[idx].PeerAddr != right[idx].PeerAddr {
+			return false
+		}
+	}
+	return true
+}
+
+// CandidateInfos define the struct of proposers
+type CandidateInfos struct {
+	Proposers []*CandidateInfo `json:"proposers"`
 }
