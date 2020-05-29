@@ -57,8 +57,8 @@ func (s *Smr) IsQuorumCertValidate(justify *pb.QuorumCert) (bool, error) {
 
 // verifyVotes verify QC sign
 func (s *Smr) verifyVotes(signs []*pb.SignInfo, validateSets []*cons_base.CandidateInfo, proposalID []byte) (bool, error) {
-	s.slog.Trace("verifyVotes", "autual", len(signs), "require", (len(validateSets)-1)*2/3)
-	if len(signs) <= (len(validateSets)-1)*2/3 {
+	s.slog.Trace("verifyVotes", "autual", len(signs), "require", (len(validateSets)+1)*2/3-1)
+	if len(signs) < ((len(validateSets)+1)*2/3 - 1) {
 		return false, ErrJustifySignNotEnough
 	}
 	for _, v := range signs {
