@@ -39,8 +39,6 @@ type XPoa struct {
 	isProduce   map[int64]bool
 	startHeight int64
 	// proposer infos
-	// poa term height
-	termHeight int64
 	// termTimestamp 轮起始时间
 	termTimestamp int64
 	// 当前的验证集合 address -> nodeInfo
