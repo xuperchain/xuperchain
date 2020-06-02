@@ -45,14 +45,7 @@ func newNativeCreator(cfg *bridge.InstanceCreatorConfig) (bridge.InstanceCreator
 
 func (n *nativeCreator) startRpcServer(service *bridge.SyscallService) error {
 	uid, gid := os.Getuid(), os.Getgid()
-	relpath := n.chainsock
-	var err error
-	if filepath.IsAbs(n.chainsock) {
-		relpath, err = RelPathOfCWD(n.chainsock)
-		if err != nil {
-			return err
-		}
-	}
+	relpath := NormalizeSockPath(n.chainsock)
 
 	listener, err := sockets.NewUnixSocketWithOpts(relpath, sockets.WithChown(uid, gid), sockets.WithChmod(0660))
 	if err != nil {

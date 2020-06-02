@@ -3,17 +3,19 @@ package native
 import (
 	"os"
 	"path/filepath"
+	"strings"
 )
 
-// RelPathOfCWD 返回工作目录的相对路径
-func RelPathOfCWD(rootpath string) (string, error) {
-	cwd, err := os.Getwd()
-	if err != nil {
-		return "", err
+// NormalizeSockPath make unix socket path as shorter as possiable
+func NormalizeSockPath(s string) string {
+	if !filepath.IsAbs(s) {
+		return s
 	}
-	socketPath, err := filepath.Rel(cwd, rootpath)
-	if err != nil {
-		return "", err
+
+	wd, _ := os.Getwd()
+	if !strings.HasPrefix(s, wd) {
+		return s
 	}
-	return socketPath, nil
+	relpath, _ := filepath.Rel(wd, s)
+	return relpath
 }

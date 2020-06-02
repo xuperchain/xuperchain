@@ -48,15 +48,7 @@ func newContractProcess(cfg *config.NativeConfig, name, basedir, chainsock strin
 
 	process.process = process.makeHostProcess()
 
-	var err error
-	relsockpath := process.nativesock
-	if filepath.IsAbs(process.nativesock) {
-		relsockpath, err = RelPathOfCWD(process.nativesock)
-		if err != nil {
-			return nil, err
-		}
-	}
-
+	relsockpath := NormalizeSockPath(process.nativesock)
 	conn, err := grpc.Dial("unix:"+relsockpath, grpc.WithInsecure())
 	if err != nil {
 		return nil, err

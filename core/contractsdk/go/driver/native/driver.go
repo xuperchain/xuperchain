@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"syscall"
 	"time"
 
@@ -51,11 +52,8 @@ func (d *driver) Serve(contract code.Contract) {
 	var listener net.Listener
 	uid := os.Getuid()
 	gid := getUnixSocketGroupid()
-	relpath, err := relPathOfCWD(codeSockPath)
-	if err != nil {
-		panic(err)
-	}
-	listener, err = sockets.NewUnixSocketWithOpts(relpath, sockets.WithChown(uid, gid), sockets.WithChmod(0660))
+	relpath := normalizeSockPath(codeSockPath)
+	listener, err := sockets.NewUnixSocketWithOpts(relpath, sockets.WithChown(uid, gid), sockets.WithChmod(0660))
 	if err != nil {
 		panic(err)
 	}
@@ -110,15 +108,16 @@ func getPingTimeout() time.Duration {
 	return time.Duration(timeout) * time.Second
 }
 
-//RelPathOfCWD 返回工作目录的相对路径
-func relPathOfCWD(rootpath string) (string, error) {
-	cwd, err := os.Getwd()
-	if err != nil {
-		return "", err
+// normalizeSockPath make unix socket path as shorter as possiable
+func normalizeSockPath(s string) string {
+	if !filepath.IsAbs(s) {
+		return s
 	}
-	socketPath, err := filepath.Rel(cwd, rootpath)
-	if err != nil {
-		return "", err
+
+	wd, _ := os.Getwd()
+	if !strings.HasPrefix(s, wd) {
+		return s
 	}
-	return socketPath, nil
+	relpath, _ := filepath.Rel(wd, s)
+	return relpath
 }
