@@ -4,7 +4,9 @@
 
 package main
 
-import "github.com/spf13/cobra"
+import (
+	"github.com/spf13/cobra"
+)
 
 // AccountCommand account cmd entrance
 type AccountCommand struct {
@@ -18,13 +20,15 @@ func NewAccountCommand(cli *Cli) *cobra.Command {
 	c.cli = cli
 	c.cmd = &cobra.Command{
 		Use:   "account",
-		Short: "Operate an account or address: balance|new|newkeys|split|merge|list-utxo.",
+		Short: "Operate an account or address: balance|new|newkeys|contracts|restore|decrypt.",
 	}
 	c.cmd.AddCommand(NewAccountBalanceCommand(cli))
 	c.cmd.AddCommand(NewAccountNewkeysCommand(cli))
 	c.cmd.AddCommand(NewAccountNewCommand(cli))
 	c.cmd.AddCommand(NewAccountContractsCommand(cli))
 	c.cmd.AddCommand(NewAccountQueryCommand(cli))
+	c.cmd.AddCommand(NewAccountRestoreCommand(cli))
+	c.cmd.AddCommand(NewAccountDecryptCommand(cli))
 	return c.cmd
 }
 

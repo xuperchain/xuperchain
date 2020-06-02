@@ -314,6 +314,34 @@ class TrustFunctionCallRequest :
   ::std::string* release_address();
   void set_allocated_address(::std::string* address);
 
+  // string publicKey = 6;
+  void clear_publickey();
+  static const int kPublicKeyFieldNumber = 6;
+  const ::std::string& publickey() const;
+  void set_publickey(const ::std::string& value);
+  #if LANG_CXX11
+  void set_publickey(::std::string&& value);
+  #endif
+  void set_publickey(const char* value);
+  void set_publickey(const char* value, size_t size);
+  ::std::string* mutable_publickey();
+  ::std::string* release_publickey();
+  void set_allocated_publickey(::std::string* publickey);
+
+  // string signature = 7;
+  void clear_signature();
+  static const int kSignatureFieldNumber = 7;
+  const ::std::string& signature() const;
+  void set_signature(const ::std::string& value);
+  #if LANG_CXX11
+  void set_signature(::std::string&& value);
+  #endif
+  void set_signature(const char* value);
+  void set_signature(const char* value, size_t size);
+  ::std::string* mutable_signature();
+  ::std::string* release_signature();
+  void set_allocated_signature(::std::string* signature);
+
   // .SyscallHeader header = 1;
   bool has_header() const;
   void clear_header();
@@ -337,6 +365,8 @@ class TrustFunctionCallRequest :
   ::google::protobuf::internal::ArenaStringPtr method_;
   ::google::protobuf::internal::ArenaStringPtr args_;
   ::google::protobuf::internal::ArenaStringPtr address_;
+  ::google::protobuf::internal::ArenaStringPtr publickey_;
+  ::google::protobuf::internal::ArenaStringPtr signature_;
   ::SyscallHeader* header_;
   ::google::protobuf::uint32 svn_;
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
@@ -985,6 +1015,112 @@ inline void TrustFunctionCallRequest::set_allocated_address(::std::string* addre
   }
   address_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), address);
   // @@protoc_insertion_point(field_set_allocated:TrustFunctionCallRequest.address)
+}
+
+// string publicKey = 6;
+inline void TrustFunctionCallRequest::clear_publickey() {
+  publickey_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& TrustFunctionCallRequest::publickey() const {
+  // @@protoc_insertion_point(field_get:TrustFunctionCallRequest.publicKey)
+  return publickey_.GetNoArena();
+}
+inline void TrustFunctionCallRequest::set_publickey(const ::std::string& value) {
+  
+  publickey_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:TrustFunctionCallRequest.publicKey)
+}
+#if LANG_CXX11
+inline void TrustFunctionCallRequest::set_publickey(::std::string&& value) {
+  
+  publickey_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:TrustFunctionCallRequest.publicKey)
+}
+#endif
+inline void TrustFunctionCallRequest::set_publickey(const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  
+  publickey_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:TrustFunctionCallRequest.publicKey)
+}
+inline void TrustFunctionCallRequest::set_publickey(const char* value, size_t size) {
+  
+  publickey_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:TrustFunctionCallRequest.publicKey)
+}
+inline ::std::string* TrustFunctionCallRequest::mutable_publickey() {
+  
+  // @@protoc_insertion_point(field_mutable:TrustFunctionCallRequest.publicKey)
+  return publickey_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* TrustFunctionCallRequest::release_publickey() {
+  // @@protoc_insertion_point(field_release:TrustFunctionCallRequest.publicKey)
+  
+  return publickey_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void TrustFunctionCallRequest::set_allocated_publickey(::std::string* publickey) {
+  if (publickey != nullptr) {
+    
+  } else {
+    
+  }
+  publickey_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), publickey);
+  // @@protoc_insertion_point(field_set_allocated:TrustFunctionCallRequest.publicKey)
+}
+
+// string signature = 7;
+inline void TrustFunctionCallRequest::clear_signature() {
+  signature_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& TrustFunctionCallRequest::signature() const {
+  // @@protoc_insertion_point(field_get:TrustFunctionCallRequest.signature)
+  return signature_.GetNoArena();
+}
+inline void TrustFunctionCallRequest::set_signature(const ::std::string& value) {
+  
+  signature_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:TrustFunctionCallRequest.signature)
+}
+#if LANG_CXX11
+inline void TrustFunctionCallRequest::set_signature(::std::string&& value) {
+  
+  signature_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:TrustFunctionCallRequest.signature)
+}
+#endif
+inline void TrustFunctionCallRequest::set_signature(const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  
+  signature_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:TrustFunctionCallRequest.signature)
+}
+inline void TrustFunctionCallRequest::set_signature(const char* value, size_t size) {
+  
+  signature_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:TrustFunctionCallRequest.signature)
+}
+inline ::std::string* TrustFunctionCallRequest::mutable_signature() {
+  
+  // @@protoc_insertion_point(field_mutable:TrustFunctionCallRequest.signature)
+  return signature_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* TrustFunctionCallRequest::release_signature() {
+  // @@protoc_insertion_point(field_release:TrustFunctionCallRequest.signature)
+  
+  return signature_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void TrustFunctionCallRequest::set_allocated_signature(::std::string* signature) {
+  if (signature != nullptr) {
+    
+  } else {
+    
+  }
+  signature_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), signature);
+  // @@protoc_insertion_point(field_set_allocated:TrustFunctionCallRequest.signature)
 }
 
 // -------------------------------------------------------------------

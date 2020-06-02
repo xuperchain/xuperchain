@@ -5,10 +5,9 @@ import (
 	"math/big"
 	"sync"
 
-	"github.com/xuperchain/xuperchain/core/consensus/tdpos/bft"
-
 	log "github.com/xuperchain/log15"
 	cons_base "github.com/xuperchain/xuperchain/core/consensus/base"
+	bft "github.com/xuperchain/xuperchain/core/consensus/common/chainedbft"
 	bft_config "github.com/xuperchain/xuperchain/core/consensus/common/chainedbft/config"
 	"github.com/xuperchain/xuperchain/core/contract"
 	crypto_base "github.com/xuperchain/xuperchain/core/crypto/client/base"
@@ -66,6 +65,8 @@ type TDpos struct {
 	curBlockNum int64
 	// 候选人得票信息 key: address, value: ballots
 	candidateBallots *sync.Map
+	// 候选人集合 key: address, value: true
+	// candidateSets *sync.Map
 	// candidate投票缓存, 内存状态, 记录每个block中得票数的变化, key: address, value: {ballot, isDel}, 以块为粒度, 块提交后清除
 	candidateBallotsCache *sync.Map
 	// 记录某一轮内某个候选人出块是否大于系统限制, 以此避免矿工恶意出块, 切轮时进行初始化 map[term_num]map[proposer]map[blockid]bool
@@ -79,7 +80,7 @@ type TDpos struct {
 	context *contract.TxContext
 	mutex   *sync.RWMutex
 	// BFT module
-	bftPaceMaker *bft.DPoSPaceMaker
+	bftPaceMaker bft.PacemakerInterface
 	p2psvr       p2p_base.P2PServer
 }
 
@@ -103,7 +104,7 @@ type tDposConfig struct {
 	// this is read from config need_neturl
 	needNetURL bool
 
-	// BTF related config
+	// BFT related config
 	enableBFT bool
 	bftConfig *bft_config.Config
 }
@@ -141,8 +142,8 @@ func (tv termBallotsSlice) Less(i, j int) bool {
 	return tv[j].Ballots < tv[i].Ballots
 }
 
-// candidateBallotsCacheValue
-type candidateBallotsCacheValue struct {
+// candidateBallotsValue
+type candidateBallotsValue struct {
 	ballots int64
 	// 是否被标记为删除
 	isDel bool

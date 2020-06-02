@@ -13,20 +13,17 @@ import (
 	"sync"
 	"time"
 
-	log "github.com/xuperchain/log15"
-
 	"encoding/hex"
 	"encoding/json"
 
+	log "github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperchain/core/common"
 	"github.com/xuperchain/xuperchain/core/common/config"
 	cons_base "github.com/xuperchain/xuperchain/core/consensus/base"
-	chainedbft "github.com/xuperchain/xuperchain/core/consensus/common/chainedbft"
+	bft "github.com/xuperchain/xuperchain/core/consensus/common/chainedbft"
 	bft_config "github.com/xuperchain/xuperchain/core/consensus/common/chainedbft/config"
-	"github.com/xuperchain/xuperchain/core/consensus/tdpos/bft"
 	"github.com/xuperchain/xuperchain/core/contract"
 	crypto_base "github.com/xuperchain/xuperchain/core/crypto/client/base"
-	"github.com/xuperchain/xuperchain/core/global"
 	"github.com/xuperchain/xuperchain/core/ledger"
 	p2p_base "github.com/xuperchain/xuperchain/core/p2p/base"
 	"github.com/xuperchain/xuperchain/core/pb"
@@ -71,49 +68,34 @@ func (tp *TDpos) Configure(xlog log.Logger, cfg *config.NodeConfig, consCfg map[
 	tp.log = xlog
 	tp.address = address
 
-	switch extParams["crypto_client"].(type) {
-	case crypto_base.CryptoClient:
-		tp.cryptoClient = extParams["crypto_client"].(crypto_base.CryptoClient)
-	default:
-		errMsg := "invalid type of crypto_client"
-		xlog.Warn(errMsg)
-		return errors.New(errMsg)
+	if cryptoClient, ok := extParams["crypto_client"].(crypto_base.CryptoClient); ok {
+		tp.cryptoClient = cryptoClient
+	} else {
+		return errors.New("invalid type of crypto_client")
 	}
 
-	switch extParams["ledger"].(type) {
-	case *ledger.Ledger:
-		tp.ledger = extParams["ledger"].(*ledger.Ledger)
-	default:
-		errMsg := "invalid type of ledger"
-		xlog.Warn(errMsg)
-		return errors.New(errMsg)
+	if ledger, ok := extParams["ledger"].(*ledger.Ledger); ok {
+		tp.ledger = ledger
+	} else {
+		return errors.New("invalid type of ledger")
 	}
 
-	switch extParams["utxovm"].(type) {
-	case *utxo.UtxoVM:
-		tp.utxoVM = extParams["utxovm"].(*utxo.UtxoVM)
-	default:
-		errMsg := "invalid type of utxovm"
-		xlog.Warn(errMsg)
-		return errors.New(errMsg)
+	if utxovm, ok := extParams["utxovm"].(*utxo.UtxoVM); ok {
+		tp.utxoVM = utxovm
+	} else {
+		return errors.New("invalid type of utxovm")
 	}
 
-	switch extParams["bcname"].(type) {
-	case string:
-		tp.bcname = extParams["bcname"].(string)
-	default:
-		errMsg := "invalid type of bcname"
-		xlog.Warn(errMsg)
-		return errors.New(errMsg)
+	if bcname, ok := extParams["bcname"].(string); ok {
+		tp.bcname = bcname
+	} else {
+		return errors.New("invalid type of bcname")
 	}
 
-	switch extParams["timestamp"].(type) {
-	case int64:
-		tp.initTimestamp = extParams["timestamp"].(int64)
-	default:
-		errMsg := "invalid type of timestamp"
-		xlog.Warn(errMsg)
-		return errors.New(errMsg)
+	if timestamp, ok := extParams["timestamp"].(int64); ok {
+		tp.initTimestamp = timestamp
+	} else {
+		return errors.New("invalid type of timestamp")
 	}
 
 	if p2psvr, ok := extParams["p2psvr"].(p2p_base.P2PServer); ok {
@@ -122,6 +104,8 @@ func (tp *TDpos) Configure(xlog log.Logger, cfg *config.NodeConfig, consCfg map[
 
 	if height, ok := extParams["height"].(int64); ok {
 		tp.height = height
+	} else {
+		return errors.New("invalid type of heights")
 	}
 
 	if err = tp.buildConfigs(xlog, nil, consCfg); err != nil {
@@ -134,6 +118,7 @@ func (tp *TDpos) Configure(xlog log.Logger, cfg *config.NodeConfig, consCfg map[
 	}
 
 	if err = tp.initCandidateBallots(); err != nil {
+		xlog.Warn("initCandidateBallots failed!", "error", err)
 		return err
 	}
 	tp.log.Trace("Configure", "TDpos", tp)
@@ -297,22 +282,26 @@ func (tp *TDpos) buildConfigs(xlog log.Logger, cfg *config.NodeConfig, consCfg m
 }
 
 func (tp *TDpos) initCandidateBallots() error {
-	it := tp.utxoVM.ScanWithPrefix([]byte(GenCandidateBallotsPrefix()))
+	// it := tp.utxoVM.ScanWithPrefix([]byte(GenCandidateBallotsPrefix()))
+	it := tp.utxoVM.ScanWithPrefix([]byte(GenCandidateNominatePrefix()))
 	defer it.Release()
 	for it.Next() {
 		key := string(it.Key())
-		address, err := ParseCandidateBallotsKey(key)
+		address, err := ParseCandidateNominateKey(key)
 		tp.log.Trace("initCandidateBallots", "key", key, "address", address)
 		if err != nil {
-			tp.log.Warn("initCandidateBallots parseCandidateBallotsKey error", "key", key)
+			tp.log.Warn("initCandidateBallots ParseCandidateNominateKey error", "key", key)
 			return err
 		}
-		ballots, err := strconv.ParseInt(string(it.Value()), 10, 64)
-		tp.log.Trace("initCandidateBallots", "key", key, "address", address, "ballots", ballots)
+		balKey := GenCandidateBallotsKey(address)
+		val, err := tp.utxoVM.GetFromTable(nil, []byte(balKey))
+		ballots, err := strconv.ParseInt(string(val), 10, 64)
+		tp.log.Trace("initCandidateBallots", "balKey", balKey, "address", address, "ballots", ballots)
 		if err != nil {
+			tp.log.Warn("initCandidateBallots parse int error", "err", err.Error())
 			return err
 		}
-		tp.candidateBallots.Store(key, ballots)
+		tp.candidateBallots.Store(balKey, ballots)
 	}
 	return nil
 }
@@ -374,6 +363,7 @@ Again:
 		}
 		sentNewView = true
 	}
+
 	// master check
 	if tp.isProposer(term, pos, tp.address) {
 		tp.log.Trace("CompeteMaster now xterm infos", "term", term, "pos", pos, "blockPos", blockPos, "un2", un2,
@@ -452,34 +442,12 @@ func (tp *TDpos) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock) (bool,
 		return false, nil
 	}
 	// 1 验证块信息是否合法
-	blkid, err := ledger.MakeBlockID(in)
-	if err != nil {
-		tp.log.Warn("CheckMinerMatch MakeBlockID error", "logid", header.Logid, "error", err)
-		return false, nil
-	}
-	if !(bytes.Equal(blkid, in.Blockid)) {
-		tp.log.Warn("CheckMinerMatch equal blockid error", "logid", header.Logid, "redo blockid", global.F(blkid),
-			"get blockid", global.F(in.Blockid))
-		return false, nil
+	if ok, err := tp.ledger.VerifyBlock(in, header.GetLogid()); !ok || err != nil {
+		tp.log.Info("TDpos CheckMinerMatch VerifyBlock not ok")
+		return ok, err
 	}
 
-	k, err := tp.cryptoClient.GetEcdsaPublicKeyFromJSON(in.Pubkey)
-	if err != nil {
-		tp.log.Warn("CheckMinerMatch get ecdsa from block error", "logid", header.Logid, "error", err)
-		return false, nil
-	}
-	chkResult, _ := tp.cryptoClient.VerifyAddressUsingPublicKey(string(in.Proposer), k)
-	if chkResult == false {
-		tp.log.Warn("CheckMinerMatch address is not match publickey", "logid", header.Logid)
-		return false, nil
-	}
-
-	valid, err := tp.cryptoClient.VerifyECDSA(k, in.Sign, in.Blockid)
-	if err != nil || !valid {
-		tp.log.Warn("CheckMinerMatch VerifyECDSA error", "logid", header.Logid, "error", err)
-		return false, nil
-	}
-
+	// 2 验证bft相关信息
 	if tp.config.enableBFT && !tp.isFirstblock(in.GetHeight()) {
 		// if BFT enabled and it's not the first proposal
 		// check whether previous block's QuorumCert is valid
@@ -490,7 +458,7 @@ func (tp *TDpos) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock) (bool,
 		}
 	}
 
-	// 2 验证轮数信息
+	// 3 验证轮数信息
 	preBlock, err := tp.ledger.QueryBlock(in.PreHash)
 	if err != nil {
 		tp.log.Warn("CheckMinerMatch failed, get preblock error")
@@ -587,8 +555,6 @@ func (tp *TDpos) ProcessBeforeMiner(timestamp int64) (map[string]interface{}, bo
 	}
 
 	res["type"] = TYPE
-	//res["curTerm"] = tp.curTerm
-	//res["curBlockNum"] = tp.curBlockNum
 	res["curTerm"] = term
 	res["curBlockNum"] = blockPos
 	tp.log.Trace("ProcessBeforeMiner", "res", res)
@@ -697,14 +663,13 @@ func (tp *TDpos) Finalize(blockid []byte) error {
 	}
 	tp.candidateBallotsCache.Range(func(k, v interface{}) bool {
 		key := k.(string)
-		value := v.(*candidateBallotsCacheValue)
+		value := v.(*candidateBallotsValue)
 		if value.isDel {
-			tp.context.UtxoBatch.Delete([]byte(key))
 			tp.candidateBallots.Delete(key)
 		} else {
-			tp.context.UtxoBatch.Put([]byte(key), []byte(strconv.FormatInt(value.ballots, 10)))
 			tp.candidateBallots.Store(key, value.ballots)
 		}
+		tp.context.UtxoBatch.Put([]byte(key), []byte(strconv.FormatInt(value.ballots, 10)))
 		return true
 	})
 	return nil
@@ -839,7 +804,7 @@ func (tp *TDpos) initBFT(cfg *config.NodeConfig) error {
 	}
 
 	// initialize bft
-	bridge := bft.NewCbftBridge(tp.bcname, tp.ledger, tp.log, tp)
+	bridge := bft.NewDefaultCbftBridge(tp.bcname, tp.ledger, tp.log, tp)
 	qcNeeded := 3
 	qc := make([]*pb.QuorumCert, qcNeeded)
 	meta := tp.ledger.GetMeta()
@@ -861,7 +826,7 @@ func (tp *TDpos) initBFT(cfg *config.NodeConfig) error {
 	}
 	term, _, _ := tp.minerScheduling(time.Now().UnixNano())
 	proposers := tp.getTermProposer(term)
-	cbft, err := chainedbft.NewChainedBft(
+	cbft, err := bft.NewChainedBft(
 		tp.log,
 		tp.config.bftConfig,
 		tp.bcname,
@@ -879,7 +844,7 @@ func (tp *TDpos) initBFT(cfg *config.NodeConfig) error {
 		return err
 	}
 
-	paceMaker, err := bft.NewDPoSPaceMaker(tp.bcname, tp.height, meta.TrunkHeight,
+	paceMaker, err := bft.NewDefaultPaceMaker(tp.bcname, tp.height, meta.TrunkHeight,
 		string(tp.address), cbft, tp.log, tp, tp.ledger)
 	if err != nil {
 		if err != nil {

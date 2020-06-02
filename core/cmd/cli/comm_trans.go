@@ -121,7 +121,7 @@ func (c *CommTrans) GenPreExeRes(ctx context.Context) (
 			return nil, nil, fmt.Errorf("Get auth require quick error: %s", err.Error())
 		}
 	} else {
-		preExeRPCReq.AuthRequire, err = c.genAuthRequire(c.MultiAddrs)
+		preExeRPCReq.AuthRequire, err = c.GenAuthRequire(c.MultiAddrs)
 		if err != nil {
 			return nil, nil, fmt.Errorf("Get auth require error: %s", err.Error())
 		}
@@ -539,13 +539,13 @@ func (c *CommTrans) GenerateMultisigGenRawTx(ctx context.Context) error {
 	}
 
 	// 填充需要多重签名的addr
-	multiAddrs, err := c.genAuthRequire(c.MultiAddrs)
+	multiAddrs, err := c.GenAuthRequire(c.MultiAddrs)
 	if err != nil {
 		return err
 	}
 	tx.AuthRequire = multiAddrs
 
-	return c.genTxFile(tx)
+	return c.GenTxFile(tx)
 }
 
 func (c *CommTrans) genAuthRequireQuick() ([]string, error) {
@@ -563,7 +563,8 @@ func (c *CommTrans) genAuthRequireQuick() ([]string, error) {
 	return authRequires, nil
 }
 
-func (c *CommTrans) genAuthRequire(filename string) ([]string, error) {
+// GenAuthRequire get auth require aks from file
+func (c *CommTrans) GenAuthRequire(filename string) ([]string, error) {
 	var addrs []string
 
 	fileIn, err := os.Open(filename)
@@ -588,7 +589,8 @@ func (c *CommTrans) genAuthRequire(filename string) ([]string, error) {
 	return addrs, nil
 }
 
-func (c *CommTrans) genTxFile(tx *pb.Transaction) error {
+// GenTxFile generate raw tx file
+func (c *CommTrans) GenTxFile(tx *pb.Transaction) error {
 	data, err := proto.Marshal(tx)
 	if err != nil {
 		return errors.New("Tx marshal error")
@@ -617,6 +619,7 @@ func printTx(tx *pb.Transaction) error {
 	return nil
 }
 
+// GenTxInputsWithMergeUTXO generate tx with merge utxo
 func (c *CommTrans) GenTxInputsWithMergeUTXO(ctx context.Context) ([]*pb.TxInput, *pb.TxOutput, error) {
 	var fromAddr string
 	var err error

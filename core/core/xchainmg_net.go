@@ -410,7 +410,7 @@ func (xm *XChainMG) handleGetBlockChainStatus(ctx context.Context, msg *xuper_p2
 			xuper_p2p.XuperMessage_GET_BLOCKCHAINSTATUS_RES, nil, xuper_p2p.XuperMessage_BLOCKCHAIN_NOTEXIST)
 		return res, errors.New("blockChain not exit")
 	}
-	bcStatusRes := bc.GetBlockChainStatus(bcStatus)
+	bcStatusRes := bc.GetBlockChainStatus(bcStatus, pb.ViewOption_NONE)
 	// no need to transfer branch id msg
 	bcStatusRes.BranchBlockid = nil
 	if bcStatusRes.GetHeader().GetError() != pb.XChainErrorEnum_SUCCESS {

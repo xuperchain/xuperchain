@@ -216,7 +216,6 @@ func isEndorsorInfoValid(queryMeta *pb.CrossQueryMeta, signs []*pb.SignatureInfo
 	for idx := range signs {
 		signMap[signs[idx].GetPublicKey()] = signs[idx]
 	}
-
 	endorsorMap := map[string]*pb.CrossEndorsor{}
 	endorsors := queryMeta.GetEndorsors()
 	for idx := range endorsors {

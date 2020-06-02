@@ -33,6 +33,8 @@ var (
 	ErrRootBlockAlreadyExist = errors.New("this ledger already has genesis block")
 	// ErrMinerInterrupt is returned when IsEnablePowMinning is false
 	ErrMinerInterrupt = errors.New("new block interrupts the process of the miner")
+	// ErrTxNotConfirmed return tx not confirmed error
+	ErrTxNotConfirmed = errors.New("transaction not confirmed")
 	// NumCPU returns the number of CPU cores for the current system
 	NumCPU = runtime.NumCPU()
 )
@@ -95,6 +97,15 @@ type ConfirmStatus struct {
 
 // NewLedger create an empty ledger, if it already exists, open it directly
 func NewLedger(storePath string, xlog log.Logger, otherPaths []string, kvEngineType string, cryptoType string) (*Ledger, error) {
+	return newLedger(storePath, xlog, otherPaths, kvEngineType, cryptoType, true)
+}
+
+// OpenLedger open ledger which already exists
+func OpenLedger(storePath string, xlog log.Logger, otherPaths []string, kvEngineType string, cryptoType string) (*Ledger, error) {
+	return newLedger(storePath, xlog, otherPaths, kvEngineType, cryptoType, false)
+}
+
+func newLedger(storePath string, xlog log.Logger, otherPaths []string, kvEngineType string, cryptoType string, createIfMissing bool) (*Ledger, error) {
 	ledger := &Ledger{}
 	ledger.mutex = &sync.RWMutex{}
 	ledger.powMutex = &sync.Mutex{}
@@ -139,7 +150,7 @@ func NewLedger(storePath string, xlog log.Logger, otherPaths []string, kvEngineT
 	ledger.confirmBatch = baseDB.NewBatch()
 	metaBuf, metaErr := ledger.metaTable.Get([]byte(""))
 	emptyLedger := false
-	if metaErr != nil && common.NormalizedKVError(metaErr) == common.ErrKVNotFound { //说明是新创建的账本
+	if metaErr != nil && common.NormalizedKVError(metaErr) == common.ErrKVNotFound && createIfMissing { //说明是新创建的账本
 		metaBuf, pbErr := proto.Marshal(ledger.meta)
 		if pbErr != nil {
 			xlog.Warn("marshal meta fail", "pb_err", pbErr)
@@ -612,14 +623,14 @@ func (l *Ledger) ConfirmBlock(block *pb.InternalBlock, isRoot bool) ConfirmStatu
 				newMeta.TipBlockid = block.Blockid
 				block.InTrunk = true
 				splitBlock, splitErr := l.handleFork(oldTip, preBlock.Blockid, block.Blockid, batchWrite) //处理分叉
-				splitHeight = splitBlock.Height
-				confirmStatus.Split = true
-				confirmStatus.TrunkSwitch = true
 				if splitErr != nil {
 					l.xlog.Warn("handle split failed", "splitErr", splitErr)
 					confirmStatus.Succ = false
 					return confirmStatus
 				}
+				splitHeight = splitBlock.Height
+				confirmStatus.Split = true
+				confirmStatus.TrunkSwitch = true
 				l.xlog.Info("handle split successfully", "splitBlock", fmt.Sprintf("%x", splitBlock.Blockid))
 			} else {
 				// 添加在分支上, 对preblock没有影响
@@ -1088,7 +1099,7 @@ func (l *Ledger) removeBlocks(fromBlockid []byte, toBlockid []byte, batch kvdb.B
 		fromBlock, findErr = l.fetchBlock(fromBlock.PreHash)
 		if findErr != nil {
 			l.xlog.Warn("failed to find prev block", "findErr", findErr)
-			return findErr
+			return nil //ignore orphan block
 		}
 	}
 	return nil
@@ -1108,11 +1119,24 @@ func (l *Ledger) Truncate(utxovmLastID []byte) error {
 		l.xlog.Warn("failed to find utxovm last block", "findErr", findErr)
 		return findErr
 	}
-	deletedBlockid := l.meta.TipBlockid
-	rmErr := l.removeBlocks(l.meta.TipBlockid, block.Blockid, batchWrite)
-	if rmErr != nil {
-		l.xlog.Warn("failed to remove garbage blocks", "from", global.F(l.meta.TipBlockid), "to", global.F(block.Blockid))
-		return rmErr
+	branchTips, err := l.GetBranchInfo(block.Blockid, block.Height)
+	if err != nil {
+		l.xlog.Warn("failed to find all branch tips", "err", err)
+		return err
+	}
+	for _, branchTip := range branchTips {
+		deletedBlockid := []byte(branchTip)
+		rmErr := l.removeBlocks(deletedBlockid, block.Blockid, batchWrite)
+		if rmErr != nil {
+			l.xlog.Warn("failed to remove garbage blocks", "from", global.F(l.meta.TipBlockid), "to", global.F(block.Blockid))
+			return rmErr
+		}
+		// update branch head
+		updateBranchErr := l.updateBranchInfo(block.Blockid, deletedBlockid, block.Height, batchWrite)
+		if updateBranchErr != nil {
+			l.xlog.Warn("Truncated failed when calling updateBranchInfo", "updateBranchErr", updateBranchErr)
+			return updateBranchErr
+		}
 	}
 	newMeta.TrunkHeight = block.Height
 	metaBuf, pbErr := proto.Marshal(newMeta)
@@ -1121,12 +1145,6 @@ func (l *Ledger) Truncate(utxovmLastID []byte) error {
 		return pbErr
 	}
 	batchWrite.Put([]byte(pb.MetaTablePrefix), metaBuf)
-	// update branch head
-	updateBranchErr := l.updateBranchInfo(block.Blockid, deletedBlockid, block.Height, batchWrite)
-	if updateBranchErr != nil {
-		l.xlog.Warn("Truncated failed when calling updateBranchInfo", "updateBranchErr", updateBranchErr)
-		return updateBranchErr
-	}
 	kvErr := batchWrite.Write()
 	if kvErr != nil {
 		l.xlog.Warn("batch write failed when Truncate", "kvErr", kvErr)
@@ -1157,4 +1175,54 @@ func (l *Ledger) IsEnablePowMinning() bool {
 	l.powMutex.Lock()
 	defer l.powMutex.Unlock()
 	return l.enablePowMinning
+}
+
+// VerifyBlock verify block
+func (l *Ledger) VerifyBlock(block *pb.InternalBlock, logid string) (bool, error) {
+	blkid, err := MakeBlockID(block)
+	if err != nil {
+		l.xlog.Warn("VerifyBlock MakeBlockID error", "logid", logid, "error", err)
+		return false, nil
+	}
+	if !(bytes.Equal(blkid, block.Blockid)) {
+		l.xlog.Warn("VerifyBlock equal blockid error", "logid", logid, "redo blockid", global.F(blkid),
+			"get blockid", global.F(block.Blockid))
+		return false, nil
+	}
+
+	errv := VerifyMerkle(block)
+	if errv != nil {
+		l.xlog.Warn("VerifyMerkle error", "logid", logid, "error", errv)
+		return false, nil
+	}
+
+	k, err := l.cryptoClient.GetEcdsaPublicKeyFromJSON(block.Pubkey)
+	if err != nil {
+		l.xlog.Warn("VerifyBlock get ecdsa from block error", "logid", logid, "error", err)
+		return false, nil
+	}
+	chkResult, _ := l.cryptoClient.VerifyAddressUsingPublicKey(string(block.Proposer), k)
+	if chkResult == false {
+		l.xlog.Warn("VerifyBlock address is not match publickey", "logid", logid)
+		return false, nil
+	}
+
+	valid, err := l.cryptoClient.VerifyECDSA(k, block.Sign, block.Blockid)
+	if err != nil || !valid {
+		l.xlog.Warn("VerifyBlock VerifyECDSA error", "logid", logid, "error", err)
+		return false, nil
+	}
+	return true, nil
+}
+
+// QueryBlockByTxid query block by txid after it has confirmed
+func (l *Ledger) QueryBlockByTxid(txid []byte) (*pb.InternalBlock, error) {
+	if exit, _ := l.HasTransaction(txid); !exit {
+		return nil, ErrTxNotConfirmed
+	}
+	tx, err := l.QueryTransaction(txid)
+	if err != nil {
+		return nil, err
+	}
+	return l.queryBlock(tx.GetBlockid(), false)
 }

@@ -373,6 +373,7 @@ func TestTruncate(t *testing.T) {
 	t1.Txid, _ = txhash.MakeTransactionID(t1)
 	t2.TxInputs = append(t2.TxInputs, &pb.TxInput{RefTxid: t1.Txid, RefOffset: 0, FromAddr: []byte(AliceAddress)})
 	t2.Txid, _ = txhash.MakeTransactionID(t2)
+	//block2
 	block2, err := ledger.FormatBlock([]*pb.Transaction{t1, t2},
 		[]byte("xchain-Miner-222222"),
 		ecdsaPk,
@@ -387,14 +388,48 @@ func TestTruncate(t *testing.T) {
 		t.Fatal("confirm block fail 2")
 	}
 
-	t.Log(ledger.meta)
+	//block2 <- block3
+	block3, err := ledger.FormatBlock([]*pb.Transaction{&pb.Transaction{Txid: []byte("dummy1")}},
+		[]byte("xchain-Miner-333333"),
+		ecdsaPk,
+		223456790,
+		0,
+		0,
+		block2.Blockid, big.NewInt(0),
+	)
+	confirmStatus = ledger.ConfirmBlock(block3, false)
+	if !confirmStatus.Succ {
+		t.Fatal("confirm block fail 2")
+	}
 
+	//block2 <- block4
+	block4, err := ledger.FormatBlock([]*pb.Transaction{&pb.Transaction{Txid: []byte("dummy2")}},
+		[]byte("xchain-Miner-444444"),
+		ecdsaPk,
+		223456791,
+		0,
+		0,
+		block2.Blockid, big.NewInt(0),
+	)
+	confirmStatus = ledger.ConfirmBlock(block4, false)
+	if !confirmStatus.Succ {
+		t.Fatal("confirm block fail 2")
+	}
+
+	layers, _ := ledger.Dump()
+	t.Log("Before truncate", layers)
+	if len(layers) != 3 {
+		t.Fatal("layers unexpected", len(layers))
+	}
 	err = ledger.Truncate(block1.Blockid)
 	if err != nil {
 		t.Fatalf("Trucate error")
 	}
-
-	t.Log(ledger.meta)
+	layers, _ = ledger.Dump()
+	if len(layers) != 1 {
+		t.Fatal("layers unexpected", len(layers))
+	}
+	t.Log("After truncate", layers)
 
 	metaBuf, _ := ledger.metaTable.Get([]byte(""))
 	_ = proto.Unmarshal(metaBuf, ledger.meta)

@@ -164,7 +164,6 @@ func (p *P2PServerV1) SendMessage(ctx context.Context, msg *p2pPb.XuperMessage,
 	msgOpts := p2p_base.GetMessageOption(opts)
 	filter := p.getFilter(msgOpts)
 	peers, _ := filter.Filter()
-	p.log.Info("testlog SendMessage", "peers", peers)
 	peerids, ok := peers.([]string)
 	if !ok {
 		p.log.Warn("p2p filter get peers failed, ignore this message",
@@ -191,7 +190,6 @@ func (p *P2PServerV1) SendMessageWithResponse(ctx context.Context, msg *p2pPb.Xu
 	msgOpts := p2p_base.GetMessageOption(opts)
 	filter := p.getFilter(msgOpts)
 	peers, _ := filter.Filter()
-	p.log.Info("testlog SendMessageWithResponse", "peers", peers)
 	percentage := msgOpts.Percentage
 	peerids, ok := peers.([]string)
 	if !ok {
@@ -431,7 +429,7 @@ func (p *P2PServerV1) SendP2PMessage(str p2pPb.P2PService_SendP2PMessageServer) 
 		return nil
 	}
 	if err != nil {
-		p.log.Warn("SendP2PMessage Recv msg error")
+		p.log.Warn("SendP2PMessage Recv msg error", in.GetHeader().GetLogid(), "type", in.GetHeader().GetType(), "error", err)
 		return err
 	}
 

@@ -2,6 +2,7 @@ package utxo
 
 import (
 	"fmt"
+	"github.com/xuperchain/xuperchain/core/pb"
 	"sort"
 	"testing"
 )
@@ -179,4 +180,21 @@ func TestTopSortWithoutCircleCase4(t *testing.T) {
 	t.Log("order->", order)
 	t.Log("circle->", circle)
 	t.Log("childDAG->", childDAG)
+}
+
+func TestSplitBlock(t *testing.T) {
+	tx1 := &pb.Transaction{Txid: []byte("tx1")}
+	tx2 := &pb.Transaction{Txid: []byte("tx2"), TxInputs: []*pb.TxInput{&pb.TxInput{RefTxid: []byte("tx1")}}}
+	tx3 := &pb.Transaction{Txid: []byte("tx3"), TxInputs: []*pb.TxInput{&pb.TxInput{RefTxid: []byte("tx1")}}}
+	tx4 := &pb.Transaction{Txid: []byte("tx4")}
+	tx5 := &pb.Transaction{Txid: []byte("tx5"), TxInputs: []*pb.TxInput{&pb.TxInput{RefTxid: []byte("tx4")}}}
+	tx6 := &pb.Transaction{Txid: []byte("tx6"), TxInputs: []*pb.TxInput{&pb.TxInput{RefTxid: []byte("tx777")}}}
+	block := &pb.InternalBlock{Transactions: []*pb.Transaction{tx1, tx2, tx3, tx4, tx5, tx6}}
+	dags := splitToDags(block)
+	if len(dags) != 3 {
+		t.Error("dags count unexpected", len(dags))
+	}
+	if len(dags[0]) != 3 || len(dags[1]) != 2 || len(dags[2]) != 1 {
+		t.Error("dag size unexpected")
+	}
 }

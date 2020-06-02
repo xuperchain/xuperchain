@@ -1,5 +1,9 @@
 package utxo
 
+import (
+	"github.com/xuperchain/xuperchain/core/pb"
+)
+
 //交易依赖关系图
 type TxGraph map[string][]string
 
@@ -92,4 +96,37 @@ func TopSortDFS(g TxGraph) (order []string, cyclic bool, childDAGSize []int) {
 		}
 	}
 	return L, false, childDAGSize
+}
+
+func splitToDags(block *pb.InternalBlock) [][]*pb.Transaction {
+	txs := block.Transactions
+	oneDag := []*pb.Transaction{}
+	dags := [][]*pb.Transaction{}
+	previousTxids := map[string]bool{}
+	noDepends := func(tx *pb.Transaction) bool {
+		for _, input := range tx.TxInputs {
+			if previousTxids[string(input.RefTxid)] {
+				return false
+			}
+		}
+		for _, input := range tx.TxInputsExt {
+			if previousTxids[string(input.RefTxid)] {
+				return false
+			}
+		}
+		return true
+	}
+	for i, tx := range txs {
+		if noDepends(tx) && i > 0 {
+			dags = append(dags, oneDag)
+			oneDag = []*pb.Transaction{}
+		}
+		oneDag = append(oneDag, tx)
+		previousTxids[string(tx.Txid)] = true
+	}
+	if len(oneDag) == 0 {
+		return dags
+	}
+	dags = append(dags, oneDag)
+	return dags
 }
