@@ -2,10 +2,9 @@ package native
 
 import (
 	"context"
+	"net"
 	"os"
-	"path/filepath"
 
-	"github.com/docker/go-connections/sockets"
 	"github.com/xuperchain/xuperchain/core/common/config"
 	"github.com/xuperchain/xuperchain/core/contract"
 	"github.com/xuperchain/xuperchain/core/contract/bridge"
@@ -15,46 +14,46 @@ import (
 )
 
 type nativeCreator struct {
-	config    *bridge.InstanceCreatorConfig
-	chainsock string
-	pm        *processManager
+	config   *bridge.InstanceCreatorConfig
+	listener net.Listener
+	pm       *processManager
 }
 
 func newNativeCreator(cfg *bridge.InstanceCreatorConfig) (bridge.InstanceCreator, error) {
 	creator := &nativeCreator{
-		config:    cfg,
-		chainsock: filepath.Join(cfg.Basedir, "xuper.sock"),
+		config: cfg,
 	}
 	err := os.MkdirAll(cfg.Basedir, 0755)
 	if err != nil {
 		return nil, err
 	}
 
-	pm, err := newProcessManager(cfg.VMConfig.(*config.NativeConfig), cfg.Basedir, creator.chainsock)
+	listenAddr, err := creator.startRpcServer(cfg.SyscallService)
+	if err != nil {
+		return nil, err
+	}
+
+	pm, err := newProcessManager(cfg.VMConfig.(*config.NativeConfig), cfg.Basedir, listenAddr)
 	if err != nil {
 		return nil, err
 	}
 	creator.pm = pm
 
-	err = creator.startRpcServer(cfg.SyscallService)
-	if err != nil {
-		return nil, err
-	}
 	return creator, nil
 }
 
-func (n *nativeCreator) startRpcServer(service *bridge.SyscallService) error {
-	uid, gid := os.Getuid(), os.Getgid()
-	relpath := NormalizeSockPath(n.chainsock)
-
-	listener, err := sockets.NewUnixSocketWithOpts(relpath, sockets.WithChown(uid, gid), sockets.WithChmod(0660))
+func (n *nativeCreator) startRpcServer(service *bridge.SyscallService) (string, error) {
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
 	if err != nil {
-		return err
+		return "", err
 	}
+	n.listener = listener
 	rpcServer := grpc.NewServer()
 	pbrpc.RegisterSyscallServer(rpcServer, service)
 	go rpcServer.Serve(listener)
-	return nil
+
+	addr := "tcp://" + listener.Addr().String()
+	return addr, nil
 }
 
 func (n *nativeCreator) CreateInstance(ctx *bridge.Context, cp bridge.ContractCodeProvider) (bridge.Instance, error) {

@@ -5,23 +5,19 @@ import (
 	"net"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"strconv"
-	"strings"
 	"syscall"
 	"time"
 
-	"github.com/docker/go-connections/sockets"
 	"github.com/xuperchain/xuperchain/core/contractsdk/go/code"
 	pbrpc "github.com/xuperchain/xuperchain/core/contractsdk/go/pbrpc"
 	"google.golang.org/grpc"
 )
 
 const (
-	xchainUnixSocketGid = "XCHAIN_UNIXSOCK_GID"
-	xchainPingTimeout   = "XCHAIN_PING_TIMEOUT"
-	xchainCodeSock      = "XCHAIN_CODE_SOCK"
-	xchainChainSock     = "XCHAIN_CHAIN_SOCK"
+	xchainPingTimeout = "XCHAIN_PING_TIMEOUT"
+	xchainCodePort    = "XCHAIN_CODE_PORT"
+	xchainChainAddr   = "XCHAIN_CHAIN_ADDR"
 )
 
 func redirectStderr() {
@@ -42,18 +38,15 @@ func New() code.Driver {
 
 func (d *driver) Serve(contract code.Contract) {
 	redirectStderr()
-	chainSockPath := os.Getenv(xchainChainSock)
-	codeSockPath := os.Getenv(xchainCodeSock)
+	chainAddr := os.Getenv(xchainChainAddr)
+	codePort := os.Getenv(xchainCodePort)
 
-	nativeCodeService := newNativeCodeService(chainSockPath, contract)
+	nativeCodeService := newNativeCodeService(chainAddr, contract)
 	rpcServer := grpc.NewServer()
 	pbrpc.RegisterNativeCodeServer(rpcServer, nativeCodeService)
 
 	var listener net.Listener
-	uid := os.Getuid()
-	gid := getUnixSocketGroupid()
-	relpath := normalizeSockPath(codeSockPath)
-	listener, err := sockets.NewUnixSocketWithOpts(relpath, sockets.WithChown(uid, gid), sockets.WithChmod(0660))
+	listener, err := net.Listen("tcp", "127.0.0.1:"+codePort)
 	if err != nil {
 		panic(err)
 	}
@@ -84,18 +77,6 @@ func (d *driver) Serve(contract code.Contract) {
 	log.Print("native code ended")
 }
 
-func getUnixSocketGroupid() int {
-	envgid := os.Getenv(xchainUnixSocketGid)
-	if envgid == "" {
-		return os.Getgid()
-	}
-	gid, err := strconv.Atoi(envgid)
-	if err != nil {
-		return os.Getgid()
-	}
-	return gid
-}
-
 func getPingTimeout() time.Duration {
 	envtimeout := os.Getenv(xchainPingTimeout)
 	if envtimeout == "" {
@@ -106,18 +87,4 @@ func getPingTimeout() time.Duration {
 		return 3 * time.Second
 	}
 	return time.Duration(timeout) * time.Second
-}
-
-// normalizeSockPath make unix socket path as shorter as possiable
-func normalizeSockPath(s string) string {
-	if !filepath.IsAbs(s) {
-		return s
-	}
-
-	wd, _ := os.Getwd()
-	if !strings.HasPrefix(s, wd) {
-		return s
-	}
-	relpath, _ := filepath.Rel(wd, s)
-	return relpath
 }

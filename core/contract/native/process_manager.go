@@ -15,16 +15,16 @@ import (
 type processManager struct {
 	cfg       *config.NativeConfig
 	basedir   string
-	chainsock string
+	chainAddr string
 	mutex     sync.Mutex
 	contracts map[string]*contractProcess
 }
 
-func newProcessManager(cfg *config.NativeConfig, basedir, chainsock string) (*processManager, error) {
+func newProcessManager(cfg *config.NativeConfig, basedir string, chainAddr string) (*processManager, error) {
 	return &processManager{
 		cfg:       cfg,
 		basedir:   basedir,
-		chainsock: chainsock,
+		chainAddr: chainAddr,
 		contracts: make(map[string]*contractProcess),
 	}, nil
 }
@@ -52,7 +52,7 @@ func (p *processManager) makeProcess(name string, desc *pb.WasmCodeDesc, code []
 		return nil, err
 	}
 
-	process, err = newContractProcess(p.cfg, name, processDir, p.chainsock, desc)
+	process, err = newContractProcess(p.cfg, name, processDir, p.chainAddr, desc)
 	if err != nil {
 		return nil, err
 	}
@@ -107,8 +107,4 @@ func nativeCodeHash(name string, desc *pb.WasmCodeDesc) string {
 func nativeCodeFileName(desc *pb.WasmCodeDesc) string {
 	hash := hex.EncodeToString(desc.GetDigest()[0:3])
 	return "nativecode-" + hash
-}
-
-func nativeCodeSockFileName(desc *pb.WasmCodeDesc) string {
-	return nativeCodeFileName(desc) + ".sock"
 }

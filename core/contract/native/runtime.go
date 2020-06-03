@@ -39,7 +39,8 @@ type DockerProcess struct {
 	startcmd string
 	envs     []string
 	mounts   []string
-	cfg      *config.NativeDockerConfig
+	// ports    []string
+	cfg *config.NativeDockerConfig
 
 	id string
 	log.Logger
@@ -71,14 +72,12 @@ func (d *DockerProcess) Start() error {
 		volumes[mount] = struct{}{}
 	}
 
-	gid := strconv.Itoa(os.Getgid())
 	cmd := []string{
 		"sh", "-c",
 		d.startcmd,
 	}
 
 	env := []string{
-		"XCHAIN_UNIXSOCK_GID=" + gid,
 		"XCHAIN_PING_TIMEOUT=" + strconv.Itoa(pingTimeoutSecond),
 	}
 	env = append(env, d.envs...)
@@ -94,24 +93,42 @@ func (d *DockerProcess) Start() error {
 	for i := range d.mounts {
 		binds[i] = d.mounts[i] + ":" + d.mounts[i]
 	}
+
+	// portBinds := make(map[docker.Port][]docker.PortBinding)
+	// for _, port := range d.ports {
+	// 	key := docker.Port(port + "/tcp")
+	// 	value := []docker.PortBinding{
+	// 		{
+	// 			HostIP:   "127.0.0.1",
+	// 			HostPort: port,
+	// 		},
+	// 	}
+	// 	portBinds[key] = value
+	// }
+
 	opts := docker.CreateContainerOptions{
 		Config: &docker.Config{
-			Volumes:         volumes,
-			Env:             env,
-			WorkingDir:      d.basedir,
-			NetworkDisabled: true,
-			Image:           d.cfg.ImageName,
-			Cmd:             cmd,
-			User:            user,
+			Volumes:    volumes,
+			Env:        env,
+			WorkingDir: d.basedir,
+			// NetworkDisabled: true,
+			Image: d.cfg.ImageName,
+			Cmd:   cmd,
+			User:  user,
 		},
 		HostConfig: &docker.HostConfig{
-			AutoRemove: true,
-			Binds:      binds,
-			CPUPeriod:  cpulimit,
-			Memory:     memlimit,
+			NetworkMode: "host",
+			AutoRemove:  true,
+			Binds:       binds,
+			CPUPeriod:   cpulimit,
+			Memory:      memlimit,
+			// PortBindings: portBinds,
 		},
 	}
 	container, err := client.CreateContainer(opts)
+	if err != nil {
+		return err
+	}
 	d.Info("create container success", "id", container.ID)
 	d.id = container.ID
 

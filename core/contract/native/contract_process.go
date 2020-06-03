@@ -3,7 +3,9 @@ package native
 import (
 	"context"
 	"fmt"
+	"net"
 	"path/filepath"
+	"strconv"
 	"sync"
 	"time"
 
@@ -20,77 +22,70 @@ import (
 type contractProcess struct {
 	cfg *config.NativeConfig
 
-	name       string
-	basedir    string
-	binpath    string
-	chainsock  string
-	nativesock string
-	desc       *xpb.WasmCodeDesc
+	name      string
+	basedir   string
+	binpath   string
+	chainAddr string
+	desc      *xpb.WasmCodeDesc
 
 	process       Process
-	rpcClient     pbrpc.NativeCodeClient
 	monitorStopch chan struct{}
 	monitorWaiter sync.WaitGroup
 	logger        log15.Logger
+
+	mutex     sync.Mutex
+	rpcPort   int
+	rpcConn   *grpc.ClientConn
+	rpcClient pbrpc.NativeCodeClient
 }
 
-func newContractProcess(cfg *config.NativeConfig, name, basedir, chainsock string, desc *xpb.WasmCodeDesc) (*contractProcess, error) {
+func newContractProcess(cfg *config.NativeConfig, name, basedir, chainAddr string, desc *xpb.WasmCodeDesc) (*contractProcess, error) {
 	process := &contractProcess{
-		cfg:        cfg,
-		name:       name,
-		basedir:    basedir,
-		binpath:    filepath.Join(basedir, nativeCodeFileName(desc)),
-		chainsock:  chainsock,
-		nativesock: filepath.Join(basedir, nativeCodeSockFileName(desc)),
-		desc:       desc,
-		logger:     log.DefaultLogger.New("contract", name),
+		cfg:       cfg,
+		name:      name,
+		basedir:   basedir,
+		binpath:   filepath.Join(basedir, nativeCodeFileName(desc)),
+		chainAddr: chainAddr,
+		desc:      desc,
+		logger:    log.DefaultLogger.New("contract", name),
 	}
-
-	process.process = process.makeHostProcess()
-
-	relsockpath := NormalizeSockPath(process.nativesock)
-	conn, err := grpc.Dial("unix:"+relsockpath, grpc.WithInsecure())
-	if err != nil {
-		return nil, err
-	}
-	process.rpcClient = pbrpc.NewNativeCodeClient(conn)
-
 	return process, nil
 }
 
-func (p *contractProcess) makeHostProcess() Process {
+func (c *contractProcess) makeHostProcess() Process {
 	envs := []string{
-		"XCHAIN_CODE_SOCK=" + p.nativesock,
-		"XCHAIN_CHAIN_SOCK=" + p.chainsock,
+		"XCHAIN_CODE_PORT=" + strconv.Itoa(c.rpcPort),
+		"XCHAIN_CHAIN_ADDR=" + c.chainAddr,
 	}
-	if !p.cfg.Docker.Enable {
+	if !c.cfg.Docker.Enable {
 		return &HostProcess{
-			basedir:  p.basedir,
-			startcmd: p.binpath,
+			basedir:  c.basedir,
+			startcmd: c.binpath,
 			envs:     envs,
-			Logger:   p.logger,
+			Logger:   c.logger,
 		}
 	}
 	mounts := []string{
-		p.basedir, p.chainsock,
+		c.basedir,
 	}
 	return &DockerProcess{
-		basedir:  p.basedir,
-		startcmd: p.binpath,
+		basedir:  c.basedir,
+		startcmd: c.binpath,
 		envs:     envs,
 		mounts:   mounts,
-		cfg:      &p.cfg.Docker,
-		Logger:   p.logger,
+		// ports:    []string{strconv.Itoa(c.rpcPort)},
+		cfg:    &c.cfg.Docker,
+		Logger: c.logger,
 	}
 }
 
 // wait the subprocess to be ready
-func (p *contractProcess) waitReply() error {
+func (c *contractProcess) waitReply() error {
 	const waitTimeout = 2 * time.Second
 	ctx, cancel := context.WithTimeout(context.TODO(), waitTimeout)
 	defer cancel()
 	for {
-		_, err := p.rpcClient.Ping(ctx, new(pb.PingRequest))
+		_, err := c.rpcClient.Ping(ctx, new(pb.PingRequest))
 		if err == nil {
 			return nil
 		}
@@ -135,7 +130,29 @@ forloop:
 	}
 }
 
+func (c *contractProcess) resetRpcClient() error {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
+	if c.rpcConn != nil {
+		c.rpcConn.Close()
+	}
+	port, err := makeFreePort()
+	if err != nil {
+		return err
+	}
+	conn, err := grpc.Dial(fmt.Sprintf("127.0.0.1:%d", port), grpc.WithInsecure())
+	if err != nil {
+		return err
+	}
+	c.rpcPort = port
+	c.rpcConn = conn
+	c.rpcClient = pbrpc.NewNativeCodeClient(c.rpcConn)
+	return nil
+}
+
 func (c *contractProcess) RpcClient() pbrpc.NativeCodeClient {
+	c.mutex.Lock()
+	defer c.mutex.Unlock()
 	return c.rpcClient
 }
 
@@ -145,7 +162,12 @@ func (c *contractProcess) restartProcess() error {
 }
 
 func (c *contractProcess) start(startMonitor bool) error {
-	err := c.process.Start()
+	err := c.resetRpcClient()
+	if err != nil {
+		return err
+	}
+	c.process = c.makeHostProcess()
+	err = c.process.Start()
 	if err != nil {
 		return err
 	}
@@ -179,4 +201,14 @@ func (c *contractProcess) Stop() {
 
 func (c *contractProcess) GetDesc() *xpb.WasmCodeDesc {
 	return c.desc
+}
+
+func makeFreePort() (int, error) {
+	l, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		return 0, err
+	}
+	addr := l.Addr().(*net.TCPAddr)
+	l.Close()
+	return addr.Port, nil
 }
