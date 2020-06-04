@@ -105,6 +105,11 @@ func nativeCodeHash(name string, desc *pb.WasmCodeDesc) string {
 }
 
 func nativeCodeFileName(desc *pb.WasmCodeDesc) string {
+	var suffix string
+	switch desc.GetRuntime() {
+	case "java":
+		suffix = ".jar"
+	}
 	hash := hex.EncodeToString(desc.GetDigest()[0:3])
-	return "nativecode-" + hash
+	return "nativecode-" + hash + suffix
 }
