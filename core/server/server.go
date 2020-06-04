@@ -580,91 +580,12 @@ func (s *server) SelectUTXO(ctx context.Context, in *pb.UtxoInput) (*pb.UtxoOutp
 
 // DeployNativeCode deploy native contract
 func (s *server) DeployNativeCode(ctx context.Context, request *pb.DeployNativeCodeRequest) (*pb.DeployNativeCodeResponse, error) {
-	if request.Header == nil {
-		request.Header = global.GHeader()
-	}
-
-	// Output access log and cost time
-	defer s.endingLog(s.accessLog(s.log, request.GetHeader().GetLogid()))
-
-	if !s.mg.Cfg.Native.Enable {
-		return nil, errors.New("native module is disabled")
-	}
-
-	cfg := s.mg.Cfg.Native.Deploy
-	if cfg.WhiteList.Enable {
-		found := false
-		for _, addr := range cfg.WhiteList.Addresses {
-			if addr == request.Address {
-				found = true
-				break
-			}
-		}
-		if !found {
-			return nil, errors.New("permission denied")
-		}
-	}
-
-	desc := request.GetDesc()
-	digest := hash.DoubleSha256(request.Code)
-	if !bytes.Equal(digest, desc.Digest) {
-		return nil, errors.New("digest not equal")
-	}
-
-	// should get blockchain firstly, so we can use CryptoClient
-	bc := s.mg.Get(request.GetBcname())
-	response := &pb.DeployNativeCodeResponse{Header: &pb.Header{Logid: request.Header.Logid}}
-	if bc == nil {
-		response.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
-		s.log.Warn("failed to get blockchain before deploy", "logid", request.Header.Logid)
-		return response, nil
-	}
-
-	pubkey, err := bc.CryptoClient.GetEcdsaPublicKeyFromJSON(request.Pubkey)
-	if err != nil {
-		return nil, err
-	}
-	ok, _ := bc.CryptoClient.VerifyAddressUsingPublicKey(request.Address, pubkey)
-	if !ok {
-		return nil, errors.New("address and public key not match")
-	}
-
-	descbuf, _ := proto.Marshal(desc)
-	deschash := hash.DoubleSha256(descbuf)
-	ok, err = bc.CryptoClient.VerifyECDSA(pubkey, request.Sign, deschash)
-	if err != nil || !ok {
-		return nil, errors.New("verify sign error")
-	}
-
-	err = bc.NativeCodeMgr.Deploy(request.GetDesc(), request.GetCode())
-	if err != nil {
-		return nil, err
-	}
-
-	return response, nil
+	return nil, errors.New("old deploy method disabled, using xkernel.Deploy method instead")
 }
 
 // NativeCodeStatus get native contract status
 func (s *server) NativeCodeStatus(ctx context.Context, request *pb.NativeCodeStatusRequest) (*pb.NativeCodeStatusResponse, error) {
-	if !s.mg.Cfg.Native.Enable {
-		return nil, errors.New("native module is disabled")
-	}
-
-	// Output access log and cost time
-	defer s.endingLog(s.accessLog(s.log, request.GetHeader().GetLogid()))
-
-	bc := s.mg.Get(request.GetBcname())
-	if request.Header == nil {
-		request.Header = global.GHeader()
-	}
-	response := &pb.NativeCodeStatusResponse{Header: &pb.Header{Logid: request.Header.Logid}}
-	if bc == nil {
-		response.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
-		s.log.Warn("failed to get blockchain before deploy", "logid", request.Header.Logid)
-		return response, nil
-	}
-	response.Status = bc.NativeCodeMgr.Status()
-	return response, nil
+	return nil, errors.New("old status method disabled")
 }
 
 // DposCandidates get dpos candidates
