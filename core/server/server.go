@@ -27,6 +27,7 @@ import (
 	"google.golang.org/grpc/reflection"
 
 	"github.com/xuperchain/xuperchain/core/common"
+	xlog "github.com/xuperchain/xuperchain/core/common/log"
 	"github.com/xuperchain/xuperchain/core/consensus"
 	xchaincore "github.com/xuperchain/xuperchain/core/core"
 	"github.com/xuperchain/xuperchain/core/crypto/hash"
@@ -49,6 +50,9 @@ func (s *server) PostTx(ctx context.Context, in *pb.TxStatus) (*pb.CommonReply, 
 		in.Header = global.GHeader()
 	}
 
+	// Output access log and cost time
+	defer s.endingLog(s.accessLog(s.log, in.GetHeader().GetLogid()))
+
 	out, needRepost, err := s.mg.ProcessTx(in)
 	if needRepost {
 		go func() {
@@ -70,6 +74,10 @@ func (s *server) BatchPostTx(ctx context.Context, in *pb.BatchTxs) (*pb.CommonRe
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
+
+	// Output access log and cost time
+	defer s.endingLog(s.accessLog(s.log, in.GetHeader().GetLogid()))
+
 	out := &pb.CommonReply{Header: &pb.Header{Logid: in.Header.Logid}}
 	succTxs := []*pb.TxStatus{}
 	for _, v := range in.Txs {
@@ -106,6 +114,10 @@ func (s *server) QueryContractStatData(ctx context.Context, in *pb.ContractStatD
 	if in.GetHeader() == nil {
 		in.Header = global.GHeader()
 	}
+
+	// Output access log and cost time
+	defer s.endingLog(s.accessLog(s.log, in.GetHeader().GetLogid()))
+
 	out := &pb.ContractStatDataResponse{Header: &pb.Header{}}
 	bc := s.mg.Get(in.GetBcname())
 
@@ -128,6 +140,10 @@ func (s *server) QueryUtxoRecord(ctx context.Context, in *pb.UtxoRecordDetail) (
 	if in.GetHeader() == nil {
 		in.Header = global.GHeader()
 	}
+
+	// Output access log and cost time
+	defer s.endingLog(s.accessLog(s.log, in.GetHeader().GetLogid()))
+
 	out := &pb.UtxoRecordDetail{Header: &pb.Header{}}
 	bc := s.mg.Get(in.GetBcname())
 
@@ -155,6 +171,10 @@ func (s *server) QueryACL(ctx context.Context, in *pb.AclStatus) (*pb.AclStatus,
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
+
+	// Output access log and cost time
+	defer s.endingLog(s.accessLog(s.log, in.GetHeader().GetLogid()))
+
 	out := &pb.AclStatus{Header: &pb.Header{}}
 	bc := s.mg.Get(in.Bcname)
 
@@ -194,6 +214,10 @@ func (s *server) GetAccountContracts(ctx context.Context, in *pb.GetAccountContr
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
+
+	// Output access log and cost time
+	defer s.endingLog(s.accessLog(s.log, in.GetHeader().GetLogid()))
+
 	out := &pb.GetAccountContractsResponse{Header: &pb.Header{Logid: in.GetHeader().GetLogid()}}
 	bc := s.mg.Get(in.GetBcname())
 	if bc == nil {
@@ -218,6 +242,10 @@ func (s *server) QueryTx(ctx context.Context, in *pb.TxStatus) (*pb.TxStatus, er
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
+
+	// Output access log and cost time
+	defer s.endingLog(s.accessLog(s.log, in.GetHeader().GetLogid()))
+
 	out := &pb.TxStatus{Header: &pb.Header{}}
 	bc := s.mg.Get(in.Bcname)
 	if bc == nil {
@@ -237,6 +265,10 @@ func (s *server) GetBalance(ctx context.Context, in *pb.AddressStatus) (*pb.Addr
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
+
+	// Output access log and cost time
+	defer s.endingLog(s.accessLog(s.log, in.GetHeader().GetLogid()))
+
 	for i := 0; i < len(in.Bcs); i++ {
 		bc := s.mg.Get(in.Bcs[i].Bcname)
 		if bc == nil {
@@ -262,6 +294,10 @@ func (s *server) GetFrozenBalance(ctx context.Context, in *pb.AddressStatus) (*p
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
+
+	// Output access log and cost time
+	defer s.endingLog(s.accessLog(s.log, in.GetHeader().GetLogid()))
+
 	for i := 0; i < len(in.Bcs); i++ {
 		bc := s.mg.Get(in.Bcs[i].Bcname)
 		if bc == nil {
@@ -287,6 +323,10 @@ func (s *server) GetBalanceDetail(ctx context.Context, in *pb.AddressBalanceStat
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
+
+	// Output access log and cost time
+	defer s.endingLog(s.accessLog(s.log, in.GetHeader().GetLogid()))
+
 	for i := 0; i < len(in.Tfds); i++ {
 		bc := s.mg.Get(in.Tfds[i].Bcname)
 		if bc == nil {
@@ -313,6 +353,10 @@ func (s *server) GetBlock(ctx context.Context, in *pb.BlockID) (*pb.Block, error
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
+
+	// Output access log and cost time
+	defer s.endingLog(s.accessLog(s.log, in.GetHeader().GetLogid()))
+
 	s.log.Trace("Start to dealwith GetBlock", "logid", in.Header.Logid, "in", in)
 	bc := s.mg.Get(in.Bcname)
 	if bc == nil {
@@ -346,6 +390,10 @@ func (s *server) GetBlockChainStatus(ctx context.Context, in *pb.BCStatus) (*pb.
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
+
+	// Output access log and cost time
+	defer s.endingLog(s.accessLog(s.log, in.GetHeader().GetLogid()))
+
 	bc := s.mg.Get(in.Bcname)
 	if bc == nil {
 		out := pb.BCStatus{Header: &pb.Header{}}
@@ -361,6 +409,10 @@ func (s *server) ConfirmBlockChainStatus(ctx context.Context, in *pb.BCStatus) (
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
+
+	// Output access log and cost time
+	defer s.endingLog(s.accessLog(s.log, in.GetHeader().GetLogid()))
+
 	bc := s.mg.Get(in.Bcname)
 	if bc == nil {
 		out := pb.BCTipStatus{Header: &pb.Header{}}
@@ -376,6 +428,10 @@ func (s *server) GetBlockChains(ctx context.Context, in *pb.CommonIn) (*pb.Block
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
+
+	// Output access log and cost time
+	defer s.endingLog(s.accessLog(s.log, in.GetHeader().GetLogid()))
+
 	out := &pb.BlockChains{Header: &pb.Header{}}
 	out.Blockchains = s.mg.GetAll()
 	return out, nil
@@ -387,6 +443,10 @@ func (s *server) GetSystemStatus(ctx context.Context, in *pb.CommonIn) (*pb.Syst
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
+
+	// Output access log and cost time
+	defer s.endingLog(s.accessLog(s.log, in.GetHeader().GetLogid()))
+
 	out := &pb.SystemsStatusReply{Header: &pb.Header{}}
 	systemsStatus := &pb.SystemsStatus{
 		Header: in.Header,
@@ -419,6 +479,10 @@ func (s *server) GetNetURL(ctx context.Context, in *pb.CommonIn) (*pb.RawUrl, er
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
+
+	// Output access log and cost time
+	defer s.endingLog(s.accessLog(s.log, in.GetHeader().GetLogid()))
+
 	out := &pb.RawUrl{Header: &pb.Header{Logid: in.Header.Logid}}
 	out.Header.Error = pb.XChainErrorEnum_SUCCESS
 	netURL := s.mg.P2pSvr.GetNetURL()
@@ -431,6 +495,10 @@ func (s *server) SelectUTXOBySize(ctx context.Context, in *pb.UtxoInput) (*pb.Ut
 	if in.GetHeader() == nil {
 		in.Header = global.GHeader()
 	}
+
+	// Output access log and cost time
+	defer s.endingLog(s.accessLog(s.log, in.GetHeader().GetLogid()))
+
 	out := &pb.UtxoOutput{Header: &pb.Header{Logid: in.Header.Logid}}
 	bc := s.mg.Get(in.GetBcname())
 	if bc == nil {
@@ -469,6 +537,10 @@ func (s *server) SelectUTXO(ctx context.Context, in *pb.UtxoInput) (*pb.UtxoOutp
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
+
+	// Output access log and cost time
+	defer s.endingLog(s.accessLog(s.log, in.GetHeader().GetLogid()))
+
 	out := &pb.UtxoOutput{Header: &pb.Header{Logid: in.Header.Logid}}
 	bc := s.mg.Get(in.GetBcname())
 	if bc == nil {
@@ -511,6 +583,10 @@ func (s *server) DeployNativeCode(ctx context.Context, request *pb.DeployNativeC
 	if request.Header == nil {
 		request.Header = global.GHeader()
 	}
+
+	// Output access log and cost time
+	defer s.endingLog(s.accessLog(s.log, request.GetHeader().GetLogid()))
+
 	if !s.mg.Cfg.Native.Enable {
 		return nil, errors.New("native module is disabled")
 	}
@@ -574,6 +650,9 @@ func (s *server) NativeCodeStatus(ctx context.Context, request *pb.NativeCodeSta
 		return nil, errors.New("native module is disabled")
 	}
 
+	// Output access log and cost time
+	defer s.endingLog(s.accessLog(s.log, request.GetHeader().GetLogid()))
+
 	bc := s.mg.Get(request.GetBcname())
 	if request.Header == nil {
 		request.Header = global.GHeader()
@@ -594,6 +673,9 @@ func (s *server) DposCandidates(ctx context.Context, request *pb.DposCandidatesR
 	if request.Header == nil {
 		request.Header = global.GHeader()
 	}
+
+	// Output access log and cost time
+	defer s.endingLog(s.accessLog(s.log, request.GetHeader().GetLogid()))
 
 	response := &pb.DposCandidatesResponse{Header: &pb.Header{Logid: request.Header.Logid}}
 	if bc == nil {
@@ -624,6 +706,10 @@ func (s *server) DposNominateRecords(ctx context.Context, request *pb.DposNomina
 	if request.Header == nil {
 		request.Header = global.GHeader()
 	}
+
+	// Output access log and cost time
+	defer s.endingLog(s.accessLog(s.log, request.GetHeader().GetLogid()))
+
 	response := &pb.DposNominateRecordsResponse{Header: &pb.Header{Logid: request.Header.Logid}}
 
 	if bc == nil {
@@ -655,6 +741,10 @@ func (s *server) DposNomineeRecords(ctx context.Context, request *pb.DposNominee
 	if request.Header == nil {
 		request.Header = global.GHeader()
 	}
+
+	// Output access log and cost time
+	defer s.endingLog(s.accessLog(s.log, request.GetHeader().GetLogid()))
+
 	response := &pb.DposNomineeRecordsResponse{Header: &pb.Header{Logid: request.Header.Logid}}
 	if bc == nil {
 		response.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
@@ -685,6 +775,10 @@ func (s *server) DposVoteRecords(ctx context.Context, request *pb.DposVoteRecord
 	if request.Header == nil {
 		request.Header = global.GHeader()
 	}
+
+	// Output access log and cost time
+	defer s.endingLog(s.accessLog(s.log, request.GetHeader().GetLogid()))
+
 	response := &pb.DposVoteRecordsResponse{Header: &pb.Header{Logid: request.Header.Logid}}
 	if bc == nil {
 		response.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
@@ -715,6 +809,10 @@ func (s *server) DposVotedRecords(ctx context.Context, request *pb.DposVotedReco
 	if request.Header == nil {
 		request.Header = global.GHeader()
 	}
+
+	// Output access log and cost time
+	defer s.endingLog(s.accessLog(s.log, request.GetHeader().GetLogid()))
+
 	response := &pb.DposVotedRecordsResponse{Header: &pb.Header{Logid: request.Header.Logid}}
 	if bc == nil {
 		response.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
@@ -744,6 +842,9 @@ func (s *server) DposCheckResults(ctx context.Context, request *pb.DposCheckResu
 	if request.Header == nil {
 		request.Header = global.GHeader()
 	}
+
+	// Output access log and cost time
+	defer s.endingLog(s.accessLog(s.log, request.GetHeader().GetLogid()))
 
 	response := &pb.DposCheckResultsResponse{Header: &pb.Header{Logid: request.Header.Logid}}
 	if bc == nil {
@@ -775,6 +876,10 @@ func (s *server) DposStatus(ctx context.Context, request *pb.DposStatusRequest) 
 	if request.Header == nil {
 		request.Header = global.GHeader()
 	}
+
+	// Output access log and cost time
+	defer s.endingLog(s.accessLog(s.log, request.GetHeader().GetLogid()))
+
 	response := &pb.DposStatusResponse{Header: &pb.Header{Logid: request.Header.Logid}, Status: &pb.DposStatus{}}
 	if bc == nil {
 		response.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE
@@ -812,6 +917,9 @@ func (s *server) PreExecWithSelectUTXO(ctx context.Context, request *pb.PreExecW
 	if request.Header == nil {
 		request.Header = global.GHeader()
 	}
+
+	// Output access log and cost time
+	defer s.endingLog(s.accessLog(s.log, request.GetHeader().GetLogid()))
 
 	// initialize output
 	responses := &pb.PreExecWithSelectUTXOResponse{Header: &pb.Header{Logid: request.Header.Logid}}
@@ -864,6 +972,10 @@ func (s *server) PreExec(ctx context.Context, request *pb.InvokeRPCRequest) (*pb
 	if request.Header == nil {
 		request.Header = global.GHeader()
 	}
+
+	// Output access log and cost time
+	defer s.endingLog(s.accessLog(s.log, request.GetHeader().GetLogid()))
+
 	rsps := &pb.InvokeRPCResponse{Header: &pb.Header{Logid: request.Header.Logid}}
 	if bc == nil {
 		rsps.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
@@ -891,6 +1003,10 @@ func (s *server) GetBlockByHeight(ctx context.Context, in *pb.BlockHeight) (*pb.
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
+
+	// Output access log and cost time
+	defer s.endingLog(s.accessLog(s.log, in.GetHeader().GetLogid()))
+
 	s.log.Trace("Start to get dealwith GetBlockByHeight", "logid", in.Header.Logid, "bcname", in.Bcname, "height", in.Height)
 	bc := s.mg.Get(in.Bcname)
 	if bc == nil {
@@ -923,6 +1039,10 @@ func (s *server) GetAccountByAK(ctx context.Context, request *pb.AK2AccountReque
 	if request.Header == nil {
 		request.Header = global.GHeader()
 	}
+
+	// Output access log and cost time
+	defer s.endingLog(s.accessLog(s.log, request.GetHeader().GetLogid()))
+
 	bc := s.mg.Get(request.Bcname)
 	if bc == nil {
 		out := pb.AK2AccountResponse{Header: &pb.Header{}}
@@ -946,6 +1066,10 @@ func (s *server) GetAddressContracts(ctx context.Context, request *pb.AddressCon
 	if request.Header == nil {
 		request.Header = global.GHeader()
 	}
+
+	// Output access log and cost time
+	defer s.endingLog(s.accessLog(s.log, request.GetHeader().GetLogid()))
+
 	res := &pb.AddressContractsResponse{
 		Header: &pb.Header{
 			Error: pb.XChainErrorEnum_SUCCESS,
@@ -983,6 +1107,48 @@ func (s *server) GetAddressContracts(ctx context.Context, request *pb.AddressCon
 	}
 
 	return res, nil
+}
+
+// Output access log and cost time
+type rpcAccessLog struct {
+	xlogf  *xlog.LogFitter
+	xtimer *global.XTimer
+}
+
+// output rpc request access log
+func (s *server) accessLog(lg xlog.LogInterface, logId string, others ...interface{}) *rpcAccessLog {
+	// check param
+	if lg == nil {
+		return nil
+	}
+
+	xlf, _ := xlog.NewLogger(lg, logId)
+	alog := &rpcAccessLog{
+		xlogf:  xlf,
+		xtimer: global.NewXTimer(),
+	}
+
+	_, callFunc := xlog.GetFuncCall(2)
+	logFields := make([]interface{}, 0)
+	logFields = append(logFields, "rpc_method", callFunc)
+	logFields = append(logFields, others...)
+
+	alog.xlogf.Info("xchain rpc access request", logFields...)
+	return alog
+}
+
+// output rpc request ending log
+func (t *server) endingLog(alog *rpcAccessLog, others ...interface{}) {
+	if alog == nil || alog.xlogf == nil || alog.xtimer == nil {
+		return
+	}
+
+	_, callFunc := xlog.GetFuncCall(2)
+	logFields := make([]interface{}, 0)
+	logFields = append(logFields, "rpc_method", callFunc)
+	logFields = append(logFields, "cost_time", alog.xtimer.Print())
+	logFields = append(logFields, others...)
+	alog.xlogf.Notice("xchain rpc service done", logFields...)
 }
 
 func startTCPServer(xchainmg *xchaincore.XChainMG) error {
