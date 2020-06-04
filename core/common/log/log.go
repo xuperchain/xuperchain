@@ -109,3 +109,7 @@ func OpenDefaultLog(lc *config.LogConfig) (Logger, error) {
 	Error = DefaultLogger.Error
 	return logger, nil
 }
+
+func init() {
+	DefaultLogger.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
+}

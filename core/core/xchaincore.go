@@ -27,9 +27,7 @@ import (
 	"github.com/xuperchain/xuperchain/core/consensus/tdpos"
 	"github.com/xuperchain/xuperchain/core/contract/bridge"
 	"github.com/xuperchain/xuperchain/core/contract/kernel"
-	"github.com/xuperchain/xuperchain/core/contract/native"
 	"github.com/xuperchain/xuperchain/core/contract/proposal"
-	"github.com/xuperchain/xuperchain/core/contract/wasm"
 	"github.com/xuperchain/xuperchain/core/crypto/account"
 	crypto_client "github.com/xuperchain/xuperchain/core/crypto/client"
 	crypto_base "github.com/xuperchain/xuperchain/core/crypto/client/base"
@@ -99,9 +97,8 @@ type XChainCore struct {
 
 	Speed *probe.SpeedCalc
 	// post_cache map[string] bool
-	stopFlag      bool
-	proposal      *proposal.Proposal
-	NativeCodeMgr *native.GeneralSCFramework
+	stopFlag bool
+	proposal *proposal.Proposal
 
 	// isCoreMiner if current node is one of the core miners
 	isCoreMiner bool
@@ -279,30 +276,26 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	xc.Utxovm.RegisterVM("consensus", xc.con, global.VMPrivRing0)
 	xc.Utxovm.RegisterVM("proposal", xc.proposal, global.VMPrivRing0)
 
-	xbridge := bridge.New()
-	if cfg.Native.Enable {
-		nc, err := native.New(&cfg.Native, datapath+"/native", xc.log, datapathOthers, kvEngineType)
-		if err != nil {
-			xc.log.Error("make native", "error", err)
-			return err
-		}
-		xc.NativeCodeMgr = nc
-
-		xc.Utxovm.RegisterVM("native", nc, global.VMPrivRing0)
-		xbridge.RegisterExecutor("native", nc)
-	}
-
-	wasmvm, err := wasm.New(&cfg.Wasm, filepath.Join(datapath, "wasm"), xbridge, xc.Utxovm.GetXModel())
+	basedir, err := filepath.Abs(datapath)
 	if err != nil {
-		xc.log.Error("initialize WASM error", "error", err)
 		return err
 	}
-
-	xbridge.RegisterExecutor("wasm", wasmvm)
+	xbridge, err := bridge.New(&bridge.XBridgeConfig{
+		Basedir: basedir,
+		VMConfigs: map[bridge.ContractType]bridge.VMConfig{
+			bridge.TypeWasm:   &cfg.Wasm,
+			bridge.TypeNative: &cfg.Native,
+		},
+		XModel: xc.Utxovm.GetXModel(),
+		Config: cfg.ContractConfig,
+	})
+	if err != nil {
+		return err
+	}
 	xbridge.RegisterToXCore(xc.Utxovm.RegisterVM3)
 
 	// 统一注册xuper3合约虚拟机
-	x3kernel, xerr := kernel.NewKernel(wasmvm)
+	x3kernel, xerr := kernel.NewKernel(xbridge)
 	if xerr != nil {
 		return xerr
 	}

@@ -16,10 +16,10 @@ func NewWasmCommand(cli *Cli) *cobra.Command {
 		Use:   "wasm",
 		Short: "Operate a command with wasm, deploy|invoke|query",
 	}
-	cmd.AddCommand(NewWasmDeployCommand(cli))
-	cmd.AddCommand(NewWasmInvokeCommand(cli))
-	cmd.AddCommand(NewWasmQueryCommand(cli))
-	cmd.AddCommand(NewWasmUpgradeCommand(cli))
+	cmd.AddCommand(NewContractDeployCommand(cli, "wasm"))
+	cmd.AddCommand(NewContractInvokeCommand(cli, "wasm"))
+	cmd.AddCommand(NewContractQueryCommand(cli, "wasm"))
+	cmd.AddCommand(NewContractUpgradeCommand(cli))
 	return cmd
 }
 

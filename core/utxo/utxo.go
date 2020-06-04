@@ -25,7 +25,7 @@ import (
 	log "github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperchain/core/common"
 	"github.com/xuperchain/xuperchain/core/contract"
-	"github.com/xuperchain/xuperchain/core/contract/wasm"
+	"github.com/xuperchain/xuperchain/core/contract/bridge"
 	crypto_client "github.com/xuperchain/xuperchain/core/crypto/client"
 	crypto_base "github.com/xuperchain/xuperchain/core/crypto/client/base"
 	"github.com/xuperchain/xuperchain/core/global"
@@ -2349,7 +2349,7 @@ func (uv *UtxoVM) GetAccountContracts(account string) ([]string, error) {
 func (uv *UtxoVM) GetContractStatus(contractName string) (*pb.ContractStatus, error) {
 	res := &pb.ContractStatus{}
 	res.ContractName = contractName
-	verdata, err := uv.model3.Get("contract", wasm.ContractCodeDescKey(contractName))
+	verdata, err := uv.model3.Get("contract", bridge.ContractCodeDescKey(contractName))
 	if err != nil {
 		uv.xlog.Warn("GetContractStatus get version data error", "error", err.Error())
 		return nil, err

@@ -2,6 +2,7 @@ package exec
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"math/big"
 
@@ -226,5 +227,9 @@ func (c *contractContext) SetOutput(response *code.Response) error {
 }
 
 func (c *contractContext) Logf(fmtstr string, args ...interface{}) {
-	log.Printf(fmtstr, args...)
+	entry := fmt.Sprintf(fmtstr, args...)
+	request := &pb.PostLogRequest{
+		Entry: entry,
+	}
+	c.bridgeCallFunc("PostLog", request, new(pb.PostLogResponse))
 }

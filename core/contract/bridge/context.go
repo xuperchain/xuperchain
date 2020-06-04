@@ -3,6 +3,7 @@ package bridge
 import (
 	"sync"
 
+	log15 "github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperchain/core/contract"
 	pb "github.com/xuperchain/xuperchain/core/contractsdk/go/pb"
 	"github.com/xuperchain/xuperchain/core/xmodel"
@@ -34,6 +35,8 @@ type Context struct {
 	TransferAmount string
 
 	Instance Instance
+
+	Logger log15.Logger
 
 	// resource used by sub contract call
 	SubResourceUsed contract.Limits

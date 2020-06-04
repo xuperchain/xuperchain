@@ -154,11 +154,24 @@ type NativeDockerConfig struct {
 
 // NativeConfig contains the two above config
 type NativeConfig struct {
+	Driver string
 	// Timeout (in seconds) to stop native code process
 	StopTimeout int
 	Deploy      NativeDeployConfig
 	Docker      NativeDockerConfig
 	Enable      bool
+}
+
+func (n *NativeConfig) DriverName() string {
+	if n.Driver != "" {
+		return n.Driver
+	}
+
+	return "native"
+}
+
+func (n *NativeConfig) IsEnable() bool {
+	return n.Enable
 }
 
 // XVMConfig contains the xvm configuration
@@ -171,13 +184,26 @@ type XVMConfig struct {
 
 // WasmConfig wasm config
 type WasmConfig struct {
-	Driver         string
-	External       bool
-	XVM            XVMConfig
+	Driver        string
+	External      bool
+	XVM           XVMConfig
+	EnableUpgrade bool
+	TEEConfig     TEEConfig `yaml:"teeConfig,omitempty"`
+}
+
+func (w *WasmConfig) DriverName() string {
+	return w.Driver
+}
+
+func (w *WasmConfig) IsEnable() bool {
+	return true
+}
+
+// ContractConfig define the config of XuperBridge
+type ContractConfig struct {
 	EnableDebugLog bool
 	DebugLog       LogConfig
 	EnableUpgrade  bool
-	TEEConfig      TEEConfig `yaml:"teeConfig,omitempty"`
 }
 
 // TEEConfig sets up the private ledger
@@ -264,7 +290,8 @@ type NodeConfig struct {
 	//  3. Mixed_BroadCast_Mode是指出块节点将新块用Full_BroadCast_Mode模式广播，其他节点使用Interactive_BroadCast_Mode
 	BlockBroadcaseMode uint8 `yaml:"blockBroadcaseMode,omitempty"`
 	// cloud storage config
-	CloudStorage CloudStorageConfig `yaml:"cloudStorage,omitempty"`
+	CloudStorage   CloudStorageConfig `yaml:"cloudStorage,omitempty"`
+	ContractConfig ContractConfig     `yaml:"contract,omitempty"`
 }
 
 // KernelConfig kernel config
@@ -349,6 +376,8 @@ func (nc *NodeConfig) defaultNodeConfig() {
 		XVM: XVMConfig{
 			OptLevel: 0,
 		},
+	}
+	nc.ContractConfig = ContractConfig{
 		EnableDebugLog: true,
 		DebugLog: LogConfig{
 			Module:         "contract",
@@ -361,6 +390,7 @@ func (nc *NodeConfig) defaultNodeConfig() {
 			RotateInterval: 60 * 24, // rotate every 1 day
 			RotateBackups:  14,      // keep old log files for two weeks
 		},
+		EnableUpgrade: false,
 	}
 	nc.CoreConnection = false
 	nc.FailSkip = false
@@ -479,6 +509,11 @@ func (nc *NodeConfig) ApplyFlags(flags *pflag.FlagSet) {
 	nc.ConsoleConfig.ApplyFlags(flags)
 	nc.Utxo.applyFlags(flags)
 	nc.Wasm.applyFlags(flags)
+
+	// for backward compatibility
+	if nc.Wasm.EnableUpgrade {
+		nc.ContractConfig.EnableUpgrade = true
+	}
 
 	flags.StringVar(&nc.Datapath, "datapath", nc.Datapath, "used for config overwrite --datapath <data path>")
 	flags.StringVar(&nc.CPUProfile, "cpuprofile", nc.CPUProfile, "used to store cpu profile data --cpuprofile <pprof file>")

@@ -11,7 +11,6 @@ import (
 	"github.com/xuperchain/xuperchain/core/common/log"
 	"github.com/xuperchain/xuperchain/core/contract/bridge"
 	"github.com/xuperchain/xuperchain/core/contract/teevm"
-	"github.com/xuperchain/xuperchain/core/contract/wasm/vm"
 	"github.com/xuperchain/xuperchain/core/xvm/compile"
 	"github.com/xuperchain/xuperchain/core/xvm/exec"
 	"github.com/xuperchain/xuperchain/core/xvm/runtime/emscripten"
@@ -20,8 +19,8 @@ import (
 
 type xvmCreator struct {
 	cm       *codeManager
-	config   vm.InstanceCreatorConfig
-	vmconfig config.XVMConfig
+	config   bridge.InstanceCreatorConfig
+	vmconfig *config.WasmConfig
 
 	wasm2cPath string
 }
@@ -40,7 +39,7 @@ func lookupWasm2c() (string, error) {
 	return osexec.LookPath("wasm2c")
 }
 
-func newXVMCreator(creatorConfig *vm.InstanceCreatorConfig) (vm.InstanceCreator, error) {
+func newXVMCreator(creatorConfig *bridge.InstanceCreatorConfig) (bridge.InstanceCreator, error) {
 	wasm2cPath, err := lookupWasm2c()
 	if err != nil {
 		return nil, err
@@ -50,8 +49,8 @@ func newXVMCreator(creatorConfig *vm.InstanceCreatorConfig) (vm.InstanceCreator,
 		config:     *creatorConfig,
 	}
 	if creatorConfig.VMConfig != nil {
-		creator.vmconfig = creatorConfig.VMConfig.(config.XVMConfig)
-		optlevel := creator.vmconfig.OptLevel
+		creator.vmconfig = creatorConfig.VMConfig.(*config.WasmConfig)
+		optlevel := creator.vmconfig.XVM.OptLevel
 		if optlevel < 0 || optlevel > 3 {
 			return nil, fmt.Errorf("bad xvm optlevel:%d", optlevel)
 		}
@@ -88,7 +87,7 @@ func (x *xvmCreator) CompileCode(buf []byte, outputPath string) error {
 
 	cfg := &compile.Config{
 		Wasm2cPath: x.wasm2cPath,
-		OptLevel:   x.vmconfig.OptLevel,
+		OptLevel:   x.vmconfig.XVM.OptLevel,
 	}
 	err = compile.CompileNativeLibrary(cfg, libpath, wasmpath)
 	if err != nil {
@@ -97,7 +96,7 @@ func (x *xvmCreator) CompileCode(buf []byte, outputPath string) error {
 	return cpfile(outputPath, libpath)
 }
 
-func (x *xvmCreator) getContractCodeCache(name string, cp vm.ContractCodeProvider) (*contractCode, error) {
+func (x *xvmCreator) getContractCodeCache(name string, cp bridge.ContractCodeProvider) (*contractCode, error) {
 	return x.cm.GetExecCode(name, cp)
 }
 
@@ -109,8 +108,8 @@ func (x *xvmCreator) MakeExecCode(libpath string) (exec.Code, error) {
 		builtinResolver,
 	}
 	//AOT only for experiment;
-	if x.config.TEEConfig.Enable {
-		teeResolver, err := teevm.NewTrustFunctionResolver(x.config.TEEConfig)
+	if x.vmconfig.TEEConfig.Enable {
+		teeResolver, err := teevm.NewTrustFunctionResolver(x.vmconfig.TEEConfig)
 		if err != nil {
 			return nil, err
 		}
@@ -122,14 +121,14 @@ func (x *xvmCreator) MakeExecCode(libpath string) (exec.Code, error) {
 	return exec.NewAOTCode(libpath, resolver)
 }
 
-func (x *xvmCreator) CreateInstance(ctx *bridge.Context, cp vm.ContractCodeProvider) (vm.Instance, error) {
+func (x *xvmCreator) CreateInstance(ctx *bridge.Context, cp bridge.ContractCodeProvider) (bridge.Instance, error) {
 	code, err := x.getContractCodeCache(ctx.ContractName, cp)
 	if err != nil {
 		log.Error("get contract cache error", "error", err, "contract", ctx.ContractName)
 		return nil, err
 	}
 
-	return createInstance(ctx, code, x.config.DebugLogger)
+	return createInstance(ctx, code, x.config.SyscallService)
 }
 
 func (x *xvmCreator) RemoveCache(contractName string) {
@@ -137,5 +136,5 @@ func (x *xvmCreator) RemoveCache(contractName string) {
 }
 
 func init() {
-	vm.Register("xvm", newXVMCreator)
+	bridge.Register(bridge.TypeWasm, "xvm", newXVMCreator)
 }

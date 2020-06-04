@@ -4,7 +4,6 @@ import (
 	"io/ioutil"
 
 	"github.com/xuperchain/xuperchain/core/contract/bridge"
-	"github.com/xuperchain/xuperchain/core/contract/wasm/vm"
 	"github.com/xuperchain/xuperchain/core/xvm/exec"
 	"github.com/xuperchain/xuperchain/core/xvm/runtime/emscripten"
 	gowasm "github.com/xuperchain/xuperchain/core/xvm/runtime/go"
@@ -12,10 +11,10 @@ import (
 
 type xvmInterpCreator struct {
 	cm     *codeManager
-	config vm.InstanceCreatorConfig
+	config bridge.InstanceCreatorConfig
 }
 
-func newXVMInterpCreator(creatorConfig *vm.InstanceCreatorConfig) (vm.InstanceCreator, error) {
+func newXVMInterpCreator(creatorConfig *bridge.InstanceCreatorConfig) (bridge.InstanceCreator, error) {
 	creator := &xvmInterpCreator{
 		config: *creatorConfig,
 	}
@@ -46,12 +45,12 @@ func (x *xvmInterpCreator) makeExecCode(codepath string) (exec.Code, error) {
 	return exec.NewInterpCode(codebuf, resolver)
 }
 
-func (x *xvmInterpCreator) CreateInstance(ctx *bridge.Context, cp vm.ContractCodeProvider) (vm.Instance, error) {
+func (x *xvmInterpCreator) CreateInstance(ctx *bridge.Context, cp bridge.ContractCodeProvider) (bridge.Instance, error) {
 	code, err := x.cm.GetExecCode(ctx.ContractName, cp)
 	if err != nil {
 		return nil, err
 	}
-	return createInstance(ctx, code, x.config.DebugLogger)
+	return createInstance(ctx, code, x.config.SyscallService)
 }
 
 func (x *xvmInterpCreator) RemoveCache(contractName string) {
@@ -59,5 +58,5 @@ func (x *xvmInterpCreator) RemoveCache(contractName string) {
 }
 
 func init() {
-	vm.Register("ixvm", newXVMInterpCreator)
+	bridge.Register(bridge.TypeWasm, "ixvm", newXVMInterpCreator)
 }

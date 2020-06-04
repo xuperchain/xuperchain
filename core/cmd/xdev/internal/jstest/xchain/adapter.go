@@ -2,7 +2,6 @@ package xchain
 
 import (
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/mitchellh/mapstructure"
@@ -116,7 +115,7 @@ func (x *xchainAdapter) OnTestCase(r *jstest.Runner, test jstest.TestCase) jstes
 		defer xctx.env.Close()
 
 		if !r.Option.Quiet {
-			xctx.env.vmm.SetLogOutput(os.Stderr)
+			// TODO: add log output
 		}
 		// reset xchain environment
 		r.GlobalObject().Set("xchain", xctx)
