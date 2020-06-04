@@ -5,7 +5,6 @@
 package server
 
 import (
-	"bytes"
 	"crypto/tls"
 	"crypto/x509"
 	"errors"
@@ -30,7 +29,6 @@ import (
 	xlog "github.com/xuperchain/xuperchain/core/common/log"
 	"github.com/xuperchain/xuperchain/core/consensus"
 	xchaincore "github.com/xuperchain/xuperchain/core/core"
-	"github.com/xuperchain/xuperchain/core/crypto/hash"
 	"github.com/xuperchain/xuperchain/core/global"
 	p2p_base "github.com/xuperchain/xuperchain/core/p2p/base"
 	xuper_p2p "github.com/xuperchain/xuperchain/core/p2p/pb"

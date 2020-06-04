@@ -7,17 +7,19 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"github.com/spf13/cobra"
 
 	"github.com/xuperchain/xuperchain/core/utxo"
 )
 
-// WasmInvokeCommand wasm invoke cmd
-type WasmInvokeCommand struct {
+// ContractInvokeCommand wasm invoke cmd
+type ContractInvokeCommand struct {
 	cli *Cli
 	cmd *cobra.Command
 
+	module     string
 	args       string
 	account    string
 	fee        string
@@ -29,13 +31,14 @@ type WasmInvokeCommand struct {
 	debug      bool
 }
 
-// NewWasmInvokeCommand new wasm invoke cmd
-func NewWasmInvokeCommand(cli *Cli) *cobra.Command {
-	c := new(WasmInvokeCommand)
+// NewContractInvokeCommand new wasm invoke cmd
+func NewContractInvokeCommand(cli *Cli, module string) *cobra.Command {
+	c := new(ContractInvokeCommand)
 	c.cli = cli
+	c.module = module
 	c.cmd = &cobra.Command{
 		Use:     "invoke [options] code",
-		Short:   "invoke from wasm code by customizing contract method",
+		Short:   "invoke from contract code by customizing contract method",
 		Example: c.example(),
 		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -47,7 +50,7 @@ func NewWasmInvokeCommand(cli *Cli) *cobra.Command {
 	return c.cmd
 }
 
-func (c *WasmInvokeCommand) addFlags() {
+func (c *ContractInvokeCommand) addFlags() {
 	c.cmd.Flags().StringVarP(&c.args, "args", "a", "{}", "contract method args")
 	c.cmd.Flags().StringVarP(&c.account, "account", "", "", "account name")
 	c.cmd.Flags().StringVar(&c.fee, "fee", "", "fee of one tx")
@@ -60,19 +63,19 @@ func (c *WasmInvokeCommand) addFlags() {
 
 }
 
-func (c *WasmInvokeCommand) example() string {
+func (c *ContractInvokeCommand) example() string {
 	return `
-xchain wasm invoke $codeaddr --method invoke -a '{"Your method args in json format"}'
+xchain wasm|native invoke $codeaddr --method invoke -a '{"Your method args in json format"}'
 `
 }
 
-func (c *WasmInvokeCommand) invoke(ctx context.Context, codeName string) error {
+func (c *ContractInvokeCommand) invoke(ctx context.Context, codeName string) error {
 	ct := &CommTrans{
 		Fee:          c.fee,
 		FrozenHeight: 0,
 		Version:      utxo.TxVersion,
 		From:         c.account,
-		ModuleName:   "wasm",
+		ModuleName:   c.module,
 		ContractName: codeName,
 		MethodName:   c.methodName,
 		Args:         make(map[string][]byte),
@@ -109,4 +112,16 @@ func (c *WasmInvokeCommand) invoke(ctx context.Context, codeName string) error {
 	}
 
 	return err
+}
+
+func convertToXuper3Args(args map[string]interface{}) (map[string][]byte, error) {
+	argmap := make(map[string][]byte)
+	for k, v := range args {
+		s, ok := v.(string)
+		if !ok {
+			return nil, fmt.Errorf("bad key %s, expect string value, got %v", k, v)
+		}
+		argmap[k] = []byte(s)
+	}
+	return argmap, nil
 }

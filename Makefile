@@ -16,7 +16,7 @@ export XCHAIN_ROOT
 PATH := ${PWD}/core/xvm/compile/wabt/build:$(PATH)
 
 build:
-	PLATFORM=$(PLATFORM) ./build.sh
+	PLATFORM=$(PLATFORM) ./core/scripts/build.sh
 
 test:
 	go test -coverprofile=coverage.txt -covermode=atomic ./...

@@ -1,10 +1,9 @@
-package wasm
+package bridge
 
 import (
 	"errors"
 	"fmt"
 
-	"github.com/xuperchain/xuperchain/core/contract/wasm/vm"
 	"github.com/xuperchain/xuperchain/core/pb"
 	xmodel_pb "github.com/xuperchain/xuperchain/core/xmodel/pb"
 
@@ -19,7 +18,7 @@ type codeProvider struct {
 	xstore xmodelStore
 }
 
-func newCodeProvider(xstore xmodelStore) vm.ContractCodeProvider {
+func newCodeProvider(xstore xmodelStore) ContractCodeProvider {
 	return &codeProvider{
 		xstore: xstore,
 	}
@@ -56,11 +55,11 @@ func (c *codeProvider) GetContractCodeDesc(name string) (*pb.WasmCodeDesc, error
 }
 
 type descProvider struct {
-	vm.ContractCodeProvider
+	ContractCodeProvider
 	desc *pb.WasmCodeDesc
 }
 
-func newDescProvider(cp vm.ContractCodeProvider, desc *pb.WasmCodeDesc) vm.ContractCodeProvider {
+func newDescProvider(cp ContractCodeProvider, desc *pb.WasmCodeDesc) ContractCodeProvider {
 	return &descProvider{
 		ContractCodeProvider: cp,
 		desc:                 desc,
