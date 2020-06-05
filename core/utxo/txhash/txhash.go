@@ -133,7 +133,7 @@ func encodeTxData(tx *pb.Transaction, includeSigns bool) ([]byte, error) {
 			return nil, err
 		}
 		if tx.GetXuperSign() != nil {
-			err = encoder.Encode(tx.AuthRequireSigns)
+			err = encoder.Encode(tx.XuperSign)
 			if err != nil {
 				return nil, err
 			}

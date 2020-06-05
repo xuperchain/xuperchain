@@ -14,14 +14,12 @@ type NativeCommand struct {
 func NewNativeCommand(cli *Cli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "native",
-		Short: "[Deprecated] Operate a native contract: activate|deactivate|deploy|invoke|query|status.",
+		Short: "Operate a native contract: deploy|upgrade|invoke|query",
 	}
-	cmd.AddCommand(NewNativeActivateCommand(cli))
-	cmd.AddCommand(NewNativeDeployCommand(cli))
-	cmd.AddCommand(NewNativeStatusCommand(cli))
-	cmd.AddCommand(NewNativeQueryCommand(cli))
-	cmd.AddCommand(NewNativeDeactivateCommand(cli))
-	cmd.AddCommand(NewNativeInvokeCommand(cli))
+	cmd.AddCommand(NewContractDeployCommand(cli, "native"))
+	cmd.AddCommand(NewContractInvokeCommand(cli, "native"))
+	cmd.AddCommand(NewContractQueryCommand(cli, "native"))
+	cmd.AddCommand(NewContractUpgradeCommand(cli))
 	return cmd
 }
 

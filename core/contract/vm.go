@@ -81,6 +81,9 @@ type ContextConfig struct {
 	// Contract being called
 	// set by bridge to check recursive contract call
 	ContractSet map[string]bool
+
+	// ContractCodeFromCache control whether fetch contract code from XMCache
+	ContractCodeFromCache bool
 }
 
 // VirtualMachine define virtual machine interface

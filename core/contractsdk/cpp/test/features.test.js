@@ -7,7 +7,8 @@ function deploy() {
         name: "features",
         code: codePath,
         lang: "c",
-        init_args: {}
+        init_args: {},
+        type: "wasm"
     });
 }
 

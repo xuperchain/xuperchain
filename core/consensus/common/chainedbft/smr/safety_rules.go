@@ -38,6 +38,10 @@ func (s *Smr) safeProposal(propsQC, justify *pb.QuorumCert) (bool, error) {
 // IsQuorumCertValidate return whether QC is validated
 func (s *Smr) IsQuorumCertValidate(justify *pb.QuorumCert) (bool, error) {
 	s.slog.Debug("IsQuorumCertValidate", "justify.ProposalId", hex.EncodeToString(justify.GetProposalId()))
+	if justify == nil && len(s.validates) == 1 {
+		s.slog.Info("IsQuorumCertValidate len of validates is 0")
+		return true, nil
+	}
 	if justify == nil || justify.GetSignInfos() == nil || justify.GetProposalId() == nil {
 		return false, ErrParams
 	}
@@ -53,8 +57,8 @@ func (s *Smr) IsQuorumCertValidate(justify *pb.QuorumCert) (bool, error) {
 
 // verifyVotes verify QC sign
 func (s *Smr) verifyVotes(signs []*pb.SignInfo, validateSets []*cons_base.CandidateInfo, proposalID []byte) (bool, error) {
-	s.slog.Trace("verifyVotes", "autual", len(signs), "require", (len(validateSets)-1)*2/3)
-	if len(signs) <= (len(validateSets)-1)*2/3 {
+	s.slog.Trace("verifyVotes", "autual", len(signs), "require", (len(validateSets)+1)*2/3-1)
+	if len(signs) < ((len(validateSets)+1)*2/3 - 1) {
 		return false, ErrJustifySignNotEnough
 	}
 	for _, v := range signs {

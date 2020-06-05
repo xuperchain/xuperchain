@@ -2,6 +2,7 @@ package native
 
 import (
 	"context"
+	"net/url"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -22,8 +23,17 @@ type nativeCodeService struct {
 	lastping  time.Time
 }
 
-func newNativeCodeService(sockpath string, contract code.Contract) *nativeCodeService {
-	conn, err := grpc.Dial("unix:"+sockpath, grpc.WithInsecure())
+func newNativeCodeService(chainAddr string, contract code.Contract) *nativeCodeService {
+	uri, err := url.Parse(chainAddr)
+	if err != nil {
+		panic(err)
+	}
+	switch uri.Scheme {
+	case "tcp":
+	default:
+		panic("unsupported protocol " + uri.Scheme)
+	}
+	conn, err := grpc.Dial(uri.Host, grpc.WithInsecure())
 	if err != nil {
 		panic(err)
 	}

@@ -1,5 +1,5 @@
-#include "xchain/xchain.h"
 #include "xchain/json/json.h"
+#include "xchain/xchain.h"
 
 #define CHECK_ARG(argKey)                             \
     std::string argKey = ctx->arg(#argKey);           \

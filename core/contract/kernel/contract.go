@@ -6,13 +6,13 @@ import (
 
 	"github.com/xuperchain/xuperchain/core/common"
 	"github.com/xuperchain/xuperchain/core/contract"
-	"github.com/xuperchain/xuperchain/core/contract/wasm"
+	"github.com/xuperchain/xuperchain/core/contract/bridge"
 	"github.com/xuperchain/xuperchain/core/permission/acl/utils"
 )
 
 // contractMethods manage methods about contract
 type contractMethods struct {
-	vmm *wasm.VMManager
+	xbridge *bridge.XBridge
 }
 
 // Deploy deploys contract
@@ -32,7 +32,7 @@ func (c *contractMethods) Deploy(ctx *KContext, args map[string][]byte) (*contra
 		return nil, fmt.Errorf("get account `%s` error: %s", accountName, err)
 	}
 
-	out, resourceUsed, err := c.vmm.DeployContract(ctx.ContextConfig, args)
+	out, resourceUsed, err := c.xbridge.DeployContract(ctx.ContextConfig, args)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +61,7 @@ func (c *contractMethods) Upgrade(ctx *KContext, args map[string][]byte) (*contr
 	if err != nil {
 		return nil, err
 	}
-	resp, resourceUsed, err := c.vmm.UpgradeContract(ctx.ContextConfig, args)
+	resp, resourceUsed, err := c.xbridge.UpgradeContract(ctx.ContextConfig, args)
 	if err != nil {
 		return nil, err
 	}
