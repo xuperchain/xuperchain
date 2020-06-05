@@ -94,7 +94,7 @@ func (c *Cli) initFlags() error {
 	rootFlags.StringP("host", "H", "127.0.0.1:37101", "server node ip:port")
 	rootFlags.String("name", "xuper", "block chain name")
 	rootFlags.String("keys", "data/keys", "directory of keys")
-	rootFlags.String("cryptotype", crypto_client.CryptoTypeDefault, "crypto type, eg. default")
+	rootFlags.String("cryptotype", crypto_client.CryptoTypeDefault, "crypto type, default|gm|schnorr")
 	viper.BindPFlags(rootFlags)
 
 	cobra.OnInitialize(func() {
