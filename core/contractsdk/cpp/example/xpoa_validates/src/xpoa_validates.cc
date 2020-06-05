@@ -10,7 +10,9 @@
 
 // XPoA 验证集合变更智能合约
 struct Hello : public xchain::Contract {};
-std::string Validate(std::string address) { return "V" + address; }
+std::string Validate(std::string address) { return "V_" + address; }
+std::string ChangeFlag() { return "CF_"; }
+
 const char delimiter_initialize = ';';
 void split_str(const std::string& str, std::vector<std::string>& str_sets,
                const std::string& sub_str) {
@@ -60,6 +62,10 @@ DEFINE_METHOD(Hello, initialize) {
             return;
         }
     }
+    if (!ctx->put_object(ChangeFlag(), "initialize")) {
+        ctx->error("initialize fail to save validate change flag");
+        return;
+    }
     ctx->ok("initialize succeed");
 }
 
@@ -88,6 +94,10 @@ DEFINE_METHOD(Hello, add_validate) {
         ctx->error("fail to save validate");
         return;
     }
+    if (!ctx->put_object(ChangeFlag(), "add")) {
+        ctx->error("add validate fail to save validate change flag");
+        return;
+    }
     ctx->ok(data);
 }
 
@@ -108,6 +118,10 @@ DEFINE_METHOD(Hello, del_validate) {
 
     if (!ctx->delete_object(Validate(address))) {
         ctx->error("fail to delete validate");
+        return;
+    }
+    if (!ctx->put_object(ChangeFlag(), "del")) {
+        ctx->error("del validate fail to save validate change flag");
         return;
     }
     ctx->ok("ok");
@@ -138,6 +152,10 @@ DEFINE_METHOD(Hello, update_validate) {
         ctx->error("fail to update validate");
         return;
     }
+    if (!ctx->put_object(ChangeFlag(), "update")) {
+        ctx->error("update validate fail to save validate change flag");
+        return;
+    }
     ctx->ok(data);
 }
 
@@ -148,6 +166,11 @@ DEFINE_METHOD(Hello, update_validate) {
  */
 DEFINE_METHOD(Hello, get_validates) {
     xchain::Context* ctx = self.context();
+    std::string flag;
+    if (!ctx->get_object(ChangeFlag(), &flag)) {
+        ctx->error("get validate change flag error");
+        return;
+    }
     xchain::json j;
     std::unique_ptr<xchain::Iterator> iter =
         ctx->new_iterator(Validate(""), Validate("~"));

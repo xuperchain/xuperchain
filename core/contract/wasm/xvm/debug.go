@@ -3,19 +3,17 @@ package xvm
 import (
 	"bytes"
 	"io"
-
-	log15 "github.com/xuperchain/log15"
 )
 
 // debugWriter implements a io.Writer which writes messages as lines to log.Logger
 type debugWriter struct {
-	buf    bytes.Buffer
-	logger log15.Logger
+	buf       bytes.Buffer
+	flushfunc func(string)
 }
 
-func newDebugWriter(logger log15.Logger) io.Writer {
+func newDebugWriter(flushfunc func(string)) io.Writer {
 	return &debugWriter{
-		logger: logger,
+		flushfunc: flushfunc,
 	}
 }
 
@@ -40,6 +38,6 @@ func (w *debugWriter) write(p []byte) {
 }
 
 func (w *debugWriter) flush() {
-	w.logger.Debug(w.buf.String())
+	w.flushfunc(w.buf.String())
 	w.buf.Reset()
 }

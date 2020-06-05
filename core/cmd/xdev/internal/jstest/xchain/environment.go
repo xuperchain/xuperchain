@@ -5,20 +5,19 @@ import (
 	"errors"
 	"io/ioutil"
 	"os"
-	"path/filepath"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/xuperchain/xuperchain/core/common/config"
 	"github.com/xuperchain/xuperchain/core/contract"
 	"github.com/xuperchain/xuperchain/core/contract/bridge"
-	"github.com/xuperchain/xuperchain/core/contract/wasm"
+	_ "github.com/xuperchain/xuperchain/core/contract/native"
+	_ "github.com/xuperchain/xuperchain/core/contract/wasm/xvm"
 	"github.com/xuperchain/xuperchain/core/pb"
 )
 
 type environment struct {
 	xbridge *bridge.XBridge
 	model   *mockStore
-	vmm     *wasm.VMManager
 	basedir string
 }
 
@@ -27,24 +26,31 @@ func newEnvironment() (*environment, error) {
 	if err != nil {
 		return nil, err
 	}
-	xbridge := bridge.New()
 	store := newMockStore()
-
-	config := &config.WasmConfig{
+	wasmconfig := &config.WasmConfig{
 		Driver: "ixvm",
 	}
+	nativeconfig := &config.NativeConfig{
+		Enable: true,
+	}
 
-	vmmdir := filepath.Join(basedir, "wasm")
-	vmm, err := wasm.New(config, vmmdir, xbridge, store)
+	xbridge, err := bridge.New(&bridge.XBridgeConfig{
+		Basedir: basedir,
+		VMConfigs: map[bridge.ContractType]bridge.VMConfig{
+			bridge.TypeWasm:   wasmconfig,
+			bridge.TypeNative: nativeconfig,
+		},
+		XModel:    store,
+		LogWriter: os.Stderr,
+	})
 	if err != nil {
 		os.RemoveAll(basedir)
 		return nil, err
 	}
-	xbridge.RegisterExecutor("wasm", vmm)
+
 	return &environment{
 		xbridge: xbridge,
 		model:   store,
-		vmm:     vmm,
 		basedir: basedir,
 	}, nil
 }
@@ -54,6 +60,7 @@ type deployArgs struct {
 	Code     string            `json:"code"`
 	Lang     string            `json:"lang"`
 	InitArgs map[string]string `json:"init_args"`
+	Type     string            `json:"type"`
 }
 
 func convertArgs(ori map[string]string) map[string][]byte {
@@ -80,6 +87,7 @@ func (e *environment) Deploy(args deployArgs) (*ContractResponse, error) {
 
 	descpb := new(pb.WasmCodeDesc)
 	descpb.Runtime = args.Lang
+	descpb.ContractType = args.Type
 	desc, err := proto.Marshal(descpb)
 	if err != nil {
 		return nil, err
@@ -87,7 +95,7 @@ func (e *environment) Deploy(args deployArgs) (*ContractResponse, error) {
 	dargs["contract_desc"] = desc
 
 	xcache := e.model.NewCache()
-	resp, _, err := e.vmm.DeployContract(&contract.ContextConfig{
+	resp, _, err := e.xbridge.DeployContract(&contract.ContextConfig{
 		XMCache:        xcache,
 		ResourceLimits: contract.MaxLimits,
 		Core:           new(chainCore),

@@ -65,7 +65,11 @@ func (x *XModelContext) CommitCache() error {
 	if err != nil {
 		return err
 	}
-	return batch.Write()
+	err = batch.Write()
+	if err != nil {
+		return err
+	}
+	return x.NewCache()
 }
 
 // NewCache create model cache instance

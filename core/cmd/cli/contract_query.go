@@ -12,11 +12,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// WasmQueryCommand wasm query cmd
-type WasmQueryCommand struct {
+// ContractQueryCommand wasm query cmd
+type ContractQueryCommand struct {
 	cli *Cli
 	cmd *cobra.Command
 
+	module     string
 	args       string
 	methodName string
 	isMulti    bool
@@ -24,13 +25,14 @@ type WasmQueryCommand struct {
 	multiAddrs string
 }
 
-// NewWasmQueryCommand new wasm query cmd
-func NewWasmQueryCommand(cli *Cli) *cobra.Command {
-	c := new(WasmQueryCommand)
+// NewContractQueryCommand new wasm query cmd
+func NewContractQueryCommand(cli *Cli, module string) *cobra.Command {
+	c := new(ContractQueryCommand)
 	c.cli = cli
+	c.module = module
 	c.cmd = &cobra.Command{
 		Use:     "query [options] code",
-		Short:   "query info from wasm code by customizing contract method",
+		Short:   "query info from contract code by customizing contract method",
 		Example: c.example(),
 		Args:    cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -42,7 +44,7 @@ func NewWasmQueryCommand(cli *Cli) *cobra.Command {
 	return c.cmd
 }
 
-func (c *WasmQueryCommand) addFlags() {
+func (c *ContractQueryCommand) addFlags() {
 	c.cmd.Flags().StringVarP(&c.args, "args", "a", "{}", "query method args")
 	c.cmd.Flags().StringVarP(&c.methodName, "method", "", "get", "contract method name")
 	c.cmd.Flags().BoolVarP(&c.isMulti, "isMulti", "m", false, "multisig scene")
@@ -50,15 +52,15 @@ func (c *WasmQueryCommand) addFlags() {
 	c.cmd.Flags().StringVarP(&c.multiAddrs, "multiAddrs", "A", "data/acl/addrs", "multiAddrs if multisig scene")
 }
 
-func (c *WasmQueryCommand) example() string {
+func (c *ContractQueryCommand) example() string {
 	return `
-xchain wasm query $codeaddr -a '{"Your contract parameters in json format"}' --method get
+xchain wasm|native query $codeaddr -a '{"Your contract parameters in json format"}' --method get
 `
 }
 
-func (c *WasmQueryCommand) query(ctx context.Context, codeName string) error {
+func (c *ContractQueryCommand) query(ctx context.Context, codeName string) error {
 	ct := &CommTrans{
-		ModuleName:   "wasm",
+		ModuleName:   c.module,
 		ContractName: codeName,
 		MethodName:   c.methodName,
 		Args:         make(map[string][]byte),
