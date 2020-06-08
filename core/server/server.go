@@ -14,6 +14,7 @@ import (
 	"net"
 	"net/http"
 	_ "net/http/pprof"
+	"reflect"
 	"strconv"
 
 	"github.com/golang/protobuf/proto"
@@ -25,7 +26,9 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/reflection"
 
+	middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/xuperchain/xuperchain/core/common"
+	xlog "github.com/xuperchain/xuperchain/core/common/log"
 	"github.com/xuperchain/xuperchain/core/consensus"
 	xchaincore "github.com/xuperchain/xuperchain/core/core"
 	"github.com/xuperchain/xuperchain/core/global"
@@ -911,26 +914,102 @@ func (s *server) GetAddressContracts(ctx context.Context, request *pb.AddressCon
 	return res, nil
 }
 
+// Output access log and cost time
+type rpcAccessLog struct {
+	xlogf  *xlog.LogFitter
+	xtimer *global.XTimer
+}
+
+type HeaderInterface interface {
+	GetHeader() *pb.Header
+}
+
+func (s *server) UnaryServerInterceptor() grpc.UnaryServerInterceptor {
+	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo,
+		handler grpc.UnaryHandler) (resp interface{}, err error) {
+
+		// panic recover
+		defer func() {
+			if e := recover(); e != nil {
+				s.log.Error("Happen panic.", "error", e, "rpc_method", info.FullMethod)
+			}
+		}()
+
+		// padding header
+		if req.(HeaderInterface).GetHeader() == nil {
+			header := reflect.ValueOf(req).Elem().FieldByName("Header")
+			if header.IsValid() && header.IsNil() && header.CanSet() {
+				header.Set(reflect.ValueOf(global.GHeader()))
+			}
+		}
+
+		// Output access log and init timer
+		alog := s.accessLog(s.log, req.(HeaderInterface).GetHeader().GetLogid(),
+			"rpc_method", info.FullMethod)
+
+		// handle request
+		resp, err = handler(ctx, req)
+
+		// output ending log
+		s.endingLog(alog, "rpc_method", info.FullMethod,
+			"resp_error", resp.(HeaderInterface).GetHeader().GetError())
+		return resp, err
+	}
+}
+
+// output rpc request access log
+func (s *server) accessLog(lg xlog.LogInterface, logId string, others ...interface{}) *rpcAccessLog {
+	// check param
+	if lg == nil {
+		return nil
+	}
+
+	xlf, _ := xlog.NewLogger(lg, logId)
+	alog := &rpcAccessLog{
+		xlogf:  xlf,
+		xtimer: global.NewXTimer(),
+	}
+
+	logFields := make([]interface{}, 0)
+	logFields = append(logFields, others...)
+
+	alog.xlogf.Info("xchain rpc access request", logFields...)
+	return alog
+}
+
+// output rpc request ending log
+func (t *server) endingLog(alog *rpcAccessLog, others ...interface{}) {
+	if alog == nil || alog.xlogf == nil || alog.xtimer == nil {
+		return
+	}
+
+	logFields := make([]interface{}, 0)
+	logFields = append(logFields, "cost_time", alog.xtimer.Print())
+	logFields = append(logFields, others...)
+	alog.xlogf.Notice("xchain rpc service done", logFields...)
+}
+
 func startTCPServer(xchainmg *xchaincore.XChainMG) error {
 	var (
-		cfg   = xchainmg.Cfg
-		log   = xchainmg.Log
-		isTLS = cfg.TCPServer.TLS
-		svr   = server{log: log, mg: xchainmg, dedupCache: common.NewLRUCache(cfg.DedupCacheSize), dedupTimeLimit: cfg.DedupTimeLimit}
-
-		rpcOptions []grpc.ServerOption
+		cfg                     = xchainmg.Cfg
+		log                     = xchainmg.Log
+		isTLS                   = cfg.TCPServer.TLS
+		svr                     = server{log: log, mg: xchainmg, dedupCache: common.NewLRUCache(cfg.DedupCacheSize), dedupTimeLimit: cfg.DedupTimeLimit}
+		unaryServerInterceptors = make([]grpc.UnaryServerInterceptor, 0)
+		rpcOptions              []grpc.ServerOption
 	)
 
+	unaryServerInterceptors = append(unaryServerInterceptors, svr.UnaryServerInterceptor())
 	if cfg.TCPServer.MetricPort != "" {
 		// add prometheus support
 		rpcOptions = append(rpcOptions,
 			grpc.StreamInterceptor(grpc_prometheus.StreamServerInterceptor),
-			grpc.UnaryInterceptor(grpc_prometheus.UnaryServerInterceptor),
 		)
-
+		unaryServerInterceptors = append(unaryServerInterceptors, grpc_prometheus.UnaryServerInterceptor)
 	}
 
 	rpcOptions = append(rpcOptions,
+		middleware.WithUnaryServerChain(unaryServerInterceptors...),
 		grpc.MaxMsgSize(cfg.TCPServer.MaxMsgSize),
 		grpc.ReadBufferSize(cfg.TCPServer.ReadBufferSize),
 		grpc.InitialWindowSize(cfg.TCPServer.InitialWindowSize),
