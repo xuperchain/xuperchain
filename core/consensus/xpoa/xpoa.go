@@ -129,46 +129,67 @@ func (xpoa *XPoa) buildXPoaConfig(consCfg map[string]interface{}) error {
 	if consCfg["version"] == nil {
 		xpoa.xpoaConf.version = 0
 	} else {
-		version, err := strconv.ParseInt(consCfg["version"].(string), 10, 64)
+		version, ok := consCfg["version"].(string)
+		if !ok {
+			return errors.New("invalid type of version")
+		}
+		versionInt, err := strconv.ParseInt(version, 10, 64)
 		if err != nil {
 			xpoa.lg.Warn("Parse XPoa config version error", "error", err.Error())
 			return err
 		}
-		xpoa.xpoaConf.version = version
+		xpoa.xpoaConf.version = versionInt
 	}
 
 	if consCfg["period"] == nil {
 		return errors.New("Parse XPoa period error, can not be null")
 	}
-	period, err := strconv.ParseInt(consCfg["period"].(string), 10, 64)
+
+	period, ok := consCfg["period"].(string)
+	if !ok {
+		return errors.New("invalid type of period")
+	}
+	periodInt, err := strconv.ParseInt(period, 10, 64)
 	if err != nil {
 		xpoa.lg.Warn("Parse XPoa config period error", "error", err.Error())
 		return err
 	}
-	xpoa.xpoaConf.period = period * 1e6
+	xpoa.xpoaConf.period = periodInt * 1e6
 
 	if consCfg["block_num"] == nil {
 		return errors.New("Parse XPoa block_num error, can not be null")
 	}
-	blockNum, err := strconv.ParseInt(consCfg["block_num"].(string), 10, 64)
+	blockNum, ok := consCfg["block_num"].(string)
+	if !ok {
+		return errors.New("invalid type of period")
+	}
+	blockNumInt, err := strconv.ParseInt(blockNum, 10, 64)
 	if err != nil {
 		xpoa.lg.Warn("Parse XPoa block_num error", "error", err.Error())
 		return err
 	}
-	xpoa.xpoaConf.blockNum = blockNum
+	xpoa.xpoaConf.blockNum = blockNumInt
 
 	if consCfg["contract_name"] == nil {
 		return errors.New("Parse XPoa contract_name error, can not be null")
 	}
-	xpoa.xpoaConf.contractName = consCfg["contract_name"].(string)
+	contractName, ok := consCfg["contract_name"].(string)
+	if !ok {
+		return errors.New("invalid type of contract_name")
+	}
+	xpoa.xpoaConf.contractName = contractName
 
 	if consCfg["method_name"] == nil {
 		return errors.New("Parse XPoa method_name error, can not be null")
 	}
-	xpoa.xpoaConf.methodName = consCfg["method_name"].(string)
+	methodName, ok := consCfg["method_name"].(string)
+	if !ok {
+		return errors.New("invalid type of method_name")
+	}
+	xpoa.xpoaConf.methodName = methodName
 
 	// init proposers
-	xpoa.lg.Trace("Config init_proposer", "init_proposer", consCfg["init_proposer"])
+	xpoa.lg.Debug("Config init_proposer", "init_proposer", consCfg["init_proposer"])
 	if consCfg["init_proposer"] == nil {
 		return errors.New("Parse XPoa init_proposer error, can not be null")
 	}
