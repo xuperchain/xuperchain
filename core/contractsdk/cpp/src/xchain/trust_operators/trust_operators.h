@@ -31,6 +31,13 @@ public:
   bool authorize(const AuthInfo &auth,
                  std::map<std::string, std::string> *result);
 
+  // paillier homomorphic method
+  bool paillier_add(const Operand &left_op, const Operand &right_op,
+           const std::string pubkey, std::map<std::string, std::string> *result);
+
+  bool paillier_mul(const Operand &left_op, const std::string scalar,
+           const std::string pubkey, std::map<std::string, std::string> *result);
+
 private:
   xchain::Context *_ctx;
   const uint32_t _svn;
