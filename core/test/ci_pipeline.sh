@@ -16,7 +16,7 @@ function spawn_process()
 {
     local name=$1
     local cmd=$2
-    bash -c "pwd && $cmd 2>&1 | sed -e 's/^/[$name] /;'" &
+    nohup bash -c "pwd && $cmd 2>&1 | sed -e 's/^/[$name] /;'" &
 }
 
 function wait_cond()
@@ -58,6 +58,21 @@ function get_addrs()
 	addr=($addr1 $addr2 $addr3)
 	echo "--------> addr=[$addr1 $addr2 $addr3]"
 }
+
+# 删除该目录之前部署的xchain
+function clear_env()
+{
+	pid_list=$(ps -efww| grep xchain| grep -v grep| awk -F ' ' '{print $2}')
+	for pid in ${pid_list[@]};do
+		path=$(ls -l /proc/$pid/cwd| awk -F ' ' '{print $NF}')
+		if [[ "$path" =~ "$basepath" ]];then
+			kill $pid
+			echo "kill $pid, path=$path"
+		fi
+	done
+	rm -rf node* relate_file
+}
+
 function deploy_env()
 {
 	mkdir node1 node2 node3
@@ -66,7 +81,7 @@ function deploy_env()
 	{
 		tcp_port="3710$i"
 		metric_port="3720$i"
-        p2p_port="4710$i"
+		p2p_port="4710$i"
 		cp -r $outputpath/output/* $basepath/node$i
 		local log_level="info"
 		sed -i'' -e "s/level:.*/level: $log_level/" $basepath/node$i/conf/xchain.yaml
@@ -76,9 +91,12 @@ function deploy_env()
 			cd $basepath/node$i
 			$basepath/node$i/xchain-cli account newkeys
 			$basepath/node$i/xchain-cli netURL gen
-			sed -i'' -e "18s/  port:.*/  port: :$tcp_port/" $basepath/node$i/conf/xchain.yaml
-			sed -i'' -e "20s/  metricPort:.*/  metricPort: :$metric_port/" $basepath/node$i/conf/xchain.yaml
-			sed -i'' -e "29s/  port:.*/  port: $p2p_port/" $basepath/node$i/conf/xchain.yaml
+			line_num1=`grep -n tcpServer -A 10 $basepath/node$i/conf/xchain.yaml|grep port|head -n 1|awk -F '-' '{print $1}'`
+			line_num2=`grep -n tcpServer -A 10 $basepath/node$i/conf/xchain.yaml|grep metricPort|head -n 1|awk -F '-' '{print $1}'`
+			line_num3=`grep -n p2p -A 10 $basepath/node$i/conf/xchain.yaml|grep port|head -n 1|awk -F '-' '{print $1}'`
+			sed -i'' -e "${line_num1}s/  port:.*/  port: :$tcp_port/" $basepath/node$i/conf/xchain.yaml
+			sed -i'' -e "${line_num2}s/  metricPort:.*/  metricPort: :$metric_port/" $basepath/node$i/conf/xchain.yaml
+			sed -i'' -e "${line_num3}s/  port:.*/  port: $p2p_port/" $basepath/node$i/conf/xchain.yaml
 		fi
 		#修改xuper.json文件
 		if [ $i -eq 1 ];then
@@ -88,15 +106,15 @@ function deploy_env()
 			timestamp=`date +%s`
 			proposer_num=2
 			block_num=5
-		    echo "timestamp=$timestamp proposer_num=$proposer_num addr2=$addr2 neturl2=$neturl2"
+			echo "timestamp=$timestamp proposer_num=$proposer_num addr2=$addr2 neturl2=$neturl2"
 			cp $basepath/relate_file/xuper.json $basepath/node$i/data/config/xuper.json
 			sed -i'' -e 's/\("timestamp": "\).*/\1'"$timestamp"'000000000"\,/' $basepath/node$i/data/config/xuper.json
 			sed -i'' -e 's/\("proposer_num": "\).*/\1'"$proposer_num"'"\,/' $basepath/node$i/data/config/xuper.json
 			sed -i'' -e 's/\("block_num": "\).*/\1'"$block_num"'"\,/' $basepath/node$i/data/config/xuper.json
 			sed -i'' -e "s/nodeaddress/$addr2/" $basepath/node$i/data/config/xuper.json
-            sed -i'' -e "s@nodeneturl@$neturl2@" $basepath/node$i/data/config/xuper.json
-            cp $basepath/node1/data/config/xuper.json $basepath/node2/data/config/xuper.json
-            cp $basepath/node1/data/config/xuper.json $basepath/node3/data/config/xuper.json
+			sed -i'' -e "s@nodeneturl@$neturl2@" $basepath/node$i/data/config/xuper.json
+			cp $basepath/node1/data/config/xuper.json $basepath/node2/data/config/xuper.json
+			cp $basepath/node1/data/config/xuper.json $basepath/node3/data/config/xuper.json
 			cd $basepath/node$i
 			cd $basepath/node$i && $basepath/node$i/xchain-cli createChain
 			spawn_process "node$i" $basepath/node$i/xchain
@@ -108,7 +126,7 @@ function deploy_env()
 		fi
     }
 	sed -i'' -e "s/#bootNodes/bootNodes/; s@#  - \"/ip4/<ip>.*@  - $(cat $basepath/node1/neturl.txt)@" $basepath/node2/conf/xchain.yaml
-    sed -i'' -e "s/#bootNodes/bootNodes/; s@#  - \"/ip4/<ip>.*@  - $(cat $basepath/node1/neturl.txt)@" $basepath/node3/conf/xchain.yaml
+	sed -i'' -e "s/#bootNodes/bootNodes/; s@#  - \"/ip4/<ip>.*@  - $(cat $basepath/node1/neturl.txt)@" $basepath/node3/conf/xchain.yaml
     ##node2,3节点创建链并启动
 	cd $basepath/node2 && $basepath/node2/xchain-cli createChain && spawn_process node2 $basepath/node2/xchain
 	cd $basepath/node3 && $basepath/node3/xchain-cli createChain && spawn_process node3 $basepath/node3/xchain
@@ -165,19 +183,19 @@ function tdpos_nominate()
 
 function check_nominate()
 {
-    cd $basepath/node1
-    check_base=$(./xchain-cli tdpos query-candidates -H=127.0.0.1:37101)
-    echo "nominate result of node1 is:"$check_base
-    for ((i=1;i<=3;i++))
-    {
-        result=$(./xchain-cli tdpos query-candidates -H=127.0.0.1:3710$i)
-        if [ "$check_base" = "$result" ];then
-            echo -e "\033[42;30m node$i is the same as node1 \033[0m \n"
-        else
-            echo -e "\033[43;35m node$i is different from node1  \033[0m \n"
+	cd $basepath/node1
+	check_base=$(./xchain-cli tdpos query-candidates -H=127.0.0.1:37101)
+	echo "nominate result of node1 is:"$check_base
+	for ((i=1;i<=3;i++))
+	{
+		result=$(./xchain-cli tdpos query-candidates -H=127.0.0.1:3710$i)
+		if [ "$check_base" = "$result" ];then
+			echo -e "\033[42;30m node$i is the same as node1 \033[0m \n"
+		else
+			echo -e "\033[43;35m node$i is different from node1  \033[0m \n"
 			exit 1
 		fi
-    }
+	}
 
 }
 
@@ -330,6 +348,8 @@ function deploy_invoke_contract()
 		exit 1
 	fi
 }
+echo "--------> clear env if deploy before"
+clear_env
 echo "--------> start to gen relate file"
 gen_file
 sleep 2
