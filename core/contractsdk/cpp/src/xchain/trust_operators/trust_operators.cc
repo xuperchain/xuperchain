@@ -1,6 +1,6 @@
-#include <bitset>
 #include "xchain/trust_operators/trust_operators.h"
 #include "xchain/trust_operators/tf.pb.h"
+#include <bitset>
 
 extern "C" uint32_t xvm_tfcall(const char *inputptr, size_t inputlen,
                                char **outputptr, size_t *outputlen);
@@ -154,15 +154,14 @@ bool TrustOperators::paillier_add(const Operand &left_op,
 }
 
 /*
-    paillier_mul implements encrypted data scalar multiplication;
-    left_op is left operand(cipher1 | commitment1), scalar is the scalar
+    paillier_partial_mul implements partially homomorphic multiplication;
+    left_op is left operand(cipher1 | commitment1), scalar is the number
     to multiply left_op, pubkey is the paillier public key,
     return {{"ciphertext", "enc_result"}}
  */
-bool TrustOperators::paillier_mul(const Operand &left_op,
-                         const std::string scalar,
-                         const std::string pubkey,
-                         std::map<std::string, std::string> *result) {
+bool TrustOperators::paillier_partial_mul(
+    const Operand &left_op, const std::string scalar, const std::string pubkey,
+    std::map<std::string, std::string> *result) {
   TrustFunctionCallRequest req;
   req.set_method("PaillierExp");
   std::map<std::string, std::string> args_map;

@@ -194,8 +194,9 @@ DEFINE_METHOD(PaillierData, add) {
     return;
   }
 
-  if ( dat1.pubkey() != dat2.pubkey()) {
-    ctx->error("addition of data with different public keys are not supported yet");
+  if (dat1.pubkey() != dat2.pubkey()) {
+    ctx->error(
+        "addition of data with different public keys are not supported yet");
     return;
   }
 
@@ -257,7 +258,7 @@ DEFINE_METHOD(PaillierData, mul) {
   // call trust operator to mul, returns {{"ciphertext", mul_result}}
   TrustOperators to(ctx, 0);
   std::map<std::string, std::string> result;
-  auto debug = to.paillier_mul(left_op, scalar, dat.pubkey(), &result);
+  auto debug = to.paillier_partial_mul(left_op, scalar, dat.pubkey(), &result);
   if (!debug) {
     ctx->error("failed to mul " + dataid + " and " + scalar);
     return;
