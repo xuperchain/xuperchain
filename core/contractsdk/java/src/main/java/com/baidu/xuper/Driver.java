@@ -9,7 +9,10 @@ import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
  * Driver
  */
 public class Driver {
+    // XCHAIN_CHAIN_ADDR is the address exposed by XuperBridge, used to initiate
+    // syscall calls to xchain
     final private static String XCHAIN_CHAIN_ADDR = "XCHAIN_CHAIN_ADDR";
+    // XCHAIN_CODE_PORT is the grpc port that the contract is exposed to xchain
     final private static String XCHAIN_CODE_PORT = "XCHAIN_CODE_PORT";
 
     public static void serve(Contract contract) {

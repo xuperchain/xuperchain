@@ -1,5 +1,6 @@
 package com.baidu.xuper;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -10,7 +11,8 @@ import com.google.protobuf.ByteString;
 import io.grpc.StatusRuntimeException;
 
 /**
- * ContextImpl
+ * ContextImpl implements the Context interface and provides an interface to
+ * access the XuperBridge for a single contract call
  */
 class ContextImpl implements Context {
 
@@ -38,7 +40,6 @@ class ContextImpl implements Context {
             Contract.ArgPair pair = this.callArgs.getArgs(i);
             args.put(pair.getKey(), pair.getValue().toByteArray());
         }
-        this.callArgs.getInitiator();
     }
 
     public void setOutput(Response resp) {
@@ -62,7 +63,7 @@ class ContextImpl implements Context {
 
     @Override
     public Map<String, byte[]> args() {
-        return this.args;
+        return Collections.unmodifiableMap(this.args);
     }
 
     @Override
