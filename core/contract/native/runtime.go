@@ -81,6 +81,7 @@ func (d *DockerProcess) Start() error {
 		"XCHAIN_PING_TIMEOUT=" + strconv.Itoa(pingTimeoutSecond),
 	}
 	env = append(env, d.envs...)
+	env = append(env, os.Environ()...)
 
 	user := strconv.Itoa(os.Getuid()) + ":" + strconv.Itoa(os.Getgid())
 
@@ -176,6 +177,9 @@ func (h *HostProcess) Start() error {
 	}
 	cmd.Env = []string{"XCHAIN_PING_TIMEOUT=" + strconv.Itoa(pingTimeoutSecond)}
 	cmd.Env = append(cmd.Env, h.envs...)
+	cmd.Env = append(cmd.Env, os.Environ()...)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 
 	if err := cmd.Start(); err != nil {
 		return err

@@ -52,31 +52,35 @@ func newContractProcess(cfg *config.NativeConfig, name, basedir, chainAddr strin
 	return process, nil
 }
 
-func (c *contractProcess) makeHostProcess() Process {
+func (c *contractProcess) makeHostProcess() (Process, error) {
 	envs := []string{
 		"XCHAIN_CODE_PORT=" + strconv.Itoa(c.rpcPort),
 		"XCHAIN_CHAIN_ADDR=" + c.chainAddr,
 	}
+	startcmd, err := c.makeStartCommand()
+	if err != nil {
+		return nil, err
+	}
 	if !c.cfg.Docker.Enable {
 		return &HostProcess{
 			basedir:  c.basedir,
-			startcmd: c.binpath,
+			startcmd: startcmd,
 			envs:     envs,
 			Logger:   c.logger,
-		}
+		}, nil
 	}
 	mounts := []string{
 		c.basedir,
 	}
 	return &DockerProcess{
 		basedir:  c.basedir,
-		startcmd: c.binpath,
+		startcmd: startcmd,
 		envs:     envs,
 		mounts:   mounts,
 		// ports:    []string{strconv.Itoa(c.rpcPort)},
 		cfg:    &c.cfg.Docker,
 		Logger: c.logger,
-	}
+	}, nil
 }
 
 // wait the subprocess to be ready
@@ -166,7 +170,11 @@ func (c *contractProcess) start(startMonitor bool) error {
 	if err != nil {
 		return err
 	}
-	c.process = c.makeHostProcess()
+	c.process, err = c.makeHostProcess()
+	if err != nil {
+		return err
+	}
+
 	err = c.process.Start()
 	if err != nil {
 		return err
@@ -201,6 +209,17 @@ func (c *contractProcess) Stop() {
 
 func (c *contractProcess) GetDesc() *xpb.WasmCodeDesc {
 	return c.desc
+}
+
+func (c *contractProcess) makeStartCommand() (string, error) {
+	switch c.desc.GetRuntime() {
+	case "java":
+		return "java -jar " + c.binpath, nil
+	case "go":
+		return c.binpath, nil
+	default:
+		return "", fmt.Errorf("unsupported native contract runtime %s", c.desc.GetRuntime())
+	}
 }
 
 func makeFreePort() (int, error) {

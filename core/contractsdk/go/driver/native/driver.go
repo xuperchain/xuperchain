@@ -20,14 +20,6 @@ const (
 	xchainChainAddr   = "XCHAIN_CHAIN_ADDR"
 )
 
-func redirectStderr() {
-	f, err := os.OpenFile("stderr.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
-	if err == nil {
-		syscall.Dup2(int(f.Fd()), 2)
-		f.Close()
-	}
-}
-
 type driver struct {
 }
 
@@ -37,7 +29,6 @@ func New() code.Driver {
 }
 
 func (d *driver) Serve(contract code.Contract) {
-	redirectStderr()
 	chainAddr := os.Getenv(xchainChainAddr)
 	codePort := os.Getenv(xchainCodePort)
 
