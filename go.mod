@@ -8,12 +8,13 @@ require (
 	github.com/btcsuite/btcutil v0.0.0-20190425235716-9e5f4b9a998d
 	github.com/ddliu/motto v0.3.1
 	github.com/dgraph-io/badger/v2 v2.0.0-rc.2
-	github.com/docker/go-connections v0.4.1-0.20180821093606-97c2040d34df
+	github.com/docker/go-connections v0.4.1-0.20180821093606-97c2040d34df // indirect
 	github.com/docker/go-units v0.4.0
 	github.com/fsouza/go-dockerclient v1.6.0
 	github.com/gogo/protobuf v1.3.0
 	github.com/golang/protobuf v1.3.2
 	github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db
+	github.com/grpc-ecosystem/go-grpc-middleware v1.2.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
 	github.com/grpc-ecosystem/grpc-gateway v1.9.2
 	github.com/hashicorp/golang-lru v0.5.3
