@@ -290,8 +290,8 @@ type NodeConfig struct {
 	//  3. Mixed_BroadCast_Mode是指出块节点将新块用Full_BroadCast_Mode模式广播，其他节点使用Interactive_BroadCast_Mode
 	BlockBroadcaseMode uint8 `yaml:"blockBroadcaseMode,omitempty"`
 	// cloud storage config
-	CloudStorage   CloudStorageConfig `yaml:"cloudStorage,omitempty"`
-	ContractConfig ContractConfig     `yaml:"contract,omitempty"`
+	CloudStorage CloudStorageConfig `yaml:"cloudStorage,omitempty"`
+	Contract     ContractConfig     `yaml:"contract,omitempty"`
 }
 
 // KernelConfig kernel config
@@ -377,7 +377,7 @@ func (nc *NodeConfig) defaultNodeConfig() {
 			OptLevel: 0,
 		},
 	}
-	nc.ContractConfig = ContractConfig{
+	nc.Contract = ContractConfig{
 		EnableDebugLog: true,
 		DebugLog: LogConfig{
 			Module:         "contract",
@@ -512,7 +512,7 @@ func (nc *NodeConfig) ApplyFlags(flags *pflag.FlagSet) {
 
 	// for backward compatibility
 	if nc.Wasm.EnableUpgrade {
-		nc.ContractConfig.EnableUpgrade = true
+		nc.Contract.EnableUpgrade = true
 	}
 
 	flags.StringVar(&nc.Datapath, "datapath", nc.Datapath, "used for config overwrite --datapath <data path>")
@@ -527,5 +527,5 @@ func (nc *NodeConfig) ApplyFlags(flags *pflag.FlagSet) {
 
 // VisitAll print all config of node
 func (nc *NodeConfig) VisitAll() {
-	fmt.Println("Config of xchain", nc)
+	fmt.Printf("Config of xchain %#v\n", nc)
 }
