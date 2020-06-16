@@ -136,14 +136,6 @@ type UtxoConfig struct {
 	MaxConfirmedDelay uint32          `yaml:"maxConfirmedDelay,omitempty"`
 }
 
-// NativeDeployConfig native contract deploy config
-type NativeDeployConfig struct {
-	WhiteList struct {
-		Enable    bool
-		Addresses []string
-	}
-}
-
 // NativeDockerConfig native contract use docker config
 type NativeDockerConfig struct {
 	Enable    bool
@@ -255,21 +247,25 @@ type NodeConfig struct {
 	CPUProfile      string          `yaml:"cpuprofile,omitempty"`
 	MemProfile      string          `yaml:"memprofile,omitempty"`
 	MemberWhiteList map[string]bool `yaml:"memberWhiteList,omitempty"`
-	Native          NativeConfig    `yaml:"native,omitempty"`
-	DBCache         DBCacheConfig   `yaml:"dbcache,omitempty"`
+
+	// 合约相关配置
+	Contract ContractConfig `yaml:"contract,omitempty"`
+	Native   NativeConfig   `yaml:"native,omitempty"`
+	Wasm     WasmConfig     `yaml:"wasm,omitempty"`
+
+	DBCache DBCacheConfig `yaml:"dbcache,omitempty"`
 	// 节点模式: NORMAL | FAST_SYNC 两种模式
 	// NORMAL: 为普通的全节点模式
 	// FAST_SYNC 模式下:节点需要连接一个可信的全节点; 拒绝事务提交; 同步区块时跳过块验证和tx验证; 去掉load未确认事务;
-	NodeMode        string     `yaml:"nodeMode,omitempty"`
-	PluginConfPath  string     `yaml:"pluginConfPath,omitempty"` // plugin config file path
-	PluginLoadPath  string     `yaml:"pluginLoadPath,omitempty"` // plugin auto-load path
-	EtcdClusterAddr string     `yaml:"etcdClusterAddr,omitempty"`
-	GatewaySwitch   bool       `yaml:"gatewaySwitch,omitempty"`
-	Wasm            WasmConfig `yaml:"wasm,omitempty"`
-	CoreConnection  bool       `yaml:"coreConnection,omitempty"`
-	FailSkip        bool       `yaml:"failSkip,omitempty"`
-	ModifyBlockAddr string     `yaml:"modifyBlockAddr,omitempty"`
-	EnableXEndorser bool       `yaml:"enableXEndorser,omitempty"`
+	NodeMode        string `yaml:"nodeMode,omitempty"`
+	PluginConfPath  string `yaml:"pluginConfPath,omitempty"` // plugin config file path
+	PluginLoadPath  string `yaml:"pluginLoadPath,omitempty"` // plugin auto-load path
+	EtcdClusterAddr string `yaml:"etcdClusterAddr,omitempty"`
+	GatewaySwitch   bool   `yaml:"gatewaySwitch,omitempty"`
+	CoreConnection  bool   `yaml:"coreConnection,omitempty"`
+	FailSkip        bool   `yaml:"failSkip,omitempty"`
+	ModifyBlockAddr string `yaml:"modifyBlockAddr,omitempty"`
+	EnableXEndorser bool   `yaml:"enableXEndorser,omitempty"`
 	// TxCacheExpiredTime expired time for tx cache
 	TxidCacheExpiredTime time.Duration `yaml:"txidCacheExpiredTime,omitempty"`
 	// local switch of compressed
@@ -290,7 +286,6 @@ type NodeConfig struct {
 	BlockBroadcaseMode uint8 `yaml:"blockBroadcaseMode,omitempty"`
 	// cloud storage config
 	CloudStorage CloudStorageConfig `yaml:"cloudStorage,omitempty"`
-	Contract     ContractConfig     `yaml:"contract,omitempty"`
 }
 
 // KernelConfig kernel config
