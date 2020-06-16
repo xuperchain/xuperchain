@@ -157,7 +157,6 @@ type NativeConfig struct {
 	Driver string
 	// Timeout (in seconds) to stop native code process
 	StopTimeout int
-	Deploy      NativeDeployConfig
 	Docker      NativeDockerConfig
 	Enable      bool
 }
