@@ -287,7 +287,7 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 			bridge.TypeNative: &cfg.Native,
 		},
 		XModel: xc.Utxovm.GetXModel(),
-		Config: cfg.ContractConfig,
+		Config: cfg.Contract,
 	})
 	if err != nil {
 		return err
