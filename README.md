@@ -1,5 +1,16 @@
-### 调研:区块链底层开源技术哪家强？
-每每到了区块链技术选型的时刻， 是性能？还是安全？还是易用性更重要？你是否经常犯难？填写这份小调研[链接](https://www.wjx.cn/m/80446725.aspx)  助你快速总结出区块链开源技术选型比较的方法，得到此次调研的结论，同时还有机会获得小度智能音箱、区块链应用案例集、京东卡等精美小礼品一份~ 🎁
+### 开发者大赛已正式启动 
+![developer_competition](https://raw.githubusercontent.com/xuperchain/docs/master/source/images/post_4th_blockchain_developer_competition.png)
+
+工信部下中国区块链开发大赛启动啦🎉🎉🎉快来参赛瓜分21万奖金池！
+
+💡百度超级链组队参赛，「超级战队」成员招募！
+如果使用XuperChain参赛，
+你将获得赛前培训、技术支持、评审加分等硬核支持，
+还有总量10万元的参赛助力金，
+助你在比赛中轻松“C位出道”！
+
+👇🏻报名链接：http://www.cbdforum.cn/bcweb/
+添加百度超级链小助手微信（image-baidu），回复“开发者大赛”，进入官方交流群，获得百度超级链赛前培训、技术支持等扶持！
 
 # XuperChain
 

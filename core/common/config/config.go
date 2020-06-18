@@ -136,14 +136,6 @@ type UtxoConfig struct {
 	MaxConfirmedDelay uint32          `yaml:"maxConfirmedDelay,omitempty"`
 }
 
-// NativeDeployConfig native contract deploy config
-type NativeDeployConfig struct {
-	WhiteList struct {
-		Enable    bool
-		Addresses []string
-	}
-}
-
 // NativeDockerConfig native contract use docker config
 type NativeDockerConfig struct {
 	Enable    bool
@@ -157,7 +149,6 @@ type NativeConfig struct {
 	Driver string
 	// Timeout (in seconds) to stop native code process
 	StopTimeout int
-	Deploy      NativeDeployConfig
 	Docker      NativeDockerConfig
 	Enable      bool
 }
@@ -256,21 +247,25 @@ type NodeConfig struct {
 	CPUProfile      string          `yaml:"cpuprofile,omitempty"`
 	MemProfile      string          `yaml:"memprofile,omitempty"`
 	MemberWhiteList map[string]bool `yaml:"memberWhiteList,omitempty"`
-	Native          NativeConfig    `yaml:"native,omitempty"`
-	DBCache         DBCacheConfig   `yaml:"dbcache,omitempty"`
+
+	// 合约相关配置
+	Contract ContractConfig `yaml:"contract,omitempty"`
+	Native   NativeConfig   `yaml:"native,omitempty"`
+	Wasm     WasmConfig     `yaml:"wasm,omitempty"`
+
+	DBCache DBCacheConfig `yaml:"dbcache,omitempty"`
 	// 节点模式: NORMAL | FAST_SYNC 两种模式
 	// NORMAL: 为普通的全节点模式
 	// FAST_SYNC 模式下:节点需要连接一个可信的全节点; 拒绝事务提交; 同步区块时跳过块验证和tx验证; 去掉load未确认事务;
-	NodeMode        string     `yaml:"nodeMode,omitempty"`
-	PluginConfPath  string     `yaml:"pluginConfPath,omitempty"` // plugin config file path
-	PluginLoadPath  string     `yaml:"pluginLoadPath,omitempty"` // plugin auto-load path
-	EtcdClusterAddr string     `yaml:"etcdClusterAddr,omitempty"`
-	GatewaySwitch   bool       `yaml:"gatewaySwitch,omitempty"`
-	Wasm            WasmConfig `yaml:"wasm,omitempty"`
-	CoreConnection  bool       `yaml:"coreConnection,omitempty"`
-	FailSkip        bool       `yaml:"failSkip,omitempty"`
-	ModifyBlockAddr string     `yaml:"modifyBlockAddr,omitempty"`
-	EnableXEndorser bool       `yaml:"enableXEndorser,omitempty"`
+	NodeMode        string `yaml:"nodeMode,omitempty"`
+	PluginConfPath  string `yaml:"pluginConfPath,omitempty"` // plugin config file path
+	PluginLoadPath  string `yaml:"pluginLoadPath,omitempty"` // plugin auto-load path
+	EtcdClusterAddr string `yaml:"etcdClusterAddr,omitempty"`
+	GatewaySwitch   bool   `yaml:"gatewaySwitch,omitempty"`
+	CoreConnection  bool   `yaml:"coreConnection,omitempty"`
+	FailSkip        bool   `yaml:"failSkip,omitempty"`
+	ModifyBlockAddr string `yaml:"modifyBlockAddr,omitempty"`
+	EnableXEndorser bool   `yaml:"enableXEndorser,omitempty"`
 	// TxCacheExpiredTime expired time for tx cache
 	TxidCacheExpiredTime time.Duration `yaml:"txidCacheExpiredTime,omitempty"`
 	// local switch of compressed
@@ -290,8 +285,7 @@ type NodeConfig struct {
 	//  3. Mixed_BroadCast_Mode是指出块节点将新块用Full_BroadCast_Mode模式广播，其他节点使用Interactive_BroadCast_Mode
 	BlockBroadcaseMode uint8 `yaml:"blockBroadcaseMode,omitempty"`
 	// cloud storage config
-	CloudStorage   CloudStorageConfig `yaml:"cloudStorage,omitempty"`
-	ContractConfig ContractConfig     `yaml:"contract,omitempty"`
+	CloudStorage CloudStorageConfig `yaml:"cloudStorage,omitempty"`
 }
 
 // KernelConfig kernel config
@@ -377,7 +371,7 @@ func (nc *NodeConfig) defaultNodeConfig() {
 			OptLevel: 0,
 		},
 	}
-	nc.ContractConfig = ContractConfig{
+	nc.Contract = ContractConfig{
 		EnableDebugLog: true,
 		DebugLog: LogConfig{
 			Module:         "contract",
@@ -512,7 +506,7 @@ func (nc *NodeConfig) ApplyFlags(flags *pflag.FlagSet) {
 
 	// for backward compatibility
 	if nc.Wasm.EnableUpgrade {
-		nc.ContractConfig.EnableUpgrade = true
+		nc.Contract.EnableUpgrade = true
 	}
 
 	flags.StringVar(&nc.Datapath, "datapath", nc.Datapath, "used for config overwrite --datapath <data path>")
@@ -527,5 +521,5 @@ func (nc *NodeConfig) ApplyFlags(flags *pflag.FlagSet) {
 
 // VisitAll print all config of node
 func (nc *NodeConfig) VisitAll() {
-	fmt.Println("Config of xchain", nc)
+	fmt.Printf("Config of xchain %#v\n", nc)
 }

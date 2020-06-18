@@ -11,7 +11,7 @@ assignees: ''
 Describe here
 
 **Your environment**
-XuperUnion and OS/Go/gcc version etc.
+XuperChain and OS/Go/gcc version etc.
 
 **Repo steps**
 Describe how to reproduce this issue.
