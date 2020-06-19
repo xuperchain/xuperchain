@@ -246,10 +246,15 @@ public class Erc20 implements Contract
 
         String fromKey = BALANCEPRE + from;
         byte[] fromBalanceByte = ctx.getObject(fromKey.getBytes());
-        if (fromBalanceByte == null) {
+        BigInteger fromBalance;
+        if (fromBalanceByte != null) {
+            fromBalance = new BigInteger(fromBalanceByte);
+            if (fromBalance.compareTo(tokenAmount) == -1){
+                return Response.error("The balance of from is not enough");
+            }
+        } else {
             return Response.error("no from found");
         }
-        BigInteger fromBalance = new BigInteger(fromBalanceByte);
 
         String toKey = BALANCEPRE + to;
         byte[] toBalanceByte = ctx.getObject(toKey.getBytes());
