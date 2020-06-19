@@ -273,11 +273,10 @@ public class Erc20 implements Contract
 
     @ContractMethod
     public Response approve(Context ctx) {
-        byte[] fromByte = ctx.args().get("from");
-        if (fromByte == null) {
-            return Response.error("missing from");
+        String from = ctx.caller();
+        if (from.isEmpty()){
+            return Response.error("missing caller");
         }
-        String from = new String(fromByte);
 
         byte[] toByte = ctx.args().get("to");
         if (toByte == null) {

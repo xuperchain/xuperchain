@@ -21,11 +21,11 @@
 # 查询资产总量
 $ xchain-cli native query --method totalSupply erc20java
 # 转账
-$ xchain-cli native invoke --method transfer -a '{"to":"dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN","token":"10"}' erc206191 --fee 200000 --account XC1111111111111113@xuper
+$ xchain-cli native invoke --method transfer -a '{"to":"dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN","token":"10"}' erc20java --fee 200000 --account XC1111111111111113@xuper
 # 余额查询
 $ xchain-cli native query --method balance -a '{"account":"XC1111111111111113@xuper"}' erc20java
 # 授权额度
-$ xchain-cli native invoke --method approve -a '{"from":"XC1111111111111113@xuper","to":"dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN","token":"10000"}' erc20java --fee 200000 --account XC1111111111111113@xuper
+$ xchain-cli native invoke --method approve -a '{"to":"dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN","token":"10000"}' erc20java --fee 200000 --account XC1111111111111113@xuper
 # 查询授权额度
 $ xchain-cli native query --method allowance -a '{"from":"XC1111111111111113@xuper","to":"dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN"}' erc20java
 # 使用授权额度
