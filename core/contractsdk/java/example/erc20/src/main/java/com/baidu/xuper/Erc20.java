@@ -91,13 +91,11 @@ public class Erc20 implements Contract
 
     @ContractMethod
     public Response totalSupply(Context ctx) {
-        BigInteger totalSupply;
         byte[] value = ctx.getObject(TOTALSUPPLY.getBytes());
-        if (value != null) {
-            totalSupply = new BigInteger(value);
-        } else {
+        if (value == null) {
             return Response.error("key TOTALSUPPLY not found)");
         }
+        BigInteger totalSupply = new BigInteger(value);
 
         return Response.ok(totalSupply.toString().getBytes());
     }
@@ -110,14 +108,12 @@ public class Erc20 implements Contract
         }
         String account = new String(accountByte);
 
-        BigInteger balance;
         String balanceKey = BALANCEPRE + account;
         byte[] value = ctx.getObject(balanceKey.getBytes());
-        if (value != null) {
-            balance = new BigInteger(value);
-        } else {
+        if (value == null) {
             return Response.error("key " + account + " not found");
         }
+        BigInteger balance = new BigInteger(value);
 
         return Response.ok(balance.toString().getBytes());
     }
@@ -137,13 +133,11 @@ public class Erc20 implements Contract
         String to = new String(toByte);
 
         String allowanceKey = ALLOWANCEPRE + from + "_" + to;
-        BigInteger allowance;
         byte[] value = ctx.getObject(allowanceKey.getBytes());
-        if (value != null) {
-            allowance = new BigInteger(value);
-        } else {
+        if (value == null) {
             return Response.error("key " + allowanceKey + " not found");
         }
+        BigInteger allowance = new BigInteger(value);
 
         return Response.ok(allowance.toString().getBytes());
     }
@@ -233,27 +227,23 @@ public class Erc20 implements Contract
         BigInteger tokenAmount = new BigInteger(tokenAmountStr);
 
         String allowanceKey = ALLOWANCEPRE + from + "_" + caller;
-        BigInteger allowance;
         byte[] value = ctx.getObject(allowanceKey.getBytes());
-        if (value != null) {
-            allowance = new BigInteger(value);
-            if (allowance.compareTo(tokenAmount) == -1){
-                return Response.error("The allowance is not enough");
-            }
-        } else {
+        if (value == null) {
             return Response.error("key " + allowanceKey + " not found");
+        }
+        BigInteger allowance = new BigInteger(value);
+        if (allowance.compareTo(tokenAmount) == -1){
+            return Response.error("The allowance is not enough");
         }
 
         String fromKey = BALANCEPRE + from;
         byte[] fromBalanceByte = ctx.getObject(fromKey.getBytes());
-        BigInteger fromBalance;
-        if (fromBalanceByte != null) {
-            fromBalance = new BigInteger(fromBalanceByte);
-            if (fromBalance.compareTo(tokenAmount) == -1){
-                return Response.error("The balance of from is not enough");
-            }
-        } else {
+        if (fromBalanceByte == null) {
             return Response.error("no from found");
+        }
+        BigInteger fromBalance = new BigInteger(fromBalanceByte);
+        if (fromBalance.compareTo(tokenAmount) == -1){
+            return Response.error("The balance of from is not enough");
         }
 
         String toKey = BALANCEPRE + to;
