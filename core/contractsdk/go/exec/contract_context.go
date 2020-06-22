@@ -229,7 +229,8 @@ func (c *contractContext) SetOutput(response *code.Response) error {
 func (c *contractContext) Logf(fmtstr string, args ...interface{}) {
 	entry := fmt.Sprintf(fmtstr, args...)
 	request := &pb.PostLogRequest{
-		Entry: entry,
+		Header: &c.header,
+		Entry:  entry,
 	}
 	c.bridgeCallFunc("PostLog", request, new(pb.PostLogResponse))
 }
