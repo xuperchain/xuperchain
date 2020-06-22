@@ -40,6 +40,24 @@ public class Counter implements Contract {
         return Response.ok(counter.toString().getBytes());
     }
 
+    @ContractMethod
+    public Response get(Context ctx) {
+        byte[] key = ctx.args().get("key");
+        if (key == null) {
+            return Response.error("missing key");
+        }
+        BigInteger counter;
+        byte[] value = ctx.getObject(key);
+        if (value != null) {
+            counter = new BigInteger(value);
+        } else {
+            return Response.error("key " + new String(key) + " not found)");
+        }
+        ctx.log("get value " + counter.toString());
+
+        return Response.ok(counter.toString().getBytes());
+    }
+
     public static void main(String[] args) {
         Driver.serve(new Counter());
     }
