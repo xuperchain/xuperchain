@@ -34,6 +34,9 @@ public class Erc20 implements Contract
         }
         String totalSupplyStr = new String(totalSupplyByte);
         BigInteger totalSupply = new BigInteger(totalSupplyStr);
+        if (totalSupply.signum() == -1) {
+            return Response.error("totalSupply must not be negative");
+        }
 
         String balanceKey = BALANCEPRE + caller;
 
@@ -66,6 +69,9 @@ public class Erc20 implements Contract
         }
         String increaseSupplyStr = new String(increaseSupplyByte);
         BigInteger increaseSupply = new BigInteger(increaseSupplyStr);
+        if (increaseSupply.signum() == -1) {
+            return Response.error("amount must not be negative");
+        }
 
         byte[] totalSupplyByte = ctx.getObject(TOTALSUPPLY.getBytes());
         if (totalSupplyByte == null) {
@@ -171,6 +177,9 @@ public class Erc20 implements Contract
         }
         String tokenAmountStr = new String(tokenByte);
         BigInteger tokenAmount = new BigInteger(tokenAmountStr);
+        if (tokenAmount.signum() == -1) {
+            return Response.error("token must not be negative");
+        }
 
         String fromKey = BALANCEPRE + from;
         byte[] fromBalanceByte = ctx.getObject(fromKey.getBytes());
@@ -225,6 +234,9 @@ public class Erc20 implements Contract
         }
         String tokenAmountStr = new String(tokenByte);
         BigInteger tokenAmount = new BigInteger(tokenAmountStr);
+        if (tokenAmount.signum() == -1) {
+            return Response.error("token must not be negative");
+        }
 
         String allowanceKey = ALLOWANCEPRE + from + "_" + caller;
         byte[] value = ctx.getObject(allowanceKey.getBytes());
@@ -285,6 +297,9 @@ public class Erc20 implements Contract
         }
         String tokenAmountStr = new String(tokenByte);
         BigInteger tokenAmount = new BigInteger(tokenAmountStr);
+        if (tokenAmount.signum() == -1) {
+            return Response.error("token must not be negative");
+        }
 
         String fromKey = BALANCEPRE + from;
         byte[] fromBalanceByte = ctx.getObject(fromKey.getBytes());
