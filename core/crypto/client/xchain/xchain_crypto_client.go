@@ -159,10 +159,6 @@ func (xcc XchainCryptoClient) XuperVerify(keys []*ecdsa.PublicKey, sig []byte, m
 	curveName := keys[0].Params().Name
 	xuperSig := new(common.XuperSignature)
 	err := json.Unmarshal(sig, xuperSig)
-	if err != nil {
-		return false, err
-	}
-
 	// 说明不是统一超级签名的格式
 	if err != nil {
 		switch keys[0].Params().Name {
