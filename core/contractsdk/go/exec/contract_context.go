@@ -18,7 +18,7 @@ const (
 	methodGetCallArgs       = "GetCallArgs"
 	methodTransfer          = "Transfer"
 	methodContractCall      = "ContractCall"
-	methodCrossContractCall = "CrossContractCall"
+	methodCrossContractCall = "CrossContractQuery"
 	methodQueryTx           = "QueryTx"
 	methodQueryBlock        = "QueryBlock"
 	methodNewIterator       = "NewIterator"
