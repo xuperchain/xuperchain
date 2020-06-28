@@ -32,6 +32,14 @@ func (d *driver) Serve(contract code.Contract) {
 	chainAddr := os.Getenv(xchainChainAddr)
 	codePort := os.Getenv(xchainCodePort)
 
+	if chainAddr == "" {
+		panic("empty XCHAIN_CHAIN_ADDR env")
+	}
+
+	if codePort == "" {
+		panic("empty XCHAIN_CODE_PORT env")
+	}
+
 	nativeCodeService := newNativeCodeService(chainAddr, contract)
 	rpcServer := grpc.NewServer()
 	pbrpc.RegisterNativeCodeServer(rpcServer, nativeCodeService)
