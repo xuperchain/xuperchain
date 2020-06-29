@@ -31,6 +31,7 @@ func (c *counter) Increase(ctx code.Context) code.Response {
 	if err == nil {
 		cnt, _ = strconv.Atoi(string(value))
 	}
+	ctx.Logf("get value %s -> %d", key, cnt)
 
 	cntstr := strconv.Itoa(cnt + 1)
 
