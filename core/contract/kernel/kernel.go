@@ -286,6 +286,14 @@ func (k *Kernel) validateCreateBC(desc *contract.TxDesc) (string, string, error)
 	default:
 		return bcName, bcData, errors.New("the type of data should be string")
 	}
+
+	// check data format, prevent panic
+	bcCfg := &ledger.RootConfig{}
+	err := json.Unmarshal([]byte(bcData), bcCfg)
+	if err != nil {
+		return bcName, bcData, fmt.Errorf("first block data error.err:%v", err)
+	}
+
 	return bcName, bcData, nil
 }
 
@@ -493,7 +501,8 @@ func (k *Kernel) Run(desc *contract.TxDesc) error {
 	defer k.mutex.Unlock()
 	switch desc.Method {
 	case "CreateBlockChain":
-		bcName, bcData, err := k.validateCreateBC(desc) //需要校验，否则容易panic
+		// 需要校验，否则容易panic
+		bcName, bcData, err := k.validateCreateBC(desc)
 		if err != nil {
 			return err
 		}
