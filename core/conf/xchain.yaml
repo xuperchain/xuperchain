@@ -108,10 +108,13 @@ prune:
   switch: false
   bcname: "xuper"
   targetBlockid: "xxx"
-  
-# 是否开启默认的XEndorser背书服务
-enableXEndorser: false
 
+# 背书服务相关配置
+xendorser:
+  # 是否开启默认的XEndorser背书服务
+  enable: false
+  module: "default"
+  #confPath: "./conf/xendorser.yaml"
 
 # 云存储配置(AWS S3接口兼容)
 cloudStorage:
@@ -122,4 +125,3 @@ cloudStorage:
   region: "bj"
   endpoint: "s3.bj.bcebos.com"
   localCacheDir: "./data/cache"
-
