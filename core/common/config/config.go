@@ -244,7 +244,8 @@ type NodeConfig struct {
 	CoreConnection  bool       `yaml:"coreConnection,omitempty"`
 	FailSkip        bool       `yaml:"failSkip,omitempty"`
 	ModifyBlockAddr string     `yaml:"modifyBlockAddr,omitempty"`
-	EnableXEndorser bool       `yaml:"enableXEndorser,omitempty"`
+	// XEndorser the endorser module config
+	XEndorser XEndorserConfig `yaml:"xendorser,omitempty"`
 	// TxCacheExpiredTime expired time for tx cache
 	TxidCacheExpiredTime time.Duration `yaml:"txidCacheExpiredTime,omitempty"`
 	// local switch of compressed
@@ -285,6 +286,15 @@ type PruneOption struct {
 type DBCacheConfig struct {
 	MemCacheSize int `yaml:"memcache,omitempty"`
 	FdCacheSize  int `yaml:"fdcache,omitempty"`
+}
+
+// XEndorserConfig XEndorser config
+type XEndorserConfig struct {
+	// Enable use xendorser if true
+	Enable bool `yaml:"enable,omitempty"`
+	// Module the plugin name for xendorser
+	Module   string `yaml:"module,omitempty"`
+	ConfPath string `yaml:"confPath,omitempty"`
 }
 
 func (nc *NodeConfig) defaultNodeConfig() {
@@ -365,7 +375,11 @@ func (nc *NodeConfig) defaultNodeConfig() {
 	nc.CoreConnection = false
 	nc.FailSkip = false
 	nc.ModifyBlockAddr = ""
-	nc.EnableXEndorser = false
+	nc.XEndorser = XEndorserConfig{
+		Enable:   false,
+		Module:   "default",
+		ConfPath: "",
+	}
 	nc.BlockBroadcaseMode = 0
 }
 

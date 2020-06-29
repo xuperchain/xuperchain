@@ -34,9 +34,10 @@ import (
 	p2p_base "github.com/xuperchain/xuperchain/core/p2p/base"
 	xuper_p2p "github.com/xuperchain/xuperchain/core/p2p/pb"
 	"github.com/xuperchain/xuperchain/core/pb"
+	"github.com/xuperchain/xuperchain/core/server/xendorser"
 )
 
-type server struct {
+type Server struct {
 	log            log.Logger
 	mg             *xchaincore.XChainMG
 	dedupCache     *common.LRUCache
@@ -44,7 +45,7 @@ type server struct {
 }
 
 // PostTx Update db
-func (s *server) PostTx(ctx context.Context, in *pb.TxStatus) (*pb.CommonReply, error) {
+func (s *Server) PostTx(ctx context.Context, in *pb.TxStatus) (*pb.CommonReply, error) {
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
@@ -66,7 +67,7 @@ func (s *server) PostTx(ctx context.Context, in *pb.TxStatus) (*pb.CommonReply, 
 }
 
 // BatchPostTx batch update db
-func (s *server) BatchPostTx(ctx context.Context, in *pb.BatchTxs) (*pb.CommonReply, error) {
+func (s *Server) BatchPostTx(ctx context.Context, in *pb.BatchTxs) (*pb.CommonReply, error) {
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
@@ -101,7 +102,7 @@ func (s *server) BatchPostTx(ctx context.Context, in *pb.BatchTxs) (*pb.CommonRe
 }
 
 // QueryContractStatData query statistic info about contract
-func (s *server) QueryContractStatData(ctx context.Context, in *pb.ContractStatDataRequest) (*pb.ContractStatDataResponse, error) {
+func (s *Server) QueryContractStatData(ctx context.Context, in *pb.ContractStatDataRequest) (*pb.ContractStatDataResponse, error) {
 	s.mg.Speed.Add("QueryContractStatData")
 	if in.GetHeader() == nil {
 		in.Header = global.GHeader()
@@ -123,7 +124,7 @@ func (s *server) QueryContractStatData(ctx context.Context, in *pb.ContractStatD
 }
 
 // QueryUtxoRecord query utxo records
-func (s *server) QueryUtxoRecord(ctx context.Context, in *pb.UtxoRecordDetail) (*pb.UtxoRecordDetail, error) {
+func (s *Server) QueryUtxoRecord(ctx context.Context, in *pb.UtxoRecordDetail) (*pb.UtxoRecordDetail, error) {
 	s.mg.Speed.Add("QueryUtxoRecord")
 	if in.GetHeader() == nil {
 		in.Header = global.GHeader()
@@ -150,7 +151,7 @@ func (s *server) QueryUtxoRecord(ctx context.Context, in *pb.UtxoRecordDetail) (
 }
 
 // QueryAcl query some account info
-func (s *server) QueryACL(ctx context.Context, in *pb.AclStatus) (*pb.AclStatus, error) {
+func (s *Server) QueryACL(ctx context.Context, in *pb.AclStatus) (*pb.AclStatus, error) {
 	s.mg.Speed.Add("QueryAcl")
 	if in.Header == nil {
 		in.Header = global.GHeader()
@@ -190,7 +191,7 @@ func (s *server) QueryACL(ctx context.Context, in *pb.AclStatus) (*pb.AclStatus,
 }
 
 // GetAccountContractsRequest get account request
-func (s *server) GetAccountContracts(ctx context.Context, in *pb.GetAccountContractsRequest) (*pb.GetAccountContractsResponse, error) {
+func (s *Server) GetAccountContracts(ctx context.Context, in *pb.GetAccountContractsRequest) (*pb.GetAccountContractsResponse, error) {
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
@@ -213,7 +214,7 @@ func (s *server) GetAccountContracts(ctx context.Context, in *pb.GetAccountContr
 }
 
 // QueryTx Get transaction details
-func (s *server) QueryTx(ctx context.Context, in *pb.TxStatus) (*pb.TxStatus, error) {
+func (s *Server) QueryTx(ctx context.Context, in *pb.TxStatus) (*pb.TxStatus, error) {
 	s.mg.Speed.Add("QueryTx")
 	if in.Header == nil {
 		in.Header = global.GHeader()
@@ -232,7 +233,7 @@ func (s *server) QueryTx(ctx context.Context, in *pb.TxStatus) (*pb.TxStatus, er
 }
 
 // GetBalance get balance for account or addr
-func (s *server) GetBalance(ctx context.Context, in *pb.AddressStatus) (*pb.AddressStatus, error) {
+func (s *Server) GetBalance(ctx context.Context, in *pb.AddressStatus) (*pb.AddressStatus, error) {
 	s.mg.Speed.Add("GetBalance")
 	if in.Header == nil {
 		in.Header = global.GHeader()
@@ -257,7 +258,7 @@ func (s *server) GetBalance(ctx context.Context, in *pb.AddressStatus) (*pb.Addr
 }
 
 // GetFrozenBalance get balance frozened for account or addr
-func (s *server) GetFrozenBalance(ctx context.Context, in *pb.AddressStatus) (*pb.AddressStatus, error) {
+func (s *Server) GetFrozenBalance(ctx context.Context, in *pb.AddressStatus) (*pb.AddressStatus, error) {
 	s.mg.Speed.Add("GetFrozenBalance")
 	if in.Header == nil {
 		in.Header = global.GHeader()
@@ -282,7 +283,7 @@ func (s *server) GetFrozenBalance(ctx context.Context, in *pb.AddressStatus) (*p
 }
 
 // GetFrozenBalance get balance frozened for account or addr
-func (s *server) GetBalanceDetail(ctx context.Context, in *pb.AddressBalanceStatus) (*pb.AddressBalanceStatus, error) {
+func (s *Server) GetBalanceDetail(ctx context.Context, in *pb.AddressBalanceStatus) (*pb.AddressBalanceStatus, error) {
 	s.mg.Speed.Add("GetFrozenBalance")
 	if in.Header == nil {
 		in.Header = global.GHeader()
@@ -308,7 +309,7 @@ func (s *server) GetBalanceDetail(ctx context.Context, in *pb.AddressBalanceStat
 }
 
 // GetBlock get block info according to blockID
-func (s *server) GetBlock(ctx context.Context, in *pb.BlockID) (*pb.Block, error) {
+func (s *Server) GetBlock(ctx context.Context, in *pb.BlockID) (*pb.Block, error) {
 	s.mg.Speed.Add("GetBlock")
 	if in.Header == nil {
 		in.Header = global.GHeader()
@@ -341,7 +342,7 @@ func (s *server) GetBlock(ctx context.Context, in *pb.BlockID) (*pb.Block, error
 }
 
 // GetBlockChainStatus get systemstatus
-func (s *server) GetBlockChainStatus(ctx context.Context, in *pb.BCStatus) (*pb.BCStatus, error) {
+func (s *Server) GetBlockChainStatus(ctx context.Context, in *pb.BCStatus) (*pb.BCStatus, error) {
 	s.mg.Speed.Add("GetBlockChainStatus")
 	if in.Header == nil {
 		in.Header = global.GHeader()
@@ -356,7 +357,7 @@ func (s *server) GetBlockChainStatus(ctx context.Context, in *pb.BCStatus) (*pb.
 }
 
 // ConfirmBlockChainStatus confirm is_trunk
-func (s *server) ConfirmBlockChainStatus(ctx context.Context, in *pb.BCStatus) (*pb.BCTipStatus, error) {
+func (s *Server) ConfirmBlockChainStatus(ctx context.Context, in *pb.BCStatus) (*pb.BCTipStatus, error) {
 	s.mg.Speed.Add("ConfirmBlockChainStatus")
 	if in.Header == nil {
 		in.Header = global.GHeader()
@@ -371,7 +372,7 @@ func (s *server) ConfirmBlockChainStatus(ctx context.Context, in *pb.BCStatus) (
 }
 
 // GetBlockChains get BlockChains
-func (s *server) GetBlockChains(ctx context.Context, in *pb.CommonIn) (*pb.BlockChains, error) {
+func (s *Server) GetBlockChains(ctx context.Context, in *pb.CommonIn) (*pb.BlockChains, error) {
 	s.mg.Speed.Add("GetBlockChains")
 	if in.Header == nil {
 		in.Header = global.GHeader()
@@ -382,7 +383,7 @@ func (s *server) GetBlockChains(ctx context.Context, in *pb.CommonIn) (*pb.Block
 }
 
 // GetSystemStatus get systemstatus
-func (s *server) GetSystemStatus(ctx context.Context, in *pb.CommonIn) (*pb.SystemsStatusReply, error) {
+func (s *Server) GetSystemStatus(ctx context.Context, in *pb.CommonIn) (*pb.SystemsStatusReply, error) {
 	s.mg.Speed.Add("GetSystemStatus")
 	if in.Header == nil {
 		in.Header = global.GHeader()
@@ -415,7 +416,7 @@ func (s *server) GetSystemStatus(ctx context.Context, in *pb.CommonIn) (*pb.Syst
 }
 
 // GetNetURL get net url in p2p_base
-func (s *server) GetNetURL(ctx context.Context, in *pb.CommonIn) (*pb.RawUrl, error) {
+func (s *Server) GetNetURL(ctx context.Context, in *pb.CommonIn) (*pb.RawUrl, error) {
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
@@ -427,7 +428,7 @@ func (s *server) GetNetURL(ctx context.Context, in *pb.CommonIn) (*pb.RawUrl, er
 }
 
 // SelectUTXOBySize select utxo inputs depending on size
-func (s *server) SelectUTXOBySize(ctx context.Context, in *pb.UtxoInput) (*pb.UtxoOutput, error) {
+func (s *Server) SelectUTXOBySize(ctx context.Context, in *pb.UtxoInput) (*pb.UtxoOutput, error) {
 	if in.GetHeader() == nil {
 		in.Header = global.GHeader()
 	}
@@ -465,7 +466,7 @@ func (s *server) SelectUTXOBySize(ctx context.Context, in *pb.UtxoInput) (*pb.Ut
 }
 
 // SelectUTXO select utxo inputs depending on amount
-func (s *server) SelectUTXO(ctx context.Context, in *pb.UtxoInput) (*pb.UtxoOutput, error) {
+func (s *Server) SelectUTXO(ctx context.Context, in *pb.UtxoInput) (*pb.UtxoOutput, error) {
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
@@ -507,7 +508,7 @@ func (s *server) SelectUTXO(ctx context.Context, in *pb.UtxoInput) (*pb.UtxoOutp
 }
 
 // DeployNativeCode deploy native contract
-func (s *server) DeployNativeCode(ctx context.Context, request *pb.DeployNativeCodeRequest) (*pb.DeployNativeCodeResponse, error) {
+func (s *Server) DeployNativeCode(ctx context.Context, request *pb.DeployNativeCodeRequest) (*pb.DeployNativeCodeResponse, error) {
 	if request.Header == nil {
 		request.Header = global.GHeader()
 	}
@@ -569,7 +570,7 @@ func (s *server) DeployNativeCode(ctx context.Context, request *pb.DeployNativeC
 }
 
 // NativeCodeStatus get native contract status
-func (s *server) NativeCodeStatus(ctx context.Context, request *pb.NativeCodeStatusRequest) (*pb.NativeCodeStatusResponse, error) {
+func (s *Server) NativeCodeStatus(ctx context.Context, request *pb.NativeCodeStatusRequest) (*pb.NativeCodeStatusResponse, error) {
 	if !s.mg.Cfg.Native.Enable {
 		return nil, errors.New("native module is disabled")
 	}
@@ -589,7 +590,7 @@ func (s *server) NativeCodeStatus(ctx context.Context, request *pb.NativeCodeSta
 }
 
 // DposCandidates get dpos candidates
-func (s *server) DposCandidates(ctx context.Context, request *pb.DposCandidatesRequest) (*pb.DposCandidatesResponse, error) {
+func (s *Server) DposCandidates(ctx context.Context, request *pb.DposCandidatesRequest) (*pb.DposCandidatesResponse, error) {
 	bc := s.mg.Get(request.GetBcname())
 	if request.Header == nil {
 		request.Header = global.GHeader()
@@ -619,7 +620,7 @@ func (s *server) DposCandidates(ctx context.Context, request *pb.DposCandidatesR
 }
 
 // DposNominateRecords get dpos 提名者提名记录
-func (s *server) DposNominateRecords(ctx context.Context, request *pb.DposNominateRecordsRequest) (*pb.DposNominateRecordsResponse, error) {
+func (s *Server) DposNominateRecords(ctx context.Context, request *pb.DposNominateRecordsRequest) (*pb.DposNominateRecordsResponse, error) {
 	bc := s.mg.Get(request.GetBcname())
 	if request.Header == nil {
 		request.Header = global.GHeader()
@@ -650,7 +651,7 @@ func (s *server) DposNominateRecords(ctx context.Context, request *pb.DposNomina
 }
 
 // DposNomineeRecords 候选人被提名记录
-func (s *server) DposNomineeRecords(ctx context.Context, request *pb.DposNomineeRecordsRequest) (*pb.DposNomineeRecordsResponse, error) {
+func (s *Server) DposNomineeRecords(ctx context.Context, request *pb.DposNomineeRecordsRequest) (*pb.DposNomineeRecordsResponse, error) {
 	bc := s.mg.Get(request.GetBcname())
 	if request.Header == nil {
 		request.Header = global.GHeader()
@@ -680,7 +681,7 @@ func (s *server) DposNomineeRecords(ctx context.Context, request *pb.DposNominee
 }
 
 // DposVoteRecords 选民投票记录
-func (s *server) DposVoteRecords(ctx context.Context, request *pb.DposVoteRecordsRequest) (*pb.DposVoteRecordsResponse, error) {
+func (s *Server) DposVoteRecords(ctx context.Context, request *pb.DposVoteRecordsRequest) (*pb.DposVoteRecordsResponse, error) {
 	bc := s.mg.Get(request.GetBcname())
 	if request.Header == nil {
 		request.Header = global.GHeader()
@@ -710,7 +711,7 @@ func (s *server) DposVoteRecords(ctx context.Context, request *pb.DposVoteRecord
 }
 
 // DposVotedRecords 候选人被投票记录
-func (s *server) DposVotedRecords(ctx context.Context, request *pb.DposVotedRecordsRequest) (*pb.DposVotedRecordsResponse, error) {
+func (s *Server) DposVotedRecords(ctx context.Context, request *pb.DposVotedRecordsRequest) (*pb.DposVotedRecordsResponse, error) {
 	bc := s.mg.Get(request.GetBcname())
 	if request.Header == nil {
 		request.Header = global.GHeader()
@@ -739,7 +740,7 @@ func (s *server) DposVotedRecords(ctx context.Context, request *pb.DposVotedReco
 }
 
 // DposCheckResults get dpos 检查结果
-func (s *server) DposCheckResults(ctx context.Context, request *pb.DposCheckResultsRequest) (*pb.DposCheckResultsResponse, error) {
+func (s *Server) DposCheckResults(ctx context.Context, request *pb.DposCheckResultsRequest) (*pb.DposCheckResultsResponse, error) {
 	bc := s.mg.Get(request.GetBcname())
 	if request.Header == nil {
 		request.Header = global.GHeader()
@@ -770,7 +771,7 @@ func (s *server) DposCheckResults(ctx context.Context, request *pb.DposCheckResu
 }
 
 // DposStatus get dpos current status
-func (s *server) DposStatus(ctx context.Context, request *pb.DposStatusRequest) (*pb.DposStatusResponse, error) {
+func (s *Server) DposStatus(ctx context.Context, request *pb.DposStatusRequest) (*pb.DposStatusResponse, error) {
 	bc := s.mg.Get(request.GetBcname())
 	if request.Header == nil {
 		request.Header = global.GHeader()
@@ -804,7 +805,7 @@ func (s *server) DposStatus(ctx context.Context, request *pb.DposStatusRequest) 
 }
 
 // PreExecWithSelectUTXO preExec + selectUtxo
-func (s *server) PreExecWithSelectUTXO(ctx context.Context, request *pb.PreExecWithSelectUTXORequest) (*pb.PreExecWithSelectUTXOResponse, error) {
+func (s *Server) PreExecWithSelectUTXO(ctx context.Context, request *pb.PreExecWithSelectUTXORequest) (*pb.PreExecWithSelectUTXOResponse, error) {
 	// verify input param
 	if request == nil {
 		return nil, errors.New("request is invalid")
@@ -858,7 +859,7 @@ func (s *server) PreExecWithSelectUTXO(ctx context.Context, request *pb.PreExecW
 }
 
 // PreExec smart contract preExec process
-func (s *server) PreExec(ctx context.Context, request *pb.InvokeRPCRequest) (*pb.InvokeRPCResponse, error) {
+func (s *Server) PreExec(ctx context.Context, request *pb.InvokeRPCRequest) (*pb.InvokeRPCResponse, error) {
 	s.log.Trace("Got PreExec req", "req", request)
 	bc := s.mg.Get(request.GetBcname())
 	if request.Header == nil {
@@ -887,7 +888,7 @@ func (s *server) PreExec(ctx context.Context, request *pb.InvokeRPCRequest) (*pb
 }
 
 // GetBlockByHeight  get trunk block by height
-func (s *server) GetBlockByHeight(ctx context.Context, in *pb.BlockHeight) (*pb.Block, error) {
+func (s *Server) GetBlockByHeight(ctx context.Context, in *pb.BlockHeight) (*pb.Block, error) {
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
@@ -919,7 +920,7 @@ func (s *server) GetBlockByHeight(ctx context.Context, in *pb.BlockHeight) (*pb.
 	return out, nil
 }
 
-func (s *server) GetAccountByAK(ctx context.Context, request *pb.AK2AccountRequest) (*pb.AK2AccountResponse, error) {
+func (s *Server) GetAccountByAK(ctx context.Context, request *pb.AK2AccountRequest) (*pb.AK2AccountResponse, error) {
 	if request.Header == nil {
 		request.Header = global.GHeader()
 	}
@@ -942,7 +943,7 @@ func (s *server) GetAccountByAK(ctx context.Context, request *pb.AK2AccountReque
 }
 
 // GetAddressContracts get contracts of accounts contain a specific address
-func (s *server) GetAddressContracts(ctx context.Context, request *pb.AddressContractsRequest) (*pb.AddressContractsResponse, error) {
+func (s *Server) GetAddressContracts(ctx context.Context, request *pb.AddressContractsRequest) (*pb.AddressContractsResponse, error) {
 	if request.Header == nil {
 		request.Header = global.GHeader()
 	}
@@ -990,7 +991,7 @@ func startTCPServer(xchainmg *xchaincore.XChainMG) error {
 		cfg   = xchainmg.Cfg
 		log   = xchainmg.Log
 		isTLS = cfg.TCPServer.TLS
-		svr   = server{log: log, mg: xchainmg, dedupCache: common.NewLRUCache(cfg.DedupCacheSize), dedupTimeLimit: cfg.DedupTimeLimit}
+		svr   = Server{log: log, mg: xchainmg, dedupCache: common.NewLRUCache(cfg.DedupCacheSize), dedupTimeLimit: cfg.DedupTimeLimit}
 
 		rpcOptions []grpc.ServerOption
 	)
@@ -1058,8 +1059,14 @@ func startTCPServer(xchainmg *xchaincore.XChainMG) error {
 	log.Trace("start rpc server")
 	s := grpc.NewServer(rpcOptions...)
 	pb.RegisterXchainServer(s, &svr)
-	if cfg.EnableXEndorser {
-		endorser := NewDefaultXEndorser(&svr)
+	if cfg.XEndorser.Enable {
+		endorser, err := xendorser.GetXEndorser(cfg.XEndorser.Module)
+		if err != nil {
+			panic(err)
+		}
+		params := map[string]interface{}{}
+		params["server"] = &svr
+		endorser.Init(cfg.XEndorser.ConfPath, params)
 		pb.RegisterXendorserServer(s, endorser)
 	}
 	if cfg.TCPServer.MetricPort != "" {
