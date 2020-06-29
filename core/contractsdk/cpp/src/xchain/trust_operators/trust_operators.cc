@@ -1,5 +1,6 @@
 #include "xchain/trust_operators/trust_operators.h"
 #include "xchain/trust_operators/tf.pb.h"
+#include <bitset>
 
 extern "C" uint32_t xvm_tfcall(const char *inputptr, size_t inputlen,
                                char **outputptr, size_t *outputlen);
@@ -111,6 +112,72 @@ bool TrustOperators::authorize(const AuthInfo &auth,
   }
 
   assert(resp.has_kvs());
+  auto kvs = resp.kvs();
+  for (int i = 0; i < kvs.kv_size(); i++) {
+    (*result)[kvs.kv(i).key()] = kvs.kv(i).value();
+  }
+  return true;
+}
+
+/*
+    paillier_add implements encrypted data addition;
+    left_op is left operand(cipher1 | commitment1), right_op is right
+    operand(cipher2 | commitment2), pubkey is paillier public key
+    return {{"ciphertext", "enc_result"}}
+ */
+bool TrustOperators::paillier_add(const Operand &left_op,
+                                  const Operand &right_op,
+                                  const std::string pubkey,
+                                  std::map<std::string, std::string> *result) {
+  TrustFunctionCallRequest req;
+  req.set_method("PaillierMul");
+  std::map<std::string, std::string> args_map;
+  args_map = {{"publicKey", pubkey},
+              {"ciphertext1", left_op.cipher},
+              {"ciphertext2", right_op.cipher},
+              {"commitment1", left_op.commitment},
+              {"commitment2", right_op.commitment}};
+  req.set_args(map_to_string(args_map));
+
+  req.set_address(_ctx->initiator());
+  TrustFunctionCallResponse resp;
+  if (!tfcall(req, &resp)) {
+    return false;
+  }
+  assert(resp.has_kvs());
+
+  auto kvs = resp.kvs();
+  for (int i = 0; i < kvs.kv_size(); i++) {
+    (*result)[kvs.kv(i).key()] = kvs.kv(i).value();
+  }
+  return true;
+}
+
+/*
+    paillier_partial_mul implements partially homomorphic multiplication;
+    left_op is left operand(cipher1 | commitment1), scalar is the number
+    to multiply left_op, pubkey is the paillier public key,
+    return {{"ciphertext", "enc_result"}}
+ */
+bool TrustOperators::paillier_partial_mul(
+    const Operand &left_op, const std::string scalar, const std::string pubkey,
+    std::map<std::string, std::string> *result) {
+  TrustFunctionCallRequest req;
+  req.set_method("PaillierExp");
+  std::map<std::string, std::string> args_map;
+  args_map = {{"ciphertext", left_op.cipher},
+              {"commitment", left_op.commitment},
+              {"scalar", scalar},
+              {"publicKey", pubkey}};
+  req.set_args(map_to_string(args_map));
+
+  req.set_address(_ctx->initiator());
+  TrustFunctionCallResponse resp;
+  if (!tfcall(req, &resp)) {
+    return false;
+  }
+  assert(resp.has_kvs());
+
   auto kvs = resp.kvs();
   for (int i = 0; i < kvs.kv_size(); i++) {
     (*result)[kvs.kv(i).key()] = kvs.kv(i).value();

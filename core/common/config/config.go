@@ -136,14 +136,6 @@ type UtxoConfig struct {
 	MaxConfirmedDelay uint32          `yaml:"maxConfirmedDelay,omitempty"`
 }
 
-// NativeDeployConfig native contract deploy config
-type NativeDeployConfig struct {
-	WhiteList struct {
-		Enable    bool
-		Addresses []string
-	}
-}
-
 // NativeDockerConfig native contract use docker config
 type NativeDockerConfig struct {
 	Enable    bool
@@ -154,11 +146,23 @@ type NativeDockerConfig struct {
 
 // NativeConfig contains the two above config
 type NativeConfig struct {
+	Driver string
 	// Timeout (in seconds) to stop native code process
 	StopTimeout int
-	Deploy      NativeDeployConfig
 	Docker      NativeDockerConfig
 	Enable      bool
+}
+
+func (n *NativeConfig) DriverName() string {
+	if n.Driver != "" {
+		return n.Driver
+	}
+
+	return "native"
+}
+
+func (n *NativeConfig) IsEnable() bool {
+	return n.Enable
 }
 
 // XVMConfig contains the xvm configuration
@@ -171,13 +175,26 @@ type XVMConfig struct {
 
 // WasmConfig wasm config
 type WasmConfig struct {
-	Driver         string
-	External       bool
-	XVM            XVMConfig
+	Driver        string
+	External      bool
+	XVM           XVMConfig
+	EnableUpgrade bool
+	TEEConfig     TEEConfig `yaml:"teeConfig,omitempty"`
+}
+
+func (w *WasmConfig) DriverName() string {
+	return w.Driver
+}
+
+func (w *WasmConfig) IsEnable() bool {
+	return true
+}
+
+// ContractConfig define the config of XuperBridge
+type ContractConfig struct {
 	EnableDebugLog bool
 	DebugLog       LogConfig
 	EnableUpgrade  bool
-	TEEConfig      TEEConfig `yaml:"teeConfig,omitempty"`
 }
 
 // TEEConfig sets up the private ledger
@@ -230,21 +247,25 @@ type NodeConfig struct {
 	CPUProfile      string          `yaml:"cpuprofile,omitempty"`
 	MemProfile      string          `yaml:"memprofile,omitempty"`
 	MemberWhiteList map[string]bool `yaml:"memberWhiteList,omitempty"`
-	Native          NativeConfig    `yaml:"native,omitempty"`
-	DBCache         DBCacheConfig   `yaml:"dbcache,omitempty"`
+
+	// 合约相关配置
+	Contract ContractConfig `yaml:"contract,omitempty"`
+	Native   NativeConfig   `yaml:"native,omitempty"`
+	Wasm     WasmConfig     `yaml:"wasm,omitempty"`
+
+	DBCache DBCacheConfig `yaml:"dbcache,omitempty"`
 	// 节点模式: NORMAL | FAST_SYNC 两种模式
 	// NORMAL: 为普通的全节点模式
 	// FAST_SYNC 模式下:节点需要连接一个可信的全节点; 拒绝事务提交; 同步区块时跳过块验证和tx验证; 去掉load未确认事务;
-	NodeMode        string     `yaml:"nodeMode,omitempty"`
-	PluginConfPath  string     `yaml:"pluginConfPath,omitempty"` // plugin config file path
-	PluginLoadPath  string     `yaml:"pluginLoadPath,omitempty"` // plugin auto-load path
-	EtcdClusterAddr string     `yaml:"etcdClusterAddr,omitempty"`
-	GatewaySwitch   bool       `yaml:"gatewaySwitch,omitempty"`
-	Wasm            WasmConfig `yaml:"wasm,omitempty"`
-	CoreConnection  bool       `yaml:"coreConnection,omitempty"`
-	FailSkip        bool       `yaml:"failSkip,omitempty"`
-	ModifyBlockAddr string     `yaml:"modifyBlockAddr,omitempty"`
-	EnableXEndorser bool       `yaml:"enableXEndorser,omitempty"`
+	NodeMode        string `yaml:"nodeMode,omitempty"`
+	PluginConfPath  string `yaml:"pluginConfPath,omitempty"` // plugin config file path
+	PluginLoadPath  string `yaml:"pluginLoadPath,omitempty"` // plugin auto-load path
+	EtcdClusterAddr string `yaml:"etcdClusterAddr,omitempty"`
+	GatewaySwitch   bool   `yaml:"gatewaySwitch,omitempty"`
+	CoreConnection  bool   `yaml:"coreConnection,omitempty"`
+	FailSkip        bool   `yaml:"failSkip,omitempty"`
+	ModifyBlockAddr string `yaml:"modifyBlockAddr,omitempty"`
+	EnableXEndorser bool   `yaml:"enableXEndorser,omitempty"`
 	// TxCacheExpiredTime expired time for tx cache
 	TxidCacheExpiredTime time.Duration `yaml:"txidCacheExpiredTime,omitempty"`
 	// local switch of compressed
@@ -349,6 +370,8 @@ func (nc *NodeConfig) defaultNodeConfig() {
 		XVM: XVMConfig{
 			OptLevel: 0,
 		},
+	}
+	nc.Contract = ContractConfig{
 		EnableDebugLog: true,
 		DebugLog: LogConfig{
 			Module:         "contract",
@@ -361,6 +384,7 @@ func (nc *NodeConfig) defaultNodeConfig() {
 			RotateInterval: 60 * 24, // rotate every 1 day
 			RotateBackups:  14,      // keep old log files for two weeks
 		},
+		EnableUpgrade: false,
 	}
 	nc.CoreConnection = false
 	nc.FailSkip = false
@@ -480,6 +504,11 @@ func (nc *NodeConfig) ApplyFlags(flags *pflag.FlagSet) {
 	nc.Utxo.applyFlags(flags)
 	nc.Wasm.applyFlags(flags)
 
+	// for backward compatibility
+	if nc.Wasm.EnableUpgrade {
+		nc.Contract.EnableUpgrade = true
+	}
+
 	flags.StringVar(&nc.Datapath, "datapath", nc.Datapath, "used for config overwrite --datapath <data path>")
 	flags.StringVar(&nc.CPUProfile, "cpuprofile", nc.CPUProfile, "used to store cpu profile data --cpuprofile <pprof file>")
 	flags.StringVar(&nc.MemProfile, "memprofile", nc.MemProfile, "used to store mem profile data --memprofile <pprof file>")
@@ -492,5 +521,5 @@ func (nc *NodeConfig) ApplyFlags(flags *pflag.FlagSet) {
 
 // VisitAll print all config of node
 func (nc *NodeConfig) VisitAll() {
-	fmt.Println("Config of xchain", nc)
+	fmt.Printf("Config of xchain %#v\n", nc)
 }

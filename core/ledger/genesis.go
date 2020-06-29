@@ -169,10 +169,7 @@ func NewGenesisBlock(ib *pb.InternalBlock) (*GenesisBlock, error) {
 	if jsErr != nil {
 		return nil, jsErr
 	}
-	println("==========  NewGenesisBlock  ==========")
 	if config.NoFee {
-		println("true")
-
 		config.Award = "0"
 		config.NewAccountResourceAmount = 0
 		config.Predistribution = []struct {
@@ -183,8 +180,6 @@ func NewGenesisBlock(ib *pb.InternalBlock) (*GenesisBlock, error) {
 		config.GasPrice.DiskRate = 0
 		config.GasPrice.MemRate = 0
 		config.GasPrice.XfeeRate = 0
-	} else {
-		println("false")
 	}
 	gb.config = config
 	return gb, nil

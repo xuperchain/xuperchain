@@ -166,41 +166,57 @@ func (tp *TDpos) buildConfigs(xlog log.Logger, cfg *config.NodeConfig, consCfg m
 		tp.version = version
 	}
 
-	proposerNum, err := strconv.ParseInt(consCfg["proposer_num"].(string), 10, 64)
-	if err != nil {
-		xlog.Warn("Parse TDpos config error", "error", err.Error())
-		return err
+	if proposerNum, ok := consCfg["proposer_num"].(string); !ok {
+		return errors.New("invalid type of proposer_num")
+	} else {
+		proposerNumInt, err := strconv.ParseInt(proposerNum, 10, 64)
+		if err != nil {
+			xlog.Warn("Parse TDpos config error", "error", err.Error())
+			return err
+		}
+		tp.config.proposerNum = proposerNumInt
 	}
-	tp.config.proposerNum = proposerNum
 
-	period, err := strconv.ParseInt(consCfg["period"].(string), 10, 64)
+	period, ok := consCfg["period"].(string)
+	if !ok {
+		return errors.New("invalid type of period")
+	}
+	periodInt, err := strconv.ParseInt(period, 10, 64)
 	if err != nil {
 		xlog.Warn("Parse TDpos config period error", "error", err.Error())
 		return err
 	}
-	tp.config.period = period * 1e6
+	tp.config.period = periodInt * 1e6
 
-	alternateInterval, err := strconv.ParseInt(consCfg["alternate_interval"].(string), 10, 64)
+	alternateInterval, ok := consCfg["alternate_interval"].(string)
+	if !ok {
+		return errors.New("invalid type of period")
+	}
+	alternateIntervalInt, err := strconv.ParseInt(alternateInterval, 10, 64)
 	if err != nil {
 		xlog.Warn("Parse TDpos config alternateInterval error", "error", err.Error())
 		return err
 	}
-	if alternateInterval%period != 0 {
+	if alternateIntervalInt%periodInt != 0 {
 		xlog.Warn("Parse TDpos config alternateInterval error", "error", "alternateInterval should be eliminated by period")
 		return errors.New("alternateInterval should be eliminated by period")
 	}
-	tp.config.alternateInterval = alternateInterval * 1e6
+	tp.config.alternateInterval = alternateIntervalInt * 1e6
 
-	termInterval, err := strconv.ParseInt(consCfg["term_interval"].(string), 10, 64)
+	termInterval, ok := consCfg["term_interval"].(string)
+	if !ok {
+		return errors.New("invalid type of period")
+	}
+	termIntervalInt, err := strconv.ParseInt(termInterval, 10, 64)
 	if err != nil {
 		xlog.Warn("Parse TDpos config termInterval error", "error", err.Error())
 		return err
 	}
-	if termInterval%period != 0 {
+	if termIntervalInt%periodInt != 0 {
 		xlog.Warn("Parse TDpos config termInterval error", "error", "termInterval should be eliminated by period")
 		return errors.New("termInterval should be eliminated by period")
 	}
-	tp.config.termInterval = termInterval * 1e6
+	tp.config.termInterval = termIntervalInt * 1e6
 
 	voteUnitPrice := big.NewInt(0)
 	if _, ok := voteUnitPrice.SetString(consCfg["vote_unit_price"].(string), 10); !ok {
@@ -209,12 +225,16 @@ func (tp *TDpos) buildConfigs(xlog log.Logger, cfg *config.NodeConfig, consCfg m
 	}
 	tp.config.voteUnitPrice = voteUnitPrice
 
-	blockNum, err := strconv.ParseInt(consCfg["block_num"].(string), 10, 64)
+	blockNum, ok := consCfg["block_num"].(string)
+	if !ok {
+		return errors.New("invalid type of period")
+	}
+	blockNumInt, err := strconv.ParseInt(blockNum, 10, 64)
 	if err != nil {
 		xlog.Warn("Parse TDpos block_num period error", "error", err.Error())
 		return err
 	}
-	tp.config.blockNum = blockNum
+	tp.config.blockNum = blockNumInt
 
 	// read config of need_neturl
 	needNetURL := false
@@ -236,7 +256,7 @@ func (tp *TDpos) buildConfigs(xlog log.Logger, cfg *config.NodeConfig, consCfg m
 		return errors.New("TDpos init proposer error, Proposer 0 not provided")
 	}
 	initProposer1 := initProposer["1"].([]interface{})
-	if int64(len(initProposer1)) != proposerNum {
+	if int64(len(initProposer1)) != tp.config.proposerNum {
 		return errors.New("TDpos init proposer info error, Proposer 0 should be equal to proposerNum")
 	}
 
@@ -253,7 +273,7 @@ func (tp *TDpos) buildConfigs(xlog log.Logger, cfg *config.NodeConfig, consCfg m
 			return errors.New("TDpos have init_proposer_neturl but don't have term 1")
 		}
 		proposerNeturls1 := proposerNeturls["1"].([]interface{})
-		if int64(len(proposerNeturls1)) != proposerNum {
+		if int64(len(proposerNeturls1)) != tp.config.proposerNum {
 			return errors.New("TDpos init error, Proposer neturl number should be equal to proposerNum")
 		}
 		for idx, v := range proposerNeturls1 {

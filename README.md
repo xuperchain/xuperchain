@@ -1,3 +1,13 @@
+### 百度超级链学院·大讲堂 
+![add for 627](https://raw.githubusercontent.com/xuperchain/docs/master/source/images/ad_for_627.png)
+
+💡金融领域是区块链技术应用最多、需求最大的，银行、证券、投资、保险等纷纷抛出了橄榄枝。
+早在17年百度超级链落地长安新生ABS，后又相继与浦发银行等大行等达成合作，区块链如何变革金融领域？用一场直播告诉你！
+
+👇🏻直播预约链接：http://abcxueyuan.baidu.com/#/live_detail?liveId=252&linkToken=cs39T
+直播时间：6月27日15:00
+添加小助手微信（image-baidu），回复“大讲堂”，进入直播社群，与专家面对面互动。
+
 # XuperChain
 
 [![Build Status](https://travis-ci.org/xuperchain/xuperchain.svg?branch=master)](https://travis-ci.org/xuperchain/xuperchain)

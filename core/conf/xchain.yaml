@@ -62,16 +62,19 @@ kernel:
   newChainWhiteList:
     - dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN: true
 
+# 合约通用配置
+contract:
+  enableUpgrade: false
+
+# wasm合约配置
+wasm:
+  driver: "xvm"
+  xvm:
+    optLevel: 0
+
 # 管理native合约的配置
 native:
   enable: false
-  # 与部署相关的配置
-  deploy:
-    # 部署白名单，列表为钱包地址
-    whiteList:
-      enable: false
-      addresses:
-        - dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN
 
   # docker相关配置
   docker:
@@ -105,15 +108,7 @@ prune:
   switch: false
   bcname: "xuper"
   targetBlockid: "xxx"
-
-# wasm合约配置
-
-wasm:
-  driver: "xvm"
-  enableUpgrade: false
-  xvm:
-    optLevel: 0
-
+  
 # 是否开启默认的XEndorser背书服务
 enableXEndorser: false
 

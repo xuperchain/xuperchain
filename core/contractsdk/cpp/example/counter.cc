@@ -20,6 +20,7 @@ DEFINE_METHOD(Counter, increase) {
     ctx->get_object(key, &value);
     int cnt = 0;
     cnt = atoi(value.c_str());
+    ctx->logf("get value %s -> %d", key.c_str(), cnt);
     char buf[32];
     snprintf(buf, 32, "%d", cnt + 1);
     ctx->put_object(key, buf);

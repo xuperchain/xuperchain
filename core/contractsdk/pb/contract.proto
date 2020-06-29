@@ -1,6 +1,7 @@
 syntax = "proto3";
 option optimize_for = LITE_RUNTIME;
 option go_package = "github.com/xuperchain/xuperchain/core/contractsdk/go/pb";
+option java_package = "com.baidu.xuper.contractpb";
 
 package xchain.contract.sdk;
 
@@ -228,4 +229,13 @@ message GetAccountAddressesRequest{
 
 message GetAccountAddressesResponse {
   repeated string addresses = 1;
+}
+
+message PostLogRequest {
+  SyscallHeader header = 1;
+  string entry = 2;
+}
+
+message PostLogResponse {
+  string entry = 1;
 }
