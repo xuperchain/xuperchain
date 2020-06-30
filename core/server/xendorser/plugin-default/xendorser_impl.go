@@ -1,4 +1,4 @@
-package server
+package main
 
 import (
 	"encoding/json"
@@ -10,28 +10,20 @@ import (
 	crypto_client "github.com/xuperchain/xuperchain/core/crypto/client"
 	"github.com/xuperchain/xuperchain/core/crypto/hash"
 	"github.com/xuperchain/xuperchain/core/pb"
+	"github.com/xuperchain/xuperchain/core/server"
+	"github.com/xuperchain/xuperchain/core/server/xendorser"
 	"github.com/xuperchain/xuperchain/core/utxo/txhash"
 )
-
-// XEndorser is the interface for endorser service
-// Endorser protocol provide standard interface for endorser operations.
-// In many cases, a full node could be used for Endorser service.
-// For example, an endorser service can provide delegated computing and
-// compliance check for transactions, and set an endorser fee for each request.
-// endorser service provider could decide how much fee needed for each operation.
-type XEndorser interface {
-	EndorserCall(ctx context.Context, req *pb.EndorserRequest) (*pb.EndorserResponse, error)
-}
 
 // DefaultXEndorser default implementation of XEndorser
 // Endorser service can implement the interface in their own way and follow
 // the protocol defined in xendorser.proto.
 type DefaultXEndorser struct {
-	svr         *server
+	svr         *server.Server
 	requestType map[string]bool
 }
 
-var (
+const (
 	// DefaultKeyPath is the default key path
 	DefaultKeyPath = "./data/endorser/keys/"
 
@@ -39,16 +31,31 @@ var (
 	NodeKeyPath = "./data/keys/"
 )
 
+// make sure this plugin implemented the interface
+var _ xendorser.XEndorser = (*DefaultXEndorser)(nil)
+
+// GetInstance returns the an instance of DefaultXEndorser
+func GetInstance() interface{} {
+	return NewDefaultXEndorser()
+}
+
 // NewDefaultXEndorser create instance of DefaultXEndorser
-func NewDefaultXEndorser(svr *server) *DefaultXEndorser {
+func NewDefaultXEndorser() *DefaultXEndorser {
 	return &DefaultXEndorser{
-		svr: svr,
 		requestType: map[string]bool{
 			"PreExecWithFee":    true,
 			"ComplianceCheck":   true,
 			"CrossQueryPreExec": true,
 		},
 	}
+}
+
+// Init initialize
+func (dxe *DefaultXEndorser) Init(confPath string, params map[string]interface{}) error {
+	if svr, ok := params["server"]; ok {
+		dxe.svr = svr.(*server.Server)
+	}
+	return nil
 }
 
 // EndorserCall process endorser call
