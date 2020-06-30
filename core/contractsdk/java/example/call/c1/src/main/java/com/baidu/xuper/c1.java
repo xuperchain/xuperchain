@@ -27,29 +27,39 @@ public class c1 implements Contract
         }
 
         // 发起转账
-        byte[] toByte = ctx.args().get("to");
+        final byte[] toByte = ctx.args().get("to");
         if (toByte == null) {
             return Response.error("missing to");
         }
         final String to = new String(toByte);
-        ctx.transfer(to,"1");
 
-        final HashMap<String, String> callArgs =
-                new HashMap<String, String>() {
+        try {
+            ctx.transfer(to,BigInteger.valueOf(1));
+        } catch (Exception e) {
+            return Response.error(e.toString());
+        }
+
+        final HashMap<String, byte[]> callArgs =
+                new HashMap<String, byte[]>() {
                     {
-                        put("to", to);
+                        put("to", toByte);
                     }
                 };
 
         // 发起跨合约调用
-        Response resp = ctx.call("native","c162802","invoke",callArgs);
+        try {
+            Response resp = ctx.call("native","c2","invoke",callArgs);
 
-        // 根据合约调用结果记录到call变量里面并持久化
-        ctx.putObject("call".getBytes(), resp.body);
+            // 根据合约调用结果记录到call变量里面并持久化
+            ctx.putObject("call".getBytes(), resp.body);
 
-        // 对cnt变量加1并持久化
-        counter = counter.add(BigInteger.valueOf(1));
-        ctx.putObject(cntKey.getBytes(), counter.toByteArray());
+            // 对cnt变量加1并持久化
+            counter = counter.add(BigInteger.valueOf(1));
+            ctx.putObject(cntKey.getBytes(), counter.toByteArray());
+
+        } catch (Exception e) {
+            return Response.error(e.toString());
+        }
 
         return Response.ok("ok".getBytes());
     }

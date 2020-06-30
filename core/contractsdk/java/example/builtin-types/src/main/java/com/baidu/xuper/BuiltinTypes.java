@@ -26,12 +26,12 @@ public class BuiltinTypes implements Contract
         }
         String txid = new String(txidByte);
 
-        Transaction tx = ctx.queryTx(txid);
-        if (tx == null) {
-            return Response.error("no tx found");
+        try {
+            Transaction tx = ctx.queryTx(txid);
+            printTx(tx);
+        } catch(Exception e) {
+            return Response.error(e.toString());
         }
-
-        printTx(tx);
 
         return Response.ok("ok".getBytes());
     }
@@ -44,18 +44,18 @@ public class BuiltinTypes implements Contract
         }
         String blockid = new String(blockidByte);
 
-        Block b = ctx.queryBlock(blockid);
-        if (b == null) {
-            return Response.error("no tx found");
+        try {
+            Block b = ctx.queryBlock(blockid);
+            printBlock(b);
+        } catch(Exception e) {
+            return Response.error(e.toString());
         }
-
-        printBlock(b);
 
         return Response.ok("ok".getBytes());
     }
 
     @ContractMethod
-    // transfer native token from the contract to other acocunts
+    // transfer native token from the contract to other accounts
     public Response transfer(Context ctx) {
         byte[] toByte = ctx.args().get("to");
         if (toByte == null) {
@@ -73,7 +73,11 @@ public class BuiltinTypes implements Contract
             return Response.error("amount must not be negative");
         }
 
-        ctx.transfer(to,amountStr);
+        try {
+            ctx.transfer(to,amount);
+        } catch (Exception e){
+            return Response.error(e.toString());
+        }
 
         return Response.ok("ok".getBytes());
     }

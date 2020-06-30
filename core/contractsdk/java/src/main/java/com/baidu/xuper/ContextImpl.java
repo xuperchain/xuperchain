@@ -1,16 +1,16 @@
 package com.baidu.xuper;
 
-import java.io.UnsupportedEncodingException;
+import java.math.BigInteger;
 import java.util.Map;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Collections;
 import io.grpc.StatusRuntimeException;
+import com.google.protobuf.ByteString;
 
 import com.baidu.xuper.contractpb.Contract;
 import com.baidu.xuper.contractpb.SyscallGrpc;
-import com.google.protobuf.ByteString;
 
 
 /**
@@ -76,11 +76,11 @@ class ContextImpl implements Context {
     }
 
     @Override
-    public ArrayList<String> authRequire() {
+    public List<String> authRequire() {
         List<ByteString> byteStringList =  this.callArgs.getAuthRequireList().asByteStringList();
-        ArrayList<String> authRequires = new ArrayList();
-        for(int i = 0;i < byteStringList.size();i++){
-            authRequires.add(byteStringList.get(i).toString());
+        ArrayList<String> authRequires = new ArrayList<>();
+        for (ByteString bytes : byteStringList) {
+            authRequires.add(bytes.toString());
         }
 
         return authRequires;
@@ -111,112 +111,83 @@ class ContextImpl implements Context {
         Contract.DeleteRequest request = Contract.DeleteRequest.newBuilder().setHeader(this.header)
                 .setKey(ByteString.copyFrom(key)).build();
         this.client.deleteObject(request);
-        return;
     }
 
 //    @Override
-    public Contract.IteratorResponse newIterator(ByteString start, ByteString limit) {
+    public Contract.IteratorResponse newIterator(byte[] start, byte[] limit) throws Exception{
         Contract.IteratorRequest request = Contract.IteratorRequest.newBuilder().setHeader(this.header)
-                .setStart(start).setLimit(limit).build();
-        try{
-            Contract.IteratorResponse resp = this.client.newIterator(request);
-            return resp;
-        } catch (StatusRuntimeException e){
-            return null;
-        }
+                .setStart(ByteString.copyFrom(start)).setLimit(ByteString.copyFrom(limit)).build();
+
+        Contract.IteratorResponse resp = this.client.newIterator(request);
+        return resp;
     }
 
     @Override
-    public Contract.Transaction queryTx(String txid) {
+    public Contract.Transaction queryTx(String txid) throws Exception{
         Contract.QueryTxRequest request = Contract.QueryTxRequest.newBuilder().setHeader(this.header)
                 .setTxid(txid).build();
 
-        try{
-            Contract.QueryTxResponse resp = this.client.queryTx(request);
-            return resp.getTx();
-        } catch (StatusRuntimeException e){
-            return null;
-        }
+        Contract.QueryTxResponse resp = this.client.queryTx(request);
+        return resp.getTx();
     }
 
     @Override
-    public Contract.Block queryBlock(String blockid) {
+    public Contract.Block queryBlock(String blockid) throws Exception{
         Contract.QueryBlockRequest request = Contract.QueryBlockRequest.newBuilder().setHeader(this.header)
                 .setBlockid(blockid).build();
 
-        try{
-            Contract.QueryBlockResponse resp = this.client.queryBlock(request);
-            return resp.getBlock();
-        } catch (StatusRuntimeException e){
-            return null;
+        Contract.QueryBlockResponse resp = this.client.queryBlock(request);
+        return resp.getBlock();
+    }
+
+    @Override
+    public void transfer(String to, BigInteger amount) throws Exception {
+        if (amount.signum() == -1) {
+            throw new Exception("amount must not be negative");
         }
-    }
 
-    @Override
-    public void transfer(String to, String amount) {
         Contract.TransferRequest request = Contract.TransferRequest.newBuilder().setHeader(this.header)
-                .setTo(to).setAmount(amount).build();
+                .setTo(to).setAmount(amount.toString()).build();
         this.client.transfer(request);
-        return;
     }
 
     @Override
-    public Response call(String module, String contract, String method, HashMap<String,String> args) {
+    public Response call(String module, String contract, String method, Map<String,byte[]> args) throws Exception{
         Contract.ContractCallRequest.Builder requestBuild = Contract.ContractCallRequest.newBuilder().setHeader(this.header)
                 .setModule(module).setContract(contract).setMethod(method);
         int i = 0;
-        for (Map.Entry<String, String> entry : args.entrySet()){
+        for (Map.Entry<String, byte[]> entry : args.entrySet()){
             Contract.ArgPair.Builder argBuilder = requestBuild.addArgsBuilder();
             argBuilder.setKey(entry.getKey());
-            ByteString value;
-            try{
-                value = ByteString.copyFrom(entry.getValue(),"UTF-8");
-            } catch(UnsupportedEncodingException e){
-                return null;
-            }
-            argBuilder.setValue(value);
+            argBuilder.setValue(ByteString.copyFrom(entry.getValue()));
             requestBuild.setArgs(i,argBuilder.build());
             i++;
         }
         Contract.ContractCallRequest request = requestBuild.build();
-        try {
-            Contract.ContractCallResponse contractCallResp = this.client.contractCall(request);
-            Contract.Response contractResp = contractCallResp.getResponse();
-            Response resp = new Response(contractResp.getStatus(),contractResp.getMessage(),contractResp.getBody()
-                    .toByteArray());
-            return resp;
-        } catch(StatusRuntimeException e){
-            return null;
-        }
+        Contract.ContractCallResponse contractCallResp = this.client.contractCall(request);
+        Contract.Response contractResp = contractCallResp.getResponse();
+        Response resp = new Response(contractResp.getStatus(),contractResp.getMessage(),contractResp.getBody()
+                .toByteArray());
+        return resp;
     }
 
     @Override
-    public Response crossQuery(String uri, HashMap<String,String> args) {
+    public Response crossQuery(String uri, Map<String,byte[]> args) throws Exception{
         Contract.CrossContractQueryRequest.Builder requestBuild = Contract.CrossContractQueryRequest.newBuilder()
                 .setHeader(this.header).setUri(uri);
         int i = 0;
-        for (Map.Entry<String, String> entry : args.entrySet()){
+        for (Map.Entry<String, byte[]> entry : args.entrySet()){
             Contract.ArgPair.Builder argBuilder = requestBuild.addArgsBuilder();
             argBuilder.setKey(entry.getKey());
-            ByteString value;
-            try{
-                value = ByteString.copyFrom(entry.getValue(),"UTF-8");
-            } catch(UnsupportedEncodingException e){
-                return null;
-            }
-            argBuilder.setValue(value);
+            argBuilder.setValue(ByteString.copyFrom(entry.getValue()));
             requestBuild.setArgs(i,argBuilder.build());
             i++;
         }
         Contract.CrossContractQueryRequest request = requestBuild.build();
-        try {
-            Contract.CrossContractQueryResponse crossContractResp = this.client.crossContractQuery(request);
-            Contract.Response contractResp = crossContractResp.getResponse();
-            Response resp = new Response(contractResp.getStatus(),contractResp.getMessage(),contractResp.getBody().toByteArray());
-            return resp;
-        } catch(StatusRuntimeException e){
-            return null;
-        }
+        Contract.CrossContractQueryResponse crossContractResp = this.client.crossContractQuery(request);
+        Contract.Response contractResp = crossContractResp.getResponse();
+        Response resp = new Response(contractResp.getStatus(),contractResp.getMessage(),contractResp.getBody().toByteArray());
+        return resp;
     }
 
     @Override
@@ -224,6 +195,5 @@ class ContextImpl implements Context {
         Contract.PostLogRequest request = Contract.PostLogRequest.newBuilder().setHeader(this.header).setEntry(msg)
                 .build();
         this.client.postLog(request);
-        return;
     }
 }

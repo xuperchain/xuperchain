@@ -32,9 +32,12 @@ public class c2 implements Contract
             return Response.error("missing to");
         }
         final String to = new String(toByte);
-        ctx.transfer(to,"1000");
-
-        ctx.putObject(cntKey.getBytes(), counter.toByteArray());
+        try {
+            ctx.transfer(to,BigInteger.valueOf(1000));
+            ctx.putObject(cntKey.getBytes(), counter.toByteArray());
+        } catch (Exception e) {
+            return Response.error(e.toString());
+        }
 
         return Response.ok(counter.toByteArray());
     }
