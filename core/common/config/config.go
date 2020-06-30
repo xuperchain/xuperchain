@@ -123,8 +123,6 @@ type MinerConfig struct {
 
 // UtxoConfig is the config of UtxoVM
 type UtxoConfig struct {
-	// nonUtxo 是否支持utxo无币化
-	NonUtxo               bool                       `yaml:"nonUtxo,omitempty"`
 	CacheSize             int                        `yaml:"cachesize,omitempty"`
 	TmpLockSeconds        int                        `yaml:"tmplockSeconds,omitempty"`
 	AsyncMode             bool                       `yaml:"asyncMode,omitempty"`
@@ -343,7 +341,6 @@ func (nc *NodeConfig) defaultNodeConfig() {
 	nc.PluginLoadPath = "./plugins/autoload/"
 	nc.Datapath = "./data/blockchain"
 	nc.Utxo = UtxoConfig{
-		NonUtxo:               false,
 		CacheSize:             100000,
 		TmpLockSeconds:        60,
 		AsyncMode:             false,
