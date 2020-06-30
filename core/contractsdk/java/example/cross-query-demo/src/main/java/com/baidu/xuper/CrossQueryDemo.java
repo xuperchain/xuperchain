@@ -1,12 +1,11 @@
 package com.baidu.xuper;
 
 import java.util.HashMap;
+
 /**
  * Cross Query Demo
- *
  */
-public class CrossQueryDemo implements Contract
-{
+public class CrossQueryDemo implements Contract {
     @Override
     @ContractMethod
     public Response initialize(Context ctx) {
@@ -29,12 +28,8 @@ public class CrossQueryDemo implements Contract
                     }
                 };
 
-        try {
-            Response resp = ctx.crossQuery(null, callArgs);
-            return Response.ok(resp.body);
-        } catch (Exception e) {
-            return Response.error(e.toString());
-        }
+        Response resp = ctx.crossQuery(uri, callArgs);
+        return Response.ok(resp.body);
     }
 
     public static void main(String[] args) {

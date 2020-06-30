@@ -1,10 +1,10 @@
 package com.baidu.xuper;
 
+import com.baidu.xuper.contractpb.Contract;
+
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
-
-import com.baidu.xuper.contractpb.Contract;
 
 public interface Context {
     public Map<String, byte[]> args();
@@ -19,17 +19,17 @@ public interface Context {
 
     public void deleteObject(byte[] key);
 
-//    public Contract.IteratorResponse newIterator(byte[] start, byte[] limit) throws Exception;
+//    public Contract.IteratorResponse newIterator(byte[] start, byte[] limit);
 
-    public Contract.Transaction queryTx(String txid) throws Exception;
+    public Contract.Transaction queryTx(String txid);
 
-    public Contract.Block queryBlock(String blockid) throws Exception;
+    public Contract.Block queryBlock(String blockid);
 
-    public void transfer(String to, BigInteger amount) throws Exception;
+    public void transfer(String to, BigInteger amount);
 
-    public Response call(String module, String contract, String method, Map<String,byte[]> args) throws Exception;
+    public Response call(String module, String contract, String method, Map<String, byte[]> args);
 
-    public Response crossQuery(String uri, Map<String,byte[]> args) throws Exception;
+    public Response crossQuery(String uri, Map<String, byte[]> args);
 
     public void setOutput(Response resp);
 

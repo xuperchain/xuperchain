@@ -5,10 +5,8 @@ import java.util.HashMap;
 
 /**
  * c1
- *
  */
-public class c1 implements Contract
-{
+public class c1 implements Contract {
     @Override
     @ContractMethod
     public Response initialize(Context ctx) {
@@ -16,7 +14,7 @@ public class c1 implements Contract
     }
 
     @ContractMethod
-    public Response invoke(final Context ctx) {
+    public Response invoke(Context ctx) {
         String cntKey = "cnt";
         BigInteger counter;
         byte[] value = ctx.getObject(cntKey.getBytes());
@@ -33,11 +31,7 @@ public class c1 implements Contract
         }
         final String to = new String(toByte);
 
-        try {
-            ctx.transfer(to,BigInteger.valueOf(1));
-        } catch (Exception e) {
-            return Response.error(e.toString());
-        }
+        ctx.transfer(to, BigInteger.valueOf(1));
 
         final HashMap<String, byte[]> callArgs =
                 new HashMap<String, byte[]>() {
@@ -47,19 +41,12 @@ public class c1 implements Contract
                 };
 
         // 发起跨合约调用
-        try {
-            Response resp = ctx.call("native","c2","invoke",callArgs);
-
-            // 根据合约调用结果记录到call变量里面并持久化
-            ctx.putObject("call".getBytes(), resp.body);
-
-            // 对cnt变量加1并持久化
-            counter = counter.add(BigInteger.valueOf(1));
-            ctx.putObject(cntKey.getBytes(), counter.toByteArray());
-
-        } catch (Exception e) {
-            return Response.error(e.toString());
-        }
+        Response resp = ctx.call("native", "c2", "invoke", callArgs);
+        // 根据合约调用结果记录到call变量里面并持久化
+        ctx.putObject("call".getBytes(), resp.body);
+        // 对cnt变量加1并持久化
+        counter = counter.add(BigInteger.valueOf(1));
+        ctx.putObject(cntKey.getBytes(), counter.toByteArray());
 
         return Response.ok("ok".getBytes());
     }

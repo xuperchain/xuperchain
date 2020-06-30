@@ -4,10 +4,8 @@ import java.math.BigInteger;
 
 /**
  * c2
- *
  */
-public class c2 implements Contract
-{
+public class c2 implements Contract {
     @Override
     @ContractMethod
     public Response initialize(Context ctx) {
@@ -15,7 +13,7 @@ public class c2 implements Contract
     }
 
     @ContractMethod
-    public Response invoke(final Context ctx) {
+    public Response invoke(Context ctx) {
         String cntKey = "cnt";
         BigInteger counter;
         byte[] value = ctx.getObject(cntKey.getBytes());
@@ -32,12 +30,8 @@ public class c2 implements Contract
             return Response.error("missing to");
         }
         final String to = new String(toByte);
-        try {
-            ctx.transfer(to,BigInteger.valueOf(1000));
-            ctx.putObject(cntKey.getBytes(), counter.toByteArray());
-        } catch (Exception e) {
-            return Response.error(e.toString());
-        }
+        ctx.transfer(to, BigInteger.valueOf(1000));
+        ctx.putObject(cntKey.getBytes(), counter.toByteArray());
 
         return Response.ok(counter.toByteArray());
     }

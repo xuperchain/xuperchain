@@ -1,16 +1,16 @@
 package com.baidu.xuper;
 
-import java.math.BigInteger;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Collections;
-import io.grpc.StatusRuntimeException;
-import com.google.protobuf.ByteString;
-
 import com.baidu.xuper.contractpb.Contract;
 import com.baidu.xuper.contractpb.SyscallGrpc;
+import com.google.protobuf.ByteString;
+import io.grpc.StatusRuntimeException;
+
+import java.math.BigInteger;
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Collections;
+import java.util.ArrayList;
 
 
 /**
@@ -77,7 +77,7 @@ class ContextImpl implements Context {
 
     @Override
     public List<String> authRequire() {
-        List<ByteString> byteStringList =  this.callArgs.getAuthRequireList().asByteStringList();
+        List<ByteString> byteStringList = this.callArgs.getAuthRequireList().asByteStringList();
         ArrayList<String> authRequires = new ArrayList<>();
         for (ByteString bytes : byteStringList) {
             authRequires.add(bytes.toString());
@@ -113,8 +113,8 @@ class ContextImpl implements Context {
         this.client.deleteObject(request);
     }
 
-//    @Override
-    public Contract.IteratorResponse newIterator(byte[] start, byte[] limit) throws Exception{
+    //    @Override
+    public Contract.IteratorResponse newIterator(byte[] start, byte[] limit) {
         Contract.IteratorRequest request = Contract.IteratorRequest.newBuilder().setHeader(this.header)
                 .setStart(ByteString.copyFrom(start)).setLimit(ByteString.copyFrom(limit)).build();
 
@@ -123,7 +123,7 @@ class ContextImpl implements Context {
     }
 
     @Override
-    public Contract.Transaction queryTx(String txid) throws Exception{
+    public Contract.Transaction queryTx(String txid) {
         Contract.QueryTxRequest request = Contract.QueryTxRequest.newBuilder().setHeader(this.header)
                 .setTxid(txid).build();
 
@@ -132,7 +132,7 @@ class ContextImpl implements Context {
     }
 
     @Override
-    public Contract.Block queryBlock(String blockid) throws Exception{
+    public Contract.Block queryBlock(String blockid) {
         Contract.QueryBlockRequest request = Contract.QueryBlockRequest.newBuilder().setHeader(this.header)
                 .setBlockid(blockid).build();
 
@@ -141,9 +141,9 @@ class ContextImpl implements Context {
     }
 
     @Override
-    public void transfer(String to, BigInteger amount) throws Exception {
+    public void transfer(String to, BigInteger amount) {
         if (amount.signum() == -1) {
-            throw new Exception("amount must not be negative");
+            throw new RuntimeException("amount must not be negative");
         }
 
         Contract.TransferRequest request = Contract.TransferRequest.newBuilder().setHeader(this.header)
@@ -152,41 +152,41 @@ class ContextImpl implements Context {
     }
 
     @Override
-    public Response call(String module, String contract, String method, Map<String,byte[]> args) throws Exception{
+    public Response call(String module, String contract, String method, Map<String, byte[]> args) {
         Contract.ContractCallRequest.Builder requestBuild = Contract.ContractCallRequest.newBuilder().setHeader(this.header)
                 .setModule(module).setContract(contract).setMethod(method);
         int i = 0;
-        for (Map.Entry<String, byte[]> entry : args.entrySet()){
+        for (Map.Entry<String, byte[]> entry : args.entrySet()) {
             Contract.ArgPair.Builder argBuilder = requestBuild.addArgsBuilder();
             argBuilder.setKey(entry.getKey());
             argBuilder.setValue(ByteString.copyFrom(entry.getValue()));
-            requestBuild.setArgs(i,argBuilder.build());
+            requestBuild.setArgs(i, argBuilder.build());
             i++;
         }
         Contract.ContractCallRequest request = requestBuild.build();
         Contract.ContractCallResponse contractCallResp = this.client.contractCall(request);
         Contract.Response contractResp = contractCallResp.getResponse();
-        Response resp = new Response(contractResp.getStatus(),contractResp.getMessage(),contractResp.getBody()
+        Response resp = new Response(contractResp.getStatus(), contractResp.getMessage(), contractResp.getBody()
                 .toByteArray());
         return resp;
     }
 
     @Override
-    public Response crossQuery(String uri, Map<String,byte[]> args) throws Exception{
+    public Response crossQuery(String uri, Map<String, byte[]> args) {
         Contract.CrossContractQueryRequest.Builder requestBuild = Contract.CrossContractQueryRequest.newBuilder()
                 .setHeader(this.header).setUri(uri);
         int i = 0;
-        for (Map.Entry<String, byte[]> entry : args.entrySet()){
+        for (Map.Entry<String, byte[]> entry : args.entrySet()) {
             Contract.ArgPair.Builder argBuilder = requestBuild.addArgsBuilder();
             argBuilder.setKey(entry.getKey());
             argBuilder.setValue(ByteString.copyFrom(entry.getValue()));
-            requestBuild.setArgs(i,argBuilder.build());
+            requestBuild.setArgs(i, argBuilder.build());
             i++;
         }
         Contract.CrossContractQueryRequest request = requestBuild.build();
         Contract.CrossContractQueryResponse crossContractResp = this.client.crossContractQuery(request);
         Contract.Response contractResp = crossContractResp.getResponse();
-        Response resp = new Response(contractResp.getStatus(),contractResp.getMessage(),contractResp.getBody().toByteArray());
+        Response resp = new Response(contractResp.getStatus(), contractResp.getMessage(), contractResp.getBody().toByteArray());
         return resp;
     }
 
