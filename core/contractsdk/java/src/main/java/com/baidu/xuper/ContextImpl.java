@@ -45,7 +45,6 @@ class ContextImpl implements Context {
         }
     }
 
-    @Override
     public void setOutput(Response resp) {
         Contract.Response.Builder respBuilder = Contract.Response.newBuilder();
         respBuilder.setStatus(resp.status);
@@ -80,7 +79,7 @@ class ContextImpl implements Context {
         List<ByteString> byteStringList = this.callArgs.getAuthRequireList().asByteStringList();
         ArrayList<String> authRequires = new ArrayList<>();
         for (ByteString bytes : byteStringList) {
-            authRequires.add(bytes.toString());
+            authRequires.add(bytes.toStringUtf8());
         }
 
         return authRequires;
@@ -113,7 +112,7 @@ class ContextImpl implements Context {
         this.client.deleteObject(request);
     }
 
-    //    @Override
+    @Override
     public Contract.IteratorResponse newIterator(byte[] start, byte[] limit) {
         Contract.IteratorRequest request = Contract.IteratorRequest.newBuilder().setHeader(this.header)
                 .setStart(ByteString.copyFrom(start)).setLimit(ByteString.copyFrom(limit)).build();

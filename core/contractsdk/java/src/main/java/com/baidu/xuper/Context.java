@@ -19,7 +19,7 @@ public interface Context {
 
     public void deleteObject(byte[] key);
 
-//    public Contract.IteratorResponse newIterator(byte[] start, byte[] limit);
+    public Contract.IteratorResponse newIterator(byte[] start, byte[] limit);
 
     public Contract.Transaction queryTx(String txid);
 
@@ -30,8 +30,6 @@ public interface Context {
     public Response call(String module, String contract, String method, Map<String, byte[]> args);
 
     public Response crossQuery(String uri, Map<String, byte[]> args);
-
-    public void setOutput(Response resp);
 
     public void log(String msg);
 
