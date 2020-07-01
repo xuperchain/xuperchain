@@ -109,7 +109,7 @@ func (e *EventService) Subscribe(stream pb.PubsubService_SubscribeServer,
 }
 
 func StringContains(target string, arr []string) bool {
-	if arr == nil || len(arr) == 0 {
+	if len(arr) == 0 {
 		return false
 	}
 	for i := 0; i < len(arr); i++ {

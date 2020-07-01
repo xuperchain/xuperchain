@@ -132,9 +132,7 @@ func GetPermTreeList(root *PermNode) ([]*PermNode, error) {
 	pn := 0
 	for pn < len(nlist) {
 		if nlist[pn].Children != nil {
-			for _, node := range nlist[pn].Children {
-				nlist = append(nlist, node)
-			}
+			nlist = append(nlist, nlist[pn].Children...)
 		}
 		pn++
 	}
