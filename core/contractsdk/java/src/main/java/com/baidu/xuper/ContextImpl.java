@@ -77,7 +77,7 @@ class ContextImpl implements Context {
     @Override
     public List<String> authRequire() {
         List<ByteString> byteStringList = this.callArgs.getAuthRequireList().asByteStringList();
-        ArrayList<String> authRequires = new ArrayList<>();
+        List<String> authRequires = new ArrayList<>();
         for (ByteString bytes : byteStringList) {
             authRequires.add(bytes.toStringUtf8());
         }
@@ -113,12 +113,8 @@ class ContextImpl implements Context {
     }
 
     @Override
-    public Contract.IteratorResponse newIterator(byte[] start, byte[] limit) {
-        Contract.IteratorRequest request = Contract.IteratorRequest.newBuilder().setHeader(this.header)
-                .setStart(ByteString.copyFrom(start)).setLimit(ByteString.copyFrom(limit)).build();
-
-        Contract.IteratorResponse resp = this.client.newIterator(request);
-        return resp;
+    public BasicIterator newIterator(byte[] start, byte[] limit) {
+        return BasicIterator.newIterator(this.client, this.header, start, limit);
     }
 
     @Override

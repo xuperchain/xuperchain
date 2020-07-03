@@ -26,5 +26,5 @@ $ xchain-cli native invoke --method put -a '{"key":"test1","value":"value1"}' bu
 # k-v 查询
 $ xchain-cli native query --method get -a '{"key":"test1"}' builtintypes
 # 迭代器查询
-$ xchain-cli native query --method getList builtintypes
+$ xchain-cli native query --method getList -a '{"start":"test"}' builtintypes
 ```

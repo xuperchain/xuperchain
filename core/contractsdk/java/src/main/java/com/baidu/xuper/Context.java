@@ -19,7 +19,7 @@ public interface Context {
 
     public void deleteObject(byte[] key);
 
-    public Contract.IteratorResponse newIterator(byte[] start, byte[] limit);
+    public BasicIterator newIterator(byte[] start, byte[] limit);
 
     public Contract.Transaction queryTx(String txid);
 

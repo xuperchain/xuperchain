@@ -1,7 +1,8 @@
 package com.baidu.xuper;
 
 import com.baidu.xuper.contractpb.Contract.Block;
-import com.baidu.xuper.contractpb.Contract.IteratorResponse;
+import com.baidu.xuper.contractpb.Contract.IteratorItem;
+import com.baidu.xuper.contractpb.Contract.IteratorItemOrBuilder;
 import com.baidu.xuper.contractpb.Contract.Transaction;
 import com.google.protobuf.ProtocolStringList;
 
@@ -12,7 +13,6 @@ import java.util.List;
  * Builtin Types
  */
 public class BuiltinTypes implements Contract {
-    static final String KEYPREFIX = "prefix_";
 
     @Override
     @ContractMethod
@@ -83,34 +83,30 @@ public class BuiltinTypes implements Contract {
 
     @ContractMethod
     public Response put(Context ctx) {
-        byte[] keyByte = ctx.args().get("key");
-        if (keyByte == null) {
+        byte[] key = ctx.args().get("key");
+        if (key == null) {
             return Response.error("missing key");
         }
-        String key = new String(keyByte);
-        key = KEYPREFIX + key;
 
         byte[] value = ctx.args().get("value");
         if (value == null) {
             return Response.error("missing value");
         }
 
-        ctx.putObject(key.getBytes(), value);
+        ctx.putObject(key, value);
         return Response.ok(value);
     }
 
     @ContractMethod
     public Response get(Context ctx) {
-        byte[] keyByte = ctx.args().get("key");
-        if (keyByte == null) {
+        byte[] key = ctx.args().get("key");
+        if (key == null) {
             return Response.error("missing key");
         }
-        String key = new String(keyByte);
-        key = KEYPREFIX + key;
 
-        byte[] value = ctx.getObject(key.getBytes());
+        byte[] value = ctx.getObject(key);
         if (value == null) {
-            return Response.error("key " + key + " not found");
+            return Response.error("key " + new String(key) + " not found");
         }
 
         return Response.ok(value);
@@ -118,13 +114,21 @@ public class BuiltinTypes implements Contract {
 
     @ContractMethod
     public Response getList(Context ctx) {
-        String start = KEYPREFIX;
-        String limit = KEYPREFIX + "~";
-        IteratorResponse iteratorResponse = ctx.newIterator(start.getBytes(), limit.getBytes());
-        for (int i = 0; i < iteratorResponse.getItemsCount(); i++) {
-            String key = iteratorResponse.getItems(i).getKey().toStringUtf8();
-            String value = iteratorResponse.getItems(i).getValue().toStringUtf8();
+        byte[] start = ctx.args().get("start");
+        if (start == null) {
+            return Response.error("missing start");
+        }
+
+        PrefixRange prefixRange = new PrefixRange();
+        byte[] limit = prefixRange.generateLimit(start);
+        BasicIterator iter = ctx.newIterator(start, limit);
+        int i = 0;
+        while (iter.hasNext()) {
+            IteratorItemOrBuilder itemBuilder = IteratorItem.newBuilder((IteratorItem) iter.next());
+            String key = itemBuilder.getKey().toStringUtf8();
+            String value = itemBuilder.getValue().toStringUtf8();
             System.out.printf("[item[%d]]: %s: %s\n", i, key, value);
+            i++;
         }
 
         return Response.ok("ok".getBytes());
