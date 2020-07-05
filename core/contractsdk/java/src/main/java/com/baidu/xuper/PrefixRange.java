@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PrefixRange {
-    public byte[] generateLimit(byte[] prefix) {
+    public static byte[] generateLimit(byte[] prefix) {
         int len = prefix.length;
         List<Byte> limitList = new ArrayList<>();
         for (int i = len - 1; i >= 0; i--) {

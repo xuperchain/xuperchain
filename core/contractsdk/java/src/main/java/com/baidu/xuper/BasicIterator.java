@@ -7,8 +7,9 @@ import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
 
-public class BasicIterator implements Iterator {
+public class BasicIterator implements Iterator<ContractIterator> {
     static final int CAP = 100;
 
     private final SyscallGrpc.SyscallBlockingStub client;
@@ -48,10 +49,10 @@ public class BasicIterator implements Iterator {
     }
 
     @Override
-    public Object next() {
+    public ContractIterator next() {
         boolean ret = end();
         if (ret) {
-            return null;
+            throw new NoSuchElementException();
         }
         Contract.IteratorItem curItem = this.items.get(this.it);
         this.it++;
@@ -63,11 +64,14 @@ public class BasicIterator implements Iterator {
             }
         }
 
-        return curItem;
+        ContractIterator item = new ContractIterator(curItem);
+
+        return item;
     }
 
     @Override
     public void remove() {
+        throw new UnsupportedOperationException("The BasicIterator does not implement the remove method");
     }
 
     private boolean load() {
@@ -101,5 +105,20 @@ public class BasicIterator implements Iterator {
 
         return this.client.newIterator(request);
     }
+}
 
+class ContractIterator {
+    private Contract.IteratorItem item;
+
+    public ContractIterator(Contract.IteratorItem item) {
+        this.item = item;
+    }
+
+    public String getKey() {
+        return this.item.getKey().toStringUtf8();
+    }
+
+    public String getValue() {
+        return this.item.getValue().toStringUtf8();
+    }
 }

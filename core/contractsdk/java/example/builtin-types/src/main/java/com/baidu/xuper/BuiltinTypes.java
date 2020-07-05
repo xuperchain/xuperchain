@@ -1,8 +1,6 @@
 package com.baidu.xuper;
 
 import com.baidu.xuper.contractpb.Contract.Block;
-import com.baidu.xuper.contractpb.Contract.IteratorItem;
-import com.baidu.xuper.contractpb.Contract.IteratorItemOrBuilder;
 import com.baidu.xuper.contractpb.Contract.Transaction;
 import com.google.protobuf.ProtocolStringList;
 
@@ -119,14 +117,13 @@ public class BuiltinTypes implements Contract {
             return Response.error("missing start");
         }
 
-        PrefixRange prefixRange = new PrefixRange();
-        byte[] limit = prefixRange.generateLimit(start);
+        byte[] limit = PrefixRange.generateLimit(start);
         BasicIterator iter = ctx.newIterator(start, limit);
         int i = 0;
         while (iter.hasNext()) {
-            IteratorItemOrBuilder itemBuilder = IteratorItem.newBuilder((IteratorItem) iter.next());
-            String key = itemBuilder.getKey().toStringUtf8();
-            String value = itemBuilder.getValue().toStringUtf8();
+            ContractIterator item = iter.next();
+            String key = item.getKey();
+            String value = item.getValue();
             System.out.printf("[item[%d]]: %s: %s\n", i, key, value);
             i++;
         }
