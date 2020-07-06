@@ -114,11 +114,11 @@ class ContractIteratorItem {
         this.item = item;
     }
 
-    public String getKey() {
-        return this.item.getKey().toStringUtf8();
+    public byte[] getKey() {
+        return this.item.getKey().toByteArray();
     }
 
-    public String getValue() {
-        return this.item.getValue().toStringUtf8();
+    public byte[] getValue() {
+        return this.item.getValue().toByteArray();
     }
 }

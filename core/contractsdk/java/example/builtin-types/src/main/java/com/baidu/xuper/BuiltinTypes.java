@@ -4,6 +4,7 @@ import com.baidu.xuper.contractpb.Contract.Block;
 import com.baidu.xuper.contractpb.Contract.Transaction;
 import com.google.protobuf.ProtocolStringList;
 
+import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.util.List;
 
@@ -122,8 +123,8 @@ public class BuiltinTypes implements Contract {
         int i = 0;
         while (iter.hasNext()) {
             ContractIteratorItem item = iter.next();
-            String key = item.getKey();
-            String value = item.getValue();
+            String key = bytesToString(item.getKey());
+            String value = bytesToString(item.getValue());
             System.out.printf("[item[%d]]: %s: %s\n", i, key, value);
             i++;
         }
@@ -176,6 +177,19 @@ public class BuiltinTypes implements Contract {
         for (int i = 0; i < authRequireList.size(); i++) {
             System.out.printf("authRequire[%d]: %s\n", i, authRequireList.get(i));
         }
+    }
+
+    private static String bytesToString(byte[] bytes) {
+        if (null == bytes || bytes.length == 0) {
+            return "";
+        }
+        String strContent = "";
+        try {
+            strContent = new String(bytes, "utf-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        return strContent;
     }
 
     public static void main(String[] args) {
