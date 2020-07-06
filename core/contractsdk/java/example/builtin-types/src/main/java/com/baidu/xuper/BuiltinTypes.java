@@ -121,7 +121,7 @@ public class BuiltinTypes implements Contract {
         BasicIterator iter = ctx.newIterator(start, limit);
         int i = 0;
         while (iter.hasNext()) {
-            ContractIterator item = iter.next();
+            ContractIteratorItem item = iter.next();
             String key = item.getKey();
             String value = item.getValue();
             System.out.printf("[item[%d]]: %s: %s\n", i, key, value);

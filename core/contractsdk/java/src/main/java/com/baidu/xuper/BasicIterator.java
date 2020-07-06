@@ -9,7 +9,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-public class BasicIterator implements Iterator<ContractIterator> {
+public class BasicIterator implements Iterator<ContractIteratorItem> {
     static final int CAP = 100;
 
     private final SyscallGrpc.SyscallBlockingStub client;
@@ -49,7 +49,7 @@ public class BasicIterator implements Iterator<ContractIterator> {
     }
 
     @Override
-    public ContractIterator next() {
+    public ContractIteratorItem next() {
         boolean ret = end();
         if (ret) {
             throw new NoSuchElementException();
@@ -64,7 +64,7 @@ public class BasicIterator implements Iterator<ContractIterator> {
             }
         }
 
-        ContractIterator item = new ContractIterator(curItem);
+        ContractIteratorItem item = new ContractIteratorItem(curItem);
 
         return item;
     }
@@ -107,10 +107,10 @@ public class BasicIterator implements Iterator<ContractIterator> {
     }
 }
 
-class ContractIterator {
+class ContractIteratorItem {
     private Contract.IteratorItem item;
 
-    public ContractIterator(Contract.IteratorItem item) {
+    public ContractIteratorItem(Contract.IteratorItem item) {
         this.item = item;
     }
 
