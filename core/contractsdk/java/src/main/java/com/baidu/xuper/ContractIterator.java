@@ -9,7 +9,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-public class BasicIterator implements Iterator<ContractIteratorItem> {
+public class ContractIterator implements Iterator<ContractIteratorItem> {
     static final int CAP = 100;
 
     private final SyscallGrpc.SyscallBlockingStub client;
@@ -19,9 +19,9 @@ public class BasicIterator implements Iterator<ContractIteratorItem> {
     private ArrayList<Contract.IteratorItem> items;
     private int it;
 
-    public static BasicIterator newIterator(SyscallGrpc.SyscallBlockingStub client,
-                                            Contract.SyscallHeader header, byte[] start, byte[] limit) {
-        BasicIterator iter = new BasicIterator(client, header, start, limit);
+    public static ContractIterator newIterator(SyscallGrpc.SyscallBlockingStub client,
+                                               Contract.SyscallHeader header, byte[] start, byte[] limit) {
+        ContractIterator iter = new ContractIterator(client, header, start, limit);
         if (!iter.load()) {
             iter.it = -1;
         } else {
@@ -30,8 +30,8 @@ public class BasicIterator implements Iterator<ContractIteratorItem> {
         return iter;
     }
 
-    private BasicIterator(SyscallGrpc.SyscallBlockingStub client, Contract.SyscallHeader header,
-                          byte[] start, byte[] limit) {
+    private ContractIterator(SyscallGrpc.SyscallBlockingStub client, Contract.SyscallHeader header,
+                             byte[] start, byte[] limit) {
         this.client = client;
         this.builder = Contract.IteratorRequest.newBuilder().setHeader(header);
         this.start = start;

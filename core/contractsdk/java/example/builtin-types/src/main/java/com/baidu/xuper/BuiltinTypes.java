@@ -6,6 +6,7 @@ import com.google.protobuf.ProtocolStringList;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
+import java.util.Iterator;
 import java.util.List;
 
 /**
@@ -28,7 +29,7 @@ public class BuiltinTypes implements Contract {
         String txid = new String(txidByte);
 
         Transaction tx = ctx.queryTx(txid);
-        printTx(tx);
+        printTx(ctx, tx);
 
         return Response.ok("ok".getBytes());
     }
@@ -42,7 +43,7 @@ public class BuiltinTypes implements Contract {
         String blockid = new String(blockidByte);
 
         Block b = ctx.queryBlock(blockid);
-        printBlock(b);
+        printBlock(ctx, b);
 
         return Response.ok("ok".getBytes());
     }
@@ -51,7 +52,7 @@ public class BuiltinTypes implements Contract {
     public Response authRequire(Context ctx) {
 
         List<String> authRequireList = ctx.authRequire();
-        printAuthRequire(authRequireList);
+        printAuthRequire(ctx, authRequireList);
 
         return Response.ok("ok".getBytes());
     }
@@ -119,7 +120,7 @@ public class BuiltinTypes implements Contract {
         }
 
         byte[] limit = PrefixRange.generateLimit(start);
-        BasicIterator iter = ctx.newIterator(start, limit);
+        Iterator<ContractIteratorItem> iter = ctx.newIterator(start, limit);
         int i = 0;
         while (iter.hasNext()) {
             ContractIteratorItem item = iter.next();
@@ -132,50 +133,50 @@ public class BuiltinTypes implements Contract {
         return Response.ok("ok".getBytes());
     }
 
-    private void printTx(Transaction tx) {
-        System.out.printf("txid: %s\n", tx.getTxid());
-        System.out.printf("blockid: %s\n", tx.getBlockid());
-        System.out.printf("desc: %s\n", tx.getDesc().toStringUtf8());
-        System.out.printf("initiator: %s\n", tx.getInitiator());
+    private void printTx(Context ctx, Transaction tx) {
+        ctx.log("txid: " + tx.getTxid());
+        ctx.log("blockid: " + tx.getBlockid());
+        ctx.log("blockid: " + tx.getDesc().toStringUtf8());
+        ctx.log("initiator: " + tx.getInitiator());
 
         ProtocolStringList authRequireList = tx.getAuthRequireList();
         for (String auth : authRequireList) {
-            System.out.printf("auth require: %s\n", auth);
+            ctx.log("auth require: " + auth);
         }
 
         for (int i = 0; i < tx.getTxInputsCount(); i++) {
-            System.out.printf("[tx_input[%d]]: ref_txid: %s\n", i, tx.getTxInputs(i).getRefTxid());
-            System.out.printf("[tx_input[%d]]: ref_offset: %d\n", i, tx.getTxInputs(i).getRefOffset());
-            System.out.printf("[tx_input[%d]]: from_addr: %s\n", i, tx.getTxInputs(i).getFromAddr().toStringUtf8());
-            System.out.printf("[tx_input[%d]]: amount: %s\n", i, tx.getTxInputs(i).getAmount());
+            ctx.log("tx_input: " + i + ", ref_txid: " + tx.getTxInputs(i).getRefTxid());
+            ctx.log("tx_input: " + i + ", ref_offset: " + tx.getTxInputs(i).getRefOffset());
+            ctx.log("tx_input: " + i + ", from_addr: " + tx.getTxInputs(i).getFromAddr().toStringUtf8());
+            ctx.log("tx_input: " + i + ", amount: " + tx.getTxInputs(i).getAmount());
         }
 
         for (int i = 0; i < tx.getTxOutputsCount(); i++) {
-            System.out.printf("[tx_input[%d]]: amount: %s\n", i, tx.getTxOutputs(i).getAmount());
-            System.out.printf("[tx_input[%d]]: to_addr: %s\n", i, tx.getTxOutputs(i).getToAddr().toStringUtf8());
+            ctx.log("tx_output: " + i + ", amount: " + tx.getTxOutputs(i).getAmount());
+            ctx.log("tx_output: " + i + ", to_addr: " + tx.getTxOutputs(i).getToAddr().toStringUtf8());
         }
     }
 
-    private void printBlock(Block b) {
-        System.out.printf("blockid: %s\n", b.getBlockid());
-        System.out.printf("pre_hash: %s\n", b.getPreHash());
-        System.out.printf("proposer: %s\n", b.getProposer().toStringUtf8());
-        System.out.printf("sign: %s\n", b.getSign());
-        System.out.printf("pubkey: %s\n", b.getPubkey().toStringUtf8());
-        System.out.printf("height: %s\n", b.getHeight());
+    private void printBlock(Context ctx, Block b) {
+        ctx.log("blockid: " + b.getBlockid());
+        ctx.log("pre_hash: " + b.getPreHash());
+        ctx.log("proposer: " + b.getProposer().toStringUtf8());
+        ctx.log("sign: " + b.getSign());
+        ctx.log("pubkey: " + b.getPubkey().toStringUtf8());
+        ctx.log("height: " + b.getHeight());
 
         for (int i = 0; i < b.getTxCount(); i++) {
-            System.out.printf("txid[%d]: %s\n", i, b.getTxids(i));
+            ctx.log("txid: " + i + ", " + b.getTxids(i));
         }
 
-        System.out.printf("tx_count: %s\n", b.getTxCount());
-        System.out.printf("in_trunk: %s\n", b.getInTrunk());
-        System.out.printf("next_hash: %s\n", b.getNextHash());
+        ctx.log("tx_count: " + b.getTxCount());
+        ctx.log("in_trunk: " + b.getInTrunk());
+        ctx.log("next_hash: " + b.getNextHash());
     }
 
-    private void printAuthRequire(List<String> authRequireList) {
+    private void printAuthRequire(Context ctx, List<String> authRequireList) {
         for (int i = 0; i < authRequireList.size(); i++) {
-            System.out.printf("authRequire[%d]: %s\n", i, authRequireList.get(i));
+            ctx.log("authRequire: " + i + ", " + authRequireList.get(i));
         }
     }
 

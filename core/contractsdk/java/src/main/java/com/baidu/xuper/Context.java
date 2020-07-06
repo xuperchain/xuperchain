@@ -3,6 +3,7 @@ package com.baidu.xuper;
 import com.baidu.xuper.contractpb.Contract;
 
 import java.math.BigInteger;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -19,7 +20,7 @@ public interface Context {
 
     public void deleteObject(byte[] key);
 
-    public BasicIterator newIterator(byte[] start, byte[] limit);
+    public Iterator<ContractIteratorItem> newIterator(byte[] start, byte[] limit);
 
     public Contract.Transaction queryTx(String txid);
 

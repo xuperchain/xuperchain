@@ -8,6 +8,7 @@ import io.grpc.StatusRuntimeException;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
+import java.util.Iterator;
 import java.util.HashMap;
 import java.util.Collections;
 import java.util.ArrayList;
@@ -113,8 +114,8 @@ class ContextImpl implements Context {
     }
 
     @Override
-    public BasicIterator newIterator(byte[] start, byte[] limit) {
-        return BasicIterator.newIterator(this.client, this.header, start, limit);
+    public Iterator<ContractIteratorItem> newIterator(byte[] start, byte[] limit) {
+        return ContractIterator.newIterator(this.client, this.header, start, limit);
     }
 
     @Override
