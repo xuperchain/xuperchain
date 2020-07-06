@@ -126,7 +126,7 @@ public class BuiltinTypes implements Contract {
             ContractIteratorItem item = iter.next();
             String key = bytesToString(item.getKey());
             String value = bytesToString(item.getValue());
-            System.out.printf("[item[%d]]: %s: %s\n", i, key, value);
+            ctx.log("item: " + i + ", key: " + key + ", value: " + value);
             i++;
         }
 
