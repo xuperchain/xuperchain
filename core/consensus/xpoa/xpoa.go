@@ -197,11 +197,11 @@ func (xpoa *XPoa) buildXPoaConfig(consCfg map[string]interface{}) error {
 		for idx := 0; idx < len(initProposers); idx++ {
 			p, _ := initProposers[idx].(map[string]interface{})
 			proposer := &cons_base.CandidateInfo{}
-			if p["Address"] == nil || p["PeerAddr"] == nil {
+			if p["address"] == nil || p["neturl"] == nil {
 				return errors.New("Parse XPoa init_proposer error, neturl and address can not be null")
 			}
-			proposer.Address = p["Address"].(string)
-			proposer.PeerAddr = p["PeerAddr"].(string)
+			proposer.Address = p["address"].(string)
+			proposer.PeerAddr = p["neturl"].(string)
 			xpoa.xpoaConf.initProposers = append(xpoa.xpoaConf.initProposers, proposer)
 		}
 	} else {
