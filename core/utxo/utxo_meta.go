@@ -377,25 +377,37 @@ func (uv *UtxoVM) LoadGasPrice() (*pb.GasPrice, error) {
 		err := proto.Unmarshal(gasPriceBuf, utxoMeta)
 		return utxoMeta.GetGasPrice(), err
 	} else if common.NormalizedKVError(findErr) == common.ErrKVNotFound {
-		gasPrice := uv.ledger.GetGasPrice()
-		cpuRate := gasPrice.CpuRate
-		memRate := gasPrice.MemRate
-		diskRate := gasPrice.DiskRate
-		xfeeRate := gasPrice.XfeeRate
-		if cpuRate < 0 || memRate < 0 || diskRate < 0 || xfeeRate < 0 {
-			return nil, ErrProposalParamsIsNegativeNumber
-		}
-		// To be compatible with the old version v3.3
-		// If GasPrice configuration is missing or value euqals 0, support a default value
-		if cpuRate == 0 && memRate == 0 && diskRate == 0 && xfeeRate == 0 {
-			gasPrice = &pb.GasPrice{
-				CpuRate:  1000,
-				MemRate:  1000000,
-				DiskRate: 1,
-				XfeeRate: 1,
+		nofee := uv.ledger.GetNoFee()
+		if nofee {
+			gasPrice := &pb.GasPrice{
+				CpuRate:  0,
+				MemRate:  0,
+				DiskRate: 0,
+				XfeeRate: 0,
 			}
+			return gasPrice, nil
+
+		} else {
+			gasPrice := uv.ledger.GetGasPrice()
+			cpuRate := gasPrice.CpuRate
+			memRate := gasPrice.MemRate
+			diskRate := gasPrice.DiskRate
+			xfeeRate := gasPrice.XfeeRate
+			if cpuRate < 0 || memRate < 0 || diskRate < 0 || xfeeRate < 0 {
+				return nil, ErrProposalParamsIsNegativeNumber
+			}
+			// To be compatible with the old version v3.3
+			// If GasPrice configuration is missing or value euqals 0, support a default value
+			if cpuRate == 0 && memRate == 0 && diskRate == 0 && xfeeRate == 0 {
+				gasPrice = &pb.GasPrice{
+					CpuRate:  1000,
+					MemRate:  1000000,
+					DiskRate: 1,
+					XfeeRate: 1,
+				}
+			}
+			return gasPrice, nil
 		}
-		return gasPrice, nil
 	}
 	return nil, findErr
 }
