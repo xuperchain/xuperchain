@@ -48,8 +48,8 @@ DEFINE_METHOD(Hello, initialize) {
     }
     for (int i = 0; i < address_sets.size(); i++) {
         xchain::json j;
-        j["address"] = address_sets[i];
-        j["neturl"] = neturl_sets[i];
+        j["Address"] = address_sets[i];
+        j["PeerAddr"] = neturl_sets[i];
 
         auto data = j.dump();
         std::string old_data;
@@ -81,8 +81,8 @@ DEFINE_METHOD(Hello, add_validate) {
     CHECK_ARG(address);
     CHECK_ARG(neturl);
     xchain::json j;
-    j["address"] = address;
-    j["neturl"] = neturl;
+    j["Address"] = address;
+    j["PeerAddr"] = neturl;
     auto data = j.dump();
 
     std::string old_data;
@@ -144,8 +144,8 @@ DEFINE_METHOD(Hello, update_validate) {
         return;
     }
     xchain::json j;
-    j["address"] = address;
-    j["neturl"] = neturl;
+    j["Address"] = address;
+    j["PeerAddr"] = neturl;
     auto data = j.dump();
 
     if (!ctx->put_object(Validate(address), data)) {
