@@ -1,6 +1,8 @@
 package client
 
 import (
+	"encoding/json"
+	"errors"
 	"sync"
 
 	"github.com/xuperchain/xuperchain/core/common"
@@ -8,9 +10,6 @@ import (
 	"github.com/xuperchain/xuperchain/core/crypto/client/base"
 	"github.com/xuperchain/xuperchain/core/crypto/config"
 	"github.com/xuperchain/xuperchain/core/pluginmgr"
-
-	"encoding/json"
-	"errors"
 )
 
 const (
