@@ -1004,6 +1004,10 @@ func (l *Ledger) GetGasPrice() *pb.GasPrice {
 	return l.GenesisBlock.GetConfig().GetGasPrice()
 }
 
+func (l *Ledger) GetNoFee() bool {
+	return l.GenesisBlock.GetConfig().NoFee
+}
+
 // SavePendingBlock put block into pending table
 func (l *Ledger) SavePendingBlock(block *pb.Block) error {
 	l.xlog.Debug("begin save pending block", "blockid", fmt.Sprintf("%x", block.Block.Blockid), "tx_count", len(block.Block.Transactions))

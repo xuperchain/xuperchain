@@ -13,6 +13,7 @@
         "height_gap": 31536000,
         "ratio": 1
     },
+    "nofee": false,
     "gas_price": {
         "cpu_rate": 1000,
         "mem_rate": 1000000,

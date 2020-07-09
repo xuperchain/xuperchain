@@ -123,8 +123,6 @@ type MinerConfig struct {
 
 // UtxoConfig is the config of UtxoVM
 type UtxoConfig struct {
-	// nonUtxo 是否支持utxo无币化
-	NonUtxo               bool                       `yaml:"nonUtxo,omitempty"`
 	CacheSize             int                        `yaml:"cachesize,omitempty"`
 	TmpLockSeconds        int                        `yaml:"tmplockSeconds,omitempty"`
 	AsyncMode             bool                       `yaml:"asyncMode,omitempty"`
@@ -265,7 +263,8 @@ type NodeConfig struct {
 	CoreConnection  bool   `yaml:"coreConnection,omitempty"`
 	FailSkip        bool   `yaml:"failSkip,omitempty"`
 	ModifyBlockAddr string `yaml:"modifyBlockAddr,omitempty"`
-	EnableXEndorser bool   `yaml:"enableXEndorser,omitempty"`
+	// XEndorser the endorser module config
+	XEndorser XEndorserConfig `yaml:"xendorser,omitempty"`
 	// TxCacheExpiredTime expired time for tx cache
 	TxidCacheExpiredTime time.Duration `yaml:"txidCacheExpiredTime,omitempty"`
 	// local switch of compressed
@@ -308,6 +307,15 @@ type DBCacheConfig struct {
 	FdCacheSize  int `yaml:"fdcache,omitempty"`
 }
 
+// XEndorserConfig XEndorser config
+type XEndorserConfig struct {
+	// Enable use xendorser if true
+	Enable bool `yaml:"enable,omitempty"`
+	// Module the plugin name for xendorser
+	Module   string `yaml:"module,omitempty"`
+	ConfPath string `yaml:"confPath,omitempty"`
+}
+
 func (nc *NodeConfig) defaultNodeConfig() {
 	nc.Version = "1.0"
 	nc.Log = LogConfig{
@@ -343,7 +351,6 @@ func (nc *NodeConfig) defaultNodeConfig() {
 	nc.PluginLoadPath = "./plugins/autoload/"
 	nc.Datapath = "./data/blockchain"
 	nc.Utxo = UtxoConfig{
-		NonUtxo:               false,
 		CacheSize:             100000,
 		TmpLockSeconds:        60,
 		AsyncMode:             false,
@@ -389,7 +396,11 @@ func (nc *NodeConfig) defaultNodeConfig() {
 	nc.CoreConnection = false
 	nc.FailSkip = false
 	nc.ModifyBlockAddr = ""
-	nc.EnableXEndorser = false
+	nc.XEndorser = XEndorserConfig{
+		Enable:   false,
+		Module:   "default",
+		ConfPath: "",
+	}
 	nc.BlockBroadcaseMode = 0
 }
 

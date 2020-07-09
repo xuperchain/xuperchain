@@ -24,9 +24,9 @@ type ConsensusStatus struct {
 // CandidateInfo define the candidate info
 type CandidateInfo struct {
 	// Address of node
-	Address string `json:"address"`
+	Address string
 	// Neturl of node
-	PeerAddr string `json:"neturl"`
+	PeerAddr string
 }
 
 // CandidateInfoEqual return whether candidate info is equal
