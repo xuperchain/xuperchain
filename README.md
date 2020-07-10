@@ -1,16 +1,12 @@
-### 开发者大赛已正式启动 
-![developer_competition](https://raw.githubusercontent.com/xuperchain/docs/master/source/images/post_4th_blockchain_developer_competition.png)
+### 百度超级链学院·大讲堂 
+![add for 627](https://raw.githubusercontent.com/xuperchain/docs/master/source/images/ad_for_627.png)
 
-工信部下中国区块链开发大赛启动啦🎉🎉🎉快来参赛瓜分21万奖金池！
+💡金融领域是区块链技术应用最多、需求最大的，银行、证券、投资、保险等纷纷抛出了橄榄枝。
+早在17年百度超级链落地长安新生ABS，后又相继与浦发银行等大行等达成合作，区块链如何变革金融领域？用一场直播告诉你！
 
-💡百度超级链组队参赛，「超级战队」成员招募！
-如果使用XuperChain参赛，
-你将获得赛前培训、技术支持、评审加分等硬核支持，
-还有总量10万元的参赛助力金，
-助你在比赛中轻松“C位出道”！
-
-👇🏻报名链接：http://www.cbdforum.cn/bcweb/
-添加百度超级链小助手微信（image-baidu），回复“开发者大赛”，进入官方交流群，获得百度超级链赛前培训、技术支持等扶持！
+👇🏻直播预约链接：http://abcxueyuan.baidu.com/#/live_detail?liveId=252&linkToken=cs39T
+直播时间：6月27日15:00
+添加小助手微信（image-baidu），回复“大讲堂”，进入直播社群，与专家面对面互动。
 
 # XuperChain
 

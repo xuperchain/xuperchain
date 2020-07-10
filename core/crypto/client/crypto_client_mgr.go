@@ -1,15 +1,15 @@
 package client
 
 import (
+	"encoding/json"
+	"errors"
+	"sync"
+
 	"github.com/xuperchain/xuperchain/core/common"
 	"github.com/xuperchain/xuperchain/core/crypto/account"
 	"github.com/xuperchain/xuperchain/core/crypto/client/base"
 	"github.com/xuperchain/xuperchain/core/crypto/config"
 	"github.com/xuperchain/xuperchain/core/pluginmgr"
-
-	"encoding/json"
-	"errors"
-	"sync"
 )
 
 const (
@@ -26,31 +26,48 @@ const (
 
 // cryptoClientFactory is the factory to hold all kinds of crypto clients' instance
 type cryptoClientFactory struct {
-	mutex   sync.Mutex
+	mtx     sync.RWMutex
 	clients map[string]base.CryptoClient
 }
 
+// GetCryptoClient returns a client for the given cryptoType.
 func (ccf *cryptoClientFactory) GetCryptoClient(cryptoType string) (base.CryptoClient, error) {
-	if _, ok := ccf.clients[cryptoType]; !ok {
-		ccf.mutex.Lock()
-		defer ccf.mutex.Unlock()
-		if _, ok := ccf.clients[cryptoType]; !ok {
-			// load crypto plugin
-			pluginMgr, err := pluginmgr.GetPluginMgr()
-			if err != nil {
-				return nil, errors.New("CreateCryptoClient: get plugin mgr failed " + err.Error())
-			}
-
-			pluginIns, err := pluginMgr.PluginMgr.CreatePluginInstance(PluginName, cryptoType)
-			if err != nil {
-				errmsg := "CreateCryptoClient: create plugin failed! name=" + cryptoType
-				return nil, errors.New(errmsg)
-			}
-			cryptoClient := pluginIns.(base.CryptoClient)
-			ccf.clients[cryptoType] = cryptoClient
-		}
+	// case 1: Return the global instance if exists.
+	// Since this should be the most frequent case, a read lock is used for better performance.
+	ccf.mtx.RLock()
+	if v, ok := ccf.clients[cryptoType]; ok {
+		ccf.mtx.RUnlock()
+		return v, nil
 	}
-	return ccf.clients[cryptoType], nil
+	ccf.mtx.RUnlock()
+
+	// Otherwise, acquire the lock and construct the fresh instance.
+	ccf.mtx.Lock()
+	defer ccf.mtx.Unlock()
+
+	// Case 2: just return the instance constructed by the 1st locker.
+	// This should be the case of the 2nd most frequent.
+	if v, ok := ccf.clients[cryptoType]; ok {
+		return v, nil
+	}
+
+	// Case3: 1st locker made the wanted CryptoClient, which is the least frequent.
+	// load crypto plugin
+	pluginMgr, err := pluginmgr.GetPluginMgr()
+	if err != nil {
+		return nil, errors.New("CreateCryptoClient: get plugin mgr failed " + err.Error())
+	}
+
+	pluginIns, err := pluginMgr.PluginMgr.CreatePluginInstance(PluginName, cryptoType)
+	if err != nil {
+		errmsg := "CreateCryptoClient: create plugin failed! name=" + cryptoType
+		return nil, errors.New(errmsg)
+	}
+
+	cryptoClient := pluginIns.(base.CryptoClient) // missing checking failure of type assertions??
+	ccf.clients[cryptoType] = cryptoClient
+
+	return cryptoClient, nil
 }
 
 var ccf cryptoClientFactory

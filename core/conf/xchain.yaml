@@ -62,16 +62,19 @@ kernel:
   newChainWhiteList:
     - dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN: true
 
+# 合约通用配置
+contract:
+  enableUpgrade: false
+
+# wasm合约配置
+wasm:
+  driver: "xvm"
+  xvm:
+    optLevel: 0
+
 # 管理native合约的配置
 native:
   enable: false
-  # 与部署相关的配置
-  deploy:
-    # 部署白名单，列表为钱包地址
-    whiteList:
-      enable: false
-      addresses:
-        - dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN
 
   # docker相关配置
   docker:
@@ -106,19 +109,12 @@ prune:
   bcname: "xuper"
   targetBlockid: "xxx"
 
-# wasm合约配置
-
-wasm:
-  driver: "xvm"
-  xvm:
-    optLevel: 0
-  
-contract:
-  enableUpgrade: false
-  
-# 是否开启默认的XEndorser背书服务
-enableXEndorser: false
-
+# 背书服务相关配置
+xendorser:
+  # 是否开启默认的XEndorser背书服务
+  enable: false
+  module: "default"
+  #confPath: "./conf/xendorser.yaml"
 
 # 云存储配置(AWS S3接口兼容)
 cloudStorage:
@@ -129,4 +125,3 @@ cloudStorage:
   region: "bj"
   endpoint: "s3.bj.bcebos.com"
   localCacheDir: "./data/cache"
-

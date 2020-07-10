@@ -11,17 +11,17 @@ import (
 )
 
 const (
-	methodPut               = "PutObject"
-	methodGet               = "GetObject"
-	methodDelete            = "DeleteObject"
-	methodOutput            = "SetOutput"
-	methodGetCallArgs       = "GetCallArgs"
-	methodTransfer          = "Transfer"
-	methodContractCall      = "ContractCall"
-	methodCrossContractCall = "CrossContractCall"
-	methodQueryTx           = "QueryTx"
-	methodQueryBlock        = "QueryBlock"
-	methodNewIterator       = "NewIterator"
+	methodPut                = "PutObject"
+	methodGet                = "GetObject"
+	methodDelete             = "DeleteObject"
+	methodOutput             = "SetOutput"
+	methodGetCallArgs        = "GetCallArgs"
+	methodTransfer           = "Transfer"
+	methodContractCall       = "ContractCall"
+	methodCrossContractQuery = "CrossContractQuery"
+	methodQueryTx            = "QueryTx"
+	methodQueryBlock         = "QueryBlock"
+	methodNewIterator        = "NewIterator"
 )
 
 var (
@@ -198,7 +198,7 @@ func (c *contractContext) CrossQuery(uri string, args map[string][]byte) (*code.
 		Args:   argPairs,
 	}
 	rep := new(pb.CrossContractQueryResponse)
-	err := c.bridgeCallFunc(methodCrossContractCall, req, rep)
+	err := c.bridgeCallFunc(methodCrossContractQuery, req, rep)
 	if err != nil {
 		return nil, err
 	}
@@ -229,7 +229,8 @@ func (c *contractContext) SetOutput(response *code.Response) error {
 func (c *contractContext) Logf(fmtstr string, args ...interface{}) {
 	entry := fmt.Sprintf(fmtstr, args...)
 	request := &pb.PostLogRequest{
-		Entry: entry,
+		Header: &c.header,
+		Entry:  entry,
 	}
 	c.bridgeCallFunc("PostLog", request, new(pb.PostLogResponse))
 }

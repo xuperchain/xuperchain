@@ -28,6 +28,7 @@ type RootConfig struct {
 	// max block size in MB
 	MaxBlockSize string `json:"maxblocksize"`
 	Period       string `json:"period"`
+	NoFee        bool   `json:"nofee"`
 	Award        string `json:"award"`
 	AwardDecay   struct {
 		HeightGap int64   `json:"height_gap"`
@@ -167,6 +168,18 @@ func NewGenesisBlock(ib *pb.InternalBlock) (*GenesisBlock, error) {
 	jsErr := json.Unmarshal(rootTx.Desc, config)
 	if jsErr != nil {
 		return nil, jsErr
+	}
+	if config.NoFee {
+		config.Award = "0"
+		config.NewAccountResourceAmount = 0
+		config.Predistribution = []struct {
+			Address string `json:"address"`
+			Quota   string `json:"quota"`
+		}{}
+		config.GasPrice.CpuRate = 0
+		config.GasPrice.DiskRate = 0
+		config.GasPrice.MemRate = 0
+		config.GasPrice.XfeeRate = 0
 	}
 	gb.config = config
 	return gb, nil
