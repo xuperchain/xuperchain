@@ -173,6 +173,72 @@ func TestCreateBlockChain(t *testing.T) {
 	kl.Stop()
 }
 
+func TestStopBlockChain(t *testing.T) {
+	workspace, workSpaceErr := ioutil.TempDir("/tmp", "")
+	if workSpaceErr != nil {
+		t.Error("create dir error ", workSpaceErr.Error())
+	}
+	defer os.RemoveAll(workspace)
+
+	ledger, err := ledger.NewLedger(workspace+"xuper", nil, nil, defaultKVEngine, crypto_client.CryptoTypeDefault)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(ledger)
+	kl := &Kernel{}
+	kLogger := log.New("module", "kernel")
+	kLogger.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
+	kl.Init(workspace, kLogger, nil, "xuper")
+	kl.SetNewChainWhiteList(map[string]bool{BobAddress: true})
+	kl.SetMinNewChainAmount("0")
+	//创建链的时候分配财富
+	tx, err := utxo.GenerateRootTx([]byte(`
+       {
+        "version" : "1"
+        , "consensus" : {
+                "miner" : "0x00000000000"
+        }
+        , "predistribution":[
+                {
+                        "address" : "` + BobAddress + `",
+                        "quota" : "100"
+                },
+				{
+                        "address" : "` + AliceAddress + `",
+                        "quota" : "200"
+                }
+
+        ]
+        , "maxblocksize" : "128"
+        , "period" : "5000"
+        , "award" : "1000"
+		} 
+    `))
+	if err != nil {
+		t.Fatal(err)
+	}
+	block, _ := ledger.FormatRootBlock([]*pb.Transaction{tx})
+	t.Logf("blockid %x", block.Blockid)
+	confirmStatus := ledger.ConfirmBlock(block, true)
+	if !confirmStatus.Succ {
+		t.Fatal("confirm block fail")
+	}
+	utxovm, _ := utxo.MakeUtxoVM("xuper", ledger, workspace+"xuper", "", "", []byte(""), nil, 5000, 60, 500, nil, false, defaultKVEngine, crypto_client.CryptoTypeDefault)
+	utxovm.RegisterVM("kernel", kl, global.VMPrivRing0)
+	err = utxovm.Play(block.Blockid)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// 通过tx删除主链xuper
+	_, err = bobToAlice(t, utxovm, ledger, "1", block.Blockid, `{"module":"kernel", "method":"StopBlockChain", "args": {"data": "{\n\t\"version\" : \"1\"\n\t, \"consensus\" : {\n\t\t\"miner\" : \"dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN\"\n\t}\n\t, \"predistribution\":[\n\t\t{\n\t\t\t\"address\" : \"dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN\"\n\t\t\t, \"quota\" : \"1000000000000000\"\n\t\t}\n\t]\n\t, \"maxblocksize\" : \"128\"\n\t, \"period\" : \"3000\"\n\t, \"award\" : \"1000000\"\n}\n", "name": "xuper"}}`)
+	if err == ErrPermissionDenied {
+		t.Logf("ok. Cannot stop main-chain: xuper.")
+	} else {
+		t.Fatal("Check StopBlockChain, main-chain xuper might be stopped.")
+	}
+}
+
 func TestCreateBlockChainPermission(t *testing.T) {
 	workspace, workSpaceErr := ioutil.TempDir("/tmp", "")
 	if workSpaceErr != nil {
