@@ -23,7 +23,7 @@ var (
 // 如果指定一个存在的账本目录，就会从这个目录加载，默认创建一个新的空账本
 const (
 	// 账本存储目录
-	ledgPath = "/home/rd/apps/xuper_node01/data/blockchain/xuper"
+	ledgPath = ""
 )
 
 const (
