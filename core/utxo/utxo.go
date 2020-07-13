@@ -156,6 +156,9 @@ type UtxoVM struct {
 	unconfirmTxAmount    int64     // 未确认的Tx数目，用于监控
 	avgDelay             int64     // 平均上链延时
 	bcname               string
+
+	// 最新区块高度通知装置
+	heightNotifier *BlockHeightNotifier
 }
 
 // InboundTx is tx wrapper
@@ -444,6 +447,7 @@ func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, priv
 		aclMgr:               aclManager,
 		maxConfirmedDelay:    DefaultMaxConfirmedDelay,
 		bcname:               bcname,
+		heightNotifier:       NewBlockHeightNotifier(),
 	}
 	if iBeta {
 		utxoVM.defaultTxVersion = BetaTxVersion
@@ -570,7 +574,7 @@ func (uv *UtxoVM) UnRegisterVAT(name string) {
 	uv.vatHandler.Remove(name)
 }
 
-func (uv *UtxoVM) updateLatestBlockid(newBlockid []byte, batch kvdb.Batch, reason string) error {
+func (uv *UtxoVM) updateLatestBlockid(newBlockid []byte, height int64, batch kvdb.Batch, reason string) error {
 	batch.Put(append([]byte(pb.MetaTablePrefix), []byte(LatestBlockKey)...), newBlockid)
 	writeErr := batch.Write()
 	if writeErr != nil {
@@ -579,6 +583,7 @@ func (uv *UtxoVM) updateLatestBlockid(newBlockid []byte, batch kvdb.Batch, reaso
 		return writeErr
 	}
 	uv.latestBlockid = newBlockid
+	uv.heightNotifier.UpdateHeight(height)
 	return nil
 }
 
@@ -923,14 +928,10 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 		requests = append(requests, &request)
 		ctx.Release()
 	}
-	utxoInputs, utxoOutputs := modelCache.GetUtxoRWSets()
-	err = modelCache.PutUtxos(utxoInputs, utxoOutputs)
-	if err != nil {
-		return nil, err
-	}
 
-	crossQuery := modelCache.GetCrossQueryRWSets()
-	err = modelCache.PutCrossQueries(crossQuery)
+	utxoInputs, utxoOutputs := modelCache.GetUtxoRWSets()
+
+	err = modelCache.WriteTransientBucket()
 	if err != nil {
 		return nil, err
 	}
@@ -1650,7 +1651,7 @@ func (uv *UtxoVM) PlayAndRepost(blockid []byte, needRepost bool, isRootTx bool) 
 		return updateErr
 	}
 	//更新latestBlockid
-	persistErr := uv.updateLatestBlockid(block.Blockid, batch, "failed to save block")
+	persistErr := uv.updateLatestBlockid(block.Blockid, block.Height, batch, "failed to save block")
 	if persistErr != nil {
 		return persistErr
 	}
@@ -1720,7 +1721,7 @@ func (uv *UtxoVM) PlayForMiner(blockid []byte, batch kvdb.Batch) error {
 		return updateErr
 	}
 	//更新latestBlockid
-	err = uv.updateLatestBlockid(block.Blockid, batch, "failed to save block")
+	err = uv.updateLatestBlockid(block.Blockid, block.Height, batch, "failed to save block")
 	if err != nil {
 		return err
 	}
@@ -1786,6 +1787,10 @@ func (uv *UtxoVM) RollBackUnconfirmedTx() (map[string]bool, error) {
 // Walk 从当前的latestBlockid 游走到 blockid, 会触发utxo状态的回滚。
 //  执行后会更新latestBlockid
 func (uv *UtxoVM) Walk(blockid []byte, ledgerPrune bool) error {
+	block, blockErr := uv.ledger.QueryBlock(blockid)
+	if blockErr != nil {
+		return blockErr
+	}
 	uv.mutex.Lock()
 	defer uv.mutex.Unlock() // lock guard
 	// 首先先把所有的unconfirm回滚了。
@@ -1846,7 +1851,7 @@ func (uv *UtxoVM) Walk(blockid []byte, ledgerPrune bool) error {
 				return updateErr
 			}
 		}
-		updateErr := uv.updateLatestBlockid(undoBlk.PreHash, batch, "error occurs when undo blocks")
+		updateErr := uv.updateLatestBlockid(undoBlk.PreHash, block.Height, batch, "error occurs when undo blocks")
 		if updateErr != nil {
 			return updateErr
 		}
@@ -1907,7 +1912,7 @@ func (uv *UtxoVM) Walk(blockid []byte, ledgerPrune bool) error {
 		if updateErr != nil {
 			return updateErr
 		}
-		updateErr = uv.updateLatestBlockid(todoBlk.Blockid, batch, "error occurs when do blocks") // 每do一个block,是一个原子batch写
+		updateErr = uv.updateLatestBlockid(todoBlk.Blockid, block.Height, batch, "error occurs when do blocks") // 每do一个block,是一个原子batch写
 		if updateErr != nil {
 			return updateErr
 		}
@@ -2486,6 +2491,11 @@ func (uv *UtxoVM) QueryUtxoRecord(accountName string, displayCount int64) (*pb.U
 	}
 
 	return utxoRecordDetail, nil
+}
+
+// WaitBlockHeight wait util the height of current block >= target
+func (uv *UtxoVM) WaitBlockHeight(target int64) int64 {
+	return uv.heightNotifier.WaitHeight(target)
 }
 
 func MakeUtxoKey(key []byte, amount string) *pb.UtxoKey {

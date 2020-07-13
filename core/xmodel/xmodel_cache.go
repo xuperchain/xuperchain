@@ -32,6 +32,7 @@ var (
 	contractUtxoInputKey  = []byte("ContractUtxo.Inputs")
 	contractUtxoOutputKey = []byte("ContractUtxo.Outputs")
 	crossQueryInfosKey    = []byte("CrossQueryInfos")
+	contractEventKey      = []byte("contractEvent")
 )
 
 // UtxoVM manages utxos
@@ -50,6 +51,7 @@ type XMCache struct {
 	model           XMReader
 	utxoCache       *UtxoCache
 	crossQueryCache *CrossQueryCache
+	events          []*pb.ContractEvent
 }
 
 // NewXModelCache new an instance of XModel Cache
@@ -274,18 +276,18 @@ func (xc *XMCache) GetUtxoRWSets() ([]*pb.TxInput, []*pb.TxOutput) {
 	return xc.utxoCache.GetRWSets()
 }
 
-// PutUtxos put utxos to TransientBucket
-func (xc *XMCache) PutUtxos(inputs []*pb.TxInput, outputs []*pb.TxOutput) error {
+// putUtxos put utxos to TransientBucket
+func (xc *XMCache) putUtxos(inputs []*pb.TxInput, outputs []*pb.TxOutput) error {
 	var in, out []byte
 	var err error
 	if len(inputs) != 0 {
-		in, err = marshalMessages(inputs)
+		in, err = MarshalMessages(inputs)
 		if err != nil {
 			return err
 		}
 	}
 	if len(outputs) != 0 {
-		out, err = marshalMessages(outputs)
+		out, err = MarshalMessages(outputs)
 		if err != nil {
 			return err
 		}
@@ -305,6 +307,10 @@ func (xc *XMCache) PutUtxos(inputs []*pb.TxInput, outputs []*pb.TxOutput) error 
 	return nil
 }
 
+func (xc *XMCache) writeUtxoRWSet() error {
+	return xc.putUtxos(xc.GetUtxoRWSets())
+}
+
 // ParseContractUtxoInputs parse contract utxo inputs from tx write sets
 func ParseContractUtxoInputs(tx *pb.Transaction) ([]*pb.TxInput, error) {
 	var (
@@ -320,7 +326,7 @@ func ParseContractUtxoInputs(tx *pb.Transaction) ([]*pb.TxInput, error) {
 		}
 	}
 	if extInput != nil {
-		err := unmsarshalMessages(extInput, &utxoInputs)
+		err := UnmsarshalMessages(extInput, &utxoInputs)
 		if err != nil {
 			return nil, err
 		}
@@ -348,13 +354,13 @@ func ParseContractUtxo(tx *pb.Transaction) ([]*pb.TxInput, []*pb.TxOutput, error
 		}
 	}
 	if extInput != nil {
-		err := unmsarshalMessages(extInput, &utxoInputs)
+		err := UnmsarshalMessages(extInput, &utxoInputs)
 		if err != nil {
 			return nil, nil, err
 		}
 	}
 	if extOutput != nil {
-		err := unmsarshalMessages(extOutput, &utxoOutputs)
+		err := UnmsarshalMessages(extOutput, &utxoOutputs)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -419,11 +425,6 @@ func (xc *XMCache) CrossQuery(crossQueryRequest *pb.CrossQueryRequest, queryMeta
 	return xc.crossQueryCache.CrossQuery(crossQueryRequest, queryMeta)
 }
 
-// GetCrossQueryRWSets get cross query rwsets
-func (xc *XMCache) GetCrossQueryRWSets() []*pb.CrossQueryInfo {
-	return xc.crossQueryCache.GetCrossQueryRWSets()
-}
-
 // ParseCrossQuery parse cross query from tx
 func ParseCrossQuery(tx *pb.Transaction) ([]*pb.CrossQueryInfo, error) {
 	var (
@@ -439,7 +440,7 @@ func ParseCrossQuery(tx *pb.Transaction) ([]*pb.CrossQueryInfo, error) {
 		}
 	}
 	if queryInfos != nil {
-		err := unmsarshalMessages(queryInfos, &crossQueryInfos)
+		err := UnmsarshalMessages(queryInfos, &crossQueryInfos)
 		if err != nil {
 			return nil, err
 		}
@@ -454,11 +455,11 @@ func IsCrossQueryEffective(cqi []*pb.CrossQueryInfo, tx *pb.Transaction) bool {
 }
 
 // PutCrossQueries put queryInfos to db
-func (xc *XMCache) PutCrossQueries(queryInfos []*pb.CrossQueryInfo) error {
+func (xc *XMCache) putCrossQueries(queryInfos []*pb.CrossQueryInfo) error {
 	var qi []byte
 	var err error
 	if len(queryInfos) != 0 {
-		qi, err = marshalMessages(queryInfos)
+		qi, err = MarshalMessages(queryInfos)
 		if err != nil {
 			return err
 		}
@@ -468,6 +469,63 @@ func (xc *XMCache) PutCrossQueries(queryInfos []*pb.CrossQueryInfo) error {
 		if err != nil {
 			return err
 		}
+	}
+	return nil
+}
+
+func (xc *XMCache) writeCrossQueriesRWSet() error {
+	return xc.putCrossQueries(xc.crossQueryCache.GetCrossQueryRWSets())
+}
+
+// ParseContractEvents parse contract events from tx
+func ParseContractEvents(tx *pb.Transaction) ([]*pb.ContractEvent, error) {
+	var events []*pb.ContractEvent
+	for _, out := range tx.GetTxOutputsExt() {
+		if out.GetBucket() != TransientBucket {
+			continue
+		}
+		if !bytes.Equal(out.GetKey(), contractEventKey) {
+			continue
+		}
+		err := UnmsarshalMessages(out.GetValue(), &events)
+		if err != nil {
+			return nil, err
+		}
+		break
+	}
+	return events, nil
+}
+
+// AddEvent add contract event to xmodel cache
+func (xc *XMCache) AddEvent(events ...*pb.ContractEvent) {
+	xc.events = append(xc.events, events...)
+}
+
+func (xc *XMCache) writeEventRWSet() error {
+	buf, err := MarshalMessages(xc.events)
+	if err != nil {
+		return err
+	}
+	return xc.Put(TransientBucket, contractEventKey, buf)
+}
+
+// WriteTransientBucket write transient bucket data.
+// transient bucket is a special bucket used to store some data
+// generated during the execution of the contract, but will not be referenced by other txs.
+func (xc *XMCache) WriteTransientBucket() error {
+	err := xc.writeUtxoRWSet()
+	if err != nil {
+		return err
+	}
+
+	err = xc.writeCrossQueriesRWSet()
+	if err != nil {
+		return err
+	}
+
+	err = xc.writeEventRWSet()
+	if err != nil {
+		return err
 	}
 	return nil
 }

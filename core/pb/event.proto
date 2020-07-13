@@ -5,116 +5,51 @@ package pb;
 import "xchain.proto";
 
 // rpc api
-service PubsubService {
-  rpc Subscribe (EventRequest) returns (stream Event);
-  rpc Unsubscribe (UnsubscribeRequest) returns (UnsubscribeResponse) {}
+service EventService {
+  rpc Subscribe (SubscribeRequest) returns (stream Event);
 }
 
-// BlockStatus block status
-enum BlockStatus {
-  ERROR = 0;
-  TRUNK = 1;
-  BRANCH = 2;
-  NONEXIST = 3;
+enum SubscribeType {
+  // 区块事件，payload为BlockFilter
+  BLOCK = 0;
 }
 
-///// EventType 事件类型
-enum EventType {
-  UNDEFINED = 0;
-  BLOCK = 1;
-  TRANSACTION = 2;
-  ACCOUNT = 3;
-  SUBSCRIBE_RESPONSE = 4;
+message SubscribeRequest {
+  SubscribeType type = 1;
+  bytes filter = 2;
 }
 
-// BlockStatusInfo 区块元数据
-message BlockStatusInfo {
-  string bcname = 1;
-  string proposer = 2;
-  int64 height = 3;
-  BlockStatus status = 4;
-}
-
-message TransactionStatusInfo {
-  string bcname = 1;
-  string initiator = 2;
-  repeated string auth_require = 3;
-  TransactionStatus status = 4;
-}
-
-message AccountStatusInfo {
-  string bcname = 1;
-  repeated string from_addr = 2;
-  repeated string to_addr = 3;
-  TransactionStatus status = 4;
-}
-
-enum UnsubscribeStatusInfo {
-  UNSUBSCRIBE_UNDEFINED = 0;
-  UNSUBSCRIBE_SUCCESS = 1;
-  UNSUBSCRIBE_FAILED = 2;
-}
-
-/////// 事件订阅请求数据结构
-// EventRequest 将事件订阅统一归为EventRequest
-message EventRequest {
-  EventType type = 1;
-  bytes payload = 2;
-}
-
-// BlockEventRequest 订阅区块请求
-message BlockEventRequest {
-  string bcname = 1;
-  string proposer = 2;
-  int64 start_height = 3;
-  int64 end_height = 4;
-  bool need_content = 5;
-}
-
-// TransactionEventRequest 订阅交易请求
-message TransactionEventRequest {
-  string bcname = 1;
-  string initiator = 2;
-  string auth_require = 3;
-  bool need_content = 4;
-}
-
-// AccountEventRequest 订阅账户请求
-message AccountEventRequest {
-  string bcname = 1;
-  string from_addr = 2;
-  string to_addr = 3;
-  bool need_content = 4;
-}
-
-// UnsubscribeRequest 取消事件订阅请求
-message UnsubscribeRequest {
-  string id = 1;
-}
-
-//////// 事件订阅返回数据结构
-/////// UnsubscribeResponse 取消订阅pb接口
-message UnsubscribeResponse {
-  string id = 1;
-  UnsubscribeStatusInfo status = 3;
-}
-
-///// Event 将多种事件订阅回复统一为Event, 易于扩展
 message Event {
-  string id = 1;
-  EventType type = 2;
-  bytes payload = 3;
-  BlockStatusInfo block_status = 4;
-  TransactionStatusInfo tx_status = 5;
-  AccountStatusInfo account_status = 6;
+  bytes payload = 1;
 }
 
-// BlockEvent 订阅区块返回
-message BlockEvent {
-  InternalBlock block = 1;
+message BlockRange {
+  string start = 1;
+  string end = 2;
 }
 
-// TransactionEvent 订阅交易返回
-message TransactionEvent {
-  Transaction tx = 1;
+message BlockFilter {
+  string bcname = 1;
+  BlockRange range = 2;
+  bool excludeTx = 3;
+  bool excludeTxEvent = 4;
+  string contract = 10;
+  string event_name = 11;
+  string initiator = 12;
+  string auth_require = 13;
+  string from_addr = 14;
+  string to_addr = 15;
 }
+
+message FilteredTransaction {
+  string txid = 1;
+  repeated ContractEvent events = 2;
+}
+
+message FilteredBlock {
+  string bcname = 1;
+  string blockid = 2;
+  int64 block_height = 3; 
+  repeated FilteredTransaction txs = 4;
+}
+
