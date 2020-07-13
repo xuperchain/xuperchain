@@ -41,13 +41,14 @@ type contractProcess struct {
 
 func newContractProcess(cfg *config.NativeConfig, name, basedir, chainAddr string, desc *xpb.WasmCodeDesc) (*contractProcess, error) {
 	process := &contractProcess{
-		cfg:       cfg,
-		name:      name,
-		basedir:   basedir,
-		binpath:   filepath.Join(basedir, nativeCodeFileName(desc)),
-		chainAddr: chainAddr,
-		desc:      desc,
-		logger:    log.DefaultLogger.New("contract", name),
+		cfg:           cfg,
+		name:          name,
+		basedir:       basedir,
+		binpath:       filepath.Join(basedir, nativeCodeFileName(desc)),
+		chainAddr:     chainAddr,
+		desc:          desc,
+		monitorStopch: make(chan struct{}),
+		logger:        log.DefaultLogger.New("contract", name),
 	}
 	return process, nil
 }
