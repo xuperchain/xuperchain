@@ -186,7 +186,7 @@ func (s *XModel) GetUncommited(bucket string, key []byte) (*xmodel_pb.VersionedD
 	if cacheHit {
 		version := cacheObj.(string)
 		if version == "" {
-			return s.makeEmptyVersionedData(bucket, key), nil
+			return makeEmptyVersionedData(bucket, key), nil
 		}
 		return s.fetchVersionedData(bucket, version)
 	}
@@ -196,7 +196,7 @@ func (s *XModel) GetUncommited(bucket string, key []byte) (*xmodel_pb.VersionedD
 // GetFromLedger get data directely from ledger
 func (s *XModel) GetFromLedger(txin *pb.TxInputExt) (*xmodel_pb.VersionedData, error) {
 	if txin.RefTxid == nil {
-		return s.makeEmptyVersionedData(txin.Bucket, txin.Key), nil
+		return makeEmptyVersionedData(txin.Bucket, txin.Key), nil
 	}
 	version := MakeVersion(txin.RefTxid, txin.RefOffset)
 	return s.fetchVersionedData(txin.Bucket, version)
@@ -212,7 +212,7 @@ func (s *XModel) Get(bucket string, key []byte) (*xmodel_pb.VersionedData, error
 			version, err = s.extUtxoDelTable.Get(rawKey)
 			if err != nil {
 				if kvdb.ErrNotFound(err) {
-					return s.makeEmptyVersionedData(bucket, key), nil
+					return makeEmptyVersionedData(bucket, key), nil
 				}
 				return nil, err
 			}
