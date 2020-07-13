@@ -22,7 +22,6 @@ test:
 	go test -coverprofile=coverage.txt -covermode=atomic ./...
 	# test wasm sdk
 	GOOS=js GOARCH=wasm go build github.com/xuperchain/xuperchain/core/contractsdk/go/driver
-	cd core/xvm/spectest && go run main.go core
 
 contractsdk:
 	make -C core/contractsdk/cpp build
