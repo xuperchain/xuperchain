@@ -82,6 +82,16 @@ public class BuiltinTypes implements Contract {
     }
 
     @ContractMethod
+    public Response transferAndPrintAmount(Context ctx) {
+
+        BigInteger amount = ctx.transferAmount();
+
+        ctx.log("transfer amount: " + amount.toString());
+
+        return Response.ok("ok".getBytes());
+    }
+
+    @ContractMethod
     public Response put(Context ctx) {
         byte[] key = ctx.args().get("key");
         if (key == null) {

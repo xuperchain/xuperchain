@@ -41,7 +41,7 @@ public class c1 implements Contract {
                 };
 
         // 发起跨合约调用
-        Response resp = ctx.call("native", "c2", "invoke", callArgs);
+        Response resp = ctx.call("native", "callc2", "invoke", callArgs);
         // 根据合约调用结果记录到call变量里面并持久化
         ctx.putObject("call".getBytes(), resp.body);
         // 对cnt变量加1并持久化
