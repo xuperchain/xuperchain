@@ -27,4 +27,6 @@ $ xchain-cli native invoke --method put -a '{"key":"test1","value":"value1"}' bu
 $ xchain-cli native query --method get -a '{"key":"test1"}' builtintypes
 # 迭代器查询
 $ xchain-cli native query --method getList -a '{"start":"test"}' builtintypes
+# invoke调用合约任意方法，并设置--amount会同时转账给合约，转账并打印转账金额
+$ xchain-cli native invoke --method transferAndPrintAmount builtintypes --amount 1 --fee 10
 ```
