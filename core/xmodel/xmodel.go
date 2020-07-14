@@ -1,6 +1,7 @@
 package xmodel
 
 import (
+	"encoding/hex"
 	"fmt"
 	"sync"
 
@@ -45,6 +46,23 @@ func NewXuperModel(ledger *ledger.Ledger, stateDB kvdb.Database, logger log.Logg
 		logger:          logger,
 		batchCache:      &sync.Map{},
 	}, nil
+}
+
+func (s *XModel) CreateSnapshot(blkId []byte) (XMReader, error) {
+	// 查询快照区块高度
+	blkInfo, err := s.ledger.QueryBlockHeader(blkId)
+	if err != nil {
+		return nil, fmt.Errorf("query block header fail.block_id:%s, err:%v",
+			hex.EncodeToString(blkId), err)
+	}
+
+	xms := &xModSnapshot{
+		xmod:      s,
+		logger:    s.logger,
+		blkHeight: blkInfo.Height,
+		blkId:     blkId,
+	}
+	return xms, nil
 }
 
 func (s *XModel) updateExtUtxo(tx *pb.Transaction, batch kvdb.Batch) error {

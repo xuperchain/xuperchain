@@ -6,8 +6,6 @@ import (
 	"fmt"
 
 	log "github.com/xuperchain/log15"
-	"github.com/xuperchain/xuperchain/core/kv/kvdb"
-	"github.com/xuperchain/xuperchain/core/ledger"
 	"github.com/xuperchain/xuperchain/core/pb"
 	xmodpb "github.com/xuperchain/xuperchain/core/xmodel/pb"
 )
@@ -22,36 +20,6 @@ type xModSnapshot struct {
 type xModListCursor struct {
 	txid   []byte
 	offset int32
-}
-
-func NewSnapshot(blkId []byte, ledger *ledger.Ledger, stateDB kvdb.Database,
-	logger log.Logger) (*xModSnapshot, error) {
-
-	// check param
-	if len(blkId) < 1 || ledger == nil || stateDB == nil || logger == nil {
-		return nil, fmt.Errorf("param set error")
-	}
-
-	// 查询快照区块高度
-	blkInfo, err := ledger.QueryBlockHeader(blkId)
-	if err != nil {
-		return nil, fmt.Errorf("query block header fail.err:%v", err)
-	}
-
-	// 实例化xmodel
-	xmod, err := NewXuperModel(ledger, stateDB, logger)
-	if err != nil {
-		return nil, fmt.Errorf("new xmodel fail.err:%v", err)
-	}
-
-	xmsObj := &xModSnapshot{
-		xmod:      xmod,
-		logger:    logger,
-		blkHeight: blkInfo.Height,
-		blkId:     blkId,
-	}
-
-	return xmsObj, nil
 }
 
 func (t *xModSnapshot) Get(bucket string, key []byte) (*xmodpb.VersionedData, error) {
@@ -106,6 +74,10 @@ func (t *xModSnapshot) Get(bucket string, key []byte) (*xmodpb.VersionedData, er
 		return makeEmptyVersionedData(bucket, key), nil
 	}
 	return verValue, nil
+}
+
+func (t *xModSnapshot) Select(bucket string, startKey []byte, endKey []byte) (Iterator, error) {
+	return nil, fmt.Errorf("xmodel snapshot temporarily not supported select")
 }
 
 func (t *xModSnapshot) isInit() bool {

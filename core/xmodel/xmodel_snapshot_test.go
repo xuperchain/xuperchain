@@ -105,12 +105,17 @@ func TestGet(t *testing.T) {
 		defer os.RemoveAll(rootPath)
 	}
 
+	xmod, err := NewXuperModel(ledg, stateDB, slog)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	blkId, err := getBlkIdByHeight(0)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	xmsp, err := NewSnapshot(blkId, ledg, stateDB, slog)
+	xmsp, err := xmod.CreateSnapshot(blkId)
 	if err != nil {
 		t.Fatal(err)
 	}
