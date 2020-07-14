@@ -13,6 +13,7 @@ import (
 	"github.com/xuperchain/xuperchain/core/event"
 	p2p_base "github.com/xuperchain/xuperchain/core/p2p/base"
 	xuper_p2p "github.com/xuperchain/xuperchain/core/p2p/pb"
+	"github.com/xuperchain/xuperchain/core/pb"
 	pm "github.com/xuperchain/xuperchain/core/pluginmgr"
 )
 
@@ -117,6 +118,21 @@ func (xm *XChainMG) Get(name string) *XChainCore {
 		return xc
 	}
 	return nil
+}
+
+// GetBlockChainInfo return block status by blockchain name.
+func (xm *XChainMG) GetBlockChainInfo(name string) *pb.BCStatus {
+	v, ok := xm.chains.Load(name)
+	if !ok {
+		return nil
+	}
+	xc := v.(*XChainCore)
+	blkStatusPb := &pb.BCStatus{
+		Header: &pb.Header{},
+		Bcname: name,
+	}
+	blkStatus := xc.GetBlockChainStatus(blkStatusPb, pb.ViewOption_NONE)
+	return blkStatus
 }
 
 // Set put <blockname, blockchain instance> into map
