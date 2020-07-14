@@ -502,6 +502,9 @@ func (xc *XMCache) AddEvent(events ...*pb.ContractEvent) {
 }
 
 func (xc *XMCache) writeEventRWSet() error {
+	if len(xc.events) == 0 {
+		return nil
+	}
 	buf, err := MarshalMessages(xc.events)
 	if err != nil {
 		return err
