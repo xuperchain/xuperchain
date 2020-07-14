@@ -32,7 +32,7 @@ func (r *Router) Subscribe(tp pb.SubscribeType, filterbuf []byte) (Iterator, err
 	}
 	filter, err := topic.ParseFilter(filterbuf)
 	if err != nil {
-		return nil, fmt.Errorf("parse filter error: %w", err)
+		return nil, fmt.Errorf("parse filter error: %s", err)
 	}
 	return topic.NewIterator(filter)
 }

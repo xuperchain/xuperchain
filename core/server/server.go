@@ -1089,7 +1089,7 @@ func startTCPServer(xchainmg *xchaincore.XChainMG) error {
 	}
 
 	// event involved rpc
-	eventService := newEventService(xchainmg)
+	eventService := newEventService(&cfg.Event, xchainmg)
 	pb.RegisterEventServiceServer(s, eventService)
 
 	lis, err := net.Listen("tcp", cfg.TCPServer.Port)
