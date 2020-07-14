@@ -220,7 +220,7 @@ func (xm *XChainMG) RegisterBlockChain(name string) error {
 func (xm *XChainMG) UnloadBlockChain(name string) error {
 	v, ok := xm.chains.Load(name)
 	if !ok {
-		return ErrBlockChainIsExist
+		return ErrBlockChainNotExist
 	}
 	xm.chains.Delete(name) //从xchainmg的map里面删了，就不会收到新的请求了
 	//然后停止这个链

@@ -568,17 +568,27 @@ func (k *Kernel) runCreateBlockChain(desc *contract.TxDesc) error {
 
 // runStopBlockChain 为客户端提供停用制定链服务，不删除该链目录下内容
 func (k *Kernel) runStopBlockChain(desc *contract.TxDesc) error {
-	bcName, _, err := k.validateCreateBC(desc) //需要校验，否则容易panic
+	if desc.Args["name"] == nil {
+		k.log.Warn("Chain name in tx for stopping a blockchain should be a non-null value.")
+		return ErrInvalidChainName
+	}
+	bcName, ok := desc.Args["name"].(string)
+	if !ok || bcName == "" {
+		k.log.Warn("Chain name in tx for stopping a blockchain should be a non-empty string.")
+		return ErrInvalidChainName
+	}
 	if bcName == "xuper" {
 		k.log.Warn("Oops, main-chain:xuper cannot be stopped.")
 		return ErrPermissionDenied
 	}
-	if err != nil {
+	if !desc.Tx.FromAddrInList(k.newChainWhiteList) && !k.disableCreateChainWhiteList {
+		k.log.Warn("Address in tx for stopping a blockchain should be in whitelist", "disableCreateChainWhiteList", k.disableCreateChainWhiteList, "ChainWhiteList", k.newChainWhiteList)
+		return ErrAddrNotInWhiteList
+	}
+	if err := k.register.UnloadBlockChain(bcName); err != nil {
 		return err
 	}
-	if err = k.register.UnloadBlockChain(bcName); err != nil {
-		return err
-	}
+	k.log.Info("Stop blockchain successfully", "ChainName", bcName)
 	return nil
 }
 
