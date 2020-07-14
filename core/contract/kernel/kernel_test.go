@@ -231,7 +231,7 @@ func TestStopBlockChain(t *testing.T) {
 	}
 
 	// 通过tx删除主链xuper
-	nextBlockid, err := bobToAlice(t, utxovm, ledger, "1", block.Blockid, `{"module":"kernel", "method":"StopBlockChain", "args": {"data": "{\"version\": \"1\", \"consensus\": {\"miner\":\"dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN\", \"type\":\"single\"},\"predistribution\":[{\"address\": \"dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN\",\"quota\": \"1000000000000000\"}],\"maxblocksize\": \"128\",\"period\": \"3000\",\"award\": \"1000000\"}", "name": "xuper"}}`)
+	nextBlockid, err := bobToAlice(t, utxovm, ledger, "1", block.Blockid, `{"module":"kernel", "method":"StopBlockChain", "args": {"name": "xuper"}}`)
 	err = utxovm.Play(nextBlockid)
 	if err == ErrPermissionDenied {
 		t.Logf("ok. Cannot stop main-chain: xuper.")
