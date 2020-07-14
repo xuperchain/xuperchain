@@ -101,7 +101,7 @@ func (e *elecCert) Save(ctx code.Context) code.Response {
 	}
 	ts := string(ctx.Args()["timestamp"])
 	if ts == "" {
-		return code.Errors("Missing key: filehash")
+		return code.Errors("Missing key: timestamp")
 	}
 
 	e.setContext(ctx, user)

@@ -12,7 +12,9 @@
     , "award_decay": {
         "height_gap": 31536000,
         "ratio": 0.5
-    }, "genesis_consensus":{
+    }
+    , "new_account_resource_amount": 1000
+    , "genesis_consensus":{
        "name": "pow",
        "config": {
 			"defaultTarget": "19",

@@ -148,6 +148,16 @@ class ContextImpl implements Context {
     }
 
     @Override
+    public BigInteger transferAmount() {
+        BigInteger amount = new BigInteger(this.callArgs.getTransferAmount());
+        if (amount.signum() == -1) {
+            throw new RuntimeException("amount must not be negative");
+        }
+
+        return amount;
+    }
+
+    @Override
     public Response call(String module, String contract, String method, Map<String, byte[]> args) {
         Contract.ContractCallRequest.Builder requestBuild = Contract.ContractCallRequest.newBuilder().setHeader(this.header)
                 .setModule(module).setContract(contract).setMethod(method);
