@@ -31,8 +31,8 @@ message BlockRange {
 message BlockFilter {
   string bcname = 1;
   BlockRange range = 2;
-  bool excludeTx = 3;
-  bool excludeTxEvent = 4;
+  bool exclude_tx = 3;
+  bool exclude_tx_event = 4;
   string contract = 10;
   string event_name = 11;
   string initiator = 12;
