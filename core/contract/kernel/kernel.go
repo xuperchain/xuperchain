@@ -594,9 +594,14 @@ func (k *Kernel) runStopBlockChain(desc *contract.TxDesc) error {
 
 // rollbackStopBlockChain 停用区块链交易的回滚操作，简化逻辑
 func (k *Kernel) rollbackStopBlockChain(desc *contract.TxDesc) error {
-	bcName, _, err := k.validateCreateBC(desc)
-	if err != nil {
-		return err
+	if desc.Args["name"] == nil {
+		k.log.Warn("rollback operation: Chain name in tx for stopping a blockchain is null.")
+		return ErrInvalidChainName
+	}
+	bcName, ok := desc.Args["name"].(string)
+	if !ok || bcName == "" {
+		k.log.Warn("rollback operation: Chain name in tx for stopping a blockchain is invalid.")
+		return ErrInvalidChainName
 	}
 	if blkStatus := k.register.GetBlockChainInfo(bcName); blkStatus != nil {
 		k.log.Warn("Errors may have occurred when stopping specific blockchain, it still runs.", "bcName", bcName)
