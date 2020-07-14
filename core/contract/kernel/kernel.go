@@ -586,7 +586,9 @@ func (k *Kernel) runStopBlockChain(desc *contract.TxDesc) error {
 		return ErrAddrNotInWhiteList
 	}
 	if err := k.register.UnloadBlockChain(bcName); err != nil {
-		return err
+		// 此处不返回ErrBlockChainIsExist, 仅打印报错信息
+		k.log.Warn("Stop blockchain failed", "ChainName", bcName)
+		return nil
 	}
 	k.log.Info("Stop blockchain successfully", "ChainName", bcName)
 	return nil
