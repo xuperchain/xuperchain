@@ -5,7 +5,6 @@ import (
 	"net"
 	"sync"
 
-	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/peer"
 
@@ -45,13 +44,13 @@ func (e *eventService) Subscribe(req *pb.SubscribeRequest, stream pb.EventServic
 	}
 	defer e.releaseConn(remoteIP)
 
-	iter, err := e.router.Subscribe(req.GetType(), req.GetFilter())
+	encfunc, iter, err := e.router.Subscribe(req.GetType(), req.GetFilter())
 	if err != nil {
 		return err
 	}
 	for iter.Next() {
-		block := iter.Data().(*pb.FilteredBlock)
-		buf, _ := proto.Marshal(block)
+		payload := iter.Data()
+		buf, _ := encfunc(payload)
 		event := &pb.Event{
 			Payload: buf,
 		}

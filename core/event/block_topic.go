@@ -41,14 +41,24 @@ func (b *BlockTopic) ParseFilter(buf []byte) (interface{}, error) {
 		return nil, err
 	}
 
-	return newBlockFilter(pbfilter)
+	return pbfilter, nil
+}
+
+// MarshalEvent encode event payload returns from Iterator.Data()
+func (b *BlockTopic) MarshalEvent(x interface{}) ([]byte, error) {
+	msg := x.(proto.Message)
+	return proto.Marshal(msg)
 }
 
 // NewIterator make a new Iterator base on filter
 func (b *BlockTopic) NewIterator(ifilter interface{}) (Iterator, error) {
-	filter, ok := ifilter.(*blockFilter)
+	pbfilter, ok := ifilter.(*pb.BlockFilter)
 	if !ok {
 		return nil, errors.New("bad filter type for block event")
+	}
+	filter, err := newBlockFilter(pbfilter)
+	if err != nil {
+		return nil, err
 	}
 	return b.newIterator(filter)
 }

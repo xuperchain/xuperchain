@@ -6,6 +6,9 @@ type Topic interface {
 	// 返回的参数会作为入参传递给NewIterator的filter参数
 	ParseFilter(buf []byte) (interface{}, error)
 
+	// MarshalEvent encode event payload returns from Iterator.Data()
+	MarshalEvent(x interface{}) ([]byte, error)
+
 	// NewIterator make a new Iterator base on filter
 	NewIterator(filter interface{}) (Iterator, error)
 }
