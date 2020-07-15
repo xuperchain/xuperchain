@@ -41,7 +41,7 @@ func parseRawKey(rawKey []byte) (string, []byte, error) {
 		return "", nil, fmt.Errorf("parseRawKey failed, invalid raw key:%s", string(rawKey))
 	}
 	bucket := string(rawKey[:idx])
-	key := rawKey[idx+1 : len(rawKey)]
+	key := rawKey[idx+1:]
 	return bucket, key, nil
 }
 

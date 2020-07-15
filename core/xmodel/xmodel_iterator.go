@@ -36,7 +36,7 @@ func (di *XMIterator) First() bool {
 func (di *XMIterator) Key() []byte {
 	tablePrefixLen := len(pb.ExtUtxoTablePrefix)
 	kvdbKey := di.iter.Key()
-	return kvdbKey[tablePrefixLen:len(kvdbKey)]
+	return kvdbKey[tablePrefixLen:]
 }
 
 // Error return error info for XMIterator
