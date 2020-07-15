@@ -236,16 +236,19 @@ func (c *contractContext) Logf(fmtstr string, args ...interface{}) {
 	c.bridgeCallFunc("PostLog", request, new(pb.PostLogResponse))
 }
 
-func (c *contractContext) EmitEvent(name string, body []byte) {
+func (c *contractContext) EmitEvent(name string, body []byte) error {
 	request := &pb.EmitEventRequest{
 		Header: &c.header,
 		Name:   name,
 		Body:   body,
 	}
-	c.bridgeCallFunc("EmitEvent", request, new(pb.EmitEventResponse))
+	return c.bridgeCallFunc("EmitEvent", request, new(pb.EmitEventResponse))
 }
 
-func (c *contractContext) EmitJSONEvent(name string, body interface{}) {
-	buf, _ := json.Marshal(body)
-	c.EmitEvent(name, buf)
+func (c *contractContext) EmitJSONEvent(name string, body interface{}) error {
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return err
+	}
+	return c.EmitEvent(name, buf)
 }

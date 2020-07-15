@@ -24,8 +24,8 @@ type Context interface {
 	TransferAmount() (*big.Int, error)
 	Call(module, contract, method string, args map[string][]byte) (*Response, error)
 	CrossQuery(uri string, args map[string][]byte) (*Response, error)
-	EmitEvent(name string, body []byte)
-	EmitJSONEvent(name string, body interface{})
+	EmitEvent(name string, body []byte) error
+	EmitJSONEvent(name string, body interface{}) error
 
 	Logf(fmt string, args ...interface{})
 }
