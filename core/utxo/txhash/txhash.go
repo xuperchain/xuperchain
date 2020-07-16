@@ -11,6 +11,9 @@ import (
 
 // MakeTransactionID 事务id生成
 func MakeTransactionID(tx *pb.Transaction) ([]byte, error) {
+	if tx.Version >= 3 {
+		return TxSignature(tx, true), nil
+	}
 	coreData, err := encodeTxData(tx, true)
 	if err != nil {
 		return nil, err
@@ -20,6 +23,10 @@ func MakeTransactionID(tx *pb.Transaction) ([]byte, error) {
 
 // MakeTxDigestHash 生成交易关键信息的hash, 不含汇款人公钥、签名等字段
 func MakeTxDigestHash(tx *pb.Transaction) ([]byte, error) {
+	if tx.Version >= 3 {
+		return TxSignature(tx, false), nil
+	}
+
 	coreData, err := encodeTxData(tx, false)
 	if err != nil {
 		return nil, err
