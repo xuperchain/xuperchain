@@ -1102,3 +1102,9 @@ message CrossQueryInfo {
   CrossQueryResponse response = 2;
   repeated SignatureInfo signs = 3;
 }
+
+message ContractEvent {
+    string contract = 1;
+    string name = 2;
+    bytes body = 3;
+}

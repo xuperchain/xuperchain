@@ -258,10 +258,6 @@ func (c *SyscallService) PutObject(ctx context.Context, in *pb.PutRequest) (*pb.
 		return nil, err
 	}
 
-	if nctx.ExceedDiskLimit() {
-		nctx.Instance.Abort(ErrOutOfDiskLimit.Error())
-		return nil, ErrOutOfDiskLimit
-	}
 	return &pb.PutResponse{}, nil
 }
 
@@ -383,6 +379,22 @@ func (c *SyscallService) PostLog(ctx context.Context, in *pb.PostLogRequest) (*p
 	}
 	nctx.Logger.Info(in.GetEntry())
 	return &pb.PostLogResponse{}, nil
+}
+
+// PostLog handle log entry from contract
+func (c *SyscallService) EmitEvent(ctx context.Context, in *pb.EmitEventRequest) (*pb.EmitEventResponse, error) {
+	nctx, ok := c.ctxmgr.Context(in.GetHeader().GetCtxid())
+	if !ok {
+		return nil, fmt.Errorf("bad ctx id:%d", in.GetHeader().GetCtxid())
+	}
+	event := &xchainpb.ContractEvent{
+		Contract: nctx.ContractName,
+		Name:     in.GetName(),
+		Body:     in.GetBody(),
+	}
+	nctx.Events = append(nctx.Events, event)
+	nctx.Cache.AddEvent(event)
+	return &pb.EmitEventResponse{}, nil
 }
 
 // ConvertTxToSDKTx mplements Syscall interface
