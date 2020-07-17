@@ -1131,10 +1131,11 @@ func (uv *UtxoVM) undoPayFee(tx *pb.Transaction, batch kvdb.Batch, block *pb.Int
 		}
 		addr = block.Proposer
 		utxoKey := GenUtxoKeyWithPrefix(addr, tx.Txid, int32(offset))
-		batch.Delete([]byte(utxoKey)) // 删除产生的UTXO
+		// 删除产生的UTXO
+		batch.Delete([]byte(utxoKey))
 		uv.utxoCache.Remove(string(addr), utxoKey)
 		uv.subBalance(addr, big.NewInt(0).SetBytes(txOutput.Amount))
-		uv.xlog.Info("    undo delete fee utxo key", "utxoKey", utxoKey)
+		uv.xlog.Info("undo delete fee utxo key", "utxoKey", utxoKey)
 	}
 	return nil
 }
@@ -1218,6 +1219,7 @@ func (uv *UtxoVM) undoTxInternal(tx *pb.Transaction, batch kvdb.Batch) error {
 		uv.xlog.Warn("model3.UndoTx failed", "err", err)
 		return ErrRWSetInvalid
 	}
+
 	for _, txInput := range tx.TxInputs {
 		addr := txInput.FromAddr
 		txid := txInput.RefTxid
@@ -1233,11 +1235,13 @@ func (uv *UtxoVM) undoTxInternal(tx *pb.Transaction, batch kvdb.Batch) error {
 		if uErr != nil {
 			return uErr
 		}
-		batch.Put([]byte(utxoKey), uBinary) // 退还用掉的UTXO
+		// 退还用掉的UTXO
+		batch.Put([]byte(utxoKey), uBinary)
 		uv.unlockKey([]byte(utxoKey))
 		uv.addBalance(addr, uItem.Amount)
-		uv.xlog.Trace("    undo insert utxo key", "utxoKey", utxoKey)
+		uv.xlog.Trace("undo insert utxo key", "utxoKey", utxoKey)
 	}
+
 	for offset, txOutput := range tx.TxOutputs {
 		addr := txOutput.ToAddr
 		if bytes.Equal(addr, []byte(FeePlaceholder)) {
@@ -1248,10 +1252,11 @@ func (uv *UtxoVM) undoTxInternal(tx *pb.Transaction, batch kvdb.Batch) error {
 			continue
 		}
 		utxoKey := GenUtxoKeyWithPrefix(addr, tx.Txid, int32(offset))
-		batch.Delete([]byte(utxoKey)) // 删除产生的UTXO
+		// 删除产生的UTXO
+		batch.Delete([]byte(utxoKey))
 		uv.utxoCache.Remove(string(addr), utxoKey)
 		uv.subBalance(addr, txOutputAmount)
-		uv.xlog.Trace("    undo delete utxo key", "utxoKey", utxoKey)
+		uv.xlog.Trace("undo delete utxo key", "utxoKey", utxoKey)
 		if tx.Coinbase {
 			// coinbase交易（包括创始块和挖矿奖励), 回滚会导致系统总资产缩水
 			delta := big.NewInt(0)
@@ -1259,6 +1264,7 @@ func (uv *UtxoVM) undoTxInternal(tx *pb.Transaction, batch kvdb.Batch) error {
 			uv.updateUtxoTotal(delta, batch, false)
 		}
 	}
+
 	return nil
 }
 
@@ -1420,25 +1426,32 @@ func (uv *UtxoVM) DoTx(tx *pb.Transaction) error {
 func (uv *UtxoVM) undoUnconfirmedTx(tx *pb.Transaction, txMap map[string]*pb.Transaction,
 	txGraph TxGraph, batch kvdb.Batch, undoDone map[string]bool) error {
 	if undoDone[string(tx.Txid)] == true {
-		return nil // 说明已经被回滚了
+		// 说明已经被回滚了
+		return nil
 	}
-	uv.xlog.Info("    start to undo transaction", "txid", fmt.Sprintf("%x", tx.Txid))
+
+	uv.xlog.Info("start to undo transaction", "txid", fmt.Sprintf("%s", hex.EncodeToString(tx.Txid)))
 	childrenTxids, exist := txGraph[string(tx.Txid)]
 	if exist {
 		for _, childTxid := range childrenTxids {
 			childTx := txMap[childTxid]
-			uv.undoUnconfirmedTx(childTx, txMap, txGraph, batch, undoDone) // 先回滚依赖“我”的交易
+			// 先递归回滚依赖“我”的交易
+			uv.undoUnconfirmedTx(childTx, txMap, txGraph, batch, undoDone)
 		}
 	}
+
 	// 下面开始回滚自身
 	undoErr := uv.undoTxInternal(tx, batch)
 	if undoErr != nil {
 		return undoErr
 	}
 	if !uv.asyncMode {
-		batch.Delete(append([]byte(pb.UnconfirmedTablePrefix), tx.Txid...)) // 从unconfirm表删除
+		// 从unconfirm表删除
+		batch.Delete(append([]byte(pb.UnconfirmedTablePrefix), tx.Txid...))
 	}
-	undoDone[string(tx.Txid)] = true
+
+	// 记录回滚交易，用于重放
+	undoDone[string(tx.Txid)] = tx
 	return nil
 }
 
@@ -1757,13 +1770,16 @@ func (uv *UtxoVM) verifyAutogenTx(tx *pb.Transaction) bool {
 }
 
 // RollBackUnconfirmedTx 回滚本地未确认交易
-func (uv *UtxoVM) RollBackUnconfirmedTx() (map[string]bool, error) {
+func (uv *UtxoVM) RollBackUnconfirmedTx() (map[string]*pb.Transaction, error) {
+	// 分析依赖关系
 	batch := uv.ldb.NewBatch()
 	unconfirmTxMap, unconfirmTxGraph, _, loadErr := uv.sortUnconfirmedTx()
 	if loadErr != nil {
 		return nil, loadErr
 	}
-	undoDone := map[string]bool{}
+
+	// 回滚未确认交易
+	undoDone := make(map[string]*pb.Transaction)
 	for txid, unconfirmTx := range unconfirmTxMap {
 		undoErr := uv.undoUnconfirmedTx(unconfirmTx, unconfirmTxMap, unconfirmTxGraph, batch, undoDone)
 		if undoErr != nil {
@@ -1771,152 +1787,264 @@ func (uv *UtxoVM) RollBackUnconfirmedTx() (map[string]bool, error) {
 			return nil, undoErr
 		}
 	}
+
+	// 原子写
 	writeErr := batch.Write()
 	if writeErr != nil {
 		uv.ClearCache()
 		uv.xlog.Warn("failed to clean unconfirmed tx", "writeErr", writeErr)
 		return nil, writeErr
 	}
+
+	// 回滚完成从未确认交易表删除
 	for txid := range undoDone {
 		uv.unconfirmTxInMem.Delete(txid)
 	}
 	return undoDone, nil
 }
 
-// Walk 从当前的latestBlockid 游走到 blockid, 会触发utxo状态的回滚。
-//  执行后会更新latestBlockid
+// Walk 从当前的latestBlockid 游走到 blockid, 会触发utxo状态的回滚。执行后会更新latestBlockid
 func (uv *UtxoVM) Walk(blockid []byte, ledgerPrune bool) error {
+	uv.xlog.Info("utxoVM start walk.", "dest_block", hex.EncodeToString(blockid),
+		"latest_blockid", hex.EncodeToString(uv.latestBlockid))
+
+	// 获取全局锁
 	uv.mutex.Lock()
-	defer uv.mutex.Unlock() // lock guard
-	// 首先先把所有的unconfirm回滚了。
+	defer uv.mutex.Unlock()
+
+	// 首先先把所有的unconfirm回滚，记录被回滚的交易，然后walk结束后恢复被回滚的合法未确认交易
 	undoDone, err := uv.RollBackUnconfirmedTx()
 	if err != nil {
-		return err
+		uv.xlog.Warn("walk fail,rollback unconfirm tx fail", "err", err)
+		return fmt.Errorf("walk rollback unconfirm tx fail")
 	}
+
+	// 清理cache
 	uv.clearBalanceCache()
-	// 然后开始寻找blockid 和 latestBlockid的最低公共祖先, 生成undoBlocks和todoBlocks
-	undoBlocks, todoBlocks, findErr := uv.ledger.FindUndoAndTodoBlocks(uv.latestBlockid, blockid)
-	if findErr != nil {
-		uv.xlog.Warn("fail to to find common parent of two blocks", "dest_block", fmt.Sprintf("%x", blockid),
-			"latestBlockid", fmt.Sprintf("%x", uv.latestBlockid), "findErr", findErr)
-		return findErr
+
+	// 寻找blockid和latestBlockid的最低公共祖先, 生成undoBlocks和todoBlocks
+	undoBlocks, todoBlocks, err := uv.ledger.FindUndoAndTodoBlocks(uv.latestBlockid, blockid)
+	if err != nil {
+		uv.xlog.Warn("walk fail,find common parent block fail", "dest_block", hex.EncodeToString(blockid),
+			"latest_block", hex.EncodeToString(uv.latestBlockid), "err", err)
+		return fmt.Errorf("walk find common parent block fail")
 	}
-	for _, undoBlk := range undoBlocks {
+
+	// utxoVM回滚需要回滚区块
+	err = t.procUndoBlkForWalk(undoBlocks, undoDone)
+	if err != nil {
+		uv.xlog.Warn("walk fail,because undo block fail", "err", err)
+		return fmt.Errorf("walk undo block fail")
+	}
+
+	// utxoVM执行需要执行区块
+	err = t.procTodoBlkForWalk(todoBlocks)
+	if err != nil {
+		uv.xlog.Warn("walk fail,because todo block fail", "err", err)
+		return fmt.Errorf("walk todo block fail")
+	}
+
+	// 异步回放被回滚未确认交易
+	go uv.recoverUnconfirmedTx(undoDone)
+
+	uv.xlog.Info("utxoVM walk finish", "dest_block", hex.EncodeToString(blockid),
+		"latest_blockid", hex.EncodeToString(uv.latestBlockid))
+	return nil
+}
+
+// utxoVM重放未确认交易，失败仅仅日志记录
+func (uv *UtxoVM) recoverUnconfirmedTx(undoDone map[string]*pb.Transaction) {
+	for txid, tx := range undoDone {
+		// 过滤挖矿奖励和自动生成交易
+		// TODO:自动生成交易来源，确认是否需要回放
+		if tx.Coinbase || tx.Autogen {
+			continue
+		}
+
+		// 重新对交易鉴权，过掉冲突交易
+		isValid, err = uv.VerifyTx(tx)
+
+		// 重新提交交易
+		err = uv.DoTx(tx)
+	}
+}
+
+// utxoVM批量回滚区块
+func (uv *UtxoVM) procUndoBlkForWalk(undoBlocks []*pb.InternalBlock,
+	undoDone map[string]*pb.Transaction) (err error) {
+	var undoBlk *pb.InternalBlock
+	var showBlkId string
+	var tx *pb.Transaction
+	var showTxId string
+
+	// 依次回滚每个区块
+	for _, undoBlk = range undoBlocks {
+		showBlkId = hex.EncodeToString(undoBlk.Blockid)
+		uv.xlog.Info("start undo block for walk", "blockid", showBlkId)
+
 		// 加一个(共识)开关来判定是否需要采用不可逆
-		// 不需要更新IrreversibleBlockHeight以及SlideWindow，因为共识层面的回滚不会回滚到IrreversibleBlockHeight
-		// 只有账本裁剪才需要更新IrreversibleBlockHeight以及SlideWindow
+		// 不需要更新IrreversibleBlockHeight以及SlideWindow，因为共识层面的回滚不会回滚到
+		// IrreversibleBlockHeight，只有账本裁剪才需要更新IrreversibleBlockHeight以及SlideWindow
 		curIrreversibleBlockHeight := uv.GetIrreversibleBlockHeight()
 		if !ledgerPrune && undoBlk.Height <= curIrreversibleBlockHeight {
-			uv.xlog.Warn("undo failed, block to be undo is older than irreversibleBlockHeight", "irreversibleBlockHeight", curIrreversibleBlockHeight, "undo block height", undoBlk.Height)
-			return errors.New("undo error")
+			return fmt.Errorf("block to be undo is older than irreversibleBlockHeight."+
+				"irreversible_height:%d,undo_block_height:%d", curIrreversibleBlockHeight, undoBlk.Height)
 		}
+
+		// 将batch赋值到合约机的上下文
 		batch := uv.ldb.NewBatch()
-		uv.xlog.Info("start undo block", "blockid", fmt.Sprintf("%x", undoBlk.Blockid))
-		ctx := &contract.TxContext{UtxoBatch: batch, Block: undoBlk, IsUndo: true, LedgerObj: uv.ledger, UtxoMeta: uv} // 将batch赋值到合约机的上下文
+		ctx := &contract.TxContext{
+			UtxoBatch: batch,
+			Block:     undoBlk,
+			IsUndo:    true,
+			LedgerObj: uv.ledger,
+			UtxoMeta:  uv,
+		}
 		uv.smartContract.SetContext(ctx)
+
+		// 倒序回滚交易
 		for i := len(undoBlk.Transactions) - 1; i >= 0; i-- {
-			tx := undoBlk.Transactions[i]
-			if !undoDone[string(tx.Txid)] { //避免重复回滚
-				err := uv.undoTxInternal(tx, batch)
+			tx = undoBlk.Transactions[i]
+			showTxId = hex.EncodeToString(tx.Txid)
+
+			// 回滚交易
+			if _, ok := undoDone[string(tx.Txid)]; !ok {
+				err = uv.undoTxInternal(tx, batch)
 				if err != nil {
-					uv.xlog.Warn("failed to undo block", "err", err)
-					return err
+					return fmt.Errorf("undo tx fail.txid:%s,err:%v", showTxId, err)
 				}
 			}
-			feeErr := uv.undoPayFee(tx, batch, undoBlk)
-			if feeErr != nil {
-				uv.xlog.Warn("undoPayFee failed", "feeErr", feeErr)
-				return feeErr
+
+			// 回滚小费，undoTxInternal不会滚小费
+			err = uv.undoPayFee(tx, batch, undoBlk)
+			if err != nil {
+				return fmt.Errorf("undo fee fail.txid:%s,err:%v", showTxId, err)
 			}
-			err := uv.RollbackContract(undoBlk.Blockid, tx)
+
+			// 二代合约回滚，回滚失败只是日志记录
+			err = uv.RollbackContract(undoBlk.Blockid, tx)
 			if err != nil {
 				uv.xlog.Warn("failed to rollback contract, when undo block", "err", err)
 			}
 		}
-		if err := uv.smartContract.Finalize(undoBlk.PreHash); err != nil {
-			uv.xlog.Error("smart contract fianlize failed", "blockid", fmt.Sprintf("%x", undoBlk.Blockid))
-			return err
+
+		if err = uv.smartContract.Finalize(undoBlk.PreHash); err != nil {
+			return fmt.Errorf("smart contract fianlize fail.blockid:%s,err:%v", showBlkId, err)
 		}
+
 		// 账本裁剪时，无视区块不可逆原则
 		if ledgerPrune {
 			curIrreversibleBlockHeight := uv.GetIrreversibleBlockHeight()
 			curIrreversibleSlideWindow := uv.GetIrreversibleSlideWindow()
-			updateErr := uv.updateNextIrreversibleBlockHeightForPrune(undoBlk.Height, curIrreversibleBlockHeight, curIrreversibleSlideWindow, batch)
-			if updateErr != nil {
-				return updateErr
+			err = uv.updateNextIrreversibleBlockHeightForPrune(undoBlk.Height,
+				curIrreversibleBlockHeight, curIrreversibleSlideWindow, batch)
+			if err != nil {
+				return fmt.Errorf("update irreversible block height fail.err:%v", err)
 			}
 		}
-		updateErr := uv.updateLatestBlockid(undoBlk.PreHash, batch, "error occurs when undo blocks")
-		if updateErr != nil {
-			return updateErr
+
+		// 更新utxoVM LatestBlockid，这里是回滚，所以是更新为上一个区块
+		err = uv.updateLatestBlockid(undoBlk.PreHash, batch, "error occurs when undo blocks")
+		if err != nil {
+			return fmt.Errorf("update latest blockid fail.latest_blockid:%s,err:%v",
+				hex.EncodeToString(undoBlk.PreHash), err)
 		}
-		// 内存级别更新UtxoMeta信息
+
+		// 每回滚完一个块，内存级别更新UtxoMeta信息
 		uv.mutexMeta.Lock()
 		newMeta := proto.Clone(uv.metaTmp).(*pb.UtxoMeta)
 		uv.meta = newMeta
 		uv.mutexMeta.Unlock()
+
+		uv.xlog.Info("finish undo this block", "blockid", showBlkId)
 	}
+
+	return nil
+}
+
+// utxoVM批量执行区块
+func (uv *UtxoVM) procTodoBlkForWalk(todoBlocks []*pb.InternalBlock) (err error) {
+	var todoBlk pb.InternalBlock
+	var showBlkId string
+	var tx *pb.Transaction
+	var showTxId string
+
+	// 依次执行每个块的交易
 	for i := len(todoBlocks) - 1; i >= 0; i-- {
-		todoBlk := todoBlocks[i]
-		// 区块加解密有效性检查
+		todoBlk = todoBlocks[i]
+		showBlkId = hex.EncodeToString(todoBlk.Blockid)
+
+		uv.xlog.Info("start do block for walk", "blockid", showBlkId)
+		// 将batch赋值到合约机的上下文
 		batch := uv.ldb.NewBatch()
-		ctx := &contract.TxContext{UtxoBatch: batch, Block: todoBlk, LedgerObj: uv.ledger, UtxoMeta: uv} // 将batch赋值到合约机的上下文
+		ctx := &contract.TxContext{UtxoBatch: batch, Block: todoBlk, LedgerObj: uv.ledger, UtxoMeta: uv}
 		uv.smartContract.SetContext(ctx)
-		uv.xlog.Info("start do block", "blockid", fmt.Sprintf("%x", todoBlk.Blockid))
-		autoGenTxList, genErr := uv.GetVATList(todoBlk.Height, -1, todoBlk.Timestamp)
-		if genErr != nil {
-			uv.xlog.Warn("get autogen tx list failed", "err", genErr)
-			return genErr
+		autoGenTxList, err := uv.GetVATList(todoBlk.Height, -1, todoBlk.Timestamp)
+		if err != nil {
+			return fmt.Errorf("get autogen tx list failed.blockid:%s,err:%v", showBlkId, err)
 		}
+
+		// 执行区块里面的交易
 		idx, length := 0, len(todoBlk.Transactions)
 		for idx < length {
-			tx := todoBlk.Transactions[idx]
+			tx = todoBlk.Transactions[idx]
+			showTxId = hex.EncodeToString(tx.Txid)
+			// 校验交易合法性
 			if !tx.Autogen && !tx.Coinbase {
 				if ok, err := uv.ImmediateVerifyTx(tx, false); !ok {
-					uv.xlog.Warn("dotx failed to ImmediateVerifyTx", "txid", fmt.Sprintf("%x", tx.Txid), "err", err)
-					return errors.New("dotx failed to ImmediateVerifyTx error")
+					return fmt.Errorf("immediate verify tx error.txid:%s,err:%v", showTxId, err)
 				}
 			}
+
+			// 执行交易
 			cacheFiller := &CacheFiller{}
-			txErr := uv.doTxInternal(tx, batch, cacheFiller)
-			if txErr != nil {
-				uv.xlog.Warn("failed to do tx when Walk", "txErr", txErr, "txid", fmt.Sprintf("%x", tx.Txid))
-				return txErr
+			err = uv.doTxInternal(tx, batch, cacheFiller)
+			if err != nil {
+				return fmt.Errorf("todo tx fail.txid:%s,err:%v", showTxId, err)
 			}
 			cacheFiller.Commit()
-			feeErr := uv.payFee(tx, batch, todoBlk)
-			if feeErr != nil {
-				uv.xlog.Warn("payFee failed", "feeErr", feeErr)
-				return feeErr
+
+			// 处理小费
+			err = uv.payFee(tx, batch, todoBlk)
+			if err != nil {
+				return fmt.Errorf("pay fee fail.txid:%s,err:%v", showTxId, err)
 			}
-			var cErr error
-			if idx, cErr = uv.TxOfRunningContractVerify(batch, todoBlk, tx, &autoGenTxList, idx); cErr != nil {
-				uv.xlog.Warn("TxOfRunningContractVerify failed when walking", "error", cErr, "idx", idx)
-				return cErr
+
+			// 执行二代合约
+			idx, err = uv.TxOfRunningContractVerify(batch, todoBlk, tx, &autoGenTxList, idx)
+			if err != nil {
+				return fmt.Errorf("run tx contract fail.txid:%s,err:%v", showTxId, err)
 			}
 		}
-		uv.xlog.Debug("Begin to Finalize", "blockid", fmt.Sprintf("%x", todoBlk.Blockid))
-		if err := uv.smartContract.Finalize(todoBlk.Blockid); err != nil {
-			uv.xlog.Error("smart contract fianlize failed", "blockid", fmt.Sprintf("%x", todoBlk.Blockid))
-			return err
+
+		uv.xlog.Debug("Begin to Finalize", "blockid", showBlkId)
+		if err = uv.smartContract.Finalize(todoBlk.Blockid); err != nil {
+			return fmt.Errorf("smart contract fianlize fail.blockid:%s,err:%v", showBlkId.err)
 		}
+
 		// 更新不可逆区块高度
 		curIrreversibleBlockHeight := uv.GetIrreversibleBlockHeight()
 		curIrreversibleSlideWindow := uv.GetIrreversibleSlideWindow()
-		updateErr := uv.updateNextIrreversibleBlockHeight(todoBlk.Height, curIrreversibleBlockHeight, curIrreversibleSlideWindow, batch)
-		if updateErr != nil {
-			return updateErr
+		err = uv.updateNextIrreversibleBlockHeight(todoBlk.Height, curIrreversibleBlockHeight,
+			curIrreversibleSlideWindow, batch)
+		if err != nil {
+			return fmt.Errorf("update irreversible height fail.blockid:%s,err:%v", showBlkId, err)
 		}
-		updateErr = uv.updateLatestBlockid(todoBlk.Blockid, batch, "error occurs when do blocks") // 每do一个block,是一个原子batch写
-		if updateErr != nil {
-			return updateErr
+		// 每do一个block,是一个原子batch写
+		err = uv.updateLatestBlockid(todoBlk.Blockid, batch, "error occurs when do blocks")
+		if err != nil {
+			return fmt.Errorf("update last blockid fail.blockid:%s,err:%v", showBlkId, err)
 		}
-		// 内存级别更新UtxoMeta信息
+
+		// 完成一个区块后，内存级别更新UtxoMeta信息
 		uv.mutexMeta.Lock()
 		newMeta := proto.Clone(uv.metaTmp).(*pb.UtxoMeta)
 		uv.meta = newMeta
 		uv.mutexMeta.Unlock()
+
+		uv.xlog.Info("finish todo this block", "blockid", showBlkId)
 	}
+
 	return nil
 }
 
