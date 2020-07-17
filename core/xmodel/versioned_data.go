@@ -79,7 +79,7 @@ func IsEmptyVersionedData(vd *xmodel_pb.VersionedData) bool {
 	return vd.RefTxid == nil && vd.RefOffset == 0
 }
 
-func (s *XModel) makeEmptyVersionedData(bucket string, key []byte) *xmodel_pb.VersionedData {
+func makeEmptyVersionedData(bucket string, key []byte) *xmodel_pb.VersionedData {
 	verData := &xmodel_pb.VersionedData{PureData: &xmodel_pb.PureData{}}
 	verData.PureData.Bucket = bucket
 	verData.PureData.Key = key
