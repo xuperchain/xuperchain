@@ -65,34 +65,41 @@ var (
 
 type KernelMethodFunc func(desc *contract.TxDesc) error
 
-type kernelFunc map[string]KernelMethodFunc
+var runKernelFunc map[string]KernelMethodFunc
+var rollbackKernelFunc map[string]KernelMethodFunc
 
-func (k *Kernel) getRunKernelFunc() kernelFunc {
-	return kernelFunc{
-		"CreateBlockChain":               k.runCreateBlockChain,
-		"UpdateMaxBlockSize":             k.runUpdateMaxBlockSize,
-		"UpdateReservedContract":         k.runUpdateReservedContract,
-		"UpdateForbiddenContract":        k.runUpdateForbiddenContract,
-		"UpdateBlockChainData":           k.runUpdateBlockChainData,
-		"UpdateNewAccountResourceAmount": k.runUpdateNewAccountResourceAmount,
-		"UpdateIrreversibleSlideWindow":  k.runUpdateIrreversibleSlideWindow,
-		"UpdateGasPrice":                 k.runUpdateGasPrice,
-		"StopBlockChain":                 k.runStopBlockChain,
+func getRunKernelFunc(k *Kernel) map[string]KernelMethodFunc {
+	if runKernelFunc == nil {
+		runKernelFunc = map[string]KernelMethodFunc{
+			"CreateBlockChain":               k.runCreateBlockChain,
+			"UpdateMaxBlockSize":             k.runUpdateMaxBlockSize,
+			"UpdateReservedContract":         k.runUpdateReservedContract,
+			"UpdateForbiddenContract":        k.runUpdateForbiddenContract,
+			"UpdateBlockChainData":           k.runUpdateBlockChainData,
+			"UpdateNewAccountResourceAmount": k.runUpdateNewAccountResourceAmount,
+			"UpdateIrreversibleSlideWindow":  k.runUpdateIrreversibleSlideWindow,
+			"UpdateGasPrice":                 k.runUpdateGasPrice,
+			"StopBlockChain":                 k.runStopBlockChain,
+		}
 	}
+	return runKernelFunc
 }
 
-func (k *Kernel) getRollbackKernelFunc() kernelFunc {
-	return kernelFunc{
-		"CreateBlockChain":               k.rollbackCreateBlockChain,
-		"UpdateMaxBlockSize":             k.rollbackUpdateMaxBlockSize,
-		"UpdateReservedContract":         k.rollbackUpdateReservedContract,
-		"UpdateForbiddenContract":        k.rollbackUpdateForbiddenContract,
-		"UpdateBlockChainData":           k.rollbackUpdateBlockChainData,
-		"UpdateNewAccountResourceAmount": k.rollbackUpdateNewAccountResourceAmount,
-		"UpdateIrreversibleSlideWindow":  k.rollbackUpdateIrreversibleSlideWindow,
-		"UpdateGasPrice":                 k.rollbackUpdateGasPrice,
-		"StopBlockChain":                 k.rollbackStopBlockChain,
+func getRollbackKernelFunc(k *Kernel) map[string]KernelMethodFunc {
+	if rollbackKernelFunc == nil {
+		rollbackKernelFunc = map[string]KernelMethodFunc{
+			"CreateBlockChain":               k.rollbackCreateBlockChain,
+			"UpdateMaxBlockSize":             k.rollbackUpdateMaxBlockSize,
+			"UpdateReservedContract":         k.rollbackUpdateReservedContract,
+			"UpdateForbiddenContract":        k.rollbackUpdateForbiddenContract,
+			"UpdateBlockChainData":           k.rollbackUpdateBlockChainData,
+			"UpdateNewAccountResourceAmount": k.rollbackUpdateNewAccountResourceAmount,
+			"UpdateIrreversibleSlideWindow":  k.rollbackUpdateIrreversibleSlideWindow,
+			"UpdateGasPrice":                 k.rollbackUpdateGasPrice,
+			"StopBlockChain":                 k.rollbackStopBlockChain,
+		}
 	}
+	return rollbackKernelFunc
 }
 
 func (k *Kernel) kernelRun(method KernelMethodFunc, arg *contract.TxDesc) error {
@@ -613,7 +620,7 @@ func (k *Kernel) rollbackStopBlockChain(desc *contract.TxDesc) error {
 
 // Run implements ContractInterface
 func (k *Kernel) Run(desc *contract.TxDesc) error {
-	runFuncMapper := k.getRunKernelFunc()
+	runFuncMapper := getRunKernelFunc(k)
 	k.mutex.Lock()
 	defer k.mutex.Unlock()
 	if _, ok := runFuncMapper[desc.Method]; !ok {
@@ -625,7 +632,7 @@ func (k *Kernel) Run(desc *contract.TxDesc) error {
 
 // Rollback implements ContractInterface
 func (k *Kernel) Rollback(desc *contract.TxDesc) error {
-	runFuncMapper := k.getRollbackKernelFunc()
+	runFuncMapper := getRollbackKernelFunc(k)
 	k.mutex.Lock()
 	defer k.mutex.Unlock()
 	if _, ok := runFuncMapper[desc.Method]; !ok {
