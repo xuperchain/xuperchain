@@ -99,6 +99,8 @@ const (
 	DefaultMaxConfirmedDelay  = 300
 )
 
+type TxLists []*pb.Transaction
+
 // UtxoVM UTXO VM
 type UtxoVM struct {
 	meta              *pb.UtxoMeta // utxo meta
@@ -1429,10 +1431,9 @@ func (uv *UtxoVM) DoTx(tx *pb.Transaction) error {
 	return uv.doTxSync(tx)
 }
 
-func (uv *UtxoVM) undoUnconfirmedTx(tx *pb.Transaction, txMap map[string]*pb.Transaction,
-	txGraph TxGraph, batch kvdb.Batch, undoDone map[string]bool) error {
+func (uv *UtxoVM) undoUnconfirmedTx(tx *pb.Transaction, txMap map[string]*pb.Transaction, txGraph TxGraph,
+	batch kvdb.Batch, undoDone map[string]bool, pundoList *TxLists) error {
 	if undoDone[string(tx.Txid)] == true {
-		// 说明已经被回滚了
 		return nil
 	}
 
@@ -1442,7 +1443,7 @@ func (uv *UtxoVM) undoUnconfirmedTx(tx *pb.Transaction, txMap map[string]*pb.Tra
 		for _, childTxid := range childrenTxids {
 			childTx := txMap[childTxid]
 			// 先递归回滚依赖“我”的交易
-			uv.undoUnconfirmedTx(childTx, txMap, txGraph, batch, undoDone)
+			uv.undoUnconfirmedTx(childTx, txMap, txGraph, batch, undoDone, pundoList)
 		}
 	}
 
@@ -1457,7 +1458,11 @@ func (uv *UtxoVM) undoUnconfirmedTx(tx *pb.Transaction, txMap map[string]*pb.Tra
 	}
 
 	// 记录回滚交易，用于重放
-	undoDone[string(tx.Txid)] = tx
+	undoDone[string(tx.Txid)] = true
+	if pundoList != nil {
+		// 需要保持回滚顺序
+		*pundoList = append(*pundoList, tx)
+	}
 	return nil
 }
 
@@ -1556,7 +1561,8 @@ func (uv *UtxoVM) processUnconfirmTxs(block *pb.InternalBlock, batch kvdb.Batch,
 			uv.xlog.Warn("will undo tx because it is beyond confirmed delay", "txid", global.F(unconfirmTx.Txid))
 		}
 		if hasConflict || tooDelayed {
-			undoErr := uv.undoUnconfirmedTx(unconfirmTx, unconfirmTxMap, unconfirmTxGraph, batch, undoDone)
+			undoErr := uv.undoUnconfirmedTx(unconfirmTx, unconfirmTxMap,
+				unconfirmTxGraph, batch, undoDone, nil)
 			if undoErr != nil {
 				uv.xlog.Warn("fail to undo tx", "undoErr", undoErr)
 				return nil, nil, undoErr
@@ -1776,21 +1782,23 @@ func (uv *UtxoVM) verifyAutogenTx(tx *pb.Transaction) bool {
 }
 
 // RollBackUnconfirmedTx 回滚本地未确认交易
-func (uv *UtxoVM) RollBackUnconfirmedTx() (map[string]*pb.Transaction, error) {
+func (uv *UtxoVM) RollBackUnconfirmedTx() (map[string]bool, TxLists, error) {
 	// 分析依赖关系
 	batch := uv.ldb.NewBatch()
 	unconfirmTxMap, unconfirmTxGraph, _, loadErr := uv.sortUnconfirmedTx()
 	if loadErr != nil {
-		return nil, loadErr
+		return nil, nil, loadErr
 	}
 
 	// 回滚未确认交易
-	undoDone := make(map[string]*pb.Transaction)
+	undoDone := make(map[string]bool)
+	undoList := make(TxLists, 0)
 	for txid, unconfirmTx := range unconfirmTxMap {
-		undoErr := uv.undoUnconfirmedTx(unconfirmTx, unconfirmTxMap, unconfirmTxGraph, batch, undoDone)
+		undoErr := uv.undoUnconfirmedTx(unconfirmTx, unconfirmTxMap, unconfirmTxGraph,
+			batch, undoDone, &undoList)
 		if undoErr != nil {
 			uv.xlog.Warn("fail to undo tx", "undoErr", undoErr, "txid", fmt.Sprintf("%x", txid))
-			return nil, undoErr
+			return nil, nil, undoErr
 		}
 	}
 
@@ -1799,14 +1807,14 @@ func (uv *UtxoVM) RollBackUnconfirmedTx() (map[string]*pb.Transaction, error) {
 	if writeErr != nil {
 		uv.ClearCache()
 		uv.xlog.Warn("failed to clean unconfirmed tx", "writeErr", writeErr)
-		return nil, writeErr
+		return nil, nil, writeErr
 	}
 
 	// 回滚完成从未确认交易表删除
 	for txid := range undoDone {
 		uv.unconfirmTxInMem.Delete(txid)
 	}
-	return undoDone, nil
+	return undoDone, undoList, nil
 }
 
 // Walk 从当前的latestBlockid 游走到 blockid, 会触发utxo状态的回滚。执行后会更新latestBlockid
@@ -1814,16 +1822,20 @@ func (uv *UtxoVM) Walk(blockid []byte, ledgerPrune bool) error {
 	uv.xlog.Info("utxoVM start walk.", "dest_block", hex.EncodeToString(blockid),
 		"latest_blockid", hex.EncodeToString(uv.latestBlockid))
 
+	xTimer := global.NewXTimer()
+
 	// 获取全局锁
 	uv.mutex.Lock()
 	defer uv.mutex.Unlock()
+	xTimer.Mark("walk_get_lock")
 
 	// 首先先把所有的unconfirm回滚，记录被回滚的交易，然后walk结束后恢复被回滚的合法未确认交易
-	undoDone, err := uv.RollBackUnconfirmedTx()
+	undoDone, undoList, err := uv.RollBackUnconfirmedTx()
 	if err != nil {
 		uv.xlog.Warn("walk fail,rollback unconfirm tx fail", "err", err)
 		return fmt.Errorf("walk rollback unconfirm tx fail")
 	}
+	xTimer.Mark("walk_rollback_unconfirm_tx")
 
 	// 清理cache
 	uv.clearBalanceCache()
@@ -1835,49 +1847,68 @@ func (uv *UtxoVM) Walk(blockid []byte, ledgerPrune bool) error {
 			"latest_block", hex.EncodeToString(uv.latestBlockid), "err", err)
 		return fmt.Errorf("walk find common parent block fail")
 	}
+	xTimer.Mark("walk_find_undo_todo_block")
 
 	// utxoVM回滚需要回滚区块
-	err = t.procUndoBlkForWalk(undoBlocks, undoDone)
+	err = uv.procUndoBlkForWalk(undoBlocks, undoDone, ledgerPrune)
 	if err != nil {
 		uv.xlog.Warn("walk fail,because undo block fail", "err", err)
 		return fmt.Errorf("walk undo block fail")
 	}
+	xTimer.Mark("walk_undo_block")
 
 	// utxoVM执行需要执行区块
-	err = t.procTodoBlkForWalk(todoBlocks)
+	err = uv.procTodoBlkForWalk(todoBlocks)
 	if err != nil {
 		uv.xlog.Warn("walk fail,because todo block fail", "err", err)
 		return fmt.Errorf("walk todo block fail")
 	}
+	xTimer.Mark("walk_todo_block")
 
 	// 异步回放被回滚未确认交易
-	go uv.recoverUnconfirmedTx(undoDone)
+	go uv.recoverUnconfirmedTx(undoList)
 
 	uv.xlog.Info("utxoVM walk finish", "dest_block", hex.EncodeToString(blockid),
-		"latest_blockid", hex.EncodeToString(uv.latestBlockid))
+		"latest_blockid", hex.EncodeToString(uv.latestBlockid), "costs", xTimer.Print())
 	return nil
 }
 
 // utxoVM重放未确认交易，失败仅仅日志记录
-func (uv *UtxoVM) recoverUnconfirmedTx(undoDone map[string]*pb.Transaction) {
-	for txid, tx := range undoDone {
-		// 过滤挖矿奖励和自动生成交易
-		// TODO:自动生成交易来源，确认是否需要回放
+func (uv *UtxoVM) recoverUnconfirmedTx(undoList TxLists) {
+	xTimer := global.NewXTimer()
+	uv.xlog.Info("start recover unconfirm tx")
+	// 由于未确认交易也可能存在依赖顺序，需要按顺序回放交易
+	for _, tx := range undoList {
+		// 过滤挖矿奖励和自动生成交易，理论上挖矿奖励和自动生成交易不会进入未确认交易池
 		if tx.Coinbase || tx.Autogen {
 			continue
 		}
 
+		uv.xlog.Info("start recover unconfirm tx", "txid", hex.EncodeToString(tx.Txid))
 		// 重新对交易鉴权，过掉冲突交易
-		isValid, err = uv.VerifyTx(tx)
+		isValid, err := uv.ImmediateVerifyTx(tx, false)
+		if err != nil || !isValid {
+			uv.xlog.Info("this tx immediate verify fail,ignore recover", "txid",
+				hex.EncodeToString(tx.Txid), "is_valid", isValid, "err", err)
+			continue
+		}
 
 		// 重新提交交易
-		err = uv.DoTx(tx)
+		err = uv.doTxSync(tx)
+		if err != nil {
+			uv.xlog.Warn("dotx fail for recover unconfirm tx,ignore recover this tx",
+				"txid", hex.EncodeToString(tx.Txid), "err", err)
+			continue
+		}
+		uv.xlog.Info("recover unconfirm tx succ", "txid", hex.EncodeToString(tx.Txid))
 	}
+
+	uv.xlog.Info("recover unconfirm tx done", "costs", xTimer.Print())
 }
 
 // utxoVM批量回滚区块
 func (uv *UtxoVM) procUndoBlkForWalk(undoBlocks []*pb.InternalBlock,
-	undoDone map[string]*pb.Transaction) (err error) {
+	undoDone map[string]bool, ledgerPrune bool) (err error) {
 	var undoBlk *pb.InternalBlock
 	var showBlkId string
 	var tx *pb.Transaction
@@ -1914,7 +1945,7 @@ func (uv *UtxoVM) procUndoBlkForWalk(undoBlocks []*pb.InternalBlock,
 			showTxId = hex.EncodeToString(tx.Txid)
 
 			// 回滚交易
-			if _, ok := undoDone[string(tx.Txid)]; !ok {
+			if !undoDone[string(tx.Txid)] {
 				err = uv.undoTxInternal(tx, batch)
 				if err != nil {
 					return fmt.Errorf("undo tx fail.txid:%s,err:%v", showTxId, err)
@@ -1970,7 +2001,7 @@ func (uv *UtxoVM) procUndoBlkForWalk(undoBlocks []*pb.InternalBlock,
 
 // utxoVM批量执行区块
 func (uv *UtxoVM) procTodoBlkForWalk(todoBlocks []*pb.InternalBlock) (err error) {
-	var todoBlk pb.InternalBlock
+	var todoBlk *pb.InternalBlock
 	var showBlkId string
 	var tx *pb.Transaction
 	var showTxId string
@@ -2025,7 +2056,7 @@ func (uv *UtxoVM) procTodoBlkForWalk(todoBlocks []*pb.InternalBlock) (err error)
 
 		uv.xlog.Debug("Begin to Finalize", "blockid", showBlkId)
 		if err = uv.smartContract.Finalize(todoBlk.Blockid); err != nil {
-			return fmt.Errorf("smart contract fianlize fail.blockid:%s,err:%v", showBlkId.err)
+			return fmt.Errorf("smart contract fianlize fail.blockid:%s,err:%v", showBlkId, err)
 		}
 
 		// 更新不可逆区块高度

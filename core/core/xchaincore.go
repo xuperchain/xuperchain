@@ -765,7 +765,7 @@ func (xc *XChainCore) Miner() int {
 	}
 	// 2 FAST_SYNC模式下需要回滚掉本地所有的未确认交易
 	if xc.nodeMode == config.NodeModeFastSync {
-		if _, err := xc.Utxovm.RollBackUnconfirmedTx(); err != nil {
+		if _, _, err := xc.Utxovm.RollBackUnconfirmedTx(); err != nil {
 			xc.log.Warn("FAST_SYNC mode RollBackUnconfirmedTx error", "error", err)
 		}
 	}
