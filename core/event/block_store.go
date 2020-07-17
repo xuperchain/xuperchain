@@ -59,7 +59,7 @@ func NewBlockStore(ledger *ledger.Ledger, utxovm *utxo.UtxoVM) BlockStore {
 
 func (b *blockStore) TipBlockHeight() (int64, error) {
 	tipBlockid := b.Ledger.GetMeta().GetTipBlockid()
-	block, err := b.Ledger.QueryBlock(tipBlockid)
+	block, err := b.Ledger.QueryBlockHeader(tipBlockid)
 	if err != nil {
 		return 0, err
 	}
