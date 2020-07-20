@@ -1879,7 +1879,7 @@ func (uv *UtxoVM) recoverUnconfirmedTx(undoList TxLists) {
 	uv.xlog.Info("start recover unconfirm tx", "tx_count", len(undoList))
 
 	var tx *pb.Transaction
-	var succCnt int
+	var succCnt, verifyErrCnt, confirmCnt, doTxErrCnt int
 	// 由于未确认交易也可能存在依赖顺序，需要按依赖顺序回放交易
 	for i := len(undoList) - 1; i >= 0; i-- {
 		tx = undoList[i]
@@ -1888,28 +1888,40 @@ func (uv *UtxoVM) recoverUnconfirmedTx(undoList TxLists) {
 			continue
 		}
 
+		// 检查交易是否已经被确认（被其他节点打包倒区块并广播了过来）
+		isConfirm, err := uv.ledger.HasTransaction(tx.Txid)
+		if err != nil && isConfirm {
+			confirmCnt++
+			uv.xlog.Info("this tx has been confirmed,ignore recover", "txid", hex.EncodeToString(tx.Txid))
+			continue
+		}
+
 		uv.xlog.Info("start recover unconfirm tx", "txid", hex.EncodeToString(tx.Txid))
 		// 重新对交易鉴权，过掉冲突交易
 		isValid, err := uv.ImmediateVerifyTx(tx, false)
 		if err != nil || !isValid {
+			verifyErrCnt++
 			uv.xlog.Info("this tx immediate verify fail,ignore recover", "txid",
 				hex.EncodeToString(tx.Txid), "is_valid", isValid, "err", err)
 			continue
 		}
 
-		// 重新提交交易
+		// 重新提交交易，可能交易已经被其他节点打包到区块广播过来，导致失败
 		err = uv.doTxSync(tx)
 		if err != nil {
-			uv.xlog.Warn("dotx fail for recover unconfirm tx,ignore recover this tx",
+			doTxErrCnt++
+			uv.xlog.Info("dotx fail for recover unconfirm tx,ignore recover this tx",
 				"txid", hex.EncodeToString(tx.Txid), "err", err)
 			continue
 		}
+
 		succCnt++
 		uv.xlog.Info("recover unconfirm tx succ", "txid", hex.EncodeToString(tx.Txid))
 	}
 
 	uv.xlog.Info("recover unconfirm tx done", "costs", xTimer.Print(), "tx_count", len(undoList),
-		"succ_count", succCnt)
+		"succ_count", succCnt, "confirm_count", confirmCnt, "verify_err_count",
+		verifyErrCnt, "dotx_err_cnt", doTxErrCnt)
 }
 
 // utxoVM批量回滚区块
