@@ -351,8 +351,14 @@ Again:
 // getCurrentValidates return current validates from xmodel
 // 注意：当查不到的时候或者一个候选人都没查到则默认取初始化的值
 // TODO: zq needs to be optimized in future because
-func (xpoa *XPoa) getCurrentValidates() ([]*cons_base.CandidateInfo, int64, int64, error) {
-	contractRes, confirmedTime, confirmedHeight, err := xpoa.utxoVM.SystemCall(xpoa.xpoaConf.contractName, xpoa.xpoaConf.methodName, nil, true)
+func (xpoa *XPoa) getCurrentValidates(curHeight int64) ([]*cons_base.CandidateInfo, int64, int64, error) {
+	preBlockId, err := xpoa.ledger.QueryBlockByHeight(curHeight)
+	xmod := xpoa.utxoVM.GetXModel()
+	reader, err := xmod.CreateSnapshot(preBlockId.GetBlockid())
+	if err != nil {
+		reader = xmod
+	}
+	contractRes, confirmedTime, confirmedHeight, err := xpoa.utxoVM.SystemCall(reader, xpoa.xpoaConf.contractName, xpoa.xpoaConf.methodName, nil)
 	if common.NormalizedKVError(err) == common.ErrKVNotFound {
 		xpoa.lg.Warn("Xpoa getCurrentValidates not found")
 		return xpoa.xpoaConf.initProposers, xpoa.xpoaConf.initTimestamp, xpoa.startHeight, ErrContractNotFound
@@ -368,7 +374,7 @@ func (xpoa *XPoa) getCurrentValidates() ([]*cons_base.CandidateInfo, int64, int6
 
 	candidateInfos := &cons_base.CandidateInfos{}
 	if err = json.Unmarshal(contractRes, candidateInfos); err != nil {
-		xpoa.lg.Warn("Xpoa getCurrentValidates Unmarshal error", "err", err.Error(), "contractRes", contractRes)
+		xpoa.lg.Warn("Xpoa getCurrentValidates Unmarshal error", "err", err.Error(), "contractRes", string(contractRes))
 		return xpoa.xpoaConf.initProposers, xpoa.xpoaConf.initTimestamp, xpoa.startHeight, nil
 	}
 
@@ -389,7 +395,7 @@ func (xpoa *XPoa) getCurrentValidates() ([]*cons_base.CandidateInfo, int64, int6
 // return: bool refers whether validates has changed
 //TODO: ZQ 优化model支持快照能力，拿最新的确认的信息
 func (xpoa *XPoa) updateValidates(curHeight int64) (bool, error) {
-	curValidates, confirmedTime, confirmedHeight, err := xpoa.getCurrentValidates()
+	curValidates, confirmedTime, confirmedHeight, err := xpoa.getCurrentValidates(curHeight)
 	if err != nil && err != ErrContractNotFound && err != ErrNotConfirmed {
 		xpoa.lg.Error("Xpoa updateValidates getCurrentValidates error", "error", err.Error())
 		return false, err

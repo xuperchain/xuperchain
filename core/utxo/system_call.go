@@ -21,11 +21,10 @@ var (
 )
 
 // SystemCall used to call contract from systerm
-func (uv *UtxoVM) SystemCall(contractName, methodName string, args map[string][]byte,
-	withConfirmed bool) ([]byte, int64, int64, error) {
+func (uv *UtxoVM) SystemCall(reader xmodel.XMReader, contractName, methodName string, args map[string][]byte) ([]byte, int64, int64, error) {
 	var lastConfirmedTime int64
 	var lastConfirmedHeight int64
-	modelCache, err := xmodel.NewXModelCache(uv.GetXModel(), uv)
+	modelCache, err := xmodel.NewXModelCache(reader, uv)
 	if err != nil {
 		return nil, lastConfirmedTime, lastConfirmedHeight, err
 	}
@@ -42,6 +41,8 @@ func (uv *UtxoVM) SystemCall(contractName, methodName string, args map[string][]
 	if err != nil {
 		return nil, lastConfirmedTime, lastConfirmedHeight, err
 	}
+
+	//vData, err := reader.Get(contractName, []byte(methodName))
 	invokeRes, invokeErr := ctx.Invoke(methodName, args)
 	if invokeErr != nil {
 		ctx.Release()
@@ -49,9 +50,6 @@ func (uv *UtxoVM) SystemCall(contractName, methodName string, args map[string][]
 	}
 	rset, _, _ := modelCache.GetRWSets()
 	ctx.Release()
-	if !withConfirmed {
-		return invokeRes.Body, lastConfirmedTime, lastConfirmedHeight, nil
-	}
 	for _, v := range rset {
 		block, err := uv.ledger.QueryBlockByTxid(v.GetRefTxid())
 		if err == ledger.ErrTxNotConfirmed {
