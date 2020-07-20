@@ -27,7 +27,7 @@ func BenchmarkTxHashV2(b *testing.B) {
 	tx := readTxFile(b, "tx.pb")
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		TxSignature(tx, true)
+		txDigestHashV2(tx, true)
 	}
 }
 
@@ -41,6 +41,6 @@ func BenchmarkTxHashV1(b *testing.B) {
 
 func TestTxHashV2(t *testing.T) {
 	tx := readTxFile(t, "tx.pb")
-	txid := TxSignature(tx, true)
+	txid := txDigestHashV2(tx, true)
 	t.Logf("txid = %x", txid)
 }

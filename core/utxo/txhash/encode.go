@@ -92,11 +92,12 @@ func (e *encoder) Encode(x interface{}) {
 	}
 }
 
-// TxSignature make tx hash using double sha256
-func TxSignature(tx *pb.Transaction, includeSigns bool) []byte {
+// txDigestHashV2 make tx hash using double sha256
+func txDigestHashV2(tx *pb.Transaction, includeSigns bool) []byte {
 	h := sha256.New()
 	enc := newEncoder(h)
 
+	// encode TxInputs
 	enc.Encode(len(tx.TxInputs))
 	for _, input := range tx.TxInputs {
 		enc.Encode(input.RefTxid)
@@ -106,6 +107,7 @@ func TxSignature(tx *pb.Transaction, includeSigns bool) []byte {
 		enc.Encode(input.FrozenHeight)
 	}
 
+	// encode TxOutputs
 	enc.Encode(len(tx.TxOutputs))
 	for _, output := range tx.TxOutputs {
 		enc.Encode(output.Amount)
@@ -118,6 +120,7 @@ func TxSignature(tx *pb.Transaction, includeSigns bool) []byte {
 	enc.Encode(tx.Timestamp)
 	enc.Encode(tx.Version)
 
+	// encode TxInputsExt
 	enc.Encode(len(tx.TxInputsExt))
 	for _, input := range tx.TxInputsExt {
 		enc.Encode(input.Bucket)
@@ -126,6 +129,7 @@ func TxSignature(tx *pb.Transaction, includeSigns bool) []byte {
 		enc.Encode(input.RefOffset)
 	}
 
+	// encode TxOutputsExt
 	enc.Encode(len(tx.TxOutputsExt))
 	for _, output := range tx.TxOutputsExt {
 		enc.Encode(output.Bucket)
@@ -133,6 +137,7 @@ func TxSignature(tx *pb.Transaction, includeSigns bool) []byte {
 		enc.Encode(output.Value)
 	}
 
+	// encode ContractRequests
 	enc.Encode(len(tx.ContractRequests))
 	for _, req := range tx.ContractRequests {
 		enc.Encode(req.ModuleName)
@@ -164,25 +169,20 @@ func TxSignature(tx *pb.Transaction, includeSigns bool) []byte {
 	if includeSigns {
 		encSigs(tx.InitiatorSigns)
 		encSigs(tx.AuthRequireSigns)
-		if tx.XuperSign == nil {
-			enc.Encode(0)
-			enc.Encode(0)
-		} else {
-			enc.Encode(tx.XuperSign.PublicKeys)
-			enc.Encode(tx.XuperSign.Signature)
+		// encode PublicKeys
+		xuperSign := tx.GetXuperSign()
+		enc.Encode(len(xuperSign.GetPublicKeys()))
+		for _, pubkey := range xuperSign.GetPublicKeys() {
+			enc.Encode(pubkey)
 		}
+		enc.Encode(tx.GetXuperSign().GetSignature())
 	}
 
 	enc.Encode(tx.Coinbase)
 	enc.Encode(tx.Autogen)
 
-	if tx.HDInfo == nil {
-		enc.Encode(0)
-		enc.Encode(0)
-	} else {
-		enc.Encode(tx.HDInfo.HdPublicKey)
-		enc.Encode(tx.HDInfo.OriginalHash)
-	}
+	enc.Encode(tx.GetHDInfo().GetHdPublicKey())
+	enc.Encode(tx.GetHDInfo().GetOriginalHash())
 
 	sum := sha256.Sum256(h.Sum(nil))
 	return sum[:]
