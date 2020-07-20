@@ -30,7 +30,6 @@ type ChainRegister interface {
 	RegisterBlockChain(name string) error
 	UnloadBlockChain(name string) error
 	GetXchainmgConfig() *config.NodeConfig
-	GetBlockChainInfo(name string) *pb.BCStatus
 }
 
 // Kernel is the kernel contract
@@ -588,7 +587,9 @@ func (k *Kernel) runStopBlockChain(desc *contract.TxDesc) error {
 	return nil
 }
 
-// rollbackStopBlockChain 停用区块链交易的回滚操作，简化逻辑
+/* rollbackStopBlockChain 停用区块链交易的回滚操作，简化逻辑do nothing;
+ * 此时不论之前操作失败与否都无法load到之前需要删除的链信息, 后续可将删除链直接移到指定文件夹中。
+ */
 func (k *Kernel) rollbackStopBlockChain(desc *contract.TxDesc) error {
 	if desc.Args["name"] == nil {
 		k.log.Warn("rollback operation: Chain name in tx for stopping a blockchain is null.")
@@ -598,9 +599,6 @@ func (k *Kernel) rollbackStopBlockChain(desc *contract.TxDesc) error {
 	if !ok || bcName == "" {
 		k.log.Warn("rollback operation: Chain name in tx for stopping a blockchain is invalid.")
 		return ErrInvalidChainName
-	}
-	if blkStatus := k.register.GetBlockChainInfo(bcName); blkStatus != nil {
-		k.log.Warn("Errors may have occurred when stopping specific blockchain, it still runs.", "bcName", bcName)
 	}
 	return nil
 }
