@@ -1876,9 +1876,13 @@ func (uv *UtxoVM) Walk(blockid []byte, ledgerPrune bool) error {
 // utxoVM重放未确认交易，失败仅仅日志记录
 func (uv *UtxoVM) recoverUnconfirmedTx(undoList TxLists) {
 	xTimer := global.NewXTimer()
-	uv.xlog.Info("start recover unconfirm tx")
-	// 由于未确认交易也可能存在依赖顺序，需要按顺序回放交易
-	for _, tx := range undoList {
+	uv.xlog.Info("start recover unconfirm tx", "tx_count", len(undoList))
+
+	var tx *pb.Transaction
+	var succCnt int
+	// 由于未确认交易也可能存在依赖顺序，需要按依赖顺序回放交易
+	for i := len(undoList) - 1; i >= 0; i-- {
+		tx = undoList[i]
 		// 过滤挖矿奖励和自动生成交易，理论上挖矿奖励和自动生成交易不会进入未确认交易池
 		if tx.Coinbase || tx.Autogen {
 			continue
@@ -1900,10 +1904,12 @@ func (uv *UtxoVM) recoverUnconfirmedTx(undoList TxLists) {
 				"txid", hex.EncodeToString(tx.Txid), "err", err)
 			continue
 		}
+		succCnt++
 		uv.xlog.Info("recover unconfirm tx succ", "txid", hex.EncodeToString(tx.Txid))
 	}
 
-	uv.xlog.Info("recover unconfirm tx done", "costs", xTimer.Print())
+	uv.xlog.Info("recover unconfirm tx done", "costs", xTimer.Print(), "tx_count", len(undoList),
+		"succ_count", succCnt)
 }
 
 // utxoVM批量回滚区块
