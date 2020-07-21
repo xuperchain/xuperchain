@@ -3,7 +3,6 @@ package ledger
 import (
 	"bytes"
 	"strconv"
-	"strings"
 
 	"github.com/xuperchain/xuperchain/core/kv/kvdb"
 	"github.com/xuperchain/xuperchain/core/pb"
@@ -28,25 +27,35 @@ func (l *Ledger) GetBranchInfo(targetBlockid []byte, targetBlockHeight int64) ([
 	result := []string{}
 	it := l.baseDB.NewIteratorWithPrefix([]byte(pb.BranchInfoPrefix))
 	defer it.Release()
+
 	for it.Next() {
-		key := string(it.Key())
-		blockidStr := strings.Split(key, pb.BranchInfoPrefix)[1]
+		key := it.Key()
+		if len(key) < len(pb.BranchInfoPrefix)+1 {
+			// 理论上不会出现这种情况
+			continue
+		}
+
+		// key格式为:前缀+blockid，去掉前缀
+		blkId := key[len(pb.BranchInfoPrefix):]
+
 		value := string(it.Value())
 		blockHeight, err := strconv.ParseInt(value, 10, 64)
 		if err != nil {
 			return nil, err
 		}
+
 		// only record block whose height is higher than target one
-		if bytes.Equal(targetBlockid, []byte(blockidStr)) {
+		if bytes.Equal(targetBlockid, blkId) {
 			continue
 		}
 		if blockHeight > targetBlockHeight {
-			result = append(result, blockidStr)
+			result = append(result, string(blkId))
 		}
 	}
 	if it.Error() != nil {
 		return nil, it.Error()
 	}
+
 	return result, nil
 }
 
