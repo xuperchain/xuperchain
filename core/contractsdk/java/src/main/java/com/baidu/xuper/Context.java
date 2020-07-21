@@ -36,7 +36,7 @@ public interface Context {
 
     public void emitEvent(String name, byte[] body);
 
-    public void emitJSONEvent(String name, Map<String, byte[]> body);
+    public void emitJSONEvent(String name, Object body);
 
     public void log(String msg);
 }

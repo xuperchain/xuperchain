@@ -2,11 +2,10 @@ package com.baidu.xuper;
 
 import com.baidu.xuper.contractpb.Contract;
 import com.baidu.xuper.contractpb.SyscallGrpc;
+import com.google.gson.Gson;
 import com.google.protobuf.ByteString;
 import io.grpc.StatusRuntimeException;
 
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectOutputStream;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
@@ -214,20 +213,9 @@ class ContextImpl implements Context {
     }
 
     @Override
-    public void emitJSONEvent(String name, Map<String, byte[]> body) {
-        byte[] buf = null;
-        try {
-            ByteArrayOutputStream os = new ByteArrayOutputStream();
-            ObjectOutputStream oos = new ObjectOutputStream(os);
-            oos.writeObject(body);
-            buf = os.toByteArray();
-
-            oos.close();
-            os.close();
-        } catch (Exception e) {
-            throw new RuntimeException("marshal to byte[] error");
-        }
-
-        emitEvent(name, buf);
+    public void emitJSONEvent(String name, Object body) {
+        Gson gson = new Gson();
+        String buf = gson.toJson(body);
+        emitEvent(name, buf.getBytes());
     }
 }
