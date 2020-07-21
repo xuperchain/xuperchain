@@ -38,6 +38,7 @@ public:
     virtual bool cross_query(const std::string& uri, const std::map<std::string, std::string>& args,
                     Response* response);                   
     virtual void logf(const char* fmt, ...);
+    virtual bool emit_event(const std::string& name, const std::string& body);
 
 private:
     pb::CallArgs _call_args;

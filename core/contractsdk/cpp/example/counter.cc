@@ -24,6 +24,9 @@ DEFINE_METHOD(Counter, increase) {
     char buf[32];
     snprintf(buf, 32, "%d", cnt + 1);
     ctx->put_object(key, buf);
+
+    ctx->emit_event("increase", buf);
+
     ctx->ok(buf);
 }
 

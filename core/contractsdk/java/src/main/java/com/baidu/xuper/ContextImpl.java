@@ -5,6 +5,8 @@ import com.baidu.xuper.contractpb.SyscallGrpc;
 import com.google.protobuf.ByteString;
 import io.grpc.StatusRuntimeException;
 
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectOutputStream;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
@@ -201,5 +203,31 @@ class ContextImpl implements Context {
         Contract.PostLogRequest request = Contract.PostLogRequest.newBuilder().setHeader(this.header).setEntry(msg)
                 .build();
         this.client.postLog(request);
+    }
+
+    @Override
+    public void emitEvent(String name, byte[] body) {
+        Contract.EmitEventRequest request = Contract.EmitEventRequest.newBuilder().setHeader(this.header)
+                .setName(name).setBody(ByteString.copyFrom(body)).build();
+
+        this.client.emitEvent(request);
+    }
+
+    @Override
+    public void emitJSONEvent(String name, Map<String, byte[]> body) {
+        byte[] buf = null;
+        try {
+            ByteArrayOutputStream os = new ByteArrayOutputStream();
+            ObjectOutputStream oos = new ObjectOutputStream(os);
+            oos.writeObject(body);
+            buf = os.toByteArray();
+
+            oos.close();
+            os.close();
+        } catch (Exception e) {
+            throw new RuntimeException("marshal to byte[] error");
+        }
+
+        emitEvent(name, buf);
     }
 }
