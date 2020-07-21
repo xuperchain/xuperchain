@@ -21,12 +21,6 @@ func newEncoder(w io.Writer) *encoder {
 	}
 }
 
-func (e *encoder) EncodeInt32(x int32) {
-	buf := e.intbuf[:4]
-	binary.BigEndian.PutUint32(buf, uint32(x))
-	e.w.Write(buf)
-}
-
 func (e *encoder) EncodeInt64(x int64) {
 	buf := e.intbuf[:8]
 	binary.BigEndian.PutUint64(buf, uint64(x))
@@ -34,6 +28,7 @@ func (e *encoder) EncodeInt64(x int64) {
 }
 
 func (e *encoder) EncodeString(s string) {
+	e.EncodeInt64(int64(len(s)))
 	if len(s) == 0 {
 		return
 	}
@@ -41,7 +36,7 @@ func (e *encoder) EncodeString(s string) {
 }
 
 func (e *encoder) EncodeBytes(s []byte) {
-	e.EncodeInt32(int32(len(s)))
+	e.EncodeInt64(int64(len(s)))
 	if len(s) == 0 {
 		return
 	}
@@ -50,7 +45,7 @@ func (e *encoder) EncodeBytes(s []byte) {
 
 func (e *encoder) EncodeMap(m map[string][]byte) {
 	length := len(m)
-	e.EncodeInt32(int32(length))
+	e.EncodeInt64(int64(length))
 	if length == 0 {
 		return
 	}
@@ -71,14 +66,14 @@ func (e *encoder) Encode(x interface{}) {
 	switch v := x.(type) {
 	case bool:
 		if v {
-			e.EncodeInt32(int32(1))
+			e.EncodeInt64(1)
 		} else {
-			e.EncodeInt32(int32(0))
+			e.EncodeInt64(0)
 		}
 	case int:
-		e.EncodeInt32(int32(v))
+		e.EncodeInt64(int64(v))
 	case int32:
-		e.EncodeInt32(v)
+		e.EncodeInt64(int64(v))
 	case int64:
 		e.EncodeInt64(v)
 	case string:
@@ -116,9 +111,11 @@ func txDigestHashV2(tx *pb.Transaction, includeSigns bool) []byte {
 	}
 
 	enc.Encode(tx.Desc)
+	enc.Encode(tx.Coinbase)
 	enc.Encode(tx.Nonce)
 	enc.Encode(tx.Timestamp)
 	enc.Encode(tx.Version)
+	enc.Encode(tx.Autogen)
 
 	// encode TxInputsExt
 	enc.Encode(len(tx.TxInputsExt))
@@ -177,9 +174,6 @@ func txDigestHashV2(tx *pb.Transaction, includeSigns bool) []byte {
 		}
 		enc.Encode(tx.GetXuperSign().GetSignature())
 	}
-
-	enc.Encode(tx.Coinbase)
-	enc.Encode(tx.Autogen)
 
 	enc.Encode(tx.GetHDInfo().GetHdPublicKey())
 	enc.Encode(tx.GetHDInfo().GetOriginalHash())
