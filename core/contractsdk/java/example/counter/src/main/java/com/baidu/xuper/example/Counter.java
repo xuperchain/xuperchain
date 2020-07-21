@@ -40,9 +40,9 @@ public class Counter implements Contract {
         ctx.putObject(key, counter.toByteArray());
 
 //        emit event with json
-        Map<String, byte[]> body = new HashMap<>();
-        body.put("key", key);
-        body.put("value", counter.toByteArray());
+        Map<String, String> body = new HashMap<>();
+        body.put("key", new String(key));
+        body.put("value", counter.toString());
         ctx.emitJSONEvent("increase", body);
 
 //        emit event directly
