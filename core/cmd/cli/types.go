@@ -481,3 +481,50 @@ type ContractDesc struct {
 	Args    interface{} `json:"args"`
 	Trigger TriggerDesc `json:"trigger"`
 }
+
+// FilteredBlock pb.FilteredBlock
+type FilteredBlock struct {
+	Bcname      string                 `json:"bcname,omitempty"`
+	Blockid     string                 `json:"blockid,omitempty"`
+	BlockHeight int64                  `json:"block_height,omitempty"`
+	Txs         []*FilteredTransaction `json:"txs,omitempty"`
+}
+
+// FilteredTransaction pb.FilteredTransaction
+type FilteredTransaction struct {
+	Txid   string           `json:"txid,omitempty"`
+	Events []*ContractEvent `json:"events,omitempty"`
+}
+
+// ContractEvent pb.ContractEvent
+type ContractEvent struct {
+	Contract string `json:"contract,omitempty"`
+	Name     string `json:"name,omitempty"`
+	Body     string `json:"body,omitempty"`
+}
+
+// FromFilteredBlockPB convert pb.FilteredBlock to FilteredBlock
+func FromFilteredBlockPB(pbblock *pb.FilteredBlock) *FilteredBlock {
+	block := &FilteredBlock{
+		Bcname:      pbblock.Bcname,
+		Blockid:     pbblock.Blockid,
+		BlockHeight: pbblock.BlockHeight,
+		Txs:         make([]*FilteredTransaction, 0, len(pbblock.Txs)),
+	}
+
+	for _, pbtx := range pbblock.Txs {
+		tx := &FilteredTransaction{
+			Txid:   pbtx.Txid,
+			Events: make([]*ContractEvent, 0, len(pbtx.Events)),
+		}
+		for _, pbevent := range pbtx.Events {
+			tx.Events = append(tx.Events, &ContractEvent{
+				Contract: pbevent.Contract,
+				Name:     pbevent.Name,
+				Body:     string(pbevent.Body),
+			})
+		}
+		block.Txs = append(block.Txs, tx)
+	}
+	return block
+}

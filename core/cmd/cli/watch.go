@@ -82,7 +82,8 @@ func (c *watchCommand) watch(ctx context.Context) error {
 	return nil
 }
 
-func (c *watchCommand) printBlock(block *pb.FilteredBlock) {
+func (c *watchCommand) printBlock(pbblock *pb.FilteredBlock) {
+	block := FromFilteredBlockPB(pbblock)
 	var buf []byte
 	if c.oneline {
 		buf, _ = json.Marshal(block)
