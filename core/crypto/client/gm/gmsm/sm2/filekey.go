@@ -3,6 +3,7 @@ package sm2
 import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
+	"github.com/xuperchain/xuperchain/core/crypto/client/gm/gmsm/sm3"
 	//	"crypto/rand"
 	"encoding/json"
 	"fmt"
@@ -287,7 +288,7 @@ func RetrieveAccountByMnemonic(mnemonic string, language int) (*account.ECDSAAcc
 		return nil, err
 	}
 	// 使用公钥来生成钱包地址
-	address, err := account.GetAddressFromPublicKey(&privateKey.PublicKey)
+	address, err := sm3.GetAddressFromPublicKey(&privateKey.PublicKey)
 	if err != nil {
 		return nil, err
 	}
@@ -384,12 +385,48 @@ func GenerateAccountByMnemonic(mnemonic string, language int) (*account.ECDSAAcc
 		return nil, err
 	}
 	// 使用公钥来生成钱包地址
-	address, err := account.GetAddressFromPublicKey(&privateKey.PublicKey)
+	address, err := sm3.GetAddressFromPublicKey(&privateKey.PublicKey)
 	if err != nil {
 		return nil, err
 	}
 	// 返回的字段：助记词、私钥的json、公钥的json、钱包地址、错误信息
 	return &account.ECDSAAccount{nil, mnemonic, jsonPrivateKey, jsonPublicKey, address}, nil
+}
+
+// ExportNewAccount creates new account and export to local file
+func ExportNewAccount(path string, privateKey *ecdsa.PrivateKey) error {
+	jsonPrivateKey, err := account.GetEcdsaPrivateKeyJSONFormat(privateKey)
+	if err != nil {
+		return err
+	}
+	jsonPublicKey, err := account.GetEcdsaPublicKeyJSONFormat(privateKey)
+	if err != nil {
+		return err
+	}
+	address, err := sm3.GetAddressFromPublicKey(&privateKey.PublicKey)
+	if err != nil {
+		return err
+	}
+	//如果path不是以/结尾的，自动拼上
+	if strings.LastIndex(path, "/") != len([]rune(path))-1 {
+		path = path + "/"
+	}
+	err = writeFileUsingFilename(path+"private.key", []byte(jsonPrivateKey))
+	if err != nil {
+		log.Printf("Export private key file failed, the err is %v", err)
+		return err
+	}
+	err = writeFileUsingFilename(path+"public.key", []byte(jsonPublicKey))
+	if err != nil {
+		log.Printf("Export public key file failed, the err is %v", err)
+		return err
+	}
+	err = writeFileUsingFilename(path+"address", []byte(address))
+	if err != nil {
+		log.Printf("Export address file failed, the err is %v", err)
+		return err
+	}
+	return err
 }
 
 func ExportNewAccountWithMnemonic(path string, language int, strength uint8, cryptography uint8) error {
