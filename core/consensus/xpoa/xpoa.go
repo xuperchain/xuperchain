@@ -352,13 +352,14 @@ Again:
 // 注意：当查不到的时候或者一个候选人都没查到则默认取初始化的值
 // TODO: zq needs to be optimized in future because
 func (xpoa *XPoa) getCurrentValidates(curHeight int64) ([]*cons_base.CandidateInfo, int64, int64, error) {
-	preBlockId, err := xpoa.ledger.QueryBlockByHeight(curHeight)
+	preBlockId, err := xpoa.ledger.QueryBlockByHeight(curHeight - 1)
 	xmod := xpoa.utxoVM.GetXModel()
 	reader, err := xmod.CreateSnapshot(preBlockId.GetBlockid())
 	if err != nil {
+		xpoa.lg.Warn("xpoa.getCurrentValidates", "CreateSnapshot", err)
 		reader = xmod
 	}
-	contractRes, confirmedTime, confirmedHeight, err := xpoa.utxoVM.SystemCall(reader, xpoa.xpoaConf.contractName, xpoa.xpoaConf.methodName, nil)
+	contractRes, confirmedTime, confirmedHeight, err := xpoa.utxoVM.SystemCall(reader, xpoa.xpoaConf.contractName, xpoa.xpoaConf.methodName, "VALIDATES", nil)
 	if common.NormalizedKVError(err) == common.ErrKVNotFound {
 		xpoa.lg.Warn("Xpoa getCurrentValidates not found")
 		return xpoa.xpoaConf.initProposers, xpoa.xpoaConf.initTimestamp, xpoa.startHeight, ErrContractNotFound
@@ -404,7 +405,8 @@ func (xpoa *XPoa) updateValidates(curHeight int64) (bool, error) {
 		xpoa.lg.Error("Xpoa updateValidates getCurrentValidates not confirmed no need to update")
 		return true, nil
 	}
-	if err == nil && curHeight < confirmedHeight+3 {
+	isInitedWithXpoa := confirmedHeight == xpoa.startHeight && len(xpoa.proposerInfos) == 0
+	if !isInitedWithXpoa && err == nil && curHeight < confirmedHeight+3 {
 		xpoa.lg.Warn("Xpoa updateValidates no need to update", "confirmedHeight", confirmedHeight, "curHeight", curHeight)
 		return true, nil
 	}
@@ -414,7 +416,7 @@ func (xpoa *XPoa) updateValidates(curHeight int64) (bool, error) {
 		if err != nil {
 			return false, ErrUpdateValidates
 		}
-		xpoa.lg.Debug("Xpoa updateValidates", "xpoa.termTimestamp", xpoa.termTimestamp, "confirmedTime", confirmedTime)
+		xpoa.lg.Debug("Xpoa updateValidates", "xpoa.termTimestamp", xpoa.termTimestamp, "confirmedTime", confirmedTime, "xpoa.proposerInfos", xpoa.proposerInfos, "curValidates", curValidates)
 		xpoa.termTimestamp = confirmedTime
 		xpoa.proposerInfos = curValidates
 	}
@@ -446,15 +448,14 @@ func (xpoa *XPoa) updateViews(viewNum int64) error {
 		xpoa.lg.Error("updateViews getCurProposer error", "err", err.Error())
 		return err
 	}
-
-	nextProposer, err := xpoa.getNextProposer()
+	preBlockId, err := xpoa.ledger.QueryBlockByHeight(viewNum - 1)
 	if err != nil {
-		xpoa.lg.Error("updateViews getNextProposer error", "err", err.Error())
+		xpoa.lg.Error("updateViews getPreProposer error", "err", err.Error())
 		return err
 	}
+	preproposer := string(preBlockId.GetProposer())
 
-	// old height might out-of-date, use current trunkHeight when NewView
-	return xpoa.bftPaceMaker.NextNewView(viewNum, nextProposer, proposer)
+	return xpoa.bftPaceMaker.NextNewView(viewNum, proposer, preproposer)
 }
 
 // getCurProposer get current proposer

@@ -43,6 +43,25 @@ public:
         return;
     }
 
+    bool parseValidates(xchain::Context* ctx, xchain::json& jValidatesObject) {
+        std::string buffer;
+        if (!ctx->get_object(VALIDATES_KEY, &buffer) || buffer.empty()) {
+            ctx->error("Invalid origin validates.");
+            return false;
+        }
+        jValidatesObject = xchain::json::parse(buffer);
+        if (jValidatesObject.find("proposers") == jValidatesObject.end() || !jValidatesObject["proposers"].is_array() || 
+            jValidatesObject["proposers"].empty() || !jValidatesObject["proposers"].size()) {
+            ctx->error("Invalid origin proposers.");
+            return false;
+        }
+        return true;
+    }
+
+    xchain::json::iterator findProposer(xchain::Context* ctx, xchain::json& jValidatesObject, const std::string& targetStr) {
+        return std::find_if(jValidatesObject["proposers"].begin(), jValidatesObject["proposers"].end(), jvectorFinder(targetStr));
+    }
+
     /*
      * func: 初始化函数，部署合约时默认被调用
      */
@@ -103,18 +122,14 @@ public:
         if (!checkArg(ctx, "address", address) || !checkArg(ctx, "neturl", neturl)) {
             return;
         }
-        std::string buffer;
-        if (!ctx->get_object(VALIDATES_KEY, &buffer) || buffer.empty()) {
-            ctx->error("Invalid origin validates.");
+        // 检查当前proposers是否合法
+        xchain::json jValidatesObject;
+        if (!parseValidates(ctx, jValidatesObject)) {
             return;
         }
-        auto jValidatesObject = xchain::json::parse(buffer);
-        if (jValidatesObject.find("proposers") == jValidatesObject.end() || !jValidatesObject["proposers"].is_array()) {
-            ctx->error("Invalid origin proposers.");
-            return;
-        }
-        if (std::find_if(jValidatesObject["proposers"].begin(), jValidatesObject["proposers"].end(), jvectorFinder(address)) != jValidatesObject["proposers"].end()) {
-            ctx->error("Validate already exists");
+        auto proposerIter = findProposer(ctx, jValidatesObject, address);
+        if (proposerIter != jValidatesObject["proposers"].end()) {
+            ctx->error("Proposer has exist");
             return;
         }
 
@@ -148,19 +163,13 @@ public:
         if (!checkArg(ctx, "address", address)) {
             return;
         }
-        std::string buffer;
-        if (!ctx->get_object(VALIDATES_KEY, &buffer) || buffer.empty()) {
-            ctx->error("Invalid origin validates.");
+        xchain::json jValidatesObject;
+        if (!parseValidates(ctx, jValidatesObject)) {
             return;
         }
-        auto jValidatesObject = xchain::json::parse(buffer);
-        if (jValidatesObject.find("proposers") == jValidatesObject.end() || !jValidatesObject["proposers"].is_array()) {
-            ctx->error("Invalid origin proposers.");
-            return;
-        }
-        auto proposerIter = std::find_if(jValidatesObject["proposers"].begin(), jValidatesObject["proposers"].end(), jvectorFinder(address));
+        auto proposerIter = findProposer(ctx, jValidatesObject, address);
         if (proposerIter == jValidatesObject["proposers"].end()) {
-            ctx->error("Validate doesn't exist");
+            ctx->error("Proposer doesn't exist");
             return;
         }
 
@@ -190,19 +199,13 @@ public:
         if (!checkArg(ctx, "address", address) || !checkArg(ctx, "neturl", neturl)) {
             return;
         }
-        std::string buffer;
-        if (!ctx->get_object(VALIDATES_KEY, &buffer) || buffer.empty()) {
-            ctx->error("Invalid origin validates.");
+        xchain::json jValidatesObject;
+        if (!parseValidates(ctx, jValidatesObject)) {
             return;
         }
-        auto jValidatesObject = xchain::json::parse(buffer);
-        if (jValidatesObject.find("proposers") == jValidatesObject.end() || !jValidatesObject["proposers"].is_array()) {
-            ctx->error("Invalid origin proposers.");
-            return;
-        }
-        auto proposerIter = std::find_if(jValidatesObject["proposers"].begin(), jValidatesObject["proposers"].end(), jvectorFinder(address));
+        auto proposerIter = findProposer(ctx, jValidatesObject, address);
         if (proposerIter == jValidatesObject["proposers"].end()) {
-            ctx->error("Validate doesn't exist");
+            ctx->error("Proposer doesn't exist");
             return;
         }
 
@@ -231,16 +234,8 @@ public:
             ctx->error("get validate change flag error");
             return;
         }
-        std::string buffer;
-        if (!ctx->get_object(VALIDATES_KEY, &buffer) || buffer.empty()) {
-            ctx->error("Invalid origin validates.");
-            return;
-        }
-        auto jValidatesObject = xchain::json::parse(buffer);
-
-        if (jValidatesObject.find("proposers") == jValidatesObject.end() || !jValidatesObject["proposers"].is_array() ||
-            jValidatesObject["proposers"].empty() || !jValidatesObject["proposers"].size()) {
-            ctx->error("Invalid origin proposers.");
+        xchain::json jValidatesObject;
+        if (!parseValidates(ctx, jValidatesObject)) {
             return;
         }
         xchain::json resultObject;

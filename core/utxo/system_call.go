@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"github.com/xuperchain/xuperchain/core/contract"
-	"github.com/xuperchain/xuperchain/core/ledger"
 	"github.com/xuperchain/xuperchain/core/xmodel"
 )
 
@@ -21,7 +20,7 @@ var (
 )
 
 // SystemCall used to call contract from systerm
-func (uv *UtxoVM) SystemCall(reader xmodel.XMReader, contractName, methodName string, args map[string][]byte) ([]byte, int64, int64, error) {
+func (uv *UtxoVM) SystemCall(reader xmodel.XMReader, contractName, methodName, watchedKey string, args map[string][]byte) ([]byte, int64, int64, error) {
 	var lastConfirmedTime int64
 	var lastConfirmedHeight int64
 	modelCache, err := xmodel.NewXModelCache(reader, uv)
@@ -41,25 +40,21 @@ func (uv *UtxoVM) SystemCall(reader xmodel.XMReader, contractName, methodName st
 	if err != nil {
 		return nil, lastConfirmedTime, lastConfirmedHeight, err
 	}
-
-	//vData, err := reader.Get(contractName, []byte(methodName))
 	invokeRes, invokeErr := ctx.Invoke(methodName, args)
 	if invokeErr != nil {
 		ctx.Release()
 		return nil, lastConfirmedTime, lastConfirmedHeight, invokeErr
 	}
-	rset, _, _ := modelCache.GetRWSets()
 	ctx.Release()
-	for _, v := range rset {
-		block, err := uv.ledger.QueryBlockByTxid(v.GetRefTxid())
-		if err == ledger.ErrTxNotConfirmed {
-			uv.xlog.Error("SystemCall get tx confirmed time error", "RefTxid", hex.EncodeToString(v.GetRefTxid()))
-			return nil, lastConfirmedTime, lastConfirmedHeight, ErrorNotConfirm
-		}
-		if block.GetTimestamp() > lastConfirmedTime {
-			lastConfirmedTime = block.GetTimestamp()
-			lastConfirmedHeight = block.GetHeight()
-		}
+	vData, err := reader.Get(contractName, []byte(watchedKey))
+	if err != nil {
+		uv.xlog.Error("SystemCall get nothing from XMReader", "RefTxid", hex.EncodeToString(vData.GetRefTxid()))
+		return nil, lastConfirmedTime, lastConfirmedHeight, ErrorNotConfirm
+	}
+	block, err := uv.ledger.QueryBlockByTxid(vData.GetRefTxid())
+	if block.GetTimestamp() > lastConfirmedTime {
+		lastConfirmedTime = block.GetTimestamp()
+		lastConfirmedHeight = block.GetHeight()
 	}
 	return invokeRes.Body, lastConfirmedTime, lastConfirmedHeight, err
 }
