@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"strconv"
 	"sync"
@@ -353,11 +354,14 @@ Again:
 // TODO: zq needs to be optimized in future because
 func (xpoa *XPoa) getCurrentValidates(curHeight int64) ([]*cons_base.CandidateInfo, int64, int64, error) {
 	preBlockId, err := xpoa.ledger.QueryBlockByHeight(curHeight - 1)
-	xmod := xpoa.utxoVM.GetXModel()
-	reader, err := xmod.CreateSnapshot(preBlockId.GetBlockid())
 	if err != nil {
-		xpoa.lg.Warn("xpoa.getCurrentValidates", "CreateSnapshot", err)
-		reader = xmod
+		xpoa.lg.Error("xpoa.getCurrentValidates", "getBlock", err)
+		return nil, 0, 0, fmt.Errorf("get block by height err:%v", err)
+	}
+	reader, err := xpoa.utxoVM.GetSnapShotWithBlock(preBlockId)
+	if err != nil {
+		xpoa.lg.Error("xpoa.getCurrentValidates", "CreateSnapshot", err)
+		return nil, 0, 0, fmt.Errorf("get snapshot err:%v", err)
 	}
 	contractRes, confirmedTime, confirmedHeight, err := xpoa.utxoVM.SystemCall(reader, xpoa.xpoaConf.contractName, xpoa.xpoaConf.methodName, "VALIDATES", nil)
 	if common.NormalizedKVError(err) == common.ErrKVNotFound {
