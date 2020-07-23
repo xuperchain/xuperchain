@@ -1,6 +1,7 @@
 package xmodel
 
 import (
+	"encoding/hex"
 	"fmt"
 	"sync"
 
@@ -45,6 +46,23 @@ func NewXuperModel(ledger *ledger.Ledger, stateDB kvdb.Database, logger log.Logg
 		logger:          logger,
 		batchCache:      &sync.Map{},
 	}, nil
+}
+
+func (s *XModel) CreateSnapshot(blkId []byte) (XMReader, error) {
+	// 查询快照区块高度
+	blkInfo, err := s.ledger.QueryBlockHeader(blkId)
+	if err != nil {
+		return nil, fmt.Errorf("query block header fail.block_id:%s, err:%v",
+			hex.EncodeToString(blkId), err)
+	}
+
+	xms := &xModSnapshot{
+		xmod:      s,
+		logger:    s.logger,
+		blkHeight: blkInfo.Height,
+		blkId:     blkId,
+	}
+	return xms, nil
 }
 
 func (s *XModel) updateExtUtxo(tx *pb.Transaction, batch kvdb.Batch) error {
@@ -186,7 +204,7 @@ func (s *XModel) GetUncommited(bucket string, key []byte) (*xmodel_pb.VersionedD
 	if cacheHit {
 		version := cacheObj.(string)
 		if version == "" {
-			return s.makeEmptyVersionedData(bucket, key), nil
+			return makeEmptyVersionedData(bucket, key), nil
 		}
 		return s.fetchVersionedData(bucket, version)
 	}
@@ -196,7 +214,7 @@ func (s *XModel) GetUncommited(bucket string, key []byte) (*xmodel_pb.VersionedD
 // GetFromLedger get data directely from ledger
 func (s *XModel) GetFromLedger(txin *pb.TxInputExt) (*xmodel_pb.VersionedData, error) {
 	if txin.RefTxid == nil {
-		return s.makeEmptyVersionedData(txin.Bucket, txin.Key), nil
+		return makeEmptyVersionedData(txin.Bucket, txin.Key), nil
 	}
 	version := MakeVersion(txin.RefTxid, txin.RefOffset)
 	return s.fetchVersionedData(txin.Bucket, version)
@@ -212,7 +230,7 @@ func (s *XModel) Get(bucket string, key []byte) (*xmodel_pb.VersionedData, error
 			version, err = s.extUtxoDelTable.Get(rawKey)
 			if err != nil {
 				if kvdb.ErrNotFound(err) {
-					return s.makeEmptyVersionedData(bucket, key), nil
+					return makeEmptyVersionedData(bucket, key), nil
 				}
 				return nil, err
 			}

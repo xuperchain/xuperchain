@@ -59,6 +59,8 @@ type Cli struct {
 
 	rootCmd *cobra.Command
 	xclient pb.XchainClient
+
+	eventClient pb.EventServiceClient
 }
 
 // NewCli new cli cmd
@@ -84,6 +86,7 @@ func (c *Cli) initXchainClient() error {
 		return err
 	}
 	c.xclient = pb.NewXchainClient(conn)
+	c.eventClient = pb.NewEventServiceClient(conn)
 	return nil
 }
 
@@ -157,6 +160,11 @@ func (c *Cli) Execute() {
 // XchainClient get xchain client
 func (c *Cli) XchainClient() pb.XchainClient {
 	return c.xclient
+}
+
+// EventClient get EventService client
+func (c *Cli) EventClient() pb.EventServiceClient {
+	return c.eventClient
 }
 
 // GetNodes get all nodes

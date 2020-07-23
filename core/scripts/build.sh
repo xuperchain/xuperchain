@@ -22,7 +22,6 @@ buildpkg xchain github.com/xuperchain/xuperchain/core/cmd/xchain
 buildpkg xdev github.com/xuperchain/xuperchain/core/cmd/xdev
 buildpkg xchain-httpgw github.com/xuperchain/xuperchain/core/gateway
 buildpkg dump_chain github.com/xuperchain/xuperchain/core/test
-buildpkg event_client github.com/xuperchain/xuperchain/core/test/pubsub
 buildpkg relayer github.com/xuperchain/xuperchain/core/cmd/relayer/relayer
 
 # build plugins

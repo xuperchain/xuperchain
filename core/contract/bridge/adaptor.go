@@ -41,6 +41,7 @@ func (v *vmContextImpl) Invoke(method string, args map[string][]byte) (*contract
 	if err != nil {
 		return nil, err
 	}
+
 	if v.ctx.ResourceUsed().Exceed(v.ctx.ResourceLimits) {
 		return nil, errors.New("resource exceeds")
 	}

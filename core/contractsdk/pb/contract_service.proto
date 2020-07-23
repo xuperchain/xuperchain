@@ -37,5 +37,8 @@ service Syscall {
 
   rpc GetCallArgs(xchain.contract.sdk.GetCallArgsRequest) returns (xchain.contract.sdk.CallArgs);
   rpc SetOutput(xchain.contract.sdk.SetOutputRequest) returns (xchain.contract.sdk.SetOutputResponse);
+
+  // Send Event
+  rpc EmitEvent(xchain.contract.sdk.EmitEventRequest) returns (xchain.contract.sdk.EmitEventResponse);
 } 
 

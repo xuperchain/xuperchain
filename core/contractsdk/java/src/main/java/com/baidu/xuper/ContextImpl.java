@@ -2,6 +2,7 @@ package com.baidu.xuper;
 
 import com.baidu.xuper.contractpb.Contract;
 import com.baidu.xuper.contractpb.SyscallGrpc;
+import com.google.gson.Gson;
 import com.google.protobuf.ByteString;
 import io.grpc.StatusRuntimeException;
 
@@ -201,5 +202,20 @@ class ContextImpl implements Context {
         Contract.PostLogRequest request = Contract.PostLogRequest.newBuilder().setHeader(this.header).setEntry(msg)
                 .build();
         this.client.postLog(request);
+    }
+
+    @Override
+    public void emitEvent(String name, byte[] body) {
+        Contract.EmitEventRequest request = Contract.EmitEventRequest.newBuilder().setHeader(this.header)
+                .setName(name).setBody(ByteString.copyFrom(body)).build();
+
+        this.client.emitEvent(request);
+    }
+
+    @Override
+    public void emitJSONEvent(String name, Object body) {
+        Gson gson = new Gson();
+        String buf = gson.toJson(body);
+        emitEvent(name, buf.getBytes());
     }
 }
