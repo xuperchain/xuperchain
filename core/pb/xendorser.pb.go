@@ -9,6 +9,8 @@ import (
 	proto "github.com/golang/protobuf/proto"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
 	math "math"
 )
 
@@ -233,6 +235,14 @@ func (c *xendorserClient) EndorserCall(ctx context.Context, in *EndorserRequest,
 // XendorserServer is the server API for Xendorser service.
 type XendorserServer interface {
 	EndorserCall(context.Context, *EndorserRequest) (*EndorserResponse, error)
+}
+
+// UnimplementedXendorserServer can be embedded to have forward compatible implementations.
+type UnimplementedXendorserServer struct {
+}
+
+func (*UnimplementedXendorserServer) EndorserCall(ctx context.Context, req *EndorserRequest) (*EndorserResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method EndorserCall not implemented")
 }
 
 func RegisterXendorserServer(s *grpc.Server, srv XendorserServer) {

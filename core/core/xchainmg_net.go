@@ -160,10 +160,6 @@ func (xm *XChainMG) ProcessTx(in *pb.TxStatus) (*pb.CommonReply, bool, error) {
 		return out, false, nil
 	}
 	out, needRepost := bc.PostTx(in, hd)
-
-	if !needRepost {
-		go produceTransactionEvent(xm.EventService, in.GetTx(), in.GetBcname(), pb.TransactionStatus_FAILED)
-	}
 	return out, needRepost, nil
 }
 

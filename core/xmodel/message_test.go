@@ -24,13 +24,13 @@ func TestMarshalMessages(t *testing.T) {
 		},
 	}
 
-	buf, err := marshalMessages(msgs)
+	buf, err := MarshalMessages(msgs)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	var out []*pb.TxInput
-	err = unmsarshalMessages(buf, &out)
+	err = UnmsarshalMessages(buf, &out)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -47,11 +47,11 @@ func TestMarshalMessages(t *testing.T) {
 func TestNilMessages(t *testing.T) {
 	var msgs []*pb.TxInput
 	var out []*pb.TxInput
-	buf, err := marshalMessages(msgs)
+	buf, err := MarshalMessages(msgs)
 	if err != nil {
 		t.Fatal(err)
 	}
-	err = unmsarshalMessages(buf, &out)
+	err = UnmsarshalMessages(buf, &out)
 	if err != nil {
 		t.Fatal(err)
 	}

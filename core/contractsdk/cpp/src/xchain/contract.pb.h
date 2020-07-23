@@ -40,7 +40,7 @@ struct TableStruct_contract_2eproto {
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
   static const ::google::protobuf::internal::AuxillaryParseTableField aux[]
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
-  static const ::google::protobuf::internal::ParseTable schema[36]
+  static const ::google::protobuf::internal::ParseTable schema[40]
     PROTOBUF_SECTION_VARIABLE(protodesc_cold);
   static const ::google::protobuf::internal::FieldMetadata field_metadata[];
   static const ::google::protobuf::internal::SerializationTable serialization_table[];
@@ -76,6 +76,12 @@ extern DeleteRequestDefaultTypeInternal _DeleteRequest_default_instance_;
 class DeleteResponse;
 class DeleteResponseDefaultTypeInternal;
 extern DeleteResponseDefaultTypeInternal _DeleteResponse_default_instance_;
+class EmitEventRequest;
+class EmitEventRequestDefaultTypeInternal;
+extern EmitEventRequestDefaultTypeInternal _EmitEventRequest_default_instance_;
+class EmitEventResponse;
+class EmitEventResponseDefaultTypeInternal;
+extern EmitEventResponseDefaultTypeInternal _EmitEventResponse_default_instance_;
 class GetAccountAddressesRequest;
 class GetAccountAddressesRequestDefaultTypeInternal;
 extern GetAccountAddressesRequestDefaultTypeInternal _GetAccountAddressesRequest_default_instance_;
@@ -112,6 +118,12 @@ extern PingRequestDefaultTypeInternal _PingRequest_default_instance_;
 class PingResponse;
 class PingResponseDefaultTypeInternal;
 extern PingResponseDefaultTypeInternal _PingResponse_default_instance_;
+class PostLogRequest;
+class PostLogRequestDefaultTypeInternal;
+extern PostLogRequestDefaultTypeInternal _PostLogRequest_default_instance_;
+class PostLogResponse;
+class PostLogResponseDefaultTypeInternal;
+extern PostLogResponseDefaultTypeInternal _PostLogResponse_default_instance_;
 class PutRequest;
 class PutRequestDefaultTypeInternal;
 extern PutRequestDefaultTypeInternal _PutRequest_default_instance_;
@@ -171,6 +183,8 @@ template<> ::xchain::contract::sdk::CrossContractQueryRequest* Arena::CreateMayb
 template<> ::xchain::contract::sdk::CrossContractQueryResponse* Arena::CreateMaybeMessage<::xchain::contract::sdk::CrossContractQueryResponse>(Arena*);
 template<> ::xchain::contract::sdk::DeleteRequest* Arena::CreateMaybeMessage<::xchain::contract::sdk::DeleteRequest>(Arena*);
 template<> ::xchain::contract::sdk::DeleteResponse* Arena::CreateMaybeMessage<::xchain::contract::sdk::DeleteResponse>(Arena*);
+template<> ::xchain::contract::sdk::EmitEventRequest* Arena::CreateMaybeMessage<::xchain::contract::sdk::EmitEventRequest>(Arena*);
+template<> ::xchain::contract::sdk::EmitEventResponse* Arena::CreateMaybeMessage<::xchain::contract::sdk::EmitEventResponse>(Arena*);
 template<> ::xchain::contract::sdk::GetAccountAddressesRequest* Arena::CreateMaybeMessage<::xchain::contract::sdk::GetAccountAddressesRequest>(Arena*);
 template<> ::xchain::contract::sdk::GetAccountAddressesResponse* Arena::CreateMaybeMessage<::xchain::contract::sdk::GetAccountAddressesResponse>(Arena*);
 template<> ::xchain::contract::sdk::GetCallArgsRequest* Arena::CreateMaybeMessage<::xchain::contract::sdk::GetCallArgsRequest>(Arena*);
@@ -183,6 +197,8 @@ template<> ::xchain::contract::sdk::NativeCallRequest* Arena::CreateMaybeMessage
 template<> ::xchain::contract::sdk::NativeCallResponse* Arena::CreateMaybeMessage<::xchain::contract::sdk::NativeCallResponse>(Arena*);
 template<> ::xchain::contract::sdk::PingRequest* Arena::CreateMaybeMessage<::xchain::contract::sdk::PingRequest>(Arena*);
 template<> ::xchain::contract::sdk::PingResponse* Arena::CreateMaybeMessage<::xchain::contract::sdk::PingResponse>(Arena*);
+template<> ::xchain::contract::sdk::PostLogRequest* Arena::CreateMaybeMessage<::xchain::contract::sdk::PostLogRequest>(Arena*);
+template<> ::xchain::contract::sdk::PostLogResponse* Arena::CreateMaybeMessage<::xchain::contract::sdk::PostLogResponse>(Arena*);
 template<> ::xchain::contract::sdk::PutRequest* Arena::CreateMaybeMessage<::xchain::contract::sdk::PutRequest>(Arena*);
 template<> ::xchain::contract::sdk::PutResponse* Arena::CreateMaybeMessage<::xchain::contract::sdk::PutResponse>(Arena*);
 template<> ::xchain::contract::sdk::QueryBlockRequest* Arena::CreateMaybeMessage<::xchain::contract::sdk::QueryBlockRequest>(Arena*);
@@ -4865,6 +4881,490 @@ class GetAccountAddressesResponse :
   mutable ::google::protobuf::internal::CachedSize _cached_size_;
   friend struct ::TableStruct_contract_2eproto;
 };
+// -------------------------------------------------------------------
+
+class PostLogRequest :
+    public ::google::protobuf::MessageLite /* @@protoc_insertion_point(class_definition:xchain.contract.sdk.PostLogRequest) */ {
+ public:
+  PostLogRequest();
+  virtual ~PostLogRequest();
+
+  PostLogRequest(const PostLogRequest& from);
+
+  inline PostLogRequest& operator=(const PostLogRequest& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  PostLogRequest(PostLogRequest&& from) noexcept
+    : PostLogRequest() {
+    *this = ::std::move(from);
+  }
+
+  inline PostLogRequest& operator=(PostLogRequest&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const PostLogRequest& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const PostLogRequest* internal_default_instance() {
+    return reinterpret_cast<const PostLogRequest*>(
+               &_PostLogRequest_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    36;
+
+  void Swap(PostLogRequest* other);
+  friend void swap(PostLogRequest& a, PostLogRequest& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline PostLogRequest* New() const final {
+    return CreateMaybeMessage<PostLogRequest>(nullptr);
+  }
+
+  PostLogRequest* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<PostLogRequest>(arena);
+  }
+  void CheckTypeAndMergeFrom(const ::google::protobuf::MessageLite& from)
+    final;
+  void CopyFrom(const PostLogRequest& from);
+  void MergeFrom(const PostLogRequest& from);
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  #if GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+  static const char* _InternalParse(const char* begin, const char* end, void* object, ::google::protobuf::internal::ParseContext* ctx);
+  ::google::protobuf::internal::ParseFunc _ParseFunc() const final { return _InternalParse; }
+  #else
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  #endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  void DiscardUnknownFields();
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  void InternalSwap(PostLogRequest* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return nullptr;
+  }
+  inline void* MaybeArenaPtr() const {
+    return nullptr;
+  }
+  public:
+
+  ::std::string GetTypeName() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // string entry = 2;
+  void clear_entry();
+  static const int kEntryFieldNumber = 2;
+  const ::std::string& entry() const;
+  void set_entry(const ::std::string& value);
+  #if LANG_CXX11
+  void set_entry(::std::string&& value);
+  #endif
+  void set_entry(const char* value);
+  void set_entry(const char* value, size_t size);
+  ::std::string* mutable_entry();
+  ::std::string* release_entry();
+  void set_allocated_entry(::std::string* entry);
+
+  // .xchain.contract.sdk.SyscallHeader header = 1;
+  bool has_header() const;
+  void clear_header();
+  static const int kHeaderFieldNumber = 1;
+  const ::xchain::contract::sdk::SyscallHeader& header() const;
+  ::xchain::contract::sdk::SyscallHeader* release_header();
+  ::xchain::contract::sdk::SyscallHeader* mutable_header();
+  void set_allocated_header(::xchain::contract::sdk::SyscallHeader* header);
+
+  // @@protoc_insertion_point(class_scope:xchain.contract.sdk.PostLogRequest)
+ private:
+  class HasBitSetters;
+
+  ::google::protobuf::internal::InternalMetadataWithArenaLite _internal_metadata_;
+  ::google::protobuf::internal::ArenaStringPtr entry_;
+  ::xchain::contract::sdk::SyscallHeader* header_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  friend struct ::TableStruct_contract_2eproto;
+};
+// -------------------------------------------------------------------
+
+class PostLogResponse :
+    public ::google::protobuf::MessageLite /* @@protoc_insertion_point(class_definition:xchain.contract.sdk.PostLogResponse) */ {
+ public:
+  PostLogResponse();
+  virtual ~PostLogResponse();
+
+  PostLogResponse(const PostLogResponse& from);
+
+  inline PostLogResponse& operator=(const PostLogResponse& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  PostLogResponse(PostLogResponse&& from) noexcept
+    : PostLogResponse() {
+    *this = ::std::move(from);
+  }
+
+  inline PostLogResponse& operator=(PostLogResponse&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const PostLogResponse& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const PostLogResponse* internal_default_instance() {
+    return reinterpret_cast<const PostLogResponse*>(
+               &_PostLogResponse_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    37;
+
+  void Swap(PostLogResponse* other);
+  friend void swap(PostLogResponse& a, PostLogResponse& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline PostLogResponse* New() const final {
+    return CreateMaybeMessage<PostLogResponse>(nullptr);
+  }
+
+  PostLogResponse* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<PostLogResponse>(arena);
+  }
+  void CheckTypeAndMergeFrom(const ::google::protobuf::MessageLite& from)
+    final;
+  void CopyFrom(const PostLogResponse& from);
+  void MergeFrom(const PostLogResponse& from);
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  #if GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+  static const char* _InternalParse(const char* begin, const char* end, void* object, ::google::protobuf::internal::ParseContext* ctx);
+  ::google::protobuf::internal::ParseFunc _ParseFunc() const final { return _InternalParse; }
+  #else
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  #endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  void DiscardUnknownFields();
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  void InternalSwap(PostLogResponse* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return nullptr;
+  }
+  inline void* MaybeArenaPtr() const {
+    return nullptr;
+  }
+  public:
+
+  ::std::string GetTypeName() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // string entry = 1;
+  void clear_entry();
+  static const int kEntryFieldNumber = 1;
+  const ::std::string& entry() const;
+  void set_entry(const ::std::string& value);
+  #if LANG_CXX11
+  void set_entry(::std::string&& value);
+  #endif
+  void set_entry(const char* value);
+  void set_entry(const char* value, size_t size);
+  ::std::string* mutable_entry();
+  ::std::string* release_entry();
+  void set_allocated_entry(::std::string* entry);
+
+  // @@protoc_insertion_point(class_scope:xchain.contract.sdk.PostLogResponse)
+ private:
+  class HasBitSetters;
+
+  ::google::protobuf::internal::InternalMetadataWithArenaLite _internal_metadata_;
+  ::google::protobuf::internal::ArenaStringPtr entry_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  friend struct ::TableStruct_contract_2eproto;
+};
+// -------------------------------------------------------------------
+
+class EmitEventRequest :
+    public ::google::protobuf::MessageLite /* @@protoc_insertion_point(class_definition:xchain.contract.sdk.EmitEventRequest) */ {
+ public:
+  EmitEventRequest();
+  virtual ~EmitEventRequest();
+
+  EmitEventRequest(const EmitEventRequest& from);
+
+  inline EmitEventRequest& operator=(const EmitEventRequest& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  EmitEventRequest(EmitEventRequest&& from) noexcept
+    : EmitEventRequest() {
+    *this = ::std::move(from);
+  }
+
+  inline EmitEventRequest& operator=(EmitEventRequest&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const EmitEventRequest& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const EmitEventRequest* internal_default_instance() {
+    return reinterpret_cast<const EmitEventRequest*>(
+               &_EmitEventRequest_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    38;
+
+  void Swap(EmitEventRequest* other);
+  friend void swap(EmitEventRequest& a, EmitEventRequest& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline EmitEventRequest* New() const final {
+    return CreateMaybeMessage<EmitEventRequest>(nullptr);
+  }
+
+  EmitEventRequest* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<EmitEventRequest>(arena);
+  }
+  void CheckTypeAndMergeFrom(const ::google::protobuf::MessageLite& from)
+    final;
+  void CopyFrom(const EmitEventRequest& from);
+  void MergeFrom(const EmitEventRequest& from);
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  #if GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+  static const char* _InternalParse(const char* begin, const char* end, void* object, ::google::protobuf::internal::ParseContext* ctx);
+  ::google::protobuf::internal::ParseFunc _ParseFunc() const final { return _InternalParse; }
+  #else
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  #endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  void DiscardUnknownFields();
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  void InternalSwap(EmitEventRequest* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return nullptr;
+  }
+  inline void* MaybeArenaPtr() const {
+    return nullptr;
+  }
+  public:
+
+  ::std::string GetTypeName() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // string name = 2;
+  void clear_name();
+  static const int kNameFieldNumber = 2;
+  const ::std::string& name() const;
+  void set_name(const ::std::string& value);
+  #if LANG_CXX11
+  void set_name(::std::string&& value);
+  #endif
+  void set_name(const char* value);
+  void set_name(const char* value, size_t size);
+  ::std::string* mutable_name();
+  ::std::string* release_name();
+  void set_allocated_name(::std::string* name);
+
+  // bytes body = 3;
+  void clear_body();
+  static const int kBodyFieldNumber = 3;
+  const ::std::string& body() const;
+  void set_body(const ::std::string& value);
+  #if LANG_CXX11
+  void set_body(::std::string&& value);
+  #endif
+  void set_body(const char* value);
+  void set_body(const void* value, size_t size);
+  ::std::string* mutable_body();
+  ::std::string* release_body();
+  void set_allocated_body(::std::string* body);
+
+  // .xchain.contract.sdk.SyscallHeader header = 1;
+  bool has_header() const;
+  void clear_header();
+  static const int kHeaderFieldNumber = 1;
+  const ::xchain::contract::sdk::SyscallHeader& header() const;
+  ::xchain::contract::sdk::SyscallHeader* release_header();
+  ::xchain::contract::sdk::SyscallHeader* mutable_header();
+  void set_allocated_header(::xchain::contract::sdk::SyscallHeader* header);
+
+  // @@protoc_insertion_point(class_scope:xchain.contract.sdk.EmitEventRequest)
+ private:
+  class HasBitSetters;
+
+  ::google::protobuf::internal::InternalMetadataWithArenaLite _internal_metadata_;
+  ::google::protobuf::internal::ArenaStringPtr name_;
+  ::google::protobuf::internal::ArenaStringPtr body_;
+  ::xchain::contract::sdk::SyscallHeader* header_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  friend struct ::TableStruct_contract_2eproto;
+};
+// -------------------------------------------------------------------
+
+class EmitEventResponse :
+    public ::google::protobuf::MessageLite /* @@protoc_insertion_point(class_definition:xchain.contract.sdk.EmitEventResponse) */ {
+ public:
+  EmitEventResponse();
+  virtual ~EmitEventResponse();
+
+  EmitEventResponse(const EmitEventResponse& from);
+
+  inline EmitEventResponse& operator=(const EmitEventResponse& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  #if LANG_CXX11
+  EmitEventResponse(EmitEventResponse&& from) noexcept
+    : EmitEventResponse() {
+    *this = ::std::move(from);
+  }
+
+  inline EmitEventResponse& operator=(EmitEventResponse&& from) noexcept {
+    if (GetArenaNoVirtual() == from.GetArenaNoVirtual()) {
+      if (this != &from) InternalSwap(&from);
+    } else {
+      CopyFrom(from);
+    }
+    return *this;
+  }
+  #endif
+  static const EmitEventResponse& default_instance();
+
+  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
+  static inline const EmitEventResponse* internal_default_instance() {
+    return reinterpret_cast<const EmitEventResponse*>(
+               &_EmitEventResponse_default_instance_);
+  }
+  static constexpr int kIndexInFileMessages =
+    39;
+
+  void Swap(EmitEventResponse* other);
+  friend void swap(EmitEventResponse& a, EmitEventResponse& b) {
+    a.Swap(&b);
+  }
+
+  // implements Message ----------------------------------------------
+
+  inline EmitEventResponse* New() const final {
+    return CreateMaybeMessage<EmitEventResponse>(nullptr);
+  }
+
+  EmitEventResponse* New(::google::protobuf::Arena* arena) const final {
+    return CreateMaybeMessage<EmitEventResponse>(arena);
+  }
+  void CheckTypeAndMergeFrom(const ::google::protobuf::MessageLite& from)
+    final;
+  void CopyFrom(const EmitEventResponse& from);
+  void MergeFrom(const EmitEventResponse& from);
+  PROTOBUF_ATTRIBUTE_REINITIALIZES void Clear() final;
+  bool IsInitialized() const final;
+
+  size_t ByteSizeLong() const final;
+  #if GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+  static const char* _InternalParse(const char* begin, const char* end, void* object, ::google::protobuf::internal::ParseContext* ctx);
+  ::google::protobuf::internal::ParseFunc _ParseFunc() const final { return _InternalParse; }
+  #else
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input) final;
+  #endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const final;
+  void DiscardUnknownFields();
+  int GetCachedSize() const final { return _cached_size_.Get(); }
+
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  void InternalSwap(EmitEventResponse* other);
+  private:
+  inline ::google::protobuf::Arena* GetArenaNoVirtual() const {
+    return nullptr;
+  }
+  inline void* MaybeArenaPtr() const {
+    return nullptr;
+  }
+  public:
+
+  ::std::string GetTypeName() const final;
+
+  // nested types ----------------------------------------------------
+
+  // accessors -------------------------------------------------------
+
+  // @@protoc_insertion_point(class_scope:xchain.contract.sdk.EmitEventResponse)
+ private:
+  class HasBitSetters;
+
+  ::google::protobuf::internal::InternalMetadataWithArenaLite _internal_metadata_;
+  mutable ::google::protobuf::internal::CachedSize _cached_size_;
+  friend struct ::TableStruct_contract_2eproto;
+};
 // ===================================================================
 
 
@@ -8652,9 +9152,347 @@ GetAccountAddressesResponse::mutable_addresses() {
   return &addresses_;
 }
 
+// -------------------------------------------------------------------
+
+// PostLogRequest
+
+// .xchain.contract.sdk.SyscallHeader header = 1;
+inline bool PostLogRequest::has_header() const {
+  return this != internal_default_instance() && header_ != nullptr;
+}
+inline void PostLogRequest::clear_header() {
+  if (GetArenaNoVirtual() == nullptr && header_ != nullptr) {
+    delete header_;
+  }
+  header_ = nullptr;
+}
+inline const ::xchain::contract::sdk::SyscallHeader& PostLogRequest::header() const {
+  const ::xchain::contract::sdk::SyscallHeader* p = header_;
+  // @@protoc_insertion_point(field_get:xchain.contract.sdk.PostLogRequest.header)
+  return p != nullptr ? *p : *reinterpret_cast<const ::xchain::contract::sdk::SyscallHeader*>(
+      &::xchain::contract::sdk::_SyscallHeader_default_instance_);
+}
+inline ::xchain::contract::sdk::SyscallHeader* PostLogRequest::release_header() {
+  // @@protoc_insertion_point(field_release:xchain.contract.sdk.PostLogRequest.header)
+  
+  ::xchain::contract::sdk::SyscallHeader* temp = header_;
+  header_ = nullptr;
+  return temp;
+}
+inline ::xchain::contract::sdk::SyscallHeader* PostLogRequest::mutable_header() {
+  
+  if (header_ == nullptr) {
+    auto* p = CreateMaybeMessage<::xchain::contract::sdk::SyscallHeader>(GetArenaNoVirtual());
+    header_ = p;
+  }
+  // @@protoc_insertion_point(field_mutable:xchain.contract.sdk.PostLogRequest.header)
+  return header_;
+}
+inline void PostLogRequest::set_allocated_header(::xchain::contract::sdk::SyscallHeader* header) {
+  ::google::protobuf::Arena* message_arena = GetArenaNoVirtual();
+  if (message_arena == nullptr) {
+    delete header_;
+  }
+  if (header) {
+    ::google::protobuf::Arena* submessage_arena = nullptr;
+    if (message_arena != submessage_arena) {
+      header = ::google::protobuf::internal::GetOwnedMessage(
+          message_arena, header, submessage_arena);
+    }
+    
+  } else {
+    
+  }
+  header_ = header;
+  // @@protoc_insertion_point(field_set_allocated:xchain.contract.sdk.PostLogRequest.header)
+}
+
+// string entry = 2;
+inline void PostLogRequest::clear_entry() {
+  entry_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& PostLogRequest::entry() const {
+  // @@protoc_insertion_point(field_get:xchain.contract.sdk.PostLogRequest.entry)
+  return entry_.GetNoArena();
+}
+inline void PostLogRequest::set_entry(const ::std::string& value) {
+  
+  entry_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:xchain.contract.sdk.PostLogRequest.entry)
+}
+#if LANG_CXX11
+inline void PostLogRequest::set_entry(::std::string&& value) {
+  
+  entry_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:xchain.contract.sdk.PostLogRequest.entry)
+}
+#endif
+inline void PostLogRequest::set_entry(const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  
+  entry_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:xchain.contract.sdk.PostLogRequest.entry)
+}
+inline void PostLogRequest::set_entry(const char* value, size_t size) {
+  
+  entry_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:xchain.contract.sdk.PostLogRequest.entry)
+}
+inline ::std::string* PostLogRequest::mutable_entry() {
+  
+  // @@protoc_insertion_point(field_mutable:xchain.contract.sdk.PostLogRequest.entry)
+  return entry_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* PostLogRequest::release_entry() {
+  // @@protoc_insertion_point(field_release:xchain.contract.sdk.PostLogRequest.entry)
+  
+  return entry_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void PostLogRequest::set_allocated_entry(::std::string* entry) {
+  if (entry != nullptr) {
+    
+  } else {
+    
+  }
+  entry_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), entry);
+  // @@protoc_insertion_point(field_set_allocated:xchain.contract.sdk.PostLogRequest.entry)
+}
+
+// -------------------------------------------------------------------
+
+// PostLogResponse
+
+// string entry = 1;
+inline void PostLogResponse::clear_entry() {
+  entry_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& PostLogResponse::entry() const {
+  // @@protoc_insertion_point(field_get:xchain.contract.sdk.PostLogResponse.entry)
+  return entry_.GetNoArena();
+}
+inline void PostLogResponse::set_entry(const ::std::string& value) {
+  
+  entry_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:xchain.contract.sdk.PostLogResponse.entry)
+}
+#if LANG_CXX11
+inline void PostLogResponse::set_entry(::std::string&& value) {
+  
+  entry_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:xchain.contract.sdk.PostLogResponse.entry)
+}
+#endif
+inline void PostLogResponse::set_entry(const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  
+  entry_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:xchain.contract.sdk.PostLogResponse.entry)
+}
+inline void PostLogResponse::set_entry(const char* value, size_t size) {
+  
+  entry_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:xchain.contract.sdk.PostLogResponse.entry)
+}
+inline ::std::string* PostLogResponse::mutable_entry() {
+  
+  // @@protoc_insertion_point(field_mutable:xchain.contract.sdk.PostLogResponse.entry)
+  return entry_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* PostLogResponse::release_entry() {
+  // @@protoc_insertion_point(field_release:xchain.contract.sdk.PostLogResponse.entry)
+  
+  return entry_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void PostLogResponse::set_allocated_entry(::std::string* entry) {
+  if (entry != nullptr) {
+    
+  } else {
+    
+  }
+  entry_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), entry);
+  // @@protoc_insertion_point(field_set_allocated:xchain.contract.sdk.PostLogResponse.entry)
+}
+
+// -------------------------------------------------------------------
+
+// EmitEventRequest
+
+// .xchain.contract.sdk.SyscallHeader header = 1;
+inline bool EmitEventRequest::has_header() const {
+  return this != internal_default_instance() && header_ != nullptr;
+}
+inline void EmitEventRequest::clear_header() {
+  if (GetArenaNoVirtual() == nullptr && header_ != nullptr) {
+    delete header_;
+  }
+  header_ = nullptr;
+}
+inline const ::xchain::contract::sdk::SyscallHeader& EmitEventRequest::header() const {
+  const ::xchain::contract::sdk::SyscallHeader* p = header_;
+  // @@protoc_insertion_point(field_get:xchain.contract.sdk.EmitEventRequest.header)
+  return p != nullptr ? *p : *reinterpret_cast<const ::xchain::contract::sdk::SyscallHeader*>(
+      &::xchain::contract::sdk::_SyscallHeader_default_instance_);
+}
+inline ::xchain::contract::sdk::SyscallHeader* EmitEventRequest::release_header() {
+  // @@protoc_insertion_point(field_release:xchain.contract.sdk.EmitEventRequest.header)
+  
+  ::xchain::contract::sdk::SyscallHeader* temp = header_;
+  header_ = nullptr;
+  return temp;
+}
+inline ::xchain::contract::sdk::SyscallHeader* EmitEventRequest::mutable_header() {
+  
+  if (header_ == nullptr) {
+    auto* p = CreateMaybeMessage<::xchain::contract::sdk::SyscallHeader>(GetArenaNoVirtual());
+    header_ = p;
+  }
+  // @@protoc_insertion_point(field_mutable:xchain.contract.sdk.EmitEventRequest.header)
+  return header_;
+}
+inline void EmitEventRequest::set_allocated_header(::xchain::contract::sdk::SyscallHeader* header) {
+  ::google::protobuf::Arena* message_arena = GetArenaNoVirtual();
+  if (message_arena == nullptr) {
+    delete header_;
+  }
+  if (header) {
+    ::google::protobuf::Arena* submessage_arena = nullptr;
+    if (message_arena != submessage_arena) {
+      header = ::google::protobuf::internal::GetOwnedMessage(
+          message_arena, header, submessage_arena);
+    }
+    
+  } else {
+    
+  }
+  header_ = header;
+  // @@protoc_insertion_point(field_set_allocated:xchain.contract.sdk.EmitEventRequest.header)
+}
+
+// string name = 2;
+inline void EmitEventRequest::clear_name() {
+  name_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& EmitEventRequest::name() const {
+  // @@protoc_insertion_point(field_get:xchain.contract.sdk.EmitEventRequest.name)
+  return name_.GetNoArena();
+}
+inline void EmitEventRequest::set_name(const ::std::string& value) {
+  
+  name_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:xchain.contract.sdk.EmitEventRequest.name)
+}
+#if LANG_CXX11
+inline void EmitEventRequest::set_name(::std::string&& value) {
+  
+  name_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:xchain.contract.sdk.EmitEventRequest.name)
+}
+#endif
+inline void EmitEventRequest::set_name(const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  
+  name_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:xchain.contract.sdk.EmitEventRequest.name)
+}
+inline void EmitEventRequest::set_name(const char* value, size_t size) {
+  
+  name_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:xchain.contract.sdk.EmitEventRequest.name)
+}
+inline ::std::string* EmitEventRequest::mutable_name() {
+  
+  // @@protoc_insertion_point(field_mutable:xchain.contract.sdk.EmitEventRequest.name)
+  return name_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* EmitEventRequest::release_name() {
+  // @@protoc_insertion_point(field_release:xchain.contract.sdk.EmitEventRequest.name)
+  
+  return name_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void EmitEventRequest::set_allocated_name(::std::string* name) {
+  if (name != nullptr) {
+    
+  } else {
+    
+  }
+  name_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), name);
+  // @@protoc_insertion_point(field_set_allocated:xchain.contract.sdk.EmitEventRequest.name)
+}
+
+// bytes body = 3;
+inline void EmitEventRequest::clear_body() {
+  body_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline const ::std::string& EmitEventRequest::body() const {
+  // @@protoc_insertion_point(field_get:xchain.contract.sdk.EmitEventRequest.body)
+  return body_.GetNoArena();
+}
+inline void EmitEventRequest::set_body(const ::std::string& value) {
+  
+  body_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:xchain.contract.sdk.EmitEventRequest.body)
+}
+#if LANG_CXX11
+inline void EmitEventRequest::set_body(::std::string&& value) {
+  
+  body_.SetNoArena(
+    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
+  // @@protoc_insertion_point(field_set_rvalue:xchain.contract.sdk.EmitEventRequest.body)
+}
+#endif
+inline void EmitEventRequest::set_body(const char* value) {
+  GOOGLE_DCHECK(value != nullptr);
+  
+  body_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
+  // @@protoc_insertion_point(field_set_char:xchain.contract.sdk.EmitEventRequest.body)
+}
+inline void EmitEventRequest::set_body(const void* value, size_t size) {
+  
+  body_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+      ::std::string(reinterpret_cast<const char*>(value), size));
+  // @@protoc_insertion_point(field_set_pointer:xchain.contract.sdk.EmitEventRequest.body)
+}
+inline ::std::string* EmitEventRequest::mutable_body() {
+  
+  // @@protoc_insertion_point(field_mutable:xchain.contract.sdk.EmitEventRequest.body)
+  return body_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline ::std::string* EmitEventRequest::release_body() {
+  // @@protoc_insertion_point(field_release:xchain.contract.sdk.EmitEventRequest.body)
+  
+  return body_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+inline void EmitEventRequest::set_allocated_body(::std::string* body) {
+  if (body != nullptr) {
+    
+  } else {
+    
+  }
+  body_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), body);
+  // @@protoc_insertion_point(field_set_allocated:xchain.contract.sdk.EmitEventRequest.body)
+}
+
+// -------------------------------------------------------------------
+
+// EmitEventResponse
+
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
+// -------------------------------------------------------------------
+
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------

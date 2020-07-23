@@ -570,16 +570,12 @@ func (uv *UtxoVM) verifyTxRWSets(tx *pb.Transaction) (bool, error) {
 
 		ctx.Release()
 	}
-	utxoInputs, utxoOutputs := env.GetModelCache().GetUtxoRWSets()
-	err = env.GetModelCache().PutUtxos(utxoInputs, utxoOutputs)
+
+	err = env.GetModelCache().WriteTransientBucket()
 	if err != nil {
 		return false, err
 	}
-	crossQuery := env.GetModelCache().GetCrossQueryRWSets()
-	err = env.GetModelCache().PutCrossQueries(crossQuery)
-	if err != nil {
-		return false, err
-	}
+
 	_, writeSet, err := env.GetModelCache().GetRWSets()
 	if err != nil {
 		return false, err

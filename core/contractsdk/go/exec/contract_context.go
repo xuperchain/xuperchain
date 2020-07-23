@@ -1,6 +1,7 @@
 package exec
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
@@ -233,4 +234,21 @@ func (c *contractContext) Logf(fmtstr string, args ...interface{}) {
 		Entry:  entry,
 	}
 	c.bridgeCallFunc("PostLog", request, new(pb.PostLogResponse))
+}
+
+func (c *contractContext) EmitEvent(name string, body []byte) error {
+	request := &pb.EmitEventRequest{
+		Header: &c.header,
+		Name:   name,
+		Body:   body,
+	}
+	return c.bridgeCallFunc("EmitEvent", request, new(pb.EmitEventResponse))
+}
+
+func (c *contractContext) EmitJSONEvent(name string, body interface{}) error {
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return err
+	}
+	return c.EmitEvent(name, buf)
 }

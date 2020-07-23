@@ -1,6 +1,0 @@
-{
-    "Type": "ACCOUNT",
-	"Args": {
-		"data": "{\"bcname\":\"xuper\", \"to_addr\":\"bob\"}"
-	}
-}

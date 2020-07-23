@@ -39,6 +39,10 @@ func (c *counter) Increase(ctx code.Context) code.Response {
 	if err != nil {
 		return code.Error(err)
 	}
+	ctx.EmitJSONEvent("increase", map[string]interface{}{
+		"key":   string(key),
+		"value": cntstr,
+	})
 	return code.OK([]byte(cntstr))
 }
 

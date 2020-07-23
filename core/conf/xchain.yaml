@@ -125,3 +125,9 @@ cloudStorage:
   region: "bj"
   endpoint: "s3.bj.bcebos.com"
   localCacheDir: "./data/cache"
+
+# 事件订阅相关配置
+event:
+  enable: true
+  # 每个ip的最大订阅连接数，为0的话不限连接数
+  addrMaxConn: 5

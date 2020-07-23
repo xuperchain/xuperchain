@@ -271,8 +271,6 @@ type NodeConfig struct {
 	EnableCompress bool `yaml:"enableCompress,omitempty"`
 	// prune ledger option
 	Prune PruneOption `yaml:"prune,omitempty"`
-	// pubsub switch
-	PubsubService bool `yaml:"pubsubService,omitempty"`
 
 	// BlockBroadcaseMode is the mode for broadcast new block
 	//  * Full_BroadCast_Mode = 0, means send full block data
@@ -285,6 +283,8 @@ type NodeConfig struct {
 	BlockBroadcaseMode uint8 `yaml:"blockBroadcaseMode,omitempty"`
 	// cloud storage config
 	CloudStorage CloudStorageConfig `yaml:"cloudStorage,omitempty"`
+
+	Event EventConfig
 }
 
 // KernelConfig kernel config
@@ -314,6 +314,14 @@ type XEndorserConfig struct {
 	// Module the plugin name for xendorser
 	Module   string `yaml:"module,omitempty"`
 	ConfPath string `yaml:"confPath,omitempty"`
+}
+
+// EventConfig is the config of event service
+type EventConfig struct {
+	// whether enable event service
+	Enable bool
+	// max conn count per IP
+	AddrMaxConn int
 }
 
 func (nc *NodeConfig) defaultNodeConfig() {
@@ -402,6 +410,10 @@ func (nc *NodeConfig) defaultNodeConfig() {
 		ConfPath: "",
 	}
 	nc.BlockBroadcaseMode = 0
+	nc.Event = EventConfig{
+		Enable:      true,
+		AddrMaxConn: 5,
+	}
 }
 
 // NewNodeConfig returns a config of a node
