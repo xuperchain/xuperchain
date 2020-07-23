@@ -30,4 +30,6 @@ $ xchain-cli native invoke --method approve -a '{"to":"dpzuVdosQrF2kmzumhVeFQZa1
 $ xchain-cli native query --method allowance -a '{"from":"XC1111111111111113@xuper","to":"dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN"}' erc20java
 # 使用授权额度
 $ xchain-cli native invoke --method transferFrom -a '{"from":"XC1111111111111113@xuper","to":"dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN","token":"88"}' erc20java --fee 200000
+# 增发token
+$ xchain-cli native invoke --method mint --account XC1111111111111113@xuper -a '{"amount":"100"}' erc20java --fee 200000
 ```

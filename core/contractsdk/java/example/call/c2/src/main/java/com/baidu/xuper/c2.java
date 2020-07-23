@@ -20,7 +20,7 @@ public class c2 implements Contract {
         if (value == null) {
             counter = BigInteger.valueOf(0);
         } else {
-            counter = new BigInteger(value);
+            counter = new BigInteger(new String(value));
         }
 
         counter = counter.add(BigInteger.valueOf(1000));
@@ -31,9 +31,9 @@ public class c2 implements Contract {
         }
         final String to = new String(toByte);
         ctx.transfer(to, BigInteger.valueOf(1000));
-        ctx.putObject(cntKey.getBytes(), counter.toByteArray());
+        ctx.putObject(cntKey.getBytes(), counter.toString().getBytes());
 
-        return Response.ok(counter.toByteArray());
+        return Response.ok(counter.toString().getBytes());
     }
 
 

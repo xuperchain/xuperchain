@@ -21,7 +21,7 @@ public class c1 implements Contract {
         if (value == null) {
             counter = BigInteger.valueOf(0);
         } else {
-            counter = new BigInteger(value);
+            counter = new BigInteger(new String(value));
         }
 
         // 发起转账
@@ -46,7 +46,7 @@ public class c1 implements Contract {
         ctx.putObject("call".getBytes(), resp.body);
         // 对cnt变量加1并持久化
         counter = counter.add(BigInteger.valueOf(1));
-        ctx.putObject(cntKey.getBytes(), counter.toByteArray());
+        ctx.putObject(cntKey.getBytes(), counter.toString().getBytes());
 
         return Response.ok("ok".getBytes());
     }

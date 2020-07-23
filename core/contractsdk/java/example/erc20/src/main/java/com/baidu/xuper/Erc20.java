@@ -11,10 +11,8 @@ import com.baidu.xuper.Response;
 
 /**
  * Erc20
- *
  */
-public class Erc20 implements Contract
-{
+public class Erc20 implements Contract {
     static final String BALANCEPRE = "balanceOf_";
     static final String ALLOWANCEPRE = "allowanceOf_";
     static final String MASTERPRE = "owner";
@@ -24,7 +22,7 @@ public class Erc20 implements Contract
     @ContractMethod
     public Response initialize(Context ctx) {
         String caller = ctx.caller();
-        if (caller.isEmpty()){
+        if (caller.isEmpty()) {
             return Response.error("missing caller");
         }
 
@@ -40,8 +38,8 @@ public class Erc20 implements Contract
 
         String balanceKey = BALANCEPRE + caller;
 
-        ctx.putObject(TOTALSUPPLY.getBytes(), totalSupply.toByteArray());
-        ctx.putObject(balanceKey.getBytes(), totalSupply.toByteArray());
+        ctx.putObject(TOTALSUPPLY.getBytes(), totalSupply.toString().getBytes());
+        ctx.putObject(balanceKey.getBytes(), totalSupply.toString().getBytes());
         ctx.putObject(MASTERPRE.getBytes(), caller.getBytes());
 
         return Response.ok("initialize success".getBytes());
@@ -50,7 +48,7 @@ public class Erc20 implements Contract
     @ContractMethod
     public Response mint(Context ctx) {
         String caller = ctx.caller();
-        if (caller.isEmpty()){
+        if (caller.isEmpty()) {
             return Response.error("missing caller");
         }
 
@@ -59,7 +57,7 @@ public class Erc20 implements Contract
             return Response.error("no owner found");
         }
 
-        if (!Arrays.equals(caller.getBytes(), ownerByte)){
+        if (!Arrays.equals(caller.getBytes(), ownerByte)) {
             return Response.error("only the person who created the contract can mint");
         }
 
@@ -77,20 +75,20 @@ public class Erc20 implements Contract
         if (totalSupplyByte == null) {
             return Response.error("no totalSupply found");
         }
-        BigInteger totalSupply = new BigInteger(totalSupplyByte);
+        BigInteger totalSupply = new BigInteger(new String(totalSupplyByte));
         BigInteger totalSupplyNow = totalSupply.add(increaseSupply);
 
-        ctx.putObject(TOTALSUPPLY.getBytes(), totalSupplyNow.toByteArray());
+        ctx.putObject(TOTALSUPPLY.getBytes(), totalSupplyNow.toString().getBytes());
 
         String balanceKey = BALANCEPRE + caller;
         byte[] callerBalanceByte = ctx.getObject(balanceKey.getBytes());
         if (callerBalanceByte == null) {
             return Response.error("no caller found");
         }
-        BigInteger callerBalance = new BigInteger(callerBalanceByte);
+        BigInteger callerBalance = new BigInteger(new String(callerBalanceByte));
         BigInteger callerBalanceNow = callerBalance.add(increaseSupply);
 
-        ctx.putObject(balanceKey.getBytes(), callerBalanceNow.toByteArray());
+        ctx.putObject(balanceKey.getBytes(), callerBalanceNow.toString().getBytes());
 
         return Response.ok("mint success".getBytes());
     }
@@ -101,7 +99,7 @@ public class Erc20 implements Contract
         if (value == null) {
             return Response.error("key TOTALSUPPLY not found)");
         }
-        BigInteger totalSupply = new BigInteger(value);
+        BigInteger totalSupply = new BigInteger(new String(value));
 
         return Response.ok(totalSupply.toString().getBytes());
     }
@@ -119,7 +117,7 @@ public class Erc20 implements Contract
         if (value == null) {
             return Response.error("key " + account + " not found");
         }
-        BigInteger balance = new BigInteger(value);
+        BigInteger balance = new BigInteger(new String(value));
 
         return Response.ok(balance.toString().getBytes());
     }
@@ -143,7 +141,7 @@ public class Erc20 implements Contract
         if (value == null) {
             return Response.error("key " + allowanceKey + " not found");
         }
-        BigInteger allowance = new BigInteger(value);
+        BigInteger allowance = new BigInteger(new String(value));
 
         return Response.ok(allowance.toString().getBytes());
     }
@@ -161,7 +159,7 @@ public class Erc20 implements Contract
     @ContractMethod
     public Response transfer(Context ctx) {
         String from = ctx.caller();
-        if (from.isEmpty()){
+        if (from.isEmpty()) {
             return Response.error("missing from");
         }
 
@@ -186,8 +184,8 @@ public class Erc20 implements Contract
         if (fromBalanceByte == null) {
             return Response.error("no from found");
         }
-        BigInteger fromBalance = new BigInteger(fromBalanceByte);
-        if (fromBalance.compareTo(tokenAmount) == -1){
+        BigInteger fromBalance = new BigInteger(new String(fromBalanceByte));
+        if (fromBalance.compareTo(tokenAmount) == -1) {
             return Response.error("no enough balance");
         }
 
@@ -197,14 +195,14 @@ public class Erc20 implements Contract
         if (toBalanceByte == null) {
             toBalance = BigInteger.valueOf(0);
         } else {
-            toBalance = new BigInteger(toBalanceByte);
+            toBalance = new BigInteger(new String(toBalanceByte));
         }
 
         BigInteger fromBalanceNow = fromBalance.subtract(tokenAmount);
         BigInteger toBalanceNow = toBalance.add(tokenAmount);
 
-        ctx.putObject(fromKey.getBytes(), fromBalanceNow.toByteArray());
-        ctx.putObject(toKey.getBytes(), toBalanceNow.toByteArray());
+        ctx.putObject(fromKey.getBytes(), fromBalanceNow.toString().getBytes());
+        ctx.putObject(toKey.getBytes(), toBalanceNow.toString().getBytes());
 
         return Response.ok("transfer success".getBytes());
     }
@@ -212,7 +210,7 @@ public class Erc20 implements Contract
     @ContractMethod
     public Response transferFrom(Context ctx) {
         String caller = ctx.caller();
-        if (caller.isEmpty()){
+        if (caller.isEmpty()) {
             return Response.error("missing caller");
         }
 
@@ -243,8 +241,8 @@ public class Erc20 implements Contract
         if (value == null) {
             return Response.error("key " + allowanceKey + " not found");
         }
-        BigInteger allowance = new BigInteger(value);
-        if (allowance.compareTo(tokenAmount) == -1){
+        BigInteger allowance = new BigInteger(new String(value));
+        if (allowance.compareTo(tokenAmount) == -1) {
             return Response.error("The allowance is not enough");
         }
 
@@ -253,8 +251,8 @@ public class Erc20 implements Contract
         if (fromBalanceByte == null) {
             return Response.error("no from found");
         }
-        BigInteger fromBalance = new BigInteger(fromBalanceByte);
-        if (fromBalance.compareTo(tokenAmount) == -1){
+        BigInteger fromBalance = new BigInteger(new String(fromBalanceByte));
+        if (fromBalance.compareTo(tokenAmount) == -1) {
             return Response.error("The balance of from is not enough");
         }
 
@@ -264,16 +262,16 @@ public class Erc20 implements Contract
         if (toBalanceByte == null) {
             toBalance = BigInteger.valueOf(0);
         } else {
-            toBalance = new BigInteger(toBalanceByte);
+            toBalance = new BigInteger(new String(toBalanceByte));
         }
 
         BigInteger fromBalanceNow = fromBalance.subtract(tokenAmount);
         BigInteger toBalanceNow = toBalance.add(tokenAmount);
         BigInteger allowanceBalanceNow = allowance.subtract(tokenAmount);
 
-        ctx.putObject(fromKey.getBytes(), fromBalanceNow.toByteArray());
-        ctx.putObject(toKey.getBytes(), toBalanceNow.toByteArray());
-        ctx.putObject(allowanceKey.getBytes(), allowanceBalanceNow.toByteArray());
+        ctx.putObject(fromKey.getBytes(), fromBalanceNow.toString().getBytes());
+        ctx.putObject(toKey.getBytes(), toBalanceNow.toString().getBytes());
+        ctx.putObject(allowanceKey.getBytes(), allowanceBalanceNow.toString().getBytes());
 
         return Response.ok("transferFrom success".getBytes());
     }
@@ -281,7 +279,7 @@ public class Erc20 implements Contract
     @ContractMethod
     public Response approve(Context ctx) {
         String from = ctx.caller();
-        if (from.isEmpty()){
+        if (from.isEmpty()) {
             return Response.error("missing caller");
         }
 
@@ -306,8 +304,8 @@ public class Erc20 implements Contract
         if (fromBalanceByte == null) {
             return Response.error("no from found");
         }
-        BigInteger fromBalance = new BigInteger(fromBalanceByte);
-        if (fromBalance.compareTo(tokenAmount) == -1){
+        BigInteger fromBalance = new BigInteger(new String(fromBalanceByte));
+        if (fromBalance.compareTo(tokenAmount) == -1) {
             return Response.error("The balance of from not enough");
         }
 
@@ -317,12 +315,12 @@ public class Erc20 implements Contract
         if (allowanceBalanceByte == null) {
             allowanceBalance = BigInteger.valueOf(0);
         } else {
-            allowanceBalance = new BigInteger(allowanceBalanceByte);
+            allowanceBalance = new BigInteger(new String(allowanceBalanceByte));
         }
 
         BigInteger allowanceBalanceNow = allowanceBalance.add(tokenAmount);
 
-        ctx.putObject(allowanceKey.getBytes(), allowanceBalanceNow.toByteArray());
+        ctx.putObject(allowanceKey.getBytes(), allowanceBalanceNow.toString().getBytes());
 
         return Response.ok("approve success".getBytes());
     }
