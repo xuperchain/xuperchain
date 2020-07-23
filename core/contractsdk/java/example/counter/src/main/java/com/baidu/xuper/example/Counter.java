@@ -30,14 +30,14 @@ public class Counter implements Contract {
         BigInteger counter;
         byte[] value = ctx.getObject(key);
         if (value != null) {
-            counter = new BigInteger(new String(value));
+            counter = new BigInteger(value);
         } else {
             ctx.log("key " + new String(key) + " not found, initialize to zero");
             counter = BigInteger.valueOf(0);
         }
         ctx.log("get value " + counter.toString());
         counter = counter.add(BigInteger.valueOf(1));
-        ctx.putObject(key, counter.toString().getBytes());
+        ctx.putObject(key, counter.toByteArray());
 
 //        emit event with json
         Map<String, String> body = new HashMap<>();
@@ -45,7 +45,7 @@ public class Counter implements Contract {
         body.put("value", counter.toString());
         ctx.emitJSONEvent("increase", body);
 
-//        emit event directly
+//        emit event directly, use 'toString().getBytes()' to make counter readable to human
 //        ctx.emitEvent("increase", counter.toString().getBytes());
 
         return Response.ok(counter.toString().getBytes());
@@ -60,7 +60,7 @@ public class Counter implements Contract {
         BigInteger counter;
         byte[] value = ctx.getObject(key);
         if (value != null) {
-            counter = new BigInteger(new String(value));
+            counter = new BigInteger(value);
         } else {
             return Response.error("key " + new String(key) + " not found)");
         }
