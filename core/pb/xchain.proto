@@ -216,13 +216,6 @@ service Xchain {
     };
   }
 
-  // Native code deploy interface
-  rpc DeployNativeCode(DeployNativeCodeRequest)
-      returns (DeployNativeCodeResponse);
-  // Native code status
-  rpc NativeCodeStatus(NativeCodeStatusRequest)
-      returns (NativeCodeStatusResponse);
-
   /*
    * DPoS query interface
    */
@@ -652,38 +645,10 @@ message WasmCodeDesc {
   string contract_type = 5;
 }
 
-message DeployNativeCodeRequest {
-  Header header = 1;
-  // chain name
-  string bcname = 2;
-  // native code desc
-  NativeCodeDesc desc = 3;
-  // code is the bytes of binary code
-  bytes code = 4;
-  // the address of deployer
-  string address = 5;
-  // the public key of deployer
-  bytes pubkey = 6;
-  // the sign of desc
-  bytes sign = 7;
-}
-
-message DeployNativeCodeResponse { Header header = 1; }
-
 message NativeCodeStatus {
   NativeCodeDesc desc = 1;
   int32 status = 2;
   bool healthy = 3;
-}
-
-message NativeCodeStatusRequest {
-  Header header = 1;
-  string bcname = 2;
-}
-
-message NativeCodeStatusResponse {
-  Header header = 1;
-  repeated NativeCodeStatus status = 2;
 }
 
 /*

@@ -7,11 +7,13 @@ import (
 	"os"
 	"strings"
 
+	"github.com/golang/protobuf/proto"
 	peer "github.com/libp2p/go-libp2p-peer"
 	"github.com/pkg/errors"
+	prom "github.com/prometheus/client_golang/prometheus"
 	log "github.com/xuperchain/log15"
-
 	"github.com/xuperchain/xuperchain/core/common/config"
+	"github.com/xuperchain/xuperchain/core/common/matrics"
 	p2p_base "github.com/xuperchain/xuperchain/core/p2p/base"
 	p2pPb "github.com/xuperchain/xuperchain/core/p2p/pb"
 )
@@ -102,6 +104,7 @@ func (p *P2PServerV2) Stop() {
 // SendMessage send message to peers using given filter strategy
 func (p *P2PServerV2) SendMessage(ctx context.Context, msg *p2pPb.XuperMessage,
 	opts ...p2p_base.MessageOption) error {
+
 	msgOpts := p2p_base.GetMessageOption(opts)
 	filter := p.getFilter(msgOpts)
 	peers, _ := filter.Filter()
@@ -128,6 +131,11 @@ func (p *P2PServerV2) SendMessage(ctx context.Context, msg *p2pPb.XuperMessage,
 		}
 	}
 	p.log.Trace("Server SendMessage", "logid", msg.GetHeader().GetLogid(), "msgType", msg.GetHeader().GetType(), "checksum", msg.GetHeader().GetDataCheckSum())
+	matricLabels := prom.Labels{
+		"bcname": msg.GetHeader().GetBcname(),
+		"type":   msg.GetHeader().GetType().String(),
+	}
+	matrics.DefaultServerMetrics.P2PFlowOut.With(matricLabels).Add(float64(proto.Size(msg)))
 	return p.node.SendMessage(ctx, msg, peersRes)
 }
 
@@ -153,6 +161,12 @@ func (p *P2PServerV2) SendMessageWithResponse(ctx context.Context, msg *p2pPb.Xu
 	percentage := msgOpts.Percentage
 	p.log.Trace("Server SendMessage with response", "logid", msg.GetHeader().GetLogid(),
 		"msgType", msg.GetHeader().GetType(), "checksum", msg.GetHeader().GetDataCheckSum(), "peers", peers)
+
+	matricLabels := prom.Labels{
+		"bcname": msg.GetHeader().GetBcname(),
+		"type":   msg.GetHeader().GetType().String(),
+	}
+	matrics.DefaultServerMetrics.P2PFlowOut.With(matricLabels).Add(float64(proto.Size(msg)))
 	return p.node.SendMessageWithResponse(ctx, msg, peersRes, percentage)
 }
 

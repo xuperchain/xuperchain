@@ -20,6 +20,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
+
 	log "github.com/xuperchain/log15"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -27,8 +28,10 @@ import (
 	"google.golang.org/grpc/reflection"
 
 	middleware "github.com/grpc-ecosystem/go-grpc-middleware"
+	prom "github.com/prometheus/client_golang/prometheus"
 	"github.com/xuperchain/xuperchain/core/common"
 	xlog "github.com/xuperchain/xuperchain/core/common/log"
+	"github.com/xuperchain/xuperchain/core/common/matrics"
 	"github.com/xuperchain/xuperchain/core/consensus"
 	xchaincore "github.com/xuperchain/xuperchain/core/core"
 	"github.com/xuperchain/xuperchain/core/global"
@@ -38,6 +41,7 @@ import (
 	"github.com/xuperchain/xuperchain/core/server/xendorser"
 )
 
+// Server is the  rpc server of xchain node
 type Server struct {
 	log            log.Logger
 	mg             *xchaincore.XChainMG
@@ -45,8 +49,14 @@ type Server struct {
 	dedupTimeLimit int
 }
 
-// PostTx Update db
+// PostTx post transaction to blockchain network
 func (s *Server) PostTx(ctx context.Context, in *pb.TxStatus) (*pb.CommonReply, error) {
+	matricLabels := prom.Labels{
+		"bcname": in.GetBcname(),
+		"type":   "PostTx",
+	}
+	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
+
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
@@ -64,47 +74,27 @@ func (s *Server) PostTx(ctx context.Context, in *pb.TxStatus) (*pb.CommonReply, 
 			s.mg.P2pSvr.SendMessage(context.Background(), msg, opts...)
 		}()
 	}
+	matricLabelsOut := prom.Labels{
+		"bcname": in.GetBcname(),
+		"type":   "PostTx",
+	}
+	matrics.DefaultServerMetrics.RPCFlowOut.With(matricLabelsOut).Add(float64(proto.Size(out)))
 	return out, err
 }
 
 // BatchPostTx batch update db
 func (s *Server) BatchPostTx(ctx context.Context, in *pb.BatchTxs) (*pb.CommonReply, error) {
-	if in.Header == nil {
-		in.Header = global.GHeader()
-	}
-	out := &pb.CommonReply{Header: &pb.Header{Logid: in.Header.Logid}}
-	succTxs := []*pb.TxStatus{}
-	for _, v := range in.Txs {
-		oneOut, needRepost, _ := s.mg.ProcessTx(v)
-		if oneOut.Header.Error != pb.XChainErrorEnum_SUCCESS {
-			if oneOut.Header.Error != pb.XChainErrorEnum_UTXOVM_ALREADY_UNCONFIRM_ERROR {
-				s.log.Warn("BatchPostTx processTx error", "logid", in.Header.Logid, "error", oneOut.Header.Error, "txid", global.F(v.Txid))
-			}
-		} else if needRepost {
-			succTxs = append(succTxs, v)
-		}
-	}
-	in.Txs = succTxs //只广播成功的
-	if len(in.Txs) > 0 {
-		txsData, err := proto.Marshal(in)
-		if err != nil {
-			s.log.Error("handleBatchPostTx Marshal txs error", "error", err)
-			return out, nil
-		}
-
-		msg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion1, "", in.GetHeader().GetLogid(), xuper_p2p.XuperMessage_BATCHPOSTTX, txsData, xuper_p2p.XuperMessage_NONE)
-		opts := []p2p_base.MessageOption{
-			p2p_base.WithFilters([]p2p_base.FilterStrategy{p2p_base.DefaultStrategy}),
-			p2p_base.WithBcName(in.Txs[0].GetBcname()),
-		}
-		go s.mg.P2pSvr.SendMessage(context.Background(), msg, opts...)
-	}
-	return out, nil
+	// Attention Please: This interface has expired and will be removed in V3.11
+	return nil, errors.New("Attention Please: This interface has expired and will be removed in V3.11")
 }
 
 // QueryContractStatData query statistic info about contract
 func (s *Server) QueryContractStatData(ctx context.Context, in *pb.ContractStatDataRequest) (*pb.ContractStatDataResponse, error) {
-	s.mg.Speed.Add("QueryContractStatData")
+	matricLabels := prom.Labels{
+		"bcname": in.GetBcname(),
+		"type":   "QueryContractStatData",
+	}
+	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
 	if in.GetHeader() == nil {
 		in.Header = global.GHeader()
 	}
@@ -120,13 +110,22 @@ func (s *Server) QueryContractStatData(ctx context.Context, in *pb.ContractStatD
 	if contractStatDataErr != nil {
 		return out, contractStatDataErr
 	}
-
+	matricLabelsOut := prom.Labels{
+		"bcname": in.GetBcname(),
+		"type":   "QueryContractStatData",
+	}
+	matrics.DefaultServerMetrics.RPCFlowOut.With(matricLabelsOut).Add(float64(proto.Size(contractStatDataResponse)))
 	return contractStatDataResponse, nil
 }
 
 // QueryUtxoRecord query utxo records
 func (s *Server) QueryUtxoRecord(ctx context.Context, in *pb.UtxoRecordDetail) (*pb.UtxoRecordDetail, error) {
-	s.mg.Speed.Add("QueryUtxoRecord")
+	matricLabels := prom.Labels{
+		"bcname": in.GetBcname(),
+		"type":   "QueryUtxoRecord",
+	}
+	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
+
 	if in.GetHeader() == nil {
 		in.Header = global.GHeader()
 	}
@@ -145,15 +144,25 @@ func (s *Server) QueryUtxoRecord(ctx context.Context, in *pb.UtxoRecordDetail) (
 		if err != nil {
 			return out, err
 		}
+		matricLabelsOut := prom.Labels{
+			"bcname": in.GetBcname(),
+			"type":   "QueryUtxoRecord",
+		}
+		matrics.DefaultServerMetrics.RPCFlowOut.With(matricLabelsOut).Add(float64(proto.Size(utxoRecord)))
 		return utxoRecord, nil
 	}
 
 	return out, nil
 }
 
-// QueryAcl query some account info
+// QueryACL query some account info
 func (s *Server) QueryACL(ctx context.Context, in *pb.AclStatus) (*pb.AclStatus, error) {
-	s.mg.Speed.Add("QueryAcl")
+	matricLabels := prom.Labels{
+		"bcname": in.GetBcname(),
+		"type":   "QueryACL",
+	}
+	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
+
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
@@ -176,7 +185,6 @@ func (s *Server) QueryACL(ctx context.Context, in *pb.AclStatus) (*pb.AclStatus,
 			return out, err
 		}
 		out.Acl = acl
-		return out, nil
 	} else if len(contractName) > 0 {
 		if len(methodName) > 0 {
 			acl, confirmed, err := bc.QueryContractMethodACL(contractName, methodName)
@@ -185,14 +193,24 @@ func (s *Server) QueryACL(ctx context.Context, in *pb.AclStatus) (*pb.AclStatus,
 				return out, err
 			}
 			out.Acl = acl
-			return out, nil
 		}
 	}
+	matricLabelsOut := prom.Labels{
+		"bcname": in.GetBcname(),
+		"type":   "QueryACL",
+	}
+	matrics.DefaultServerMetrics.RPCFlowOut.With(matricLabelsOut).Add(float64(proto.Size(out)))
 	return out, nil
 }
 
-// GetAccountContractsRequest get account request
+// GetAccountContracts get account request
 func (s *Server) GetAccountContracts(ctx context.Context, in *pb.GetAccountContractsRequest) (*pb.GetAccountContractsResponse, error) {
+	matricLabels := prom.Labels{
+		"bcname": in.GetBcname(),
+		"type":   "GetAccountContracts",
+	}
+	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
+
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
@@ -211,12 +229,22 @@ func (s *Server) GetAccountContracts(ctx context.Context, in *pb.GetAccountContr
 		return out, err
 	}
 	out.ContractsStatus = contractsStatus
+	matricLabelsOut := prom.Labels{
+		"bcname": in.GetBcname(),
+		"type":   "GetAccountContracts",
+	}
+	matrics.DefaultServerMetrics.RPCFlowOut.With(matricLabelsOut).Add(float64(proto.Size(out)))
 	return out, nil
 }
 
 // QueryTx Get transaction details
 func (s *Server) QueryTx(ctx context.Context, in *pb.TxStatus) (*pb.TxStatus, error) {
-	s.mg.Speed.Add("QueryTx")
+	matricLabels := prom.Labels{
+		"bcname": in.GetBcname(),
+		"type":   "QueryTx",
+	}
+	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
+
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
@@ -230,12 +258,16 @@ func (s *Server) QueryTx(ctx context.Context, in *pb.TxStatus) (*pb.TxStatus, er
 		return out, errors.New("tx has been forbidden")
 	}
 	out = bc.QueryTx(in)
+	matricLabelsOut := prom.Labels{
+		"bcname": in.GetBcname(),
+		"type":   "QueryTx",
+	}
+	matrics.DefaultServerMetrics.RPCFlowOut.With(matricLabelsOut).Add(float64(proto.Size(out)))
 	return out, nil
 }
 
 // GetBalance get balance for account or addr
 func (s *Server) GetBalance(ctx context.Context, in *pb.AddressStatus) (*pb.AddressStatus, error) {
-	s.mg.Speed.Add("GetBalance")
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
@@ -260,7 +292,6 @@ func (s *Server) GetBalance(ctx context.Context, in *pb.AddressStatus) (*pb.Addr
 
 // GetFrozenBalance get balance frozened for account or addr
 func (s *Server) GetFrozenBalance(ctx context.Context, in *pb.AddressStatus) (*pb.AddressStatus, error) {
-	s.mg.Speed.Add("GetFrozenBalance")
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
@@ -283,9 +314,8 @@ func (s *Server) GetFrozenBalance(ctx context.Context, in *pb.AddressStatus) (*p
 	return in, nil
 }
 
-// GetFrozenBalance get balance frozened for account or addr
+// GetBalanceDetail get balance frozened for account or addr
 func (s *Server) GetBalanceDetail(ctx context.Context, in *pb.AddressBalanceStatus) (*pb.AddressBalanceStatus, error) {
-	s.mg.Speed.Add("GetFrozenBalance")
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
@@ -311,7 +341,12 @@ func (s *Server) GetBalanceDetail(ctx context.Context, in *pb.AddressBalanceStat
 
 // GetBlock get block info according to blockID
 func (s *Server) GetBlock(ctx context.Context, in *pb.BlockID) (*pb.Block, error) {
-	s.mg.Speed.Add("GetBlock")
+	matricLabels := prom.Labels{
+		"bcname": in.GetBcname(),
+		"type":   "GetBlock",
+	}
+	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
+
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
@@ -339,27 +374,47 @@ func (s *Server) GetBlock(ctx context.Context, in *pb.BlockID) (*pb.Block, error
 	}
 	s.log.Trace("Start to dealwith GetBlock result", "logid", in.Header.Logid,
 		"blockid", out.Blockid, "height", out.GetBlock().GetHeight())
+	matricLabelsOut := prom.Labels{
+		"bcname": in.GetBcname(),
+		"type":   "GetBlock",
+	}
+	matrics.DefaultServerMetrics.RPCFlowOut.With(matricLabelsOut).Add(float64(proto.Size(out)))
 	return out, nil
 }
 
 // GetBlockChainStatus get systemstatus
 func (s *Server) GetBlockChainStatus(ctx context.Context, in *pb.BCStatus) (*pb.BCStatus, error) {
-	s.mg.Speed.Add("GetBlockChainStatus")
+	matricLabels := prom.Labels{
+		"bcname": in.GetBcname(),
+		"type":   "GetBlockChainStatus",
+	}
+	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
 	bc := s.mg.Get(in.Bcname)
+	out := &pb.BCStatus{Header: &pb.Header{}}
 	if bc == nil {
-		out := pb.BCStatus{Header: &pb.Header{}}
 		out.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
-		return &out, nil
+		return out, nil
 	}
-	return bc.GetBlockChainStatus(in, pb.ViewOption_NONE), nil
+	out = bc.GetBlockChainStatus(in, pb.ViewOption_NONE)
+	matricLabelsOut := prom.Labels{
+		"bcname": in.GetBcname(),
+		"type":   "GetBlockChainStatus",
+	}
+	matrics.DefaultServerMetrics.RPCFlowOut.With(matricLabelsOut).Add(float64(proto.Size(out)))
+	return out, nil
 }
 
 // ConfirmBlockChainStatus confirm is_trunk
 func (s *Server) ConfirmBlockChainStatus(ctx context.Context, in *pb.BCStatus) (*pb.BCTipStatus, error) {
-	s.mg.Speed.Add("ConfirmBlockChainStatus")
+	matricLabels := prom.Labels{
+		"bcname": in.GetBcname(),
+		"type":   "ConfirmBlockChainStatus",
+	}
+	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
+
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
@@ -374,7 +429,6 @@ func (s *Server) ConfirmBlockChainStatus(ctx context.Context, in *pb.BCStatus) (
 
 // GetBlockChains get BlockChains
 func (s *Server) GetBlockChains(ctx context.Context, in *pb.CommonIn) (*pb.BlockChains, error) {
-	s.mg.Speed.Add("GetBlockChains")
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
@@ -385,7 +439,6 @@ func (s *Server) GetBlockChains(ctx context.Context, in *pb.CommonIn) (*pb.Block
 
 // GetSystemStatus get systemstatus
 func (s *Server) GetSystemStatus(ctx context.Context, in *pb.CommonIn) (*pb.SystemsStatusReply, error) {
-	s.mg.Speed.Add("GetSystemStatus")
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
@@ -405,6 +458,7 @@ func (s *Server) GetSystemStatus(ctx context.Context, in *pb.CommonIn) (*pb.Syst
 		if _, ok := systemsStatus.Speeds.BcSpeeds[v]; !ok {
 			systemsStatus.Speeds.BcSpeeds[v] = &pb.BCSpeeds{}
 			systemsStatus.Speeds.BcSpeeds[v].BcSpeed = bc.Speed.GetMaxSpeed()
+			// Attention Please: @zhengqi The speed of systemstatus will be set 0 at v3.9 and will be removed in feature version
 		}
 		systemsStatus.BcsStatus = append(systemsStatus.BcsStatus, bcst)
 	}
@@ -430,6 +484,12 @@ func (s *Server) GetNetURL(ctx context.Context, in *pb.CommonIn) (*pb.RawUrl, er
 
 // SelectUTXOBySize select utxo inputs depending on size
 func (s *Server) SelectUTXOBySize(ctx context.Context, in *pb.UtxoInput) (*pb.UtxoOutput, error) {
+	matricLabels := prom.Labels{
+		"bcname": in.GetBcname(),
+		"type":   "SelectUTXOBySize",
+	}
+	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
+
 	if in.GetHeader() == nil {
 		in.Header = global.GHeader()
 	}
@@ -462,12 +522,22 @@ func (s *Server) SelectUTXOBySize(ctx context.Context, in *pb.UtxoInput) (*pb.Ut
 	s.log.Trace("Merge utxo totalSelect", "totalSelect", totalSelectedStr)
 	out.UtxoList = utxoList
 	out.TotalSelected = totalSelectedStr
-
+	matricLabelsOut := prom.Labels{
+		"bcname": in.GetBcname(),
+		"type":   "SelectUTXOBySize",
+	}
+	matrics.DefaultServerMetrics.RPCFlowOut.With(matricLabelsOut).Add(float64(proto.Size(out)))
 	return out, nil
 }
 
 // SelectUTXO select utxo inputs depending on amount
 func (s *Server) SelectUTXO(ctx context.Context, in *pb.UtxoInput) (*pb.UtxoOutput, error) {
+	matricLabels := prom.Labels{
+		"bcname": in.GetBcname(),
+		"type":   "SelectUTXO",
+	}
+	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
+
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
@@ -505,273 +575,351 @@ func (s *Server) SelectUTXO(ctx context.Context, in *pb.UtxoInput) (*pb.UtxoOutp
 	s.log.Trace("Select utxo totalSelect", "totalSelect", totalSelectedStr)
 	out.UtxoList = utxoList
 	out.TotalSelected = totalSelectedStr
+	matricLabelsOut := prom.Labels{
+		"bcname": in.GetBcname(),
+		"type":   "SelectUTXO",
+	}
+	matrics.DefaultServerMetrics.RPCFlowOut.With(matricLabelsOut).Add(float64(proto.Size(out)))
 	return out, nil
 }
 
-// DeployNativeCode deploy native contract
-func (s *Server) DeployNativeCode(ctx context.Context, request *pb.DeployNativeCodeRequest) (*pb.DeployNativeCodeResponse, error) {
-	return nil, errors.New("old deploy method disabled, using xkernel.Deploy method instead")
-}
-
-// NativeCodeStatus get native contract status
-func (s *Server) NativeCodeStatus(ctx context.Context, request *pb.NativeCodeStatusRequest) (*pb.NativeCodeStatusResponse, error) {
-	return nil, errors.New("old status method disabled")
-}
-
 // DposCandidates get dpos candidates
-func (s *Server) DposCandidates(ctx context.Context, request *pb.DposCandidatesRequest) (*pb.DposCandidatesResponse, error) {
-	bc := s.mg.Get(request.GetBcname())
-	if request.Header == nil {
-		request.Header = global.GHeader()
+func (s *Server) DposCandidates(ctx context.Context, in *pb.DposCandidatesRequest) (*pb.DposCandidatesResponse, error) {
+	matricLabels := prom.Labels{
+		"bcname": in.GetBcname(),
+		"type":   "DposCandidates",
+	}
+	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
+
+	bc := s.mg.Get(in.GetBcname())
+	if in.Header == nil {
+		in.Header = global.GHeader()
 	}
 
-	response := &pb.DposCandidatesResponse{Header: &pb.Header{Logid: request.Header.Logid}}
+	out := &pb.DposCandidatesResponse{Header: &pb.Header{Logid: in.Header.Logid}}
 	if bc == nil {
-		response.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
-		s.log.Warn("DposCandidates failed to get blockchain", "logid", request.Header.Logid)
-		return response, nil
+		out.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
+		s.log.Warn("DposCandidates failed to get blockchain", "logid", in.Header.Logid)
+		return out, nil
 	}
 	if bc.GetConsType() != consensus.ConsensusTypeTdpos {
-		response.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
-		s.log.Warn("DposCandidates failed to check consensus type", "logid", request.Header.Logid)
-		return response, errors.New("The consensus is not tdpos")
+		out.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
+		s.log.Warn("DposCandidates failed to check consensus type", "logid", in.Header.Logid)
+		return out, errors.New("The consensus is not tdpos")
 	}
 
 	candidates, err := bc.GetDposCandidates()
 	if err != nil {
-		response.Header.Error = pb.XChainErrorEnum_DPOS_QUERY_ERROR
-		s.log.Warn("DposCandidates error", "logid", request.Header.Logid, "error", err)
-		return response, err
+		out.Header.Error = pb.XChainErrorEnum_DPOS_QUERY_ERROR
+		s.log.Warn("DposCandidates error", "logid", in.Header.Logid, "error", err)
+		return out, err
 	}
-	response.Header.Error = pb.XChainErrorEnum_SUCCESS
-	response.CandidatesInfo = candidates
-	return response, nil
+	out.Header.Error = pb.XChainErrorEnum_SUCCESS
+	out.CandidatesInfo = candidates
+	matricLabelsOut := prom.Labels{
+		"bcname": in.GetBcname(),
+		"type":   "DposCandidates",
+	}
+	matrics.DefaultServerMetrics.RPCFlowOut.With(matricLabelsOut).Add(float64(proto.Size(out)))
+	return out, nil
 }
 
 // DposNominateRecords get dpos 提名者提名记录
-func (s *Server) DposNominateRecords(ctx context.Context, request *pb.DposNominateRecordsRequest) (*pb.DposNominateRecordsResponse, error) {
-	bc := s.mg.Get(request.GetBcname())
-	if request.Header == nil {
-		request.Header = global.GHeader()
+func (s *Server) DposNominateRecords(ctx context.Context, in *pb.DposNominateRecordsRequest) (*pb.DposNominateRecordsResponse, error) {
+	matricLabels := prom.Labels{
+		"bcname": in.GetBcname(),
+		"type":   "DposNominateRecords",
 	}
-	response := &pb.DposNominateRecordsResponse{Header: &pb.Header{Logid: request.Header.Logid}}
+	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
+
+	bc := s.mg.Get(in.GetBcname())
+	if in.Header == nil {
+		in.Header = global.GHeader()
+	}
+	out := &pb.DposNominateRecordsResponse{Header: &pb.Header{Logid: in.Header.Logid}}
 
 	if bc == nil {
-		response.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
-		s.log.Warn("DposNominateRecords failed to get blockchain", "logid", request.Header.Logid)
-		return response, nil
+		out.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
+		s.log.Warn("DposNominateRecords failed to get blockchain", "logid", in.Header.Logid)
+		return out, nil
 	}
 
 	if bc.GetConsType() != consensus.ConsensusTypeTdpos {
-		response.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
-		s.log.Warn("DposNominateRecords failed to check consensus type", "logid", request.Header.Logid)
-		return response, errors.New("The consensus is not tdpos")
+		out.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
+		s.log.Warn("DposNominateRecords failed to check consensus type", "logid", in.Header.Logid)
+		return out, errors.New("The consensus is not tdpos")
 	}
 	s.log.Info("DposNominateRecords GetDposNominateRecords")
-	nominateRecords, err := bc.GetDposNominateRecords(request.Address)
+	nominateRecords, err := bc.GetDposNominateRecords(in.Address)
 	if err != nil {
-		response.Header.Error = pb.XChainErrorEnum_DPOS_QUERY_ERROR
-		s.log.Warn("DposNominateRecords error", "logid", request.Header.Logid, "error", err)
-		return response, err
+		out.Header.Error = pb.XChainErrorEnum_DPOS_QUERY_ERROR
+		s.log.Warn("DposNominateRecords error", "logid", in.Header.Logid, "error", err)
+		return out, err
 	}
-	response.Header.Error = pb.XChainErrorEnum_SUCCESS
-	response.NominateRecords = nominateRecords
-	return response, nil
+	out.Header.Error = pb.XChainErrorEnum_SUCCESS
+	out.NominateRecords = nominateRecords
+	matricLabelsOut := prom.Labels{
+		"bcname": in.GetBcname(),
+		"type":   "DposNominateRecords",
+	}
+	matrics.DefaultServerMetrics.RPCFlowOut.With(matricLabelsOut).Add(float64(proto.Size(out)))
+	return out, nil
 }
 
 // DposNomineeRecords 候选人被提名记录
-func (s *Server) DposNomineeRecords(ctx context.Context, request *pb.DposNomineeRecordsRequest) (*pb.DposNomineeRecordsResponse, error) {
-	bc := s.mg.Get(request.GetBcname())
-	if request.Header == nil {
-		request.Header = global.GHeader()
+func (s *Server) DposNomineeRecords(ctx context.Context, in *pb.DposNomineeRecordsRequest) (*pb.DposNomineeRecordsResponse, error) {
+	matricLabels := prom.Labels{
+		"bcname": in.GetBcname(),
+		"type":   "DposNomineeRecords",
 	}
-	response := &pb.DposNomineeRecordsResponse{Header: &pb.Header{Logid: request.Header.Logid}}
+	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
+
+	bc := s.mg.Get(in.GetBcname())
+	if in.Header == nil {
+		in.Header = global.GHeader()
+	}
+	out := &pb.DposNomineeRecordsResponse{Header: &pb.Header{Logid: in.Header.Logid}}
 	if bc == nil {
-		response.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
-		s.log.Warn("DposNominatedRecords failed to get blockchain", "logid", request.Header.Logid)
-		return response, nil
+		out.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
+		s.log.Warn("DposNominatedRecords failed to get blockchain", "logid", in.Header.Logid)
+		return out, nil
 	}
 
 	if bc.GetConsType() != consensus.ConsensusTypeTdpos {
-		response.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
-		s.log.Warn("DposNominatedRecords failed to check consensus type", "logid", request.Header.Logid)
-		return response, errors.New("The consensus is not tdpos")
+		out.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
+		s.log.Warn("DposNominatedRecords failed to check consensus type", "logid", in.Header.Logid)
+		return out, errors.New("The consensus is not tdpos")
 	}
 
-	txid, err := bc.GetDposNominatedRecords(request.Address)
+	txid, err := bc.GetDposNominatedRecords(in.Address)
 	if err != nil {
-		response.Header.Error = pb.XChainErrorEnum_DPOS_QUERY_ERROR
-		s.log.Warn("DposNominatedRecords error", "logid", request.Header.Logid, "error", err)
-		return response, err
+		out.Header.Error = pb.XChainErrorEnum_DPOS_QUERY_ERROR
+		s.log.Warn("DposNominatedRecords error", "logid", in.Header.Logid, "error", err)
+		return out, err
 	}
-	response.Header.Error = pb.XChainErrorEnum_SUCCESS
-	response.Txid = txid
-	return response, nil
+	out.Header.Error = pb.XChainErrorEnum_SUCCESS
+	out.Txid = txid
+	matricLabelsOut := prom.Labels{
+		"bcname": in.GetBcname(),
+		"type":   "DposNomineeRecords",
+	}
+	matrics.DefaultServerMetrics.RPCFlowOut.With(matricLabelsOut).Add(float64(proto.Size(out)))
+	return out, nil
 }
 
 // DposVoteRecords 选民投票记录
-func (s *Server) DposVoteRecords(ctx context.Context, request *pb.DposVoteRecordsRequest) (*pb.DposVoteRecordsResponse, error) {
-	bc := s.mg.Get(request.GetBcname())
-	if request.Header == nil {
-		request.Header = global.GHeader()
+func (s *Server) DposVoteRecords(ctx context.Context, in *pb.DposVoteRecordsRequest) (*pb.DposVoteRecordsResponse, error) {
+	matricLabels := prom.Labels{
+		"bcname": in.GetBcname(),
+		"type":   "DposVoteRecords",
 	}
-	response := &pb.DposVoteRecordsResponse{Header: &pb.Header{Logid: request.Header.Logid}}
+	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
+
+	bc := s.mg.Get(in.GetBcname())
+	if in.Header == nil {
+		in.Header = global.GHeader()
+	}
+	out := &pb.DposVoteRecordsResponse{Header: &pb.Header{Logid: in.Header.Logid}}
 	if bc == nil {
-		response.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
-		s.log.Warn("DposVoteRecords failed to get blockchain", "logid", request.Header.Logid)
-		return response, nil
+		out.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
+		s.log.Warn("DposVoteRecords failed to get blockchain", "logid", in.Header.Logid)
+		return out, nil
 	}
 
 	if bc.GetConsType() != consensus.ConsensusTypeTdpos {
-		response.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
-		s.log.Warn("DposVoteRecords failed to check consensus type", "logid", request.Header.Logid)
-		return response, errors.New("The consensus is not tdpos")
+		out.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
+		s.log.Warn("DposVoteRecords failed to check consensus type", "logid", in.Header.Logid)
+		return out, errors.New("The consensus is not tdpos")
 	}
 
-	voteRecords, err := bc.GetDposVoteRecords(request.Address)
+	voteRecords, err := bc.GetDposVoteRecords(in.Address)
 	if err != nil {
-		response.Header.Error = pb.XChainErrorEnum_DPOS_QUERY_ERROR
-		s.log.Warn("DposVoteRecords error", "logid", request.Header.Logid, "error", err)
-		return response, err
+		out.Header.Error = pb.XChainErrorEnum_DPOS_QUERY_ERROR
+		s.log.Warn("DposVoteRecords error", "logid", in.Header.Logid, "error", err)
+		return out, err
 	}
-	response.Header.Error = pb.XChainErrorEnum_SUCCESS
-	response.VoteTxidRecords = voteRecords
-	return response, nil
+	out.Header.Error = pb.XChainErrorEnum_SUCCESS
+	out.VoteTxidRecords = voteRecords
+	matricLabelsOut := prom.Labels{
+		"bcname": in.GetBcname(),
+		"type":   "DposVoteRecords",
+	}
+	matrics.DefaultServerMetrics.RPCFlowOut.With(matricLabelsOut).Add(float64(proto.Size(out)))
+	return out, nil
 }
 
 // DposVotedRecords 候选人被投票记录
-func (s *Server) DposVotedRecords(ctx context.Context, request *pb.DposVotedRecordsRequest) (*pb.DposVotedRecordsResponse, error) {
-	bc := s.mg.Get(request.GetBcname())
-	if request.Header == nil {
-		request.Header = global.GHeader()
+func (s *Server) DposVotedRecords(ctx context.Context, in *pb.DposVotedRecordsRequest) (*pb.DposVotedRecordsResponse, error) {
+	matricLabels := prom.Labels{
+		"bcname": in.GetBcname(),
+		"type":   "DposVotedRecords",
 	}
-	response := &pb.DposVotedRecordsResponse{Header: &pb.Header{Logid: request.Header.Logid}}
+	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
+
+	bc := s.mg.Get(in.GetBcname())
+	if in.Header == nil {
+		in.Header = global.GHeader()
+	}
+	out := &pb.DposVotedRecordsResponse{Header: &pb.Header{Logid: in.Header.Logid}}
 	if bc == nil {
-		response.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
-		s.log.Warn("DposVotedRecords failed to get blockchain", "logid", request.Header.Logid)
-		return response, nil
+		out.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
+		s.log.Warn("DposVotedRecords failed to get blockchain", "logid", in.Header.Logid)
+		return out, nil
 	}
 
 	if bc.GetConsType() != consensus.ConsensusTypeTdpos {
-		response.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
-		s.log.Warn("DposVoteRecords failed to check consensus type", "logid", request.Header.Logid)
-		return response, errors.New("The consensus is not tdpos")
+		out.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
+		s.log.Warn("DposVoteRecords failed to check consensus type", "logid", in.Header.Logid)
+		return out, errors.New("The consensus is not tdpos")
 	}
-	votedRecords, err := bc.GetDposVotedRecords(request.Address)
+	votedRecords, err := bc.GetDposVotedRecords(in.Address)
 	if err != nil {
-		response.Header.Error = pb.XChainErrorEnum_DPOS_QUERY_ERROR
-		s.log.Warn("GetDposVotedRecords error", "logid", request.Header.Logid, "error", err)
-		return response, err
+		out.Header.Error = pb.XChainErrorEnum_DPOS_QUERY_ERROR
+		s.log.Warn("GetDposVotedRecords error", "logid", in.Header.Logid, "error", err)
+		return out, err
 	}
-	response.Header.Error = pb.XChainErrorEnum_SUCCESS
-	response.VotedTxidRecords = votedRecords
-	return response, nil
+	out.Header.Error = pb.XChainErrorEnum_SUCCESS
+	out.VotedTxidRecords = votedRecords
+	matricLabelsOut := prom.Labels{
+		"bcname": in.GetBcname(),
+		"type":   "DposVotedRecords",
+	}
+	matrics.DefaultServerMetrics.RPCFlowOut.With(matricLabelsOut).Add(float64(proto.Size(out)))
+	return out, nil
 }
 
 // DposCheckResults get dpos 检查结果
-func (s *Server) DposCheckResults(ctx context.Context, request *pb.DposCheckResultsRequest) (*pb.DposCheckResultsResponse, error) {
-	bc := s.mg.Get(request.GetBcname())
-	if request.Header == nil {
-		request.Header = global.GHeader()
+func (s *Server) DposCheckResults(ctx context.Context, in *pb.DposCheckResultsRequest) (*pb.DposCheckResultsResponse, error) {
+	matricLabels := prom.Labels{
+		"bcname": in.GetBcname(),
+		"type":   "DposCheckResults",
+	}
+	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
+
+	bc := s.mg.Get(in.GetBcname())
+	if in.Header == nil {
+		in.Header = global.GHeader()
 	}
 
-	response := &pb.DposCheckResultsResponse{Header: &pb.Header{Logid: request.Header.Logid}}
+	out := &pb.DposCheckResultsResponse{Header: &pb.Header{Logid: in.Header.Logid}}
 	if bc == nil {
-		response.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
-		s.log.Warn("DposVotedRecords failed to get blockchain", "logid", request.Header.Logid)
-		return response, nil
+		out.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
+		s.log.Warn("DposVotedRecords failed to get blockchain", "logid", in.Header.Logid)
+		return out, nil
 	}
 
 	if bc.GetConsType() != consensus.ConsensusTypeTdpos {
-		response.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
-		s.log.Warn("DposVoteRecords failed to check consensus type", "logid", request.Header.Logid)
-		return response, errors.New("The consensus is not tdpos")
+		out.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
+		s.log.Warn("DposVoteRecords failed to check consensus type", "logid", in.Header.Logid)
+		return out, errors.New("The consensus is not tdpos")
 	}
 
-	checkResult, err := bc.GetCheckResults(request.Term)
+	checkResult, err := bc.GetCheckResults(in.Term)
 	if err != nil {
-		response.Header.Error = pb.XChainErrorEnum_DPOS_QUERY_ERROR
-		s.log.Warn("DposCheckResults error", "logid", request.Header.Logid, "error", err)
-		return response, err
+		out.Header.Error = pb.XChainErrorEnum_DPOS_QUERY_ERROR
+		s.log.Warn("DposCheckResults error", "logid", in.Header.Logid, "error", err)
+		return out, err
 	}
-	response.Term = request.Term
-	response.CheckResult = checkResult
-	return response, nil
+	out.Term = in.Term
+	out.CheckResult = checkResult
+	matricLabelsOut := prom.Labels{
+		"bcname": in.GetBcname(),
+		"type":   "DposCheckResults",
+	}
+	matrics.DefaultServerMetrics.RPCFlowOut.With(matricLabelsOut).Add(float64(proto.Size(out)))
+	return out, nil
 }
 
 // DposStatus get dpos current status
-func (s *Server) DposStatus(ctx context.Context, request *pb.DposStatusRequest) (*pb.DposStatusResponse, error) {
-	bc := s.mg.Get(request.GetBcname())
-	if request.Header == nil {
-		request.Header = global.GHeader()
+func (s *Server) DposStatus(ctx context.Context, in *pb.DposStatusRequest) (*pb.DposStatusResponse, error) {
+	matricLabels := prom.Labels{
+		"bcname": in.GetBcname(),
+		"type":   "DposStatus",
 	}
-	response := &pb.DposStatusResponse{Header: &pb.Header{Logid: request.Header.Logid}, Status: &pb.DposStatus{}}
+	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
+
+	bc := s.mg.Get(in.GetBcname())
+	if in.Header == nil {
+		in.Header = global.GHeader()
+	}
+	out := &pb.DposStatusResponse{Header: &pb.Header{Logid: in.Header.Logid}, Status: &pb.DposStatus{}}
 	if bc == nil {
-		response.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE
-		s.log.Warn("DposStatus failed  to get blockchain", "logid", request.Header.Logid)
-		return response, nil
+		out.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE
+		s.log.Warn("DposStatus failed  to get blockchain", "logid", in.Header.Logid)
+		return out, nil
 	}
 
 	if bc.GetConsType() != consensus.ConsensusTypeTdpos {
-		response.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE
-		s.log.Warn("DposStatus failed to check consensus type", "logid", request.Header.Logid)
-		return response, errors.New("The consensus is not tdpos")
+		out.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE
+		s.log.Warn("DposStatus failed to check consensus type", "logid", in.Header.Logid)
+		return out, errors.New("The consensus is not tdpos")
 	}
 
 	status := bc.GetConsStatus()
-	response.Status.Term = status.Term
-	response.Status.BlockNum = status.BlockNum
-	response.Status.Proposer = status.Proposer
+	out.Status.Term = status.Term
+	out.Status.BlockNum = status.BlockNum
+	out.Status.Proposer = status.Proposer
 	checkResult, err := bc.GetCheckResults(status.Term)
 	if err != nil {
-		response.Header.Error = pb.XChainErrorEnum_DPOS_QUERY_ERROR
-		s.log.Warn("DposStatus error", "logid", request.Header.Logid, "error", err)
-		return response, err
+		out.Header.Error = pb.XChainErrorEnum_DPOS_QUERY_ERROR
+		s.log.Warn("DposStatus error", "logid", in.Header.Logid, "error", err)
+		return out, err
 	}
-	response.Status.CheckResult = checkResult
-	response.Status.ProposerNum = int64(len(checkResult))
-	return response, nil
+	out.Status.CheckResult = checkResult
+	out.Status.ProposerNum = int64(len(checkResult))
+	matricLabelsOut := prom.Labels{
+		"bcname": in.GetBcname(),
+		"type":   "DposStatus",
+	}
+	matrics.DefaultServerMetrics.RPCFlowOut.With(matricLabelsOut).Add(float64(proto.Size(out)))
+	return out, nil
 }
 
 // PreExecWithSelectUTXO preExec + selectUtxo
-func (s *Server) PreExecWithSelectUTXO(ctx context.Context, request *pb.PreExecWithSelectUTXORequest) (*pb.PreExecWithSelectUTXOResponse, error) {
+func (s *Server) PreExecWithSelectUTXO(ctx context.Context, in *pb.PreExecWithSelectUTXORequest) (*pb.PreExecWithSelectUTXOResponse, error) {
+	matricLabels := prom.Labels{
+		"bcname": in.GetBcname(),
+		"type":   "PreExecWithSelectUTXO",
+	}
+	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
+
 	// verify input param
-	if request == nil {
+	if in == nil {
 		return nil, errors.New("request is invalid")
 	}
-	if request.Header == nil {
-		request.Header = global.GHeader()
+	if in.Header == nil {
+		in.Header = global.GHeader()
 	}
 
 	// initialize output
-	responses := &pb.PreExecWithSelectUTXOResponse{Header: &pb.Header{Logid: request.Header.Logid}}
-	responses.Bcname = request.GetBcname()
+	out := &pb.PreExecWithSelectUTXOResponse{Header: &pb.Header{Logid: in.Header.Logid}}
+	out.Bcname = in.GetBcname()
 	// for PreExec
-	preExecRequest := request.GetRequest()
+	preExecRequest := in.GetRequest()
 	fee := int64(0)
 	if preExecRequest != nil {
-		preExecRequest.Header = request.Header
+		preExecRequest.Header = in.Header
 		invokeRPCResponse, preErr := s.PreExec(ctx, preExecRequest)
 		if preErr != nil {
 			return nil, preErr
 		}
 		invokeResponse := invokeRPCResponse.GetResponse()
-		responses.Response = invokeResponse
-		fee = responses.Response.GetGasUsed()
+		out.Response = invokeResponse
+		fee = out.Response.GetGasUsed()
 	}
 
-	totalAmount := request.GetTotalAmount() + fee
+	totalAmount := in.GetTotalAmount() + fee
 
 	if totalAmount > 0 {
 		utxoInput := &pb.UtxoInput{
-			Bcname:    request.GetBcname(),
-			Address:   request.GetAddress(),
+			Bcname:    in.GetBcname(),
+			Address:   in.GetAddress(),
 			TotalNeed: strconv.FormatInt(totalAmount, 10),
-			Publickey: request.GetSignInfo().GetPublicKey(),
-			UserSign:  request.GetSignInfo().GetSign(),
-			NeedLock:  request.GetNeedLock(),
+			Publickey: in.GetSignInfo().GetPublicKey(),
+			UserSign:  in.GetSignInfo().GetSign(),
+			NeedLock:  in.GetNeedLock(),
 		}
-		if ok := validUtxoAccess(utxoInput, s.mg.Get(utxoInput.GetBcname()), request.GetTotalAmount()); !ok {
+		if ok := validUtxoAccess(utxoInput, s.mg.Get(utxoInput.GetBcname()), in.GetTotalAmount()); !ok {
 			return nil, errors.New("validUtxoAccess failed")
 		}
 		utxoOutput, selectErr := s.SelectUTXO(ctx, utxoInput)
@@ -781,43 +929,64 @@ func (s *Server) PreExecWithSelectUTXO(ctx context.Context, request *pb.PreExecW
 		if utxoOutput.Header.Error != pb.XChainErrorEnum_SUCCESS {
 			return nil, common.ServerError{utxoOutput.Header.Error}
 		}
-		responses.UtxoOutput = utxoOutput
+		out.UtxoOutput = utxoOutput
 	}
-
-	return responses, nil
+	matricLabelsOut := prom.Labels{
+		"bcname": in.GetBcname(),
+		"type":   "PreExecWithSelectUTXO",
+	}
+	matrics.DefaultServerMetrics.RPCFlowOut.With(matricLabelsOut).Add(float64(proto.Size(out)))
+	return out, nil
 }
 
 // PreExec smart contract preExec process
-func (s *Server) PreExec(ctx context.Context, request *pb.InvokeRPCRequest) (*pb.InvokeRPCResponse, error) {
-	s.log.Trace("Got PreExec req", "req", request)
-	bc := s.mg.Get(request.GetBcname())
-	if request.Header == nil {
-		request.Header = global.GHeader()
+func (s *Server) PreExec(ctx context.Context, in *pb.InvokeRPCRequest) (*pb.InvokeRPCResponse, error) {
+	matricLabels := prom.Labels{
+		"bcname": in.GetBcname(),
+		"type":   "PreExec",
 	}
-	rsps := &pb.InvokeRPCResponse{Header: &pb.Header{Logid: request.Header.Logid}}
+	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
+
+	s.log.Trace("Got PreExec req", "req", in)
+	bc := s.mg.Get(in.GetBcname())
+	if in.Header == nil {
+		in.Header = global.GHeader()
+	}
+	out := &pb.InvokeRPCResponse{Header: &pb.Header{Logid: in.Header.Logid}}
 	if bc == nil {
-		rsps.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
-		s.log.Warn("failed to get blockchain before query", "logid", request.Header.Logid)
-		return rsps, nil
+		out.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
+		s.log.Warn("failed to get blockchain before query", "logid", in.Header.Logid)
+		return out, nil
 	}
 	hd := &global.XContext{Timer: global.NewXTimer()}
-	vmResponse, err := bc.PreExec(request, hd)
+	vmResponse, err := bc.PreExec(in, hd)
 	if err != nil {
 		return nil, err
 	}
 	txInputs := vmResponse.GetInputs()
 	for _, txInput := range txInputs {
 		if bc.QueryTxFromForbidden(txInput.GetRefTxid()) {
-			return rsps, errors.New("RefTxid has been forbidden")
+			return out, errors.New("RefTxid has been forbidden")
 		}
 	}
-	rsps.Response = vmResponse
-	s.log.Info("PreExec", "logid", request.Header.Logid, "cost", hd.Timer.Print())
-	return rsps, nil
+	out.Response = vmResponse
+	s.log.Info("PreExec", "logid", in.Header.Logid, "cost", hd.Timer.Print())
+	matricLabelsOut := prom.Labels{
+		"bcname": in.GetBcname(),
+		"type":   "PreExec",
+	}
+	matrics.DefaultServerMetrics.RPCFlowOut.With(matricLabelsOut).Add(float64(proto.Size(out)))
+	return out, nil
 }
 
 // GetBlockByHeight  get trunk block by height
 func (s *Server) GetBlockByHeight(ctx context.Context, in *pb.BlockHeight) (*pb.Block, error) {
+	matricLabels := prom.Labels{
+		"bcname": in.GetBcname(),
+		"type":   "GetBlockByHeight",
+	}
+	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
+
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
@@ -843,76 +1012,102 @@ func (s *Server) GetBlockByHeight(ctx context.Context, in *pb.BlockHeight) (*pb.
 	if transactions != nil {
 		out.Block.Transactions = transactionsFilter
 	}
-
 	s.log.Trace("GetBlockByHeight result", "logid", in.Header.Logid, "bcname", in.Bcname, "height", in.Height,
 		"blockid", out.GetBlockid())
+	matricLabelsOut := prom.Labels{
+		"bcname": in.GetBcname(),
+		"type":   "GetBlockByHeight",
+	}
+	matrics.DefaultServerMetrics.RPCFlowOut.With(matricLabelsOut).Add(float64(proto.Size(out)))
 	return out, nil
 }
 
-func (s *Server) GetAccountByAK(ctx context.Context, request *pb.AK2AccountRequest) (*pb.AK2AccountResponse, error) {
-	if request.Header == nil {
-		request.Header = global.GHeader()
+// GetAccountByAK get account list with contain ak
+func (s *Server) GetAccountByAK(ctx context.Context, in *pb.AK2AccountRequest) (*pb.AK2AccountResponse, error) {
+	matricLabels := prom.Labels{
+		"bcname": in.GetBcname(),
+		"type":   "GetAccountByAK",
 	}
-	bc := s.mg.Get(request.Bcname)
+	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
+
+	if in.Header == nil {
+		in.Header = global.GHeader()
+	}
+	bc := s.mg.Get(in.Bcname)
 	if bc == nil {
 		out := pb.AK2AccountResponse{Header: &pb.Header{}}
 		out.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
 		return &out, nil
 	}
 	out := &pb.AK2AccountResponse{
-		Bcname: request.Bcname,
+		Bcname: in.Bcname,
 		Header: global.GHeader(),
 	}
-	accounts, err := bc.QueryAccountContainAK(request.GetAddress())
+	accounts, err := bc.QueryAccountContainAK(in.GetAddress())
 	if err != nil || accounts == nil {
 		return out, err
 	}
 	out.Account = accounts
+	matricLabelsOut := prom.Labels{
+		"bcname": in.GetBcname(),
+		"type":   "GetAccountByAK",
+	}
+	matrics.DefaultServerMetrics.RPCFlowOut.With(matricLabelsOut).Add(float64(proto.Size(out)))
 	return out, err
 }
 
 // GetAddressContracts get contracts of accounts contain a specific address
-func (s *Server) GetAddressContracts(ctx context.Context, request *pb.AddressContractsRequest) (*pb.AddressContractsResponse, error) {
-	if request.Header == nil {
-		request.Header = global.GHeader()
+func (s *Server) GetAddressContracts(ctx context.Context, in *pb.AddressContractsRequest) (*pb.AddressContractsResponse, error) {
+	matricLabels := prom.Labels{
+		"bcname": in.GetBcname(),
+		"type":   "GetAddressContracts",
 	}
-	res := &pb.AddressContractsResponse{
+	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
+
+	if in.Header == nil {
+		in.Header = global.GHeader()
+	}
+	out := &pb.AddressContractsResponse{
 		Header: &pb.Header{
 			Error: pb.XChainErrorEnum_SUCCESS,
-			Logid: request.GetHeader().GetLogid(),
+			Logid: in.GetHeader().GetLogid(),
 		},
 	}
-	bc := s.mg.Get(request.GetBcname())
+	bc := s.mg.Get(in.GetBcname())
 	if bc == nil {
-		res.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE
-		s.log.Warn("GetAddressContracts:failed to get blockchain before query", "logid", res.Header.Logid)
-		return res, nil
+		out.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE
+		s.log.Warn("GetAddressContracts:failed to get blockchain before query", "logid", out.Header.Logid)
+		return out, nil
 	}
 
 	// get all accounts which contains this address
-	accounts, err := bc.QueryAccountContainAK(request.GetAddress())
+	accounts, err := bc.QueryAccountContainAK(in.GetAddress())
 	if err != nil || accounts == nil {
-		res.Header.Error = pb.XChainErrorEnum_SERVICE_REFUSED_ERROR
-		s.log.Warn("GetAddressContracts: error occurred", "logid", res.Header.Logid, "error", err)
-		return res, err
+		out.Header.Error = pb.XChainErrorEnum_SERVICE_REFUSED_ERROR
+		s.log.Warn("GetAddressContracts: error occurred", "logid", out.Header.Logid, "error", err)
+		return out, err
 	}
 
 	// get contracts for each account
-	res.Contracts = make(map[string]*pb.ContractList)
+	out.Contracts = make(map[string]*pb.ContractList)
 	for _, account := range accounts {
-		contracts, err := bc.GetAccountContractsStatus(account, request.GetNeedContent())
+		contracts, err := bc.GetAccountContractsStatus(account, in.GetNeedContent())
 		if err != nil {
-			s.log.Warn("GetAddressContracts partial account error", "logid", res.Header.Logid, "error", err)
+			s.log.Warn("GetAddressContracts partial account error", "logid", out.Header.Logid, "error", err)
 			continue
 		}
 		if len(contracts) > 0 {
-			res.Contracts[account] = &pb.ContractList{
+			out.Contracts[account] = &pb.ContractList{
 				ContractStatus: contracts,
 			}
 		}
 	}
-
-	return res, nil
+	matricLabelsOut := prom.Labels{
+		"bcname": in.GetBcname(),
+		"type":   "GetAddressContracts",
+	}
+	matrics.DefaultServerMetrics.RPCFlowOut.With(matricLabelsOut).Add(float64(proto.Size(out)))
+	return out, nil
 }
 
 // Output access log and cost time
@@ -925,6 +1120,7 @@ type HeaderInterface interface {
 	GetHeader() *pb.Header
 }
 
+// UnaryServerInterceptor provides a hook to intercept the execution of a unary RPC on the server.
 func (s *Server) UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler) (resp interface{}, err error) {
@@ -959,13 +1155,13 @@ func (s *Server) UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 }
 
 // output rpc request access log
-func (s *Server) accessLog(lg xlog.LogInterface, logId string, others ...interface{}) *rpcAccessLog {
+func (s *Server) accessLog(lg xlog.LogInterface, logID string, others ...interface{}) *rpcAccessLog {
 	// check param
 	if lg == nil {
 		return nil
 	}
 
-	xlf, _ := xlog.NewLogger(lg, logId)
+	xlf, _ := xlog.NewLogger(lg, logID)
 	alog := &rpcAccessLog{
 		xlogf:  xlf,
 		xtimer: global.NewXTimer(),
@@ -979,7 +1175,7 @@ func (s *Server) accessLog(lg xlog.LogInterface, logId string, others ...interfa
 }
 
 // output rpc request ending log
-func (t *Server) endingLog(alog *rpcAccessLog, others ...interface{}) {
+func (s *Server) endingLog(alog *rpcAccessLog, others ...interface{}) {
 	if alog == nil || alog.xlogf == nil || alog.xtimer == nil {
 		return
 	}
@@ -1082,6 +1278,10 @@ func startTCPServer(xchainmg *xchaincore.XChainMG) error {
 		// 因为两者的ServerOption都包含了prometheus的拦截器，所以都可以监控到
 		// Must be called after RegisterXchainServer
 		grpc_prometheus.Register(s)
+		prom.MustRegister(matrics.DefaultServerMetrics.RPCFlowIn)
+		prom.MustRegister(matrics.DefaultServerMetrics.RPCFlowOut)
+		prom.MustRegister(matrics.DefaultServerMetrics.P2PFlowIn)
+		prom.MustRegister(matrics.DefaultServerMetrics.P2PFlowOut)
 		http.Handle("/metrics", promhttp.Handler())
 		go func() {
 			panic(http.ListenAndServe(cfg.TCPServer.MetricPort, nil))

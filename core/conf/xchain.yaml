@@ -98,7 +98,7 @@ coreConnection: false
 txidCacheExpiredTime: "10s"
 
 # 是否压缩交易/区块
-enableCompress: true
+#enableCompress: true
 
 # 块广播模式
 blockBroadcaseMode: 0
