@@ -413,18 +413,15 @@ func ExportNewAccount(path string, privateKey *ecdsa.PrivateKey) error {
 	}
 	err = writeFileUsingFilename(path+"private.key", []byte(jsonPrivateKey))
 	if err != nil {
-		log.Printf("Export private key file failed, the err is %v", err)
-		return err
+		return fmt.Errorf("Export private key file failed, the err is %v", err)
 	}
 	err = writeFileUsingFilename(path+"public.key", []byte(jsonPublicKey))
 	if err != nil {
-		log.Printf("Export public key file failed, the err is %v", err)
-		return err
+		return fmt.Errorf("Export public key file failed, the err is %v", err)
 	}
 	err = writeFileUsingFilename(path+"address", []byte(address))
 	if err != nil {
-		log.Printf("Export address file failed, the err is %v", err)
-		return err
+		return fmt.Errorf("Export address file failed, the err is %v", err)
 	}
 	return err
 }
