@@ -1,7 +1,6 @@
 package utxo
 
 import (
-	"encoding/hex"
 	"errors"
 
 	"github.com/xuperchain/xuperchain/core/contract"
@@ -20,12 +19,10 @@ var (
 )
 
 // SystemCall used to call contract from systerm
-func (uv *UtxoVM) SystemCall(reader xmodel.XMReader, contractName, methodName, watchedKey string, args map[string][]byte) ([]byte, int64, int64, error) {
-	var lastConfirmedTime int64
-	var lastConfirmedHeight int64
+func (uv *UtxoVM) SystemCall(reader xmodel.XMReader, contractName, methodName string, args map[string][]byte) ([]byte, error) {
 	modelCache, err := xmodel.NewXModelCache(reader, uv)
 	if err != nil {
-		return nil, lastConfirmedTime, lastConfirmedHeight, err
+		return nil, err
 	}
 	contextConfig := &contract.ContextConfig{
 		XMCache:        modelCache,
@@ -34,27 +31,16 @@ func (uv *UtxoVM) SystemCall(reader xmodel.XMReader, contractName, methodName, w
 	}
 	vm, err := uv.vmMgr3.GetVM("wasm")
 	if err != nil {
-		return nil, lastConfirmedTime, lastConfirmedHeight, err
+		return nil, err
 	}
 	ctx, err := vm.NewContext(contextConfig)
 	if err != nil {
-		return nil, lastConfirmedTime, lastConfirmedHeight, err
+		return nil, err
 	}
 	invokeRes, invokeErr := ctx.Invoke(methodName, args)
-	if invokeErr != nil {
-		ctx.Release()
-		return nil, lastConfirmedTime, lastConfirmedHeight, invokeErr
-	}
 	ctx.Release()
-	vData, err := reader.Get(contractName, []byte(watchedKey))
-	if err != nil {
-		uv.xlog.Error("SystemCall get nothing from XMReader", "RefTxid", hex.EncodeToString(vData.GetRefTxid()))
-		return nil, lastConfirmedTime, lastConfirmedHeight, ErrorNotConfirm
+	if invokeErr != nil {
+		return nil, invokeErr
 	}
-	block, err := uv.ledger.QueryBlockByTxid(vData.GetRefTxid())
-	if block.GetTimestamp() > lastConfirmedTime {
-		lastConfirmedTime = block.GetTimestamp()
-		lastConfirmedHeight = block.GetHeight()
-	}
-	return invokeRes.Body, lastConfirmedTime, lastConfirmedHeight, err
+	return invokeRes.Body, err
 }

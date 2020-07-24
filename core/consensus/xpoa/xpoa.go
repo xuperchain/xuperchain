@@ -352,46 +352,41 @@ Again:
 // getCurrentValidates return current validates from xmodel
 // 注意：当查不到的时候或者一个候选人都没查到则默认取初始化的值
 // TODO: zq needs to be optimized in future because
-func (xpoa *XPoa) getCurrentValidates(curHeight int64) ([]*cons_base.CandidateInfo, int64, int64, error) {
+func (xpoa *XPoa) getCurrentValidates(curHeight int64) ([]*cons_base.CandidateInfo, error) {
 	preBlockId, err := xpoa.ledger.QueryBlockByHeight(curHeight - 1)
 	if err != nil {
 		xpoa.lg.Error("xpoa.getCurrentValidates", "getBlock", err)
-		return nil, 0, 0, fmt.Errorf("get block by height err:%v", err)
+		return nil, fmt.Errorf("get block by height err:%v", err)
 	}
 	reader, err := xpoa.utxoVM.GetSnapShotWithBlock(preBlockId)
 	if err != nil {
 		xpoa.lg.Error("xpoa.getCurrentValidates", "CreateSnapshot", err)
-		return nil, 0, 0, fmt.Errorf("get snapshot err:%v", err)
+		return nil, fmt.Errorf("get snapshot err:%v", err)
 	}
-	contractRes, confirmedTime, confirmedHeight, err := xpoa.utxoVM.SystemCall(reader, xpoa.xpoaConf.contractName, xpoa.xpoaConf.methodName, "VALIDATES", nil)
+	contractRes, err := xpoa.utxoVM.SystemCall(reader, xpoa.xpoaConf.contractName, xpoa.xpoaConf.methodName, nil)
 	if common.NormalizedKVError(err) == common.ErrKVNotFound {
 		xpoa.lg.Warn("Xpoa getCurrentValidates not found")
-		return xpoa.xpoaConf.initProposers, xpoa.xpoaConf.initTimestamp, xpoa.startHeight, ErrContractNotFound
-	}
-	if err == utxo.ErrorNotConfirm {
-		xpoa.lg.Warn("Xpoa getCurrentValidates not confirmed")
-		return nil, 0, 0, ErrNotConfirmed
+		return xpoa.xpoaConf.initProposers, ErrContractNotFound
 	}
 	if err != nil {
 		xpoa.lg.Error("Xpoa getCurrentValidates error", "err", err.Error())
-		return nil, 0, 0, err
+		return nil, err
 	}
 
 	candidateInfos := &cons_base.CandidateInfos{}
 	if err = json.Unmarshal(contractRes, candidateInfos); err != nil {
 		xpoa.lg.Warn("Xpoa getCurrentValidates Unmarshal error", "err", err.Error(), "contractRes", string(contractRes))
-		return xpoa.xpoaConf.initProposers, xpoa.xpoaConf.initTimestamp, xpoa.startHeight, nil
+		return xpoa.xpoaConf.initProposers, nil
 	}
 
 	if len(candidateInfos.Proposers) == 0 {
 		xpoa.lg.Warn("Xpoa getCurrentValidates len(proposers) is 0")
-		return xpoa.xpoaConf.initProposers, xpoa.xpoaConf.initTimestamp, xpoa.startHeight, nil
+		return xpoa.xpoaConf.initProposers, nil
 	}
 	for i := range candidateInfos.Proposers {
 		xpoa.lg.Trace("Xpoa getCurrentValidates res", "Proposer", candidateInfos.Proposers[i])
 	}
-	xpoa.lg.Trace("Xpoa getCurrentValidates res", "confirmedTime", confirmedTime, "confirmedHeight", confirmedHeight)
-	return candidateInfos.Proposers, confirmedTime, confirmedHeight, nil
+	return candidateInfos.Proposers, nil
 }
 
 // updateValidates update validates
@@ -400,7 +395,7 @@ func (xpoa *XPoa) getCurrentValidates(curHeight int64) ([]*cons_base.CandidateIn
 // return: bool refers whether validates has changed
 //TODO: ZQ 优化model支持快照能力，拿最新的确认的信息
 func (xpoa *XPoa) updateValidates(curHeight int64) (bool, error) {
-	curValidates, confirmedTime, confirmedHeight, err := xpoa.getCurrentValidates(curHeight)
+	curValidates, err := xpoa.getCurrentValidates(curHeight)
 	if err != nil && err != ErrContractNotFound && err != ErrNotConfirmed {
 		xpoa.lg.Error("Xpoa updateValidates getCurrentValidates error", "error", err.Error())
 		return false, err
@@ -409,19 +404,13 @@ func (xpoa *XPoa) updateValidates(curHeight int64) (bool, error) {
 		xpoa.lg.Error("Xpoa updateValidates getCurrentValidates not confirmed no need to update")
 		return true, nil
 	}
-	isInitedWithXpoa := confirmedHeight == xpoa.startHeight && len(xpoa.proposerInfos) == 0
-	if !isInitedWithXpoa && err == nil && curHeight < confirmedHeight+3 {
-		xpoa.lg.Warn("Xpoa updateValidates no need to update", "confirmedHeight", confirmedHeight, "curHeight", curHeight)
-		return true, nil
-	}
 
-	if !base.CandidateInfoEqual(xpoa.proposerInfos, curValidates) || xpoa.termTimestamp != confirmedTime {
+	if !base.CandidateInfoEqual(xpoa.proposerInfos, curValidates) {
 		err = xpoa.bftPaceMaker.UpdateValidatorSet(curValidates)
 		if err != nil {
 			return false, ErrUpdateValidates
 		}
-		xpoa.lg.Debug("Xpoa updateValidates", "xpoa.termTimestamp", xpoa.termTimestamp, "confirmedTime", confirmedTime, "xpoa.proposerInfos", xpoa.proposerInfos, "curValidates", curValidates)
-		xpoa.termTimestamp = confirmedTime
+		xpoa.lg.Debug("Xpoa updateValidates", "xpoa.termTimestamp", xpoa.termTimestamp, "curValidates", curValidates)
 		xpoa.proposerInfos = curValidates
 	}
 	return true, nil

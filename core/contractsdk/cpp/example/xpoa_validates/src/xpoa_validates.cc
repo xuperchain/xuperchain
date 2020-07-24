@@ -17,8 +17,6 @@ private:
     const std::string VALIDATES_KEY = "VALIDATES";
 
 public:
-    std::string changeFlag() const { return "CF_"; }
-    
     bool checkArg(xchain::Context* ctx, const std::string& key, std::string& value) {
         value = ctx->arg(key);
         if (value.empty()) {
@@ -50,8 +48,8 @@ public:
             return false;
         }
         *jValidatesObject = xchain::json::parse(buffer);
-        auto proposerObject = jValidatesObject->find("proposers");
-        if (proposerObject == jValidatesObject->end() || !proposerObject->is_array() || proposerObject->empty() || !proposerObject->size()) {
+        auto proposersIter = jValidatesObject->find("proposers");
+        if (proposersIter == jValidatesObject->end() || !(*proposersIter).is_array() || (*proposersIter).empty() || !(*proposersIter).size()) {
              ctx->error("Invalid origin proposers.");
              return false;
         }
@@ -102,10 +100,6 @@ public:
             ctx->error("initialize fail to save validate");
             return;
         }
-        if (!ctx->put_object(changeFlag(), "initialize")) {
-            ctx->error("initialize fail to save validate change flag");
-            return;
-        }
         ctx->ok("initialize succeed:" + validatesStr);
     }
 
@@ -138,15 +132,11 @@ public:
             { "Address", address },
             { "PeerAddr", neturl}
         };
-        proposerIter->push_back(jItem);
+        jValidatesObject["proposers"].push_back(jItem);
         std::string value = jValidatesObject.dump();
         if (value.empty() || !ctx->put_object(VALIDATES_KEY, value)) {
            ctx->error("Add new validate Failed.");
            return;
-        }
-        if (!ctx->put_object(changeFlag(), "add")) {
-            ctx->error("Add validate fail to save validate change flag");
-            return;
         }
         ctx->ok(value);
     }
@@ -168,22 +158,16 @@ public:
         if (!parseValidates(ctx, &jValidatesObject)) {
             return;
         }
-        xchain::json proposerObject = jValidatesObject["proposers"];
         xchain::json::iterator proposerIter;
-        if (!findItem(ctx, proposerObject, address, &proposerIter)) {
+        if (!findItem(ctx, jValidatesObject["proposers"], address, &proposerIter)) {
             ctx->error("Proposer doesn't exist");
             return;
         }
-
-        proposerObject.erase(proposerIter);
+        jValidatesObject["proposers"].erase(proposerIter);
         std::string value = jValidatesObject.dump();
         if (value.empty() || !ctx->put_object(VALIDATES_KEY, value)) {
            ctx->error("Delete validate Failed.");
            return;
-        }
-        if (!ctx->put_object(changeFlag(), "del")) {
-            ctx->error("Del validate fail to save validate change flag");
-            return;
         }
         ctx->ok("ok");
     }
@@ -217,10 +201,6 @@ public:
            ctx->error("Update validate Failed.");
            return;
         }
-        if (!ctx->put_object(changeFlag(), "update")) {
-            ctx->error("update validate fail to save validate change flag");
-            return;
-        }
         ctx->ok(value);
     }
 
@@ -231,11 +211,6 @@ public:
     */
     void get_validates() {
         xchain::Context* ctx = this->context();
-        std::string flag;
-        if (!ctx->get_object(changeFlag(), &flag)) {
-            ctx->error("get validate change flag error");
-            return;
-        }
         xchain::json jValidatesObject;
         if (!parseValidates(ctx, &jValidatesObject)) {
             return;
