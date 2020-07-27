@@ -2487,6 +2487,11 @@ func (uv *UtxoVM) GetXModel() *xmodel.XModel {
 	return uv.model3
 }
 
+func (uv *UtxoVM) GetSnapShotWithBlock(block *pb.InternalBlock) (xmodel.XMReader, error) {
+	reader, err := uv.model3.CreateSnapshot(block.GetBlockid())
+	return reader, err
+}
+
 // GetACLManager return ACLManager instance
 func (uv *UtxoVM) GetACLManager() *acli.Manager {
 	return uv.aclMgr
