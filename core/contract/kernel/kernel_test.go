@@ -309,7 +309,14 @@ func TestRunCreateBlockChain(t *testing.T) {
 		"module":"kernel",
 		"method":"CreateBlockChain", 
 		"args": {
-			"data": "{\n\t\"version\" : \"1\"\n\t, \"consensus\" : {\n\t\t\"miner\" : \"dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN\"\n\t}\n\t, \"predistribution\":[\n\t\t{\n\t\t\t\"address\" : \"dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN\"\n\t\t\t, \"quota\" : \"1000000000000000\"\n\t\t}\n\t]\n\t, \"maxblocksize\" : \"128\"\n\t, \"period\" : \"3000\"\n\t, \"award\" : \"1000000\"\n}\n", 
+			"data": "{
+				\"version\" : \"1\", 
+				\"consensus\" : {\"miner\" : \"dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN\"}, 
+				\"predistribution\":[{\"address\" : \"dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN\", \"quota\" : \"1000000000000000\"}], 
+				\"maxblocksize\" : \"128\", 
+				\"period\" : \"3000\", 
+				\"award\" : \"1000000\"
+			}", 
 			"name": "Dog"
 		}
 	}
