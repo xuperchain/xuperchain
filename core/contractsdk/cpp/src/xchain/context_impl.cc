@@ -195,4 +195,16 @@ void ContextImpl::logf(const char* fmt, ...) {
     putchar('\n');
 }
 
+bool ContextImpl::emit_event(const std::string& name, const std::string& body) {
+    pb::EmitEventRequest request;
+    pb::EmitEventResponse response;
+    request.set_name(name);
+    request.set_body(body);
+    bool ok = syscall("EmitEvent", request, &response);
+    if (!ok) {
+        return false;
+    }
+    return true;
+}
+
 }  // namespace xchain

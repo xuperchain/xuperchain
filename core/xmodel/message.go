@@ -13,8 +13,8 @@ var (
 	protoIface = reflect.TypeOf((*proto.Message)(nil)).Elem()
 )
 
-// marshalMessages marshal protobuf message slice
-func marshalMessages(msgs interface{}) ([]byte, error) {
+// MarshalMessages marshal protobuf message slice
+func MarshalMessages(msgs interface{}) ([]byte, error) {
 	if msgs == nil {
 		return nil, nil
 	}
@@ -42,8 +42,8 @@ func marshalMessages(msgs interface{}) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-// unmsarshalMessages unmarshal protobuf messages to slice, x must be a pointer to message slice
-func unmsarshalMessages(p []byte, x interface{}) error {
+// UnmsarshalMessages unmarshal protobuf messages to slice, x must be a pointer to message slice
+func UnmsarshalMessages(p []byte, x interface{}) error {
 	if p == nil {
 		return nil
 	}

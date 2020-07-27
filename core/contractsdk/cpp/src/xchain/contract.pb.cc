@@ -168,6 +168,22 @@ class GetAccountAddressesResponseDefaultTypeInternal {
  public:
   ::google::protobuf::internal::ExplicitlyConstructed<GetAccountAddressesResponse> _instance;
 } _GetAccountAddressesResponse_default_instance_;
+class PostLogRequestDefaultTypeInternal {
+ public:
+  ::google::protobuf::internal::ExplicitlyConstructed<PostLogRequest> _instance;
+} _PostLogRequest_default_instance_;
+class PostLogResponseDefaultTypeInternal {
+ public:
+  ::google::protobuf::internal::ExplicitlyConstructed<PostLogResponse> _instance;
+} _PostLogResponse_default_instance_;
+class EmitEventRequestDefaultTypeInternal {
+ public:
+  ::google::protobuf::internal::ExplicitlyConstructed<EmitEventRequest> _instance;
+} _EmitEventRequest_default_instance_;
+class EmitEventResponseDefaultTypeInternal {
+ public:
+  ::google::protobuf::internal::ExplicitlyConstructed<EmitEventResponse> _instance;
+} _EmitEventResponse_default_instance_;
 }  // namespace sdk
 }  // namespace contract
 }  // namespace xchain
@@ -697,6 +713,64 @@ static void InitDefaultsGetAccountAddressesResponse_contract_2eproto() {
 
 ::google::protobuf::internal::SCCInfo<0> scc_info_GetAccountAddressesResponse_contract_2eproto =
     {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsGetAccountAddressesResponse_contract_2eproto}, {}};
+
+static void InitDefaultsPostLogRequest_contract_2eproto() {
+  GOOGLE_PROTOBUF_VERIFY_VERSION;
+
+  {
+    void* ptr = &::xchain::contract::sdk::_PostLogRequest_default_instance_;
+    new (ptr) ::xchain::contract::sdk::PostLogRequest();
+    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
+  }
+  ::xchain::contract::sdk::PostLogRequest::InitAsDefaultInstance();
+}
+
+::google::protobuf::internal::SCCInfo<1> scc_info_PostLogRequest_contract_2eproto =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 1, InitDefaultsPostLogRequest_contract_2eproto}, {
+      &scc_info_SyscallHeader_contract_2eproto.base,}};
+
+static void InitDefaultsPostLogResponse_contract_2eproto() {
+  GOOGLE_PROTOBUF_VERIFY_VERSION;
+
+  {
+    void* ptr = &::xchain::contract::sdk::_PostLogResponse_default_instance_;
+    new (ptr) ::xchain::contract::sdk::PostLogResponse();
+    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
+  }
+  ::xchain::contract::sdk::PostLogResponse::InitAsDefaultInstance();
+}
+
+::google::protobuf::internal::SCCInfo<0> scc_info_PostLogResponse_contract_2eproto =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsPostLogResponse_contract_2eproto}, {}};
+
+static void InitDefaultsEmitEventRequest_contract_2eproto() {
+  GOOGLE_PROTOBUF_VERIFY_VERSION;
+
+  {
+    void* ptr = &::xchain::contract::sdk::_EmitEventRequest_default_instance_;
+    new (ptr) ::xchain::contract::sdk::EmitEventRequest();
+    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
+  }
+  ::xchain::contract::sdk::EmitEventRequest::InitAsDefaultInstance();
+}
+
+::google::protobuf::internal::SCCInfo<1> scc_info_EmitEventRequest_contract_2eproto =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 1, InitDefaultsEmitEventRequest_contract_2eproto}, {
+      &scc_info_SyscallHeader_contract_2eproto.base,}};
+
+static void InitDefaultsEmitEventResponse_contract_2eproto() {
+  GOOGLE_PROTOBUF_VERIFY_VERSION;
+
+  {
+    void* ptr = &::xchain::contract::sdk::_EmitEventResponse_default_instance_;
+    new (ptr) ::xchain::contract::sdk::EmitEventResponse();
+    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
+  }
+  ::xchain::contract::sdk::EmitEventResponse::InitAsDefaultInstance();
+}
+
+::google::protobuf::internal::SCCInfo<0> scc_info_EmitEventResponse_contract_2eproto =
+    {{ATOMIC_VAR_INIT(::google::protobuf::internal::SCCInfoBase::kUninitialized), 0, InitDefaultsEmitEventResponse_contract_2eproto}, {}};
 
 namespace xchain {
 namespace contract {
@@ -11864,6 +11938,1122 @@ void GetAccountAddressesResponse::InternalSwap(GetAccountAddressesResponse* othe
 }
 
 
+// ===================================================================
+
+void PostLogRequest::InitAsDefaultInstance() {
+  ::xchain::contract::sdk::_PostLogRequest_default_instance_._instance.get_mutable()->header_ = const_cast< ::xchain::contract::sdk::SyscallHeader*>(
+      ::xchain::contract::sdk::SyscallHeader::internal_default_instance());
+}
+class PostLogRequest::HasBitSetters {
+ public:
+  static const ::xchain::contract::sdk::SyscallHeader& header(const PostLogRequest* msg);
+};
+
+const ::xchain::contract::sdk::SyscallHeader&
+PostLogRequest::HasBitSetters::header(const PostLogRequest* msg) {
+  return *msg->header_;
+}
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
+const int PostLogRequest::kHeaderFieldNumber;
+const int PostLogRequest::kEntryFieldNumber;
+#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+
+PostLogRequest::PostLogRequest()
+  : ::google::protobuf::MessageLite(), _internal_metadata_(nullptr) {
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:xchain.contract.sdk.PostLogRequest)
+}
+PostLogRequest::PostLogRequest(const PostLogRequest& from)
+  : ::google::protobuf::MessageLite(),
+      _internal_metadata_(nullptr) {
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  entry_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.entry().size() > 0) {
+    entry_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.entry_);
+  }
+  if (from.has_header()) {
+    header_ = new ::xchain::contract::sdk::SyscallHeader(*from.header_);
+  } else {
+    header_ = nullptr;
+  }
+  // @@protoc_insertion_point(copy_constructor:xchain.contract.sdk.PostLogRequest)
+}
+
+void PostLogRequest::SharedCtor() {
+  ::google::protobuf::internal::InitSCC(
+      &scc_info_PostLogRequest_contract_2eproto.base);
+  entry_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  header_ = nullptr;
+}
+
+PostLogRequest::~PostLogRequest() {
+  // @@protoc_insertion_point(destructor:xchain.contract.sdk.PostLogRequest)
+  SharedDtor();
+}
+
+void PostLogRequest::SharedDtor() {
+  entry_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (this != internal_default_instance()) delete header_;
+}
+
+void PostLogRequest::SetCachedSize(int size) const {
+  _cached_size_.Set(size);
+}
+const PostLogRequest& PostLogRequest::default_instance() {
+  ::google::protobuf::internal::InitSCC(&::scc_info_PostLogRequest_contract_2eproto.base);
+  return *internal_default_instance();
+}
+
+
+void PostLogRequest::Clear() {
+// @@protoc_insertion_point(message_clear_start:xchain.contract.sdk.PostLogRequest)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  entry_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (GetArenaNoVirtual() == nullptr && header_ != nullptr) {
+    delete header_;
+  }
+  header_ = nullptr;
+  _internal_metadata_.Clear();
+}
+
+#if GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+const char* PostLogRequest::_InternalParse(const char* begin, const char* end, void* object,
+                  ::google::protobuf::internal::ParseContext* ctx) {
+  auto msg = static_cast<PostLogRequest*>(object);
+  ::google::protobuf::int32 size; (void)size;
+  int depth; (void)depth;
+  ::google::protobuf::uint32 tag;
+  ::google::protobuf::internal::ParseFunc parser_till_end; (void)parser_till_end;
+  auto ptr = begin;
+  while (ptr < end) {
+    ptr = ::google::protobuf::io::Parse32(ptr, &tag);
+    GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+    switch (tag >> 3) {
+      // .xchain.contract.sdk.SyscallHeader header = 1;
+      case 1: {
+        if (static_cast<::google::protobuf::uint8>(tag) != 10) goto handle_unusual;
+        ptr = ::google::protobuf::io::ReadSize(ptr, &size);
+        GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+        parser_till_end = ::xchain::contract::sdk::SyscallHeader::_InternalParse;
+        object = msg->mutable_header();
+        if (size > end - ptr) goto len_delim_till_end;
+        ptr += size;
+        GOOGLE_PROTOBUF_PARSER_ASSERT(ctx->ParseExactRange(
+            {parser_till_end, object}, ptr - size, ptr));
+        break;
+      }
+      // string entry = 2;
+      case 2: {
+        if (static_cast<::google::protobuf::uint8>(tag) != 18) goto handle_unusual;
+        ptr = ::google::protobuf::io::ReadSize(ptr, &size);
+        GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+        ctx->extra_parse_data().SetFieldName(nullptr);
+        object = msg->mutable_entry();
+        if (size > end - ptr + ::google::protobuf::internal::ParseContext::kSlopBytes) {
+          parser_till_end = ::google::protobuf::internal::GreedyStringParserUTF8;
+          goto string_till_end;
+        }
+        GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheckUTF8(ptr, size, ctx));
+        ::google::protobuf::internal::InlineGreedyStringParser(object, ptr, size, ctx);
+        ptr += size;
+        break;
+      }
+      default: {
+      handle_unusual:
+        if ((tag & 7) == 4 || tag == 0) {
+          ctx->EndGroup(tag);
+          return ptr;
+        }
+        auto res = UnknownFieldParse(tag, {_InternalParse, msg},
+          ptr, end, msg->_internal_metadata_.mutable_unknown_fields(), ctx);
+        ptr = res.first;
+        GOOGLE_PROTOBUF_PARSER_ASSERT(ptr != nullptr);
+        if (res.second) return ptr;
+      }
+    }  // switch
+  }  // while
+  return ptr;
+string_till_end:
+  static_cast<::std::string*>(object)->clear();
+  static_cast<::std::string*>(object)->reserve(size);
+  goto len_delim_till_end;
+len_delim_till_end:
+  return ctx->StoreAndTailCall(ptr, end, {_InternalParse, msg},
+                               {parser_till_end, object}, size);
+}
+#else  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+bool PostLogRequest::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!PROTOBUF_PREDICT_TRUE(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  ::google::protobuf::internal::LiteUnknownFieldSetter unknown_fields_setter(
+      &_internal_metadata_);
+  ::google::protobuf::io::StringOutputStream unknown_fields_output(
+      unknown_fields_setter.buffer());
+  ::google::protobuf::io::CodedOutputStream unknown_fields_stream(
+      &unknown_fields_output, false);
+  // @@protoc_insertion_point(parse_start:xchain.contract.sdk.PostLogRequest)
+  for (;;) {
+    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // .xchain.contract.sdk.SyscallHeader header = 1;
+      case 1: {
+        if (static_cast< ::google::protobuf::uint8>(tag) == (10 & 0xFF)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
+               input, mutable_header()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // string entry = 2;
+      case 2: {
+        if (static_cast< ::google::protobuf::uint8>(tag) == (18 & 0xFF)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_entry()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->entry().data(), static_cast<int>(this->entry().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "xchain.contract.sdk.PostLogRequest.entry"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormatLite::SkipField(
+            input, tag, &unknown_fields_stream));
+        break;
+      }
+    }
+  }
+success:
+  // @@protoc_insertion_point(parse_success:xchain.contract.sdk.PostLogRequest)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:xchain.contract.sdk.PostLogRequest)
+  return false;
+#undef DO_
+}
+#endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+
+void PostLogRequest::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:xchain.contract.sdk.PostLogRequest)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // .xchain.contract.sdk.SyscallHeader header = 1;
+  if (this->has_header()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessage(
+      1, HasBitSetters::header(this), output);
+  }
+
+  // string entry = 2;
+  if (this->entry().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->entry().data(), static_cast<int>(this->entry().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "xchain.contract.sdk.PostLogRequest.entry");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      2, this->entry(), output);
+  }
+
+  output->WriteRaw(_internal_metadata_.unknown_fields().data(),
+                   static_cast<int>(_internal_metadata_.unknown_fields().size()));
+  // @@protoc_insertion_point(serialize_end:xchain.contract.sdk.PostLogRequest)
+}
+
+size_t PostLogRequest::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:xchain.contract.sdk.PostLogRequest)
+  size_t total_size = 0;
+
+  total_size += _internal_metadata_.unknown_fields().size();
+
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  // string entry = 2;
+  if (this->entry().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::StringSize(
+        this->entry());
+  }
+
+  // .xchain.contract.sdk.SyscallHeader header = 1;
+  if (this->has_header()) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::MessageSize(
+        *header_);
+  }
+
+  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  SetCachedSize(cached_size);
+  return total_size;
+}
+
+void PostLogRequest::CheckTypeAndMergeFrom(
+    const ::google::protobuf::MessageLite& from) {
+  MergeFrom(*::google::protobuf::down_cast<const PostLogRequest*>(&from));
+}
+
+void PostLogRequest::MergeFrom(const PostLogRequest& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:xchain.contract.sdk.PostLogRequest)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from.entry().size() > 0) {
+
+    entry_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.entry_);
+  }
+  if (from.has_header()) {
+    mutable_header()->::xchain::contract::sdk::SyscallHeader::MergeFrom(from.header());
+  }
+}
+
+void PostLogRequest::CopyFrom(const PostLogRequest& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:xchain.contract.sdk.PostLogRequest)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool PostLogRequest::IsInitialized() const {
+  return true;
+}
+
+void PostLogRequest::Swap(PostLogRequest* other) {
+  if (other == this) return;
+  InternalSwap(other);
+}
+void PostLogRequest::InternalSwap(PostLogRequest* other) {
+  using std::swap;
+  _internal_metadata_.Swap(&other->_internal_metadata_);
+  entry_.Swap(&other->entry_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+    GetArenaNoVirtual());
+  swap(header_, other->header_);
+}
+
+::std::string PostLogRequest::GetTypeName() const {
+  return "xchain.contract.sdk.PostLogRequest";
+}
+
+
+// ===================================================================
+
+void PostLogResponse::InitAsDefaultInstance() {
+}
+class PostLogResponse::HasBitSetters {
+ public:
+};
+
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
+const int PostLogResponse::kEntryFieldNumber;
+#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+
+PostLogResponse::PostLogResponse()
+  : ::google::protobuf::MessageLite(), _internal_metadata_(nullptr) {
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:xchain.contract.sdk.PostLogResponse)
+}
+PostLogResponse::PostLogResponse(const PostLogResponse& from)
+  : ::google::protobuf::MessageLite(),
+      _internal_metadata_(nullptr) {
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  entry_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.entry().size() > 0) {
+    entry_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.entry_);
+  }
+  // @@protoc_insertion_point(copy_constructor:xchain.contract.sdk.PostLogResponse)
+}
+
+void PostLogResponse::SharedCtor() {
+  ::google::protobuf::internal::InitSCC(
+      &scc_info_PostLogResponse_contract_2eproto.base);
+  entry_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+
+PostLogResponse::~PostLogResponse() {
+  // @@protoc_insertion_point(destructor:xchain.contract.sdk.PostLogResponse)
+  SharedDtor();
+}
+
+void PostLogResponse::SharedDtor() {
+  entry_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+
+void PostLogResponse::SetCachedSize(int size) const {
+  _cached_size_.Set(size);
+}
+const PostLogResponse& PostLogResponse::default_instance() {
+  ::google::protobuf::internal::InitSCC(&::scc_info_PostLogResponse_contract_2eproto.base);
+  return *internal_default_instance();
+}
+
+
+void PostLogResponse::Clear() {
+// @@protoc_insertion_point(message_clear_start:xchain.contract.sdk.PostLogResponse)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  entry_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  _internal_metadata_.Clear();
+}
+
+#if GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+const char* PostLogResponse::_InternalParse(const char* begin, const char* end, void* object,
+                  ::google::protobuf::internal::ParseContext* ctx) {
+  auto msg = static_cast<PostLogResponse*>(object);
+  ::google::protobuf::int32 size; (void)size;
+  int depth; (void)depth;
+  ::google::protobuf::uint32 tag;
+  ::google::protobuf::internal::ParseFunc parser_till_end; (void)parser_till_end;
+  auto ptr = begin;
+  while (ptr < end) {
+    ptr = ::google::protobuf::io::Parse32(ptr, &tag);
+    GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+    switch (tag >> 3) {
+      // string entry = 1;
+      case 1: {
+        if (static_cast<::google::protobuf::uint8>(tag) != 10) goto handle_unusual;
+        ptr = ::google::protobuf::io::ReadSize(ptr, &size);
+        GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+        ctx->extra_parse_data().SetFieldName(nullptr);
+        object = msg->mutable_entry();
+        if (size > end - ptr + ::google::protobuf::internal::ParseContext::kSlopBytes) {
+          parser_till_end = ::google::protobuf::internal::GreedyStringParserUTF8;
+          goto string_till_end;
+        }
+        GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheckUTF8(ptr, size, ctx));
+        ::google::protobuf::internal::InlineGreedyStringParser(object, ptr, size, ctx);
+        ptr += size;
+        break;
+      }
+      default: {
+      handle_unusual:
+        if ((tag & 7) == 4 || tag == 0) {
+          ctx->EndGroup(tag);
+          return ptr;
+        }
+        auto res = UnknownFieldParse(tag, {_InternalParse, msg},
+          ptr, end, msg->_internal_metadata_.mutable_unknown_fields(), ctx);
+        ptr = res.first;
+        GOOGLE_PROTOBUF_PARSER_ASSERT(ptr != nullptr);
+        if (res.second) return ptr;
+      }
+    }  // switch
+  }  // while
+  return ptr;
+string_till_end:
+  static_cast<::std::string*>(object)->clear();
+  static_cast<::std::string*>(object)->reserve(size);
+  goto len_delim_till_end;
+len_delim_till_end:
+  return ctx->StoreAndTailCall(ptr, end, {_InternalParse, msg},
+                               {parser_till_end, object}, size);
+}
+#else  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+bool PostLogResponse::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!PROTOBUF_PREDICT_TRUE(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  ::google::protobuf::internal::LiteUnknownFieldSetter unknown_fields_setter(
+      &_internal_metadata_);
+  ::google::protobuf::io::StringOutputStream unknown_fields_output(
+      unknown_fields_setter.buffer());
+  ::google::protobuf::io::CodedOutputStream unknown_fields_stream(
+      &unknown_fields_output, false);
+  // @@protoc_insertion_point(parse_start:xchain.contract.sdk.PostLogResponse)
+  for (;;) {
+    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // string entry = 1;
+      case 1: {
+        if (static_cast< ::google::protobuf::uint8>(tag) == (10 & 0xFF)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_entry()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->entry().data(), static_cast<int>(this->entry().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "xchain.contract.sdk.PostLogResponse.entry"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormatLite::SkipField(
+            input, tag, &unknown_fields_stream));
+        break;
+      }
+    }
+  }
+success:
+  // @@protoc_insertion_point(parse_success:xchain.contract.sdk.PostLogResponse)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:xchain.contract.sdk.PostLogResponse)
+  return false;
+#undef DO_
+}
+#endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+
+void PostLogResponse::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:xchain.contract.sdk.PostLogResponse)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // string entry = 1;
+  if (this->entry().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->entry().data(), static_cast<int>(this->entry().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "xchain.contract.sdk.PostLogResponse.entry");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      1, this->entry(), output);
+  }
+
+  output->WriteRaw(_internal_metadata_.unknown_fields().data(),
+                   static_cast<int>(_internal_metadata_.unknown_fields().size()));
+  // @@protoc_insertion_point(serialize_end:xchain.contract.sdk.PostLogResponse)
+}
+
+size_t PostLogResponse::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:xchain.contract.sdk.PostLogResponse)
+  size_t total_size = 0;
+
+  total_size += _internal_metadata_.unknown_fields().size();
+
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  // string entry = 1;
+  if (this->entry().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::StringSize(
+        this->entry());
+  }
+
+  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  SetCachedSize(cached_size);
+  return total_size;
+}
+
+void PostLogResponse::CheckTypeAndMergeFrom(
+    const ::google::protobuf::MessageLite& from) {
+  MergeFrom(*::google::protobuf::down_cast<const PostLogResponse*>(&from));
+}
+
+void PostLogResponse::MergeFrom(const PostLogResponse& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:xchain.contract.sdk.PostLogResponse)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from.entry().size() > 0) {
+
+    entry_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.entry_);
+  }
+}
+
+void PostLogResponse::CopyFrom(const PostLogResponse& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:xchain.contract.sdk.PostLogResponse)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool PostLogResponse::IsInitialized() const {
+  return true;
+}
+
+void PostLogResponse::Swap(PostLogResponse* other) {
+  if (other == this) return;
+  InternalSwap(other);
+}
+void PostLogResponse::InternalSwap(PostLogResponse* other) {
+  using std::swap;
+  _internal_metadata_.Swap(&other->_internal_metadata_);
+  entry_.Swap(&other->entry_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+    GetArenaNoVirtual());
+}
+
+::std::string PostLogResponse::GetTypeName() const {
+  return "xchain.contract.sdk.PostLogResponse";
+}
+
+
+// ===================================================================
+
+void EmitEventRequest::InitAsDefaultInstance() {
+  ::xchain::contract::sdk::_EmitEventRequest_default_instance_._instance.get_mutable()->header_ = const_cast< ::xchain::contract::sdk::SyscallHeader*>(
+      ::xchain::contract::sdk::SyscallHeader::internal_default_instance());
+}
+class EmitEventRequest::HasBitSetters {
+ public:
+  static const ::xchain::contract::sdk::SyscallHeader& header(const EmitEventRequest* msg);
+};
+
+const ::xchain::contract::sdk::SyscallHeader&
+EmitEventRequest::HasBitSetters::header(const EmitEventRequest* msg) {
+  return *msg->header_;
+}
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
+const int EmitEventRequest::kHeaderFieldNumber;
+const int EmitEventRequest::kNameFieldNumber;
+const int EmitEventRequest::kBodyFieldNumber;
+#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+
+EmitEventRequest::EmitEventRequest()
+  : ::google::protobuf::MessageLite(), _internal_metadata_(nullptr) {
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:xchain.contract.sdk.EmitEventRequest)
+}
+EmitEventRequest::EmitEventRequest(const EmitEventRequest& from)
+  : ::google::protobuf::MessageLite(),
+      _internal_metadata_(nullptr) {
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  name_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.name().size() > 0) {
+    name_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.name_);
+  }
+  body_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.body().size() > 0) {
+    body_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.body_);
+  }
+  if (from.has_header()) {
+    header_ = new ::xchain::contract::sdk::SyscallHeader(*from.header_);
+  } else {
+    header_ = nullptr;
+  }
+  // @@protoc_insertion_point(copy_constructor:xchain.contract.sdk.EmitEventRequest)
+}
+
+void EmitEventRequest::SharedCtor() {
+  ::google::protobuf::internal::InitSCC(
+      &scc_info_EmitEventRequest_contract_2eproto.base);
+  name_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  body_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  header_ = nullptr;
+}
+
+EmitEventRequest::~EmitEventRequest() {
+  // @@protoc_insertion_point(destructor:xchain.contract.sdk.EmitEventRequest)
+  SharedDtor();
+}
+
+void EmitEventRequest::SharedDtor() {
+  name_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  body_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (this != internal_default_instance()) delete header_;
+}
+
+void EmitEventRequest::SetCachedSize(int size) const {
+  _cached_size_.Set(size);
+}
+const EmitEventRequest& EmitEventRequest::default_instance() {
+  ::google::protobuf::internal::InitSCC(&::scc_info_EmitEventRequest_contract_2eproto.base);
+  return *internal_default_instance();
+}
+
+
+void EmitEventRequest::Clear() {
+// @@protoc_insertion_point(message_clear_start:xchain.contract.sdk.EmitEventRequest)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  name_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  body_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (GetArenaNoVirtual() == nullptr && header_ != nullptr) {
+    delete header_;
+  }
+  header_ = nullptr;
+  _internal_metadata_.Clear();
+}
+
+#if GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+const char* EmitEventRequest::_InternalParse(const char* begin, const char* end, void* object,
+                  ::google::protobuf::internal::ParseContext* ctx) {
+  auto msg = static_cast<EmitEventRequest*>(object);
+  ::google::protobuf::int32 size; (void)size;
+  int depth; (void)depth;
+  ::google::protobuf::uint32 tag;
+  ::google::protobuf::internal::ParseFunc parser_till_end; (void)parser_till_end;
+  auto ptr = begin;
+  while (ptr < end) {
+    ptr = ::google::protobuf::io::Parse32(ptr, &tag);
+    GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+    switch (tag >> 3) {
+      // .xchain.contract.sdk.SyscallHeader header = 1;
+      case 1: {
+        if (static_cast<::google::protobuf::uint8>(tag) != 10) goto handle_unusual;
+        ptr = ::google::protobuf::io::ReadSize(ptr, &size);
+        GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+        parser_till_end = ::xchain::contract::sdk::SyscallHeader::_InternalParse;
+        object = msg->mutable_header();
+        if (size > end - ptr) goto len_delim_till_end;
+        ptr += size;
+        GOOGLE_PROTOBUF_PARSER_ASSERT(ctx->ParseExactRange(
+            {parser_till_end, object}, ptr - size, ptr));
+        break;
+      }
+      // string name = 2;
+      case 2: {
+        if (static_cast<::google::protobuf::uint8>(tag) != 18) goto handle_unusual;
+        ptr = ::google::protobuf::io::ReadSize(ptr, &size);
+        GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+        ctx->extra_parse_data().SetFieldName(nullptr);
+        object = msg->mutable_name();
+        if (size > end - ptr + ::google::protobuf::internal::ParseContext::kSlopBytes) {
+          parser_till_end = ::google::protobuf::internal::GreedyStringParserUTF8;
+          goto string_till_end;
+        }
+        GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheckUTF8(ptr, size, ctx));
+        ::google::protobuf::internal::InlineGreedyStringParser(object, ptr, size, ctx);
+        ptr += size;
+        break;
+      }
+      // bytes body = 3;
+      case 3: {
+        if (static_cast<::google::protobuf::uint8>(tag) != 26) goto handle_unusual;
+        ptr = ::google::protobuf::io::ReadSize(ptr, &size);
+        GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+        object = msg->mutable_body();
+        if (size > end - ptr + ::google::protobuf::internal::ParseContext::kSlopBytes) {
+          parser_till_end = ::google::protobuf::internal::GreedyStringParser;
+          goto string_till_end;
+        }
+        GOOGLE_PROTOBUF_PARSER_ASSERT(::google::protobuf::internal::StringCheck(ptr, size, ctx));
+        ::google::protobuf::internal::InlineGreedyStringParser(object, ptr, size, ctx);
+        ptr += size;
+        break;
+      }
+      default: {
+      handle_unusual:
+        if ((tag & 7) == 4 || tag == 0) {
+          ctx->EndGroup(tag);
+          return ptr;
+        }
+        auto res = UnknownFieldParse(tag, {_InternalParse, msg},
+          ptr, end, msg->_internal_metadata_.mutable_unknown_fields(), ctx);
+        ptr = res.first;
+        GOOGLE_PROTOBUF_PARSER_ASSERT(ptr != nullptr);
+        if (res.second) return ptr;
+      }
+    }  // switch
+  }  // while
+  return ptr;
+string_till_end:
+  static_cast<::std::string*>(object)->clear();
+  static_cast<::std::string*>(object)->reserve(size);
+  goto len_delim_till_end;
+len_delim_till_end:
+  return ctx->StoreAndTailCall(ptr, end, {_InternalParse, msg},
+                               {parser_till_end, object}, size);
+}
+#else  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+bool EmitEventRequest::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!PROTOBUF_PREDICT_TRUE(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  ::google::protobuf::internal::LiteUnknownFieldSetter unknown_fields_setter(
+      &_internal_metadata_);
+  ::google::protobuf::io::StringOutputStream unknown_fields_output(
+      unknown_fields_setter.buffer());
+  ::google::protobuf::io::CodedOutputStream unknown_fields_stream(
+      &unknown_fields_output, false);
+  // @@protoc_insertion_point(parse_start:xchain.contract.sdk.EmitEventRequest)
+  for (;;) {
+    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // .xchain.contract.sdk.SyscallHeader header = 1;
+      case 1: {
+        if (static_cast< ::google::protobuf::uint8>(tag) == (10 & 0xFF)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(
+               input, mutable_header()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // string name = 2;
+      case 2: {
+        if (static_cast< ::google::protobuf::uint8>(tag) == (18 & 0xFF)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_name()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->name().data(), static_cast<int>(this->name().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "xchain.contract.sdk.EmitEventRequest.name"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // bytes body = 3;
+      case 3: {
+        if (static_cast< ::google::protobuf::uint8>(tag) == (26 & 0xFF)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
+                input, this->mutable_body()));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormatLite::SkipField(
+            input, tag, &unknown_fields_stream));
+        break;
+      }
+    }
+  }
+success:
+  // @@protoc_insertion_point(parse_success:xchain.contract.sdk.EmitEventRequest)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:xchain.contract.sdk.EmitEventRequest)
+  return false;
+#undef DO_
+}
+#endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+
+void EmitEventRequest::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:xchain.contract.sdk.EmitEventRequest)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // .xchain.contract.sdk.SyscallHeader header = 1;
+  if (this->has_header()) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessage(
+      1, HasBitSetters::header(this), output);
+  }
+
+  // string name = 2;
+  if (this->name().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->name().data(), static_cast<int>(this->name().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "xchain.contract.sdk.EmitEventRequest.name");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      2, this->name(), output);
+  }
+
+  // bytes body = 3;
+  if (this->body().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
+      3, this->body(), output);
+  }
+
+  output->WriteRaw(_internal_metadata_.unknown_fields().data(),
+                   static_cast<int>(_internal_metadata_.unknown_fields().size()));
+  // @@protoc_insertion_point(serialize_end:xchain.contract.sdk.EmitEventRequest)
+}
+
+size_t EmitEventRequest::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:xchain.contract.sdk.EmitEventRequest)
+  size_t total_size = 0;
+
+  total_size += _internal_metadata_.unknown_fields().size();
+
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  // string name = 2;
+  if (this->name().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::StringSize(
+        this->name());
+  }
+
+  // bytes body = 3;
+  if (this->body().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::BytesSize(
+        this->body());
+  }
+
+  // .xchain.contract.sdk.SyscallHeader header = 1;
+  if (this->has_header()) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::MessageSize(
+        *header_);
+  }
+
+  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  SetCachedSize(cached_size);
+  return total_size;
+}
+
+void EmitEventRequest::CheckTypeAndMergeFrom(
+    const ::google::protobuf::MessageLite& from) {
+  MergeFrom(*::google::protobuf::down_cast<const EmitEventRequest*>(&from));
+}
+
+void EmitEventRequest::MergeFrom(const EmitEventRequest& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:xchain.contract.sdk.EmitEventRequest)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from.name().size() > 0) {
+
+    name_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.name_);
+  }
+  if (from.body().size() > 0) {
+
+    body_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.body_);
+  }
+  if (from.has_header()) {
+    mutable_header()->::xchain::contract::sdk::SyscallHeader::MergeFrom(from.header());
+  }
+}
+
+void EmitEventRequest::CopyFrom(const EmitEventRequest& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:xchain.contract.sdk.EmitEventRequest)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool EmitEventRequest::IsInitialized() const {
+  return true;
+}
+
+void EmitEventRequest::Swap(EmitEventRequest* other) {
+  if (other == this) return;
+  InternalSwap(other);
+}
+void EmitEventRequest::InternalSwap(EmitEventRequest* other) {
+  using std::swap;
+  _internal_metadata_.Swap(&other->_internal_metadata_);
+  name_.Swap(&other->name_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+    GetArenaNoVirtual());
+  body_.Swap(&other->body_, &::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+    GetArenaNoVirtual());
+  swap(header_, other->header_);
+}
+
+::std::string EmitEventRequest::GetTypeName() const {
+  return "xchain.contract.sdk.EmitEventRequest";
+}
+
+
+// ===================================================================
+
+void EmitEventResponse::InitAsDefaultInstance() {
+}
+class EmitEventResponse::HasBitSetters {
+ public:
+};
+
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
+#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+
+EmitEventResponse::EmitEventResponse()
+  : ::google::protobuf::MessageLite(), _internal_metadata_(nullptr) {
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:xchain.contract.sdk.EmitEventResponse)
+}
+EmitEventResponse::EmitEventResponse(const EmitEventResponse& from)
+  : ::google::protobuf::MessageLite(),
+      _internal_metadata_(nullptr) {
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  // @@protoc_insertion_point(copy_constructor:xchain.contract.sdk.EmitEventResponse)
+}
+
+void EmitEventResponse::SharedCtor() {
+}
+
+EmitEventResponse::~EmitEventResponse() {
+  // @@protoc_insertion_point(destructor:xchain.contract.sdk.EmitEventResponse)
+  SharedDtor();
+}
+
+void EmitEventResponse::SharedDtor() {
+}
+
+void EmitEventResponse::SetCachedSize(int size) const {
+  _cached_size_.Set(size);
+}
+const EmitEventResponse& EmitEventResponse::default_instance() {
+  ::google::protobuf::internal::InitSCC(&::scc_info_EmitEventResponse_contract_2eproto.base);
+  return *internal_default_instance();
+}
+
+
+void EmitEventResponse::Clear() {
+// @@protoc_insertion_point(message_clear_start:xchain.contract.sdk.EmitEventResponse)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  _internal_metadata_.Clear();
+}
+
+#if GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+const char* EmitEventResponse::_InternalParse(const char* begin, const char* end, void* object,
+                  ::google::protobuf::internal::ParseContext* ctx) {
+  auto msg = static_cast<EmitEventResponse*>(object);
+  ::google::protobuf::int32 size; (void)size;
+  int depth; (void)depth;
+  ::google::protobuf::uint32 tag;
+  ::google::protobuf::internal::ParseFunc parser_till_end; (void)parser_till_end;
+  auto ptr = begin;
+  while (ptr < end) {
+    ptr = ::google::protobuf::io::Parse32(ptr, &tag);
+    GOOGLE_PROTOBUF_PARSER_ASSERT(ptr);
+    switch (tag >> 3) {
+      default: {
+        if ((tag & 7) == 4 || tag == 0) {
+          ctx->EndGroup(tag);
+          return ptr;
+        }
+        auto res = UnknownFieldParse(tag, {_InternalParse, msg},
+          ptr, end, msg->_internal_metadata_.mutable_unknown_fields(), ctx);
+        ptr = res.first;
+        GOOGLE_PROTOBUF_PARSER_ASSERT(ptr != nullptr);
+        if (res.second) return ptr;
+      }
+    }  // switch
+  }  // while
+  return ptr;
+}
+#else  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+bool EmitEventResponse::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!PROTOBUF_PREDICT_TRUE(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  ::google::protobuf::internal::LiteUnknownFieldSetter unknown_fields_setter(
+      &_internal_metadata_);
+  ::google::protobuf::io::StringOutputStream unknown_fields_output(
+      unknown_fields_setter.buffer());
+  ::google::protobuf::io::CodedOutputStream unknown_fields_stream(
+      &unknown_fields_output, false);
+  // @@protoc_insertion_point(parse_start:xchain.contract.sdk.EmitEventResponse)
+  for (;;) {
+    ::std::pair<::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+  handle_unusual:
+    if (tag == 0) {
+      goto success;
+    }
+    DO_(::google::protobuf::internal::WireFormatLite::SkipField(
+        input, tag, &unknown_fields_stream));
+  }
+success:
+  // @@protoc_insertion_point(parse_success:xchain.contract.sdk.EmitEventResponse)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:xchain.contract.sdk.EmitEventResponse)
+  return false;
+#undef DO_
+}
+#endif  // GOOGLE_PROTOBUF_ENABLE_EXPERIMENTAL_PARSER
+
+void EmitEventResponse::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:xchain.contract.sdk.EmitEventResponse)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  output->WriteRaw(_internal_metadata_.unknown_fields().data(),
+                   static_cast<int>(_internal_metadata_.unknown_fields().size()));
+  // @@protoc_insertion_point(serialize_end:xchain.contract.sdk.EmitEventResponse)
+}
+
+size_t EmitEventResponse::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:xchain.contract.sdk.EmitEventResponse)
+  size_t total_size = 0;
+
+  total_size += _internal_metadata_.unknown_fields().size();
+
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  SetCachedSize(cached_size);
+  return total_size;
+}
+
+void EmitEventResponse::CheckTypeAndMergeFrom(
+    const ::google::protobuf::MessageLite& from) {
+  MergeFrom(*::google::protobuf::down_cast<const EmitEventResponse*>(&from));
+}
+
+void EmitEventResponse::MergeFrom(const EmitEventResponse& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:xchain.contract.sdk.EmitEventResponse)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+}
+
+void EmitEventResponse::CopyFrom(const EmitEventResponse& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:xchain.contract.sdk.EmitEventResponse)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool EmitEventResponse::IsInitialized() const {
+  return true;
+}
+
+void EmitEventResponse::Swap(EmitEventResponse* other) {
+  if (other == this) return;
+  InternalSwap(other);
+}
+void EmitEventResponse::InternalSwap(EmitEventResponse* other) {
+  using std::swap;
+  _internal_metadata_.Swap(&other->_internal_metadata_);
+}
+
+::std::string EmitEventResponse::GetTypeName() const {
+  return "xchain.contract.sdk.EmitEventResponse";
+}
+
+
 // @@protoc_insertion_point(namespace_scope)
 }  // namespace sdk
 }  // namespace contract
@@ -11977,6 +13167,18 @@ template<> PROTOBUF_NOINLINE ::xchain::contract::sdk::GetAccountAddressesRequest
 }
 template<> PROTOBUF_NOINLINE ::xchain::contract::sdk::GetAccountAddressesResponse* Arena::CreateMaybeMessage< ::xchain::contract::sdk::GetAccountAddressesResponse >(Arena* arena) {
   return Arena::CreateInternal< ::xchain::contract::sdk::GetAccountAddressesResponse >(arena);
+}
+template<> PROTOBUF_NOINLINE ::xchain::contract::sdk::PostLogRequest* Arena::CreateMaybeMessage< ::xchain::contract::sdk::PostLogRequest >(Arena* arena) {
+  return Arena::CreateInternal< ::xchain::contract::sdk::PostLogRequest >(arena);
+}
+template<> PROTOBUF_NOINLINE ::xchain::contract::sdk::PostLogResponse* Arena::CreateMaybeMessage< ::xchain::contract::sdk::PostLogResponse >(Arena* arena) {
+  return Arena::CreateInternal< ::xchain::contract::sdk::PostLogResponse >(arena);
+}
+template<> PROTOBUF_NOINLINE ::xchain::contract::sdk::EmitEventRequest* Arena::CreateMaybeMessage< ::xchain::contract::sdk::EmitEventRequest >(Arena* arena) {
+  return Arena::CreateInternal< ::xchain::contract::sdk::EmitEventRequest >(arena);
+}
+template<> PROTOBUF_NOINLINE ::xchain::contract::sdk::EmitEventResponse* Arena::CreateMaybeMessage< ::xchain::contract::sdk::EmitEventResponse >(Arena* arena) {
+  return Arena::CreateInternal< ::xchain::contract::sdk::EmitEventResponse >(arena);
 }
 }  // namespace protobuf
 }  // namespace google
