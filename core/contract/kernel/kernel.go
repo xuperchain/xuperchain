@@ -210,7 +210,7 @@ func (k *Kernel) CreateBlockChain(name string, data []byte) error {
 		k.log.Warn("fullpath exist", "fullpath", fullpath)
 		return ErrBlockChainExist
 	}
-	err := os.MkdirAll(fullpath, os.ModePerm)
+	err := os.MkdirAll(fullpath, 0755)
 	if err != nil {
 		k.log.Warn("can't create path[" + fullpath + "] %v")
 		return err
