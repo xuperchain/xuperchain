@@ -304,18 +304,30 @@ func TestRunCreateBlockChain(t *testing.T) {
 		UtxoMeta:  utxovm,
 	}
 	kl.SetContext(context)
-	args := []byte(`
-	{
-		"module": "kernel",
-		"method": "CreateBlockChain",
-		"args": { 
-			"name": "Dog",
-			"data": "{\"version\":\"1\",\"consensus\":{\"miner\":\"dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN\"},\"predistribution\":[{\"address\":\"dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN\",\"quota\":\"1000000000000000\"}],\"maxblocksize\":\"128\",\"period\":\"3000\",\"award\":\"1000000\"}"
-		}
+
+	txreq := &pb.TxData{}
+	txreq.Bcname = "xuper"
+	txreq.FromAddr = BobAddress
+	txreq.FromPubkey = BobPubkey
+	txreq.FromScrkey = BobPrivateKey
+	txreq.Nonce = "nonce"
+	txreq.Timestamp = time.Now().UnixNano()
+	//bob给alice转20
+	txreq.Account = []*pb.TxDataAccount{
+		{Address: AliceAddress, Amount: "20"},
 	}
-	`)
+	chainTx, err := utxovm.GenerateTx(txreq)
+	if err != nil {
+		t.Error("GenerateTx Error", err)
+	}
 	txDesc := &contract.TxDesc{}
-	_ = json.Unmarshal(args, txDesc)
+	txDesc.Tx = chainTx
+	txDesc.Method = "CreateBlockChain"
+	txDesc.Module = "kernel"
+	argMap := make(map[string]interface{})
+	argMap["name"] = "Dog"
+	argMap["data"] = "{\"version\":\"1\",\"consensus\":{\"miner\":\"dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN\"},\"predistribution\":[{\"address\":\"dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN\",\"quota\":\"1000000000000000\"}],\"maxblocksize\":\"128\",\"period\":\"3000\",\"award\":\"1000000\"}"
+	txDesc.Args = argMap
 	runCreateBlockChain := kl.runCreateBlockChain(txDesc)
 	if runCreateBlockChain != nil {
 		t.Error("runCreateBlockChain error ", runCreateBlockChain.Error())
