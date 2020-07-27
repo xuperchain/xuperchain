@@ -306,19 +306,22 @@ func TestRunCreateBlockChain(t *testing.T) {
 	kl.SetContext(context)
 	args := []byte(`
 	{
-		"module":"kernel",
-		"method":"CreateBlockChain", 
-		"args": {
-			"data": "{
-				\"version\" : \"1\", 
-				\"consensus\" : {\"miner\" : \"dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN\"}, 
-				\"predistribution\":[{\"address\" : \"dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN\", \"quota\" : \"1000000000000000\"}], 
-				\"maxblocksize\" : \"128\", 
-				\"period\" : \"3000\", 
-				\"award\" : \"1000000\"
-			}", 
-			"name": "Dog"
-		}
+		"data": {
+		  "version": "1",
+		  "consensus": {
+			"miner": "dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN"
+		  },
+		  "predistribution": [
+			{
+			  "address": "dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN",
+			  "quota": "1000000000000000"
+			}
+		  ],
+		  "maxblocksize": "128",
+		  "period": "3000",
+		  "award": "1000000"
+		},
+		"name": "Dog"
 	}
 	`)
 	txDesc := &contract.TxDesc{}
