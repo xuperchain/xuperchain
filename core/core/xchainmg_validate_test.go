@@ -51,6 +51,7 @@ func TestCheckContractAuthority(t *testing.T) {
 				FromAddr: []byte("bob"),
 			},
 		},
+		Initiator: "bob",
 		Desc: []byte(strDesc),
 	}
 	state, err := checkContractAuthority(contractWhiteList, fakeTx)
