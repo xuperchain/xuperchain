@@ -1,185 +1,232 @@
 #include "xchain/json/json.h"
 #include "xchain/xchain.h"
 
-#define CHECK_ARG(argKey)                             \
-    std::string argKey = ctx->arg(#argKey);           \
-    if (argKey == "") {                               \
-        ctx->error("missing required arg: " #argKey); \
-        return;                                       \
+class jvectorFinder {
+public:
+    jvectorFinder(const std::string address) : address(address) {}
+    bool operator ()(const std::vector<xchain::json>::value_type &value) { 
+        return value.is_object() and value.value("Address", "") == address; 
     }
+private:
+    std::string address;
+};
 
 // XPoA 验证集合变更智能合约
-struct Hello : public xchain::Contract {};
-std::string Validate(std::string address) { return "V_" + address; }
-std::string ChangeFlag() { return "CF_"; }
+class XpoaValidates : public xchain::Contract {
+private:
+    const std::string VALIDATES_KEY = "VALIDATES";
 
-const char delimiter_initialize = ';';
-void split_str(const std::string& str, std::vector<std::string>& str_sets,
-               const std::string& sub_str) {
-    std::string::size_type pos1, pos2;
-    pos2 = str.find(sub_str);
-    pos1 = 0;
-    while (std::string::npos != pos2) {
-        str_sets.push_back(str.substr(pos1, pos2 - pos1));
-        pos1 = pos2 + sub_str.size();
-        pos2 = str.find(sub_str, pos1);
+public:
+    bool checkArg(xchain::Context* ctx, const std::string& key, std::string& value) {
+        value = ctx->arg(key);
+        if (value.empty()) {
+            ctx->error("missing required arg: " + key);
+            return false;
+        }
+        return true;
     }
-    if (pos1 != str.length()) {
-        str_sets.push_back(str.substr(pos1));
-    }
-}
 
-/*
- * func: 初始化函数，部署合约时默认被调用
- */
-DEFINE_METHOD(Hello, initialize) {
-    xchain::Context* ctx = self.context();
-    CHECK_ARG(addresss);
-    CHECK_ARG(neturls);
-    std::vector<std::string> address_sets;
-    std::vector<std::string> neturl_sets;
-    std::string sub_str = std::string(1, delimiter_initialize);
-    split_str(addresss, address_sets, sub_str);
-    split_str(neturls, neturl_sets, sub_str);
-    if ((address_sets.size() != neturl_sets.size()) ||
-        address_sets.size() == 0) {
-        ctx->error("initialize param error");
+    void split(std::vector<std::string>& str_sets, const std::string& str, const std::string& separator) {
+        std::string::size_type pos1, pos2;
+        pos2 = str.find(separator);
+        pos1 = 0;
+        while (std::string::npos != pos2) {
+            str_sets.push_back(str.substr(pos1, pos2 - pos1));
+            pos1 = pos2 + separator.size();
+            pos2 = str.find(separator, pos1);
+        }
+        if (pos1 != str.length()) {
+            str_sets.push_back(str.substr(pos1));
+        }
         return;
     }
-    for (int i = 0; i < address_sets.size(); i++) {
-        xchain::json j;
-        j["Address"] = address_sets[i];
-        j["PeerAddr"] = neturl_sets[i];
 
-        auto data = j.dump();
-        std::string old_data;
-        if (ctx->get_object(Validate(address_sets[i]), &old_data)) {
-            ctx->error("initialize this validate already exists");
+    bool parseValidates(xchain::Context* ctx, xchain::json* jValidatesObject) {
+        std::string buffer;
+        if (!ctx->get_object(VALIDATES_KEY, &buffer) || buffer.empty()) {
+            ctx->error("Invalid origin validates.");
+            return false;
+        }
+        *jValidatesObject = xchain::json::parse(buffer);
+        auto proposersIter = jValidatesObject->find("proposers");
+        if (proposersIter == jValidatesObject->end() || !(*proposersIter).is_array() || (*proposersIter).empty() || !(*proposersIter).size()) {
+             ctx->error("Invalid origin proposers.");
+             return false;
+        }
+        return true;
+    }
+       
+    bool findItem(xchain::Context* ctx, xchain::json& jObject, const std::string& targetStr, xchain::json::iterator* iter) {
+        *iter = std::find_if(jObject.begin(), jObject.end(), jvectorFinder(targetStr));
+        return *iter != jObject.end();
+    }
+
+    /*
+     * func: 初始化函数，部署合约时默认被调用
+     */
+    void initialize() {
+        xchain::Context* ctx = this->context();
+        // 检查合约参数是否包含所需字段
+        std::string addresss, neturls;
+        if (!checkArg(ctx, "addresss", addresss) || !checkArg(ctx, "neturls", neturls)) {
             return;
-        };
-        if (!ctx->put_object(Validate(address_sets[i]), data)) {
+        }
+        std::vector<std::string> address_sets;
+        split(address_sets, addresss, ";");
+        std::vector<std::string> neturl_sets;
+        split(neturl_sets, neturls, ";");
+        if (!address_sets.size() || address_sets.size() != neturl_sets.size()) {
+            ctx->error("initialize xpoa param error");
+            return;
+        }
+        std::string buffer;
+        if (ctx->get_object(VALIDATES_KEY, &buffer) && !buffer.empty()) {
+            ctx->error("initialize xpoa validates already exist");
+            return;
+        }
+
+        xchain::json jValidatesArray = xchain::json::array();
+        for (int i = 0; i < address_sets.size(); ++i) {
+            xchain::json jItem = {
+                { "Address", address_sets[i] },
+                { "PeerAddr", neturl_sets[i] }
+            };
+            jValidatesArray.push_back(jItem);
+        }
+        xchain::json jValidatesObject;
+        jValidatesObject["proposers"] = jValidatesArray;
+        auto validatesStr = jValidatesObject.dump();
+        if (validatesStr.empty() || !ctx->put_object(VALIDATES_KEY, validatesStr)) {
             ctx->error("initialize fail to save validate");
             return;
         }
-    }
-    if (!ctx->put_object(ChangeFlag(), "initialize")) {
-        ctx->error("initialize fail to save validate change flag");
-        return;
-    }
-    ctx->ok("initialize succeed");
-}
-
-/*
- * func: XPoA添加一个新的验证节点
- * 说明:
- * 通过合约方法权限控制谁可以增加XPoA共识的验证集合，此方法不应该是高频操作
- * @param: address: 节点地址
- * @param: neturl: 节点网络连接地址
- */
-DEFINE_METHOD(Hello, add_validate) {
-    xchain::Context* ctx = self.context();
-    CHECK_ARG(address);
-    CHECK_ARG(neturl);
-    xchain::json j;
-    j["Address"] = address;
-    j["PeerAddr"] = neturl;
-    auto data = j.dump();
-
-    std::string old_data;
-    if (ctx->get_object(Validate(address), &old_data)) {
-        ctx->error("this validate already exists");
-        return;
-    };
-    if (!ctx->put_object(Validate(address), data)) {
-        ctx->error("fail to save validate");
-        return;
-    }
-    if (!ctx->put_object(ChangeFlag(), "add")) {
-        ctx->error("add validate fail to save validate change flag");
-        return;
-    }
-    ctx->ok(data);
-}
-
-/*
- * func: XPoA删除一个验证节点
- * 说明:
- * 通过合约方法权限控制谁可以减少XPoA共识的验证集合，此方法不应该是高频操作
- * @param: address: 节点地址
- */
-DEFINE_METHOD(Hello, del_validate) {
-    xchain::Context* ctx = self.context();
-    CHECK_ARG(address);
-    std::string old_data;
-    if (!ctx->get_object(Validate(address), &old_data)) {
-        ctx->error("this validate does not exists");
-        return;
+        ctx->ok("initialize succeed:" + validatesStr);
     }
 
-    if (!ctx->delete_object(Validate(address))) {
-        ctx->error("fail to delete validate");
-        return;
+    /*
+    * func: XPoA添加一个新的验证节点
+    * 说明:
+    * 通过合约方法权限控制谁可以增加XPoA共识的验证集合，此方法不应该是高频操作
+    * @param: address: 节点地址
+    * @param: neturl: 节点网络连接地址
+    */
+    void add_validate() {
+        xchain::Context* ctx = this->context();
+        // 检查合约参数是否包含所需字段
+        std::string address, neturl;
+        if (!checkArg(ctx, "address", address) || !checkArg(ctx, "neturl", neturl)) {
+            return;
+        }
+        // 检查当前proposers是否合法
+        xchain::json jValidatesObject;
+        if (!parseValidates(ctx, &jValidatesObject)) {
+            return;
+        }
+        xchain::json::iterator proposerIter;
+        if (findItem(ctx, jValidatesObject["proposers"], address, &proposerIter)) {
+            ctx->error("Proposer has exist");
+            return;
+        }
+    
+        xchain::json jItem = {
+            { "Address", address },
+            { "PeerAddr", neturl}
+        };
+        jValidatesObject["proposers"].push_back(jItem);
+        std::string value = jValidatesObject.dump();
+        if (value.empty() || !ctx->put_object(VALIDATES_KEY, value)) {
+           ctx->error("Add new validate Failed.");
+           return;
+        }
+        ctx->ok(value);
     }
-    if (!ctx->put_object(ChangeFlag(), "del")) {
-        ctx->error("del validate fail to save validate change flag");
-        return;
-    }
-    ctx->ok("ok");
-}
 
-/*
- * func: XPoA更新一个验证节点信息
- * 说明:
- * 通过合约方法权限控制谁可以减少XPoA共识的验证集合，此方法不应该是高频操作
- * @param: address: 节点地址
- * @param: neturl: 节点网络连接地址
- */
-DEFINE_METHOD(Hello, update_validate) {
-    xchain::Context* ctx = self.context();
-    CHECK_ARG(address);
-    CHECK_ARG(neturl);
-    std::string old_data;
-    if (!ctx->get_object(Validate(address), &old_data)) {
-        ctx->error("this validate does not exists");
-        return;
+    /*
+    * func: XPoA删除一个验证节点
+    * 说明:
+    * 通过合约方法权限控制谁可以减少XPoA共识的验证集合，此方法不应该是高频操作
+    * @param: address: 节点地址
+    */
+    void del_validate() {
+        xchain::Context* ctx = this->context();
+        // 检查合约参数是否包含所需字段
+        std::string address;
+        if (!checkArg(ctx, "address", address)) {
+            return;
+        }
+        xchain::json jValidatesObject;
+        if (!parseValidates(ctx, &jValidatesObject)) {
+            return;
+        }
+        xchain::json::iterator proposerIter;
+        if (!findItem(ctx, jValidatesObject["proposers"], address, &proposerIter)) {
+            ctx->error("Proposer doesn't exist");
+            return;
+        }
+        jValidatesObject["proposers"].erase(proposerIter);
+        std::string value = jValidatesObject.dump();
+        if (value.empty() || !ctx->put_object(VALIDATES_KEY, value)) {
+           ctx->error("Delete validate Failed.");
+           return;
+        }
+        ctx->ok("ok");
     }
-    xchain::json j;
-    j["Address"] = address;
-    j["PeerAddr"] = neturl;
-    auto data = j.dump();
 
-    if (!ctx->put_object(Validate(address), data)) {
-        ctx->error("fail to update validate");
-        return;
-    }
-    if (!ctx->put_object(ChangeFlag(), "update")) {
-        ctx->error("update validate fail to save validate change flag");
-        return;
-    }
-    ctx->ok(data);
-}
+    /*
+    * func: XPoA更新一个验证节点信息
+    * 说明:
+    * 通过合约方法权限控制谁可以减少XPoA共识的验证集合，此方法不应该是高频操作
+    * @param: address: 节点地址
+    * @param: neturl: 节点网络连接地址
+    */
+    void update_validate() {
+        xchain::Context* ctx = this->context();
+        std::string address, neturl;
+        if (!checkArg(ctx, "address", address) || !checkArg(ctx, "neturl", neturl)) {
+            return;
+        }
+        xchain::json jValidatesObject;
+        if (!parseValidates(ctx, &jValidatesObject)) {
+            return;
+        }
+        xchain::json::iterator proposerIter;
+        if (!findItem(ctx, jValidatesObject["proposers"], address, &proposerIter)) {
+            ctx->error("Proposer doesn't exist");
+            return;
+        }
 
-/*
- * func: XPoA查询所有验证节点信息
- * 说明:
- * 查询当前XPoA共识所有验证的验证集合信息
- */
-DEFINE_METHOD(Hello, get_validates) {
-    xchain::Context* ctx = self.context();
-    std::string flag;
-    if (!ctx->get_object(ChangeFlag(), &flag)) {
-        ctx->error("get validate change flag error");
-        return;
+        (*proposerIter)["PeerAddr"] = neturl;
+        std::string value = jValidatesObject.dump();
+        if (value.empty() || !ctx->put_object(VALIDATES_KEY, value)) {
+           ctx->error("Update validate Failed.");
+           return;
+        }
+        ctx->ok(value);
     }
-    xchain::json j;
-    std::unique_ptr<xchain::Iterator> iter =
-        ctx->new_iterator(Validate(""), Validate("~"));
-    while (iter->next()) {
-        std::pair<std::string, std::string> kv;
-        iter->get(&kv);
-        auto one = xchain::json::parse(kv.second);
-        j["proposers"].push_back(one);
+
+    /*
+    * func: XPoA查询所有验证节点信息
+    * 说明:
+    * 查询当前XPoA共识所有验证的验证集合信息
+    */
+    void get_validates() {
+        xchain::Context* ctx = this->context();
+        xchain::json jValidatesObject;
+        if (!parseValidates(ctx, &jValidatesObject)) {
+            return;
+        }
+        xchain::json resultObject;
+        resultObject["proposers"] = jValidatesObject["proposers"];
+        ctx->ok(resultObject.dump());
     }
-    auto result = j.dump();
-    ctx->ok(result);
-}
+};
+
+DEFINE_METHOD(XpoaValidates, initialize) { self.initialize(); }
+
+DEFINE_METHOD(XpoaValidates, add_validate) { self.add_validate(); }
+
+DEFINE_METHOD(XpoaValidates, del_validate) { self.del_validate(); }
+
+DEFINE_METHOD(XpoaValidates, update_validate) { self.update_validate(); }
+
+DEFINE_METHOD(XpoaValidates, get_validates) { self.get_validates(); }

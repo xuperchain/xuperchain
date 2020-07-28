@@ -402,7 +402,7 @@ func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
 		return ErrServiceRefused
 	}
 	blocksIds := []string{}
-	//如果是接受到老的block（版本是1）, TODO
+	//如果是接收到老的block（版本是1）, TODO
 	blocksIds = append(blocksIds, string(in.Block.Blockid))
 	err := xc.Ledger.SavePendingBlock(in)
 	if err != nil {
