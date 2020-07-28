@@ -179,7 +179,6 @@ func TestRunStopBlockChain(t *testing.T) {
 		t.Error("create dir error ", workSpaceErr.Error())
 	}
 	defer os.RemoveAll(workspace)
-
 	// 创建xuper链
 	ledger, err := ledger.NewLedger(workspace+"xuper", nil, nil, defaultKVEngine, crypto_client.CryptoTypeDefault)
 	if err != nil {
@@ -229,7 +228,7 @@ func TestRunStopBlockChain(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
+	// 删除xuper链
 	txreq := &pb.TxData{}
 	txreq.Bcname = "xuper"
 	txreq.FromAddr = BobAddress
@@ -268,7 +267,6 @@ func TestRunCreateBlockChain(t *testing.T) {
 		t.Error("create dir error ", workSpaceErr.Error())
 	}
 	defer os.RemoveAll(workspace)
-
 	// 创建xuper链
 	ledger, err := ledger.NewLedger(workspace+"xuper", nil, nil, defaultKVEngine, crypto_client.CryptoTypeDefault)
 	if err != nil {
@@ -318,8 +316,7 @@ func TestRunCreateBlockChain(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
-	// 创建其他链
+	// 创建Dog链
 	txreq := &pb.TxData{}
 	txreq.Bcname = "xuper"
 	txreq.FromAddr = BobAddress
