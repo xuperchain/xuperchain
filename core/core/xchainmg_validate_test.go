@@ -46,12 +46,12 @@ func TestCheckContractAuthority(t *testing.T) {
 	}
 	strDesc, _ := json.Marshal(desc)
 	fakeTx := &pb.Transaction{
+		Initiator: "bob",
 		TxInputs: []*pb.TxInput{
 			&pb.TxInput{
 				FromAddr: []byte("bob"),
 			},
 		},
-		Initiator: "bob",
 		Desc: []byte(strDesc),
 	}
 	state, err := checkContractAuthority(contractWhiteList, fakeTx)
