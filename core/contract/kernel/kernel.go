@@ -540,9 +540,10 @@ func (k *Kernel) runCreateBlockChain(desc *contract.TxDesc) error {
 		k.log.Warn("tx from addr not in whitelist to create blockchain", "disableCreateChainWhiteList", k.disableCreateChainWhiteList)
 		return ErrAddrNotInWhiteList
 	}
+	nofee := k.context.LedgerObj.GetNoFee()
 	investment := desc.Tx.GetAmountByAddress(bcName)
-	k.log.Info("create blockchain", "chain", bcName, "investment", investment, "need", k.minNewChainAmount)
-	if investment.Cmp(k.minNewChainAmount) < 0 {
+	k.log.Info("create blockchain", "chain", bcName, "investment", investment, "need", k.minNewChainAmount, "nofee", nofee)
+	if !nofee && investment.Cmp(k.minNewChainAmount) < 0 {
 		return ErrNoEnoughUTXO
 	}
 	err = k.CreateBlockChain(bcName, []byte(bcData))
