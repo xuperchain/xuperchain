@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"math/big"
 	"os"
+	"path/filepath"
 	"reflect"
 	"sync"
 
@@ -204,17 +205,17 @@ func (k *Kernel) CreateBlockChain(name string, data []byte) error {
 		k.log.Warn("only xuper chain can create side-chain", "bcName", k.bcName)
 		return ErrPermissionDenied
 	}
-	fullpath := k.datapath + "/" + name
+	fullpath := filepath.Join(k.datapath, name)
 	if global.PathExists(fullpath) {
 		k.log.Warn("fullpath exist", "fullpath", fullpath)
 		return ErrBlockChainExist
 	}
-	err := os.Mkdir(fullpath, os.ModePerm)
+	err := os.MkdirAll(fullpath, 0755)
 	if err != nil {
 		k.log.Warn("can't create path[" + fullpath + "] %v")
 		return err
 	}
-	rootfile := fullpath + "/" + global.SBlockChainConfig
+	rootfile := filepath.Join(fullpath, global.SBlockChainConfig)
 	err = ioutil.WriteFile(rootfile, data, 0666)
 	if err != nil {
 		k.log.Warn("write file error ", "file", rootfile)
