@@ -173,13 +173,12 @@ func TestCreateBlockChain(t *testing.T) {
 	kl.Stop()
 }
 
-func TestStopBlockChain(t *testing.T) {
+func TestRunStopBlockChain(t *testing.T) {
 	workspace, workSpaceErr := ioutil.TempDir("/tmp", "")
 	if workSpaceErr != nil {
 		t.Error("create dir error ", workSpaceErr.Error())
 	}
 	defer os.RemoveAll(workspace)
-
 	// 创建xuper链
 	ledger, err := ledger.NewLedger(workspace+"xuper", nil, nil, defaultKVEngine, crypto_client.CryptoTypeDefault)
 	if err != nil {
@@ -229,14 +228,121 @@ func TestStopBlockChain(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-
+	// 删除xuper链
+	txreq := &pb.TxData{}
+	txreq.Bcname = "xuper"
+	txreq.FromAddr = BobAddress
+	txreq.FromPubkey = BobPubkey
+	txreq.FromScrkey = BobPrivateKey
+	txreq.Nonce = "nonce"
+	txreq.Timestamp = time.Now().UnixNano()
+	//bob给alice转20
+	txreq.Account = []*pb.TxDataAccount{
+		{Address: AliceAddress, Amount: "20"},
+	}
+	chainTx, err := utxovm.GenerateTx(txreq)
+	if err != nil {
+		t.Error("GenerateTx Error", err)
+	}
+	txDesc := &contract.TxDesc{}
+	txDesc.Tx = chainTx
+	txDesc.Method = "StopBlockChain"
+	txDesc.Module = "kernel"
+	argMap := make(map[string]interface{})
+	argMap["name"] = "xuper"
+	argMap["data"] = "{\"version\":\"1\",\"consensus\":{\"miner\":\"dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN\"},\"predistribution\":[{\"address\":\"dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN\",\"quota\":\"1000000000000000\"}],\"maxblocksize\":\"128\",\"period\":\"3000\",\"award\":\"1000000\"}"
+	txDesc.Args = argMap
 	// 通过tx删除主链xuper
-	nextBlockid, err := bobToAlice(t, utxovm, ledger, "1", block.Blockid, `{"module":"kernel", "method":"StopBlockChain", "args": {"name": "xuper"}}`)
-	err = utxovm.Play(nextBlockid)
+	err = kl.runStopBlockChain(txDesc)
 	if err == ErrPermissionDenied {
 		t.Logf("ok. Cannot stop main-chain: xuper.")
 	} else {
 		t.Fatal("Check StopBlockChain, main-chain xuper might be stopped.")
+	}
+}
+
+func TestRunCreateBlockChain(t *testing.T) {
+	workspace, workSpaceErr := ioutil.TempDir("/tmp", "")
+	if workSpaceErr != nil {
+		t.Error("create dir error ", workSpaceErr.Error())
+	}
+	defer os.RemoveAll(workspace)
+	// 创建xuper链
+	ledger, err := ledger.NewLedger(workspace+"xuper", nil, nil, defaultKVEngine, crypto_client.CryptoTypeDefault)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(ledger)
+	kl := &Kernel{}
+	kLogger := log.New("module", "kernel")
+	kLogger.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
+	kl.Init(workspace, kLogger, nil, "xuper")
+	kl.SetNewChainWhiteList(map[string]bool{BobAddress: true})
+	kl.SetMinNewChainAmount("0")
+	tx, err := utxo.GenerateRootTx([]byte(`
+       {
+        "version" : "1"
+        , "consensus" : {
+                "miner" : "0x00000000000"
+        }
+        , "predistribution":[
+                {
+                        "address" : "` + BobAddress + `",
+                        "quota" : "100"
+                },
+				{
+                        "address" : "` + AliceAddress + `",
+                        "quota" : "200"
+                }
+
+        ]
+        , "maxblocksize" : "128"
+        , "period" : "5000"
+        , "award" : "1000"
+		} 
+    `))
+	if err != nil {
+		t.Fatal(err)
+	}
+	block, _ := ledger.FormatRootBlock([]*pb.Transaction{tx})
+	t.Logf("blockid %x", block.Blockid)
+	confirmStatus := ledger.ConfirmBlock(block, true)
+	if !confirmStatus.Succ {
+		t.Fatal("confirm block fail")
+	}
+	utxovm, _ := utxo.MakeUtxoVM("xuper", ledger, workspace+"xuper", "", "", []byte(""), nil, 5000, 60, 500, nil, false, defaultKVEngine, crypto_client.CryptoTypeDefault)
+	utxovm.RegisterVM("kernel", kl, global.VMPrivRing0)
+	err = utxovm.Play(block.Blockid)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// 创建Dog链
+	txreq := &pb.TxData{}
+	txreq.Bcname = "xuper"
+	txreq.FromAddr = BobAddress
+	txreq.FromPubkey = BobPubkey
+	txreq.FromScrkey = BobPrivateKey
+	txreq.Nonce = "nonce"
+	txreq.Timestamp = time.Now().UnixNano()
+	//bob给alice转20
+	txreq.Account = []*pb.TxDataAccount{
+		{Address: AliceAddress, Amount: "20"},
+	}
+	chainTx, err := utxovm.GenerateTx(txreq)
+	if err != nil {
+		t.Error("GenerateTx Error", err)
+	}
+	txDesc := &contract.TxDesc{}
+	txDesc.Tx = chainTx
+	txDesc.Method = "CreateBlockChain"
+	txDesc.Module = "kernel"
+	argMap := make(map[string]interface{})
+	argMap["name"] = "Dog"
+	argMap["data"] = "{\"version\":\"1\",\"consensus\":{\"miner\":\"dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN\"},\"predistribution\":[{\"address\":\"dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN\",\"quota\":\"1000000000000000\"}],\"maxblocksize\":\"128\",\"period\":\"3000\",\"award\":\"1000000\"}"
+	txDesc.Args = argMap
+	runCreateBlockChain := kl.runCreateBlockChain(txDesc)
+	if runCreateBlockChain != nil {
+		t.Error("runCreateBlockChain error ", runCreateBlockChain.Error())
 	}
 }
 
