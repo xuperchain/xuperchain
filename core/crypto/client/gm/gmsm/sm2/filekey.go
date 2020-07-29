@@ -4,6 +4,7 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"github.com/xuperchain/xuperchain/core/crypto/client/gm/gmsm/sm3"
+	"path/filepath"
 	//	"crypto/rand"
 	"encoding/json"
 	"fmt"
@@ -17,7 +18,6 @@ import (
 	"github.com/xuperchain/xuperchain/core/crypto/config"
 	"github.com/xuperchain/xuperchain/core/crypto/utils"
 	walletRand "github.com/xuperchain/xuperchain/core/hdwallet/rand"
-	//	"gmsm/sm3"
 )
 
 // 定义助记词的强度类型
@@ -407,19 +407,16 @@ func ExportNewAccount(path string, privateKey *ecdsa.PrivateKey) error {
 	if err != nil {
 		return err
 	}
-	//如果path不是以/结尾的，自动拼上
-	if strings.LastIndex(path, "/") != len([]rune(path))-1 {
-		path = path + "/"
-	}
-	err = writeFileUsingFilename(path+"private.key", []byte(jsonPrivateKey))
+
+	err = writeFileUsingFilename(filepath.Join(path, "private.key"), []byte(jsonPrivateKey))
 	if err != nil {
 		return fmt.Errorf("Export private key file failed, the err is %v", err)
 	}
-	err = writeFileUsingFilename(path+"public.key", []byte(jsonPublicKey))
+	err = writeFileUsingFilename(filepath.Join(path, "public.key"), []byte(jsonPublicKey))
 	if err != nil {
 		return fmt.Errorf("Export public key file failed, the err is %v", err)
 	}
-	err = writeFileUsingFilename(path+"address", []byte(address))
+	err = writeFileUsingFilename(filepath.Join(path, "address"), []byte(address))
 	if err != nil {
 		return fmt.Errorf("Export address file failed, the err is %v", err)
 	}
