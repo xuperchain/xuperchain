@@ -239,3 +239,12 @@ message PostLogRequest {
 message PostLogResponse {
   string entry = 1;
 }
+
+message EmitEventRequest {
+  SyscallHeader header = 1;
+  string name = 2;
+  bytes body = 3;
+}
+
+message EmitEventResponse {
+}

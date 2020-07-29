@@ -28,10 +28,15 @@ public interface Context {
 
     public void transfer(String to, BigInteger amount);
 
+    public BigInteger transferAmount();
+
     public Response call(String module, String contract, String method, Map<String, byte[]> args);
 
     public Response crossQuery(String uri, Map<String, byte[]> args);
 
-    public void log(String msg);
+    public void emitEvent(String name, byte[] body);
 
+    public void emitJSONEvent(String name, Object body);
+
+    public void log(String msg);
 }

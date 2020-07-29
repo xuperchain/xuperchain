@@ -473,6 +473,61 @@ func TestFrozenHeight(t *testing.T) {
 	}
 }
 
+func TestGetSnapShotWithBlock(t *testing.T) {
+	workspace, dirErr := ioutil.TempDir("/tmp", "")
+	if dirErr != nil {
+		t.Fatal(dirErr)
+	}
+	os.RemoveAll(workspace)
+	defer os.RemoveAll(workspace)
+	ledger, err := ledger_pkg.NewLedger(workspace, nil, nil, DefaultKVEngine, crypto_client.CryptoTypeDefault)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(ledger)
+	tx, err := GenerateRootTx([]byte(`
+       {
+        "version" : "1"
+        , "consensus" : {
+                "miner" : "0x00000000000"
+        }
+        , "predistribution":[
+                {
+                        "address" : "` + BobAddress + `",
+                        "quota" : "100"
+                },
+				{
+                        "address" : "` + AliceAddress + `",
+                        "quota" : "200"
+                }
+
+        ]
+        , "maxblocksize" : "128"
+        , "period" : "5000"
+        , "award" : "1000"
+		} 
+    `))
+	if err != nil {
+		t.Fatal(err)
+	}
+	block, _ := ledger.FormatRootBlock([]*pb.Transaction{tx})
+	t.Logf("blockid %x", block.Blockid)
+	confirmStatus := ledger.ConfirmBlock(block, true)
+	if !confirmStatus.Succ {
+		t.Fatal("confirm block fail")
+	}
+	utxoVM, _ := NewUtxoVM("xuper", ledger, workspace, minerPrivateKey, minerPublicKey, []byte(minerAddress),
+		nil, false, DefaultKVEngine, crypto_client.CryptoTypeDefault)
+	playErr := utxoVM.Play(block.Blockid)
+	if playErr != nil {
+		t.Fatal(playErr)
+	}
+	_, err = utxoVM.GetSnapShotWithBlock(block)
+	if err != nil {
+		t.Fatal("GetSnapShotWithBlock fail")
+	}
+}
+
 type testInterface struct{}
 
 func (ti *testInterface) Run(desc *contract.TxDesc) error {

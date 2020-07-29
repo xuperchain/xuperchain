@@ -1,12 +1,12 @@
-### 百度超级链学院·大讲堂 
-![add for 627](https://raw.githubusercontent.com/xuperchain/docs/master/source/images/ad_for_627.png)
+### 全民普惠上链·百度超级链开放网络白皮书发布会
+![ad for 0804](https://raw.githubusercontent.com/xuperchain/docs/master/source/images/ad_for_0804.jpg)
 
-💡金融领域是区块链技术应用最多、需求最大的，银行、证券、投资、保险等纷纷抛出了橄榄枝。
-早在17年百度超级链落地长安新生ABS，后又相继与浦发银行等大行等达成合作，区块链如何变革金融领域？用一场直播告诉你！
+💡30+省份强推区块链，产业区块链浪潮来袭，中小企业如何上链?
+“无需建链，连接即用”的开放网络白皮书即将发布，揭秘产品战略、全新理念、生态合作，让中小企业，上链无忧!
+发布会期间，千万补贴资源大放送，新用户无门槛神券、老用户感恩回馈，双重优惠助您零成本上链、轻松实践。
 
-👇🏻直播预约链接：http://abcxueyuan.baidu.com/#/live_detail?liveId=252&linkToken=cs39T
-直播时间：6月27日15:00
-添加小助手微信（image-baidu），回复“大讲堂”，进入直播社群，与专家面对面互动。
+👇🏻直播时间：2020年8月4日14：00
+立即预约、领取优惠： https://xchain.baidu.com/n/activities_whitepaper
 
 # XuperChain
 
