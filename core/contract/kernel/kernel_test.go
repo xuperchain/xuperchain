@@ -253,6 +253,7 @@ func TestRunStopBlockChain(t *testing.T) {
 	argMap["data"] = "{\"version\":\"1\",\"consensus\":{\"miner\":\"dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN\"},\"predistribution\":[{\"address\":\"dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN\",\"quota\":\"1000000000000000\"}],\"maxblocksize\":\"128\",\"period\":\"3000\",\"award\":\"1000000\"}"
 	txDesc.Args = argMap
 	// 通过tx删除主链xuper
+	kl.register.GetXchainmgConfig().Kernel.EnableStopChain = true
 	err = kl.runStopBlockChain(txDesc)
 	if err == ErrPermissionDenied {
 		t.Logf("ok. Cannot stop main-chain: xuper.")
