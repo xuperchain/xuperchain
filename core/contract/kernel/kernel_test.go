@@ -12,6 +12,7 @@ import (
 	"time"
 
 	log "github.com/xuperchain/log15"
+	conf "github.com/xuperchain/xuperchain/core/common/config"
 	"github.com/xuperchain/xuperchain/core/contract"
 	"github.com/xuperchain/xuperchain/core/crypto/client"
 	crypto_client "github.com/xuperchain/xuperchain/core/crypto/client"
@@ -173,6 +174,22 @@ func TestCreateBlockChain(t *testing.T) {
 	kl.Stop()
 }
 
+type registerTmp struct {
+	Cfg *conf.NodeConfig
+}
+
+func (r *registerTmp) RegisterBlockChain(name string) error {
+	return nil
+}
+
+func (r *registerTmp) UnloadBlockChain(name string) error {
+	return nil
+}
+
+func (r *registerTmp) GetXchainmgConfig() *conf.NodeConfig {
+	return r.Cfg
+}
+
 func TestRunStopBlockChain(t *testing.T) {
 	workspace, workSpaceErr := ioutil.TempDir("/tmp", "")
 	if workSpaceErr != nil {
@@ -188,7 +205,16 @@ func TestRunStopBlockChain(t *testing.T) {
 	kl := &Kernel{}
 	kLogger := log.New("module", "kernel")
 	kLogger.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
-	kl.Init(workspace, kLogger, nil, "xuper")
+	kernelConfig := conf.KernelConfig{
+		EnableStopChain: true,
+	}
+	config := &conf.NodeConfig{
+		Kernel: kernelConfig,
+	}
+	register := &registerTmp{
+		Cfg: config,
+	}
+	kl.Init(workspace, kLogger, register, "xuper")
 	kl.SetNewChainWhiteList(map[string]bool{BobAddress: true})
 	kl.SetMinNewChainAmount("0")
 	tx, err := utxo.GenerateRootTx([]byte(`
@@ -253,7 +279,6 @@ func TestRunStopBlockChain(t *testing.T) {
 	argMap["data"] = "{\"version\":\"1\",\"consensus\":{\"miner\":\"dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN\"},\"predistribution\":[{\"address\":\"dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN\",\"quota\":\"1000000000000000\"}],\"maxblocksize\":\"128\",\"period\":\"3000\",\"award\":\"1000000\"}"
 	txDesc.Args = argMap
 	// 通过tx删除主链xuper
-	kl.register.GetXchainmgConfig().Kernel.EnableStopChain = true
 	err = kl.runStopBlockChain(txDesc)
 	if err == ErrPermissionDenied {
 		t.Logf("ok. Cannot stop main-chain: xuper.")
