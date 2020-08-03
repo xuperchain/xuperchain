@@ -6,8 +6,10 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
+	"sync"
 	"testing"
 	"time"
 
@@ -27,6 +29,25 @@ const BobPubkey = `{"Curvname":"P-256","X":7469561747716005875774720822037123683
 const BobPrivateKey = `{"Curvname":"P-256","X":74695617477160058757747208220371236837474210247114418775262229497812962582435,"Y":51348715319124770392993866417088542497927816017012182211244120852620959209571,"D":29079635126530934056640915735344231956621504557963207107451663058887647996601}`
 const AliceAddress = "WNWk3ekXeM5M2232dY2uCJmEqWhfQiDYT"
 const defaultKVEngine = "default"
+
+type registerTmp struct {
+	Cfg    *conf.NodeConfig
+	chains *sync.Map
+}
+
+func (r *registerTmp) RegisterBlockChain(name string) error {
+	r.chains.Store("name", name)
+	return nil
+}
+
+func (r *registerTmp) UnloadBlockChain(name string) error {
+	_, ok := r.chains.Load(name)
+	if !ok {
+		return fmt.Errorf("No chain exist")
+	}
+	r.chains.Delete(name)
+	return nil
+}
 
 func bobToAlice(t *testing.T, utxovm *utxo.UtxoVM, ledger *ledger.Ledger, amount string, prehash []byte, desc string) ([]byte, error) {
 	t.Logf("pre_hash of this block: %x", prehash)
@@ -172,18 +193,6 @@ func TestCreateBlockChain(t *testing.T) {
 	}
 	// test for Stop
 	kl.Stop()
-}
-
-type registerTmp struct {
-	Cfg *conf.NodeConfig
-}
-
-func (r *registerTmp) RegisterBlockChain(name string) error {
-	return nil
-}
-
-func (r *registerTmp) UnloadBlockChain(name string) error {
-	return nil
 }
 
 func (r *registerTmp) GetXchainmgConfig() *conf.NodeConfig {
