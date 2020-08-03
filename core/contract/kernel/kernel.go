@@ -41,6 +41,7 @@ type Kernel struct {
 	context                     *contract.TxContext
 	minNewChainAmount           *big.Int        //创建平行链的最小花费
 	newChainWhiteList           map[string]bool //能创建链的address白名单
+	EnableStopChain             bool            //是否开启停用平行链功能
 	disableCreateChainWhiteList bool            //是否允许任何人创建链
 	mutex                       *sync.Mutex
 	bcName                      string
@@ -563,6 +564,11 @@ func (k *Kernel) runCreateBlockChain(desc *contract.TxDesc) error {
 
 // runStopBlockChain 为客户端提供停用制定链服务，不删除该链目录下内容
 func (k *Kernel) runStopBlockChain(desc *contract.TxDesc) error {
+	k.EnableStopChain = k.register.GetXchainmgConfig().Kernel.EnableStopChain
+	if !k.EnableStopChain {
+		k.log.Warn("Cannot stop any blockchain, please configure the properties named 'enableStopChain'of your kernel in xchain.yaml")
+		return ErrPermissionDenied
+	}
 	if desc.Args["name"] == nil {
 		k.log.Warn("Chain name in tx for stopping a blockchain should be a non-null value.")
 		return ErrInvalidChainName
@@ -593,6 +599,10 @@ func (k *Kernel) runStopBlockChain(desc *contract.TxDesc) error {
  * 此时不论之前操作失败与否都无法load到之前需要删除的链信息, 后续可将删除链直接移到指定文件夹中。
  */
 func (k *Kernel) rollbackStopBlockChain(desc *contract.TxDesc) error {
+	if !k.EnableStopChain {
+		k.log.Warn("Cannot rollback any blockchain, please configure the properties named 'enableStopChain'of your kernel in xchain.yaml")
+		return ErrPermissionDenied
+	}
 	if desc.Args["name"] == nil {
 		k.log.Warn("rollback operation: Chain name in tx for stopping a blockchain is null.")
 		return ErrInvalidChainName
