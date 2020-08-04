@@ -73,7 +73,7 @@ func (xm *XChainMG) Init(log log.Logger, cfg *config.NodeConfig,
 		if fi.IsDir() { // 忽略非目录
 			xm.Log.Trace("--------find " + fi.Name())
 			aKernel := &kernel.Kernel{}
-			aKernel.Init(xm.datapath, xm.Log, xm, fi.Name())
+			aKernel.Init(xm.datapath, xm.Log, xm, fi.Name(), &xm.Cfg.Kernel)
 			x := &XChainCore{}
 			err := x.Init(fi.Name(), log, cfg, p2pV2, aKernel, xm.nodeMode, xm)
 			if err != nil {
@@ -90,9 +90,6 @@ func (xm *XChainMG) Init(log log.Logger, cfg *config.NodeConfig,
 		xm.Log.Error("can not find xuper chain, please create it first", "err", err)
 		return err
 	}
-	xm.rootKernel.SetNewChainWhiteList(cfg.Kernel.NewChainWhiteList)
-	xm.rootKernel.SetMinNewChainAmount(cfg.Kernel.MinNewChainAmount)
-	xm.rootKernel.SetDisableCreateChainWhiteList(cfg.Kernel.DisableCreateChainWhiteList)
 	/*for _, x := range xm.chains {
 		go x.SyncBlocks()
 	}*/
@@ -174,7 +171,7 @@ func (xm *XChainMG) addBlockChain(name string) (*XChainCore, error) {
 	aKernel := xm.rootKernel
 	if name != "xuper" {
 		aKernel = &kernel.Kernel{}
-		aKernel.Init(xm.datapath, xm.Log, xm, name)
+		aKernel.Init(xm.datapath, xm.Log, xm, name, &xm.Cfg.Kernel)
 	}
 	err := x.Init(name, xm.Log, xm.Cfg, xm.P2pSvr, aKernel, xm.nodeMode, xm)
 	if err != nil {
