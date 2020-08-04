@@ -248,7 +248,7 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 		xc.Utxovm.StartAsyncBlockMode()
 	}
 	xc.Utxovm.SetMaxConfirmedDelay(cfg.Utxo.MaxConfirmedDelay)
-	xc.Utxovm.SetModifyBlockAddr(cfg.ModifyBlockAddr)
+	xc.Utxovm.SetModifyBlockAddr(cfg.Kernel.ModifyBlockAddr)
 	gBlk := xc.Ledger.GetGenesisBlock()
 	if gBlk == nil {
 		xc.log.Warn("GenesisBlock nil")

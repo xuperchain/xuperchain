@@ -62,7 +62,8 @@ func (c *CreateChainCommand) createChain(ctx context.Context) error {
 		return err
 	}
 	k := kernel.Kernel{}
-	k.Init(c.ccOutput, xlog, nil, "xuper")
+	kc := &config.KernelConfig{}
+	k.Init(c.ccOutput, xlog, nil, "xuper", kc)
 	js := c.ccRootConfig + "/" + c.cli.RootOptions.Name + ".json"
 	data, err := ioutil.ReadFile(js)
 	if err != nil {
