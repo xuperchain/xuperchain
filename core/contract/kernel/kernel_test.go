@@ -6,15 +6,13 @@ import (
 	"crypto/rand"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"os"
-	"sync"
 	"testing"
 	"time"
 
 	log "github.com/xuperchain/log15"
-	conf "github.com/xuperchain/xuperchain/core/common/config"
+	"github.com/xuperchain/xuperchain/core/common/config"
 	"github.com/xuperchain/xuperchain/core/contract"
 	"github.com/xuperchain/xuperchain/core/crypto/client"
 	crypto_client "github.com/xuperchain/xuperchain/core/crypto/client"
@@ -30,27 +28,12 @@ const BobPrivateKey = `{"Curvname":"P-256","X":746956174771600587577472082203712
 const AliceAddress = "WNWk3ekXeM5M2232dY2uCJmEqWhfQiDYT"
 const defaultKVEngine = "default"
 
-type registerTmp struct {
-	Cfg    *conf.NodeConfig
-	chains *sync.Map
-}
-
-func (r *registerTmp) RegisterBlockChain(name string) error {
-	r.chains.Store("name", name)
-	return nil
-}
-
-func (r *registerTmp) UnloadBlockChain(name string) error {
-	_, ok := r.chains.Load(name)
-	if !ok {
-		return fmt.Errorf("No chain exist")
-	}
-	r.chains.Delete(name)
-	return nil
-}
-
-func (r *registerTmp) GetXchainmgConfig() *conf.NodeConfig {
-	return r.Cfg
+var kernelConfig = &config.KernelConfig{
+	MinNewChainAmount:           "0",
+	NewChainWhiteList:           map[string]bool{BobAddress: true},
+	DisableCreateChainWhiteList: false,
+	EnableStopChain:             true,
+	ModifyBlockAddr:             "",
 }
 
 func bobToAlice(t *testing.T, utxovm *utxo.UtxoVM, ledger *ledger.Ledger, amount string, prehash []byte, desc string) ([]byte, error) {
@@ -121,9 +104,7 @@ func TestCreateBlockChain(t *testing.T) {
 	kl := &Kernel{}
 	kLogger := log.New("module", "kernel")
 	kLogger.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
-	kl.Init(workspace, kLogger, nil, "xuper")
-	kl.SetNewChainWhiteList(map[string]bool{BobAddress: true})
-	kl.SetMinNewChainAmount("0")
+	kl.Init(workspace, kLogger, nil, "xuper", kernelConfig)
 	//创建链的时候分配财富
 	tx, err := utxo.GenerateRootTx([]byte(`
        {
@@ -214,18 +195,7 @@ func TestRunStopBlockChain(t *testing.T) {
 	kl := &Kernel{}
 	kLogger := log.New("module", "kernel")
 	kLogger.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
-	kernelConfig := conf.KernelConfig{
-		EnableStopChain: true,
-	}
-	config := &conf.NodeConfig{
-		Kernel: kernelConfig,
-	}
-	register := &registerTmp{
-		Cfg: config,
-	}
-	kl.Init(workspace, kLogger, register, "xuper")
-	kl.SetNewChainWhiteList(map[string]bool{BobAddress: true})
-	kl.SetMinNewChainAmount("0")
+	kl.Init(workspace, kLogger, nil, "xuper", kernelConfig)
 	tx, err := utxo.GenerateRootTx([]byte(`
        {
         "version" : "1"
@@ -311,9 +281,7 @@ func TestRunCreateBlockChain(t *testing.T) {
 	kl := &Kernel{}
 	kLogger := log.New("module", "kernel")
 	kLogger.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
-	kl.Init(workspace, kLogger, nil, "xuper")
-	kl.SetNewChainWhiteList(map[string]bool{BobAddress: true})
-	kl.SetMinNewChainAmount("0")
+	kl.Init(workspace, kLogger, nil, "xuper", kernelConfig)
 	tx, err := utxo.GenerateRootTx([]byte(`
        {
         "version" : "1"
@@ -397,8 +365,7 @@ func TestCreateBlockChainPermission(t *testing.T) {
 	kl := &Kernel{}
 	kLogger := log.New("module", "kernel")
 	kLogger.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
-	kl.Init(workspace, kLogger, nil, chainName)
-	kl.SetNewChainWhiteList(map[string]bool{BobAddress: true})
+	kl.Init(workspace, kLogger, nil, chainName, kernelConfig)
 	//创建链的时候分配财富
 	tx, err := utxo.GenerateRootTx([]byte(`
        {
@@ -538,7 +505,7 @@ func TestRunUpdateMaxBlockSize(t *testing.T) {
 	kl := &Kernel{}
 	kLogger := log.New("module", "kernel")
 	kLogger.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
-	kl.Init(workspace, kLogger, nil, "xuper")
+	kl.Init(workspace, kLogger, nil, "xuper", kernelConfig)
 	kl.SetContext(context)
 	txDesc := &contract.TxDesc{
 		Args: map[string]interface{}{
@@ -630,7 +597,7 @@ func TestRunUpdateReservedContracts(t *testing.T) {
 	kl := &Kernel{}
 	kLogger := log.New("module", "kernel")
 	kLogger.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
-	kl.Init(workspace, kLogger, nil, "xuper")
+	kl.Init(workspace, kLogger, nil, "xuper", kernelConfig)
 	kl.SetContext(context)
 	args := []byte(`
         {
@@ -745,7 +712,7 @@ func TestRunUpdateForbiddenContract(t *testing.T) {
 	kl := &Kernel{}
 	kLogger := log.New("module", "kernel")
 	kLogger.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
-	kl.Init(workSpace, kLogger, nil, "xuper")
+	kl.Init(workSpace, kLogger, nil, "xuper", kernelConfig)
 	kl.SetContext(context)
 	args := []byte(`
 	{

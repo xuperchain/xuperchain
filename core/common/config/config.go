@@ -262,7 +262,6 @@ type NodeConfig struct {
 	GatewaySwitch   bool   `yaml:"gatewaySwitch,omitempty"`
 	CoreConnection  bool   `yaml:"coreConnection,omitempty"`
 	FailSkip        bool   `yaml:"failSkip,omitempty"`
-	ModifyBlockAddr string `yaml:"modifyBlockAddr,omitempty"`
 	// XEndorser the endorser module config
 	XEndorser XEndorserConfig `yaml:"xendorser,omitempty"`
 	// TxCacheExpiredTime expired time for tx cache
@@ -289,10 +288,11 @@ type NodeConfig struct {
 
 // KernelConfig kernel config
 type KernelConfig struct {
-	MinNewChainAmount           string          `yaml:"minNewChainAmount,omitempty"`
-	NewChainWhiteList           map[string]bool `yaml:"newChainWhiteList,omitempty"`
-	DisableCreateChainWhiteList bool            `yaml:"disableCreateChainWhiteList,omitempty"`
-	EnableStopChain             bool            `yaml:"enableStopChain,omitempty"`
+	MinNewChainAmount           string          `yaml:"minNewChainAmount,omitempty"`           //创建平行链的最小花费
+	NewChainWhiteList           map[string]bool `yaml:"newChainWhiteList,omitempty"`           //能创建链的address白名单
+	DisableCreateChainWhiteList bool            `yaml:"disableCreateChainWhiteList,omitempty"` //是否允许任何人创建链
+	EnableStopChain             bool            `yaml:"enableStopChain,omitempty"`             //是否开启停用平行链功能
+	ModifyBlockAddr             string          `yaml:"modifyBlockAddr,omitempty"`             //是否为可变更区块链
 }
 
 // PruneOption ledger prune option
@@ -374,6 +374,7 @@ func (nc *NodeConfig) defaultNodeConfig() {
 		MinNewChainAmount:           "0",
 		DisableCreateChainWhiteList: false,
 		EnableStopChain:             false,
+		ModifyBlockAddr:             "",
 	}
 	nc.DBCache = DBCacheConfig{
 		MemCacheSize: 128,  //MB for each leveldb
@@ -405,7 +406,6 @@ func (nc *NodeConfig) defaultNodeConfig() {
 	}
 	nc.CoreConnection = false
 	nc.FailSkip = false
-	nc.ModifyBlockAddr = ""
 	nc.XEndorser = XEndorserConfig{
 		Enable:   false,
 		Module:   "default",
@@ -541,7 +541,7 @@ func (nc *NodeConfig) ApplyFlags(flags *pflag.FlagSet) {
 	flags.StringVar(&nc.PluginConfPath, "pluginConfPath", nc.PluginConfPath, "used for config overwrite --pluginConfPath <plugin conf path>")
 
 	flags.BoolVar(&nc.FailSkip, "failSkip", nc.FailSkip, "used for config overwrite --failSkip <>")
-	flags.StringVar(&nc.ModifyBlockAddr, "modifyBlockAddr", nc.ModifyBlockAddr, "used for config overwrite --modifyBlockAddr <>")
+	flags.StringVar(&nc.Kernel.ModifyBlockAddr, "modifyBlockAddr", nc.Kernel.ModifyBlockAddr, "used for config overwrite --modifyBlockAddr <>")
 }
 
 // VisitAll print all config of node
