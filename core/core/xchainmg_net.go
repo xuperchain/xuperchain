@@ -61,7 +61,7 @@ func (xm *XChainMG) StartLoop() {
 		select {
 		case msg := <-xm.msgChan:
 			// handle received msg
-			xm.Log.Info("XchainMG get msg", "logid", msg.GetHeader().GetLogid(), "msgType", msg.GetHeader().GetType(), "checksum", msg.GetHeader().GetDataCheckSum())
+			xm.Log.Info("XchainMG get msg", "logid", msg.GetHeader().GetLogid(), "msgType", msg.GetHeader().GetType(), "checksum", msg.GetHeader().GetDataCheckSum(), "from", msg.GetHeader().GetFrom())
 			go xm.handleReceivedMsg(msg)
 		}
 	}
