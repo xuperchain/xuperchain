@@ -322,7 +322,13 @@ Again:
 	}
 
 	// update validates
-	if _, err := xpoa.updateValidates(height); err != nil {
+	preBlockId, err := xpoa.ledger.QueryBlockByHeight(height - 1)
+	if err != nil {
+		xpoa.lg.Error("xpoa.getCurrentValidates", "getBlock", err)
+		return false, false
+	}
+	xpoa.lg.Info("Miner Propcess update validates")
+	if _, err := xpoa.updateValidates(preBlockId.GetBlockid()); err != nil {
 		xpoa.lg.Error("Xpoa update validates error", "error", err.Error())
 		return false, false
 	}
@@ -351,14 +357,8 @@ Again:
 
 // getCurrentValidates return current validates from xmodel
 // 注意：当查不到的时候或者一个候选人都没查到则默认取初始化的值
-// TODO: zq needs to be optimized in future because
-func (xpoa *XPoa) getCurrentValidates(curHeight int64) ([]*cons_base.CandidateInfo, error) {
-	preBlockId, err := xpoa.ledger.QueryBlockByHeight(curHeight - 1)
-	if err != nil {
-		xpoa.lg.Error("xpoa.getCurrentValidates", "getBlock", err)
-		return nil, fmt.Errorf("get block by height err:%v", err)
-	}
-	reader, err := xpoa.utxoVM.GetSnapShotWithBlock(preBlockId)
+func (xpoa *XPoa) getCurrentValidates(blockId []byte) ([]*cons_base.CandidateInfo, error) {
+	reader, err := xpoa.utxoVM.GetSnapShotWithBlock(blockId)
 	if err != nil {
 		xpoa.lg.Error("xpoa.getCurrentValidates", "CreateSnapshot", err)
 		return nil, fmt.Errorf("get snapshot err:%v", err)
@@ -393,9 +393,8 @@ func (xpoa *XPoa) getCurrentValidates(curHeight int64) ([]*cons_base.CandidateIn
 // param: initTime time of the latest changed
 // param: curValidates validates of the latest changed
 // return: bool refers whether validates has changed
-//TODO: ZQ 优化model支持快照能力，拿最新的确认的信息
-func (xpoa *XPoa) updateValidates(curHeight int64) (bool, error) {
-	curValidates, err := xpoa.getCurrentValidates(curHeight)
+func (xpoa *XPoa) updateValidates(blockId []byte) (bool, error) {
+	curValidates, err := xpoa.getCurrentValidates(blockId)
 	if err != nil && err != ErrContractNotFound && err != ErrNotConfirmed {
 		xpoa.lg.Error("Xpoa updateValidates getCurrentValidates error", "error", err.Error())
 		return false, err
@@ -404,33 +403,33 @@ func (xpoa *XPoa) updateValidates(curHeight int64) (bool, error) {
 		xpoa.lg.Error("Xpoa updateValidates getCurrentValidates not confirmed no need to update")
 		return true, nil
 	}
-
 	if !base.CandidateInfoEqual(xpoa.proposerInfos, curValidates) {
 		err = xpoa.bftPaceMaker.UpdateValidatorSet(curValidates)
 		if err != nil {
 			return false, ErrUpdateValidates
 		}
-		xpoa.lg.Debug("Xpoa updateValidates", "xpoa.termTimestamp", xpoa.termTimestamp, "curValidates", curValidates)
 		xpoa.proposerInfos = curValidates
+		xpoa.lg.Debug("Xpoa updateValidates Successfully", "base on", blockId)
+		for _, v := range curValidates {
+			xpoa.lg.Debug("updateValidates", "curValidates", v.Address)
+		}
 	}
 	return true, nil
 }
 
 // minerScheduling return current term, pos, blockPos from last changed
 func (xpoa *XPoa) minerScheduling(timestamp int64) (term int64, pos int64, blockPos int64) {
-	if timestamp < xpoa.termTimestamp {
-		return
-	}
 	// 每一轮的时间
 	termTime := xpoa.xpoaConf.period * int64(len(xpoa.proposerInfos)) * xpoa.xpoaConf.blockNum
 	// 每个矿工轮值时间
 	posTime := xpoa.xpoaConf.period * xpoa.xpoaConf.blockNum
-	term = (timestamp-xpoa.termTimestamp)/termTime + 1
-	resTime := (timestamp - xpoa.termTimestamp) - (term-1)*termTime
+	term = (timestamp)/termTime + 1
+	//10640483 180000
+	resTime := timestamp - (term-1)*termTime
 	pos = resTime / posTime
 	resTime = resTime - (resTime/posTime)*posTime
 	blockPos = resTime/xpoa.xpoaConf.period + 1
-	xpoa.lg.Trace("getTermPos", "timestamp", timestamp, "term", term, "pos", pos, "blockPos", blockPos, "xpoa.termTimestamp", xpoa.termTimestamp)
+	xpoa.lg.Trace("getTermPos", "timestamp", timestamp, "term", term, "pos", pos, "blockPos", blockPos)
 	return
 }
 
@@ -447,7 +446,7 @@ func (xpoa *XPoa) updateViews(viewNum int64) error {
 		return err
 	}
 	preproposer := string(preBlockId.GetProposer())
-
+	// 这里要计算nextProposer, 并更新p2p validates
 	return xpoa.bftPaceMaker.NextNewView(viewNum, proposer, preproposer)
 }
 
@@ -474,9 +473,9 @@ func (xpoa *XPoa) getNextProposer() (string, error) {
 
 // getProposerWithTime get proposer with timestamp
 // 注意：这里的time需要是一个同步的时间戳
-func (xpoa *XPoa) getProposerWithTime(timestamp, height int64) (string, error) {
-	// update validates
-	if _, err := xpoa.updateValidates(height); err != nil {
+func (xpoa *XPoa) getProposerWithTime(timestamp int64, blockId []byte) (string, error) {
+	xpoa.lg.Info("ConfirmBlock Propcess update validates")
+	if _, err := xpoa.updateValidates(blockId); err != nil {
 		xpoa.lg.Error("Xpoa getProposerWithTime update validates error", "error", err.Error())
 		return "", err
 	}
@@ -527,7 +526,7 @@ func (xpoa *XPoa) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock) (bool
 
 	// 验证矿工身份
 	// get current validates from model
-	proposer, err := xpoa.getProposerWithTime(in.GetTimestamp(), in.GetHeight())
+	proposer, err := xpoa.getProposerWithTime(in.GetTimestamp(), in.GetPreHash())
 	if err != nil {
 		xpoa.lg.Warn("CheckMinerMatch getProposerWithTime error", "error", err.Error())
 		return false, nil
@@ -621,7 +620,7 @@ func (xpoa *XPoa) ProcessConfirmBlock(block *pb.InternalBlock) error {
 	}
 	// update bft smr status
 	if xpoa.enableBFT && !xpoa.isInValidateSets() {
-		xpoa.bftPaceMaker.UpdateSmrState(block.GetJustify())
+		xpoa.bftPaceMaker.UpdateSmrState(block.GetBlockid(), block.GetJustify())
 	}
 	return nil
 }

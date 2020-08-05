@@ -603,7 +603,7 @@ func (tp *TDpos) ProcessConfirmBlock(block *pb.InternalBlock) error {
 	}
 	// update bft smr status
 	if tp.config.enableBFT && !tp.isInValidateSets() {
-		tp.bftPaceMaker.UpdateSmrState(block.GetJustify())
+		tp.bftPaceMaker.UpdateSmrState(block.GetBlockid(), block.GetJustify())
 	}
 	return nil
 }

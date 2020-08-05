@@ -385,7 +385,8 @@ func (s *Smr) handleReceivedProposal(msg *p2p_pb.XuperMessage) error {
 
 	// Step4: update state
 	if prePropsQC != nil && bytes.Equal(prePropsQC.GetProposalId(), s.generateQC.GetProposalId()) {
-		s.slog.Info("handleReceivedProposal as the preleader, no need to updateQcStatus.")
+		s.slog.Info("handleReceivedProposal as the preleader, update propsQC.")
+		s.updateQcStatus(propsQC, s.generateQC, s.lockedQC)
 		return nil
 	}
 	// propsQC is the first QC
@@ -631,8 +632,13 @@ func (s *Smr) addLocalProposal(qc *pb.QuorumCert) {
 	s.localProposal.Store(string(qc.GetProposalId()), qc)
 }
 
-// UpdateSmrState update state of smr
-func (s *Smr) UpdateSmrState(generateQC *pb.QuorumCert) {
-	s.slog.Info("UpdateSmrState after block confirmed")
-	s.updateQcStatus(nil, generateQC, s.generateQC)
+// UpdateSmrState 更新smr状态, 解决bpm check IsLastViewConfirmed的问题
+func (s *Smr) UpdateSmrState(proposalId []byte, generateQC *pb.QuorumCert) {
+	s.slog.Info("UpdateSmrState and update ProposalQCId after block confirmed")
+	simpleProposalQc := &pb.QuorumCert{
+		ProposalId: proposalId,
+		Type:       pb.QCState_PREPARE,
+		SignInfos:  &pb.QCSignInfos{},
+	}
+	s.updateQcStatus(simpleProposalQc, generateQC, s.generateQC)
 }

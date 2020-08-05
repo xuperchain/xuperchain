@@ -24,7 +24,7 @@ type PacemakerInterface interface {
 	// UpdateValidatorSet update the validator set of BFT
 	UpdateValidatorSet(validators []*cons_base.CandidateInfo) error
 	// UpdateSmrState update smr status of chainedbft
-	UpdateSmrState(generateQC *pb.QuorumCert)
+	UpdateSmrState(proposalId []byte, generateQC *pb.QuorumCert)
 	// IsLastViewConfirmed check if last block is confirmed
 	IsLastViewConfirmed() (bool, error)
 	GetChainedBFT() *ChainedBft

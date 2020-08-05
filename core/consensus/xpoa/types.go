@@ -38,9 +38,6 @@ type XPoa struct {
 	mutex       *sync.RWMutex
 	isProduce   map[int64]bool
 	startHeight int64
-	// proposer infos
-	// termTimestamp 轮起始时间
-	termTimestamp int64
 	// 当前的验证集合 address -> nodeInfo
 	proposerInfos []*cons_base.CandidateInfo
 	// BFT module

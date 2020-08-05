@@ -111,6 +111,6 @@ func (cb *ChainedBft) UnRegisterToNetwork() error {
 }
 
 // UpdateSmrState update smr status
-func (cb *ChainedBft) UpdateSmrState(generateQC *pb.QuorumCert) {
-	cb.smr.UpdateSmrState(generateQC)
+func (cb *ChainedBft) UpdateSmrState(proposalId []byte, generateQC *pb.QuorumCert) {
+	cb.smr.UpdateSmrState(proposalId, generateQC)
 }

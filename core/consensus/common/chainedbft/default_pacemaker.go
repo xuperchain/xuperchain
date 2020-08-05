@@ -156,6 +156,6 @@ func (dpm *DefaultPaceMaker) Stop() error {
 }
 
 // UpdateSmrState update smr status of chainedbft
-func (dpm *DefaultPaceMaker) UpdateSmrState(generateQC *pb.QuorumCert) {
-	dpm.cbft.UpdateSmrState(generateQC)
+func (dpm *DefaultPaceMaker) UpdateSmrState(proposalId []byte, generateQC *pb.QuorumCert) {
+	dpm.cbft.UpdateSmrState(proposalId, generateQC)
 }
