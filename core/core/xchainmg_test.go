@@ -36,6 +36,14 @@ const DefaultKvEngine = "default"
 
 var baseDir = os.Getenv("XCHAIN_ROOT")
 
+var kernelConfig = &config.KernelConfig{
+	MinNewChainAmount:           "0",
+	NewChainWhiteList:           map[string]bool{BobAddress: true},
+	DisableCreateChainWhiteList: false,
+	EnableStopChain:             true,
+	ModifyBlockAddr:             "",
+}
+
 func Init(t *testing.T) *XChainMG {
 	logger := log.New("module", "xchain")
 	logger.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
@@ -404,9 +412,7 @@ func InitCreateBlockChain(t *testing.T) {
 	kl := &kernel.Kernel{}
 	kLogger := log.New("module", "kernel")
 	kLogger.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
-	kl.Init(workSpace, kLogger, nil, "xuper")
-	kl.SetNewChainWhiteList(map[string]bool{BobAddress: true})
-	kl.SetDisableCreateChainWhiteList(false)
+	kl.Init(workSpace, kLogger, nil, "xuper", kernelConfig)
 	/*
 		utxoVM, _ := utxo.MakeUtxoVM("xuper", ledger, workSpace, "", "", []byte(""), nil, 5000, 60, 500, nil, false, DefaultKvEngine, crypto_client.CryptoTypeDefault)
 		utxoVM.RegisterVM("kernel", kl, global.VMPrivRing0)*/
