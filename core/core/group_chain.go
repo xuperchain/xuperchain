@@ -1,7 +1,6 @@
 package xchaincore
 
 import (
-	"strings"
 	"sync"
 	"time"
 )
@@ -14,9 +13,9 @@ type GroupChainRegister interface {
 }
 
 type groupChainCache struct {
-	// key: peerID value: ip + peerID
+	// key: peerID value: peerID
 	StreamCache map[string]string
-	// key: bcname value: map[string]bool
+	// key: bcname value: map[peerID]bool
 	StreamContractCache map[string]map[string]bool
 	// key: bcname value: bool
 	ChainContractCache map[string]bool
@@ -34,27 +33,28 @@ func (xm *XChainMG) IsPeerInGroupChain(bcname, remotePeerID string) bool {
 	if _, groupExist := xm.groupChainCache.ChainContractCache[bcname]; !groupExist {
 		return true
 	}
-	ipSet, ipSetExist := xm.groupChainCache.StreamContractCache[bcname]
-	// ipSetExist代表是否有群组属性
-	// len(ipSet)代表bcname的白名单数量
-	if !ipSetExist {
+	peerIDSet, peerIDSetExist := xm.groupChainCache.StreamContractCache[bcname]
+	// peerIDSetExist代表是否有群组属性
+	// len(peerIDSet)代表bcname的白名单数量
+	if !peerIDSetExist {
 		return true
-	} else if len(ipSet) == 0 {
+	} else if len(peerIDSet) == 0 {
 		return false
 	}
 
 	// 如果本地没有远程传来的节点id，直接拒绝
-	ip, ipExist := xm.groupChainCache.StreamCache[remotePeerID]
-	if !ipExist {
+	peerID, peerIDExist := xm.groupChainCache.StreamCache[remotePeerID]
+	if !peerIDExist {
 		return false
 	}
-	if _, exist := ipSet[ip]; !exist {
+	if _, exist := peerIDSet[peerID]; !exist {
 		return false
 	}
 
 	return true
 }
 
+// GetAllowedPeersWithBcname 查询某个链群组白名单
 func (xm *XChainMG) GetAllowedPeersWithBcname(bcname string) map[string]bool {
 	allowedPeersMap := map[string]bool{}
 	if bcname == "" {
@@ -66,23 +66,18 @@ func (xm *XChainMG) GetAllowedPeersWithBcname(bcname string) map[string]bool {
 	if _, groupExist := xm.groupChainCache.ChainContractCache[bcname]; !groupExist {
 		return allowedPeersMap
 	}
-	ipSet, exist := xm.groupChainCache.StreamContractCache[bcname]
-	if !exist {
+	peerIDSet, peerIDSetExist := xm.groupChainCache.StreamContractCache[bcname]
+	if !peerIDSetExist {
 		return allowedPeersMap
 	}
-	for ip, _ := range ipSet {
-		arr := strings.Split(ip, "/")
-		if len(arr) <= 0 {
-			continue
-		}
-		peerID := arr[len(arr)-1]
-		localIP, exist := xm.groupChainCache.StreamCache[peerID]
+	for peerID := range peerIDSet {
+		localPeerID, exist := xm.groupChainCache.StreamCache[peerID]
 		// 本地不存在，忽略
 		if !exist {
 			continue
 		}
 		// 群组合约存储的ip与本地ip一致，该stream是有效的
-		if localIP == ip {
+		if localPeerID == peerID {
 			allowedPeersMap[peerID] = true
 		}
 	}
@@ -109,9 +104,9 @@ func (xm *XChainMG) updateContractCache() {
 	xm.groupChainCache.Mutex.Unlock()
 
 	for _, bcname := range bcnameSet {
-		ipSet := bc.Utxovm.QueryIPsInList(bcname)
+		peerIDSet := bc.Utxovm.QueryPeerIDsInList(bcname)
 		xm.groupChainCache.Mutex.Lock()
-		xm.groupChainCache.StreamContractCache[bcname] = ipSet
+		xm.groupChainCache.StreamContractCache[bcname] = peerIDSet
 		xm.groupChainCache.Mutex.Unlock()
 	}
 }
