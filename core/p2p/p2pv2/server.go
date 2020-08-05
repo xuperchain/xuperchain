@@ -271,16 +271,9 @@ func (p *P2PServerV2) GetPeerIDAndUrls() map[string]string {
 	id2Url := map[string]string{}
 	peers := p.node.ListPeers()
 	for _, v := range peers {
-		if s, err := p.node.strPool.FindStream(v); err == nil {
-			if s.gp == "" {
-				s.getRPCPort()
-			}
-			peerID := string(v.Pretty())
-			ipStr := s.addr.String() + "/p2p/" + peerID
-			id2Url[peerID] = ipStr
-		}
+		peerID := string(v.Pretty())
+		id2Url[peerID] = peerID
 	}
-
 	return id2Url
 }
 
