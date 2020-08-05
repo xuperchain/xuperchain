@@ -12,19 +12,19 @@ func (uv *UtxoVM) QueryChainInList() map[string]bool {
 	return uv.getChainInList()
 }
 
-func (uv *UtxoVM) QueryIPsInList(bcname string) map[string]bool {
-	return uv.getIPsInList(bcname)
+func (uv *UtxoVM) QueryPeerIDsInList(bcname string) map[string]bool {
+	return uv.getPeerIDsInList(bcname)
 }
 
-func (uv *UtxoVM) getIPsInList(bcname string) map[string]bool {
-	ipMap := map[string]bool{}
+func (uv *UtxoVM) getPeerIDsInList(bcname string) map[string]bool {
+	peerIDMap := map[string]bool{}
 	args := map[string][]byte{
 		"bcname": []byte(bcname),
 	}
 
 	groupChainContract := uv.GetGroupChainContract()
 	if groupChainContract == nil {
-		return ipMap
+		return peerIDMap
 	}
 	moduleName := groupChainContract.ModuleName
 	contractName := groupChainContract.ContractName
@@ -33,19 +33,26 @@ func (uv *UtxoVM) getIPsInList(bcname string) map[string]bool {
 	fmt.Println("============>", "moduleName:", moduleName, "contractName:", contractName, "methodName:", methodName)
 
 	if moduleName == "" && contractName == "" && methodName == "" {
-		return ipMap
+		return peerIDMap
 	}
 
 	status, target, err := uv.queryGroupChain(moduleName, contractName, methodName, args)
 	if status >= 400 || err != nil || string(target) == "" {
-		return ipMap
+		return peerIDMap
 	}
 	res := strings.Split(string(target), "\x01")
 	for _, v := range res {
-		ipMap[v] = true
+		arr := strings.Split(v, "/")
+		if len(arr) <= 0 {
+			continue
+		}
+		peerID := arr[len(arr)-1]
+		if peerID == "" {
+			continue
+		}
+		peerIDMap[peerID] = true
 	}
-
-	return ipMap
+	return peerIDMap
 }
 
 func (uv *UtxoVM) getChainInList() map[string]bool {
