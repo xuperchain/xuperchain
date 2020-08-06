@@ -106,7 +106,7 @@ func CheckAddressFormat(address string) (bool, uint8) {
 	simpleCheckCode := slice[len(slice)-4:]
 
 	checkContent := slice[:len(slice)-4]
-	checkCode := hash.DoubleSha256(checkContent)
+	checkCode := Sm3Sum(checkContent)
 	realSimpleCheckCode := checkCode[:4]
 
 	byteVersion := slice[:1]

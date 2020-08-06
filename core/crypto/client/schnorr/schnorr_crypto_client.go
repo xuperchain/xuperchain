@@ -151,6 +151,26 @@ func (xcc SchnorrCryptoClient) GetEcdsaPublicKeyFromJSON(jsonBytes []byte) (*ecd
 	return account.GetEcdsaPublicKeyFromJSON(jsonBytes)
 }
 
+// GetAddressFromPublicKey 通过公钥来计算地址
+func (xcc SchnorrCryptoClient) GetAddressFromPublicKey(pub *ecdsa.PublicKey) (string, error) {
+	address, err := account.GetAddressFromPublicKey(pub)
+	return address, err
+}
+
+// CheckAddressFormat 验证钱包地址是否是合法的格式。
+// 如果成功，返回true和对应的版本号；如果失败，返回false和默认的版本号0
+func (xcc SchnorrCryptoClient) CheckAddressFormat(address string) (bool, uint8) {
+	isValid, nVersion := account.CheckAddressFormat(address)
+	return isValid, nVersion
+}
+
+// VerifyAddressUsingPublicKey 验证钱包地址是否和指定的公钥match。
+// 如果成功，返回true和对应的版本号；如果失败，返回false和默认的版本号0
+func (xcc SchnorrCryptoClient) VerifyAddressUsingPublicKey(address string, pub *ecdsa.PublicKey) (bool, uint8) {
+	isValid, nVersion := account.VerifyAddressUsingPublicKey(address, pub)
+	return isValid, nVersion
+}
+
 // --- 	schnorr 环签名算法相关 start ---
 
 // SignSchnorrRing schnorr环签名算法 生成统一签名

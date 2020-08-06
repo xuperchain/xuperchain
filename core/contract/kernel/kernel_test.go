@@ -12,6 +12,7 @@ import (
 	"time"
 
 	log "github.com/xuperchain/log15"
+	"github.com/xuperchain/xuperchain/core/common/config"
 	"github.com/xuperchain/xuperchain/core/contract"
 	"github.com/xuperchain/xuperchain/core/crypto/client"
 	crypto_client "github.com/xuperchain/xuperchain/core/crypto/client"
@@ -26,6 +27,14 @@ const BobPubkey = `{"Curvname":"P-256","X":7469561747716005875774720822037123683
 const BobPrivateKey = `{"Curvname":"P-256","X":74695617477160058757747208220371236837474210247114418775262229497812962582435,"Y":51348715319124770392993866417088542497927816017012182211244120852620959209571,"D":29079635126530934056640915735344231956621504557963207107451663058887647996601}`
 const AliceAddress = "WNWk3ekXeM5M2232dY2uCJmEqWhfQiDYT"
 const defaultKVEngine = "default"
+
+var kernelConfig = &config.KernelConfig{
+	MinNewChainAmount:           "0",
+	NewChainWhiteList:           map[string]bool{BobAddress: true},
+	DisableCreateChainWhiteList: false,
+	EnableStopChain:             true,
+	ModifyBlockAddr:             "",
+}
 
 func bobToAlice(t *testing.T, utxovm *utxo.UtxoVM, ledger *ledger.Ledger, amount string, prehash []byte, desc string) ([]byte, error) {
 	t.Logf("pre_hash of this block: %x", prehash)
@@ -95,9 +104,7 @@ func TestCreateBlockChain(t *testing.T) {
 	kl := &Kernel{}
 	kLogger := log.New("module", "kernel")
 	kLogger.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
-	kl.Init(workspace, kLogger, nil, "xuper")
-	kl.SetNewChainWhiteList(map[string]bool{BobAddress: true})
-	kl.SetMinNewChainAmount("0")
+	kl.Init(workspace, kLogger, nil, "xuper", kernelConfig)
 	//创建链的时候分配财富
 	tx, err := utxo.GenerateRootTx([]byte(`
        {
@@ -173,6 +180,175 @@ func TestCreateBlockChain(t *testing.T) {
 	kl.Stop()
 }
 
+func TestRunStopBlockChain(t *testing.T) {
+	workspace, workSpaceErr := ioutil.TempDir("/tmp", "")
+	if workSpaceErr != nil {
+		t.Error("create dir error ", workSpaceErr.Error())
+	}
+	defer os.RemoveAll(workspace)
+	// 创建xuper链
+	ledger, err := ledger.NewLedger(workspace+"xuper", nil, nil, defaultKVEngine, crypto_client.CryptoTypeDefault)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(ledger)
+	kl := &Kernel{}
+	kLogger := log.New("module", "kernel")
+	kLogger.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
+	kl.Init(workspace, kLogger, nil, "xuper", kernelConfig)
+	tx, err := utxo.GenerateRootTx([]byte(`
+       {
+        "version" : "1"
+        , "consensus" : {
+                "miner" : "0x00000000000"
+        }
+        , "predistribution":[
+                {
+                        "address" : "` + BobAddress + `",
+                        "quota" : "100"
+                },
+				{
+                        "address" : "` + AliceAddress + `",
+                        "quota" : "200"
+                }
+
+        ]
+        , "maxblocksize" : "128"
+        , "period" : "5000"
+        , "award" : "1000"
+		} 
+    `))
+	if err != nil {
+		t.Fatal(err)
+	}
+	block, _ := ledger.FormatRootBlock([]*pb.Transaction{tx})
+	t.Logf("blockid %x", block.Blockid)
+	confirmStatus := ledger.ConfirmBlock(block, true)
+	if !confirmStatus.Succ {
+		t.Fatal("confirm block fail")
+	}
+	utxovm, _ := utxo.MakeUtxoVM("xuper", ledger, workspace+"xuper", "", "", []byte(""), nil, 5000, 60, 500, nil, false, defaultKVEngine, crypto_client.CryptoTypeDefault)
+	utxovm.RegisterVM("kernel", kl, global.VMPrivRing0)
+	err = utxovm.Play(block.Blockid)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// 删除xuper链
+	txreq := &pb.TxData{}
+	txreq.Bcname = "xuper"
+	txreq.FromAddr = BobAddress
+	txreq.FromPubkey = BobPubkey
+	txreq.FromScrkey = BobPrivateKey
+	txreq.Nonce = "nonce"
+	txreq.Timestamp = time.Now().UnixNano()
+	//bob给alice转20
+	txreq.Account = []*pb.TxDataAccount{
+		{Address: AliceAddress, Amount: "20"},
+	}
+	chainTx, err := utxovm.GenerateTx(txreq)
+	if err != nil {
+		t.Error("GenerateTx Error", err)
+	}
+	txDesc := &contract.TxDesc{}
+	txDesc.Tx = chainTx
+	txDesc.Method = "StopBlockChain"
+	txDesc.Module = "kernel"
+	argMap := make(map[string]interface{})
+	argMap["name"] = "xuper"
+	argMap["data"] = "{\"version\":\"1\",\"consensus\":{\"miner\":\"dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN\"},\"predistribution\":[{\"address\":\"dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN\",\"quota\":\"1000000000000000\"}],\"maxblocksize\":\"128\",\"period\":\"3000\",\"award\":\"1000000\"}"
+	txDesc.Args = argMap
+	// 通过tx删除主链xuper
+	err = kl.runStopBlockChain(txDesc)
+	if err == ErrPermissionDenied {
+		t.Logf("ok. Cannot stop main-chain: xuper.")
+	} else {
+		t.Fatal("Check StopBlockChain, main-chain xuper might be stopped.")
+	}
+}
+
+func TestRunCreateBlockChain(t *testing.T) {
+	workspace, workSpaceErr := ioutil.TempDir("/tmp", "")
+	if workSpaceErr != nil {
+		t.Error("create dir error ", workSpaceErr.Error())
+	}
+	defer os.RemoveAll(workspace)
+	// 创建xuper链
+	ledger, err := ledger.NewLedger(workspace+"xuper", nil, nil, defaultKVEngine, crypto_client.CryptoTypeDefault)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Log(ledger)
+	kl := &Kernel{}
+	kLogger := log.New("module", "kernel")
+	kLogger.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
+	kl.Init(workspace, kLogger, nil, "xuper", kernelConfig)
+	tx, err := utxo.GenerateRootTx([]byte(`
+       {
+        "version" : "1"
+        , "consensus" : {
+                "miner" : "0x00000000000"
+        }
+        , "predistribution":[
+                {
+                        "address" : "` + BobAddress + `",
+                        "quota" : "100"
+                },
+				{
+                        "address" : "` + AliceAddress + `",
+                        "quota" : "200"
+                }
+
+        ]
+        , "maxblocksize" : "128"
+        , "period" : "5000"
+        , "award" : "1000"
+		} 
+    `))
+	if err != nil {
+		t.Fatal(err)
+	}
+	block, _ := ledger.FormatRootBlock([]*pb.Transaction{tx})
+	t.Logf("blockid %x", block.Blockid)
+	confirmStatus := ledger.ConfirmBlock(block, true)
+	if !confirmStatus.Succ {
+		t.Fatal("confirm block fail")
+	}
+	utxovm, _ := utxo.MakeUtxoVM("xuper", ledger, workspace+"xuper", "", "", []byte(""), nil, 5000, 60, 500, nil, false, defaultKVEngine, crypto_client.CryptoTypeDefault)
+	utxovm.RegisterVM("kernel", kl, global.VMPrivRing0)
+	err = utxovm.Play(block.Blockid)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// 创建Dog链
+	txreq := &pb.TxData{}
+	txreq.Bcname = "xuper"
+	txreq.FromAddr = BobAddress
+	txreq.FromPubkey = BobPubkey
+	txreq.FromScrkey = BobPrivateKey
+	txreq.Nonce = "nonce"
+	txreq.Timestamp = time.Now().UnixNano()
+	//bob给alice转20
+	txreq.Account = []*pb.TxDataAccount{
+		{Address: AliceAddress, Amount: "20"},
+	}
+	chainTx, err := utxovm.GenerateTx(txreq)
+	if err != nil {
+		t.Error("GenerateTx Error", err)
+	}
+	txDesc := &contract.TxDesc{}
+	txDesc.Tx = chainTx
+	txDesc.Method = "CreateBlockChain"
+	txDesc.Module = "kernel"
+	argMap := make(map[string]interface{})
+	argMap["name"] = "Dog"
+	argMap["data"] = "{\"version\":\"1\",\"consensus\":{\"miner\":\"dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN\"},\"predistribution\":[{\"address\":\"dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN\",\"quota\":\"1000000000000000\"}],\"maxblocksize\":\"128\",\"period\":\"3000\",\"award\":\"1000000\"}"
+	txDesc.Args = argMap
+	runCreateBlockChain := kl.runCreateBlockChain(txDesc)
+	if runCreateBlockChain != nil {
+		t.Error("runCreateBlockChain error ", runCreateBlockChain.Error())
+	}
+}
+
 func TestCreateBlockChainPermission(t *testing.T) {
 	workspace, workSpaceErr := ioutil.TempDir("/tmp", "")
 	if workSpaceErr != nil {
@@ -189,8 +365,7 @@ func TestCreateBlockChainPermission(t *testing.T) {
 	kl := &Kernel{}
 	kLogger := log.New("module", "kernel")
 	kLogger.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
-	kl.Init(workspace, kLogger, nil, chainName)
-	kl.SetNewChainWhiteList(map[string]bool{BobAddress: true})
+	kl.Init(workspace, kLogger, nil, chainName, kernelConfig)
 	//创建链的时候分配财富
 	tx, err := utxo.GenerateRootTx([]byte(`
        {
@@ -330,7 +505,7 @@ func TestRunUpdateMaxBlockSize(t *testing.T) {
 	kl := &Kernel{}
 	kLogger := log.New("module", "kernel")
 	kLogger.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
-	kl.Init(workspace, kLogger, nil, "xuper")
+	kl.Init(workspace, kLogger, nil, "xuper", kernelConfig)
 	kl.SetContext(context)
 	txDesc := &contract.TxDesc{
 		Args: map[string]interface{}{
@@ -422,7 +597,7 @@ func TestRunUpdateReservedContracts(t *testing.T) {
 	kl := &Kernel{}
 	kLogger := log.New("module", "kernel")
 	kLogger.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
-	kl.Init(workspace, kLogger, nil, "xuper")
+	kl.Init(workspace, kLogger, nil, "xuper", kernelConfig)
 	kl.SetContext(context)
 	args := []byte(`
         {
@@ -537,7 +712,7 @@ func TestRunUpdateForbiddenContract(t *testing.T) {
 	kl := &Kernel{}
 	kLogger := log.New("module", "kernel")
 	kLogger.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
-	kl.Init(workSpace, kLogger, nil, "xuper")
+	kl.Init(workSpace, kLogger, nil, "xuper", kernelConfig)
 	kl.SetContext(context)
 	args := []byte(`
 	{

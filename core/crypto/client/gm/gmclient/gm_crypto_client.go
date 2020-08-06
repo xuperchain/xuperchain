@@ -26,6 +26,7 @@ import (
 	"github.com/xuperchain/xuperchain/core/crypto/client/gm/gmsm/schnorr_sign"
 	"github.com/xuperchain/xuperchain/core/crypto/client/gm/gmsm/signature"
 	"github.com/xuperchain/xuperchain/core/crypto/client/gm/gmsm/sm2"
+	"github.com/xuperchain/xuperchain/core/crypto/client/gm/gmsm/sm3"
 	"github.com/xuperchain/xuperchain/core/crypto/client/gm/gmsm/sm4"
 )
 
@@ -222,16 +223,31 @@ func (gmcc GmCryptoClient) ExportNewAccount(path string) error {
 	if err != nil {
 		return err
 	}
-	return account.ExportNewAccount(path, lowLevelPrivateKey)
+	return sm2.ExportNewAccount(path, lowLevelPrivateKey)
 }
 
-//// 使用公钥来生成钱包地址
-//func (gmcc GmCryptoClient) GetAddressFromPublicKey(nVersion uint8, pub *ecdsa.PublicKey) string {
-//	address := account.GetAddressFromPublicKey(nVersion, pub)
-//	return address
-//}
+// GetAddressFromPublicKey 通过公钥来计算地址
+func (gmcc GmCryptoClient) GetAddressFromPublicKey(pub *ecdsa.PublicKey) (string, error) {
+	address, err := sm3.GetAddressFromPublicKey(pub)
+	return address, err
+}
 
-// 创建含有助记词的新的账户，返回的字段：（助记词、私钥的json、公钥的json、钱包地址） as ECDSAAccount，以及可能的错误信息
+// CheckAddressFormat 验证钱包地址是否是合法的格式。
+// 如果成功，返回true和对应的版本号；如果失败，返回false和默认的版本号0
+func (gmcc GmCryptoClient) CheckAddressFormat(address string) (bool, uint8) {
+	isValid, nVersion := sm3.CheckAddressFormat(address)
+	return isValid, nVersion
+}
+
+// VerifyAddressUsingPublicKey 验证钱包地址是否和指定的公钥match。
+// 如果成功，返回true和对应的版本号；如果失败，返回false和默认的版本号0
+func (gmcc GmCryptoClient) VerifyAddressUsingPublicKey(address string, pub *ecdsa.PublicKey) (bool, uint8) {
+	isValid, nVersion := sm3.VerifyAddressUsingPublicKey(address, pub)
+	return isValid, nVersion
+}
+
+// CreateNewAccountWithMnemonic 创建含有助记词的新的账户
+// 返回的字段：（助记词、私钥的json、公钥的json、钱包地址） as ECDSAAccount，以及可能的错误信息
 func (gmcc GmCryptoClient) CreateNewAccountWithMnemonic(language int, strength uint8) (*account.ECDSAAccount, error) {
 	cryptography := uint8(config.Gm)
 	//	ecdsaAccount, err := account.CreateNewAccountWithMnemonic(nVersion, language, strength, cryptography)
@@ -239,7 +255,7 @@ func (gmcc GmCryptoClient) CreateNewAccountWithMnemonic(language int, strength u
 	return ecdsaAccount, err
 }
 
-// 创建新的账户，并用支付密码加密私钥后存在本地，
+// CreateNewAccountAndSaveSecretKey 创建新的账户，并用支付密码加密私钥后存在本地，
 // 返回的字段：（随机熵（供其他钱包软件推导出私钥）、助记词、私钥的json、公钥的json、钱包地址） as ECDSAAccount，以及可能的错误信息
 func (gmcc GmCryptoClient) CreateNewAccountAndSaveSecretKey(path string, language int, strength uint8, password string) (*account.ECDSAInfo, error) {
 	cryptography := uint8(config.Gm)
@@ -247,7 +263,8 @@ func (gmcc GmCryptoClient) CreateNewAccountAndSaveSecretKey(path string, languag
 	return ecdasaInfo, err
 }
 
-// 创建新的账户，并导出相关文件（含助记词）到本地。生成如下几个文件：1.助记词，2.私钥，3.公钥，4.钱包地址
+// ExportNewAccountWithMnemonic 创建新的账户，并导出相关文件（含助记词）到本地。
+// 生成如下几个文件：1.助记词，2.私钥，3.公钥，4.钱包地址
 func (gmcc GmCryptoClient) ExportNewAccountWithMnemonic(path string, language int, strength uint8) error {
 	//	curve := sm2.P256Sm2()
 	cryptography := uint8(config.Gm)
@@ -256,14 +273,14 @@ func (gmcc GmCryptoClient) ExportNewAccountWithMnemonic(path string, language in
 	return err
 }
 
-// 从助记词恢复钱包账户
+// RetrieveAccountByMnemonic 从助记词恢复钱包账户
 func (gmcc GmCryptoClient) RetrieveAccountByMnemonic(mnemonic string, language int) (*account.ECDSAAccount, error) {
 	//	ecdsaAccount, err := sm2.GenerateAccountByMnemonic(mnemonic, language)
 	ecdsaAccount, err := sm2.RetrieveAccountByMnemonic(mnemonic, language)
 	return ecdsaAccount, err
 }
 
-// 从助记词恢复钱包账户，并用支付密码加密私钥后存在本地，
+// RetrieveAccountByMnemonicAndSavePrivKey 从助记词恢复钱包账户，并用支付密码加密私钥后存在本地，
 // 返回的字段：（随机熵（供其他钱包软件推导出私钥）、助记词、私钥的json、公钥的json、钱包地址） as ECDSAAccount，以及可能的错误信息
 func (gmcc GmCryptoClient) RetrieveAccountByMnemonicAndSavePrivKey(path string, language int, mnemonic string, password string) (*account.ECDSAInfo, error) {
 	//	curve := sm2.P256Sm2()
