@@ -11,7 +11,6 @@ import (
 	"github.com/patrickmn/go-cache"
 	prom "github.com/prometheus/client_golang/prometheus"
 	log "github.com/xuperchain/log15"
-	"github.com/xuperchain/xuperchain/core/common/matrics"
 	xuperp2p "github.com/xuperchain/xuperchain/core/p2p/pb"
 )
 
@@ -148,11 +147,11 @@ func (hm *HandlerMap) HandleMessage(stream interface{}, msg *xuperp2p.XuperMessa
 		return nil
 	}
 
-	matricLabels := prom.Labels{
+	metricLabels := prom.Labels{
 		"bcname": msg.GetHeader().GetBcname(),
 		"type":   msg.GetHeader().GetType().String(),
 	}
-	matrics.DefaultServerMetrics.P2PFlowIn.With(matricLabels).Add(float64(proto.Size(msg)))
+	DefaultP2pMetrics.P2PFlowIn.With(metricLabels).Add(float64(proto.Size(msg)))
 
 	if ms, ok := v.(*MultiSubscriber); ok {
 		// 如果注册了回调方法，则调用回调方法, 如果注册了channel,则进行通知

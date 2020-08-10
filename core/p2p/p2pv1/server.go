@@ -20,7 +20,6 @@ import (
 	"google.golang.org/grpc/reflection"
 
 	"github.com/xuperchain/xuperchain/core/common/config"
-	"github.com/xuperchain/xuperchain/core/common/matrics"
 	p2p_base "github.com/xuperchain/xuperchain/core/p2p/base"
 	p2pPb "github.com/xuperchain/xuperchain/core/p2p/pb"
 )
@@ -183,11 +182,11 @@ func (p *P2PServerV1) SendMessage(ctx context.Context, msg *p2pPb.XuperMessage,
 			msg = p2p_base.Compress(msg)
 		}
 	}
-	matricLabels := prom.Labels{
+	metricLabels := prom.Labels{
 		"bcname": msg.GetHeader().GetBcname(),
 		"type":   msg.GetHeader().GetType().String(),
 	}
-	matrics.DefaultServerMetrics.P2PFlowOut.With(matricLabels).Add(float64(proto.Size(msg)))
+	p2p_base.DefaultP2pMetrics.P2PFlowOut.With(metricLabels).Add(float64(proto.Size(msg)))
 	return p.sendMessage(ctx, msg, peerids)
 }
 
@@ -215,11 +214,11 @@ func (p *P2PServerV1) SendMessageWithResponse(ctx context.Context, msg *p2pPb.Xu
 			msg = p2p_base.Compress(msg)
 		}
 	}
-	matricLabels := prom.Labels{
+	metricLabels := prom.Labels{
 		"bcname": msg.GetHeader().GetBcname(),
 		"type":   msg.GetHeader().GetType().String(),
 	}
-	matrics.DefaultServerMetrics.P2PFlowOut.With(matricLabels).Add(float64(proto.Size(msg)))
+	p2p_base.DefaultP2pMetrics.P2PFlowOut.With(metricLabels).Add(float64(proto.Size(msg)))
 	return p.sendMessageWithRes(ctx, msg, peerids, percentage)
 }
 
