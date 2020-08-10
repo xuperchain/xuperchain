@@ -127,7 +127,7 @@ func (p *P2PServerV2) SendMessage(ctx context.Context, msg *p2pPb.XuperMessage,
 			msg = p2p_base.Compress(msg)
 		}
 	}
-	p.log.Trace("Server SendMessage", "logid", msg.GetHeader().GetLogid(), "msgType", msg.GetHeader().GetType(), "checksum", msg.GetHeader().GetDataCheckSum())
+	p.log.Trace("Server SendMessage", "logid", msg.GetHeader().GetLogid(), "bcname", msg.GetHeader().GetBcname(), "msgType", msg.GetHeader().GetType(), "checksum", msg.GetHeader().GetDataCheckSum(), "peers", peersRes)
 	return p.node.SendMessage(ctx, msg, peersRes)
 }
 
@@ -151,8 +151,8 @@ func (p *P2PServerV2) SendMessageWithResponse(ctx context.Context, msg *p2pPb.Xu
 		peersRes = peers.([]peer.ID)
 	}
 	percentage := msgOpts.Percentage
-	p.log.Trace("Server SendMessage with response", "logid", msg.GetHeader().GetLogid(),
-		"msgType", msg.GetHeader().GetType(), "checksum", msg.GetHeader().GetDataCheckSum(), "peers", peers)
+	p.log.Trace("Server SendMessage with response", "logid", msg.GetHeader().GetLogid(), "bcname", msg.GetHeader().GetBcname,
+		"msgType", msg.GetHeader().GetType(), "checksum", msg.GetHeader().GetDataCheckSum(), "peers", peersRes)
 	return p.node.SendMessageWithResponse(ctx, msg, peersRes, percentage)
 }
 
