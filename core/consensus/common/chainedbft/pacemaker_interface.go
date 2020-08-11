@@ -14,7 +14,7 @@ type PacemakerInterface interface {
 	// It used while leader changed.
 	NextNewView(viewNum int64, proposer, preProposer string) error
 	// NextNewProposal generate new proposal directly while the leader haven't changed.
-	NextNewProposal(proposalID []byte, data interface{}) error
+	NextNewProposal(proposalID []byte, data interface{}, validatesInfos []*cons_base.CandidateInfo) error
 	// UpdateQCHigh update QuorumCert high of this node.
 	//UpdateQCHigh() error
 	// CurretQCHigh return current QuorumCert high of this node.
@@ -24,9 +24,10 @@ type PacemakerInterface interface {
 	// UpdateValidatorSet update the validator set of BFT
 	UpdateValidatorSet(validators []*cons_base.CandidateInfo) error
 	// UpdateSmrState update smr status of chainedbft
-	UpdateSmrState(proposalId []byte, generateQC *pb.QuorumCert)
+	UpdateSmrState(generateQC *pb.QuorumCert)
 	// IsLastViewConfirmed check if last block is confirmed
 	IsLastViewConfirmed() (bool, error)
+	CheckViewNumer(viewNumber int64) bool 
 	GetChainedBFT() *ChainedBft
 	Start() error
 	Stop() error

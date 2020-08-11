@@ -11,6 +11,7 @@ import (
 	"github.com/golang/protobuf/proto"
 
 	"github.com/xuperchain/xuperchain/core/consensus/base"
+	cons_base "github.com/xuperchain/xuperchain/core/consensus/base"
 	"github.com/xuperchain/xuperchain/core/ledger"
 	"github.com/xuperchain/xuperchain/core/pb"
 )
@@ -68,7 +69,7 @@ func (dpm *DefaultPaceMaker) NextNewView(viewNum int64, proposer, preProposer st
 
 // NextNewProposal used to submit new proposal to bft network
 // the content is the new block
-func (dpm *DefaultPaceMaker) NextNewProposal(proposalID []byte, data interface{}) error {
+func (dpm *DefaultPaceMaker) NextNewProposal(proposalID []byte, data interface{}, validatesInfos []*cons_base.CandidateInfo) error {
 	block, ok := data.(*pb.Block)
 	if !ok {
 		return fmt.Errorf("Proposal data is not block")
@@ -83,7 +84,7 @@ func (dpm *DefaultPaceMaker) NextNewProposal(proposalID []byte, data interface{}
 		return err
 	}
 	// set current view number to block height
-	_, err = dpm.cbft.ProcessProposal(block.GetBlock().GetHeight(), blockid, blockMsg)
+	_, err = dpm.cbft.ProcessProposal(block.GetBlock().GetHeight(), blockid, blockMsg, validatesInfos)
 	if err != nil {
 		dpm.log.Warn("ProcessProposal failed", "error", err)
 		return err
@@ -156,6 +157,11 @@ func (dpm *DefaultPaceMaker) Stop() error {
 }
 
 // UpdateSmrState update smr status of chainedbft
-func (dpm *DefaultPaceMaker) UpdateSmrState(proposalId []byte, generateQC *pb.QuorumCert) {
-	dpm.cbft.UpdateSmrState(proposalId, generateQC)
+func (dpm *DefaultPaceMaker) UpdateSmrState(generateQC *pb.QuorumCert) {
+	dpm.cbft.UpdateSmrState(generateQC)
+}
+
+// CheckViewNumer check if the viewNumber given is valid in smr's viewMsgs storage
+func (dpm *DefaultPaceMaker) CheckViewNumer(viewNumber int64) bool {
+	return dpm.cbft.CheckViewNumer(viewNumber)
 }

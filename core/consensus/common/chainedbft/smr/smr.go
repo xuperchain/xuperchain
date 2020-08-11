@@ -51,6 +51,8 @@ var (
 	ErrGetLocalProposalQC = errors.New("get local proposalQC error")
 )
 
+var effectiveDelay = int64(0)
+
 // NewSmr return smr instance
 func NewSmr(
 	slog log.Logger,
@@ -65,7 +67,8 @@ func NewSmr(
 	p2p p2p_base.P2PServer,
 	proposalQC,
 	generateQC,
-	lockedQC *pb.QuorumCert) (*Smr, error) {
+	lockedQC *pb.QuorumCert,
+	effectiveHeight int64) (*Smr, error) {
 
 	// set up smr
 	smr := &Smr{
@@ -87,6 +90,7 @@ func NewSmr(
 		lk:            &sync.Mutex{},
 		QuitCh:        make(chan bool, 1),
 	}
+	effectiveDelay = effectiveHeight
 	if err := smr.updateQcStatus(proposalQC, generateQC, lockedQC); err != nil {
 		slog.Error("smr updateQcStatus error", "error", err)
 		return nil, err
@@ -170,6 +174,7 @@ func (s *Smr) ProcessNewView(viewNumber int64, leader, preLeader string) error {
 		},
 	}
 
+	// 作为上一个Leader，会将当前自己的qc(上一个区块)写入这个NewView的上一个qc发出去
 	if preLeader == s.address {
 		gQC, _ := s.GetGenerateQC()
 		newViewMsg.JustifyQC = gQC
@@ -181,10 +186,11 @@ func (s *Smr) ProcessNewView(viewNumber int64, leader, preLeader string) error {
 		return err
 	}
 	// if as the new leader, wait for the (n-f) new view message from other replicas and call back extenal consensus
-	if leader == s.address {
-		s.slog.Trace("ProcessNewView as a new leader, wait for n*2/3 new view messags")
-		return s.addViewMsg(newViewMsg)
-	}
+	// 本操作省略了chained-bft中第一阶段Prepare阶段，作为Leader直接更新View，广播给从节点后，从节点直接变更新View
+	//if leader == s.address {
+	//	s.slog.Trace("ProcessNewView as a new leader, wait for n*2/3 new view messags")
+	//	return s.addViewMsg(newViewMsg)
+	//}
 	// send to next leader
 	msgBuf, err := proto.Marshal(newViewMsg)
 	if err != nil {
@@ -222,8 +228,7 @@ func (s *Smr) GetGenerateQC() (*pb.QuorumCert, error) {
 }
 
 // ProcessProposal used to generate new QuorumCert and broadcast to other replicas
-func (s *Smr) ProcessProposal(viewNumber int64, proposalID,
-	proposalMsg []byte) (*pb.QuorumCert, error) {
+func (s *Smr) ProcessProposal(viewNumber int64, proposalID, proposalMsg []byte, validatesInfos []*cons_base.CandidateInfo) (*pb.QuorumCert, error) {
 	qc := &pb.QuorumCert{
 		ProposalId:  proposalID,
 		ProposalMsg: proposalMsg,
@@ -259,7 +264,7 @@ func (s *Smr) ProcessProposal(viewNumber int64, proposalID,
 	s.slog.Info("ProcessProposal proposal msg", "netMsg", netMsg)
 	opts := []p2p_base.MessageOption{
 		p2p_base.WithBcName(s.bcname),
-		p2p_base.WithTargetPeerAddrs(s.getReplicasURL()),
+		p2p_base.WithTargetPeerAddrs(s.getReplicasURL(validatesInfos)),
 	}
 	go s.p2p.SendMessage(context.Background(), netMsg, opts...)
 	return qc, nil
@@ -321,6 +326,11 @@ func (s *Smr) handleReceivedVoteMsg(msg *p2p_pb.XuperMessage) error {
 			return ErrGetLocalProposalQC
 		}
 		proposQC := v.(*pb.QuorumCert)
+		// 变更QC前需要确定当前收到的proposalQC与generateQC为上下轮关系
+		if proposQC.GetViewNumber() != s.generateQC.GetViewNumber()+1 {
+			s.slog.Error("handleReceivedVoteMsg proposalQC's pre QC != s.generateQC")
+			return ErrGetVotes
+		}
 		s.updateQcStatus(nil, proposQC, s.generateQC)
 		v, ok = s.qcVoteMsgs.Load(string(voteMsg.GetProposalId()))
 		if !ok {
@@ -383,12 +393,13 @@ func (s *Smr) handleReceivedProposal(msg *p2p_pb.XuperMessage) error {
 		return err
 	}
 
-	// Step4: update state
+	// Step4: update state as a preLeader
 	if prePropsQC != nil && bytes.Equal(prePropsQC.GetProposalId(), s.generateQC.GetProposalId()) {
 		s.slog.Info("handleReceivedProposal as the preleader, update propsQC.")
 		s.updateQcStatus(propsQC, s.generateQC, s.lockedQC)
 		return nil
 	}
+
 	// propsQC is the first QC
 	if isFirstProposal {
 		s.updateQcStatus(propsQC, nil, nil)
@@ -482,6 +493,21 @@ func (s *Smr) voteProposal(propsQC *pb.QuorumCert, voteTo, logid string) error {
 	return nil
 }
 
+func (s *Smr) getValidates(viewNumer int64) []*cons_base.CandidateInfo {
+	s.slog.Error("getValidates", "effectiveDelay", effectiveDelay, "s.vscView", s.vscView)
+	// 根据不同共识的生效延时，判断当前view是否需要使用哪个验证集合，viewNumer为新视图，vscView为上次变更候选人视图
+	if effectiveDelay > 0 && viewNumer == s.vscView+effectiveDelay {
+		for _, v := range s.preValidates {
+			s.slog.Debug("PreValidates Check Set", "Address", v.Address)
+		}
+		return s.preValidates
+	}
+	for _, v := range s.validates {
+		s.slog.Debug("Validates Check Set", "Address", v.Address)
+	}
+	return s.validates
+}
+
 // addViewMsg check and add new view msg to smr
 // 1: check sign of msg
 // 2: check if the msg from validate sets replica
@@ -499,12 +525,14 @@ func (s *Smr) addViewMsg(msg *pb.ChainedBftPhaseMessage) error {
 	}
 
 	// check in ValidateSets
-	if !utils.IsInValidateSets(s.validates, msg.GetSignature().GetAddress()) {
-		s.slog.Error("addViewMsg checkValidateSets error")
+	validates := s.getValidates(msg.GetViewNumber())
+	if !utils.IsInValidateSets(validates, msg.GetSignature().GetAddress()) {
+		s.slog.Debug("addViewMsg checkValidateSets error", "msg.viewNumber", msg.GetViewNumber(), "msg.GetAddress()", msg.GetSignature().GetAddress())
 		return errors.New("addViewMsg checkValidateSets error")
 	}
 	// add JustifyQC
 	justify := msg.GetJustifyQC()
+	// 收到preLeader的NewViewMSG，则当前leader变更QC
 	if justify != nil {
 		s.slog.Info("addViewMsg GetJustifyQC not nil", "justifyId", hex.EncodeToString(justify.GetProposalId()),
 			"proposalId", hex.EncodeToString(s.proposalQC.GetProposalId()), "GetJustifyQC.SignInfos", justify.GetSignInfos())
@@ -513,23 +541,20 @@ func (s *Smr) addViewMsg(msg *pb.ChainedBftPhaseMessage) error {
 				s.slog.Info("addViewMsg update local as a new leader")
 				s.updateQcStatus(nil, s.proposalQC, s.generateQC)
 				s.qcVoteMsgs.Store(string(justify.GetProposalId()), justify.GetSignInfos())
+
+				viewMsgs := []*pb.ChainedBftPhaseMessage{}
+				viewMsgs = append(viewMsgs, msg)
+				s.newViewMsgs.Store(msg.GetViewNumber(), viewMsgs)
 			}
 		}
 	}
-
-	// add View msg
-	v, ok := s.newViewMsgs.Load(msg.GetViewNumber())
-	if !ok {
-		viewMsgs := []*pb.ChainedBftPhaseMessage{}
-		viewMsgs = append(viewMsgs, msg)
-		s.newViewMsgs.Store(msg.GetViewNumber(), viewMsgs)
-		return nil
-	}
-
-	viewMsgs := v.([]*pb.ChainedBftPhaseMessage)
-	viewMsgs = append(viewMsgs, msg)
-	s.newViewMsgs.Store(msg.GetViewNumber(), viewMsgs)
 	return nil
+}
+
+// CheckViewNumer check if smr has recieved preLeader's UpdateView msg
+func (s *Smr) CheckViewNumer(viewNumber int64) bool {
+	_, ok := s.newViewMsgs.Load(viewNumber)
+	return ok
 }
 
 // addVoteMsg check and add vote msg to smr
@@ -604,9 +629,9 @@ func (s *Smr) UpdateValidateSets(validates []*cons_base.CandidateInfo) error {
 }
 
 // getReplicasURL return validates urls
-func (s *Smr) getReplicasURL() []string {
+func (s *Smr) getReplicasURL(validates []*cons_base.CandidateInfo) []string {
 	validateURL := []string{}
-	for _, v := range s.validates {
+	for _, v := range validates {
 		if v.Address == s.address {
 			continue
 		}
@@ -633,12 +658,14 @@ func (s *Smr) addLocalProposal(qc *pb.QuorumCert) {
 }
 
 // UpdateSmrState 更新smr状态, 解决bpm check IsLastViewConfirmed的问题
-func (s *Smr) UpdateSmrState(proposalId []byte, generateQC *pb.QuorumCert) {
+func (s *Smr) UpdateSmrState(generateQC *pb.QuorumCert) {
 	s.slog.Info("UpdateSmrState and update ProposalQCId after block confirmed")
-	simpleProposalQc := &pb.QuorumCert{
-		ProposalId: proposalId,
-		Type:       pb.QCState_PREPARE,
-		SignInfos:  &pb.QCSignInfos{},
+	// 此处需要确定这个generateQC一定比本地的s.generateQC后才行
+	if generateQC.GetViewNumber() == s.generateQC.GetViewNumber()+1 && s.proposalQC.GetViewNumber() == generateQC.GetViewNumber()+1 {
+		s.updateQcStatus(s.proposalQC, generateQC, s.generateQC)
+		return
 	}
-	s.updateQcStatus(simpleProposalQc, generateQC, s.generateQC)
+	if generateQC.GetViewNumber() == s.generateQC.GetViewNumber()+1 {
+		s.updateQcStatus(nil, generateQC, s.generateQC)
+	}
 }

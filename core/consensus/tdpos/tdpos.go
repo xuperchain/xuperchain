@@ -67,6 +67,7 @@ func (tp *TDpos) Configure(xlog log.Logger, cfg *config.NodeConfig, consCfg map[
 	}
 	tp.log = xlog
 	tp.address = address
+	tp.effectiveDelay = 0
 
 	if cryptoClient, ok := extParams["crypto_client"].(crypto_base.CryptoClient); ok {
 		tp.cryptoClient = cryptoClient
@@ -595,7 +596,7 @@ func (tp *TDpos) ProcessConfirmBlock(block *pb.InternalBlock) error {
 			Block:   block,
 		}
 
-		err := tp.bftPaceMaker.NextNewProposal(block.Blockid, blockData)
+		err := tp.bftPaceMaker.NextNewProposal(block.Blockid, blockData, tp.getTermProposer(tp.curTerm))
 		if err != nil {
 			tp.log.Warn("ProcessConfirmBlock: bft next proposal failed", "error", err)
 			return err
@@ -603,7 +604,7 @@ func (tp *TDpos) ProcessConfirmBlock(block *pb.InternalBlock) error {
 	}
 	// update bft smr status
 	if tp.config.enableBFT && !tp.isInValidateSets() {
-		tp.bftPaceMaker.UpdateSmrState(block.GetBlockid(), block.GetJustify())
+		tp.bftPaceMaker.UpdateSmrState(block.GetJustify())
 	}
 	return nil
 }
@@ -857,7 +858,8 @@ func (tp *TDpos) initBFT(cfg *config.NodeConfig) error {
 		bridge,
 		tp.cryptoClient,
 		tp.p2psvr,
-		qc[2], qc[1], qc[0])
+		qc[2], qc[1], qc[0],
+		tp.effectiveDelay)
 
 	if err != nil {
 		tp.log.Warn("initBFT: create ChainedBft failed", "error", err)

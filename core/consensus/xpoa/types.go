@@ -43,6 +43,8 @@ type XPoa struct {
 	// BFT module
 	enableBFT    bool
 	bftPaceMaker bft.PacemakerInterface
+	// 变更候选人生效高度，0表示当前立即生效，1表示下个区块生效，以此类推
+	effectiveDelay int64
 }
 
 // Config xpoa共识机制的配置
