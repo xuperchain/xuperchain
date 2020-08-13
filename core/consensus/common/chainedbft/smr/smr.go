@@ -185,13 +185,7 @@ func (s *Smr) ProcessNewView(viewNumber int64, leader, preLeader string) error {
 		s.slog.Error("ProcessNewView MakePhaseMsgSign error", "error", err)
 		return err
 	}
-	// if as the new leader, wait for the (n-f) new view message from other replicas and call back extenal consensus
-	// 本操作省略了chained-bft中第一阶段Prepare阶段，作为Leader直接更新View，广播给从节点后，从节点直接变更新View
-	//if leader == s.address {
-	//	s.slog.Trace("ProcessNewView as a new leader, wait for n*2/3 new view messags")
-	//	return s.addViewMsg(newViewMsg)
-	//}
-	// send to next leader
+
 	msgBuf, err := proto.Marshal(newViewMsg)
 	if err != nil {
 		s.slog.Error("ProcessNewView marshal msg error", "error", err)
@@ -259,9 +253,17 @@ func (s *Smr) ProcessProposal(viewNumber int64, proposalID, proposalMsg []byte, 
 		s.slog.Error("ProcessProposal marshal msg error", "error", err)
 		return nil, err
 	}
+
 	netMsg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion3, s.bcname, "",
 		p2p_pb.XuperMessage_CHAINED_BFT_NEW_PROPOSAL_MSG, msgBuf, p2p_pb.XuperMessage_NONE)
-	s.slog.Info("ProcessProposal proposal msg", "netMsg", netMsg)
+	// 当前leader提前给自己投票，加速投票过程
+	if s.generateQC != nil {
+		err = s.voteProposal(qc, s.address, netMsg.GetHeader().GetLogid())
+		if err != nil {
+			s.slog.Error("提前签名error", "logid", netMsg.GetHeader().GetLogid(), "error", err)
+		}
+	}
+	s.slog.Info("ProcessProposal: Send proposal msg", "netMsg", netMsg)
 	opts := []p2p_base.MessageOption{
 		p2p_base.WithBcName(s.bcname),
 		p2p_base.WithTargetPeerAddrs(s.getReplicasURL(validatesInfos)),
@@ -328,9 +330,10 @@ func (s *Smr) handleReceivedVoteMsg(msg *p2p_pb.XuperMessage) error {
 		proposQC := v.(*pb.QuorumCert)
 		// 变更QC前需要确定当前收到的proposalQC与generateQC为上下轮关系
 		if proposQC.GetViewNumber() != s.generateQC.GetViewNumber()+1 {
-			s.slog.Error("handleReceivedVoteMsg proposalQC's pre QC != s.generateQC")
+			s.slog.Error("handleReceivedVoteMsg proposalQC's pre QC != s.generateQC", "proposQC=", proposQC.GetViewNumber(), "s.generateQC=", s.generateQC.GetViewNumber())
 			return ErrGetVotes
 		}
+		s.slog.Debug("updateQcStatus when handleReceivedVoteMsg.")
 		s.updateQcStatus(nil, proposQC, s.generateQC)
 		v, ok = s.qcVoteMsgs.Load(string(voteMsg.GetProposalId()))
 		if !ok {
@@ -452,10 +455,12 @@ func (s *Smr) updateQcStatus(proposalQC, generateQC, lockedQC *pb.QuorumCert) er
 	s.lockedQC = lockedQC
 	s.generateQC = generateQC
 	s.proposalQC = proposalQC
-	// debuglog
-	s.slog.Info("updateQcStatus result", "proposalQCId", hex.EncodeToString(proposalQC.GetProposalId()))
-	s.slog.Info("updateQcStatus result", "generateQCId", hex.EncodeToString(generateQC.GetProposalId()))
-	s.slog.Info("updateQcStatus result", "lockedQCId", hex.EncodeToString(lockedQC.GetProposalId()))
+	if s.generateQC == s.proposalQC {
+		s.proposalQC = nil
+	}
+	s.slog.Info("updateQcStatus result", "proposalQCId", hex.EncodeToString(s.proposalQC.GetProposalId()))
+	s.slog.Info("updateQcStatus result", "generateQCId", hex.EncodeToString(s.generateQC.GetProposalId()))
+	s.slog.Info("updateQcStatus result", "lockedQCId", hex.EncodeToString(s.lockedQC.GetProposalId()))
 	s.lk.Unlock()
 	return nil
 }
@@ -541,7 +546,6 @@ func (s *Smr) addViewMsg(msg *pb.ChainedBftPhaseMessage) error {
 				s.slog.Info("addViewMsg update local as a new leader")
 				s.updateQcStatus(nil, s.proposalQC, s.generateQC)
 				s.qcVoteMsgs.Store(string(justify.GetProposalId()), justify.GetSignInfos())
-
 				viewMsgs := []*pb.ChainedBftPhaseMessage{}
 				viewMsgs = append(viewMsgs, msg)
 				s.newViewMsgs.Store(msg.GetViewNumber(), viewMsgs)
