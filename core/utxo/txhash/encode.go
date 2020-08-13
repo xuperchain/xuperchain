@@ -55,7 +55,6 @@ func (e *encoder) EncodeMap(m map[string][]byte) {
 	}
 	sort.Strings(keys)
 
-	e.Encode(len(m))
 	for _, key := range keys {
 		e.EncodeString(key)
 		e.EncodeBytes(m[key])
