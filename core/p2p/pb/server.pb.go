@@ -8,6 +8,8 @@ import (
 	fmt "fmt"
 	proto "github.com/golang/protobuf/proto"
 	grpc "google.golang.org/grpc"
+	codes "google.golang.org/grpc/codes"
+	status "google.golang.org/grpc/status"
 	math "math"
 )
 
@@ -92,6 +94,14 @@ func (x *p2PServiceSendP2PMessageClient) Recv() (*XuperMessage, error) {
 // P2PServiceServer is the server API for P2PService service.
 type P2PServiceServer interface {
 	SendP2PMessage(P2PService_SendP2PMessageServer) error
+}
+
+// UnimplementedP2PServiceServer can be embedded to have forward compatible implementations.
+type UnimplementedP2PServiceServer struct {
+}
+
+func (*UnimplementedP2PServiceServer) SendP2PMessage(srv P2PService_SendP2PMessageServer) error {
+	return status.Errorf(codes.Unimplemented, "method SendP2PMessage not implemented")
 }
 
 func RegisterP2PServiceServer(s *grpc.Server, srv P2PServiceServer) {

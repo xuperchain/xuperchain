@@ -10,7 +10,6 @@ import (
 	"github.com/xuperchain/xuperchain/core/common/events"
 	"github.com/xuperchain/xuperchain/core/common/probe"
 	"github.com/xuperchain/xuperchain/core/contract/kernel"
-	"github.com/xuperchain/xuperchain/core/event"
 	p2p_base "github.com/xuperchain/xuperchain/core/p2p/base"
 	xuper_p2p "github.com/xuperchain/xuperchain/core/p2p/pb"
 	pm "github.com/xuperchain/xuperchain/core/pluginmgr"
@@ -33,7 +32,6 @@ type XChainMG struct {
 	// the switch of compressed
 	enableCompress bool
 	// event involved
-	EventService *event.EventService
 	// group chain involved
 	groupChainCache *groupChainCache
 }
@@ -52,8 +50,6 @@ func (xm *XChainMG) Init(log log.Logger, cfg *config.NodeConfig,
 	xm.Quit = make(chan struct{})
 	xm.nodeMode = cfg.NodeMode
 	xm.enableCompress = cfg.EnableCompress
-	xm.EventService = &event.EventService{}
-	xm.EventService.Init(cfg.PubsubService)
 
 	xm.groupChainCache = &groupChainCache{
 		StreamCache:         map[string]string{},
@@ -77,9 +73,9 @@ func (xm *XChainMG) Init(log log.Logger, cfg *config.NodeConfig,
 		if fi.IsDir() { // 忽略非目录
 			xm.Log.Trace("--------find " + fi.Name())
 			aKernel := &kernel.Kernel{}
-			aKernel.Init(xm.datapath, xm.Log, xm, fi.Name())
+			aKernel.Init(xm.datapath, xm.Log, xm, fi.Name(), &xm.Cfg.Kernel)
 			x := &XChainCore{}
-			err := x.Init(fi.Name(), log, cfg, p2pV2, aKernel, xm.nodeMode, xm.EventService, xm)
+			err := x.Init(fi.Name(), log, cfg, p2pV2, aKernel, xm.nodeMode, xm)
 			if err != nil {
 				return err
 			}
@@ -94,9 +90,6 @@ func (xm *XChainMG) Init(log log.Logger, cfg *config.NodeConfig,
 		xm.Log.Error("can not find xuper chain, please create it first", "err", err)
 		return err
 	}
-	xm.rootKernel.SetNewChainWhiteList(cfg.Kernel.NewChainWhiteList)
-	xm.rootKernel.SetMinNewChainAmount(cfg.Kernel.MinNewChainAmount)
-	xm.rootKernel.SetDisableCreateChainWhiteList(cfg.Kernel.DisableCreateChainWhiteList)
 	/*for _, x := range xm.chains {
 		go x.SyncBlocks()
 	}*/
@@ -178,9 +171,9 @@ func (xm *XChainMG) addBlockChain(name string) (*XChainCore, error) {
 	aKernel := xm.rootKernel
 	if name != "xuper" {
 		aKernel = &kernel.Kernel{}
-		aKernel.Init(xm.datapath, xm.Log, xm, name)
+		aKernel.Init(xm.datapath, xm.Log, xm, name, &xm.Cfg.Kernel)
 	}
-	err := x.Init(name, xm.Log, xm.Cfg, xm.P2pSvr, aKernel, xm.nodeMode, xm.EventService, xm)
+	err := x.Init(name, xm.Log, xm.Cfg, xm.P2pSvr, aKernel, xm.nodeMode, xm)
 	if err != nil {
 		xm.Log.Warn("XChainCore init error")
 		xm.rootKernel.RemoveBlockChainData(name)
@@ -204,7 +197,7 @@ func (xm *XChainMG) RegisterBlockChain(name string) error {
 func (xm *XChainMG) UnloadBlockChain(name string) error {
 	v, ok := xm.chains.Load(name)
 	if !ok {
-		return ErrBlockChainIsExist
+		return ErrBlockChainNotExist
 	}
 	xm.chains.Delete(name) //从xchainmg的map里面删了，就不会收到新的请求了
 	//然后停止这个链

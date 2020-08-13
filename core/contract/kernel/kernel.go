@@ -8,6 +8,7 @@ import (
 	"io/ioutil"
 	"math/big"
 	"os"
+	"path/filepath"
 	"reflect"
 	"sync"
 
@@ -29,20 +30,17 @@ import (
 type ChainRegister interface {
 	RegisterBlockChain(name string) error
 	UnloadBlockChain(name string) error
-	GetXchainmgConfig() *config.NodeConfig
 }
 
 // Kernel is the kernel contract
 type Kernel struct {
-	datapath                    string
-	log                         log.Logger
-	register                    ChainRegister
-	context                     *contract.TxContext
-	minNewChainAmount           *big.Int        //创建平行链的最小花费
-	newChainWhiteList           map[string]bool //能创建链的address白名单
-	disableCreateChainWhiteList bool            //是否允许任何人创建链
-	mutex                       *sync.Mutex
-	bcName                      string
+	datapath     string
+	log          log.Logger
+	register     ChainRegister
+	context      *contract.TxContext
+	mutex        *sync.Mutex
+	bcName       string
+	kernelConfig *config.KernelConfig
 }
 
 var (
@@ -62,31 +60,49 @@ var (
 	ErrInvalidChainName = errors.New("Invalid Chain name")
 )
 
+type KernelMethodFunc func(k *Kernel, desc *contract.TxDesc) error
+
+var runKernelFuncMap = map[string]KernelMethodFunc{
+	"CreateBlockChain":               (*Kernel).runCreateBlockChain,
+	"UpdateMaxBlockSize":             (*Kernel).runUpdateMaxBlockSize,
+	"UpdateReservedContract":         (*Kernel).runUpdateReservedContract,
+	"UpdateForbiddenContract":        (*Kernel).runUpdateForbiddenContract,
+	"UpdateBlockChainData":           (*Kernel).runUpdateBlockChainData,
+	"UpdateNewAccountResourceAmount": (*Kernel).runUpdateNewAccountResourceAmount,
+	"UpdateIrreversibleSlideWindow":  (*Kernel).runUpdateIrreversibleSlideWindow,
+	"UpdateGasPrice":                 (*Kernel).runUpdateGasPrice,
+	"StopBlockChain":                 (*Kernel).runStopBlockChain,
+}
+
+var rollbackKernelFuncMap = map[string]KernelMethodFunc{
+	"CreateBlockChain":               (*Kernel).rollbackCreateBlockChain,
+	"UpdateMaxBlockSize":             (*Kernel).rollbackUpdateMaxBlockSize,
+	"UpdateReservedContract":         (*Kernel).rollbackUpdateReservedContract,
+	"UpdateForbiddenContract":        (*Kernel).rollbackUpdateForbiddenContract,
+	"UpdateBlockChainData":           (*Kernel).rollbackUpdateBlockChainData,
+	"UpdateNewAccountResourceAmount": (*Kernel).rollbackUpdateNewAccountResourceAmount,
+	"UpdateIrreversibleSlideWindow":  (*Kernel).rollbackUpdateIrreversibleSlideWindow,
+	"UpdateGasPrice":                 (*Kernel).rollbackUpdateGasPrice,
+	"StopBlockChain":                 (*Kernel).rollbackStopBlockChain,
+}
+
+var rootKernelMap = map[string]bool{
+	"CreateBlockChain": true,
+	"StopBlockChain":   true,
+}
+
+func (k *Kernel) kernelRun(method KernelMethodFunc, arg *contract.TxDesc) error {
+	return method(k, arg)
+}
+
 // Init initialize kernel contract
-func (k *Kernel) Init(path string, log log.Logger, register ChainRegister, bcName string) {
+func (k *Kernel) Init(path string, log log.Logger, register ChainRegister, bcName string, kernelConfig *config.KernelConfig) {
 	k.datapath = path
 	k.log = log
 	k.register = register
-	k.minNewChainAmount = big.NewInt(0)
 	k.mutex = &sync.Mutex{}
 	k.bcName = bcName
-}
-
-// SetMinNewChainAmount set the minimum amount of token to create a block chain
-func (k *Kernel) SetMinNewChainAmount(amount string) {
-	n := big.NewInt(0)
-	n.SetString(amount, 10)
-	k.minNewChainAmount = n
-}
-
-// SetNewChainWhiteList set the whitelit of address who can create new block chain
-func (k *Kernel) SetNewChainWhiteList(whiteList map[string]bool) {
-	k.newChainWhiteList = whiteList
-}
-
-// SetDisableCreateChainWhiteList set if isCreateChain config, if true, that any address can create new chain
-func (k *Kernel) SetDisableCreateChainWhiteList(disableCreateChainWhiteList bool) {
-	k.disableCreateChainWhiteList = disableCreateChainWhiteList
+	k.kernelConfig = kernelConfig
 }
 
 // GetKVEngineType get kv engine type from xuper.json
@@ -174,17 +190,17 @@ func (k *Kernel) CreateBlockChain(name string, data []byte) error {
 		k.log.Warn("only xuper chain can create side-chain", "bcName", k.bcName)
 		return ErrPermissionDenied
 	}
-	fullpath := k.datapath + "/" + name
+	fullpath := filepath.Join(k.datapath, name)
 	if global.PathExists(fullpath) {
 		k.log.Warn("fullpath exist", "fullpath", fullpath)
 		return ErrBlockChainExist
 	}
-	err := os.Mkdir(fullpath, os.ModePerm)
+	err := os.MkdirAll(fullpath, 0755)
 	if err != nil {
 		k.log.Warn("can't create path[" + fullpath + "] %v")
 		return err
 	}
-	rootfile := fullpath + "/" + global.SBlockChainConfig
+	rootfile := filepath.Join(fullpath, global.SBlockChainConfig)
 	err = ioutil.WriteFile(rootfile, data, 0666)
 	if err != nil {
 		k.log.Warn("write file error ", "file", rootfile)
@@ -450,7 +466,7 @@ func (k *Kernel) validateUpdateBlockChainData(desc *contract.TxDesc) error {
 	if err != nil {
 		return err
 	}
-	addr := k.register.GetXchainmgConfig().ModifyBlockAddr
+	addr := k.kernelConfig.ModifyBlockAddr
 	isMatch, _ := xcc.VerifyAddressUsingPublicKey(addr, ecdsaKey)
 	if !isMatch {
 		return errors.New("address and public key not match")
@@ -495,104 +511,141 @@ func (k *Kernel) validateUpdateBlockChainData(desc *contract.TxDesc) error {
 	return nil
 }
 
+func (k *Kernel) runCreateBlockChain(desc *contract.TxDesc) error {
+	// 需要校验，否则容易panic
+	bcName, bcData, err := k.validateCreateBC(desc)
+	if err != nil {
+		return err
+	}
+	k.log.Debug("contract: create block chain", "from", k.bcName, "toCrate", bcName)
+	if k.bcName != "xuper" {
+		k.log.Warn("only xuper chain can create side-chain", "bcName", k.bcName)
+		return ErrPermissionDenied
+	}
+	if !desc.Tx.FromAddrInList(k.kernelConfig.NewChainWhiteList) && !k.kernelConfig.DisableCreateChainWhiteList {
+		k.log.Warn("tx from addr not in whitelist to create blockchain", "disableCreateChainWhiteList", k.kernelConfig.DisableCreateChainWhiteList)
+		return ErrAddrNotInWhiteList
+	}
+	nofee := k.context.LedgerObj.GetNoFee()
+	investment := desc.Tx.GetAmountByAddress(bcName)
+
+	minNewChainAmount := big.NewInt(0)
+	minNewChainAmount.SetString(k.kernelConfig.MinNewChainAmount, 10)
+	k.log.Info("create blockchain", "chain", bcName, "investment", investment, "need", minNewChainAmount, "nofee", nofee)
+	if !nofee && investment.Cmp(minNewChainAmount) < 0 {
+		return ErrNoEnoughUTXO
+	}
+	err = k.CreateBlockChain(bcName, []byte(bcData))
+	if err == ErrBlockChainExist { //暂时忽略
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	if k.register != nil {
+		k.log.Info("register block chain", "name", bcName)
+		return k.register.RegisterBlockChain(bcName)
+	}
+	return nil
+}
+
+// runStopBlockChain 为客户端提供停用制定链服务，不删除该链目录下内容
+func (k *Kernel) runStopBlockChain(desc *contract.TxDesc) error {
+	if !k.kernelConfig.EnableStopChain {
+		k.log.Warn("Cannot stop any blockchain, please configure the properties named 'enableStopChain'of your kernel in xchain.yaml")
+		return ErrPermissionDenied
+	}
+	if desc.Args["name"] == nil {
+		k.log.Warn("Chain name in tx for stopping a blockchain should be a non-null value.")
+		return ErrInvalidChainName
+	}
+	bcName, ok := desc.Args["name"].(string)
+	if !ok || bcName == "" {
+		k.log.Warn("Chain name in tx for stopping a blockchain should be a non-empty string.")
+		return ErrInvalidChainName
+	}
+	if bcName == "xuper" {
+		k.log.Warn("Oops, main-chain:xuper cannot be stopped.")
+		return ErrPermissionDenied
+	}
+	if !desc.Tx.FromAddrInList(k.kernelConfig.NewChainWhiteList) && !k.kernelConfig.DisableCreateChainWhiteList {
+		k.log.Warn("Address in tx for stopping a blockchain should be in whitelist", "disableCreateChainWhiteList", k.kernelConfig.DisableCreateChainWhiteList, "ChainWhiteList", k.kernelConfig.NewChainWhiteList)
+		return ErrAddrNotInWhiteList
+	}
+	if err := k.register.UnloadBlockChain(bcName); err != nil {
+		// 此处不返回ErrBlockChainIsExist, 仅打印报错信息
+		k.log.Warn("Stop blockchain failed", "ChainName", bcName)
+		return nil
+	}
+	k.log.Info("Stop blockchain successfully", "ChainName", bcName)
+	return nil
+}
+
+/* rollbackStopBlockChain 停用区块链交易的回滚操作，简化逻辑do nothing;
+ * 此时不论之前操作失败与否都无法load到之前需要删除的链信息, 后续可将删除链直接移到指定文件夹中。
+ */
+func (k *Kernel) rollbackStopBlockChain(desc *contract.TxDesc) error {
+	if !k.kernelConfig.EnableStopChain {
+		k.log.Warn("Cannot rollback any blockchain, please configure the properties named 'enableStopChain'of your kernel in xchain.yaml")
+		return ErrPermissionDenied
+	}
+	if desc.Args["name"] == nil {
+		k.log.Warn("rollback operation: Chain name in tx for stopping a blockchain is null.")
+		return ErrInvalidChainName
+	}
+	bcName, ok := desc.Args["name"].(string)
+	if !ok || bcName == "" {
+		k.log.Warn("rollback operation: Chain name in tx for stopping a blockchain is invalid.")
+		return ErrInvalidChainName
+	}
+	return nil
+}
+
 // Run implements ContractInterface
 func (k *Kernel) Run(desc *contract.TxDesc) error {
 	k.mutex.Lock()
 	defer k.mutex.Unlock()
-	switch desc.Method {
-	case "CreateBlockChain":
-		// 需要校验，否则容易panic
-		bcName, bcData, err := k.validateCreateBC(desc)
-		if err != nil {
-			return err
-		}
-		k.log.Debug("contract: create block chain", "from", k.bcName, "toCrate", bcName)
-		if k.bcName != "xuper" {
-			k.log.Warn("only xuper chain can create side-chain", "bcName", k.bcName)
-			return ErrPermissionDenied
-		}
-
-		if !desc.Tx.FromAddrInList(k.newChainWhiteList) && !k.disableCreateChainWhiteList {
-			k.log.Warn("tx from addr not in whitelist to create blockchain", "disableCreateChainWhiteList", k.disableCreateChainWhiteList)
-			return ErrAddrNotInWhiteList
-		}
-		investment := desc.Tx.GetAmountByAddress(bcName)
-		k.log.Info("create blockchain", "chain", bcName, "investment", investment, "need", k.minNewChainAmount)
-		if investment.Cmp(k.minNewChainAmount) < 0 {
-			return ErrNoEnoughUTXO
-		}
-		err = k.CreateBlockChain(bcName, []byte(bcData))
-		if err == ErrBlockChainExist { //暂时忽略
-			return nil
-		}
-		if err != nil {
-			return err
-		}
-		if k.register != nil {
-			k.log.Info("register block chain", "name", bcName)
-			return k.register.RegisterBlockChain(bcName)
-		}
-		return nil
-	case "UpdateMaxBlockSize":
-		return k.runUpdateMaxBlockSize(desc)
-	case "UpdateReservedContract":
-		return k.runUpdateReservedContract(desc)
-	case "UpdateForbiddenContract":
-		return k.runUpdateForbiddenContract(desc)
-	case "UpdateBlockChainData":
-		return k.runUpdateBlockChainData(desc)
-	case "UpdateNewAccountResourceAmount":
-		return k.runUpdateNewAccountResourceAmount(desc)
-	case "UpdateIrreversibleSlideWindow":
-		return k.runUpdateIrreversibleSlideWindow(desc)
-	case "UpdateGasPrice":
-		return k.runUpdateGasPrice(desc)
-	default:
+	if _, ok := runKernelFuncMap[desc.Method]; !ok {
 		k.log.Warn("method not implemented", "method", desc.Method)
 		return ErrMethodNotImplemented
 	}
+	if rootKernelMap[desc.Method] && k.bcName != "xuper" {
+		return ErrPermissionDenied
+	}
+	return k.kernelRun(runKernelFuncMap[desc.Method], desc)
 }
 
 // Rollback implements ContractInterface
 func (k *Kernel) Rollback(desc *contract.TxDesc) error {
 	k.mutex.Lock()
 	defer k.mutex.Unlock()
-	switch desc.Method {
-	case "CreateBlockChain":
-		bcName, _, err := k.validateCreateBC(desc) //需要校验，否则容易panic
-		if err != nil {
-			return err
-		}
-		fullpath := k.datapath + "/" + bcName
-		if !global.PathExists(fullpath) {
-			return nil //no need to rollback
-		}
-		err = k.RemoveBlockChainData(bcName)
-		if err != nil {
-			return err
-		}
-		if k.register != nil {
-			return k.register.UnloadBlockChain(bcName)
-		}
-		return nil
-	case "UpdateMaxBlockSize":
-		return k.rollbackUpdateMaxBlockSize(desc)
-	case "UpdateReservedContract":
-		return k.rollbackUpdateReservedContract(desc)
-	case "UpdateForbiddenContract":
-		return k.rollbackUpdateForbiddenContract(desc)
-	case "UpdateBlockChainData":
-		return k.rollbackUpdateBlockChainData(desc)
-	case "UpdateNewAccountResourceAmount":
-		return k.rollbackUpdateNewAccountResourceAmount(desc)
-	case "UpdateIrreversibleSlideWindow":
-		return k.rollbackUpdateIrreversibleSlideWindow(desc)
-	case "UpdateGasPrice":
-		return k.rollbackUpdateGasPrice(desc)
-	default:
+	if _, ok := rollbackKernelFuncMap[desc.Method]; !ok {
 		k.log.Warn("method not implemented", "method", desc.Method)
 		return ErrMethodNotImplemented
 	}
+	if rootKernelMap[desc.Method] && k.bcName != "xuper" {
+		return ErrPermissionDenied
+	}
+	return k.kernelRun(rollbackKernelFuncMap[desc.Method], desc)
+}
+
+func (k *Kernel) rollbackCreateBlockChain(desc *contract.TxDesc) error {
+	bcName, _, err := k.validateCreateBC(desc) //需要校验，否则容易panic
+	if err != nil {
+		return err
+	}
+	fullpath := k.datapath + "/" + bcName
+	if !global.PathExists(fullpath) {
+		return nil //no need to rollback
+	}
+	err = k.RemoveBlockChainData(bcName)
+	if err != nil {
+		return err
+	}
+	if k.register != nil {
+		return k.register.UnloadBlockChain(bcName)
+	}
+	return nil
 }
 
 func (k *Kernel) runUpdateMaxBlockSize(desc *contract.TxDesc) error {

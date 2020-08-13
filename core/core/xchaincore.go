@@ -31,7 +31,6 @@ import (
 	"github.com/xuperchain/xuperchain/core/crypto/account"
 	crypto_client "github.com/xuperchain/xuperchain/core/crypto/client"
 	crypto_base "github.com/xuperchain/xuperchain/core/crypto/client/base"
-	"github.com/xuperchain/xuperchain/core/event"
 	"github.com/xuperchain/xuperchain/core/global"
 	"github.com/xuperchain/xuperchain/core/kv/kvdb"
 	"github.com/xuperchain/xuperchain/core/ledger"
@@ -115,8 +114,6 @@ type XChainCore struct {
 	// cache for duplicate block message
 	msgCache           *common.LRUCache
 	blockBroadcaseMode uint8
-	// event involved
-	eventService *event.EventService
 	// group chain involved
 	groupChain GroupChainRegister
 }
@@ -128,7 +125,7 @@ func (xc *XChainCore) Status() int {
 
 // Init init the chain
 func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfig,
-	p2p p2p_base.P2PServer, ker *kernel.Kernel, nodeMode string, eventService *event.EventService, groupChain GroupChainRegister) error {
+	p2p p2p_base.P2PServer, ker *kernel.Kernel, nodeMode string, groupChain GroupChainRegister) error {
 
 	// 设置全局随机数发生器的原始种子
 	err := global.SetSeed()
@@ -140,7 +137,6 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	xc.Speed = probe.NewSpeedCalc(bcname)
 	// this.mutex.Lock()
 	// defer this.mutex.Unlock()
-	xc.eventService = eventService
 	xc.groupChain = groupChain
 	xc.status = global.SafeModel
 	xc.bcname = bcname
@@ -252,7 +248,7 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 		xc.Utxovm.StartAsyncBlockMode()
 	}
 	xc.Utxovm.SetMaxConfirmedDelay(cfg.Utxo.MaxConfirmedDelay)
-	xc.Utxovm.SetModifyBlockAddr(cfg.ModifyBlockAddr)
+	xc.Utxovm.SetModifyBlockAddr(cfg.Kernel.ModifyBlockAddr)
 	gBlk := xc.Ledger.GetGenesisBlock()
 	if gBlk == nil {
 		xc.log.Warn("GenesisBlock nil")
@@ -406,7 +402,7 @@ func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
 		return ErrServiceRefused
 	}
 	blocksIds := []string{}
-	//如果是接受到老的block（版本是1）, TODO
+	//如果是接收到老的block（版本是1）, TODO
 	blocksIds = append(blocksIds, string(in.Block.Blockid))
 	err := xc.Ledger.SavePendingBlock(in)
 	if err != nil {
@@ -483,7 +479,6 @@ func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
 				xc.log.Warn("utxo vm play err", "logid", in.Header.Logid, "err", err)
 				return ErrUTXOVMPlay
 			}
-			go produceBlockEvent(xc.eventService, block.GetBlock(), xc.bcname)
 		}
 	} else {
 		//交点不等于utxo latest block
@@ -698,7 +693,6 @@ func (xc *XChainCore) doMiner() {
 		xc.log.Warn("[Minning] utxo play error ", "logid", header.Logid, "error", err, "blockid", fmt.Sprintf("%x", freshBlock.Blockid))
 		return
 	}
-	go produceBlockEvent(xc.eventService, freshBlock, xc.bcname)
 	minerTimer.Mark("PlayForMiner")
 	xc.con.ProcessConfirmBlock(freshBlock)
 	minerTimer.Mark("ProcessConfirmBlock")
@@ -771,7 +765,7 @@ func (xc *XChainCore) Miner() int {
 	}
 	// 2 FAST_SYNC模式下需要回滚掉本地所有的未确认交易
 	if xc.nodeMode == config.NodeModeFastSync {
-		if _, err := xc.Utxovm.RollBackUnconfirmedTx(); err != nil {
+		if _, _, err := xc.Utxovm.RollBackUnconfirmedTx(); err != nil {
 			xc.log.Warn("FAST_SYNC mode RollBackUnconfirmedTx error", "error", err)
 		}
 	}

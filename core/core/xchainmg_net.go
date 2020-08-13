@@ -61,7 +61,7 @@ func (xm *XChainMG) StartLoop() {
 		select {
 		case msg := <-xm.msgChan:
 			// handle received msg
-			xm.Log.Info("XchainMG get msg", "logid", msg.GetHeader().GetLogid(), "msgType", msg.GetHeader().GetType(), "checksum", msg.GetHeader().GetDataCheckSum())
+			xm.Log.Info("XchainMG get msg", "logid", msg.GetHeader().GetLogid(), "msgType", msg.GetHeader().GetType(), "checksum", msg.GetHeader().GetDataCheckSum(), "from", msg.GetHeader().GetFrom())
 			go xm.handleReceivedMsg(msg)
 		}
 	}
@@ -102,8 +102,12 @@ func (xm *XChainMG) handleReceivedMsg(msg *xuper_p2p.XuperMessage) {
 }
 
 func (xm *XChainMG) handlePostTx(msg *xuper_p2p.XuperMessage) {
+	bc := xm.Get(msg.GetHeader().GetBcname())
+	if bc == nil {
+		xm.Log.Info("handlePostTx Get blockchain error", "error", "blockchain not exit", "bcname", msg.GetHeader().GetBcname())
+		return
+	}
 	txStatus := &pb.TxStatus{}
-
 	txStatusBuf, err := p2p_base.Uncompress(msg)
 	if txStatusBuf == nil || err != nil {
 		xm.Log.Error("handlePostTx xuper_p2p uncompressed error", "error", err)
@@ -121,9 +125,11 @@ func (xm *XChainMG) handlePostTx(msg *xuper_p2p.XuperMessage) {
 		txStatus.Header = global.GHeader()
 	}
 	if _, needRepost, _ := xm.ProcessTx(txStatus); needRepost {
+		whiteList := bc.groupChain.GetAllowedPeersWithBcname(msg.GetHeader().GetBcname())
 		opts := []p2p_base.MessageOption{
 			p2p_base.WithFilters([]p2p_base.FilterStrategy{p2p_base.DefaultStrategy}),
 			p2p_base.WithBcName(msg.GetHeader().GetBcname()),
+			p2p_base.WithWhiteList(whiteList),
 		}
 		go xm.P2pSvr.SendMessage(context.Background(), msg, opts...)
 	}
@@ -133,14 +139,13 @@ func (xm *XChainMG) handlePostTx(msg *xuper_p2p.XuperMessage) {
 // ProcessTx process tx, move from server/server.go
 func (xm *XChainMG) ProcessTx(in *pb.TxStatus) (*pb.CommonReply, bool, error) {
 	out := &pb.CommonReply{Header: &pb.Header{Logid: in.Header.Logid}}
-
 	if err := validatePostTx(in); err != nil {
 		out.Header.Error = pb.XChainErrorEnum_VALIDATE_ERROR
 		xm.Log.Trace("PostTx validate param errror", "logid", in.Header.Logid, "error", err.Error())
 		return out, false, err
 	}
 
-	bc := xm.Get(in.Bcname)
+	bc := xm.Get(in.GetBcname())
 	if bc == nil {
 		out.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
 		return out, false, nil
@@ -160,15 +165,17 @@ func (xm *XChainMG) ProcessTx(in *pb.TxStatus) (*pb.CommonReply, bool, error) {
 		return out, false, nil
 	}
 	out, needRepost := bc.PostTx(in, hd)
-
-	if !needRepost {
-		go produceTransactionEvent(xm.EventService, in.GetTx(), in.GetBcname(), pb.TransactionStatus_FAILED)
-	}
 	return out, needRepost, nil
 }
 
 // HandleSendBlock handle SENDBLOCK type msg
 func (xm *XChainMG) HandleSendBlock(msg *xuper_p2p.XuperMessage) {
+	bcname := msg.GetHeader().GetBcname()
+	bc := xm.Get(bcname)
+	if bc == nil {
+		xm.Log.Info("HandleSendBlockGet blockchain error", "error", "blockchain not exit", "bcname", bcname)
+		return
+	}
 	block := &pb.Block{}
 	blockBuf, err := p2p_base.Uncompress(msg)
 	if blockBuf == nil || err != nil {
@@ -197,17 +204,17 @@ func (xm *XChainMG) HandleSendBlock(msg *xuper_p2p.XuperMessage) {
 	}
 
 	// send block to peers
-	bcname := block.GetBcname()
-	bc := xm.Get(bcname)
 	if xm.Cfg.BlockBroadcaseMode == 0 {
 		// send full block to peers in Full_BroadCast_Mode
 		filters := []p2p_base.FilterStrategy{p2p_base.DefaultStrategy}
 		if bc.NeedCoreConnection() {
 			filters = append(filters, p2p_base.CorePeersStrategy)
 		}
+		whiteList := bc.groupChain.GetAllowedPeersWithBcname(bc.bcname)
 		opts := []p2p_base.MessageOption{
 			p2p_base.WithFilters(filters),
 			p2p_base.WithBcName(bcname),
+			p2p_base.WithWhiteList(whiteList),
 		}
 		go xm.P2pSvr.SendMessage(context.Background(), msg, opts...)
 	} else {
@@ -227,9 +234,11 @@ func (xm *XChainMG) HandleSendBlock(msg *xuper_p2p.XuperMessage) {
 		if bc.NeedCoreConnection() {
 			filters = append(filters, p2p_base.CorePeersStrategy)
 		}
+		whiteList := bc.groupChain.GetAllowedPeersWithBcname(bc.bcname)
 		opts := []p2p_base.MessageOption{
 			p2p_base.WithFilters(filters),
 			p2p_base.WithBcName(bcname),
+			p2p_base.WithWhiteList(whiteList),
 		}
 		go xm.P2pSvr.SendMessage(context.Background(), msg, opts...)
 	}
@@ -238,17 +247,17 @@ func (xm *XChainMG) HandleSendBlock(msg *xuper_p2p.XuperMessage) {
 
 // ProcessBlock process block
 func (xm *XChainMG) ProcessBlock(block *pb.Block) error {
+	bc := xm.Get(block.GetBcname())
+	if bc == nil {
+		xm.Log.Error("ProcessBlock Get blockchain error", "error", "blockchain not exit", "bcname", block.GetBcname())
+		return ErrBlockChainNotExist
+	}
 	if err := validateSendBlock(block); err != nil {
 		xm.Log.Error("ProcessBlock validateSendBlock error", "error", err.Error())
 		return err
 	}
 
 	xm.Log.Trace("Start to dealwith SendBlock", "blockid", global.F(block.GetBlockid()))
-	bc := xm.Get(block.GetBcname())
-	if bc == nil {
-		xm.Log.Error("ProcessBlock error", "error", "bc not exist")
-		return ErrBlockChainNotExist
-	}
 	hd := &global.XContext{Timer: global.NewXTimer()}
 	if err := bc.ProcessSendBlock(block, hd); err != nil {
 		if err == ErrBlockExist {
@@ -266,6 +275,11 @@ func (xm *XChainMG) ProcessBlock(block *pb.Block) error {
 }
 
 func (xm *XChainMG) handleBatchPostTx(msg *xuper_p2p.XuperMessage) {
+	bc := xm.Get(msg.GetHeader().GetBcname())
+	if bc == nil {
+		xm.Log.Info("handleBatchPostTx Get blockchain error", "error", "blockchain not exit", "bcname", msg.GetHeader().GetBcname())
+		return
+	}
 	batchTxs := &pb.BatchTxs{}
 	batchTxsBuf, err := p2p_base.Uncompress(msg)
 	if batchTxsBuf == nil || err != nil {
@@ -293,10 +307,12 @@ func (xm *XChainMG) handleBatchPostTx(msg *xuper_p2p.XuperMessage) {
 		}
 		header := msg.GetHeader()
 		msg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion1, header.GetBcname(), header.GetLogid(), xuper_p2p.XuperMessage_BATCHPOSTTX, txsData, xuper_p2p.XuperMessage_SUCCESS)
+		whiteList := bc.groupChain.GetAllowedPeersWithBcname(msg.GetHeader().GetBcname())
 		opts := []p2p_base.MessageOption{
 			p2p_base.WithFilters([]p2p_base.FilterStrategy{p2p_base.DefaultStrategy}),
 			p2p_base.WithBcName(msg.GetHeader().GetBcname()),
 			p2p_base.WithCompress(xm.enableCompress),
+			p2p_base.WithWhiteList(whiteList),
 		}
 		go xm.P2pSvr.SendMessage(context.Background(), msg, opts...)
 	}

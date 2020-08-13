@@ -1,6 +1,8 @@
 package com.baidu.xuper.example;
 
 import java.math.BigInteger;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.baidu.xuper.Context;
 import com.baidu.xuper.Contract;
@@ -36,6 +38,15 @@ public class Counter implements Contract {
         ctx.log("get value " + counter.toString());
         counter = counter.add(BigInteger.valueOf(1));
         ctx.putObject(key, counter.toByteArray());
+
+//        emit event with json
+        Map<String, String> body = new HashMap<>();
+        body.put("key", new String(key));
+        body.put("value", counter.toString());
+        ctx.emitJSONEvent("increase", body);
+
+//        emit event directly, use 'toString().getBytes()' to make counter readable to human
+//        ctx.emitEvent("increase", counter.toString().getBytes());
 
         return Response.ok(counter.toString().getBytes());
     }
