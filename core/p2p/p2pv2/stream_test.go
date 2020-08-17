@@ -49,7 +49,7 @@ func handleStream(s net.Stream) {
 		fmt.Println("create node failed, err=", err1)
 		return
 	}
-	handleMap, _ := p2p_base.NewHandlerMap(lg)
+	handleMap, _ := p2p_base.NewHandlerMap(lg, false)
 	srv := &P2PServerV2{
 		config:     cfg,
 		handlerMap: handleMap,
