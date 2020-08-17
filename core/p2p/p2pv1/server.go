@@ -53,6 +53,7 @@ type P2PServerV1 struct {
 	quitCh       chan bool
 	lock         sync.Mutex
 	localAddr    map[string]*p2p_base.XchainAddrInfo
+	metric       bool
 }
 
 // NewP2PServerV1 create P2PServerV1 instance
@@ -85,6 +86,9 @@ func (p *P2PServerV1) Init(cfg config.P2PConfig, lg log.Logger, extra map[string
 	p.quitCh = make(chan bool, 1)
 	p.msgChan = make(chan *p2pPb.XuperMessage, 5000)
 	p.localAddr = map[string]*p2p_base.XchainAddrInfo{}
+	if extra["metric"] != nil && extra["metric"].(bool) {
+		p.metric = true
+	}
 
 	peerids := []string{}
 	hasPeerMap := map[string]bool{}
@@ -182,11 +186,13 @@ func (p *P2PServerV1) SendMessage(ctx context.Context, msg *p2pPb.XuperMessage,
 			msg = p2p_base.Compress(msg)
 		}
 	}
-	metricLabels := prom.Labels{
-		"bcname": msg.GetHeader().GetBcname(),
-		"type":   msg.GetHeader().GetType().String(),
+	if p.metric {
+		metricLabels := prom.Labels{
+			"bcname": msg.GetHeader().GetBcname(),
+			"type":   msg.GetHeader().GetType().String(),
+		}
+		p2p_base.DefaultP2pMetrics.P2PFlowOut.With(metricLabels).Add(float64(proto.Size(msg)))
 	}
-	p2p_base.DefaultP2pMetrics.P2PFlowOut.With(metricLabels).Add(float64(proto.Size(msg)))
 	return p.sendMessage(ctx, msg, peerids)
 }
 
@@ -214,11 +220,13 @@ func (p *P2PServerV1) SendMessageWithResponse(ctx context.Context, msg *p2pPb.Xu
 			msg = p2p_base.Compress(msg)
 		}
 	}
-	metricLabels := prom.Labels{
-		"bcname": msg.GetHeader().GetBcname(),
-		"type":   msg.GetHeader().GetType().String(),
+	if p.metric {
+		metricLabels := prom.Labels{
+			"bcname": msg.GetHeader().GetBcname(),
+			"type":   msg.GetHeader().GetType().String(),
+		}
+		p2p_base.DefaultP2pMetrics.P2PFlowOut.With(metricLabels).Add(float64(proto.Size(msg)))
 	}
-	p2p_base.DefaultP2pMetrics.P2PFlowOut.With(metricLabels).Add(float64(proto.Size(msg)))
 	return p.sendMessageWithRes(ctx, msg, peerids, percentage)
 }
 

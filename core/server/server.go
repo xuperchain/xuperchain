@@ -16,6 +16,7 @@ import (
 	_ "net/http/pprof"
 	"reflect"
 	"strconv"
+	"strings"
 
 	"github.com/golang/protobuf/proto"
 	grpc_prometheus "github.com/grpc-ecosystem/go-grpc-prometheus"
@@ -31,7 +32,6 @@ import (
 	prom "github.com/prometheus/client_golang/prometheus"
 	"github.com/xuperchain/xuperchain/core/common"
 	xlog "github.com/xuperchain/xuperchain/core/common/log"
-	"github.com/xuperchain/xuperchain/core/common/matrics"
 	"github.com/xuperchain/xuperchain/core/consensus"
 	xchaincore "github.com/xuperchain/xuperchain/core/core"
 	"github.com/xuperchain/xuperchain/core/global"
@@ -47,16 +47,11 @@ type Server struct {
 	mg             *xchaincore.XChainMG
 	dedupCache     *common.LRUCache
 	dedupTimeLimit int
+	metric         bool
 }
 
 // PostTx post transaction to blockchain network
 func (s *Server) PostTx(ctx context.Context, in *pb.TxStatus) (*pb.CommonReply, error) {
-	matricLabels := prom.Labels{
-		"bcname": in.GetBcname(),
-		"type":   "PostTx",
-	}
-	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
-
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
@@ -74,11 +69,6 @@ func (s *Server) PostTx(ctx context.Context, in *pb.TxStatus) (*pb.CommonReply, 
 			s.mg.P2pSvr.SendMessage(context.Background(), msg, opts...)
 		}()
 	}
-	matricLabelsOut := prom.Labels{
-		"bcname": in.GetBcname(),
-		"type":   "PostTx",
-	}
-	matrics.DefaultServerMetrics.RPCFlowOut.With(matricLabelsOut).Add(float64(proto.Size(out)))
 	return out, err
 }
 
@@ -90,11 +80,6 @@ func (s *Server) BatchPostTx(ctx context.Context, in *pb.BatchTxs) (*pb.CommonRe
 
 // QueryContractStatData query statistic info about contract
 func (s *Server) QueryContractStatData(ctx context.Context, in *pb.ContractStatDataRequest) (*pb.ContractStatDataResponse, error) {
-	matricLabels := prom.Labels{
-		"bcname": in.GetBcname(),
-		"type":   "QueryContractStatData",
-	}
-	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
 	if in.GetHeader() == nil {
 		in.Header = global.GHeader()
 	}
@@ -110,22 +95,11 @@ func (s *Server) QueryContractStatData(ctx context.Context, in *pb.ContractStatD
 	if contractStatDataErr != nil {
 		return out, contractStatDataErr
 	}
-	matricLabelsOut := prom.Labels{
-		"bcname": in.GetBcname(),
-		"type":   "QueryContractStatData",
-	}
-	matrics.DefaultServerMetrics.RPCFlowOut.With(matricLabelsOut).Add(float64(proto.Size(contractStatDataResponse)))
 	return contractStatDataResponse, nil
 }
 
 // QueryUtxoRecord query utxo records
 func (s *Server) QueryUtxoRecord(ctx context.Context, in *pb.UtxoRecordDetail) (*pb.UtxoRecordDetail, error) {
-	matricLabels := prom.Labels{
-		"bcname": in.GetBcname(),
-		"type":   "QueryUtxoRecord",
-	}
-	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
-
 	if in.GetHeader() == nil {
 		in.Header = global.GHeader()
 	}
@@ -144,11 +118,6 @@ func (s *Server) QueryUtxoRecord(ctx context.Context, in *pb.UtxoRecordDetail) (
 		if err != nil {
 			return out, err
 		}
-		matricLabelsOut := prom.Labels{
-			"bcname": in.GetBcname(),
-			"type":   "QueryUtxoRecord",
-		}
-		matrics.DefaultServerMetrics.RPCFlowOut.With(matricLabelsOut).Add(float64(proto.Size(utxoRecord)))
 		return utxoRecord, nil
 	}
 
@@ -157,12 +126,6 @@ func (s *Server) QueryUtxoRecord(ctx context.Context, in *pb.UtxoRecordDetail) (
 
 // QueryACL query some account info
 func (s *Server) QueryACL(ctx context.Context, in *pb.AclStatus) (*pb.AclStatus, error) {
-	matricLabels := prom.Labels{
-		"bcname": in.GetBcname(),
-		"type":   "QueryACL",
-	}
-	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
-
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
@@ -195,22 +158,11 @@ func (s *Server) QueryACL(ctx context.Context, in *pb.AclStatus) (*pb.AclStatus,
 			out.Acl = acl
 		}
 	}
-	matricLabelsOut := prom.Labels{
-		"bcname": in.GetBcname(),
-		"type":   "QueryACL",
-	}
-	matrics.DefaultServerMetrics.RPCFlowOut.With(matricLabelsOut).Add(float64(proto.Size(out)))
 	return out, nil
 }
 
 // GetAccountContracts get account request
 func (s *Server) GetAccountContracts(ctx context.Context, in *pb.GetAccountContractsRequest) (*pb.GetAccountContractsResponse, error) {
-	matricLabels := prom.Labels{
-		"bcname": in.GetBcname(),
-		"type":   "GetAccountContracts",
-	}
-	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
-
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
@@ -229,22 +181,11 @@ func (s *Server) GetAccountContracts(ctx context.Context, in *pb.GetAccountContr
 		return out, err
 	}
 	out.ContractsStatus = contractsStatus
-	matricLabelsOut := prom.Labels{
-		"bcname": in.GetBcname(),
-		"type":   "GetAccountContracts",
-	}
-	matrics.DefaultServerMetrics.RPCFlowOut.With(matricLabelsOut).Add(float64(proto.Size(out)))
 	return out, nil
 }
 
 // QueryTx Get transaction details
 func (s *Server) QueryTx(ctx context.Context, in *pb.TxStatus) (*pb.TxStatus, error) {
-	matricLabels := prom.Labels{
-		"bcname": in.GetBcname(),
-		"type":   "QueryTx",
-	}
-	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
-
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
@@ -258,11 +199,6 @@ func (s *Server) QueryTx(ctx context.Context, in *pb.TxStatus) (*pb.TxStatus, er
 		return out, errors.New("tx has been forbidden")
 	}
 	out = bc.QueryTx(in)
-	matricLabelsOut := prom.Labels{
-		"bcname": in.GetBcname(),
-		"type":   "QueryTx",
-	}
-	matrics.DefaultServerMetrics.RPCFlowOut.With(matricLabelsOut).Add(float64(proto.Size(out)))
 	return out, nil
 }
 
@@ -341,12 +277,6 @@ func (s *Server) GetBalanceDetail(ctx context.Context, in *pb.AddressBalanceStat
 
 // GetBlock get block info according to blockID
 func (s *Server) GetBlock(ctx context.Context, in *pb.BlockID) (*pb.Block, error) {
-	matricLabels := prom.Labels{
-		"bcname": in.GetBcname(),
-		"type":   "GetBlock",
-	}
-	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
-
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
@@ -374,21 +304,11 @@ func (s *Server) GetBlock(ctx context.Context, in *pb.BlockID) (*pb.Block, error
 	}
 	s.log.Trace("Start to dealwith GetBlock result", "logid", in.Header.Logid,
 		"blockid", out.Blockid, "height", out.GetBlock().GetHeight())
-	matricLabelsOut := prom.Labels{
-		"bcname": in.GetBcname(),
-		"type":   "GetBlock",
-	}
-	matrics.DefaultServerMetrics.RPCFlowOut.With(matricLabelsOut).Add(float64(proto.Size(out)))
 	return out, nil
 }
 
 // GetBlockChainStatus get systemstatus
 func (s *Server) GetBlockChainStatus(ctx context.Context, in *pb.BCStatus) (*pb.BCStatus, error) {
-	matricLabels := prom.Labels{
-		"bcname": in.GetBcname(),
-		"type":   "GetBlockChainStatus",
-	}
-	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
@@ -399,22 +319,11 @@ func (s *Server) GetBlockChainStatus(ctx context.Context, in *pb.BCStatus) (*pb.
 		return out, nil
 	}
 	out = bc.GetBlockChainStatus(in, pb.ViewOption_NONE)
-	matricLabelsOut := prom.Labels{
-		"bcname": in.GetBcname(),
-		"type":   "GetBlockChainStatus",
-	}
-	matrics.DefaultServerMetrics.RPCFlowOut.With(matricLabelsOut).Add(float64(proto.Size(out)))
 	return out, nil
 }
 
 // ConfirmBlockChainStatus confirm is_trunk
 func (s *Server) ConfirmBlockChainStatus(ctx context.Context, in *pb.BCStatus) (*pb.BCTipStatus, error) {
-	matricLabels := prom.Labels{
-		"bcname": in.GetBcname(),
-		"type":   "ConfirmBlockChainStatus",
-	}
-	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
-
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
@@ -484,12 +393,6 @@ func (s *Server) GetNetURL(ctx context.Context, in *pb.CommonIn) (*pb.RawUrl, er
 
 // SelectUTXOBySize select utxo inputs depending on size
 func (s *Server) SelectUTXOBySize(ctx context.Context, in *pb.UtxoInput) (*pb.UtxoOutput, error) {
-	matricLabels := prom.Labels{
-		"bcname": in.GetBcname(),
-		"type":   "SelectUTXOBySize",
-	}
-	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
-
 	if in.GetHeader() == nil {
 		in.Header = global.GHeader()
 	}
@@ -522,22 +425,11 @@ func (s *Server) SelectUTXOBySize(ctx context.Context, in *pb.UtxoInput) (*pb.Ut
 	s.log.Trace("Merge utxo totalSelect", "totalSelect", totalSelectedStr)
 	out.UtxoList = utxoList
 	out.TotalSelected = totalSelectedStr
-	matricLabelsOut := prom.Labels{
-		"bcname": in.GetBcname(),
-		"type":   "SelectUTXOBySize",
-	}
-	matrics.DefaultServerMetrics.RPCFlowOut.With(matricLabelsOut).Add(float64(proto.Size(out)))
 	return out, nil
 }
 
 // SelectUTXO select utxo inputs depending on amount
 func (s *Server) SelectUTXO(ctx context.Context, in *pb.UtxoInput) (*pb.UtxoOutput, error) {
-	matricLabels := prom.Labels{
-		"bcname": in.GetBcname(),
-		"type":   "SelectUTXO",
-	}
-	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
-
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
@@ -575,22 +467,11 @@ func (s *Server) SelectUTXO(ctx context.Context, in *pb.UtxoInput) (*pb.UtxoOutp
 	s.log.Trace("Select utxo totalSelect", "totalSelect", totalSelectedStr)
 	out.UtxoList = utxoList
 	out.TotalSelected = totalSelectedStr
-	matricLabelsOut := prom.Labels{
-		"bcname": in.GetBcname(),
-		"type":   "SelectUTXO",
-	}
-	matrics.DefaultServerMetrics.RPCFlowOut.With(matricLabelsOut).Add(float64(proto.Size(out)))
 	return out, nil
 }
 
 // DposCandidates get dpos candidates
 func (s *Server) DposCandidates(ctx context.Context, in *pb.DposCandidatesRequest) (*pb.DposCandidatesResponse, error) {
-	matricLabels := prom.Labels{
-		"bcname": in.GetBcname(),
-		"type":   "DposCandidates",
-	}
-	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
-
 	bc := s.mg.Get(in.GetBcname())
 	if in.Header == nil {
 		in.Header = global.GHeader()
@@ -616,22 +497,11 @@ func (s *Server) DposCandidates(ctx context.Context, in *pb.DposCandidatesReques
 	}
 	out.Header.Error = pb.XChainErrorEnum_SUCCESS
 	out.CandidatesInfo = candidates
-	matricLabelsOut := prom.Labels{
-		"bcname": in.GetBcname(),
-		"type":   "DposCandidates",
-	}
-	matrics.DefaultServerMetrics.RPCFlowOut.With(matricLabelsOut).Add(float64(proto.Size(out)))
 	return out, nil
 }
 
 // DposNominateRecords get dpos 提名者提名记录
 func (s *Server) DposNominateRecords(ctx context.Context, in *pb.DposNominateRecordsRequest) (*pb.DposNominateRecordsResponse, error) {
-	matricLabels := prom.Labels{
-		"bcname": in.GetBcname(),
-		"type":   "DposNominateRecords",
-	}
-	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
-
 	bc := s.mg.Get(in.GetBcname())
 	if in.Header == nil {
 		in.Header = global.GHeader()
@@ -658,22 +528,11 @@ func (s *Server) DposNominateRecords(ctx context.Context, in *pb.DposNominateRec
 	}
 	out.Header.Error = pb.XChainErrorEnum_SUCCESS
 	out.NominateRecords = nominateRecords
-	matricLabelsOut := prom.Labels{
-		"bcname": in.GetBcname(),
-		"type":   "DposNominateRecords",
-	}
-	matrics.DefaultServerMetrics.RPCFlowOut.With(matricLabelsOut).Add(float64(proto.Size(out)))
 	return out, nil
 }
 
 // DposNomineeRecords 候选人被提名记录
 func (s *Server) DposNomineeRecords(ctx context.Context, in *pb.DposNomineeRecordsRequest) (*pb.DposNomineeRecordsResponse, error) {
-	matricLabels := prom.Labels{
-		"bcname": in.GetBcname(),
-		"type":   "DposNomineeRecords",
-	}
-	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
-
 	bc := s.mg.Get(in.GetBcname())
 	if in.Header == nil {
 		in.Header = global.GHeader()
@@ -699,22 +558,11 @@ func (s *Server) DposNomineeRecords(ctx context.Context, in *pb.DposNomineeRecor
 	}
 	out.Header.Error = pb.XChainErrorEnum_SUCCESS
 	out.Txid = txid
-	matricLabelsOut := prom.Labels{
-		"bcname": in.GetBcname(),
-		"type":   "DposNomineeRecords",
-	}
-	matrics.DefaultServerMetrics.RPCFlowOut.With(matricLabelsOut).Add(float64(proto.Size(out)))
 	return out, nil
 }
 
 // DposVoteRecords 选民投票记录
 func (s *Server) DposVoteRecords(ctx context.Context, in *pb.DposVoteRecordsRequest) (*pb.DposVoteRecordsResponse, error) {
-	matricLabels := prom.Labels{
-		"bcname": in.GetBcname(),
-		"type":   "DposVoteRecords",
-	}
-	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
-
 	bc := s.mg.Get(in.GetBcname())
 	if in.Header == nil {
 		in.Header = global.GHeader()
@@ -740,22 +588,11 @@ func (s *Server) DposVoteRecords(ctx context.Context, in *pb.DposVoteRecordsRequ
 	}
 	out.Header.Error = pb.XChainErrorEnum_SUCCESS
 	out.VoteTxidRecords = voteRecords
-	matricLabelsOut := prom.Labels{
-		"bcname": in.GetBcname(),
-		"type":   "DposVoteRecords",
-	}
-	matrics.DefaultServerMetrics.RPCFlowOut.With(matricLabelsOut).Add(float64(proto.Size(out)))
 	return out, nil
 }
 
 // DposVotedRecords 候选人被投票记录
 func (s *Server) DposVotedRecords(ctx context.Context, in *pb.DposVotedRecordsRequest) (*pb.DposVotedRecordsResponse, error) {
-	matricLabels := prom.Labels{
-		"bcname": in.GetBcname(),
-		"type":   "DposVotedRecords",
-	}
-	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
-
 	bc := s.mg.Get(in.GetBcname())
 	if in.Header == nil {
 		in.Header = global.GHeader()
@@ -780,21 +617,11 @@ func (s *Server) DposVotedRecords(ctx context.Context, in *pb.DposVotedRecordsRe
 	}
 	out.Header.Error = pb.XChainErrorEnum_SUCCESS
 	out.VotedTxidRecords = votedRecords
-	matricLabelsOut := prom.Labels{
-		"bcname": in.GetBcname(),
-		"type":   "DposVotedRecords",
-	}
-	matrics.DefaultServerMetrics.RPCFlowOut.With(matricLabelsOut).Add(float64(proto.Size(out)))
 	return out, nil
 }
 
 // DposCheckResults get dpos 检查结果
 func (s *Server) DposCheckResults(ctx context.Context, in *pb.DposCheckResultsRequest) (*pb.DposCheckResultsResponse, error) {
-	matricLabels := prom.Labels{
-		"bcname": in.GetBcname(),
-		"type":   "DposCheckResults",
-	}
-	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
 
 	bc := s.mg.Get(in.GetBcname())
 	if in.Header == nil {
@@ -822,22 +649,11 @@ func (s *Server) DposCheckResults(ctx context.Context, in *pb.DposCheckResultsRe
 	}
 	out.Term = in.Term
 	out.CheckResult = checkResult
-	matricLabelsOut := prom.Labels{
-		"bcname": in.GetBcname(),
-		"type":   "DposCheckResults",
-	}
-	matrics.DefaultServerMetrics.RPCFlowOut.With(matricLabelsOut).Add(float64(proto.Size(out)))
 	return out, nil
 }
 
 // DposStatus get dpos current status
 func (s *Server) DposStatus(ctx context.Context, in *pb.DposStatusRequest) (*pb.DposStatusResponse, error) {
-	matricLabels := prom.Labels{
-		"bcname": in.GetBcname(),
-		"type":   "DposStatus",
-	}
-	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
-
 	bc := s.mg.Get(in.GetBcname())
 	if in.Header == nil {
 		in.Header = global.GHeader()
@@ -867,22 +683,11 @@ func (s *Server) DposStatus(ctx context.Context, in *pb.DposStatusRequest) (*pb.
 	}
 	out.Status.CheckResult = checkResult
 	out.Status.ProposerNum = int64(len(checkResult))
-	matricLabelsOut := prom.Labels{
-		"bcname": in.GetBcname(),
-		"type":   "DposStatus",
-	}
-	matrics.DefaultServerMetrics.RPCFlowOut.With(matricLabelsOut).Add(float64(proto.Size(out)))
 	return out, nil
 }
 
 // PreExecWithSelectUTXO preExec + selectUtxo
 func (s *Server) PreExecWithSelectUTXO(ctx context.Context, in *pb.PreExecWithSelectUTXORequest) (*pb.PreExecWithSelectUTXOResponse, error) {
-	matricLabels := prom.Labels{
-		"bcname": in.GetBcname(),
-		"type":   "PreExecWithSelectUTXO",
-	}
-	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
-
 	// verify input param
 	if in == nil {
 		return nil, errors.New("request is invalid")
@@ -931,22 +736,11 @@ func (s *Server) PreExecWithSelectUTXO(ctx context.Context, in *pb.PreExecWithSe
 		}
 		out.UtxoOutput = utxoOutput
 	}
-	matricLabelsOut := prom.Labels{
-		"bcname": in.GetBcname(),
-		"type":   "PreExecWithSelectUTXO",
-	}
-	matrics.DefaultServerMetrics.RPCFlowOut.With(matricLabelsOut).Add(float64(proto.Size(out)))
 	return out, nil
 }
 
 // PreExec smart contract preExec process
 func (s *Server) PreExec(ctx context.Context, in *pb.InvokeRPCRequest) (*pb.InvokeRPCResponse, error) {
-	matricLabels := prom.Labels{
-		"bcname": in.GetBcname(),
-		"type":   "PreExec",
-	}
-	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
-
 	s.log.Trace("Got PreExec req", "req", in)
 	bc := s.mg.Get(in.GetBcname())
 	if in.Header == nil {
@@ -971,22 +765,11 @@ func (s *Server) PreExec(ctx context.Context, in *pb.InvokeRPCRequest) (*pb.Invo
 	}
 	out.Response = vmResponse
 	s.log.Info("PreExec", "logid", in.Header.Logid, "cost", hd.Timer.Print())
-	matricLabelsOut := prom.Labels{
-		"bcname": in.GetBcname(),
-		"type":   "PreExec",
-	}
-	matrics.DefaultServerMetrics.RPCFlowOut.With(matricLabelsOut).Add(float64(proto.Size(out)))
 	return out, nil
 }
 
 // GetBlockByHeight  get trunk block by height
 func (s *Server) GetBlockByHeight(ctx context.Context, in *pb.BlockHeight) (*pb.Block, error) {
-	matricLabels := prom.Labels{
-		"bcname": in.GetBcname(),
-		"type":   "GetBlockByHeight",
-	}
-	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
-
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
@@ -1014,22 +797,11 @@ func (s *Server) GetBlockByHeight(ctx context.Context, in *pb.BlockHeight) (*pb.
 	}
 	s.log.Trace("GetBlockByHeight result", "logid", in.Header.Logid, "bcname", in.Bcname, "height", in.Height,
 		"blockid", out.GetBlockid())
-	matricLabelsOut := prom.Labels{
-		"bcname": in.GetBcname(),
-		"type":   "GetBlockByHeight",
-	}
-	matrics.DefaultServerMetrics.RPCFlowOut.With(matricLabelsOut).Add(float64(proto.Size(out)))
 	return out, nil
 }
 
 // GetAccountByAK get account list with contain ak
 func (s *Server) GetAccountByAK(ctx context.Context, in *pb.AK2AccountRequest) (*pb.AK2AccountResponse, error) {
-	matricLabels := prom.Labels{
-		"bcname": in.GetBcname(),
-		"type":   "GetAccountByAK",
-	}
-	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
-
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
@@ -1048,22 +820,11 @@ func (s *Server) GetAccountByAK(ctx context.Context, in *pb.AK2AccountRequest) (
 		return out, err
 	}
 	out.Account = accounts
-	matricLabelsOut := prom.Labels{
-		"bcname": in.GetBcname(),
-		"type":   "GetAccountByAK",
-	}
-	matrics.DefaultServerMetrics.RPCFlowOut.With(matricLabelsOut).Add(float64(proto.Size(out)))
 	return out, err
 }
 
 // GetAddressContracts get contracts of accounts contain a specific address
 func (s *Server) GetAddressContracts(ctx context.Context, in *pb.AddressContractsRequest) (*pb.AddressContractsResponse, error) {
-	matricLabels := prom.Labels{
-		"bcname": in.GetBcname(),
-		"type":   "GetAddressContracts",
-	}
-	matrics.DefaultServerMetrics.RPCFlowIn.With(matricLabels).Add(float64(proto.Size(in)))
-
 	if in.Header == nil {
 		in.Header = global.GHeader()
 	}
@@ -1102,11 +863,6 @@ func (s *Server) GetAddressContracts(ctx context.Context, in *pb.AddressContract
 			}
 		}
 	}
-	matricLabelsOut := prom.Labels{
-		"bcname": in.GetBcname(),
-		"type":   "GetAddressContracts",
-	}
-	matrics.DefaultServerMetrics.RPCFlowOut.With(matricLabelsOut).Add(float64(proto.Size(out)))
 	return out, nil
 }
 
@@ -1118,6 +874,11 @@ type rpcAccessLog struct {
 
 type HeaderInterface interface {
 	GetHeader() *pb.Header
+}
+
+// BcnameInterface
+type BcnameInterface interface {
+	GetBcname() string
 }
 
 // UnaryServerInterceptor provides a hook to intercept the execution of a unary RPC on the server.
@@ -1144,14 +905,70 @@ func (s *Server) UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 		alog := s.accessLog(s.log, req.(HeaderInterface).GetHeader().GetLogid(),
 			"rpc_method", info.FullMethod)
 
+		// Server req metrics
+		bcname := ""
+		if _, ok := req.(BcnameInterface); ok {
+			bcname = req.(BcnameInterface).GetBcname()
+		}
+		_, method := splitMethodName(info.FullMethod)
+
+		if s.metric {
+			s.addRequestMetric(bcname, method, req)
+		}
+
 		// handle request
 		resp, err = handler(ctx, req)
+
+		// Server resp metrics
+		if s.metric {
+			s.addResponseMetric(bcname, method, resp)
+		}
 
 		// output ending log
 		s.endingLog(alog, "rpc_method", info.FullMethod,
 			"resp_error", resp.(HeaderInterface).GetHeader().GetError())
 		return resp, err
 	}
+}
+
+func splitMethodName(fullMethodName string) (string, string) {
+	fullMethodName = strings.TrimPrefix(fullMethodName, "/")
+	if i := strings.Index(fullMethodName, "/"); i >= 0 {
+		return fullMethodName[:i], fullMethodName[i+1:]
+	}
+	return "unknown", "unknown"
+}
+
+func (s *Server) addRequestMetric(bcname string, method string, req interface{}) {
+	if bcname == "" || method == "" || req == nil {
+		return
+	}
+	matricLabels := prom.Labels{
+		"bcname": bcname,
+		"type":   method,
+	}
+	request, ok := req.(proto.Message)
+	if !ok {
+		return
+	}
+	DefaultServerMetrics.rpcFlowIn.With(matricLabels).Add(float64(proto.Size(request)))
+	return
+}
+
+func (s *Server) addResponseMetric(bcname string, method string, resp interface{}) {
+	if bcname == "" || method == "" || resp == nil {
+		return
+	}
+	matricLabels := prom.Labels{
+		"bcname": bcname,
+		"type":   method,
+	}
+	response, ok := resp.(proto.Message)
+	if !ok {
+		return
+	}
+	DefaultServerMetrics.rpcFlowOut.With(matricLabels).Add(float64(proto.Size(response)))
+	return
 }
 
 // output rpc request access log
@@ -1195,9 +1012,12 @@ func startTCPServer(xchainmg *xchaincore.XChainMG) error {
 		unaryServerInterceptors = make([]grpc.UnaryServerInterceptor, 0)
 		rpcOptions              []grpc.ServerOption
 	)
+	if cfg.TCPServer.MetricPort != "" {
+		svr.metric = true
+	}
 
 	unaryServerInterceptors = append(unaryServerInterceptors, svr.UnaryServerInterceptor())
-	if cfg.TCPServer.MetricPort != "" {
+	if svr.metric {
 		// add prometheus support
 		rpcOptions = append(rpcOptions,
 			grpc.StreamInterceptor(grpc_prometheus.StreamServerInterceptor),
@@ -1270,7 +1090,7 @@ func startTCPServer(xchainmg *xchaincore.XChainMG) error {
 		endorser.Init(cfg.XEndorser.ConfPath, params)
 		pb.RegisterXendorserServer(s, endorser)
 	}
-	if cfg.TCPServer.MetricPort != "" {
+	if svr.metric {
 		grpc_prometheus.EnableHandlingTimeHistogram(
 			grpc_prometheus.WithHistogramBuckets([]float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10}),
 		)
@@ -1278,10 +1098,6 @@ func startTCPServer(xchainmg *xchaincore.XChainMG) error {
 		// 因为两者的ServerOption都包含了prometheus的拦截器，所以都可以监控到
 		// Must be called after RegisterXchainServer
 		grpc_prometheus.Register(s)
-		prom.MustRegister(matrics.DefaultServerMetrics.RPCFlowIn)
-		prom.MustRegister(matrics.DefaultServerMetrics.RPCFlowOut)
-		prom.MustRegister(matrics.DefaultServerMetrics.P2PFlowIn)
-		prom.MustRegister(matrics.DefaultServerMetrics.P2PFlowOut)
 		http.Handle("/metrics", promhttp.Handler())
 		go func() {
 			panic(http.ListenAndServe(cfg.TCPServer.MetricPort, nil))

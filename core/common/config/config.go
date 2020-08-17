@@ -114,6 +114,8 @@ type P2PConfig struct {
 	IsUseCert bool `yaml:"isUseCert,omitempty"`
 	// ServiceName
 	ServiceName string `yaml:"serviceName,omitempty"`
+	// Metric define wherther use promeous
+	Metric bool
 }
 
 // MinerConfig is the config of miner
