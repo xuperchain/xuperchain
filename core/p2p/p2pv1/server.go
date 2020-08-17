@@ -67,8 +67,10 @@ func (p *P2PServerV1) Init(cfg config.P2PConfig, lg log.Logger, extra map[string
 		lg = log.New("module", "p2pv1")
 		lg.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
 	}
-
-	hm, err := p2p_base.NewHandlerMap(lg)
+	if extra["metric"] != nil && extra["metric"].(bool) {
+		p.metric = true
+	}
+	hm, err := p2p_base.NewHandlerMap(lg, p.metric)
 	if err != nil {
 		p.log.Error("Init P2PServerV1 NewHandlerMap error", "error", err)
 		return ErrCreateHandlerMap
@@ -86,9 +88,6 @@ func (p *P2PServerV1) Init(cfg config.P2PConfig, lg log.Logger, extra map[string
 	p.quitCh = make(chan bool, 1)
 	p.msgChan = make(chan *p2pPb.XuperMessage, 5000)
 	p.localAddr = map[string]*p2p_base.XchainAddrInfo{}
-	if extra["metric"] != nil && extra["metric"].(bool) {
-		p.metric = true
-	}
 
 	peerids := []string{}
 	hasPeerMap := map[string]bool{}

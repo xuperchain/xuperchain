@@ -36,16 +36,18 @@ type HandlerMap struct {
 	// key: xuperp2p.XuperMessage_MessageType, value: *MultiSubscriber
 	subscriberCenter *sync.Map
 	msgHandled       *cache.Cache
+	metric           bool
 	quitCh           chan bool
 }
 
 // NewHandlerMap create instance of HandlerMap
-func NewHandlerMap(log log.Logger) (*HandlerMap, error) {
+func NewHandlerMap(log log.Logger, metric bool) (*HandlerMap, error) {
 	log.Trace("Create NewHandlerMap")
 	return &HandlerMap{
 		lg:               log,
 		subscriberCenter: new(sync.Map),
 		msgHandled:       cache.New(time.Duration(3)*time.Second, 1*time.Second),
+		metric:           metric,
 		quitCh:           make(chan bool, 1),
 	}, nil
 }
@@ -147,11 +149,13 @@ func (hm *HandlerMap) HandleMessage(stream interface{}, msg *xuperp2p.XuperMessa
 		return nil
 	}
 
-	metricLabels := prom.Labels{
-		"bcname": msg.GetHeader().GetBcname(),
-		"type":   msg.GetHeader().GetType().String(),
+	if hm.metric {
+		metricLabels := prom.Labels{
+			"bcname": msg.GetHeader().GetBcname(),
+			"type":   msg.GetHeader().GetType().String(),
+		}
+		DefaultP2pMetrics.P2PFlowIn.With(metricLabels).Add(float64(proto.Size(msg)))
 	}
-	DefaultP2pMetrics.P2PFlowIn.With(metricLabels).Add(float64(proto.Size(msg)))
 
 	if ms, ok := v.(*MultiSubscriber); ok {
 		// 如果注册了回调方法，则调用回调方法, 如果注册了channel,则进行通知

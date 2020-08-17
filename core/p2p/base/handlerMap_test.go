@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/xuperchain/log15"
-	"github.com/xuperchain/xuperchain/core/p2p/pb"
+	log "github.com/xuperchain/log15"
+	xuperp2p "github.com/xuperchain/xuperchain/core/p2p/pb"
 )
 
 // Subscriber define the subscriber of message
@@ -98,7 +98,7 @@ func TestStartHandlerMap(t *testing.T) {
 	lg.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
 
 	// new a HandlerMap
-	hm, err := NewHandlerMap(lg)
+	hm, err := NewHandlerMap(lg, false)
 	/*
 	   defer func() {
 	       if hm != nil {
@@ -170,7 +170,7 @@ func TestMarkMsgAsHandled(t *testing.T) {
 
 	// new a HandlerMap
 	lg := log.New("module", "p2pv2")
-	hm, err := NewHandlerMap(lg)
+	hm, err := NewHandlerMap(lg, false)
 	defer func() {
 		if hm != nil {
 			hm.Stop()
@@ -201,7 +201,7 @@ func testHandler(ctx context.Context, msg *xuperp2p.XuperMessage) (*xuperp2p.Xup
 
 func TestHandleMessage(t *testing.T) {
 	lg := log.New("module", "p2pv2")
-	hm, err := NewHandlerMap(lg)
+	hm, err := NewHandlerMap(lg, false)
 	defer func() {
 		if hm != nil {
 			hm.Stop()
