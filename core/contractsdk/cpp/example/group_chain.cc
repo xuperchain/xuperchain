@@ -104,6 +104,10 @@ public:
     }
     void addChain() {
         xchain::Context* ctx = this->context();
+        if (ctx->arg("bcname") == "xuper") {
+            ctx->error("xuper is forbidden");
+            return;
+        }
         std::string key = chainBucket + ctx->arg("bcname");
         if (ctx->put_object(key, "true")) {
             ctx->ok("add chain succeed");

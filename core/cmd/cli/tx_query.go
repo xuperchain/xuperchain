@@ -10,7 +10,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/spf13/cobra"
 
 	"github.com/xuperchain/xuperchain/core/global"
@@ -21,6 +23,8 @@ import (
 type TxQueryCommand struct {
 	cli *Cli
 	cmd *cobra.Command
+
+	pbfile string
 }
 
 // NewTxQueryCommand new tx query cmd
@@ -44,6 +48,7 @@ func NewTxQueryCommand(cli *Cli) *cobra.Command {
 }
 
 func (t *TxQueryCommand) addFlags() {
+	t.cmd.Flags().StringVarP(&t.pbfile, "pb", "p", "", "generate pb file")
 }
 
 func (t *TxQueryCommand) queryTx(ctx context.Context, txid string) error {
@@ -71,6 +76,14 @@ func (t *TxQueryCommand) queryTx(ctx context.Context, txid string) error {
 		return errors.New("tx not found")
 	}
 	tx := FromPBTx(reply.Tx)
+
+	if t.pbfile != "" {
+		buf, _ := proto.Marshal(reply.Tx)
+		err = ioutil.WriteFile(t.pbfile, buf, 0644)
+		if err != nil {
+			return err
+		}
+	}
 	output, err := json.MarshalIndent(tx, "", "  ")
 	if err != nil {
 		fmt.Println(err)
