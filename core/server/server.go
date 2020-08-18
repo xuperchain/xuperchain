@@ -910,8 +910,13 @@ func (s *Server) UnaryAccesslogInterceptor() grpc.UnaryServerInterceptor {
 		resp, err = handler(ctx, req)
 
 		// output ending log
-		s.endingLog(alog, "rpc_method", info.FullMethod,
-			"resp_error", resp.(HeaderInterface).GetHeader().GetError())
+		if err == nil {
+			s.endingLog(alog, "rpc_method", info.FullMethod,
+				"resp_error", resp.(HeaderInterface).GetHeader().GetError())
+		} else {
+			s.endingLog(alog, "rpc_method", info.FullMethod,
+				"resp_error", err.Error())
+		}
 		return resp, err
 	}
 }
@@ -932,7 +937,9 @@ func (s *Server) UnaryMetricInterceptor() grpc.UnaryServerInterceptor {
 		resp, err = handler(ctx, req)
 
 		// Server resp metrics
-		s.addResponseMetric(bcname, method, resp)
+		if err == nil {
+			s.addResponseMetric(bcname, method, resp)
+		}
 		return resp, err
 	}
 }
