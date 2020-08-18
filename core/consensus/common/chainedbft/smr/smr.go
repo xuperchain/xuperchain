@@ -51,8 +51,6 @@ var (
 	ErrGetLocalProposalQC = errors.New("get local proposalQC error")
 )
 
-var effectiveDelay = int64(0)
-
 // NewSmr return smr instance
 func NewSmr(
 	slog log.Logger,
@@ -68,29 +66,29 @@ func NewSmr(
 	proposalQC,
 	generateQC,
 	lockedQC *pb.QuorumCert,
-	effectiveHeight int64) (*Smr, error) {
+	effectiveDelay int64) (*Smr, error) {
 
 	// set up smr
 	smr := &Smr{
-		slog:          slog,
-		bcname:        bcname,
-		address:       address,
-		publicKey:     publicKey,
-		privateKey:    privateKey,
-		preValidates:  []*cons_base.CandidateInfo{},
-		validates:     validates,
-		externalCons:  externalCons,
-		cryptoClient:  cryptoClient,
-		p2p:           p2p,
-		p2pMsgChan:    make(chan *p2p_pb.XuperMessage, DefaultNetMsgChanSize),
-		subscribeList: []p2p_base.Subscriber{},
-		localProposal: &sync.Map{},
-		qcVoteMsgs:    &sync.Map{},
-		newViewMsgs:   &sync.Map{},
-		lk:            &sync.Mutex{},
-		QuitCh:        make(chan bool, 1),
+		slog:           slog,
+		bcname:         bcname,
+		address:        address,
+		publicKey:      publicKey,
+		privateKey:     privateKey,
+		preValidates:   []*cons_base.CandidateInfo{},
+		validates:      validates,
+		externalCons:   externalCons,
+		cryptoClient:   cryptoClient,
+		p2p:            p2p,
+		p2pMsgChan:     make(chan *p2p_pb.XuperMessage, DefaultNetMsgChanSize),
+		subscribeList:  []p2p_base.Subscriber{},
+		localProposal:  &sync.Map{},
+		qcVoteMsgs:     &sync.Map{},
+		newViewMsgs:    &sync.Map{},
+		effectiveDelay: effectiveDelay,
+		lk:             &sync.Mutex{},
+		QuitCh:         make(chan bool, 1),
 	}
-	effectiveDelay = effectiveHeight
 	if err := smr.updateQcStatus(proposalQC, generateQC, lockedQC); err != nil {
 		slog.Error("smr updateQcStatus error", "error", err)
 		return nil, err
@@ -499,9 +497,9 @@ func (s *Smr) voteProposal(propsQC *pb.QuorumCert, voteTo, logid string) error {
 }
 
 func (s *Smr) getValidates(viewNumer int64) []*cons_base.CandidateInfo {
-	s.slog.Error("getValidates", "effectiveDelay", effectiveDelay, "s.vscView", s.vscView)
+	s.slog.Error("getValidates", "effectiveDelay", s.effectiveDelay, "s.vscView", s.vscView)
 	// 根据不同共识的生效延时，判断当前view是否需要使用哪个验证集合，viewNumer为新视图，vscView为上次变更候选人视图
-	if effectiveDelay > 0 && viewNumer == s.vscView+effectiveDelay {
+	if s.effectiveDelay > 0 && viewNumer == s.vscView+s.effectiveDelay {
 		for _, v := range s.preValidates {
 			s.slog.Debug("PreValidates Check Set", "Address", v.Address)
 		}
