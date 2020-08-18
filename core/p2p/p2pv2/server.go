@@ -31,11 +31,11 @@ var _ p2p_base.P2PServer = (*P2PServerV2)(nil)
 type P2PServerV2 struct {
 	log log.Logger
 	// config is the p2p v2 设置
-	config     config.P2PConfig
-	node       *Node
-	handlerMap *p2p_base.HandlerMap
-	metric     bool
-	quitCh     chan bool
+	config       config.P2PConfig
+	node         *Node
+	handlerMap   *p2p_base.HandlerMap
+	enableMetric bool
+	quitCh       chan bool
 }
 
 // NewP2PServerV2 create P2PServerV2 instance
@@ -55,10 +55,10 @@ func (p *P2PServerV2) Init(cfg config.P2PConfig, lg log.Logger, extra map[string
 		lg.Trace("NewP2PServerV2 create node error", "error", err)
 		return ErrCreateNode
 	}
-	if extra["metric"] != nil && extra["metric"].(bool) {
-		p.metric = true
+	if extra["metric"] != nil && extra["enableMetric"].(bool) {
+		p.enableMetric = true
 	}
-	hm, err := p2p_base.NewHandlerMap(lg, p.metric)
+	hm, err := p2p_base.NewHandlerMap(lg, p.enableMetric)
 	if err != nil {
 		lg.Trace("NewP2PServerV2 new handler map error", "errors", err)
 		return ErrCreateHandlerMap
@@ -133,7 +133,7 @@ func (p *P2PServerV2) SendMessage(ctx context.Context, msg *p2pPb.XuperMessage,
 	}
 	p.log.Trace("Server SendMessage", "logid", msg.GetHeader().GetLogid(), "bcname", msg.GetHeader().GetBcname(),
 		"msgType", msg.GetHeader().GetType(), "checksum", msg.GetHeader().GetDataCheckSum(), "peers", peersRes)
-	if p.metric {
+	if p.enableMetric {
 		metricLabels := prom.Labels{
 			"bcname": msg.GetHeader().GetBcname(),
 			"type":   msg.GetHeader().GetType().String(),
@@ -166,7 +166,7 @@ func (p *P2PServerV2) SendMessageWithResponse(ctx context.Context, msg *p2pPb.Xu
 	p.log.Trace("Server SendMessage with response", "logid", msg.GetHeader().GetLogid(), "bcname", msg.GetHeader().GetBcname,
 		"msgType", msg.GetHeader().GetType(), "checksum", msg.GetHeader().GetDataCheckSum(), "peers", peersRes)
 
-	if p.metric {
+	if p.enableMetric {
 		metricLabels := prom.Labels{
 			"bcname": msg.GetHeader().GetBcname(),
 			"type":   msg.GetHeader().GetType().String(),

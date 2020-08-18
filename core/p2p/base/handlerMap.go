@@ -36,18 +36,18 @@ type HandlerMap struct {
 	// key: xuperp2p.XuperMessage_MessageType, value: *MultiSubscriber
 	subscriberCenter *sync.Map
 	msgHandled       *cache.Cache
-	metric           bool
+	enableMetric     bool
 	quitCh           chan bool
 }
 
 // NewHandlerMap create instance of HandlerMap
-func NewHandlerMap(log log.Logger, metric bool) (*HandlerMap, error) {
+func NewHandlerMap(log log.Logger, enableMetric bool) (*HandlerMap, error) {
 	log.Trace("Create NewHandlerMap")
 	return &HandlerMap{
 		lg:               log,
 		subscriberCenter: new(sync.Map),
 		msgHandled:       cache.New(time.Duration(3)*time.Second, 1*time.Second),
-		metric:           metric,
+		enableMetric:     enableMetric,
 		quitCh:           make(chan bool, 1),
 	}, nil
 }
@@ -149,7 +149,7 @@ func (hm *HandlerMap) HandleMessage(stream interface{}, msg *xuperp2p.XuperMessa
 		return nil
 	}
 
-	if hm.metric {
+	if hm.enableMetric {
 		metricLabels := prom.Labels{
 			"bcname": msg.GetHeader().GetBcname(),
 			"type":   msg.GetHeader().GetType().String(),

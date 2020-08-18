@@ -53,7 +53,7 @@ type P2PServerV1 struct {
 	quitCh       chan bool
 	lock         sync.Mutex
 	localAddr    map[string]*p2p_base.XchainAddrInfo
-	metric       bool
+	enableMetric bool
 }
 
 // NewP2PServerV1 create P2PServerV1 instance
@@ -67,10 +67,10 @@ func (p *P2PServerV1) Init(cfg config.P2PConfig, lg log.Logger, extra map[string
 		lg = log.New("module", "p2pv1")
 		lg.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
 	}
-	if extra["metric"] != nil && extra["metric"].(bool) {
-		p.metric = true
+	if extra["metric"] != nil && extra["enableMetric"].(bool) {
+		p.enableMetric = true
 	}
-	hm, err := p2p_base.NewHandlerMap(lg, p.metric)
+	hm, err := p2p_base.NewHandlerMap(lg, p.enableMetric)
 	if err != nil {
 		p.log.Error("Init P2PServerV1 NewHandlerMap error", "error", err)
 		return ErrCreateHandlerMap
@@ -185,7 +185,7 @@ func (p *P2PServerV1) SendMessage(ctx context.Context, msg *p2pPb.XuperMessage,
 			msg = p2p_base.Compress(msg)
 		}
 	}
-	if p.metric {
+	if p.enableMetric {
 		metricLabels := prom.Labels{
 			"bcname": msg.GetHeader().GetBcname(),
 			"type":   msg.GetHeader().GetType().String(),
@@ -219,7 +219,7 @@ func (p *P2PServerV1) SendMessageWithResponse(ctx context.Context, msg *p2pPb.Xu
 			msg = p2p_base.Compress(msg)
 		}
 	}
-	if p.metric {
+	if p.enableMetric {
 		metricLabels := prom.Labels{
 			"bcname": msg.GetHeader().GetBcname(),
 			"type":   msg.GetHeader().GetType().String(),

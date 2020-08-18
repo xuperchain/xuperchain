@@ -47,7 +47,7 @@ type Server struct {
 	mg             *xchaincore.XChainMG
 	dedupCache     *common.LRUCache
 	dedupTimeLimit int
-	metric         bool
+	enableMetric   bool
 }
 
 // PostTx post transaction to blockchain network
@@ -872,17 +872,18 @@ type rpcAccessLog struct {
 	xtimer *global.XTimer
 }
 
+// HeaderInterface define header interface
 type HeaderInterface interface {
 	GetHeader() *pb.Header
 }
 
-// BcnameInterface
+// BcnameInterface define bcname interface
 type BcnameInterface interface {
 	GetBcname() string
 }
 
-// UnaryServerInterceptor provides a hook to intercept the execution of a unary RPC on the server.
-func (s *Server) UnaryServerInterceptor() grpc.UnaryServerInterceptor {
+// UnaryAccesslogInterceptor provides a hook to intercept the execution of a unary RPC on the server.
+func (s *Server) UnaryAccesslogInterceptor() grpc.UnaryServerInterceptor {
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler) (resp interface{}, err error) {
 
@@ -905,6 +906,20 @@ func (s *Server) UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 		alog := s.accessLog(s.log, req.(HeaderInterface).GetHeader().GetLogid(),
 			"rpc_method", info.FullMethod)
 
+		// handle request
+		resp, err = handler(ctx, req)
+
+		// output ending log
+		s.endingLog(alog, "rpc_method", info.FullMethod,
+			"resp_error", resp.(HeaderInterface).GetHeader().GetError())
+		return resp, err
+	}
+}
+
+// UnaryMetricInterceptor define metric interceptor
+func (s *Server) UnaryMetricInterceptor() grpc.UnaryServerInterceptor {
+	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo,
+		handler grpc.UnaryHandler) (resp interface{}, err error) {
 		// Server req metrics
 		bcname := ""
 		if _, ok := req.(BcnameInterface); ok {
@@ -912,21 +927,12 @@ func (s *Server) UnaryServerInterceptor() grpc.UnaryServerInterceptor {
 		}
 		_, method := splitMethodName(info.FullMethod)
 
-		if s.metric {
-			s.addRequestMetric(bcname, method, req)
-		}
-
+		s.addRequestMetric(bcname, method, req)
 		// handle request
 		resp, err = handler(ctx, req)
 
 		// Server resp metrics
-		if s.metric {
-			s.addResponseMetric(bcname, method, resp)
-		}
-
-		// output ending log
-		s.endingLog(alog, "rpc_method", info.FullMethod,
-			"resp_error", resp.(HeaderInterface).GetHeader().GetError())
+		s.addResponseMetric(bcname, method, resp)
 		return resp, err
 	}
 }
@@ -1013,16 +1019,17 @@ func startTCPServer(xchainmg *xchaincore.XChainMG) error {
 		rpcOptions              []grpc.ServerOption
 	)
 	if cfg.TCPServer.MetricPort != "" {
-		svr.metric = true
+		svr.enableMetric = true
 	}
 
-	unaryServerInterceptors = append(unaryServerInterceptors, svr.UnaryServerInterceptor())
-	if svr.metric {
+	unaryServerInterceptors = append(unaryServerInterceptors, svr.UnaryAccesslogInterceptor())
+	if svr.enableMetric {
 		// add prometheus support
 		rpcOptions = append(rpcOptions,
 			grpc.StreamInterceptor(grpc_prometheus.StreamServerInterceptor),
 		)
 		unaryServerInterceptors = append(unaryServerInterceptors, grpc_prometheus.UnaryServerInterceptor)
+		unaryServerInterceptors = append(unaryServerInterceptors, svr.UnaryMetricInterceptor())
 	}
 
 	rpcOptions = append(rpcOptions,
@@ -1090,7 +1097,7 @@ func startTCPServer(xchainmg *xchaincore.XChainMG) error {
 		endorser.Init(cfg.XEndorser.ConfPath, params)
 		pb.RegisterXendorserServer(s, endorser)
 	}
-	if svr.metric {
+	if svr.enableMetric {
 		grpc_prometheus.EnableHandlingTimeHistogram(
 			grpc_prometheus.WithHistogramBuckets([]float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10}),
 		)
