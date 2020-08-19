@@ -191,6 +191,10 @@ func setStaticNodes(cfg config.P2PConfig, node *Node) error {
 
 func genHostOption(cfg config.P2PConfig) ([]libp2p.Option, error) {
 	muAddr, _ := multiaddr.NewMultiaddr(fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", cfg.Port))
+	if cfg.IsIpv6 {
+		muAddr, _ = multiaddr.NewMultiaddr(fmt.Sprintf("/ip6/::/tcp/%d", cfg.Port))
+	}
+
 	opts := []libp2p.Option{
 		libp2p.ListenAddrs(muAddr),
 	}

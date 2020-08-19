@@ -81,6 +81,8 @@ type P2PConfig struct {
 	IsSecure bool `yaml:"isSecure,omitempty"`
 	// isHidden config whether the node can be found
 	IsHidden bool `yaml:"isHidden,omitempty"`
+	// IsIpv6 config whether the node use ipv6
+	IsIpv6 bool `yaml:"isIpv6,omitempty"`
 	// bootNodes config the bootNodes the node to connect
 	BootNodes []string `yaml:"bootNodes,omitempty"`
 	// staticNodes config the nodes which you trust
