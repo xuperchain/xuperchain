@@ -21,6 +21,7 @@ const (
 	DefaultNetIsNat         = true // use NAT
 	DefaultNetIsSecure      = true // use encrypted secure transport
 	DefaultNetIsHidden      = false
+	DefaultNetIsIpv6        = false
 	DefaultMaxStreamLimits  = 1024
 	DefaultMaxMessageSize   = 128
 	DefaultTimeout          = 3
@@ -436,6 +437,7 @@ func newP2pConfigWithDefault() P2PConfig {
 		IsNat:            DefaultNetIsNat,
 		IsSecure:         DefaultNetIsSecure,
 		IsHidden:         DefaultNetIsHidden,
+		IsIpv6:           DefaultNetIsIpv6,
 		MaxStreamLimits:  DefaultMaxStreamLimits,
 		MaxMessageSize:   DefaultMaxMessageSize,
 		Timeout:          DefaultTimeout,
