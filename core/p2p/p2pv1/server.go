@@ -67,7 +67,7 @@ func (p *P2PServerV1) Init(cfg config.P2PConfig, lg log.Logger, extra map[string
 		lg = log.New("module", "p2pv1")
 		lg.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
 	}
-	if extra["metric"] != nil && extra["enableMetric"].(bool) {
+	if extra["enableMetric"] != nil && extra["enableMetric"].(bool) {
 		p.enableMetric = true
 	}
 	hm, err := p2p_base.NewHandlerMap(lg, p.enableMetric)

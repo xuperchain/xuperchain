@@ -55,7 +55,7 @@ func (p *P2PServerV2) Init(cfg config.P2PConfig, lg log.Logger, extra map[string
 		lg.Trace("NewP2PServerV2 create node error", "error", err)
 		return ErrCreateNode
 	}
-	if extra["metric"] != nil && extra["enableMetric"].(bool) {
+	if extra["enableMetric"] != nil && extra["enableMetric"].(bool) {
 		p.enableMetric = true
 	}
 	hm, err := p2p_base.NewHandlerMap(lg, p.enableMetric)
