@@ -522,7 +522,7 @@ func TestGetSnapShotWithBlock(t *testing.T) {
 	if playErr != nil {
 		t.Fatal(playErr)
 	}
-	_, err = utxoVM.GetSnapShotWithBlock(block)
+	_, err = utxoVM.GetSnapShotWithBlock(block.GetBlockid())
 	if err != nil {
 		t.Fatal("GetSnapShotWithBlock fail")
 	}
