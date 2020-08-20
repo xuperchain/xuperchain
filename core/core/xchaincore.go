@@ -795,7 +795,7 @@ func (xc *XChainCore) Miner() int {
 			return -1
 		}
 		b, s := xc.con.CompeteMaster(xc.Ledger.GetMeta().TrunkHeight + 1)
-		xc.log.Debug("competemaster", "blockchain", xc.bcname, "master", b, "needSync", s)
+		xc.log.Debug("competemaster", "blockchain", xc.bcname, "master", b, "needSync", s, "compete height", xc.Ledger.GetMeta().TrunkHeight+1)
 		xc.updateIsCoreMiner()
 		if b {
 			// todo 首次切换为矿工时SyncBlcok, Bug: 可能会导致第一次出块失败
