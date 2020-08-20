@@ -2485,8 +2485,8 @@ func (uv *UtxoVM) GetXModel() *xmodel.XModel {
 	return uv.model3
 }
 
-func (uv *UtxoVM) GetSnapShotWithBlock(block *pb.InternalBlock) (xmodel.XMReader, error) {
-	reader, err := uv.model3.CreateSnapshot(block.GetBlockid())
+func (uv *UtxoVM) GetSnapShotWithBlock(blockId []byte) (xmodel.XMReader, error) {
+	reader, err := uv.model3.CreateSnapshot(blockId)
 	return reader, err
 }
 
