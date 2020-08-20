@@ -7,7 +7,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/patrickmn/go-cache"
+	prom "github.com/prometheus/client_golang/prometheus"
 	log "github.com/xuperchain/log15"
 	xuperp2p "github.com/xuperchain/xuperchain/core/p2p/pb"
 )
@@ -34,16 +36,18 @@ type HandlerMap struct {
 	// key: xuperp2p.XuperMessage_MessageType, value: *MultiSubscriber
 	subscriberCenter *sync.Map
 	msgHandled       *cache.Cache
+	enableMetric     bool
 	quitCh           chan bool
 }
 
 // NewHandlerMap create instance of HandlerMap
-func NewHandlerMap(log log.Logger) (*HandlerMap, error) {
+func NewHandlerMap(log log.Logger, enableMetric bool) (*HandlerMap, error) {
 	log.Trace("Create NewHandlerMap")
 	return &HandlerMap{
 		lg:               log,
 		subscriberCenter: new(sync.Map),
 		msgHandled:       cache.New(time.Duration(3)*time.Second, 1*time.Second),
+		enableMetric:     enableMetric,
 		quitCh:           make(chan bool, 1),
 	}, nil
 }
@@ -143,6 +147,14 @@ func (hm *HandlerMap) HandleMessage(stream interface{}, msg *xuperp2p.XuperMessa
 	if !ok {
 		hm.lg.Warn("HandlerMap load subscribeCenter not found!", "msgType", msgType)
 		return nil
+	}
+
+	if hm.enableMetric {
+		metricLabels := prom.Labels{
+			"bcname": msg.GetHeader().GetBcname(),
+			"type":   msg.GetHeader().GetType().String(),
+		}
+		DefaultP2pMetrics.P2PFlowIn.With(metricLabels).Add(float64(proto.Size(msg)))
 	}
 
 	if ms, ok := v.(*MultiSubscriber); ok {
