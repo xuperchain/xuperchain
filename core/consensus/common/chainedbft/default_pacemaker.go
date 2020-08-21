@@ -6,11 +6,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	log "github.com/xuperchain/log15"
-
 	"github.com/golang/protobuf/proto"
 
-	"github.com/xuperchain/xupercore/consensus/base"
+	log "github.com/xuperchain/log15"
+	cons_base "github.com/xuperchain/xupercore/consensus/base"
 	"github.com/xuperchain/xupercore/ledger"
 	"github.com/xuperchain/xupercore/pb"
 )
@@ -24,12 +23,12 @@ type DefaultPaceMaker struct {
 	cbft        *ChainedBft
 	log         log.Logger
 	ledger      *ledger.Ledger
-	cons        base.ConsensusInterface
+	cons        cons_base.ConsensusInterface
 }
 
 // NewDefaultPaceMaker create new DPoSPaceMaker instance
 func NewDefaultPaceMaker(bcname string, startView int64, viewNum int64, address string, cbft *ChainedBft,
-	xlog log.Logger, cons base.ConsensusInterface, ledger *ledger.Ledger) (*DefaultPaceMaker, error) {
+	xlog log.Logger, cons cons_base.ConsensusInterface, ledger *ledger.Ledger) (*DefaultPaceMaker, error) {
 	if cbft == nil {
 		return nil, fmt.Errorf("Chained-BFT instance is nil")
 	}
@@ -68,7 +67,7 @@ func (dpm *DefaultPaceMaker) NextNewView(viewNum int64, proposer, preProposer st
 
 // NextNewProposal used to submit new proposal to bft network
 // the content is the new block
-func (dpm *DefaultPaceMaker) NextNewProposal(proposalID []byte, data interface{}) error {
+func (dpm *DefaultPaceMaker) NextNewProposal(proposalID []byte, data interface{}, validatesInfos []*cons_base.CandidateInfo) error {
 	block, ok := data.(*pb.Block)
 	if !ok {
 		return fmt.Errorf("Proposal data is not block")
@@ -83,7 +82,7 @@ func (dpm *DefaultPaceMaker) NextNewProposal(proposalID []byte, data interface{}
 		return err
 	}
 	// set current view number to block height
-	_, err = dpm.cbft.ProcessProposal(block.GetBlock().GetHeight(), blockid, blockMsg)
+	_, err = dpm.cbft.ProcessProposal(block.GetBlock().GetHeight(), blockid, blockMsg, validatesInfos)
 	if err != nil {
 		dpm.log.Warn("ProcessProposal failed", "error", err)
 		return err
@@ -101,7 +100,7 @@ func (dpm *DefaultPaceMaker) CurrentQCHigh(proposalID []byte) (*pb.QuorumCert, e
 }
 
 // UpdateValidatorSet update the validator set of BFT
-func (dpm *DefaultPaceMaker) UpdateValidatorSet(validators []*base.CandidateInfo) error {
+func (dpm *DefaultPaceMaker) UpdateValidatorSet(validators []*cons_base.CandidateInfo) error {
 	valStr, _ := json.Marshal(validators)
 	dpm.log.Trace("bft update validator set", "validators", string(valStr))
 	return dpm.cbft.UpdateValidateSets(validators)
@@ -158,4 +157,9 @@ func (dpm *DefaultPaceMaker) Stop() error {
 // UpdateSmrState update smr status of chainedbft
 func (dpm *DefaultPaceMaker) UpdateSmrState(generateQC *pb.QuorumCert) {
 	dpm.cbft.UpdateSmrState(generateQC)
+}
+
+// CheckViewNumer check if the viewNumber given is valid in smr's viewMsgs storage
+func (dpm *DefaultPaceMaker) CheckViewNumer(viewNumber int64) bool {
+	return dpm.cbft.CheckViewNumer(viewNumber)
 }

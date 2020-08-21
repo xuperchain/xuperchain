@@ -58,7 +58,8 @@ type Smr struct {
 	qcVoteMsgs *sync.Map
 	// new view msg gathered from other replicas, key: viewNumber, value: []*pb.ChainedBftPhaseMessage
 	newViewMsgs *sync.Map
-
+	// effectiveDelay is the interval height after validates are changed, where the new validates will become effective to the whole network.
+	effectiveDelay int64
 	// lk lock
 	lk *sync.Mutex
 	// quitCh stop channel

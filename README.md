@@ -149,7 +149,7 @@ XuperChain is under the [Apache License, Version 2.0](https://github.com/xuperch
 
 ## XuperChain是什么?
 
-**XuperUion**是超级链体系下的第一个开源项目，是构建超级联盟网络的底层方案。
+**XuperChain**是超级链体系下的第一个开源项目，是构建超级联盟网络的底层方案。
 
 核心特点
 

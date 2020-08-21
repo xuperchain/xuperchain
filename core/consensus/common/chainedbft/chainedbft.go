@@ -34,11 +34,12 @@ func NewChainedBft(
 	externalCons external.ExternalInterface,
 	cryptoClient crypto_base.CryptoClient,
 	p2p p2p_base.P2PServer,
-	proposalQC, generateQC, lockedQC *pb.QuorumCert) (*ChainedBft, error) {
+	proposalQC, generateQC, lockedQC *pb.QuorumCert,
+	effectiveDelay int64) (*ChainedBft, error) {
 
 	// set up smr
 	smr, err := smr.NewSmr(xlog, cfg, bcname, address, publicKey, privateKey,
-		validates, externalCons, cryptoClient, p2p, proposalQC, generateQC, lockedQC)
+		validates, externalCons, cryptoClient, p2p, proposalQC, generateQC, lockedQC, effectiveDelay)
 	if err != nil {
 		xlog.Error("NewChainedBft instance error")
 		return nil, err
@@ -86,8 +87,8 @@ func (cb *ChainedBft) GetGenerateQC() (*pb.QuorumCert, error) {
 }
 
 // ProcessProposal used to generate new QuorumCert and broadcast to other replicas
-func (cb *ChainedBft) ProcessProposal(viewNumber int64, proposalID, proposalMsg []byte) (*pb.QuorumCert, error) {
-	return cb.smr.ProcessProposal(viewNumber, proposalID, proposalMsg)
+func (cb *ChainedBft) ProcessProposal(viewNumber int64, proposalID, proposalMsg []byte, validatesInfos []*cons_base.CandidateInfo) (*pb.QuorumCert, error) {
+	return cb.smr.ProcessProposal(viewNumber, proposalID, proposalMsg, validatesInfos)
 }
 
 // UpdateValidateSets will update the validates while
@@ -113,4 +114,9 @@ func (cb *ChainedBft) UnRegisterToNetwork() error {
 // UpdateSmrState update smr status
 func (cb *ChainedBft) UpdateSmrState(generateQC *pb.QuorumCert) {
 	cb.smr.UpdateSmrState(generateQC)
+}
+
+// CheckViewNumer check if the viewNumber given is valid in smr's viewMsgs storage
+func (cb *ChainedBft) CheckViewNumer(viewNumber int64) bool {
+	return cb.smr.CheckViewNumer(viewNumber)
 }

@@ -6,7 +6,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io/ioutil"
 	"strconv"
 	"sync"
@@ -37,6 +36,8 @@ var (
 	ErrNotConfirmed = errors.New("Xpoa validate contract not confirmed")
 )
 
+var curHeight = int64(0)
+
 // Type return the type of Poa consensus
 func (xpoa *XPoa) Type() string {
 	return TYPE
@@ -56,6 +57,7 @@ func (xpoa *XPoa) Configure(xlog log.Logger, cfg *config.NodeConfig, consCfg map
 	xpoa.lg = xlog
 	xpoa.mutex = new(sync.RWMutex)
 	xpoa.isProduce = make(map[int64]bool)
+	xpoa.effectiveDelay = 1
 	address, err := ioutil.ReadFile(cfg.Miner.Keypath + "/address")
 	if err != nil {
 		xpoa.lg.Warn("load address error", "path", cfg.Miner.Keypath+"/address")
@@ -277,7 +279,8 @@ func (xpoa *XPoa) initBFT(cfg *config.NodeConfig, cryptoClient crypto_base.Crypt
 		bridge,
 		cryptoClient,
 		xpoa.p2psvr,
-		qc[2], qc[1], qc[0])
+		qc[2], qc[1], qc[0],
+		xpoa.effectiveDelay)
 
 	if err != nil {
 		xpoa.lg.Warn("initBFT: create ChainedBft failed", "error", err)
@@ -321,171 +324,134 @@ Again:
 		goto Again
 	}
 
+	xpoa.lg.Info("Compete Master", "height", height)
+	xpoa.mutex.Lock()
+	defer xpoa.mutex.Unlock()
+	curHeight = height
+
 	// update validates
-	if _, err := xpoa.updateValidates(height); err != nil {
+	preBlockId, err := xpoa.ledger.QueryBlockByHeight(height - 1)
+	if err != nil {
+		xpoa.lg.Error("xpoa.getCurrentValidates", "getBlock", err)
+		return false, false
+	}
+	xpoa.lg.Info("Miner Propcess update validates")
+	if _, err := xpoa.updateValidates(preBlockId.GetBlockid()); err != nil {
 		xpoa.lg.Error("Xpoa update validates error", "error", err.Error())
 		return false, false
 	}
 
-	// get current proposers info
-	curTerm, curPos, curBlockPos := xpoa.minerScheduling(time.Now().UnixNano())
-
-	// update view
-	if err := xpoa.updateViews(height); err != nil {
-		xpoa.lg.Error("Xpoa update views error", "error", err.Error())
+	candidate, err := xpoa.getProposer(time.Now().UnixNano(), xpoa.proposerInfos)
+	preproposer := string(preBlockId.GetProposer())
+	if err = xpoa.bftPaceMaker.NextNewView(height, candidate.Address, preproposer); err != nil {
 		return false, false
 	}
 
-	// master check
-	if xpoa.isProposer(curPos, xpoa.address) {
-		xpoa.lg.Trace("Xpoa CompeteMaster now xterm infos", "term", curTerm, "pos", curPos, "blockPos", curBlockPos, "un2", time.Now().UnixNano(),
-			"master", true, "height", height)
+	if candidate.Address == xpoa.address {
+		xpoa.lg.Trace("Xpoa CompeteMaster now xterm infos", "master", true, "height", height)
 		s := xpoa.needSync()
 		return true, s
 	}
 
-	xpoa.lg.Trace("Xpoa CompeteMaster now xterm infos", "term", curTerm, "pos", curPos, "blockPos", curBlockPos, "un2", time.Now().UnixNano(),
-		"master", false, "height", height)
+	xpoa.lg.Trace("Xpoa CompeteMaster now xterm infos", "master", false, "height", height)
 	return false, false
 }
 
-// getCurrentValidates return current validates from xmodel
-// 注意：当查不到的时候或者一个候选人都没查到则默认取初始化的值
-// TODO: zq needs to be optimized in future because
-func (xpoa *XPoa) getCurrentValidates(curHeight int64) ([]*cons_base.CandidateInfo, error) {
-	preBlockId, err := xpoa.ledger.QueryBlockByHeight(curHeight - 1)
+// getValidatesByBlockId 根据当前输入blockid，用快照的方式在xmodel中寻找<=当前blockid的最新的候选人值，若无则使用xuper.json中指定的初始值
+func (xpoa *XPoa) getValidatesByBlockId(blockId []byte) ([]*cons_base.CandidateInfo, bool, error) {
+	reader, err := xpoa.utxoVM.GetSnapShotWithBlock(blockId)
 	if err != nil {
-		xpoa.lg.Error("xpoa.getCurrentValidates", "getBlock", err)
-		return nil, fmt.Errorf("get block by height err:%v", err)
-	}
-	reader, err := xpoa.utxoVM.GetSnapShotWithBlock(preBlockId)
-	if err != nil {
-		xpoa.lg.Error("xpoa.getCurrentValidates", "CreateSnapshot", err)
-		return nil, fmt.Errorf("get snapshot err:%v", err)
+		xpoa.lg.Error("Xpoa updateValidates getCurrentValidates error", "CreateSnapshot err:", err)
+		return nil, false, err
 	}
 	contractRes, err := xpoa.utxoVM.SystemCall(reader, xpoa.xpoaConf.contractName, xpoa.xpoaConf.methodName, nil)
+	if err == ErrNotConfirmed {
+		xpoa.lg.Error("Xpoa updateValidates getCurrentValidates not confirmed no need to update")
+		return nil, true, nil
+	}
+	if err != nil && common.NormalizedKVError(err) != common.ErrKVNotFound {
+		xpoa.lg.Error("Xpoa getCurrentValidates error", "err", err)
+		return nil, false, err
+	}
 	if common.NormalizedKVError(err) == common.ErrKVNotFound {
 		xpoa.lg.Warn("Xpoa getCurrentValidates not found")
-		return xpoa.xpoaConf.initProposers, ErrContractNotFound
+		return xpoa.xpoaConf.initProposers, true, nil
 	}
-	if err != nil {
-		xpoa.lg.Error("Xpoa getCurrentValidates error", "err", err.Error())
-		return nil, err
-	}
-
 	candidateInfos := &cons_base.CandidateInfos{}
 	if err = json.Unmarshal(contractRes, candidateInfos); err != nil {
 		xpoa.lg.Warn("Xpoa getCurrentValidates Unmarshal error", "err", err.Error(), "contractRes", string(contractRes))
-		return xpoa.xpoaConf.initProposers, nil
+		return xpoa.xpoaConf.initProposers, true, nil
 	}
-
 	if len(candidateInfos.Proposers) == 0 {
 		xpoa.lg.Warn("Xpoa getCurrentValidates len(proposers) is 0")
-		return xpoa.xpoaConf.initProposers, nil
+		return xpoa.xpoaConf.initProposers, true, nil
 	}
-	for i := range candidateInfos.Proposers {
-		xpoa.lg.Trace("Xpoa getCurrentValidates res", "Proposer", candidateInfos.Proposers[i])
-	}
-	return candidateInfos.Proposers, nil
+	return candidateInfos.Proposers, true, nil
 }
 
 // updateValidates update validates
 // param: initTime time of the latest changed
 // param: curValidates validates of the latest changed
 // return: bool refers whether validates has changed
-//TODO: ZQ 优化model支持快照能力，拿最新的确认的信息
-func (xpoa *XPoa) updateValidates(curHeight int64) (bool, error) {
-	curValidates, err := xpoa.getCurrentValidates(curHeight)
-	if err != nil && err != ErrContractNotFound && err != ErrNotConfirmed {
-		xpoa.lg.Error("Xpoa updateValidates getCurrentValidates error", "error", err.Error())
-		return false, err
+func (xpoa *XPoa) updateValidates(blockId []byte) (bool, error) {
+	validates, ok, err := xpoa.getValidatesByBlockId(blockId)
+	if err != nil {
+		return ok, err
 	}
-	if err == ErrNotConfirmed {
-		xpoa.lg.Error("Xpoa updateValidates getCurrentValidates not confirmed no need to update")
-		return true, nil
-	}
-
-	if !base.CandidateInfoEqual(xpoa.proposerInfos, curValidates) {
-		err = xpoa.bftPaceMaker.UpdateValidatorSet(curValidates)
+	if validates != nil && !base.CandidateInfoEqual(xpoa.proposerInfos, validates) {
+		err := xpoa.bftPaceMaker.UpdateValidatorSet(validates)
 		if err != nil {
 			return false, ErrUpdateValidates
 		}
-		xpoa.lg.Debug("Xpoa updateValidates", "xpoa.termTimestamp", xpoa.termTimestamp, "curValidates", curValidates)
-		xpoa.proposerInfos = curValidates
+		xpoa.proposerInfos = validates
+		xpoa.lg.Debug("Xpoa updateValidates Successfully", "base on", blockId)
+		for _, v := range xpoa.proposerInfos {
+			xpoa.lg.Debug("updateValidates", "curValidates", v.Address)
+		}
 	}
 	return true, nil
 }
 
 // minerScheduling return current term, pos, blockPos from last changed
-func (xpoa *XPoa) minerScheduling(timestamp int64) (term int64, pos int64, blockPos int64) {
-	if timestamp < xpoa.termTimestamp {
-		return
-	}
+func (xpoa *XPoa) minerScheduling(timestamp int64, length int64) (term int64, pos int64, blockPos int64) {
 	// 每一轮的时间
-	termTime := xpoa.xpoaConf.period * int64(len(xpoa.proposerInfos)) * xpoa.xpoaConf.blockNum
+	termTime := xpoa.xpoaConf.period * length * xpoa.xpoaConf.blockNum
 	// 每个矿工轮值时间
 	posTime := xpoa.xpoaConf.period * xpoa.xpoaConf.blockNum
-	term = (timestamp-xpoa.termTimestamp)/termTime + 1
-	resTime := (timestamp - xpoa.termTimestamp) - (term-1)*termTime
+	term = (timestamp)/termTime + 1
+	//10640483 180000
+	resTime := timestamp - (term-1)*termTime
 	pos = resTime / posTime
 	resTime = resTime - (resTime/posTime)*posTime
 	blockPos = resTime/xpoa.xpoaConf.period + 1
-	xpoa.lg.Trace("getTermPos", "timestamp", timestamp, "term", term, "pos", pos, "blockPos", blockPos, "xpoa.termTimestamp", xpoa.termTimestamp)
+	xpoa.lg.Trace("getTermPos", "timestamp", timestamp, "term", term, "pos", pos, "blockPos", blockPos)
 	return
 }
 
-// updateViews update view
-func (xpoa *XPoa) updateViews(viewNum int64) error {
-	proposer, err := xpoa.getCurProposer()
-	if err != nil {
-		xpoa.lg.Error("updateViews getCurProposer error", "err", err.Error())
-		return err
+// getProposer 根据时间与当前候选人集合计算proposer
+func (xpoa *XPoa) getProposer(nextTime int64, proposerInfos []*cons_base.CandidateInfo) (*cons_base.CandidateInfo, error) {
+	term, pos, blockPos := xpoa.minerScheduling(nextTime, int64(len(proposerInfos)))
+	if int(pos) > len(proposerInfos)-1 {
+		return nil, errors.New("xpoa proposer infos idx error")
 	}
-	preBlockId, err := xpoa.ledger.QueryBlockByHeight(viewNum - 1)
-	if err != nil {
-		xpoa.lg.Error("updateViews getPreProposer error", "err", err.Error())
-		return err
-	}
-	preproposer := string(preBlockId.GetProposer())
-
-	return xpoa.bftPaceMaker.NextNewView(viewNum, proposer, preproposer)
-}
-
-// getCurProposer get current proposer
-func (xpoa *XPoa) getCurProposer() (string, error) {
-	_, pos, _ := xpoa.minerScheduling(time.Now().UnixNano())
-	if int(pos) > len(xpoa.proposerInfos)-1 {
-		return "", errors.New("xpoa proposer infos idx error")
-	}
-	return xpoa.proposerInfos[pos].Address, nil
-}
-
-// getNextProposer get next proposer
-func (xpoa *XPoa) getNextProposer() (string, error) {
-	_, pos, _ := xpoa.minerScheduling(time.Now().UnixNano())
-	if int(pos) > len(xpoa.proposerInfos)-1 {
-		return "", errors.New("xpoa proposer infos idx error")
-	}
-	if int(pos) == len(xpoa.proposerInfos)-1 {
-		return xpoa.proposerInfos[0].Address, nil
-	}
-	return xpoa.proposerInfos[pos+1].Address, nil
+	xpoa.lg.Trace("Xpoa getProposer", "term", term, "pos", pos, "blockPos", blockPos, "time", nextTime)
+	return proposerInfos[pos], nil
 }
 
 // getProposerWithTime get proposer with timestamp
 // 注意：这里的time需要是一个同步的时间戳
-func (xpoa *XPoa) getProposerWithTime(timestamp, height int64) (string, error) {
-	// update validates
-	if _, err := xpoa.updateValidates(height); err != nil {
+func (xpoa *XPoa) getProposerWithTime(timestamp int64, blockId []byte) (string, error) {
+	xpoa.lg.Info("ConfirmBlock Propcess update validates")
+	if _, err := xpoa.updateValidates(blockId); err != nil {
 		xpoa.lg.Error("Xpoa getProposerWithTime update validates error", "error", err.Error())
 		return "", err
 	}
-	_, pos, _ := xpoa.minerScheduling(timestamp)
-	if int(pos) > len(xpoa.proposerInfos)-1 {
+	candidate, err := xpoa.getProposer(timestamp, xpoa.proposerInfos)
+	if err != nil {
 		xpoa.lg.Error("Xpoa getProposerWithTime minerScheduling error")
-		return "", errors.New("Xpoa getProposerWithTime minerScheduling error")
+		return "", err
 	}
-	return xpoa.proposerInfos[pos].Address, nil
+	return candidate.Address, nil
 }
 
 // isProposer return whether the node is the proposer
@@ -527,7 +493,7 @@ func (xpoa *XPoa) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock) (bool
 
 	// 验证矿工身份
 	// get current validates from model
-	proposer, err := xpoa.getProposerWithTime(in.GetTimestamp(), in.GetHeight())
+	proposer, err := xpoa.getProposerWithTime(in.GetTimestamp(), in.GetPreHash())
 	if err != nil {
 		xpoa.lg.Warn("CheckMinerMatch getProposerWithTime error", "error", err.Error())
 		return false, nil
@@ -553,8 +519,13 @@ func (xpoa *XPoa) ProcessBeforeMiner(timestamp int64) (map[string]interface{}, b
 		return nil, false
 	}
 
+	if curHeight != xpoa.ledger.GetMeta().GetTrunkHeight()+1 {
+		xpoa.lg.Warn("ProcessBeforeMiner error", "curHeight", curHeight, "xpoa.ledger.GetMeta().GetTrunkHeight()", xpoa.ledger.GetMeta().GetTrunkHeight())
+		return nil, false
+	}
+
 	res := make(map[string]interface{})
-	_, pos, blockPos := xpoa.minerScheduling(timestamp)
+	_, pos, blockPos := xpoa.minerScheduling(timestamp, int64(len(xpoa.proposerInfos)))
 	if blockPos > xpoa.xpoaConf.blockNum || int(pos) >= len(xpoa.proposerInfos) {
 		return res, false
 	}
@@ -564,8 +535,14 @@ func (xpoa *XPoa) ProcessBeforeMiner(timestamp int64) (map[string]interface{}, b
 	}
 	res["type"] = TYPE
 	if xpoa.enableBFT {
-		if !xpoa.isFirstBlock(xpoa.ledger.GetMeta().GetTrunkHeight() + 1) {
+		height := xpoa.ledger.GetMeta().GetTrunkHeight() + 1
+		if !xpoa.isFirstBlock(height) {
 			if ok, _ := xpoa.bftPaceMaker.IsLastViewConfirmed(); !ok {
+				// 若view number未更新则先暂停
+				if xpoa.bftPaceMaker.CheckViewNumer(height) {
+					xpoa.lg.Warn("Haven't received preLeader's NextViewMsg, hold first.")
+					return nil, false
+				}
 				if len(xpoa.proposerInfos) == 1 {
 					res["quorum_cert"] = nil
 					return res, true
@@ -613,23 +590,40 @@ func (xpoa *XPoa) ProcessConfirmBlock(block *pb.InternalBlock) error {
 			Block:   block,
 		}
 
-		err := xpoa.bftPaceMaker.NextNewProposal(block.Blockid, blockData)
+		// 如果是当前矿工，检测到下一轮需变更validates，且下一轮proposer并不在节点列表中，此时需在广播列表中新加入节点
+		validates := xpoa.proposerInfos
+		nextValidates, _, err := xpoa.getValidatesByBlockId(block.GetBlockid())
+		if err == nil {
+			nextTime := time.Now().UnixNano() + xpoa.xpoaConf.period
+			nextProposer, err := xpoa.getProposer(nextTime, nextValidates)
+			xpoa.lg.Warn("Cal nextProposer:", "proposer", nextProposer)
+			if err == nil && !xpoa.isInValidateSets(nextProposer.Address) {
+				// 更新发送节点
+				nextValidates := append(xpoa.proposerInfos, nextProposer)
+				validates = nextValidates
+			}
+		}
+
+		err = xpoa.bftPaceMaker.NextNewProposal(block.Blockid, blockData, validates)
 		if err != nil {
 			xpoa.lg.Warn("ProcessConfirmBlock: bft next proposal failed", "error", err)
 			return err
 		}
+		xpoa.lg.Info("Now Confirm finish", "ledger height", xpoa.ledger.GetMeta().TrunkHeight, "viewNum", xpoa.bftPaceMaker.CurrentView())
+		return nil
 	}
 	// update bft smr status
-	if xpoa.enableBFT && !xpoa.isInValidateSets() {
+	if xpoa.enableBFT {
 		xpoa.bftPaceMaker.UpdateSmrState(block.GetJustify())
 	}
+	xpoa.lg.Debug("Now Confirm finish", "ledger height", xpoa.ledger.GetMeta().TrunkHeight, "viewNum", xpoa.bftPaceMaker.CurrentView())
 	return nil
 }
 
 // isInValidateSets return whether
-func (xpoa *XPoa) isInValidateSets() bool {
-	for idx := range xpoa.proposerInfos {
-		if xpoa.address == xpoa.proposerInfos[idx].Address {
+func (xpoa *XPoa) isInValidateSets(address string) bool {
+	for _, proposerInfo := range xpoa.proposerInfos {
+		if address == proposerInfo.Address {
 			return true
 		}
 	}
@@ -702,7 +696,7 @@ func (xpoa *XPoa) GetStatus() *cons_base.ConsensusStatus {
 		return nil
 	}
 	timestamp := time.Now().UnixNano()
-	term, pos, blockPos := xpoa.minerScheduling(timestamp)
+	term, pos, blockPos := xpoa.minerScheduling(timestamp, int64(len(xpoa.proposerInfos)))
 	proposers := xpoa.proposerInfos
 	status := &cons_base.ConsensusStatus{
 		Term:     term,

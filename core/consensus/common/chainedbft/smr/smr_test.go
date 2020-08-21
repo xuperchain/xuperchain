@@ -78,6 +78,7 @@ func MakeSmr(t *testing.T) (*Smr, error) {
 		cryptoClient,
 		mockP2p,
 		proposalQC, generateQC, lockedQC,
+		int64(0),
 	)
 	return smr, nil
 }
@@ -213,7 +214,13 @@ func TestProcessProposal(t *testing.T) {
 		t.Error("TestProcessProposal MakeSmr error", err)
 		return
 	}
-	_, err = smr.ProcessProposal(1005, []byte("test proposalID"), []byte("test proposalMsg"))
+	validatesInfos := []*cons_base.CandidateInfo{
+		&cons_base.CandidateInfo{
+			Address:  "dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN",
+			PeerAddr: "127.0.0.1:37101",
+		},
+	}
+	_, err = smr.ProcessProposal(1005, []byte("test proposalID"), []byte("test proposalMsg"), validatesInfos)
 	if err != nil {
 		t.Error("TestProcessProposal error", err)
 	}
@@ -241,6 +248,7 @@ func TestHandleReceivedVoteMsg(t *testing.T) {
 	}
 	proposal := &pb.QuorumCert{
 		ProposalId: []byte("proposalQC ProposalId"),
+		ViewNumber: 1005,
 	}
 	smr.localProposal.Store(string(proposal.GetProposalId()), proposal)
 	netMsg, err := MakeVoteMsg(t)

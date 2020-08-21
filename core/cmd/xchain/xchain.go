@@ -50,7 +50,11 @@ func Start(cfg *config.NodeConfig) error {
 	defer signal.Stop(sigc)
 
 	// Init p2p server
-	p2pServ, err := p2p_factory.GetP2PServer(cfg.P2p.Module, cfg.P2p, xlog, nil)
+	p2pExtra := make(map[string]interface{})
+	if cfg.TCPServer.MetricPort != "" {
+		p2pExtra["enableMetric"] = true
+	}
+	p2pServ, err := p2p_factory.GetP2PServer(cfg.P2p.Module, cfg.P2p, xlog, p2pExtra)
 	if err != nil {
 		panic(err)
 	}

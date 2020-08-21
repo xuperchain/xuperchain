@@ -38,14 +38,13 @@ type XPoa struct {
 	mutex       *sync.RWMutex
 	isProduce   map[int64]bool
 	startHeight int64
-	// proposer infos
-	// termTimestamp 轮起始时间
-	termTimestamp int64
 	// 当前的验证集合 address -> nodeInfo
 	proposerInfos []*cons_base.CandidateInfo
 	// BFT module
 	enableBFT    bool
 	bftPaceMaker bft.PacemakerInterface
+	// 变更候选人生效高度，0表示当前立即生效，1表示下个区块生效，以此类推
+	effectiveDelay int64
 }
 
 // Config xpoa共识机制的配置
