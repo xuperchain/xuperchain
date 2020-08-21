@@ -7,7 +7,7 @@ import (
 
 	"strconv"
 
-	"github.com/xuperchain/xuperchain/core/pb"
+	"github.com/xuperchain/xupercore/pb"
 )
 
 //GenCandidateBallotsPrefix generate candidate ballots prefix

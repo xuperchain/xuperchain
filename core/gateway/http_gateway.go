@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"github.com/xuperchain/xuperchain/core/pb"
+	"github.com/xuperchain/xupercore/pb"
 	"google.golang.org/grpc"
 	"net/http"
 )

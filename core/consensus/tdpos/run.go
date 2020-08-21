@@ -8,11 +8,11 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/xuperchain/xuperchain/core/common"
-	"github.com/xuperchain/xuperchain/core/common/events"
-	cons_base "github.com/xuperchain/xuperchain/core/consensus/base"
-	"github.com/xuperchain/xuperchain/core/contract"
-	"github.com/xuperchain/xuperchain/core/pb"
+	"github.com/xuperchain/xupercore/common"
+	"github.com/xuperchain/xupercore/common/events"
+	cons_base "github.com/xuperchain/xupercore/consensus/base"
+	"github.com/xuperchain/xupercore/contract"
+	"github.com/xuperchain/xupercore/pb"
 )
 
 // 执行投票

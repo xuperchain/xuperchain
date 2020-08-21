@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/xuperchain/xuperchain/core/consensus/common/chainedbft/utils"
-	"github.com/xuperchain/xuperchain/core/pb"
+	"github.com/xuperchain/xupercore/pb"
 )
 
 func TestSafeProposal(t *testing.T) {

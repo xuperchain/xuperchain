@@ -24,12 +24,12 @@ import (
 
 	"golang.org/x/crypto/pbkdf2"
 
-	"github.com/xuperchain/xuperchain/core/crypto/account"
 	"github.com/xuperchain/xuperchain/core/crypto/client/gm/gmsm/sm2"
-	"github.com/xuperchain/xuperchain/core/crypto/ecies"
-	"github.com/xuperchain/xuperchain/core/crypto/hash"
-	"github.com/xuperchain/xuperchain/core/hdwallet/config"
-	spv_error "github.com/xuperchain/xuperchain/core/hdwallet/error"
+	"github.com/xuperchain/xupercore/crypto/account"
+	"github.com/xuperchain/xupercore/crypto/ecies"
+	"github.com/xuperchain/xupercore/crypto/hash"
+	"github.com/xuperchain/xupercore/hdwallet/config"
+	spv_error "github.com/xuperchain/xupercore/hdwallet/error"
 )
 
 func GetBinaryEcdsaPrivateKeyFromFile(path string, password string) ([]byte, error) {

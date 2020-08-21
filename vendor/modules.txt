@@ -3,14 +3,12 @@ github.com/AndreasBriese/bbloom
 # github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78
 github.com/Azure/go-ansiterm
 github.com/Azure/go-ansiterm/winterm
-# github.com/BurntSushi/toml v0.3.1
-github.com/BurntSushi/toml
 # github.com/Microsoft/go-winio v0.4.15-0.20190919025122-fc70bd9a86b5
 github.com/Microsoft/go-winio
 github.com/Microsoft/go-winio/pkg/guid
 # github.com/Microsoft/hcsshim v0.8.7-0.20191101173118-65519b62243c
 github.com/Microsoft/hcsshim/osversion
-# github.com/aws/aws-sdk-go v1.29.2
+# github.com/aws/aws-sdk-go v1.34.5
 github.com/aws/aws-sdk-go/aws
 github.com/aws/aws-sdk-go/aws/arn
 github.com/aws/aws-sdk-go/aws/awserr
@@ -30,6 +28,7 @@ github.com/aws/aws-sdk-go/aws/endpoints
 github.com/aws/aws-sdk-go/aws/request
 github.com/aws/aws-sdk-go/aws/session
 github.com/aws/aws-sdk-go/aws/signer/v4
+github.com/aws/aws-sdk-go/internal/context
 github.com/aws/aws-sdk-go/internal/ini
 github.com/aws/aws-sdk-go/internal/s3err
 github.com/aws/aws-sdk-go/internal/sdkio
@@ -39,6 +38,7 @@ github.com/aws/aws-sdk-go/internal/sdkuri
 github.com/aws/aws-sdk-go/internal/shareddefaults
 github.com/aws/aws-sdk-go/internal/strings
 github.com/aws/aws-sdk-go/internal/sync/singleflight
+github.com/aws/aws-sdk-go/private/checksum
 github.com/aws/aws-sdk-go/private/protocol
 github.com/aws/aws-sdk-go/private/protocol/eventstream
 github.com/aws/aws-sdk-go/private/protocol/eventstream/eventstreamapi
@@ -58,19 +58,12 @@ github.com/beorn7/perks/quantile
 github.com/btcsuite/btcd/btcec
 # github.com/btcsuite/btcutil v0.0.0-20190425235716-9e5f4b9a998d
 github.com/btcsuite/btcutil/base58
-# github.com/chzyer/readline v0.0.0-20180603132655-2972be24d48e
-github.com/chzyer/readline
 # github.com/containerd/containerd v1.3.0
 github.com/containerd/containerd/errdefs
 # github.com/containerd/continuity v0.0.0-20190426062206-aaeac12a7ffc
 github.com/containerd/continuity/fs
 github.com/containerd/continuity/syscallx
 github.com/containerd/continuity/sysx
-# github.com/coreos/go-semver v0.3.0
-github.com/coreos/go-semver/semver
-# github.com/ddliu/motto v0.3.1
-github.com/ddliu/motto
-github.com/ddliu/motto/underscore
 # github.com/dgraph-io/badger/v2 v2.0.0-rc.2
 github.com/dgraph-io/badger/v2
 github.com/dgraph-io/badger/v2/options
@@ -122,7 +115,6 @@ github.com/fsouza/go-dockerclient
 # github.com/go-stack/stack v1.8.0
 github.com/go-stack/stack
 # github.com/gogo/protobuf v1.3.0
-github.com/gogo/protobuf/io
 github.com/gogo/protobuf/proto
 # github.com/golang/protobuf v1.3.2
 github.com/golang/protobuf/jsonpb
@@ -137,12 +129,8 @@ github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/struct
 github.com/golang/protobuf/ptypes/timestamp
 github.com/golang/protobuf/ptypes/wrappers
-# github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db
+# github.com/golang/snappy v0.0.1
 github.com/golang/snappy
-# github.com/google/uuid v1.1.1
-github.com/google/uuid
-# github.com/gorilla/websocket v1.4.1
-github.com/gorilla/websocket
 # github.com/grpc-ecosystem/go-grpc-middleware v1.2.0
 github.com/grpc-ecosystem/go-grpc-middleware
 # github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
@@ -165,174 +153,33 @@ github.com/hashicorp/hcl/hcl/token
 github.com/hashicorp/hcl/json/parser
 github.com/hashicorp/hcl/json/scanner
 github.com/hashicorp/hcl/json/token
-# github.com/huin/goupnp v1.0.0
-github.com/huin/goupnp
-github.com/huin/goupnp/dcps/internetgateway1
-github.com/huin/goupnp/dcps/internetgateway2
-github.com/huin/goupnp/httpu
-github.com/huin/goupnp/scpd
-github.com/huin/goupnp/soap
-github.com/huin/goupnp/ssdp
-# github.com/inconshreveable/mousetrap v1.0.0
-github.com/inconshreveable/mousetrap
-# github.com/ipfs/go-cid v0.0.3
-github.com/ipfs/go-cid
-# github.com/ipfs/go-datastore v0.1.0
-github.com/ipfs/go-datastore
-github.com/ipfs/go-datastore/autobatch
-github.com/ipfs/go-datastore/query
-github.com/ipfs/go-datastore/sync
 # github.com/ipfs/go-ipfs-addr v0.0.1
 github.com/ipfs/go-ipfs-addr
-# github.com/ipfs/go-ipfs-util v0.0.1
-github.com/ipfs/go-ipfs-util
 # github.com/ipfs/go-log v0.0.1
 github.com/ipfs/go-log
 github.com/ipfs/go-log/tracer
 github.com/ipfs/go-log/tracer/wire
 github.com/ipfs/go-log/writer
-# github.com/ipfs/go-todocounter v0.0.2
-github.com/ipfs/go-todocounter
-# github.com/jackpal/gateway v1.0.5
-github.com/jackpal/gateway
-# github.com/jackpal/go-nat-pmp v1.0.1
-github.com/jackpal/go-nat-pmp
-# github.com/jbenet/go-temp-err-catcher v0.0.0-20150120210811-aac704a3f4f2
-github.com/jbenet/go-temp-err-catcher
-# github.com/jbenet/goprocess v0.1.3
-github.com/jbenet/goprocess
-github.com/jbenet/goprocess/context
-github.com/jbenet/goprocess/periodic
-github.com/jbenet/goprocess/ratelimit
-# github.com/jmespath/go-jmespath v0.0.0-20180206201540-c2b33e8439af
+# github.com/jmespath/go-jmespath v0.3.0
 github.com/jmespath/go-jmespath
-# github.com/juju/ansiterm v0.0.0-20180109212912-720a0952cc2a
-github.com/juju/ansiterm
-github.com/juju/ansiterm/tabwriter
 # github.com/konsorten/go-windows-terminal-sequences v1.0.1
 github.com/konsorten/go-windows-terminal-sequences
-# github.com/koron/go-ssdp v0.0.0-20180514024734-4a0ed625a78b
-github.com/koron/go-ssdp
-# github.com/libp2p/go-addr-util v0.0.1
-github.com/libp2p/go-addr-util
-# github.com/libp2p/go-buffer-pool v0.0.2
-github.com/libp2p/go-buffer-pool
-# github.com/libp2p/go-conn-security-multistream v0.1.0
-github.com/libp2p/go-conn-security-multistream
-# github.com/libp2p/go-eventbus v0.1.0
-github.com/libp2p/go-eventbus
-# github.com/libp2p/go-flow-metrics v0.0.1
-github.com/libp2p/go-flow-metrics
-# github.com/libp2p/go-libp2p v0.4.0
-github.com/libp2p/go-libp2p
-github.com/libp2p/go-libp2p/config
-github.com/libp2p/go-libp2p/p2p/host/basic
-github.com/libp2p/go-libp2p/p2p/host/relay
-github.com/libp2p/go-libp2p/p2p/host/routed
-github.com/libp2p/go-libp2p/p2p/protocol/identify
-github.com/libp2p/go-libp2p/p2p/protocol/identify/pb
-github.com/libp2p/go-libp2p/p2p/protocol/ping
-# github.com/libp2p/go-libp2p-autonat v0.1.0
-github.com/libp2p/go-libp2p-autonat
-github.com/libp2p/go-libp2p-autonat/pb
-# github.com/libp2p/go-libp2p-circuit v0.1.3
-github.com/libp2p/go-libp2p-circuit
-github.com/libp2p/go-libp2p-circuit/pb
 # github.com/libp2p/go-libp2p-core v0.2.3
-github.com/libp2p/go-libp2p-core/connmgr
 github.com/libp2p/go-libp2p-core/crypto
 github.com/libp2p/go-libp2p-core/crypto/pb
-github.com/libp2p/go-libp2p-core/discovery
-github.com/libp2p/go-libp2p-core/event
-github.com/libp2p/go-libp2p-core/helpers
-github.com/libp2p/go-libp2p-core/host
-github.com/libp2p/go-libp2p-core/metrics
-github.com/libp2p/go-libp2p-core/mux
-github.com/libp2p/go-libp2p-core/network
 github.com/libp2p/go-libp2p-core/peer
 github.com/libp2p/go-libp2p-core/peerstore
-github.com/libp2p/go-libp2p-core/pnet
-github.com/libp2p/go-libp2p-core/protocol
-github.com/libp2p/go-libp2p-core/routing
-github.com/libp2p/go-libp2p-core/sec
-github.com/libp2p/go-libp2p-core/sec/insecure
-github.com/libp2p/go-libp2p-core/sec/insecure/pb
-github.com/libp2p/go-libp2p-core/transport
 # github.com/libp2p/go-libp2p-crypto v0.1.0
 github.com/libp2p/go-libp2p-crypto
-# github.com/libp2p/go-libp2p-discovery v0.1.0
-github.com/libp2p/go-libp2p-discovery
-# github.com/libp2p/go-libp2p-host v0.1.0
-github.com/libp2p/go-libp2p-host
-# github.com/libp2p/go-libp2p-kad-dht v0.2.1
-github.com/libp2p/go-libp2p-kad-dht
-github.com/libp2p/go-libp2p-kad-dht/metrics
-github.com/libp2p/go-libp2p-kad-dht/opts
-github.com/libp2p/go-libp2p-kad-dht/pb
-github.com/libp2p/go-libp2p-kad-dht/providers
-# github.com/libp2p/go-libp2p-kbucket v0.2.1
-github.com/libp2p/go-libp2p-kbucket
-github.com/libp2p/go-libp2p-kbucket/keyspace
-# github.com/libp2p/go-libp2p-loggables v0.1.0
-github.com/libp2p/go-libp2p-loggables
-# github.com/libp2p/go-libp2p-mplex v0.2.1
-github.com/libp2p/go-libp2p-mplex
-# github.com/libp2p/go-libp2p-nat v0.0.4
-github.com/libp2p/go-libp2p-nat
-# github.com/libp2p/go-libp2p-net v0.1.0
-github.com/libp2p/go-libp2p-net
 # github.com/libp2p/go-libp2p-peer v0.2.0
 github.com/libp2p/go-libp2p-peer
 # github.com/libp2p/go-libp2p-peerstore v0.1.3
 github.com/libp2p/go-libp2p-peerstore
-github.com/libp2p/go-libp2p-peerstore/addr
-github.com/libp2p/go-libp2p-peerstore/pstoremem
-github.com/libp2p/go-libp2p-peerstore/queue
-# github.com/libp2p/go-libp2p-record v0.1.1
-github.com/libp2p/go-libp2p-record
-github.com/libp2p/go-libp2p-record/pb
-# github.com/libp2p/go-libp2p-routing v0.1.0
-github.com/libp2p/go-libp2p-routing/notifications
-# github.com/libp2p/go-libp2p-secio v0.2.0
-github.com/libp2p/go-libp2p-secio
-github.com/libp2p/go-libp2p-secio/pb
-# github.com/libp2p/go-libp2p-swarm v0.2.2
-github.com/libp2p/go-libp2p-swarm
-# github.com/libp2p/go-libp2p-transport-upgrader v0.1.1
-github.com/libp2p/go-libp2p-transport-upgrader
-# github.com/libp2p/go-libp2p-yamux v0.2.1
-github.com/libp2p/go-libp2p-yamux
-# github.com/libp2p/go-maddr-filter v0.0.5
-github.com/libp2p/go-maddr-filter
-# github.com/libp2p/go-mplex v0.1.0
-github.com/libp2p/go-mplex
-# github.com/libp2p/go-msgio v0.0.4
-github.com/libp2p/go-msgio
-# github.com/libp2p/go-nat v0.0.3
-github.com/libp2p/go-nat
 # github.com/libp2p/go-openssl v0.0.2
 github.com/libp2p/go-openssl
 github.com/libp2p/go-openssl/utils
-# github.com/libp2p/go-reuseport v0.0.1
-github.com/libp2p/go-reuseport
-# github.com/libp2p/go-reuseport-transport v0.0.2
-github.com/libp2p/go-reuseport-transport
-# github.com/libp2p/go-stream-muxer-multistream v0.2.0
-github.com/libp2p/go-stream-muxer-multistream
-# github.com/libp2p/go-tcp-transport v0.1.1
-github.com/libp2p/go-tcp-transport
-# github.com/libp2p/go-ws-transport v0.1.2
-github.com/libp2p/go-ws-transport
-# github.com/libp2p/go-yamux v1.2.3
-github.com/libp2p/go-yamux
-# github.com/lunixbochs/vtclean v0.0.0-20180621232353-2d01aacdc34a
-github.com/lunixbochs/vtclean
 # github.com/magiconair/properties v1.8.0
 github.com/magiconair/properties
-# github.com/manifoldco/promptui v0.7.0
-github.com/manifoldco/promptui
-github.com/manifoldco/promptui/list
-github.com/manifoldco/promptui/screenbuf
 # github.com/mattn/go-colorable v0.1.1
 github.com/mattn/go-colorable
 # github.com/mattn/go-isatty v0.0.5
@@ -349,22 +196,10 @@ github.com/mitchellh/mapstructure
 github.com/morikuni/aec
 # github.com/mr-tron/base58 v1.1.2
 github.com/mr-tron/base58/base58
-# github.com/multiformats/go-base32 v0.0.3
-github.com/multiformats/go-base32
 # github.com/multiformats/go-multiaddr v0.1.1
 github.com/multiformats/go-multiaddr
-# github.com/multiformats/go-multiaddr-dns v0.1.0
-github.com/multiformats/go-multiaddr-dns
-# github.com/multiformats/go-multiaddr-fmt v0.1.0
-github.com/multiformats/go-multiaddr-fmt
-# github.com/multiformats/go-multiaddr-net v0.1.0
-github.com/multiformats/go-multiaddr-net
-# github.com/multiformats/go-multibase v0.0.1
-github.com/multiformats/go-multibase
 # github.com/multiformats/go-multihash v0.0.8
 github.com/multiformats/go-multihash
-# github.com/multiformats/go-multistream v0.1.0
-github.com/multiformats/go-multistream
 # github.com/opencontainers/go-digest v1.0.0-rc1
 github.com/opencontainers/go-digest
 # github.com/opencontainers/image-spec v1.0.1
@@ -397,14 +232,6 @@ github.com/prometheus/common/model
 github.com/prometheus/procfs
 github.com/prometheus/procfs/internal/fs
 github.com/prometheus/procfs/internal/util
-# github.com/robertkrimen/otto v0.0.0-20191219234010-c382bd3c16ff
-github.com/robertkrimen/otto
-github.com/robertkrimen/otto/ast
-github.com/robertkrimen/otto/dbg
-github.com/robertkrimen/otto/file
-github.com/robertkrimen/otto/parser
-github.com/robertkrimen/otto/registry
-github.com/robertkrimen/otto/token
 # github.com/sirupsen/logrus v1.4.2
 github.com/sirupsen/logrus
 # github.com/spacemonkeygo/spacelog v0.0.0-20180420211403-2296661a0572
@@ -416,8 +243,6 @@ github.com/spf13/afero
 github.com/spf13/afero/mem
 # github.com/spf13/cast v1.3.0
 github.com/spf13/cast
-# github.com/spf13/cobra v0.0.5
-github.com/spf13/cobra
 # github.com/spf13/jwalterweatherman v1.0.0
 github.com/spf13/jwalterweatherman
 # github.com/spf13/pflag v1.0.5
@@ -452,18 +277,8 @@ github.com/twitchyliquid64/golang-asm/obj/x86
 github.com/twitchyliquid64/golang-asm/objabi
 github.com/twitchyliquid64/golang-asm/src
 github.com/twitchyliquid64/golang-asm/sys
-# github.com/whyrusleeping/base32 v0.0.0-20170828182744-c30ac30633cc
-github.com/whyrusleeping/base32
-# github.com/whyrusleeping/go-keyspace v0.0.0-20160322163242-5b898ac5add1
-github.com/whyrusleeping/go-keyspace
 # github.com/whyrusleeping/go-logging v0.0.0-20170515211332-0457bb6b88fc
 github.com/whyrusleeping/go-logging
-# github.com/whyrusleeping/go-notifier v0.0.0-20170827234753-097c5d47330f
-github.com/whyrusleeping/go-notifier
-# github.com/whyrusleeping/mafmt v1.2.8
-github.com/whyrusleeping/mafmt
-# github.com/whyrusleeping/multiaddr-filter v0.0.0-20160516205228-e903e4adabd7
-github.com/whyrusleeping/multiaddr-filter
 # github.com/xuperchain/log15 v0.0.0-20190620081506-bc88a9198230
 github.com/xuperchain/log15
 # github.com/xuperchain/wagon v0.6.1-0.20200313164333-db544e251599
@@ -475,15 +290,76 @@ github.com/xuperchain/wagon/wasm
 github.com/xuperchain/wagon/wasm/internal/readpos
 github.com/xuperchain/wagon/wasm/leb128
 github.com/xuperchain/wagon/wasm/operators
-# go.opencensus.io v0.22.1
-go.opencensus.io/internal/tagencoding
-go.opencensus.io/metric/metricdata
-go.opencensus.io/metric/metricproducer
-go.opencensus.io/resource
-go.opencensus.io/stats
-go.opencensus.io/stats/internal
-go.opencensus.io/stats/view
-go.opencensus.io/tag
+# github.com/xuperchain/xupercore v0.0.0 => ../xupercore
+github.com/xuperchain/xupercore/common
+github.com/xuperchain/xupercore/common/config
+github.com/xuperchain/xupercore/common/events
+github.com/xuperchain/xupercore/common/log
+github.com/xuperchain/xupercore/common/probe
+github.com/xuperchain/xupercore/consensus
+github.com/xuperchain/xupercore/consensus/base
+github.com/xuperchain/xupercore/consensus/tdpos
+github.com/xuperchain/xupercore/contract
+github.com/xuperchain/xupercore/contract/bridge
+github.com/xuperchain/xupercore/contract/bridge/memrpc
+github.com/xuperchain/xupercore/contract/kernel
+github.com/xuperchain/xupercore/contract/native
+github.com/xuperchain/xupercore/contract/proposal
+github.com/xuperchain/xupercore/contract/teevm
+github.com/xuperchain/xupercore/contract/wasm/xvm
+github.com/xuperchain/xupercore/contractsdk/go/pb
+github.com/xuperchain/xupercore/contractsdk/go/pbrpc
+github.com/xuperchain/xupercore/core
+github.com/xuperchain/xupercore/crypto/account
+github.com/xuperchain/xupercore/crypto/aes/ecb
+github.com/xuperchain/xupercore/crypto/aes/padding
+github.com/xuperchain/xupercore/crypto/client
+github.com/xuperchain/xupercore/crypto/client/base
+github.com/xuperchain/xupercore/crypto/common
+github.com/xuperchain/xupercore/crypto/config
+github.com/xuperchain/xupercore/crypto/ecies
+github.com/xuperchain/xupercore/crypto/ecies/libecies
+github.com/xuperchain/xupercore/crypto/hash
+github.com/xuperchain/xupercore/crypto/multisign
+github.com/xuperchain/xupercore/crypto/sign
+github.com/xuperchain/xupercore/crypto/utils
+github.com/xuperchain/xupercore/event
+github.com/xuperchain/xupercore/global
+github.com/xuperchain/xupercore/hdwallet/config
+github.com/xuperchain/xupercore/hdwallet/error
+github.com/xuperchain/xupercore/hdwallet/key
+github.com/xuperchain/xupercore/hdwallet/rand
+github.com/xuperchain/xupercore/hdwallet/wordlist
+github.com/xuperchain/xupercore/kv/kvdb
+github.com/xuperchain/xupercore/ledger
+github.com/xuperchain/xupercore/p2p/base
+github.com/xuperchain/xupercore/p2p/factory
+github.com/xuperchain/xupercore/p2p/pb
+github.com/xuperchain/xupercore/pb
+github.com/xuperchain/xupercore/permission
+github.com/xuperchain/xupercore/permission/acl
+github.com/xuperchain/xupercore/permission/acl/impl
+github.com/xuperchain/xupercore/permission/acl/utils
+github.com/xuperchain/xupercore/permission/ptree
+github.com/xuperchain/xupercore/permission/rule
+github.com/xuperchain/xupercore/permission/utils
+github.com/xuperchain/xupercore/pluginmgr
+github.com/xuperchain/xupercore/server
+github.com/xuperchain/xupercore/server/xendorser
+github.com/xuperchain/xupercore/txn
+github.com/xuperchain/xupercore/utxo
+github.com/xuperchain/xupercore/utxo/txhash
+github.com/xuperchain/xupercore/vat
+github.com/xuperchain/xupercore/xmodel
+github.com/xuperchain/xupercore/xmodel/pb
+github.com/xuperchain/xupercore/xvm/compile
+github.com/xuperchain/xupercore/xvm/debug
+github.com/xuperchain/xupercore/xvm/exec
+github.com/xuperchain/xupercore/xvm/pointer
+github.com/xuperchain/xupercore/xvm/runtime/emscripten
+github.com/xuperchain/xupercore/xvm/runtime/go
+github.com/xuperchain/xupercore/xvm/runtime/go/js
+github.com/xuperchain/xupercore/xvm/runtime/go/js/fs
 # golang.org/x/crypto v0.0.0-20190927123631-a832865fa7ad
 golang.org/x/crypto/blake2s
 golang.org/x/crypto/ed25519
@@ -492,19 +368,12 @@ golang.org/x/crypto/pbkdf2
 golang.org/x/crypto/ripemd160
 golang.org/x/crypto/sha3
 # golang.org/x/net v0.0.0-20200202094626-16171245cfb2
-golang.org/x/net/bpf
 golang.org/x/net/context
-golang.org/x/net/html
-golang.org/x/net/html/atom
-golang.org/x/net/html/charset
 golang.org/x/net/http/httpguts
 golang.org/x/net/http2
 golang.org/x/net/http2/hpack
 golang.org/x/net/idna
-golang.org/x/net/internal/iana
-golang.org/x/net/internal/socket
 golang.org/x/net/internal/timeseries
-golang.org/x/net/ipv4
 golang.org/x/net/trace
 # golang.org/x/sync v0.0.0-20190423024810-112230192c58
 golang.org/x/sync/errgroup
@@ -514,29 +383,10 @@ golang.org/x/sys/cpu
 golang.org/x/sys/unix
 golang.org/x/sys/windows
 # golang.org/x/text v0.3.2
-golang.org/x/text/encoding
-golang.org/x/text/encoding/charmap
-golang.org/x/text/encoding/htmlindex
-golang.org/x/text/encoding/internal
-golang.org/x/text/encoding/internal/identifier
-golang.org/x/text/encoding/japanese
-golang.org/x/text/encoding/korean
-golang.org/x/text/encoding/simplifiedchinese
-golang.org/x/text/encoding/traditionalchinese
-golang.org/x/text/encoding/unicode
-golang.org/x/text/internal/language
-golang.org/x/text/internal/language/compact
-golang.org/x/text/internal/tag
-golang.org/x/text/internal/utf8internal
-golang.org/x/text/language
-golang.org/x/text/runes
 golang.org/x/text/secure/bidirule
 golang.org/x/text/transform
 golang.org/x/text/unicode/bidi
 golang.org/x/text/unicode/norm
-# golang.org/x/xerrors v0.0.0-20190717185122-a985d3407aa7
-golang.org/x/xerrors
-golang.org/x/xerrors/internal
 # google.golang.org/genproto v0.0.0-20190927181202-20e1ac93f88c
 google.golang.org/genproto/googleapis/api/annotations
 google.golang.org/genproto/googleapis/api/httpbody
@@ -578,8 +428,5 @@ google.golang.org/grpc/serviceconfig
 google.golang.org/grpc/stats
 google.golang.org/grpc/status
 google.golang.org/grpc/tap
-# gopkg.in/sourcemap.v1 v1.0.5
-gopkg.in/sourcemap.v1
-gopkg.in/sourcemap.v1/base64vlq
 # gopkg.in/yaml.v2 v2.2.2
 gopkg.in/yaml.v2

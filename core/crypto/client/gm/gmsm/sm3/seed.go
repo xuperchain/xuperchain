@@ -13,8 +13,8 @@ import (
 	"strconv"
 	"strings"
 
-	//	"github.com/xuperchain/xuperchain/core/crypto/hash"
-	"github.com/xuperchain/xuperchain/core/hdwallet/wordlist"
+	//	"github.com/xuperchain/xupercore/crypto/hash"
+	"github.com/xuperchain/xupercore/hdwallet/wordlist"
 
 	"golang.org/x/crypto/pbkdf2"
 )

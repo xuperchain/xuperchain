@@ -2,8 +2,8 @@ package external
 
 import (
 	"github.com/xuperchain/xuperchain/core/consensus/common/chainedbft/utils"
-	crypto_client "github.com/xuperchain/xuperchain/core/crypto/client"
-	pb "github.com/xuperchain/xuperchain/core/pb"
+	crypto_client "github.com/xuperchain/xupercore/crypto/client"
+	pb "github.com/xuperchain/xupercore/pb"
 )
 
 // MockExternalConsensus mock the ExternalInterface

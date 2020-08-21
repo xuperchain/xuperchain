@@ -10,9 +10,9 @@ import (
 
 	"github.com/golang/protobuf/proto"
 
-	"github.com/xuperchain/xuperchain/core/consensus/base"
-	"github.com/xuperchain/xuperchain/core/ledger"
-	"github.com/xuperchain/xuperchain/core/pb"
+	"github.com/xuperchain/xupercore/consensus/base"
+	"github.com/xuperchain/xupercore/ledger"
+	"github.com/xuperchain/xupercore/pb"
 )
 
 // DefaultPaceMaker the implementation of PaceMakerInterface for default consensus

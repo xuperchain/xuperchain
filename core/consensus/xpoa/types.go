@@ -3,14 +3,14 @@ package xpoa
 import (
 	"sync"
 
-	p2p_base "github.com/xuperchain/xuperchain/core/p2p/base"
+	p2p_base "github.com/xuperchain/xupercore/p2p/base"
 
 	log "github.com/xuperchain/log15"
-	cons_base "github.com/xuperchain/xuperchain/core/consensus/base"
 	bft "github.com/xuperchain/xuperchain/core/consensus/common/chainedbft"
 	bft_config "github.com/xuperchain/xuperchain/core/consensus/common/chainedbft/config"
-	"github.com/xuperchain/xuperchain/core/ledger"
-	"github.com/xuperchain/xuperchain/core/utxo"
+	cons_base "github.com/xuperchain/xupercore/consensus/base"
+	"github.com/xuperchain/xupercore/ledger"
+	"github.com/xuperchain/xupercore/utxo"
 )
 
 const (

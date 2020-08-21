@@ -1,7 +1,7 @@
 package external
 
 import (
-	pb "github.com/xuperchain/xuperchain/core/pb"
+	pb "github.com/xuperchain/xupercore/pb"
 )
 
 // ExternalInterface is the interface that chainedbft can communicate with external interface

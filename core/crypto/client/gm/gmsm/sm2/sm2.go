@@ -31,7 +31,6 @@ import (
 	"math/big"
 
 	"github.com/xuperchain/xuperchain/core/crypto/client/gm/gmsm/sm3"
-	//	"github.com/tjfoc/gmsm/sm3"
 )
 
 const (

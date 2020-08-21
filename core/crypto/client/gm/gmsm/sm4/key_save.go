@@ -22,10 +22,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/xuperchain/xuperchain/core/crypto/account"
-	"github.com/xuperchain/xuperchain/core/crypto/hash"
-	"github.com/xuperchain/xuperchain/core/hdwallet/config"
-	spv_error "github.com/xuperchain/xuperchain/core/hdwallet/error"
+	"github.com/xuperchain/xupercore/crypto/account"
+	"github.com/xuperchain/xupercore/crypto/hash"
+	"github.com/xuperchain/xupercore/hdwallet/config"
+	spv_error "github.com/xuperchain/xupercore/hdwallet/error"
 
 	"golang.org/x/crypto/pbkdf2"
 )

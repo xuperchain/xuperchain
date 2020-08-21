@@ -10,22 +10,16 @@ endif
 
 all: build 
 export GO111MODULE=on
-export GOFLAGS=-mod=vendor
+# export GOFLAGS=-mod=vendor
 XCHAIN_ROOT := ${PWD}/core
 export XCHAIN_ROOT
-PATH := ${PWD}/core/xvm/compile/wabt/build:$(PATH)
+#PATH := ${PWD}/core/xvm/compile/wabt/build:$(PATH)
 
 build:
 	PLATFORM=$(PLATFORM) ./core/scripts/build.sh
 
 test:
 	go test -coverprofile=coverage.txt -covermode=atomic ./...
-	# test wasm sdk
-	GOOS=js GOARCH=wasm go build github.com/xuperchain/xuperchain/core/contractsdk/go/driver
-
-contractsdk:
-	make -C core/contractsdk/cpp build
-	make -C core/contractsdk/cpp test
 
 clean:
 	rm -rf output

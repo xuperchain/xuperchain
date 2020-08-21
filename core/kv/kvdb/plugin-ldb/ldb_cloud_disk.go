@@ -2,7 +2,7 @@
 
 // go-leveldb wrapper plugin
 // so，package必须是main
-// build.sh: go build --buildmode=plugin --tags cloud -o core/plugins/kv/kv-ldb-cloud.so.1.0.0 github.com/xuperchain/xuperchain/core/kv/kvdb/plugin-ldb
+// build.sh: go build --buildmode=plugin --tags cloud -o core/plugins/kv/kv-ldb-cloud.so.1.0.0 github.com/xuperchain/xupercore/kv/kvdb/plugin-ldb
 package main
 
 import (
@@ -11,8 +11,8 @@ import (
 	"github.com/syndtr/goleveldb/leveldb/filter"
 	"github.com/syndtr/goleveldb/leveldb/opt"
 	"github.com/xuperchain/log15"
-	"github.com/xuperchain/xuperchain/core/common/config"
 	"github.com/xuperchain/xuperchain/core/kv/s3"
+	"github.com/xuperchain/xupercore/common/config"
 	pt "path"
 )
 
