@@ -14,7 +14,6 @@ func (xc *XChainCore) GenerateTx(in *pb.TxData, hd *global.XContext) *pb.TxStatu
 		return out
 	}
 	t, err := xc.Utxovm.GenerateTx(in)
-	xc.Speed.Add("GenerateTx")
 	if err != nil {
 		out.Header.Error = HandlerUtxoError(err)
 	} else {
