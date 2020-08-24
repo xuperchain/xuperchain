@@ -14,6 +14,7 @@ type NetURLPreviewCommand struct {
 	cli  *Cli
 	cmd  *cobra.Command
 	ip   string
+	ipv6 string
 	port string
 	path string
 }
@@ -35,6 +36,7 @@ func NewNetURLPreviewCommand(cli *Cli) *cobra.Command {
 
 func (n *NetURLPreviewCommand) addFlags() {
 	n.cmd.Flags().StringVar(&n.ip, "ip", "127.0.0.1", "ip address of the p2p node (default is 127.0.0.1)")
+	n.cmd.Flags().StringVar(&n.ipv6, "ipv6", "", "ipv6 address of the p2p node")
 	n.cmd.Flags().StringVar(&n.port, "port", "47101", "port of the p2p node (default is 47101)")
 	n.cmd.Flags().StringVar(&n.path, "path", "./data/netkeys/", "path to save net url (default is ./data/netkeys/)")
 }
@@ -44,6 +46,12 @@ func (n *NetURLPreviewCommand) previewNetURL(ctx context.Context) error {
 	if err != nil {
 		fmt.Println("Parse net URL from key path failed, err=", err)
 	}
-	fmt.Printf("/ip4/%s/tcp/%s/p2p/%s\n", n.ip, n.port, pid)
+
+	if n.ipv6 != "" {
+		fmt.Printf("/ip6/%s/tcp/%s/p2p/%s\n", n.ipv6, n.port, pid)
+	} else {
+		fmt.Printf("/ip4/%s/tcp/%s/p2p/%s\n", n.ip, n.port, pid)
+	}
+
 	return nil
 }

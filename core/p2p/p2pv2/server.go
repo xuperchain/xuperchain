@@ -194,6 +194,10 @@ func (p *P2PServerV2) UnRegister(sub p2p_base.Subscriber) error {
 // GetNetURL return net url of the xuper node
 // url = /ip4/127.0.0.1/tcp/<port>/p2p/<peer.Id>
 func (p *P2PServerV2) GetNetURL() string {
+	if p.config.IsIpv6 {
+		return fmt.Sprintf("/ip6/::1/tcp/%v/p2p/%s", p.config.Port, p.node.id.Pretty())
+	}
+
 	return fmt.Sprintf("/ip4/127.0.0.1/tcp/%v/p2p/%s", p.config.Port, p.node.id.Pretty())
 }
 

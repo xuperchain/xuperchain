@@ -194,6 +194,12 @@ func genHostOption(cfg config.P2PConfig) ([]libp2p.Option, error) {
 	opts := []libp2p.Option{
 		libp2p.ListenAddrs(muAddr),
 	}
+
+	if cfg.IsIpv6 {
+		muAddr, _ = multiaddr.NewMultiaddr(fmt.Sprintf("/ip6/::/tcp/%d", cfg.Port))
+		opts = append(opts, libp2p.ListenAddrs(muAddr))
+	}
+
 	if cfg.IsNat {
 		opts = append(opts, libp2p.NATPortMap())
 	}
