@@ -4,8 +4,14 @@ set -e -x
 cd `dirname $0`/../../
 
 # build wasm2c
-# make -C core/xvm/compile/wabt -j 4
-# cp core/xvm/compile/wabt/build/wasm2c ./
+mkdir -p core_tmp
+cd core_tmp
+git clone https://github.com/xuperchain/xupercore.git
+cd xupercore
+make -C xvm/compile/wabt -j 4
+cp xvm/compile/wabt/build/wasm2c ../../
+cd ../../
+rm -rf core_tmp
 
 # build framework and tools
 function buildpkg() {
@@ -49,6 +55,7 @@ mkdir -p output
 output_dir=output
 mv xchain xchain-cli ${output_dir}
 mv xchain-httpgw ${output_dir}
+mv wasm2c ${output_dir}
 mv xdev ${output_dir}
 mv dump_chain ${output_dir}
 # cp -rf core/plugins ${output_dir}
