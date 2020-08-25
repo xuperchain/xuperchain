@@ -290,7 +290,7 @@ github.com/xuperchain/wagon/wasm
 github.com/xuperchain/wagon/wasm/internal/readpos
 github.com/xuperchain/wagon/wasm/leb128
 github.com/xuperchain/wagon/wasm/operators
-# github.com/xuperchain/xupercore v0.0.0 => ../xupercore
+# github.com/xuperchain/xupercore v0.0.0-20200824152519-143199bdd034
 github.com/xuperchain/xupercore/common
 github.com/xuperchain/xupercore/common/config
 github.com/xuperchain/xupercore/common/events

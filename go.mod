@@ -1,10 +1,6 @@
 module github.com/xuperchain/xuperchain
 
-go 1.12
-
-require github.com/xuperchain/xupercore v0.0.0
-
-replace github.com/xuperchain/xupercore => ../xupercore
+go 1.13
 
 require (
 	github.com/aws/aws-sdk-go v1.34.5
@@ -17,6 +13,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/syndtr/goleveldb v1.0.0
 	github.com/xuperchain/log15 v0.0.0-20190620081506-bc88a9198230
+	github.com/xuperchain/xupercore v0.0.0-20200824152519-143199bdd034
 	golang.org/x/crypto v0.0.0-20190927123631-a832865fa7ad
 	google.golang.org/grpc v1.24.0
 )
