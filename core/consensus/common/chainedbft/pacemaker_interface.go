@@ -1,8 +1,8 @@
 package chainedbft
 
 import (
-	cons_base "github.com/xuperchain/xuperchain/core/consensus/base"
-	"github.com/xuperchain/xuperchain/core/pb"
+	cons_base "github.com/xuperchain/xupercore/consensus/base"
+	"github.com/xuperchain/xupercore/pb"
 )
 
 // PacemakerInterface is the interface of Pacemaker. It responsible for generating a new round.

@@ -6,7 +6,7 @@ import (
 	"math/big"
 
 	"github.com/xuperchain/xuperchain/core/crypto/client/gm/gmsm/sm3"
-	"github.com/xuperchain/xuperchain/core/hdwallet/rand"
+	"github.com/xuperchain/xupercore/hdwallet/rand"
 )
 
 // GetRandom32Bytes 生成默认随机数Ki

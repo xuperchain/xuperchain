@@ -2,7 +2,7 @@
 package main
 
 import (
-	"github.com/xuperchain/xuperchain/core/consensus/tdpos"
+	"github.com/xuperchain/xupercore/consensus/tdpos"
 )
 
 // GetInstance : implement plugin framework

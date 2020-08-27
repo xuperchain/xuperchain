@@ -12,12 +12,12 @@ import (
 	"strconv"
 
 	log "github.com/xuperchain/log15"
-	"github.com/xuperchain/xuperchain/core/common/config"
-	cons_base "github.com/xuperchain/xuperchain/core/consensus/base"
-	crypto_base "github.com/xuperchain/xuperchain/core/crypto/client/base"
-	"github.com/xuperchain/xuperchain/core/global"
-	"github.com/xuperchain/xuperchain/core/ledger"
-	"github.com/xuperchain/xuperchain/core/pb"
+	"github.com/xuperchain/xupercore/common/config"
+	cons_base "github.com/xuperchain/xupercore/consensus/base"
+	crypto_base "github.com/xuperchain/xupercore/crypto/client/base"
+	"github.com/xuperchain/xupercore/global"
+	"github.com/xuperchain/xupercore/ledger"
+	"github.com/xuperchain/xupercore/pb"
 )
 
 // TYPE is the type of the pow consensus

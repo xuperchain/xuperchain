@@ -13,9 +13,8 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/xuperchain/xuperchain/core/crypto/common"
-
 	"github.com/xuperchain/xuperchain/core/crypto/client/gm/gmsm/sm3"
+	"github.com/xuperchain/xupercore/crypto/common"
 )
 
 var (

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/xuperchain/xuperchain/core/contract"
+	"github.com/xuperchain/xupercore/contract"
 )
 
 func TestRollBackVote(t *testing.T) {

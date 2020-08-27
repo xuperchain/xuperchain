@@ -15,8 +15,8 @@ import (
 	//	"log"
 	"reflect"
 
-	"github.com/xuperchain/xuperchain/core/crypto/config"
-	"github.com/xuperchain/xuperchain/core/crypto/hash"
+	"github.com/xuperchain/xupercore/crypto/config"
+	"github.com/xuperchain/xupercore/crypto/hash"
 
 	"github.com/btcsuite/btcutil/base58"
 )

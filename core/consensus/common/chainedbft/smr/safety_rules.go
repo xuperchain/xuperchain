@@ -3,9 +3,9 @@ package smr
 import (
 	"encoding/hex"
 
-	cons_base "github.com/xuperchain/xuperchain/core/consensus/base"
 	"github.com/xuperchain/xuperchain/core/consensus/common/chainedbft/utils"
-	"github.com/xuperchain/xuperchain/core/pb"
+	cons_base "github.com/xuperchain/xupercore/consensus/base"
+	"github.com/xuperchain/xupercore/pb"
 )
 
 // safeProposal make sure whether Proposal is safe

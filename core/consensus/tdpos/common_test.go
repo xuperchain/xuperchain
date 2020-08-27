@@ -13,12 +13,12 @@ import (
 	"testing"
 
 	log "github.com/xuperchain/log15"
-	cons_base "github.com/xuperchain/xuperchain/core/consensus/base"
-	"github.com/xuperchain/xuperchain/core/contract"
-	crypto_client "github.com/xuperchain/xuperchain/core/crypto/client"
-	"github.com/xuperchain/xuperchain/core/ledger"
-	"github.com/xuperchain/xuperchain/core/pb"
-	"github.com/xuperchain/xuperchain/core/utxo"
+	cons_base "github.com/xuperchain/xupercore/consensus/base"
+	"github.com/xuperchain/xupercore/contract"
+	crypto_client "github.com/xuperchain/xupercore/crypto/client"
+	"github.com/xuperchain/xupercore/ledger"
+	"github.com/xuperchain/xupercore/pb"
+	"github.com/xuperchain/xupercore/utxo"
 )
 
 const (

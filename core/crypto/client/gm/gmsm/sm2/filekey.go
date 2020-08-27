@@ -3,7 +3,6 @@ package sm2
 import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
-	"github.com/xuperchain/xuperchain/core/crypto/client/gm/gmsm/sm3"
 	"path/filepath"
 	//	"crypto/rand"
 	"encoding/json"
@@ -14,10 +13,11 @@ import (
 	"os"
 	"strings"
 
-	"github.com/xuperchain/xuperchain/core/crypto/account"
-	"github.com/xuperchain/xuperchain/core/crypto/config"
-	"github.com/xuperchain/xuperchain/core/crypto/utils"
-	walletRand "github.com/xuperchain/xuperchain/core/hdwallet/rand"
+	"github.com/xuperchain/xuperchain/core/crypto/client/gm/gmsm/sm3"
+	"github.com/xuperchain/xupercore/crypto/account"
+	"github.com/xuperchain/xupercore/crypto/config"
+	"github.com/xuperchain/xupercore/crypto/utils"
+	walletRand "github.com/xuperchain/xupercore/hdwallet/rand"
 )
 
 // 定义助记词的强度类型

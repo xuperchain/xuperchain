@@ -6,14 +6,12 @@ import (
 	"encoding/json"
 	"fmt"
 
-	log "github.com/xuperchain/log15"
-
 	"github.com/golang/protobuf/proto"
 
-	"github.com/xuperchain/xuperchain/core/consensus/base"
-	cons_base "github.com/xuperchain/xuperchain/core/consensus/base"
-	"github.com/xuperchain/xuperchain/core/ledger"
-	"github.com/xuperchain/xuperchain/core/pb"
+	log "github.com/xuperchain/log15"
+	cons_base "github.com/xuperchain/xupercore/consensus/base"
+	"github.com/xuperchain/xupercore/ledger"
+	"github.com/xuperchain/xupercore/pb"
 )
 
 // DefaultPaceMaker the implementation of PaceMakerInterface for default consensus
@@ -25,12 +23,12 @@ type DefaultPaceMaker struct {
 	cbft        *ChainedBft
 	log         log.Logger
 	ledger      *ledger.Ledger
-	cons        base.ConsensusInterface
+	cons        cons_base.ConsensusInterface
 }
 
 // NewDefaultPaceMaker create new DPoSPaceMaker instance
 func NewDefaultPaceMaker(bcname string, startView int64, viewNum int64, address string, cbft *ChainedBft,
-	xlog log.Logger, cons base.ConsensusInterface, ledger *ledger.Ledger) (*DefaultPaceMaker, error) {
+	xlog log.Logger, cons cons_base.ConsensusInterface, ledger *ledger.Ledger) (*DefaultPaceMaker, error) {
 	if cbft == nil {
 		return nil, fmt.Errorf("Chained-BFT instance is nil")
 	}
@@ -102,7 +100,7 @@ func (dpm *DefaultPaceMaker) CurrentQCHigh(proposalID []byte) (*pb.QuorumCert, e
 }
 
 // UpdateValidatorSet update the validator set of BFT
-func (dpm *DefaultPaceMaker) UpdateValidatorSet(validators []*base.CandidateInfo) error {
+func (dpm *DefaultPaceMaker) UpdateValidatorSet(validators []*cons_base.CandidateInfo) error {
 	valStr, _ := json.Marshal(validators)
 	dpm.log.Trace("bft update validator set", "validators", string(valStr))
 	return dpm.cbft.UpdateValidateSets(validators)

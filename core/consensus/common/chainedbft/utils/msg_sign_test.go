@@ -3,8 +3,8 @@ package utils
 import (
 	"testing"
 
-	crypto_client "github.com/xuperchain/xuperchain/core/crypto/client"
-	"github.com/xuperchain/xuperchain/core/pb"
+	crypto_client "github.com/xuperchain/xupercore/crypto/client"
+	"github.com/xuperchain/xupercore/pb"
 )
 
 type User struct {

@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/dgraph-io/badger/v2"
-	//"github.com/xuperchain/xuperchain/core/kv/kvdb"
+	//"github.com/xuperchain/xupercore/kv/kvdb"
 )
 
 type BadgerIterator struct {

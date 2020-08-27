@@ -6,10 +6,10 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/xuperchain/xuperchain/core/crypto/hash"
+	"github.com/xuperchain/xupercore/crypto/hash"
 
-	crypto_base "github.com/xuperchain/xuperchain/core/crypto/client/base"
-	"github.com/xuperchain/xuperchain/core/pb"
+	crypto_base "github.com/xuperchain/xupercore/crypto/client/base"
+	"github.com/xuperchain/xupercore/pb"
 )
 
 func encodeChainedBftPhaseMessage(msg *pb.ChainedBftPhaseMessage) ([]byte, error) {
