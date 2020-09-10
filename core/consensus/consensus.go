@@ -283,6 +283,10 @@ func (pc *PluggableConsensus) postUpdateConsensusActions(name string, sc *StepCo
 
 func (pc *PluggableConsensus) updateConsensusByName(name string, height int64,
 	consConf map[string]interface{}, extParams map[string]interface{}) (*StepConsensus, error) {
+	// 是否上下升级为同一种，即tdpos
+	if len(pc.cons) != 0 && pc.cons[len(pc.cons)-1].Conn.Type() == name {
+		extParams["sameconsensus"] = true
+	}
 	// load consensus plugin
 	pluginMgr, err := pluginmgr.GetPluginMgr()
 	if err != nil {

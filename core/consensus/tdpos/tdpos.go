@@ -113,7 +113,8 @@ func (tp *TDpos) Configure(xlog log.Logger, cfg *config.NodeConfig, consCfg map[
 		return err
 	}
 
-	if err = tp.initBFT(cfg); err != nil {
+	sameBFT, _ := extParams["sameconsensus"].(bool)
+	if err = tp.initBFT(cfg, sameBFT); err != nil {
 		xlog.Warn("init chained-bft failed!", "error", err)
 		return err
 	}
@@ -388,13 +389,13 @@ Again:
 	// master check
 	if tp.isProposer(term, pos, tp.address) {
 		tp.log.Trace("CompeteMaster now xterm infos", "term", term, "pos", pos, "blockPos", blockPos, "un2", un2,
-			"master", true)
+			"master", true, "height", height)
 		tp.curBlockNum = blockPos
 		s := tp.needSync()
 		return true, s
 	}
 	tp.log.Trace("CompeteMaster now xterm infos", "term", term, "pos", pos, "blockPos", blockPos, "un2", un2,
-		"master", false)
+		"master", false, "height", height)
 	return false, false
 }
 
@@ -603,7 +604,7 @@ func (tp *TDpos) ProcessConfirmBlock(block *pb.InternalBlock) error {
 		}
 	}
 	// update bft smr status
-	if tp.config.enableBFT && !tp.isInValidateSets() {
+	if tp.config.enableBFT {
 		tp.bftPaceMaker.UpdateSmrState(block.GetJustify())
 	}
 	return nil
@@ -799,7 +800,7 @@ func (tp *TDpos) GetStatus() *cons_base.ConsensusStatus {
 	return status
 }
 
-func (tp *TDpos) initBFT(cfg *config.NodeConfig) error {
+func (tp *TDpos) initBFT(cfg *config.NodeConfig, sameBFT bool) error {
 	// BFT not enabled
 	if !tp.config.enableBFT {
 		return nil
@@ -838,7 +839,14 @@ func (tp *TDpos) initBFT(cfg *config.NodeConfig) error {
 				tp.log.Warn("initBFT: get block failed", "error", err, "blockid", string(blockid))
 				return err
 			}
-			qc[qcNeeded] = block.GetJustify()
+			qcItem := block.GetJustify()
+			if sameBFT && qcNeeded == 2 {
+				qcItem = &pb.QuorumCert{
+					ProposalId: blockid,
+					ViewNumber: block.GetHeight(),
+				}
+			}
+			qc[qcNeeded] = qcItem
 			blockid = block.GetPreHash()
 			if blockid == nil {
 				break
@@ -847,6 +855,11 @@ func (tp *TDpos) initBFT(cfg *config.NodeConfig) error {
 	}
 	term, _, _ := tp.minerScheduling(time.Now().UnixNano())
 	proposers := tp.getTermProposer(term)
+	if sameBFT {
+		qc[0] = qc[1]
+		qc[1] = qc[2]
+		qc[2] = nil
+	}
 	cbft, err := bft.NewChainedBft(
 		tp.log,
 		tp.config.bftConfig,
