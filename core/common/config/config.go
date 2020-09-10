@@ -21,6 +21,7 @@ const (
 	DefaultNetIsNat         = true // use NAT
 	DefaultNetIsSecure      = true // use encrypted secure transport
 	DefaultNetIsHidden      = false
+	DefaultNetIsIpv6        = false
 	DefaultMaxStreamLimits  = 1024
 	DefaultMaxMessageSize   = 128
 	DefaultTimeout          = 3
@@ -81,6 +82,8 @@ type P2PConfig struct {
 	IsSecure bool `yaml:"isSecure,omitempty"`
 	// isHidden config whether the node can be found
 	IsHidden bool `yaml:"isHidden,omitempty"`
+	// IsIpv6 config whether the node use ipv6
+	IsIpv6 bool `yaml:"isIpv6,omitempty"`
 	// bootNodes config the bootNodes the node to connect
 	BootNodes []string `yaml:"bootNodes,omitempty"`
 	// staticNodes config the nodes which you trust
@@ -434,6 +437,7 @@ func newP2pConfigWithDefault() P2PConfig {
 		IsNat:            DefaultNetIsNat,
 		IsSecure:         DefaultNetIsSecure,
 		IsHidden:         DefaultNetIsHidden,
+		IsIpv6:           DefaultNetIsIpv6,
 		MaxStreamLimits:  DefaultMaxStreamLimits,
 		MaxMessageSize:   DefaultMaxMessageSize,
 		Timeout:          DefaultTimeout,

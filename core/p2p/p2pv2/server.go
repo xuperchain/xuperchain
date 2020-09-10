@@ -7,10 +7,11 @@ import (
 	"os"
 	"strings"
 
+	"github.com/golang/protobuf/proto"
 	peer "github.com/libp2p/go-libp2p-peer"
 	"github.com/pkg/errors"
+	prom "github.com/prometheus/client_golang/prometheus"
 	log "github.com/xuperchain/log15"
-
 	"github.com/xuperchain/xuperchain/core/common/config"
 	p2p_base "github.com/xuperchain/xuperchain/core/p2p/base"
 	p2pPb "github.com/xuperchain/xuperchain/core/p2p/pb"
@@ -30,10 +31,11 @@ var _ p2p_base.P2PServer = (*P2PServerV2)(nil)
 type P2PServerV2 struct {
 	log log.Logger
 	// config is the p2p v2 设置
-	config     config.P2PConfig
-	node       *Node
-	handlerMap *p2p_base.HandlerMap
-	quitCh     chan bool
+	config       config.P2PConfig
+	node         *Node
+	handlerMap   *p2p_base.HandlerMap
+	enableMetric bool
+	quitCh       chan bool
 }
 
 // NewP2PServerV2 create P2PServerV2 instance
@@ -53,8 +55,10 @@ func (p *P2PServerV2) Init(cfg config.P2PConfig, lg log.Logger, extra map[string
 		lg.Trace("NewP2PServerV2 create node error", "error", err)
 		return ErrCreateNode
 	}
-
-	hm, err := p2p_base.NewHandlerMap(lg)
+	if extra["enableMetric"] != nil && extra["enableMetric"].(bool) {
+		p.enableMetric = true
+	}
+	hm, err := p2p_base.NewHandlerMap(lg, p.enableMetric)
 	if err != nil {
 		lg.Trace("NewP2PServerV2 new handler map error", "errors", err)
 		return ErrCreateHandlerMap
@@ -66,7 +70,6 @@ func (p *P2PServerV2) Init(cfg config.P2PConfig, lg log.Logger, extra map[string
 	p.node = no
 	p.handlerMap = hm
 	p.quitCh = make(chan bool, 1)
-
 	no.SetServer(p)
 
 	if err := p.registerSubscriber(); err != nil {
@@ -102,6 +105,7 @@ func (p *P2PServerV2) Stop() {
 // SendMessage send message to peers using given filter strategy
 func (p *P2PServerV2) SendMessage(ctx context.Context, msg *p2pPb.XuperMessage,
 	opts ...p2p_base.MessageOption) error {
+
 	msgOpts := p2p_base.GetMessageOption(opts)
 	filter := p.getFilter(msgOpts)
 	peers, _ := filter.Filter()
@@ -127,7 +131,15 @@ func (p *P2PServerV2) SendMessage(ctx context.Context, msg *p2pPb.XuperMessage,
 			msg = p2p_base.Compress(msg)
 		}
 	}
-	p.log.Trace("Server SendMessage", "logid", msg.GetHeader().GetLogid(), "bcname", msg.GetHeader().GetBcname(), "msgType", msg.GetHeader().GetType(), "checksum", msg.GetHeader().GetDataCheckSum(), "peers", peersRes)
+	p.log.Trace("Server SendMessage", "logid", msg.GetHeader().GetLogid(), "bcname", msg.GetHeader().GetBcname(),
+		"msgType", msg.GetHeader().GetType(), "checksum", msg.GetHeader().GetDataCheckSum(), "peers", peersRes)
+	if p.enableMetric {
+		metricLabels := prom.Labels{
+			"bcname": msg.GetHeader().GetBcname(),
+			"type":   msg.GetHeader().GetType().String(),
+		}
+		p2p_base.DefaultP2pMetrics.P2PFlowOut.With(metricLabels).Add(float64(proto.Size(msg)))
+	}
 	return p.node.SendMessage(ctx, msg, peersRes)
 }
 
@@ -153,6 +165,14 @@ func (p *P2PServerV2) SendMessageWithResponse(ctx context.Context, msg *p2pPb.Xu
 	percentage := msgOpts.Percentage
 	p.log.Trace("Server SendMessage with response", "logid", msg.GetHeader().GetLogid(), "bcname", msg.GetHeader().GetBcname,
 		"msgType", msg.GetHeader().GetType(), "checksum", msg.GetHeader().GetDataCheckSum(), "peers", peersRes)
+
+	if p.enableMetric {
+		metricLabels := prom.Labels{
+			"bcname": msg.GetHeader().GetBcname(),
+			"type":   msg.GetHeader().GetType().String(),
+		}
+		p2p_base.DefaultP2pMetrics.P2PFlowOut.With(metricLabels).Add(float64(proto.Size(msg)))
+	}
 	return p.node.SendMessageWithResponse(ctx, msg, peersRes, percentage)
 }
 
@@ -174,6 +194,10 @@ func (p *P2PServerV2) UnRegister(sub p2p_base.Subscriber) error {
 // GetNetURL return net url of the xuper node
 // url = /ip4/127.0.0.1/tcp/<port>/p2p/<peer.Id>
 func (p *P2PServerV2) GetNetURL() string {
+	if p.config.IsIpv6 {
+		return fmt.Sprintf("/ip6/::1/tcp/%v/p2p/%s", p.config.Port, p.node.id.Pretty())
+	}
+
 	return fmt.Sprintf("/ip4/127.0.0.1/tcp/%v/p2p/%s", p.config.Port, p.node.id.Pretty())
 }
 

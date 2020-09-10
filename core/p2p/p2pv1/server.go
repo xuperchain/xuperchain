@@ -11,7 +11,9 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/pkg/errors"
+	prom "github.com/prometheus/client_golang/prometheus"
 	log "github.com/xuperchain/log15"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/peer"
@@ -51,6 +53,7 @@ type P2PServerV1 struct {
 	quitCh       chan bool
 	lock         sync.Mutex
 	localAddr    map[string]*p2p_base.XchainAddrInfo
+	enableMetric bool
 }
 
 // NewP2PServerV1 create P2PServerV1 instance
@@ -64,8 +67,10 @@ func (p *P2PServerV1) Init(cfg config.P2PConfig, lg log.Logger, extra map[string
 		lg = log.New("module", "p2pv1")
 		lg.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
 	}
-
-	hm, err := p2p_base.NewHandlerMap(lg)
+	if extra["enableMetric"] != nil && extra["enableMetric"].(bool) {
+		p.enableMetric = true
+	}
+	hm, err := p2p_base.NewHandlerMap(lg, p.enableMetric)
 	if err != nil {
 		p.log.Error("Init P2PServerV1 NewHandlerMap error", "error", err)
 		return ErrCreateHandlerMap
@@ -180,6 +185,13 @@ func (p *P2PServerV1) SendMessage(ctx context.Context, msg *p2pPb.XuperMessage,
 			msg = p2p_base.Compress(msg)
 		}
 	}
+	if p.enableMetric {
+		metricLabels := prom.Labels{
+			"bcname": msg.GetHeader().GetBcname(),
+			"type":   msg.GetHeader().GetType().String(),
+		}
+		p2p_base.DefaultP2pMetrics.P2PFlowOut.With(metricLabels).Add(float64(proto.Size(msg)))
+	}
 	return p.sendMessage(ctx, msg, peerids)
 }
 
@@ -207,7 +219,13 @@ func (p *P2PServerV1) SendMessageWithResponse(ctx context.Context, msg *p2pPb.Xu
 			msg = p2p_base.Compress(msg)
 		}
 	}
-
+	if p.enableMetric {
+		metricLabels := prom.Labels{
+			"bcname": msg.GetHeader().GetBcname(),
+			"type":   msg.GetHeader().GetType().String(),
+		}
+		p2p_base.DefaultP2pMetrics.P2PFlowOut.With(metricLabels).Add(float64(proto.Size(msg)))
+	}
 	return p.sendMessageWithRes(ctx, msg, peerids, percentage)
 }
 

@@ -84,13 +84,16 @@ var (
 
 // package constants
 const (
-	UTXOLockExpiredSecond     = 60
-	LatestBlockKey            = "pointer"
-	UTXOCacheSize             = 1000
-	OfflineTxChanBuffer       = 100000
-	TxVersion                 = 1
-	BetaTxVersion             = 2
-	StableTxVersion           = 1
+	UTXOLockExpiredSecond = 60
+	LatestBlockKey        = "pointer"
+	UTXOCacheSize         = 1000
+	OfflineTxChanBuffer   = 100000
+
+	// TxVersion 为所有交易使用的版本
+	TxVersion = 1
+	// BetaTxVersion 为当前代码支持的最高交易版本
+	BetaTxVersion = 3
+
 	RootTxVersion             = 0
 	FeePlaceholder            = "$"
 	UTXOTotalKey              = "xtotal"
@@ -153,7 +156,6 @@ type UtxoVM struct {
 	balanceViewDirty     map[string]int   //balanceCache 标记dirty: addr -> sequence of view
 	contractExectionTime int
 	unconfirmTxInMem     *sync.Map //未确认Tx表的内存镜像
-	defaultTxVersion     int32     // 默认的tx version
 	maxConfirmedDelay    uint32    // 交易处于unconfirm状态的最长时间，超过后会被回滚
 	unconfirmTxAmount    int64     // 未确认的Tx数目，用于监控
 	avgDelay             int64     // 平均上链延时
@@ -345,6 +347,7 @@ func (uv *UtxoVM) clearExpiredLocks() {
 //   @param ledger 账本对象
 //   @param store path, utxo 数据的保存路径
 //   @param xlog , 日志handler
+// TODO: remove isBeta parameter
 func NewUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, privateKey, publicKey string,
 	address []byte, xlog log.Logger, isBeta bool, kvEngineType string, cryptoType string) (*UtxoVM, error) {
 	return MakeUtxoVM(bcname, ledger, storePath, privateKey, publicKey, address, xlog, UTXOCacheSize,
@@ -450,11 +453,6 @@ func MakeUtxoVM(bcname string, ledger *ledger_pkg.Ledger, storePath string, priv
 		maxConfirmedDelay:    DefaultMaxConfirmedDelay,
 		bcname:               bcname,
 		heightNotifier:       NewBlockHeightNotifier(),
-	}
-	if iBeta {
-		utxoVM.defaultTxVersion = BetaTxVersion
-	} else {
-		utxoVM.defaultTxVersion = StableTxVersion
 	}
 
 	latestBlockid, findErr := utxoVM.metaTable.Get([]byte(LatestBlockKey))
