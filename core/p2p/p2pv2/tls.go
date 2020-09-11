@@ -38,7 +38,7 @@ func New(certPath, serviceName string) func(key crypto.PrivKey) (*Transport, err
 			return nil, err
 		}
 
-		certificate, err := tls.LoadX509KeyPair(certPath + "/cert.pem", certPath + "/private.key")
+		certificate, err := tls.LoadX509KeyPair(certPath+"/cert.pem", certPath+"/private.key")
 		if err != nil {
 			return nil, err
 		}
@@ -56,7 +56,7 @@ func New(certPath, serviceName string) func(key crypto.PrivKey) (*Transport, err
 				ClientCAs:    certPool,
 				ClientAuth:   tls.RequireAndVerifyClientCert,
 			},
-			privKey: key,
+			privKey:   key,
 			localPeer: id,
 		}, nil
 	}

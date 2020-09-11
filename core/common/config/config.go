@@ -15,10 +15,10 @@ const (
 	NodeModeNormal = "Normal"
 	// NodeModeFastSync NODE_MODE_FAST_SYNC node mode for fast
 	NodeModeFastSync        = "FastSync"
-	DefaultNetPort          = 47101             // p2p port
+	DefaultNetPort          = 47101            // p2p port
 	DefaultNetKeyPath       = "./data/netkeys" // node private key path
 	DefaultCertPath         = "./data/cert"
-	DefaultNetIsNat         = true // use NAT
+	DefaultNetIsNat         = true  // use NAT
 	DefaultNetIsTls         = false // use tls secure transport
 	DefaultNetIsHidden      = false
 	DefaultNetIsIpv6        = false
