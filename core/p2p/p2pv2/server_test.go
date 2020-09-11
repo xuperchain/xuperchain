@@ -18,7 +18,6 @@ func TestNewP2PServerV2(t *testing.T) {
 				Port:            47103,
 				KeyPath:         "./data/netkeys/",
 				IsNat:           true,
-				IsSecure:        true,
 				IsHidden:        false,
 				BootNodes:       []string{},
 				MaxStreamLimits: 32,

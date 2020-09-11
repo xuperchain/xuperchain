@@ -3,6 +3,7 @@ package base
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/pem"
 	"errors"
 	"io/ioutil"
 	math_rand "math/rand"
@@ -64,7 +65,7 @@ func GetKeyPairFromPath(path string) (crypto.PrivKey, error) {
 		path = config.DefaultNetKeyPath
 	}
 
-	data, err := ioutil.ReadFile(path + "net_private.key")
+	data, err := ioutil.ReadFile(path + "/net_private.key")
 	if err != nil {
 		return nil, err
 	}
@@ -74,6 +75,17 @@ func GetKeyPairFromPath(path string) (crypto.PrivKey, error) {
 		return nil, err
 	}
 	return crypto.UnmarshalPrivateKey(privData)
+}
+
+// GetKeyPairFromCertPath get xuper ca private key from file path
+func GetKeyPairFromCertPath(path string) (crypto.PrivKey, error) {
+	keyFile, err := ioutil.ReadFile(path + "/private.key")
+	if err != nil {
+		return nil, err
+	}
+
+	keyBlock, _ := pem.Decode(keyFile)
+	return crypto.UnmarshalRsaPrivateKey(keyBlock.Bytes)
 }
 
 // GenerateUniqueRandList get a random unique number list

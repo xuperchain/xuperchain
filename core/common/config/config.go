@@ -16,10 +16,10 @@ const (
 	// NodeModeFastSync NODE_MODE_FAST_SYNC node mode for fast
 	NodeModeFastSync        = "FastSync"
 	DefaultNetPort          = 47101             // p2p port
-	DefaultNetKeyPath       = "./data/netkeys/" // node private key path
+	DefaultNetKeyPath       = "./data/netkeys" // node private key path
 	DefaultCertPath         = "./data/cert"
 	DefaultNetIsNat         = true // use NAT
-	DefaultNetIsSecure      = true // use encrypted secure transport
+	DefaultNetIsTls         = false // use tls secure transport
 	DefaultNetIsHidden      = false
 	DefaultNetIsIpv6        = false
 	DefaultMaxStreamLimits  = 1024
@@ -78,8 +78,8 @@ type P2PConfig struct {
 	KeyPath string `yaml:"keyPath,omitempty"`
 	// isNat config whether the node use NAT manager
 	IsNat bool `yaml:"isNat,omitempty"`
-	// isSecure config whether the node use secure transparent
-	IsSecure bool `yaml:"isSecure,omitempty"`
+	// isTls config the node use tls secure transparent
+	IsTls bool `yaml:"isTls,omitempty"`
 	// isHidden config whether the node can be found
 	IsHidden bool `yaml:"isHidden,omitempty"`
 	// IsIpv6 config whether the node use ipv6
@@ -435,7 +435,7 @@ func newP2pConfigWithDefault() P2PConfig {
 		Port:             DefaultNetPort,
 		KeyPath:          DefaultNetKeyPath,
 		IsNat:            DefaultNetIsNat,
-		IsSecure:         DefaultNetIsSecure,
+		IsTls:            DefaultNetIsTls,
 		IsHidden:         DefaultNetIsHidden,
 		IsIpv6:           DefaultNetIsIpv6,
 		MaxStreamLimits:  DefaultMaxStreamLimits,

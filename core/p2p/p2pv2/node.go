@@ -203,16 +203,26 @@ func genHostOption(cfg config.P2PConfig) ([]libp2p.Option, error) {
 	if cfg.IsNat {
 		opts = append(opts, libp2p.NATPortMap())
 	}
-	if cfg.IsSecure {
+
+	if cfg.IsTls {
+		priv, err := p2p_base.GetKeyPairFromCertPath(cfg.CertPath)
+		if err != nil {
+			return nil, err
+		}
+
+		opts = append(opts, libp2p.Identity(priv))
+		opts = append(opts, libp2p.Security(ID, New(cfg.CertPath, cfg.ServiceName)))
+	} else {
+		priv, err := p2p_base.GetKeyPairFromPath(cfg.KeyPath)
+		if err != nil {
+			return nil, err
+		}
+
+		opts = append(opts, libp2p.Identity(priv))
 		opts = append(opts, libp2p.DefaultSecurity)
 	}
-	opts = append(opts, libp2p.EnableRelay(circuit.OptHop))
 
-	priv, err := p2p_base.GetKeyPairFromPath(cfg.KeyPath)
-	if err != nil {
-		return nil, err
-	}
-	opts = append(opts, libp2p.Identity(priv))
+	opts = append(opts, libp2p.EnableRelay(circuit.OptHop))
 	return opts, nil
 }
 
