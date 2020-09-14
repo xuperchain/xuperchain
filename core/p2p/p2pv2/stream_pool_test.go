@@ -15,7 +15,6 @@ func TestStreamPoolBasic(t *testing.T) {
 		Port:            20016,
 		KeyPath:         "./data/netkeys/",
 		IsNat:           true,
-		IsSecure:        true,
 		IsHidden:        false,
 		MaxStreamLimits: 20,
 	}
