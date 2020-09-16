@@ -79,6 +79,7 @@ func (c *ContractDeployCommand) deploy(ctx context.Context, codepath string) err
 		Keys:         c.cli.RootOptions.Keys,
 		XchainClient: c.cli.XchainClient(),
 		CryptoType:   c.cli.RootOptions.CryptoType,
+		Cfg:          c.cli.RootOptions.XCfg,
 	}
 
 	var err error

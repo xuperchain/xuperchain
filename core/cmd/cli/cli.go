@@ -44,6 +44,8 @@ type RootOptions struct {
 	TLS        TLSOptions
 	CryptoType string
 	Xuper3     bool
+	Xendorser  string
+	XCfg       *CommConfig
 }
 
 // TLSOptions TLS part
@@ -98,6 +100,7 @@ func (c *Cli) initFlags() error {
 	rootFlags.String("name", "xuper", "block chain name")
 	rootFlags.String("keys", "data/keys", "directory of keys")
 	rootFlags.String("cryptotype", crypto_client.CryptoTypeDefault, "crypto type, default|gm|schnorr")
+	rootFlags.String("xendorser", "", "xendorser config file (default is cmd/cli/conf/xendorser_cli.yaml)")
 	viper.BindPFlags(rootFlags)
 
 	cobra.OnInitialize(func() {
@@ -122,6 +125,15 @@ func (c *Cli) initFlags() error {
 		// 如果想使用嵌套struct的flag，则在设置pflag的flag name的时候需要使用如下的方式
 		// rootFlags.String("topic.key", "", "")
 		viper.Unmarshal(&c.RootOptions)
+
+		cfg := NewCommonConfig()
+		if c.RootOptions.Xendorser != "" {
+			err := cfg.LoadConfig(c.RootOptions.Xendorser)
+			if err != nil {
+				os.Exit(-1)
+			}
+		}
+		c.RootOptions.XCfg = cfg
 
 		err := c.initXchainClient()
 		if err != nil {
