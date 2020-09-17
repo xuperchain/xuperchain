@@ -20,6 +20,7 @@ import (
 	"github.com/golang/protobuf/proto"
 
 	"github.com/xuperchain/xuperchain/core/contract"
+	"github.com/xuperchain/xuperchain/core/contract/bridge"
 	crypto_client "github.com/xuperchain/xuperchain/core/crypto/client"
 	"github.com/xuperchain/xuperchain/core/global"
 	"github.com/xuperchain/xuperchain/core/pb"
@@ -261,7 +262,7 @@ func (c *CommTrans) GenTxOutputs(gasUsed int64) ([]*pb.TxOutput, *big.Int, error
 	}
 
 	accounts := []*pb.TxDataAccount{}
-	if c.To != "" {
+	if c.To != "" && c.ModuleName != string(bridge.TypeEvm) {
 		accounts = append(accounts, account)
 	}
 

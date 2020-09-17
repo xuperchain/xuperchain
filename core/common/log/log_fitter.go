@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"os"
 	"sync"
+
+	"github.com/hyperledger/burrow/logging"
+	"github.com/hyperledger/burrow/logging/loggers"
 )
 
 // Reserve common key
@@ -60,6 +63,17 @@ func NewLogger(logger LogInterface, logId string) (*LogFitter, error) {
 	}
 
 	return lf, nil
+}
+
+// NewLoggerForEVM, logger for evm(Burrow)
+func NewLoggerForEVM() (*logging.Logger, error) {
+	stdoutLogger, err := loggers.NewStreamLogger(os.Stdout, loggers.TerminalFormat)
+	if err != nil {
+		return nil, fmt.Errorf("could not make logger: %v", err)
+	}
+	logger := logging.NewLogger(stdoutLogger)
+
+	return logger, nil
 }
 
 func (t *LogFitter) GetLogId() string {

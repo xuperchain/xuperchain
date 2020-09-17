@@ -6,17 +6,25 @@ package main
 
 import (
 	"context"
+	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
+	"path"
+	"path/filepath"
+	"strings"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/hyperledger/burrow/deploy/compile"
 	"github.com/spf13/cobra"
 
+	"github.com/xuperchain/xuperchain/core/common/log"
+	"github.com/xuperchain/xuperchain/core/contract/bridge"
 	"github.com/xuperchain/xuperchain/core/pb"
 	"github.com/xuperchain/xuperchain/core/utxo"
 )
 
-// ContractDeployCommand wasm deploy cmd
+// ContractDeployCommand wasm/native/evm deploy cmd
 type ContractDeployCommand struct {
 	cli *Cli
 	cmd *cobra.Command
@@ -30,9 +38,10 @@ type ContractDeployCommand struct {
 	isMulti      bool
 	multiAddrs   string
 	output       string
+	//solFile      string
 }
 
-// NewContractDeployCommand new wasm deploy cmd
+// NewContractDeployCommand new wasm/native/evm deploy cmd
 func NewContractDeployCommand(cli *Cli, module string) *cobra.Command {
 	c := new(ContractDeployCommand)
 	c.cli = cli
@@ -59,6 +68,7 @@ func (c *ContractDeployCommand) addFlags() {
 	c.cmd.Flags().BoolVarP(&c.isMulti, "isMulti", "m", false, "multisig scene")
 	c.cmd.Flags().StringVarP(&c.multiAddrs, "multiAddrs", "A", "data/acl/addrs", "multiAddrs if multisig scene")
 	c.cmd.Flags().StringVarP(&c.output, "output", "o", "./tx.out", "tx draw data")
+	//c.cmd.Flags().StringVarP(&c.solFile, "sol", "", "./counter.sol", "solidity contract file for evm")
 }
 
 func (c *ContractDeployCommand) deploy(ctx context.Context, codepath string) error {
@@ -87,28 +97,60 @@ func (c *ContractDeployCommand) deploy(ctx context.Context, codepath string) err
 		return err
 	}
 
+	var codeBuf, abiCode []byte
+	var evmCode string
+	if c.module == string(bridge.TypeEvm) {
+		evmCode, abiCode, err = compileSolidityForEVM(codepath)
+		if err != nil {
+			return err
+		}
+		codeBuf, err = hex.DecodeString(evmCode)
+		if err != nil {
+			return err
+		}
+	} else {
+		codeBuf, err = ioutil.ReadFile(codepath)
+		if err != nil {
+			return err
+		}
+	}
+
 	// generate preExe params
 	args := make(map[string]interface{})
 	err = json.Unmarshal([]byte(c.args), &args)
 	if err != nil {
 		return err
 	}
-	x3args, err := convertToXuper3Args(args)
-	if err != nil {
-		return err
+
+	var x3args map[string][]byte
+	if c.module == string(bridge.TypeEvm) && c.args != "" {
+		x3args, err = convertToEvmArgsWithAbiData(abiCode, "", args)
+		if err != nil {
+			return err
+		}
+		callData := hex.EncodeToString(x3args["input"])
+		evmCode = evmCode + callData
+		codeBuf, err = hex.DecodeString(evmCode)
+		if err != nil {
+			return err
+		}
+	} else {
+		x3args, err = convertToXuper3Args(args)
+		if err != nil {
+			return err
+		}
 	}
 	initArgs, _ := json.Marshal(x3args)
-	codebuf, err := ioutil.ReadFile(codepath)
-	if err != nil {
-		return err
-	}
-	descbuf := c.prepareCodeDesc()
+
+	descBuf := c.prepareCodeDesc()
+
 	ct.Args = map[string][]byte{
 		"account_name":  []byte(c.account),
 		"contract_name": []byte(c.contractName),
-		"contract_code": codebuf,
-		"contract_desc": descbuf,
+		"contract_code": codeBuf,
+		"contract_desc": descBuf,
 		"init_args":     initArgs,
+		"contract_abi":  abiCode,
 	}
 
 	if c.isMulti {
@@ -127,4 +169,77 @@ func (c *ContractDeployCommand) prepareCodeDesc() []byte {
 	}
 	buf, _ := proto.Marshal(desc)
 	return buf
+}
+
+//func readAbi(abiFilePath string) ([]byte, error) {
+//	if _, err := os.Stat(abiFilePath); err != nil {
+//		fmt.Printf("abifile not found,%s", abiFilePath)
+//		return nil, fmt.Errorf("Abi doesn't exist for =>\t%s", abiFilePath)
+//	}
+//	fmt.Printf("Found ABI file, path: %s", abiFilePath)
+//	sol, err := compile.LoadSolidityContract(abiFilePath)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	return sol.Abi, nil
+//}
+
+func compileSolidityForEVM(solidityFile string) (string, []byte, error) {
+	filePath, fileName := filepath.Split(solidityFile)
+	contractCode, abiCode, err := compileSolidity(filePath, fileName, false)
+	if err != nil {
+		return "", nil, err
+	}
+	return contractCode, []byte(abiCode), nil
+}
+
+func compileSolidity(filePath string, fileName string, optimize bool) (string, string, error) {
+	fileSuffix := path.Ext(fileName)
+	fileNameOnly := strings.TrimSuffix(fileName, fileSuffix)
+
+	logger, _ := log.NewLoggerForEVM()
+
+	// compile contracts
+	resp, err := compile.EVM(fileName, optimize, filePath, nil, logger)
+	if err != nil {
+		return "", "", err
+	}
+	var solidityContract compile.SolidityContract
+	if len(resp.Objects) == 1 {
+		// only one contract
+		// check that the file name is the same as the contract name
+		if resp.Objects[0].Objectname != fileNameOnly {
+			return "", "", fmt.Errorf("No contract found\n")
+		}
+		solidityContract = resp.Objects[0].Contract
+	} else {
+		// find the contract to be deployed from several contracts
+		// please check that the file name is the same as the contract name
+		var i int
+		for i = range resp.Objects {
+			if resp.Objects[i].Objectname == fileNameOnly {
+				break
+			}
+
+			// find the last contract object, but no contract fount yet
+			if i == len(resp.Objects)-1 {
+				return "", "", fmt.Errorf("No contract found\n")
+			}
+		}
+		solidityContract = resp.Objects[i].Contract
+	}
+
+	// save the contract's binary
+	err = solidityContract.Save(filePath, fmt.Sprintf("%s.bin", fileNameOnly))
+	if err != nil {
+		fmt.Printf("Error: Solidity save error: %s \n", fileNameOnly)
+		return "", "", err
+	}
+
+	// construct the byteCode
+	if solidityContract.Evm.Bytecode.Object == "" {
+		return "", "", fmt.Errorf("Solidity compile result is nil\n")
+	}
+	return solidityContract.Evm.Bytecode.Object, string(solidityContract.Abi), nil
 }

@@ -10,9 +10,11 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
+
+	"github.com/xuperchain/xuperchain/core/contract/bridge"
 )
 
-// ContractQueryCommand wasm query cmd
+// ContractQueryCommand wasm/native/evm query cmd
 type ContractQueryCommand struct {
 	cli *Cli
 	cmd *cobra.Command
@@ -23,9 +25,10 @@ type ContractQueryCommand struct {
 	isMulti    bool
 	verbose    bool
 	multiAddrs string
+	abiFile    string
 }
 
-// NewContractQueryCommand new wasm query cmd
+// NewContractQueryCommand new wasm/native/evm query cmd
 func NewContractQueryCommand(cli *Cli, module string) *cobra.Command {
 	c := new(ContractQueryCommand)
 	c.cli = cli
@@ -50,11 +53,14 @@ func (c *ContractQueryCommand) addFlags() {
 	c.cmd.Flags().BoolVarP(&c.isMulti, "isMulti", "m", false, "multisig scene")
 	c.cmd.Flags().BoolVarP(&c.verbose, "verbose", "v", false, "show query result verbosely")
 	c.cmd.Flags().StringVarP(&c.multiAddrs, "multiAddrs", "A", "data/acl/addrs", "multiAddrs if multisig scene")
+	if c.module == string(bridge.TypeEvm) {
+		c.cmd.Flags().StringVarP(&c.abiFile, "abi", "", "", "the abi file of contract")
+	}
 }
 
 func (c *ContractQueryCommand) example() string {
 	return `
-xchain wasm|native query $codeaddr -a '{"Your contract parameters in json format"}' --method get
+xchain wasm|native|evm query $codeaddr -a '{"Your contract parameters in json format"}' --method get
 `
 }
 
@@ -72,14 +78,22 @@ func (c *ContractQueryCommand) query(ctx context.Context, codeName string) error
 		XchainClient: c.cli.XchainClient(),
 	}
 
+	// generate preExe params
 	args := make(map[string]interface{})
-	if c.args != "" {
-		json.Unmarshal([]byte(c.args), &args)
-	}
-	var err error
-	ct.Args, err = convertToXuper3Args(args)
+	err := json.Unmarshal([]byte(c.args), &args)
 	if err != nil {
 		return err
+	}
+	if c.module == string(bridge.TypeEvm) {
+		ct.Args, err = convertToEvmArgsWithAbiFile(c.abiFile, c.methodName, args)
+		if err != nil {
+			return err
+		}
+	} else {
+		ct.Args, err = convertToXuper3Args(args)
+		if err != nil {
+			return err
+		}
 	}
 
 	response, _, err := ct.GenPreExeRes(ctx)

@@ -1,18 +1,24 @@
 package xchain
 
 import (
+	"encoding/hex"
 	"fmt"
+	"io/ioutil"
 	"testing"
 
 	"github.com/mitchellh/mapstructure"
 	"github.com/robertkrimen/otto"
 
 	"github.com/xuperchain/xuperchain/core/cmd/xdev/internal/jstest"
+	"github.com/xuperchain/xuperchain/core/contract/bridge"
+	"github.com/xuperchain/xuperchain/core/contract/evm/abi"
 )
 
 type contractObject struct {
 	env  *environment
+	abi  *abi.ABI
 	Name string
+	Type string
 }
 
 // func (c *contractObject) Invoke(method string, args map[string]string, option InvokeOptions) *contract.Response {
@@ -29,6 +35,19 @@ func (c *contractObject) Invoke(call otto.FunctionCall) otto.Value {
 	err := mapstructure.Decode(export, &args.Args)
 	if err != nil {
 		jstest.Throw(err)
+	}
+	if c.Type != string(bridge.TypeEvm) {
+		args.trueArgs = convertArgs(args.Args)
+	} else {
+		if method != "" {
+			input, err := c.abi.Encode(method, args.Args)
+			if err != nil {
+				jstest.Throw(fmt.Errorf("abi encode error:%s", err))
+			}
+			args.trueArgs = map[string][]byte{
+				"input": input,
+			}
+		}
 	}
 
 	if call.Argument(2).IsObject() {
@@ -75,13 +94,57 @@ func (x *xchainObject) Contract(name string) *contractObject {
 }
 
 func (x *xchainObject) Deploy(args deployArgs) *contractObject {
-	_, err := x.env.Deploy(args)
+	codeBuf, err := ioutil.ReadFile(args.Code)
 	if err != nil {
 		jstest.Throw(err)
 	}
+
+	if args.Type == string(bridge.TypeEvm) {
+		dst, err := hex.DecodeString(string(codeBuf))
+		if err != nil {
+			jstest.Throw(err)
+		}
+		codeBuf = dst
+	}
+
+	args.codeBuf = codeBuf
+	if args.Type == string(bridge.TypeEvm) && args.ABIFile == "" {
+		jstest.Throws("missing abi")
+	}
+	var enc *abi.ABI
+	if args.ABIFile != "" {
+		buf, err := ioutil.ReadFile(args.ABIFile)
+		if err != nil {
+			jstest.Throw(err)
+		}
+		enc, err = abi.New(buf)
+		if err != nil {
+			jstest.Throw(err)
+		}
+	}
+	var trueArgs map[string][]byte
+	if args.ABIFile != "" {
+		input, err := enc.Encode("", args.InitArgs)
+		if err != nil {
+			jstest.Throw(err)
+		}
+		codeBuf = append(codeBuf, input...)
+	} else {
+		trueArgs = convertArgs(args.InitArgs)
+	}
+	args.trueArgs = trueArgs
+	args.codeBuf = codeBuf
+
+	_, err = x.env.Deploy(args)
+	if err != nil {
+		jstest.Throw(err)
+	}
+
 	return &contractObject{
 		env:  x.env,
+		abi:  enc,
 		Name: args.Name,
+		Type: args.Type,
 	}
 }
 

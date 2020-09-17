@@ -300,6 +300,20 @@ func (s *XModel) QueryBlock(blockid []byte) (*pb.InternalBlock, error) {
 	return block, nil
 }
 
+// QueryBlockByHeight query block by height from ledger
+func (s *XModel) QueryBlockByHeight(height int64) (*pb.InternalBlock, error) {
+	block, err := s.ledger.QueryBlockByHeight(height)
+	if err != nil {
+		return nil, err
+	}
+	return block, nil
+}
+
+// QueryLastBlock query last block by height
+func (s *XModel) QueryLastBlock() (*pb.InternalBlock, error) {
+	return s.ledger.QueryLastBlock()
+}
+
 // CleanCache clear batchCache and lastBatch
 func (s *XModel) CleanCache() {
 	s.cleanCache(nil)

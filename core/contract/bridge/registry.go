@@ -10,6 +10,7 @@ type ContractType string
 const (
 	TypeWasm   ContractType = "wasm"
 	TypeNative ContractType = "native"
+	TypeEvm    ContractType = "evm"
 )
 
 var defaultRegistry = newRegistry()
@@ -48,7 +49,7 @@ func (r *registry) Open(tp ContractType, name string, config *InstanceCreatorCon
 	}
 	driverFunc, ok := m[name]
 	if !ok {
-		return nil, fmt.Errorf("driver %s not found", name)
+		return nil, fmt.Errorf("driver %s for %s not found", name, tp)
 	}
 	return driverFunc(config)
 }
