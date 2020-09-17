@@ -10,6 +10,7 @@ import (
 	"github.com/libp2p/go-libp2p-core/sec"
 	"io/ioutil"
 	"net"
+	"path/filepath"
 )
 
 // ID is the protocol ID (used when negotiating with multistream)
@@ -27,7 +28,7 @@ var _ sec.SecureTransport = &Transport{}
 
 func New(path, serviceName string) func(key crypto.PrivKey) (*Transport, error) {
 	return func(key crypto.PrivKey) (*Transport, error) {
-		bs, err := ioutil.ReadFile(path + "/cacert.pem")
+		bs, err := ioutil.ReadFile(filepath.Join(path, "cacert.pem"))
 		if err != nil {
 			return nil, err
 		}
@@ -38,7 +39,7 @@ func New(path, serviceName string) func(key crypto.PrivKey) (*Transport, error) 
 			return nil, err
 		}
 
-		certificate, err := tls.LoadX509KeyPair(path+"/cert.pem", path+"/private.key")
+		certificate, err := tls.LoadX509KeyPair(filepath.Join(path, "cert.pem"), filepath.Join(path, "private.key"))
 		if err != nil {
 			return nil, err
 		}
