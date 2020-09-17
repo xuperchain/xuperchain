@@ -33,7 +33,6 @@ func handleStream(s net.Stream) {
 		Port:            20015,
 		KeyPath:         "./data/netkeys/",
 		IsNat:           true,
-		IsSecure:        true,
 		IsHidden:        false,
 		MaxStreamLimits: 20,
 		MaxMessageSize:  config.DefaultMaxMessageSize,

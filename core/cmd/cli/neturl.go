@@ -16,11 +16,12 @@ type NetURLCommand struct {
 func NewNetURLCommand(cli *Cli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "netURL",
-		Short: "Operate a netURL: gen|get|preview.",
+		Short: "Operate a netURL: gen|get|preview|convert.",
 	}
 	cmd.AddCommand(NewNetURLGenCommand(cli))
 	cmd.AddCommand(NewNetURLGetCommand(cli))
 	cmd.AddCommand(NewNetURLPreviewCommand(cli))
+	cmd.AddCommand(NewNetURLConvertCommand(cli))
 	return cmd
 }
 

@@ -27,6 +27,7 @@ p2p:
   # module is the name of p2p module plugin, value is [p2pv2/p2pv1], default is p2pv2
   module: p2pv2
   port: 47101
+  #isTls: true
   #certPath: ./data/tls/1
   #serviceName: saas_test.server.com
   #bootNodes:
