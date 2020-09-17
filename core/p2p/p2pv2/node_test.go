@@ -15,7 +15,6 @@ func TestNewNode(t *testing.T) {
 		Port:            45101,
 		KeyPath:         "./data/netkeys/",
 		IsNat:           true,
-		IsSecure:        true,
 		IsHidden:        false,
 		MaxStreamLimits: 20,
 	}
@@ -34,7 +33,6 @@ func TestNewNode(t *testing.T) {
 		Port:            45102,
 		KeyPath:         "./data/netkeys/",
 		IsNat:           true,
-		IsSecure:        true,
 		IsHidden:        false,
 		MaxStreamLimits: 20,
 	}
