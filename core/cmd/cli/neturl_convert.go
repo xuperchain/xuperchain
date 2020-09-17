@@ -25,7 +25,7 @@ func NewNetURLConvertCommand(cli *Cli) *cobra.Command {
 	n.cli = cli
 	n.cmd = &cobra.Command{
 		Use:   "convert [options]",
-		Short: "Convert net private key",
+		Short: "Convert net private key to CA pem format",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return n.convertKey(context.TODO())
 		},
@@ -35,7 +35,7 @@ func NewNetURLConvertCommand(cli *Cli) *cobra.Command {
 }
 
 func (n *NetURLConvertCommand) addFlags() {
-	n.cmd.Flags().StringVar(&n.path, "path", "./data/netkeys", "path to save net url (default is ./data/netkeys)")
+	n.cmd.Flags().StringVar(&n.path, "path", "./data/netkeys", "path where net_private.key saved (default is ./data/netkeys)")
 }
 
 func (n *NetURLConvertCommand) convertKey(ctx context.Context) error {
