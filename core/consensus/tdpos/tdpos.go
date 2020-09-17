@@ -113,8 +113,7 @@ func (tp *TDpos) Configure(xlog log.Logger, cfg *config.NodeConfig, consCfg map[
 		return err
 	}
 
-	sameBFT, _ := extParams["sameconsensus"].(bool)
-	if err = tp.initBFT(cfg, sameBFT); err != nil {
+	if err = tp.initBFT(cfg); err != nil {
 		xlog.Warn("init chained-bft failed!", "error", err)
 		return err
 	}
@@ -800,7 +799,7 @@ func (tp *TDpos) GetStatus() *cons_base.ConsensusStatus {
 	return status
 }
 
-func (tp *TDpos) initBFT(cfg *config.NodeConfig, sameBFT bool) error {
+func (tp *TDpos) initBFT(cfg *config.NodeConfig) error {
 	// BFT not enabled
 	if !tp.config.enableBFT {
 		return nil
@@ -839,12 +838,9 @@ func (tp *TDpos) initBFT(cfg *config.NodeConfig, sameBFT bool) error {
 				tp.log.Warn("initBFT: get block failed", "error", err, "blockid", string(blockid))
 				return err
 			}
-			qcItem := block.GetJustify()
-			if sameBFT && qcNeeded == 2 {
-				qcItem = &pb.QuorumCert{
-					ProposalId: blockid,
-					ViewNumber: block.GetHeight(),
-				}
+			qcItem := &pb.QuorumCert{
+				ProposalId: blockid,
+				ViewNumber: block.GetHeight(),
 			}
 			qc[qcNeeded] = qcItem
 			blockid = block.GetPreHash()
@@ -855,11 +851,6 @@ func (tp *TDpos) initBFT(cfg *config.NodeConfig, sameBFT bool) error {
 	}
 	term, _, _ := tp.minerScheduling(time.Now().UnixNano())
 	proposers := tp.getTermProposer(term)
-	if sameBFT {
-		qc[0] = qc[1]
-		qc[1] = qc[2]
-		qc[2] = nil
-	}
 	cbft, err := bft.NewChainedBft(
 		tp.log,
 		tp.config.bftConfig,
