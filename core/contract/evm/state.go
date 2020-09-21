@@ -53,14 +53,14 @@ func (s *stateManager) GetAccount(address crypto.Address) (*acm.Account, error) 
 
 // Retrieve a 32-byte value stored at key for the account at address, return Zero256 if key does not exist but
 // error if address does not
-func (s *stateManager) GetStorage(address crypto.Address, key binary.Word256) (value []byte, err error) {
-	fmt.Printf("get %s %s\n", address, key)
-	fmt.Printf("contractName1 %s\n", s.ctx.ContractName)
+func (s *stateManager) GetStorage(address crypto.Address, key binary.Word256) ([]byte, error) {
+	fmt.Printf("\nget %s %s\n", address, key)
+	fmt.Printf("first address %s\n", s.ctx.ContractName)
 	contractName, _, err := DetermineEVMAddress(address)
 	if err != nil {
 		return nil, nil
 	}
-	fmt.Printf("contractName2 %s\n", contractName)
+	fmt.Printf("second address %s\n", contractName)
 	v, err := s.ctx.Cache.Get(contractName, key.Bytes())
 	if err != nil {
 		fmt.Printf("GetStorage error %v\n", err)
@@ -83,13 +83,13 @@ func (s *stateManager) RemoveAccount(address crypto.Address) error {
 
 // Store a 32-byte value at key for the account at address, setting to Zero256 removes the key
 func (s *stateManager) SetStorage(address crypto.Address, key binary.Word256, value []byte) error {
-	fmt.Printf("store %s %s:%x\n", address, key, value)
-	fmt.Printf("contractName1 %s\n", s.ctx.ContractName)
+	fmt.Printf("\nstore %s %s:%x\n", address, key, value)
+	fmt.Printf("first address %s\n", s.ctx.ContractName)
 	contractName, _, err := DetermineEVMAddress(address)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("contractName2 %s\n", contractName)
+	fmt.Printf("second address %s\n", contractName)
 	return s.ctx.Cache.Put(contractName, key.Bytes(), value)
 }
 

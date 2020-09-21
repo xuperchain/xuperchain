@@ -183,13 +183,19 @@ func (e *evmInstance) deployContract() error {
 	if err != nil {
 		return err
 	}
+
+	callee, err := ContractNameToEVMAddress(e.ctx.ContractName)
+	if err != nil {
+		return err
+	}
+
 	var gas uint64 = 100000
 	input := e.code
 	params := engine.CallParams{
 		CallType: exec.CallTypeCode,
 		Origin:   caller,
 		Caller:   caller,
-		Callee:   crypto.ZeroAddress,
+		Callee:   callee,
 		Input:    input,
 		Value:    big.NewInt(0),
 		Gas:      &gas,
