@@ -205,7 +205,7 @@ github.com/huin/goupnp/httpu
 github.com/huin/goupnp/scpd
 github.com/huin/goupnp/soap
 github.com/huin/goupnp/ssdp
-# github.com/hyperledger/burrow v0.30.5 => github.com/Tri-stone/burrow v0.30.18
+# github.com/hyperledger/burrow v0.30.5 => github.com/xuperchain/burrow v0.30.6-0.20200922024403-90193b5a35dd
 github.com/hyperledger/burrow/acm
 github.com/hyperledger/burrow/acm/acmstate
 github.com/hyperledger/burrow/acm/balance
