@@ -38,14 +38,14 @@ var (
 
 // RootOptions 代表全局通用的flag，可以以嵌套结构体的方式组织flags.
 type RootOptions struct {
-	Host       string
-	Name       string
-	Keys       string
-	TLS        TLSOptions
-	CryptoType string
-	Xuper3     bool
-	Xendorser  string
-	XCfg       *CommConfig
+	Host        string
+	Name        string
+	Keys        string
+	TLS         TLSOptions
+	CryptoType  string
+	Xuper3      bool
+	CliConfPath string
+	CliConf     *CliConfig
 }
 
 // TLSOptions TLS part
@@ -100,7 +100,7 @@ func (c *Cli) initFlags() error {
 	rootFlags.String("name", "xuper", "block chain name")
 	rootFlags.String("keys", "data/keys", "directory of keys")
 	rootFlags.String("cryptotype", crypto_client.CryptoTypeDefault, "crypto type, default|gm|schnorr")
-	rootFlags.String("xendorser", "", "xendorser config file (default is cmd/cli/conf/xendorser_cli.yaml)")
+	rootFlags.String("cliconfpath", "", "cli config file path")
 	viper.BindPFlags(rootFlags)
 
 	cobra.OnInitialize(func() {
@@ -126,14 +126,14 @@ func (c *Cli) initFlags() error {
 		// rootFlags.String("topic.key", "", "")
 		viper.Unmarshal(&c.RootOptions)
 
-		cfg := NewCommonConfig()
-		if c.RootOptions.Xendorser != "" {
-			err := cfg.LoadConfig(c.RootOptions.Xendorser)
+		cfg := NewCliConfig()
+		if c.RootOptions.CliConfPath != "" {
+			err := cfg.LoadConfig(c.RootOptions.CliConfPath)
 			if err != nil {
 				os.Exit(-1)
 			}
 		}
-		c.RootOptions.XCfg = cfg
+		c.RootOptions.CliConf = cfg
 
 		err := c.initXchainClient()
 		if err != nil {

@@ -56,7 +56,7 @@ type CommTrans struct {
 
 	// DebugTx if enabled, tx will be printed instead of being posted
 	DebugTx bool
-	Cfg     *CommConfig
+	CliConf *CliConfig
 }
 
 // GenerateTx generate raw tx
@@ -379,10 +379,9 @@ func (c *CommTrans) GenTxInputs(ctx context.Context, totalNeed *big.Int) (
 func (c *CommTrans) Transfer(ctx context.Context) error {
 	var err error
 	tx := &pb.Transaction{}
-	if c.Cfg.ComplianceCheck.IsNeedComplianceCheck == true {
+	if c.CliConf.ComplianceCheck.IsNeedComplianceCheck == true {
 		preSelectUTXORes, err := c.GenPreExeWithSelectUtxoRes(ctx)
 		if err != nil {
-			fmt.Printf("Contract preExe failed, err: %v", err)
 			return err
 		}
 		return c.GenCompleteTxAndPost(ctx, preSelectUTXORes)
@@ -743,8 +742,8 @@ func (c *CommTrans) GenPreExeWithSelectUtxoRes(ctx context.Context) (
 			return nil, fmt.Errorf("Get auth require error: %s", err.Error())
 		}
 	}
-	extraAmount := int64(c.Cfg.ComplianceCheck.ComplianceCheckEndorseServiceFee)
-	preExeRPCReq.AuthRequire = append(preExeRPCReq.AuthRequire, c.Cfg.ComplianceCheck.ComplianceCheckEndorseServiceAddr)
+	extraAmount := int64(c.CliConf.ComplianceCheck.ComplianceCheckEndorseServiceFee)
+	preExeRPCReq.AuthRequire = append(preExeRPCReq.AuthRequire, c.CliConf.ComplianceCheck.ComplianceCheckEndorseServiceAddr)
 	preSelUTXOReq := &pb.PreExecWithSelectUTXORequest{
 		Bcname:      c.ChainName,
 		Address:     initiator,
@@ -753,7 +752,28 @@ func (c *CommTrans) GenPreExeWithSelectUtxoRes(ctx context.Context) (
 	}
 
 	// preExe
-	return c.PreExecWithSelecUTXO(preSelUTXOReq)
+	preExecWithSelectUTXOResponse, err := c.XchainClient.PreExecWithSelectUTXO(ctx, preSelUTXOReq)
+	if err != nil {
+		return nil, err
+	}
+
+	gasUsed := preExecWithSelectUTXOResponse.GetResponse().GetGasUsed()
+	fmt.Printf("The gas you cousume is: %v\n", gasUsed)
+	if gasUsed > 0 {
+		if c.Fee != "" && c.Fee != "0" {
+			fee, _ := strconv.ParseInt(c.Fee, 10, 64)
+			if fee < gasUsed {
+				return nil, errors.New("Fee not enough")
+			}
+		} else {
+			return nil, errors.New("You need add fee")
+		}
+		fmt.Printf("The fee you pay is: %v\n", c.Fee)
+	} else if c.Fee != "" && c.Fee != "0" && gasUsed <= 0 {
+		fmt.Printf("The fee you pay is: %v\n", c.Fee)
+	}
+
+	return preExecWithSelectUTXOResponse, nil
 }
 
 func (c *CommTrans) GenCompleteTxAndPost(ctx context.Context, preExeResp *pb.PreExecWithSelectUTXOResponse) error {
@@ -866,7 +886,7 @@ func (c *CommTrans) GenRealTx(response *pb.PreExecWithSelectUTXOResponse,
 		authRequire = fromAddr
 	}
 	tx.AuthRequire = append(tx.AuthRequire, authRequire)
-	tx.AuthRequire = append(tx.AuthRequire, c.Cfg.ComplianceCheck.ComplianceCheckEndorseServiceAddr)
+	tx.AuthRequire = append(tx.AuthRequire, c.CliConf.ComplianceCheck.ComplianceCheckEndorseServiceAddr)
 
 	cryptoClient, err := crypto_client.CreateCryptoClient(c.CryptoType)
 	if err != nil {
@@ -952,52 +972,6 @@ func (c *CommTrans) GeneratePureTxInputs(utxoOutputs *pb.UtxoOutput) (
 	return txInputs, nil
 }
 
-func (c *CommTrans) PreExecWithSelecUTXO(req *pb.PreExecWithSelectUTXORequest) (*pb.PreExecWithSelectUTXOResponse, error) {
-	requestData, err := json.Marshal(req)
-	if err != nil {
-		fmt.Printf("PreExecWithSelecUTXO json marshal failed, err: %v", err)
-		return nil, err
-	}
-
-	endorserRequest := &pb.EndorserRequest{
-		RequestName: "PreExecWithFee",
-		BcName:      c.ChainName,
-		RequestData: requestData,
-	}
-
-	conn, err := grpc.Dial(c.Cfg.EndorseServiceHost, grpc.WithInsecure(), grpc.WithMaxMsgSize(64<<20-1))
-	if err != nil {
-		fmt.Printf("PreExecWithSelecUTXO Connect EndorseServiceHost failed, err: %v", err)
-	}
-	defer conn.Close()
-	ctx, cancel := context.WithTimeout(context.Background(), 15000*time.Millisecond)
-	defer cancel()
-	client := pb.NewXendorserClient(conn)
-	endorserResponse, err := client.EndorserCall(ctx, endorserRequest)
-	if err != nil {
-		fmt.Printf("PreExecWithSelecUTXO EndorserCall failed, err: %v", err)
-		return nil, fmt.Errorf("EndorserCall error! Response is: %v", err)
-	}
-
-	responseData := endorserResponse.ResponseData
-
-	preExecWithSelectUTXOResponse := new(pb.PreExecWithSelectUTXOResponse)
-	err = json.Unmarshal(responseData, preExecWithSelectUTXOResponse)
-	if err != nil {
-		return nil, err
-	}
-
-	fmt.Printf("The gas you cousume is: %v\n", preExecWithSelectUTXOResponse.GetResponse().GetGasUsed())
-	for _, res := range preExecWithSelectUTXOResponse.GetResponse().GetResponses() {
-		if res.Status >= 400 {
-			return nil, fmt.Errorf("contract error status:%d message:%s", res.Status, res.Message)
-		}
-		fmt.Printf("contract response: %s\n", string(res.Body))
-	}
-
-	return preExecWithSelectUTXOResponse, nil
-}
-
 func (c *CommTrans) ComplianceCheck(tx *pb.Transaction, fee *pb.Transaction) (
 	*pb.SignatureInfo, error) {
 	txStatus := &pb.TxStatus{
@@ -1018,7 +992,7 @@ func (c *CommTrans) ComplianceCheck(tx *pb.Transaction, fee *pb.Transaction) (
 		RequestData: requestData,
 	}
 
-	conn, err := grpc.Dial(c.Cfg.EndorseServiceHost, grpc.WithInsecure(), grpc.WithMaxMsgSize(64<<20-1))
+	conn, err := grpc.Dial(c.CliConf.EndorseServiceHost, grpc.WithInsecure(), grpc.WithMaxMsgSize(64<<20-1))
 	if err != nil {
 		fmt.Printf("ComplianceCheck connect EndorseServiceHost err: %v", err)
 		return nil, err
@@ -1038,15 +1012,15 @@ func (c *CommTrans) ComplianceCheck(tx *pb.Transaction, fee *pb.Transaction) (
 }
 
 func (c *CommTrans) GenComplianceCheckTx(utxoOutput *pb.UtxoOutput) (*pb.Transaction, error) {
-	totalNeed := new(big.Int).SetInt64(int64(c.Cfg.ComplianceCheck.ComplianceCheckEndorseServiceFee))
+	totalNeed := new(big.Int).SetInt64(int64(c.CliConf.ComplianceCheck.ComplianceCheckEndorseServiceFee))
 	txInputs, deltaTxOutput, err := c.GenerateTxInput(utxoOutput, totalNeed)
 	if err != nil {
 		fmt.Printf("GenerateComplianceTx GenerateTxInput failed.")
 		return nil, fmt.Errorf("GenerateComplianceTx GenerateTxInput err: %v", err)
 	}
 
-	checkAmount := strconv.Itoa(c.Cfg.ComplianceCheck.ComplianceCheckEndorseServiceFee)
-	txOutputs, err := c.GenerateTxOutput(c.Cfg.ComplianceCheck.ComplianceCheckEndorseServiceFeeAddr, checkAmount, "0")
+	checkAmount := strconv.Itoa(c.CliConf.ComplianceCheck.ComplianceCheckEndorseServiceFee)
+	txOutputs, err := c.GenerateTxOutput(c.CliConf.ComplianceCheck.ComplianceCheckEndorseServiceAddr, checkAmount, "0")
 	if err != nil {
 		fmt.Printf("GenerateComplianceTx GenerateTxOutput failed.")
 		return nil, fmt.Errorf("GenerateComplianceTx GenerateTxOutput err: %v", err)
