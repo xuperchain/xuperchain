@@ -86,7 +86,7 @@ func (p *PublicKey) Verify(s *Signature, t *merlin.Transcript) bool {
 
 	Rp := r255.NewElement()
 	Rp = Rp.ScalarBaseMult(s.S)
-	ky := (p.key).ScalarMult(k, p.key)
+	ky := r255.NewElement().ScalarMult(k, p.key)
 	Rp = Rp.Subtract(Rp, ky)
 
 	return Rp.Equal(s.R) == 1

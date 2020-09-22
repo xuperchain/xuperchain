@@ -5,7 +5,7 @@ github.com/Azure/go-ansiterm
 github.com/Azure/go-ansiterm/winterm
 # github.com/BurntSushi/toml v0.3.1
 github.com/BurntSushi/toml
-# github.com/ChainSafe/go-schnorrkel v0.0.0-20200102211924-4bcbc698314f
+# github.com/ChainSafe/go-schnorrkel v0.0.0-20200626160457-b38283118816
 github.com/ChainSafe/go-schnorrkel
 # github.com/Microsoft/go-winio v0.4.15-0.20190919025122-fc70bd9a86b5
 github.com/Microsoft/go-winio

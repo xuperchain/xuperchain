@@ -60,13 +60,46 @@ func (out *VrfOutput) Encode() [32]byte {
 	return outbytes
 }
 
+// Decode sets the VrfOutput to the decoded input
+func (out *VrfOutput) Decode(in [32]byte) error {
+	output := r255.NewElement()
+	err := output.Decode(in[:])
+	if err != nil {
+		return err
+	}
+	out.output = output
+	return nil
+}
+
 // Encode returns a 64-byte encoded VrfProof
-func (p *VrfProof) Encode() []byte {
+func (p *VrfProof) Encode() [64]byte {
 	cbytes := [32]byte{}
 	copy(cbytes[:], p.c.Encode([]byte{}))
 	sbytes := [32]byte{}
 	copy(sbytes[:], p.s.Encode([]byte{}))
-	return append(cbytes[:], sbytes[:]...)
+	enc := [64]byte{}
+	copy(enc[:32], cbytes[:])
+	copy(enc[32:], sbytes[:])
+	return enc
+}
+
+// Decode sets the VrfProof to the decoded input
+func (p *VrfProof) Decode(in [64]byte) error {
+	c := r255.NewScalar()
+	err := c.Decode(in[:32])
+	if err != nil {
+		return err
+	}
+	p.c = c
+
+	s := r255.NewScalar()
+	err = s.Decode(in[32:])
+	if err != nil {
+		return err
+	}
+	p.s = s
+
+	return nil
 }
 
 // VrfSign returns a vrf output and proof given a secret key and transcript.

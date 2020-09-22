@@ -19,7 +19,7 @@ func divideScalarByCofactor(s []byte) []byte {
 	l := len(s) - 1
 	low := byte(0)
 	for i := range s {
-		r := s[l-i] & 0b00000111 // remainder
+		r := s[l-i] & 0x07 // remainder
 		s[l-i] >>= 3
 		s[l-i] += low
 		low = r << 5
