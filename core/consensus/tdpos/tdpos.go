@@ -388,13 +388,13 @@ Again:
 	// master check
 	if tp.isProposer(term, pos, tp.address) {
 		tp.log.Trace("CompeteMaster now xterm infos", "term", term, "pos", pos, "blockPos", blockPos, "un2", un2,
-			"master", true)
+			"master", true, "height", height)
 		tp.curBlockNum = blockPos
 		s := tp.needSync()
 		return true, s
 	}
 	tp.log.Trace("CompeteMaster now xterm infos", "term", term, "pos", pos, "blockPos", blockPos, "un2", un2,
-		"master", false)
+		"master", false, "height", height)
 	return false, false
 }
 
@@ -603,7 +603,7 @@ func (tp *TDpos) ProcessConfirmBlock(block *pb.InternalBlock) error {
 		}
 	}
 	// update bft smr status
-	if tp.config.enableBFT && !tp.isInValidateSets() {
+	if tp.config.enableBFT {
 		tp.bftPaceMaker.UpdateSmrState(block.GetJustify())
 	}
 	return nil
@@ -838,7 +838,11 @@ func (tp *TDpos) initBFT(cfg *config.NodeConfig) error {
 				tp.log.Warn("initBFT: get block failed", "error", err, "blockid", string(blockid))
 				return err
 			}
-			qc[qcNeeded] = block.GetJustify()
+			qcItem := &pb.QuorumCert{
+				ProposalId: blockid,
+				ViewNumber: block.GetHeight(),
+			}
+			qc[qcNeeded] = qcItem
 			blockid = block.GetPreHash()
 			if blockid == nil {
 				break

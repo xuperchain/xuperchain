@@ -3,10 +3,12 @@ package base
 import (
 	"crypto/rand"
 	"encoding/base64"
+	"encoding/pem"
 	"errors"
 	"io/ioutil"
 	math_rand "math/rand"
 	"os"
+	"path/filepath"
 	"strconv"
 	"time"
 
@@ -41,7 +43,7 @@ func GenerateKeyPairWithPath(path string) error {
 		return err
 	}
 
-	return ioutil.WriteFile(path+"net_private.key", []byte(base64.StdEncoding.EncodeToString(privData)), 0700)
+	return ioutil.WriteFile(filepath.Join(path, "net_private.key"), []byte(base64.StdEncoding.EncodeToString(privData)), 0700)
 }
 
 // GetPeerIDFromPath return peer id of given private key path
@@ -64,7 +66,7 @@ func GetKeyPairFromPath(path string) (crypto.PrivKey, error) {
 		path = config.DefaultNetKeyPath
 	}
 
-	data, err := ioutil.ReadFile(path + "net_private.key")
+	data, err := ioutil.ReadFile(filepath.Join(path, "net_private.key"))
 	if err != nil {
 		return nil, err
 	}
@@ -74,6 +76,59 @@ func GetKeyPairFromPath(path string) (crypto.PrivKey, error) {
 		return nil, err
 	}
 	return crypto.UnmarshalPrivateKey(privData)
+}
+
+// GetPemKeyPairFromPath get xuper pem private key from file path
+func GetPemKeyPairFromPath(path string) (crypto.PrivKey, error) {
+	if len(path) == 0 {
+		path = config.DefaultNetKeyPath
+	}
+
+	keyFile, err := ioutil.ReadFile(filepath.Join(path, "private.key"))
+	if err != nil {
+		return nil, err
+	}
+
+	keyBlock, _ := pem.Decode(keyFile)
+	return crypto.UnmarshalRsaPrivateKey(keyBlock.Bytes)
+}
+
+// GeneratePemKeyFromNetKey get pem format private key from net private key
+func GeneratePemKeyFromNetKey(path string) error {
+	privKey, err := GetKeyPairFromPath(path)
+	if err != nil {
+		return err
+	}
+
+	bytes, err := privKey.Raw()
+	if err != nil {
+		return err
+	}
+
+	block := &pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: bytes,
+	}
+	return ioutil.WriteFile(filepath.Join(path, "private.key"), pem.EncodeToMemory(block), 0700)
+}
+
+// GenerateNetKeyFromPemKey get net private key from pem format private key
+func GenerateNetKeyFromPemKey(path string) error {
+	priv, err := GetPemKeyPairFromPath(path)
+	if err != nil {
+		return err
+	}
+
+	privData, err := crypto.MarshalPrivateKey(priv)
+	if err != nil {
+		return err
+	}
+
+	if err = os.MkdirAll(path, 0777); err != nil {
+		return err
+	}
+
+	return ioutil.WriteFile(filepath.Join(path, "net_private.key"), []byte(base64.StdEncoding.EncodeToString(privData)), 0700)
 }
 
 // GenerateUniqueRandList get a random unique number list
