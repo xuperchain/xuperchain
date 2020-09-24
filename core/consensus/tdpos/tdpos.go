@@ -826,28 +826,17 @@ func (tp *TDpos) initBFT(cfg *config.NodeConfig) error {
 
 	// initialize bft
 	bridge := bft.NewDefaultCbftBridge(tp.bcname, tp.ledger, tp.log, tp)
-	qcNeeded := 3
-	qc := make([]*pb.QuorumCert, qcNeeded)
+	qc := make([]*pb.QuorumCert, 3) // 3为chained-bft的qc存储数目
 	meta := tp.ledger.GetMeta()
 	if meta.TrunkHeight != 0 {
 		blockid := meta.TipBlockid
-		for qcNeeded > 0 {
-			qcNeeded--
-			block, err := tp.ledger.QueryBlock(blockid)
-			if err != nil {
-				tp.log.Warn("initBFT: get block failed", "error", err, "blockid", string(blockid))
-				return err
-			}
-			qcItem := &pb.QuorumCert{
-				ProposalId: blockid,
-				ViewNumber: block.GetHeight(),
-			}
-			qc[qcNeeded] = qcItem
-			blockid = block.GetPreHash()
-			if blockid == nil {
-				break
-			}
+		block, _ := tp.ledger.QueryBlock(blockid)
+		qc[2] = nil
+		qc[1] = &pb.QuorumCert{
+			ProposalId: blockid,
+			ViewNumber: block.GetHeight(),
 		}
+		qc[0] = block.GetJustify()
 	}
 	term, _, _ := tp.minerScheduling(time.Now().UnixNano())
 	proposers := tp.getTermProposer(term)

@@ -254,13 +254,6 @@ func (s *Smr) ProcessProposal(viewNumber int64, proposalID, proposalMsg []byte, 
 
 	netMsg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion3, s.bcname, "",
 		p2p_pb.XuperMessage_CHAINED_BFT_NEW_PROPOSAL_MSG, msgBuf, p2p_pb.XuperMessage_NONE)
-	// 当前leader提前给自己投票，加速投票过程
-	if s.generateQC != nil {
-		err = s.voteProposal(qc, s.address, netMsg.GetHeader().GetLogid())
-		if err != nil {
-			s.slog.Error("提前签名error", "logid", netMsg.GetHeader().GetLogid(), "error", err)
-		}
-	}
 	s.slog.Info("ProcessProposal: Send proposal msg", "netMsg", netMsg)
 	opts := []p2p_base.MessageOption{
 		p2p_base.WithBcName(s.bcname),
