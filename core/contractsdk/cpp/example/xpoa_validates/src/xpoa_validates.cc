@@ -133,7 +133,8 @@ public:
       // 此处检查用户blockid，通过blockid限制合约多tx并发
         std::string last_blockid, last_height;
         xchain::Block block;
-        if (!ctx->get_object(LAST_BLOCKID, &last_blockid) || !ctx->get_object(LAST_HEIGHT, &last_height)|| !ctx->query_block(blockid, &block) || !block.in_trunk || blockid == last_blockid) {
+        if (!ctx->get_object(LAST_BLOCKID, &last_blockid) || !ctx->get_object(LAST_HEIGHT, &last_height)|| !ctx->query_block(blockid, &block) || 
+            !block.in_trunk || blockid == last_blockid || !block.next_hash.empty()) {
             ctx->error("add_validate fail to check blockid");
             return;
         }
@@ -191,7 +192,8 @@ public:
         // 此处检查用户blockid，通过blockid限制合约多tx并发
         std::string last_blockid, last_height;
         xchain::Block block;
-        if (!ctx->get_object(LAST_BLOCKID, &last_blockid) || !ctx->get_object(LAST_HEIGHT, &last_height) || !ctx->query_block(blockid, &block) || !block.in_trunk || blockid == last_blockid) {
+        if (!ctx->get_object(LAST_BLOCKID, &last_blockid) || !ctx->get_object(LAST_HEIGHT, &last_height) || !ctx->query_block(blockid, &block) ||
+            !block.in_trunk || blockid == last_blockid || !block.next_hash.empty()) {
             ctx->error("del_validate fail to check blockid");
             return;
         }
@@ -242,7 +244,8 @@ public:
         // 此处检查用户blockid，通过blockid限制合约多tx并发
         std::string last_blockid, last_height;
         xchain::Block block;
-        if (!ctx->get_object(LAST_BLOCKID, &last_blockid)  || !ctx->get_object(LAST_HEIGHT, &last_height) || !ctx->query_block(blockid, &block) || !block.in_trunk || blockid == last_blockid) {
+        if (!ctx->get_object(LAST_BLOCKID, &last_blockid)  || !ctx->get_object(LAST_HEIGHT, &last_height) || !ctx->query_block(blockid, &block) || 
+            !block.in_trunk || blockid == last_blockid || !block.next_hash.empty()) {
             ctx->error("update_validate fail to check blockid");
             return;
         }
