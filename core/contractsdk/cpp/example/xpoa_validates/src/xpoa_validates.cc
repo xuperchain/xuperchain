@@ -139,9 +139,7 @@ public:
             return;
         }
         int64_t height = 0;
-        try {
-            height = std::atoll(last_height.c_str());
-        } catch(...) {}
+        height = std::atoll(last_height.c_str());
         if (!height || height > block.height) {
             ctx->error("add_validate fail to check blockid, please input tipID from ledger");
             return;
@@ -198,9 +196,7 @@ public:
             return;
         }
         int64_t height = 0;
-        try {
-            height = std::atoll(last_height.c_str());
-        } catch(...) {}
+        height = std::atoll(last_height.c_str());
         if (!height || height > block.height) {
             ctx->error("add_validate fail to check blockid, please input tipID from ledger");
             return;
@@ -250,9 +246,7 @@ public:
             return;
         }
         int64_t height = 0;
-        try {
-            height = std::atoll(last_height.c_str());
-        } catch(...) {}
+        height = std::atoll(last_height.c_str());
         if (!height || height > block.height) {
             ctx->error("add_validate fail to check blockid, please input tipID from ledger");
             return;
