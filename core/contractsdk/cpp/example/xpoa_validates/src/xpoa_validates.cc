@@ -15,6 +15,8 @@ private:
 class XpoaValidates : public xchain::Contract {
 private:
     const std::string VALIDATES_KEY = "VALIDATES";
+    const std::string LAST_BLOCKID = "BLOCKID";
+    const std::string LAST_HEIGHT = "HEIGHT";
 
 public:
     bool checkArg(xchain::Context* ctx, const std::string& key, std::string& value) {
@@ -67,8 +69,8 @@ public:
     void initialize() {
         xchain::Context* ctx = this->context();
         // 检查合约参数是否包含所需字段
-        std::string addresss, neturls;
-        if (!checkArg(ctx, "addresss", addresss) || !checkArg(ctx, "neturls", neturls)) {
+        std::string addresss, neturls, blockid;
+        if (!checkArg(ctx, "addresss", addresss) || !checkArg(ctx, "neturls", neturls) || !checkArg(ctx, "blockid", blockid)) {
             return;
         }
         std::vector<std::string> address_sets;
@@ -82,6 +84,17 @@ public:
         std::string buffer;
         if (ctx->get_object(VALIDATES_KEY, &buffer) && !buffer.empty()) {
             ctx->error("initialize xpoa validates already exist");
+            return;
+        }
+
+        // 此处写入blockid，通过blockid限制合约多tx并发
+        xchain::Block block;
+        if (!ctx->query_block(blockid, &block) || !block.in_trunk) {
+            ctx->error("initialize fail to check blockid");
+            return;
+        }
+        if (!ctx->put_object(LAST_BLOCKID, blockid) || !ctx->put_object(LAST_HEIGHT, std::to_string(block.height))) {
+            ctx->error("initialize fail to save blockid");
             return;
         }
 
@@ -113,10 +126,29 @@ public:
     void add_validate() {
         xchain::Context* ctx = this->context();
         // 检查合约参数是否包含所需字段
-        std::string address, neturl;
-        if (!checkArg(ctx, "address", address) || !checkArg(ctx, "neturl", neturl)) {
+        std::string address, neturl, blockid;
+        if (!checkArg(ctx, "address", address) || !checkArg(ctx, "neturl", neturl) || !checkArg(ctx, "blockid", blockid)) {
             return;
         }
+      // 此处检查用户blockid，通过blockid限制合约多tx并发
+        std::string last_blockid, last_height;
+        xchain::Block block;
+        if (!ctx->get_object(LAST_BLOCKID, &last_blockid) || !ctx->get_object(LAST_HEIGHT, &last_height)|| !ctx->query_block(blockid, &block) || 
+            !block.in_trunk || blockid == last_blockid || !block.next_hash.empty()) {
+            ctx->error("add_validate fail to check blockid");
+            return;
+        }
+        int64_t height = 0;
+        height = std::atoll(last_height.c_str());
+        if (!height || height > block.height) {
+            ctx->error("add_validate fail to check blockid, please input tipID from ledger");
+            return;
+        }
+        if (!ctx->put_object(LAST_BLOCKID, blockid) || !ctx->put_object(LAST_HEIGHT, std::to_string(block.height))) {
+            ctx->error("add_validate fail to save blockid");
+            return;
+        }
+
         // 检查当前proposers是否合法
         xchain::json jValidatesObject;
         if (!parseValidates(ctx, &jValidatesObject)) {
@@ -150,10 +182,30 @@ public:
     void del_validate() {
         xchain::Context* ctx = this->context();
         // 检查合约参数是否包含所需字段
-        std::string address;
-        if (!checkArg(ctx, "address", address)) {
+        std::string address, blockid;
+        if (!checkArg(ctx, "address", address) || !checkArg(ctx, "blockid", blockid)) {
             return;
         }
+
+        // 此处检查用户blockid，通过blockid限制合约多tx并发
+        std::string last_blockid, last_height;
+        xchain::Block block;
+        if (!ctx->get_object(LAST_BLOCKID, &last_blockid) || !ctx->get_object(LAST_HEIGHT, &last_height) || !ctx->query_block(blockid, &block) ||
+            !block.in_trunk || blockid == last_blockid || !block.next_hash.empty()) {
+            ctx->error("del_validate fail to check blockid");
+            return;
+        }
+        int64_t height = 0;
+        height = std::atoll(last_height.c_str());
+        if (!height || height > block.height) {
+            ctx->error("add_validate fail to check blockid, please input tipID from ledger");
+            return;
+        }
+        if (!ctx->put_object(LAST_BLOCKID, blockid) || !ctx->put_object(LAST_HEIGHT, std::to_string(block.height))) {
+            ctx->error("del_validate fail to save blockid");
+            return;
+        }
+
         xchain::json jValidatesObject;
         if (!parseValidates(ctx, &jValidatesObject)) {
             return;
@@ -181,10 +233,29 @@ public:
     */
     void update_validate() {
         xchain::Context* ctx = this->context();
-        std::string address, neturl;
-        if (!checkArg(ctx, "address", address) || !checkArg(ctx, "neturl", neturl)) {
+        std::string address, neturl, blockid;
+        if (!checkArg(ctx, "address", address) || !checkArg(ctx, "neturl", neturl) || !checkArg(ctx, "blockid", blockid)) {
             return;
         }
+        // 此处检查用户blockid，通过blockid限制合约多tx并发
+        std::string last_blockid, last_height;
+        xchain::Block block;
+        if (!ctx->get_object(LAST_BLOCKID, &last_blockid)  || !ctx->get_object(LAST_HEIGHT, &last_height) || !ctx->query_block(blockid, &block) || 
+            !block.in_trunk || blockid == last_blockid || !block.next_hash.empty()) {
+            ctx->error("update_validate fail to check blockid");
+            return;
+        }
+        int64_t height = 0;
+        height = std::atoll(last_height.c_str());
+        if (!height || height > block.height) {
+            ctx->error("add_validate fail to check blockid, please input tipID from ledger");
+            return;
+        }
+        if (!ctx->put_object(LAST_BLOCKID, blockid) || !ctx->put_object(LAST_HEIGHT, std::to_string(block.height))) {
+            ctx->error("update_validate fail to save blockid");
+            return;
+        }
+
         xchain::json jValidatesObject;
         if (!parseValidates(ctx, &jValidatesObject)) {
             return;
