@@ -185,7 +185,6 @@ func readEVMCodeAndAbi(abiFilePath string) (string, []byte, error) {
 		fmt.Printf("abifile not found,%s\n", abiFilePath)
 		return "", nil, fmt.Errorf("Abi doesn't exist for =>\t%s", abiFilePath)
 	}
-	fmt.Printf("Found ABI file, path: %s", abiFilePath)
 	sol, err := compile.LoadSolidityContract(abiFilePath)
 	if err != nil {
 		return "", nil, err

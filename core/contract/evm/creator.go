@@ -57,6 +57,7 @@ type evmInstance struct {
 	cp         bridge.ContractCodeProvider
 	code       []byte
 	abi        []byte
+	gasUsed    uint64
 }
 
 func (e *evmInstance) Exec() error {
@@ -103,7 +104,7 @@ func (e *evmInstance) Exec() error {
 		return err
 	}
 
-	var gas uint64 = 100000
+	gas := uint64(contract.MaxLimits.Cpu)
 	input := e.ctx.Args["input"]
 
 	value := big.NewInt(0)
@@ -127,6 +128,8 @@ func (e *evmInstance) Exec() error {
 		return err
 	}
 
+	e.gasUsed = uint64(contract.MaxLimits.Cpu) - *params.Gas
+
 	if e.ctx.Method != "" {
 		err = DecodeRespWithAbiForEVM(string(e.abi), e.ctx.Method, out)
 	} else {
@@ -149,7 +152,9 @@ func (e *evmInstance) Exec() error {
 }
 
 func (e *evmInstance) ResourceUsed() contract.Limits {
-	return contract.Limits{}
+	return contract.Limits{
+		Cpu: int64(e.gasUsed),
+	}
 }
 
 func (e *evmInstance) Release() {
@@ -183,7 +188,7 @@ func (e *evmInstance) deployContract() error {
 		return err
 	}
 
-	var gas uint64 = 100000
+	gas := uint64(contract.MaxLimits.Cpu)
 	input := e.code
 	params := engine.CallParams{
 		CallType: exec.CallTypeCode,
@@ -203,6 +208,9 @@ func (e *evmInstance) deployContract() error {
 	if err != nil {
 		return err
 	}
+
+	e.gasUsed = uint64(contract.MaxLimits.Cpu) - *params.Gas
+
 	e.ctx.Output = &pb.Response{
 		Status: 200,
 	}
