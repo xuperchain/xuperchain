@@ -3,6 +3,8 @@ package evm
 import (
 	"fmt"
 	"testing"
+
+	"github.com/hyperledger/burrow/crypto"
 )
 
 func TestXchainToEVMAddress(t *testing.T) {
@@ -32,16 +34,16 @@ func TestXchainToEVMAddress(t *testing.T) {
 }
 
 func TestContractNameToEVMAddress(t *testing.T) {
-	// testtoken1    0909090909090909090974657374746F6B656E31
-	// storagedata11    0x0909090909090973746F72616765646174613131
+	// testtoken1    0x313131312D2D2D2D2D2D74657374746F6B656E31
+	// storagedata11    0x313131312D2D2D73746F72616765646174613131
 	contractName := "storagedata11"
 	contractNameEvmAddr, err := ContractNameToEVMAddress(contractName)
 	if err != nil {
 		t.Error(err)
 	}
 
-	// 0x0909090909090973746F72616765646174613131
-	evmAddr := "0909090909090973746F72616765646174613131"
+	// 0x313131312D2D2D73746F72616765646174613131
+	evmAddr := "313131312D2D2D73746F72616765646174613131"
 	if contractNameEvmAddr.String() != evmAddr {
 		t.Errorf("expect %s got %s", evmAddr, contractNameEvmAddr.String())
 	}
@@ -63,8 +65,8 @@ func TestContractAccountToEVMAddress(t *testing.T) {
 		t.Error(err)
 	}
 
-	// 0x0A0A0A0A31313131313131313131313131313133
-	evmAddr := "0A0A0A0A31313131313131313131313131313133"
+	// 0x3131313231313131313131313131313131313133
+	evmAddr := "3131313231313131313131313131313131313133"
 	if contractAccountEvmAddr.String() != evmAddr {
 		t.Errorf("expect %s got %s", evmAddr, contractAccountEvmAddr.String())
 	}
@@ -76,5 +78,55 @@ func TestContractAccountToEVMAddress(t *testing.T) {
 
 	if contractAccountFromEVMAddr != contractAccount {
 		t.Errorf("expect %s got %s", contractAccount, contractAccountFromEVMAddr)
+	}
+}
+
+func TestDetermineEVMAddress(t *testing.T) {
+	// contract account
+	evmAddrHex := "3131313231313131313131313131313131313133"
+	contractAccount := "XC1111111111111113@xuper"
+	evmAddr, _ := crypto.AddressFromHexString(evmAddrHex)
+
+	contractAccountFromEVMAddr, addrType, err := DetermineEVMAddress(evmAddr)
+	if err != nil {
+		t.Error(err)
+	}
+	if contractAccountFromEVMAddr != contractAccount {
+		t.Errorf("expect %s got %s", contractAccount, contractAccountFromEVMAddr)
+	}
+	if addrType != contractAccountType {
+		t.Errorf("expect %s got %s", contractAccountType, addrType)
+	}
+
+	// contract name
+	evmAddrHex = "313131312D2D2D73746F72616765646174613131"
+	contractName := "storagedata11"
+	evmAddr, _ = crypto.AddressFromHexString(evmAddrHex)
+
+	contractNameFromEVMAddr, addrType, err := DetermineEVMAddress(evmAddr)
+	if err != nil {
+		t.Error(err)
+	}
+	if contractNameFromEVMAddr != contractName {
+		t.Errorf("expect %s got %s", contractAccount, contractNameFromEVMAddr)
+	}
+	if addrType != contractNameType {
+		t.Errorf("expect %s got %s", contractNameType, addrType)
+	}
+
+	// xchain addr
+	evmAddrHex = "D1824C1050F55CA7E564243CE087706CACF1C687"
+	xchainAddr := "jSPJQSAR3NWoKcSFMxYGfcY8KVskvNMtm"
+	evmAddr, _ = crypto.AddressFromHexString(evmAddrHex)
+
+	xchainFromEVMAddr, addrType, err := DetermineEVMAddress(evmAddr)
+	if err != nil {
+		t.Error(err)
+	}
+	if xchainFromEVMAddr != xchainAddr {
+		t.Errorf("expect %s got %s", xchainAddr, xchainFromEVMAddr)
+	}
+	if addrType != xchainAddrType {
+		t.Errorf("expect %s got %s", xchainAddrType, addrType)
 	}
 }

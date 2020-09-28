@@ -85,7 +85,7 @@ func (c *ContractQueryCommand) query(ctx context.Context, codeName string) error
 		return err
 	}
 	if c.module == string(bridge.TypeEvm) {
-		ct.Args, err = convertToEvmArgsWithAbiFile(c.abiFile, c.methodName, args)
+		ct.Args, ct.AbiCode, err = convertToEvmArgsWithAbiFile(c.abiFile, c.methodName, args)
 		if err != nil {
 			return err
 		}

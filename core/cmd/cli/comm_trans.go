@@ -21,6 +21,7 @@ import (
 
 	"github.com/xuperchain/xuperchain/core/contract"
 	"github.com/xuperchain/xuperchain/core/contract/bridge"
+	"github.com/xuperchain/xuperchain/core/contract/evm"
 	crypto_client "github.com/xuperchain/xuperchain/core/crypto/client"
 	"github.com/xuperchain/xuperchain/core/global"
 	"github.com/xuperchain/xuperchain/core/pb"
@@ -53,6 +54,9 @@ type CommTrans struct {
 	Keys         string
 	XchainClient pb.XchainClient
 	CryptoType   string
+
+	// evm
+	AbiCode []byte
 
 	// DebugTx if enabled, tx will be printed instead of being posted
 	DebugTx bool
@@ -135,7 +139,15 @@ func (c *CommTrans) GenPreExeRes(ctx context.Context) (
 		if res.Status >= contract.StatusErrorThreshold {
 			return nil, nil, fmt.Errorf("contract error status:%d message:%s", res.Status, res.Message)
 		}
-		fmt.Printf("contract response: %s\n", string(res.Body))
+		if c.ModuleName != string(bridge.TypeEvm) {
+			fmt.Printf("contract response: %s\n", string(res.Body))
+		} else {
+			// print contract response of evm
+			err := evm.DecodeRespWithAbiForEVM(string(c.AbiCode), c.MethodName, res.Body)
+			if err != nil {
+				return nil, nil, nil
+			}
+		}
 	}
 	return preExeRPCRes, preExeRPCRes.Response.Requests, nil
 }
@@ -262,7 +274,7 @@ func (c *CommTrans) GenTxOutputs(gasUsed int64) ([]*pb.TxOutput, *big.Int, error
 	}
 
 	accounts := []*pb.TxDataAccount{}
-	if c.To != "" && c.ModuleName != string(bridge.TypeEvm) {
+	if c.To != "" {
 		accounts = append(accounts, account)
 	}
 

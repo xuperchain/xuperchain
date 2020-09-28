@@ -1,7 +1,6 @@
 package evm
 
 import (
-	"encoding/json"
 	"fmt"
 	"math/big"
 
@@ -61,7 +60,6 @@ type evmInstance struct {
 }
 
 func (e *evmInstance) Exec() error {
-	// fmt.Printf("%#v\n", e.ctx)
 	var err error
 	if e.ctx.Method == initializeMethod {
 		code, err := e.cp.GetContractCode(e.ctx.ContractName)
@@ -75,18 +73,16 @@ func (e *evmInstance) Exec() error {
 		e.code = code
 		e.abi = e.ctx.Args["contract_abi"]
 	} else {
-		codeDataWithVersion, err := e.ctx.Cache.Get("contract", evmCodeKey(e.ctx.ContractName))
+		e.code, err = e.cp.GetContractCode(e.ctx.ContractName)
 		if err != nil {
 			fmt.Println("get evm code error")
 			return err
 		}
-		abiDataWithVersion, err := e.ctx.Cache.Get("contract", evmAbiKey(e.ctx.ContractName))
+		e.abi, err = e.cp.GetContractAbi(e.ctx.ContractName)
 		if err != nil {
 			fmt.Println("get evm abi error")
 			return err
 		}
-		e.code = codeDataWithVersion.GetPureData().GetValue()
-		e.abi = abiDataWithVersion.GetPureData().GetValue()
 	}
 	if e.ctx.Method == initializeMethod {
 		return e.deployContract()
@@ -131,11 +127,10 @@ func (e *evmInstance) Exec() error {
 		return err
 	}
 
-	var resp string
 	if e.ctx.Method != "" {
-		resp, err = decodeRespWithAbiForEVM(string(e.abi), e.ctx.Method, out)
+		err = DecodeRespWithAbiForEVM(string(e.abi), e.ctx.Method, out)
 	} else {
-		resp, err = decodeRespWithAbiForEVM(string(e.abi), "", out)
+		err = DecodeRespWithAbiForEVM(string(e.abi), "", out)
 	}
 	if err != nil {
 		return err
@@ -148,8 +143,7 @@ func (e *evmInstance) Exec() error {
 
 	e.ctx.Output = &pb.Response{
 		Status: 200,
-		//Body:   []byte(hex.EncodeToString(out)),
-		Body: []byte(resp),
+		Body:   out,
 	}
 	return nil
 }
@@ -200,8 +194,6 @@ func (e *evmInstance) deployContract() error {
 		Value:    big.NewInt(0),
 		Gas:      &gas,
 	}
-	fmt.Printf("input:%x\n", params.Input)
-	//e.ctx.Cache.Transfer()
 	contractCode, err := e.vm.Execute(e.state, e.blockState, e, params, e.code)
 	if err != nil {
 		return err
@@ -211,11 +203,6 @@ func (e *evmInstance) deployContract() error {
 	if err != nil {
 		return err
 	}
-	//key = evmAbiKey(e.ctx.ContractName)
-	//err = e.ctx.Cache.Put("contract", key, e.ctx.Args["abi"])
-	//if err != nil {
-	//	return err
-	//}
 	e.ctx.Output = &pb.Response{
 		Status: 200,
 	}
@@ -242,22 +229,16 @@ func init() {
 //	return packedBytes, nil
 //}
 
-func decodeRespWithAbiForEVM(abiData, funcName string, resp []byte) (string, error) {
-	respArray := make([]string, 10, 10)
+func DecodeRespWithAbiForEVM(abiData, funcName string, resp []byte) error {
 	Variables, err := abi.DecodeFunctionReturn(abiData, funcName, resp)
 	if err != nil {
-		return "", err
+		return err
 	}
+
+	fmt.Println("contract response:")
 	for i := range Variables {
 		fmt.Println("key,value:", Variables[i].Name, Variables[i].Value)
-		respArray = append(respArray, Variables[i].Value)
 	}
 
-	// transfer resp from array to json
-	respStr, err := json.Marshal(resp)
-	if err != nil {
-		return "", err
-	}
-
-	return string(respStr), nil
+	return nil
 }

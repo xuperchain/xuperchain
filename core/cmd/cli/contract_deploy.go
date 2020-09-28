@@ -10,6 +10,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path"
 	"path/filepath"
 	"strings"
@@ -38,7 +39,7 @@ type ContractDeployCommand struct {
 	isMulti      bool
 	multiAddrs   string
 	output       string
-	//solFile      string
+	abiFile      string
 }
 
 // NewContractDeployCommand new wasm/native/evm deploy cmd
@@ -68,7 +69,7 @@ func (c *ContractDeployCommand) addFlags() {
 	c.cmd.Flags().BoolVarP(&c.isMulti, "isMulti", "m", false, "multisig scene")
 	c.cmd.Flags().StringVarP(&c.multiAddrs, "multiAddrs", "A", "data/acl/addrs", "multiAddrs if multisig scene")
 	c.cmd.Flags().StringVarP(&c.output, "output", "o", "./tx.out", "tx draw data")
-	//c.cmd.Flags().StringVarP(&c.solFile, "sol", "", "./counter.sol", "solidity contract file for evm")
+	c.cmd.Flags().StringVarP(&c.abiFile, "abi", "", "", "the abi file of contract")
 }
 
 func (c *ContractDeployCommand) deploy(ctx context.Context, codepath string) error {
@@ -100,14 +101,22 @@ func (c *ContractDeployCommand) deploy(ctx context.Context, codepath string) err
 	var codeBuf, abiCode []byte
 	var evmCode string
 	if c.module == string(bridge.TypeEvm) {
-		evmCode, abiCode, err = compileSolidityForEVM(codepath)
-		if err != nil {
-			return err
+		if c.abiFile != "" {
+			evmCode, abiCode, err = readEVMCodeAndAbi(c.abiFile)
+			if err != nil {
+				return err
+			}
+		} else {
+			evmCode, abiCode, err = compileSolidityForEVM(codepath)
+			if err != nil {
+				return err
+			}
+			codeBuf, err = hex.DecodeString(evmCode)
+			if err != nil {
+				return err
+			}
 		}
-		codeBuf, err = hex.DecodeString(evmCode)
-		if err != nil {
-			return err
-		}
+
 	} else {
 		codeBuf, err = ioutil.ReadFile(codepath)
 		if err != nil {
@@ -124,7 +133,7 @@ func (c *ContractDeployCommand) deploy(ctx context.Context, codepath string) err
 
 	var x3args map[string][]byte
 	if c.module == string(bridge.TypeEvm) && c.args != "" {
-		x3args, err = convertToEvmArgsWithAbiData(abiCode, "", args)
+		x3args, ct.AbiCode, err = convertToEvmArgsWithAbiData(abiCode, "", args)
 		if err != nil {
 			return err
 		}
@@ -171,19 +180,19 @@ func (c *ContractDeployCommand) prepareCodeDesc() []byte {
 	return buf
 }
 
-//func readAbi(abiFilePath string) ([]byte, error) {
-//	if _, err := os.Stat(abiFilePath); err != nil {
-//		fmt.Printf("abifile not found,%s", abiFilePath)
-//		return nil, fmt.Errorf("Abi doesn't exist for =>\t%s", abiFilePath)
-//	}
-//	fmt.Printf("Found ABI file, path: %s", abiFilePath)
-//	sol, err := compile.LoadSolidityContract(abiFilePath)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	return sol.Abi, nil
-//}
+func readEVMCodeAndAbi(abiFilePath string) (string, []byte, error) {
+	if _, err := os.Stat(abiFilePath); err != nil {
+		fmt.Printf("abifile not found,%s\n", abiFilePath)
+		return "", nil, fmt.Errorf("Abi doesn't exist for =>\t%s", abiFilePath)
+	}
+	fmt.Printf("Found ABI file, path: %s", abiFilePath)
+	sol, err := compile.LoadSolidityContract(abiFilePath)
+	if err != nil {
+		return "", nil, err
+	}
+
+	return sol.Evm.Bytecode.Object, sol.Abi, nil
+}
 
 func compileSolidityForEVM(solidityFile string) (string, []byte, error) {
 	filePath, fileName := filepath.Split(solidityFile)

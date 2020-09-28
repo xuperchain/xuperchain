@@ -107,7 +107,7 @@ func (c *ContractInvokeCommand) invoke(ctx context.Context, codeName string) err
 		return err
 	}
 	if c.module == string(bridge.TypeEvm) {
-		ct.Args, err = convertToEvmArgsWithAbiFile(c.abiFile, c.methodName, args)
+		ct.Args, ct.AbiCode, err = convertToEvmArgsWithAbiFile(c.abiFile, c.methodName, args)
 		if err != nil {
 			return err
 		}
@@ -139,25 +139,25 @@ func convertToXuper3Args(args map[string]interface{}) (map[string][]byte, error)
 	return argmap, nil
 }
 
-func convertToEvmArgsWithAbiFile(abiFile string, method string, args map[string]interface{}) (map[string][]byte, error) {
+func convertToEvmArgsWithAbiFile(abiFile string, method string, args map[string]interface{}) (map[string][]byte, []byte, error) {
 	buf, err := ioutil.ReadFile(abiFile)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	return convertToEvmArgsWithAbiData(buf, method, args)
 }
 
-func convertToEvmArgsWithAbiData(abiData []byte, method string, args map[string]interface{}) (map[string][]byte, error) {
+func convertToEvmArgsWithAbiData(abiData []byte, method string, args map[string]interface{}) (map[string][]byte, []byte, error) {
 	enc, err := abi.New(abiData)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	input, err := enc.Encode(method, args)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	ret := map[string][]byte{
 		"input": input,
 	}
-	return ret, nil
+	return ret, abiData, nil
 }

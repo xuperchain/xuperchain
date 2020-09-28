@@ -95,9 +95,15 @@ func (s *stateManager) SetStorage(address crypto.Address, key binary.Word256, va
 
 // Transfer native token
 func (s *stateManager) Transfer(from, to crypto.Address, amount *big.Int) error {
-	fromAddr, _, err := DetermineEVMAddress(from)
+	fromAddr, addrType, err := DetermineEVMAddress(from)
 	if err != nil {
 		return err
+	}
+
+	// return directly when from is xchain address or contract account
+	// only transfer from a contract name works
+	if addrType == contractAccountType || addrType == xchainAddrType {
+		return nil
 	}
 
 	toAddr, _, err := DetermineEVMAddress(to)

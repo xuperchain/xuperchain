@@ -20,6 +20,7 @@ func NewEvmCommand(cli *Cli) *cobra.Command {
 	cmd.AddCommand(NewContractInvokeCommand(cli, "evm"))
 	cmd.AddCommand(NewContractQueryCommand(cli, "evm"))
 	cmd.AddCommand(NewContractUpgradeCommand(cli))
+	cmd.AddCommand(NewEVMAddrTransCommand(cli))
 	return cmd
 }
 
