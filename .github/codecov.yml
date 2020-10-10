@@ -2,6 +2,13 @@ coverage:
   precision: 2
   round: down
   range: "30...80"
+  status:
+    project:
+      default:
+        # basic
+        target: auto
+        threshold: 0%
+        base: auto 
 
 parsers:
   gcov:
@@ -11,4 +18,11 @@ parsers:
       method: no
       macro: no
 
-comment: true
+comment:
+  layout: "reach, diff, flags, files"
+  behavior: default
+  require_changes: false  
+  require_base: no        
+  require_head: yes      
+  branches:              
+    - "master"
