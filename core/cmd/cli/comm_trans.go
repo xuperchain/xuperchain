@@ -1056,6 +1056,19 @@ func (c *CommTrans) GenComplianceCheckTx(utxoOutput *pb.UtxoOutput) (*pb.Transac
 	if err != nil {
 		return nil, err
 	}
+	fromAddr, err := readAddress(c.Keys)
+	if err != nil {
+		return nil, err
+	}
+
+	var authRequire string
+	if c.From != "" {
+		authRequire = c.From + "/" + fromAddr
+	} else {
+		authRequire = fromAddr
+	}
+	tx.AuthRequire = append(tx.AuthRequire, authRequire)
+
 	signTx, err := txhash.ProcessSignTx(cryptoClient, tx, []byte(fromScrkey))
 	if err != nil {
 		return nil, err
@@ -1070,6 +1083,7 @@ func (c *CommTrans) GenComplianceCheckTx(utxoOutput *pb.UtxoOutput) (*pb.Transac
 	signatureInfos = append(signatureInfos, signatureInfo)
 
 	tx.InitiatorSigns = signatureInfos
+	tx.AuthRequireSigns = signatureInfos
 
 	// make txid
 	tx.Txid, _ = txhash.MakeTransactionID(tx)
