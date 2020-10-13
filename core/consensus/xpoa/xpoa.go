@@ -511,26 +511,6 @@ func (xpoa *XPoa) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock) (bool
 			return false, nil
 		}
 	}
-
-	// Trick: 确保单个区块中仅有一次validates变更，在此xpoa的合约名必须是固定的CONTRACT_NAME，因为KEY有重复可能
-	if in.GetTxCount() <= 2 {
-		// txCount <= 2: 仅包含一个系统自生成tx和一个可能的候选人变更tx
-		return bytes.Equal(in.GetProposer(), []byte(proposer)), nil
-	}
-	txs := in.GetTransactions()
-	xpoa_count := 0
-	for _, v := range txs {
-		inputExt := v.GetTxInputsExt()
-		for _, iv := range inputExt {
-			if iv.GetBucket() == XPOA_CONTRACT_NAME {
-				xpoa_count++
-			}
-		}
-	}
-	if xpoa_count > 1 {
-		xpoa.lg.Error("XPoa CheckMinerMatch: the number of txs which modify validates exceed the threshold 1, please try again", "count", xpoa_count)
-		return false, nil
-	}
 	return bytes.Equal(in.GetProposer(), []byte(proposer)), nil
 }
 
@@ -621,6 +601,7 @@ func (xpoa *XPoa) ProcessConfirmBlock(block *pb.InternalBlock) error {
 			xpoa.lg.Warn("Cal nextProposer:", "proposer", nextProposer)
 			if err == nil && !xpoa.isInValidateSets(nextProposer.Address) {
 				// 更新发送节点
+				xpoa.lg.Info("Send Proposal to new Validates")
 				nextValidates := append(xpoa.proposerInfos, nextProposer)
 				validates = nextValidates
 			}

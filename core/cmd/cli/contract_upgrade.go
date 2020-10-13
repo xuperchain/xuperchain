@@ -70,6 +70,7 @@ func (c *ContractUpgradeCommand) upgrade(ctx context.Context, codepath string) e
 		Keys:         c.cli.RootOptions.Keys,
 		XchainClient: c.cli.XchainClient(),
 		CryptoType:   c.cli.RootOptions.CryptoType,
+		CliConf:      c.cli.RootOptions.CliConf,
 	}
 
 	var err error

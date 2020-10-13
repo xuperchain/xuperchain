@@ -38,12 +38,14 @@ var (
 
 // RootOptions 代表全局通用的flag，可以以嵌套结构体的方式组织flags.
 type RootOptions struct {
-	Host       string
-	Name       string
-	Keys       string
-	TLS        TLSOptions
-	CryptoType string
-	Xuper3     bool
+	Host        string
+	Name        string
+	Keys        string
+	TLS         TLSOptions
+	CryptoType  string
+	Xuper3      bool
+	CliConfPath string
+	CliConf     *CliConfig
 }
 
 // TLSOptions TLS part
@@ -98,6 +100,7 @@ func (c *Cli) initFlags() error {
 	rootFlags.String("name", "xuper", "block chain name")
 	rootFlags.String("keys", "data/keys", "directory of keys")
 	rootFlags.String("cryptotype", crypto_client.CryptoTypeDefault, "crypto type, default|gm|schnorr")
+	rootFlags.String("cliconfpath", "", "cli config file path")
 	viper.BindPFlags(rootFlags)
 
 	cobra.OnInitialize(func() {
@@ -122,6 +125,15 @@ func (c *Cli) initFlags() error {
 		// 如果想使用嵌套struct的flag，则在设置pflag的flag name的时候需要使用如下的方式
 		// rootFlags.String("topic.key", "", "")
 		viper.Unmarshal(&c.RootOptions)
+
+		cfg := NewCliConfig()
+		if c.RootOptions.CliConfPath != "" {
+			err := cfg.LoadConfig(c.RootOptions.CliConfPath)
+			if err != nil {
+				os.Exit(-1)
+			}
+		}
+		c.RootOptions.CliConf = cfg
 
 		err := c.initXchainClient()
 		if err != nil {
