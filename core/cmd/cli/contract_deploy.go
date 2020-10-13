@@ -39,7 +39,6 @@ type ContractDeployCommand struct {
 	isMulti      bool
 	multiAddrs   string
 	output       string
-	abiFile      string
 }
 
 // NewContractDeployCommand new wasm/native/evm deploy cmd
@@ -69,7 +68,6 @@ func (c *ContractDeployCommand) addFlags() {
 	c.cmd.Flags().BoolVarP(&c.isMulti, "isMulti", "m", false, "multisig scene")
 	c.cmd.Flags().StringVarP(&c.multiAddrs, "multiAddrs", "A", "data/acl/addrs", "multiAddrs if multisig scene")
 	c.cmd.Flags().StringVarP(&c.output, "output", "o", "./tx.out", "tx draw data")
-	c.cmd.Flags().StringVarP(&c.abiFile, "abi", "", "", "the abi file of contract")
 }
 
 func (c *ContractDeployCommand) deploy(ctx context.Context, codepath string) error {
@@ -101,8 +99,8 @@ func (c *ContractDeployCommand) deploy(ctx context.Context, codepath string) err
 	var codeBuf, abiCode []byte
 	var evmCode string
 	if c.module == string(bridge.TypeEvm) {
-		if c.abiFile != "" {
-			evmCode, abiCode, err = readEVMCodeAndAbi(c.abiFile)
+		if path.Ext(codepath) != ".sol" {
+			evmCode, abiCode, err = readEVMCodeAndAbi(codepath)
 			if err != nil {
 				return err
 			}

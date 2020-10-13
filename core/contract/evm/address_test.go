@@ -130,3 +130,50 @@ func TestDetermineEVMAddress(t *testing.T) {
 		t.Errorf("expect %s got %s", xchainAddrType, addrType)
 	}
 }
+
+func TestDetermineXchainAddress(t *testing.T) {
+	// contract account
+	evmAddrHex := "3131313231313131313131313131313131313133"
+	contractAccount := "XC1111111111111113@xuper"
+
+	contractAccountFromXchain, addrType, err := DetermineXchainAddress(contractAccount)
+	if err != nil {
+		t.Error(err)
+	}
+	if contractAccountFromXchain != evmAddrHex {
+		t.Errorf("expect %s got %s", evmAddrHex, contractAccountFromXchain)
+	}
+	if addrType != contractAccountType {
+		t.Errorf("expect %s got %s", contractAccountType, addrType)
+	}
+
+	// contract name
+	evmAddrHex = "313131312D2D2D73746F72616765646174613131"
+	contractName := "storagedata11"
+
+	contractNameFromXchain, addrType, err := DetermineXchainAddress(contractName)
+	if err != nil {
+		t.Error(err)
+	}
+	if contractNameFromXchain != evmAddrHex {
+		t.Errorf("expect %s got %s", evmAddrHex, contractNameFromXchain)
+	}
+	if addrType != contractNameType {
+		t.Errorf("expect %s got %s", contractNameType, addrType)
+	}
+
+	// xchain addr
+	evmAddrHex = "D1824C1050F55CA7E564243CE087706CACF1C687"
+	xchainAddr := "jSPJQSAR3NWoKcSFMxYGfcY8KVskvNMtm"
+
+	xchainFromXchain, addrType, err := DetermineXchainAddress(xchainAddr)
+	if err != nil {
+		t.Error(err)
+	}
+	if xchainFromXchain != evmAddrHex {
+		t.Errorf("expect %s got %s", evmAddrHex, xchainFromXchain)
+	}
+	if addrType != xchainAddrType {
+		t.Errorf("expect %s got %s", xchainAddrType, addrType)
+	}
+}
