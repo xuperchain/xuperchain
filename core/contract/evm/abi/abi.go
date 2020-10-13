@@ -64,17 +64,17 @@ func (a *ABI) encodeMethod(method *abi.FunctionSpec, args map[string]interface{}
 	return out, err
 }
 
-func decodeHex(str string) []byte {
-	var buf []byte
-	n, err := fmt.Sscanf(str, "0x%x", &buf)
-	if err != nil {
-		panic(err)
-	}
-	if n != 1 {
-		panic("bad address")
-	}
-	return buf
-}
+//func decodeHex(str string) []byte {
+//	var buf []byte
+//	n, err := fmt.Sscanf(str, "0x%x", &buf)
+//	if err != nil {
+//		panic(err)
+//	}
+//	if n != 1 {
+//		panic("bad address")
+//	}
+//	return buf
+//}
 
 // func encodeInt(x interface{}, size int) interface{} {
 // 	if size <= 64 {

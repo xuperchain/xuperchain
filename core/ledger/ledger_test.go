@@ -113,6 +113,8 @@ func TestBasicFunc(t *testing.T) {
 	if string(blockByHeight.Blockid) != string(blockCopy.Blockid) {
 		t.Fatalf("query block by height failed")
 	}
+	lastBlock, _ := ledger.QueryLastBlock()
+	t.Logf("query last block %x", lastBlock.Blockid)
 	t.Logf("block1 next hash %x", blockCopy.NextHash)
 	blockCopy2, readErr2 := ledger.QueryBlock(blockCopy.NextHash)
 	if readErr2 != nil {

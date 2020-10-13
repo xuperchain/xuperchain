@@ -63,3 +63,9 @@ func TestNotice(t *testing.T) {
 	wg.Wait()
 	log.Notice("test", "a", 1, "b", 2, "c", 3)
 }
+
+func TestNewLoggerForEVM(t *testing.T) {
+	logger, _ := NewLoggerForEVM()
+
+	logger.TraceMsg("EVM logger test", "result", 1)
+}
