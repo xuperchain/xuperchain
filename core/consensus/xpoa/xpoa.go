@@ -483,6 +483,11 @@ func (xpoa *XPoa) needSync() bool {
 
 // CheckMinerMatch is the specific implementation of ConsensusInterface
 func (xpoa *XPoa) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock) (bool, error) {
+	if in.GetHeight() <= xpoa.ledger.GetMeta().GetTrunkHeight()-3 {
+		xpoa.lg.Warn("refuse short chain of blocks", "remote", in.GetHeight(), "local", xpoa.ledger.GetMeta().GetTrunkHeight())
+		return false, nil
+	}
+
 	if !xpoa.IsActive() {
 		xpoa.lg.Info("XPoa CheckMinerMatch consensus instance not active", "state", xpoa.state)
 		return false, nil

@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"net"
 	"time"
 
 	"github.com/spf13/pflag"
@@ -74,6 +75,8 @@ type P2PConfig struct {
 	Module string `yaml:"module,omitempty"`
 	// port the p2p network listened
 	Port int32 `yaml:"port,omitempty"`
+	// Address the p2p network connect with, ipv4
+	Ip string `yaml:"ip,omitempty"`
 	// keyPath is the node private key path, xuper will gen a random one if is nil
 	KeyPath string `yaml:"keyPath,omitempty"`
 	// isNat config whether the node use NAT manager
@@ -433,6 +436,7 @@ func newP2pConfigWithDefault() P2PConfig {
 	return P2PConfig{
 		Module:           DefaultP2PModuleName,
 		Port:             DefaultNetPort,
+		Ip:               GetHostIp(),
 		KeyPath:          DefaultNetKeyPath,
 		IsNat:            DefaultNetIsNat,
 		IsTls:            DefaultNetIsTls,
@@ -454,6 +458,21 @@ func newP2pConfigWithDefault() P2PConfig {
 		ServiceName:           DefaultServiceName,
 		IsBroadCast:           DefaultIsBroadCast,
 	}
+}
+
+func GetHostIp() string {
+	addrs, err := net.InterfaceAddrs()
+	if err != nil {
+		return ""
+	}
+	for _, address := range addrs {
+		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
+			if ipnet.IP.To4() != nil {
+				return ipnet.IP.String()
+			}
+		}
+	}
+	return ""
 }
 
 // Validate valid if

@@ -359,7 +359,7 @@ Again:
 	if blockPos > tp.config.blockNum || pos >= tp.config.proposerNum {
 		if !sentNewView {
 			// only run once when term or proposer change
-			err := tp.notifyNewView(height)
+			err := tp.notifyNewView()
 			if err != nil {
 				tp.log.Warn("proposer or term change, bft Newview failed", "error", err)
 			}
@@ -368,7 +368,7 @@ Again:
 		goto Again
 	}
 	// reset proposers when term changed
-	if pos == 0 && blockPos == 1 {
+	if (pos == 0 || pos == 1) && blockPos == 1 {
 		err := tp.notifyTermChanged(tp.curTerm)
 		if err != nil {
 			tp.log.Warn("proposer or term change, bft Update Validators failed", "error", err)
@@ -378,7 +378,7 @@ Again:
 	// if NewView not sent, send NewView message
 	if !sentNewView {
 		// if no term or proposer change, run NewView before generate block
-		err := tp.notifyNewView(height)
+		err := tp.notifyNewView()
 		if err != nil {
 			tp.log.Warn("proposer not changed, bft Newview failed", "error", err)
 		}
@@ -388,13 +388,13 @@ Again:
 	// master check
 	if tp.isProposer(term, pos, tp.address) {
 		tp.log.Trace("CompeteMaster now xterm infos", "term", term, "pos", pos, "blockPos", blockPos, "un2", un2,
-			"master", true, "height", height)
+			"master", true, "height", tp.ledger.GetMeta().TrunkHeight+1, "origin height", height)
 		tp.curBlockNum = blockPos
 		s := tp.needSync()
 		return true, s
 	}
 	tp.log.Trace("CompeteMaster now xterm infos", "term", term, "pos", pos, "blockPos", blockPos, "un2", un2,
-		"master", false, "height", height)
+		"master", false, "height", tp.ledger.GetMeta().TrunkHeight+1, "origin height", height)
 	return false, false
 }
 
@@ -413,7 +413,7 @@ func (tp *TDpos) needSync() bool {
 	return true
 }
 
-func (tp *TDpos) notifyNewView(height int64) error {
+func (tp *TDpos) notifyNewView() error {
 	if !tp.config.enableBFT {
 		// BFT not enabled, continue
 		return nil
@@ -462,6 +462,11 @@ func (tp *TDpos) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock) (bool,
 		tp.log.Info("TDpos CheckMinerMatch consensus instance not active", "state", tp.state)
 		return false, nil
 	}
+	if tp.config.enableBFT && in.GetHeight() <= tp.ledger.GetMeta().GetTrunkHeight()-3 {
+		tp.log.Warn("refuse short chain of blocks", "remote", in.GetHeight(), "local", tp.ledger.GetMeta().GetTrunkHeight())
+		return false, nil
+	}
+
 	// 1 验证块信息是否合法
 	if ok, err := tp.ledger.VerifyBlock(in, header.GetLogid()); !ok || err != nil {
 		tp.log.Info("TDpos CheckMinerMatch VerifyBlock not ok")

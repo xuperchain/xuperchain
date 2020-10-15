@@ -1161,17 +1161,20 @@ func (l *Ledger) Truncate(utxovmLastID []byte) error {
 }
 
 // StartPowMinning set the value of enablePowMinning true to tell the miner to start minning
-func (l *Ledger) StartPowMinning() {
+func (l *Ledger) StartPowMinning(height int64) {
 	l.powMutex.Lock()
 	defer l.powMutex.Unlock()
 	l.enablePowMinning = true
+	powMinningHeight = height
 }
 
 // AbortPowMinning set the value of enablePowMinning false to tell the miner to stop minning
-func (l *Ledger) AbortPowMinning() {
+func (l *Ledger) AbortPowMinning(height int64) {
 	l.powMutex.Lock()
 	defer l.powMutex.Unlock()
-	l.enablePowMinning = false
+	if height >= powMinningHeight {
+		l.enablePowMinning = false
+	}
 }
 
 // IsEnablePowMinning get the value of enablePowMinning

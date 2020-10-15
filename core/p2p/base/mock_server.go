@@ -64,6 +64,11 @@ func (mp *MockP2pServer) GetNetURL() string {
 	return ""
 }
 
+// GetLocalUrl implements the GetLocalUrl interface
+func (mp *MockP2pServer) GetLocalUrl() string {
+	return ""
+}
+
 // GetPeerUrls implements the GetPeerUrls interface
 func (mp *MockP2pServer) GetPeerUrls() []string {
 	return nil

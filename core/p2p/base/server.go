@@ -29,6 +29,7 @@ type P2PServer interface {
 	SendMessageWithResponse(context.Context, *p2pPb.XuperMessage, ...MessageOption) ([]*p2pPb.XuperMessage, error)
 
 	GetNetURL() string
+	GetLocalUrl() string
 	// 查询所连接节点的信息
 	GetPeerUrls() []string
 	GetPeerIDAndUrls() map[string]string

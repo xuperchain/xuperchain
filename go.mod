@@ -22,6 +22,7 @@ require (
 	github.com/ipfs/go-todocounter v0.0.2 // indirect
 	github.com/libp2p/go-libp2p v0.4.0
 	github.com/libp2p/go-libp2p-circuit v0.1.3
+	github.com/libp2p/go-libp2p-core v0.2.3
 	github.com/libp2p/go-libp2p-crypto v0.1.0
 	github.com/libp2p/go-libp2p-host v0.1.0
 	github.com/libp2p/go-libp2p-kad-dht v0.2.1

@@ -201,6 +201,10 @@ func (p *P2PServerV2) GetNetURL() string {
 	return fmt.Sprintf("/ip4/127.0.0.1/tcp/%v/p2p/%s", p.config.Port, p.node.id.Pretty())
 }
 
+func (p *P2PServerV2) GetLocalUrl() string {
+	return fmt.Sprintf("%s:%v", p.config.Ip, p.config.Port)
+}
+
 func (p *P2PServerV2) getCompress(opts *p2p_base.MsgOptions) bool {
 	if opts == nil {
 		return false

@@ -8,13 +8,15 @@ import (
 
 const round = 65535
 
+var powMinningHeight = int64(0)
+
 func (l *Ledger) processFormatBlockForPOW(block *pb.InternalBlock, targetBits int32) (*pb.InternalBlock, error) {
 	var gussNonce int32
 	var gussCount int64
 	valid := false
 	var err error
 	// 在每次挖矿时，设置为true
-	l.StartPowMinning()
+	l.StartPowMinning(block.GetHeight())
 	for {
 		if gussCount%round == 0 && !l.IsEnablePowMinning() {
 			break

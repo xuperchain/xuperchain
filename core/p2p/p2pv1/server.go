@@ -251,6 +251,10 @@ func (p *P2PServerV1) GetNetURL() string {
 	return fmt.Sprintf("/ip4/127.0.0.1/tcp/%v", p.config.Port)
 }
 
+func (p *P2PServerV1) GetLocalUrl() string {
+	return fmt.Sprintf("%s:%v", p.config.Ip, p.config.Port)
+}
+
 func (p *P2PServerV1) sendMessage(ctx context.Context, msg *p2pPb.XuperMessage, peerids []string) error {
 	// send message to all peers
 	p.log.Trace("Server SendMessage", "logid", msg.GetHeader().GetLogid(),
