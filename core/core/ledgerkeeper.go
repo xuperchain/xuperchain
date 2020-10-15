@@ -358,7 +358,7 @@ func InitPeerStatusMap(sn *LedgerKeeper) {
 		if id == sn.P2pSvr.GetLocalUrl() || id == loopUrl {
 			continue
 		}
-		sn.peersStatusMap.Store(id, true)
+		sn.peersStatusMap.Store("\""+id+"\"", true)
 		initFlag = true
 	}
 }
