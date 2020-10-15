@@ -743,6 +743,11 @@ func (c *CommTrans) GenPreExeWithSelectUtxoRes(ctx context.Context) (
 		}
 	}
 	extraAmount := int64(c.CliConf.ComplianceCheck.ComplianceCheckEndorseServiceFee)
+	fee, err := strconv.ParseInt(c.Fee, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("calculate fee fail.error: %s", err)
+	}
+	extraAmount += fee
 	preExeRPCReq.AuthRequire = append(preExeRPCReq.AuthRequire, c.CliConf.ComplianceCheck.ComplianceCheckEndorseServiceAddr)
 	preSelUTXOReq := &pb.PreExecWithSelectUTXORequest{
 		Bcname:      c.ChainName,
@@ -838,8 +843,7 @@ func (c *CommTrans) GenRealTx(response *pb.PreExecWithSelectUTXOResponse,
 	if !ok {
 		return nil, ErrInvalidAmount
 	}
-	gasUsed := strconv.Itoa(int(response.GetResponse().GasUsed))
-	fee, ok := big.NewInt(0).SetString(gasUsed, 10)
+	fee, ok := big.NewInt(0).SetString(c.Fee, 10)
 	if !ok {
 		return nil, ErrInvalidAmount
 	}
@@ -847,7 +851,7 @@ func (c *CommTrans) GenRealTx(response *pb.PreExecWithSelectUTXOResponse,
 	totalNeed.Add(totalNeed, amount)
 
 	selfAmount := totalSelected.Sub(totalSelected, totalNeed)
-	txOutputs, err := c.GenerateMultiTxOutputs(selfAmount.String(), gasUsed)
+	txOutputs, err := c.GenerateMultiTxOutputs(selfAmount.String(), c.Fee)
 	if err != nil {
 		fmt.Printf("GenRealTx GenerateTxOutput failed.")
 		return nil, fmt.Errorf("GenRealTx GenerateTxOutput err: %v", err)
