@@ -152,6 +152,20 @@ func (c *CommTrans) GenPreExeRes(ctx context.Context) (
 	return preExeRPCRes, preExeRPCRes.Response.Requests, nil
 }
 
+func printRespWithAbiForEVM(abiData, funcName string, resp []byte) error {
+	Variables, err := abi.DecodeFunctionReturn(abiData, funcName, resp)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("contract response:")
+	for i := range Variables {
+		fmt.Println("key,value:", Variables[i].Name, Variables[i].Value)
+	}
+
+	return nil
+}
+
 // GetInvokeRequestFromDesc get invokerequest from desc file
 func (c *CommTrans) GetInvokeRequestFromDesc() (*pb.InvokeRequest, error) {
 	desc, err := c.GetDesc()
@@ -682,18 +696,4 @@ func (c *CommTrans) GenTxInputsWithMergeUTXO(ctx context.Context) ([]*pb.TxInput
 	}
 
 	return txInputs, txOutput, nil
-}
-
-func printRespWithAbiForEVM(abiData, funcName string, resp []byte) error {
-	Variables, err := abi.DecodeFunctionReturn(abiData, funcName, resp)
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("contract response:")
-	for i := range Variables {
-		fmt.Println("key,value:", Variables[i].Name, Variables[i].Value)
-	}
-
-	return nil
 }

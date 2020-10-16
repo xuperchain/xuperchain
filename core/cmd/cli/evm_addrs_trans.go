@@ -40,7 +40,7 @@ func NewEVMAddrTransCommand(cli *Cli) *cobra.Command {
 }
 
 func (c *EVMAddrTransCommand) addFlags() {
-	c.cmd.Flags().StringVarP(&c.transType, "type", "t", "（x2e,e2x）", "the kind of address translation between EVM and xchain")
+	c.cmd.Flags().StringVarP(&c.transType, "type", "t", "e2x", "the kind of address translation between EVM and xchain")
 	c.cmd.Flags().StringVarP(&c.from, "from", "f", "", "from address")
 }
 
