@@ -14,7 +14,7 @@ type EvmCommand struct {
 func NewEvmCommand(cli *Cli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "evm",
-		Short: "Operate a native contract: deploy|upgrade|invoke|query",
+		Short: "Operate an evm contract: deploy|upgrade|invoke|query",
 	}
 	cmd.AddCommand(NewContractDeployCommand(cli, "evm"))
 	cmd.AddCommand(NewContractInvokeCommand(cli, "evm"))

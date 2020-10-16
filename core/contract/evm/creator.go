@@ -8,7 +8,6 @@ import (
 	"github.com/hyperledger/burrow/execution/engine"
 	"github.com/hyperledger/burrow/execution/errors"
 	"github.com/hyperledger/burrow/execution/evm"
-	"github.com/hyperledger/burrow/execution/evm/abi"
 	"github.com/hyperledger/burrow/execution/exec"
 
 	"github.com/xuperchain/xuperchain/core/contract"
@@ -79,11 +78,12 @@ func (e *evmInstance) Exec() error {
 			fmt.Println("get evm code error")
 			return err
 		}
-		e.abi, err = e.cp.GetContractAbi(e.ctx.ContractName)
-		if err != nil {
-			fmt.Println("get evm abi error")
-			return err
-		}
+		// there is no need to get evm abi
+		//e.abi, err = e.cp.GetContractAbi(e.ctx.ContractName)
+		//if err != nil {
+		//	fmt.Println("get evm abi error")
+		//	return err
+		//}
 	}
 	if e.ctx.Method == initializeMethod {
 		return e.deployContract()
@@ -129,20 +129,6 @@ func (e *evmInstance) Exec() error {
 	}
 
 	e.gasUsed = uint64(contract.MaxLimits.Cpu) - *params.Gas
-
-	if e.ctx.Method != "" {
-		err = DecodeRespWithAbiForEVM(string(e.abi), e.ctx.Method, out)
-	} else {
-		err = DecodeRespWithAbiForEVM(string(e.abi), "", out)
-	}
-	if err != nil {
-		return err
-	}
-
-	//respBytes, err := hex.DecodeString(resp)
-	//if err != nil {
-	//	return err
-	//}
 
 	e.ctx.Output = &pb.Response{
 		Status: 200,
@@ -237,16 +223,16 @@ func init() {
 //	return packedBytes, nil
 //}
 
-func DecodeRespWithAbiForEVM(abiData, funcName string, resp []byte) error {
-	Variables, err := abi.DecodeFunctionReturn(abiData, funcName, resp)
-	if err != nil {
-		return err
-	}
-
-	fmt.Println("contract response:")
-	for i := range Variables {
-		fmt.Println("key,value:", Variables[i].Name, Variables[i].Value)
-	}
-
-	return nil
-}
+//func DecodeRespWithAbiForEVM(abiData, funcName string, resp []byte) error {
+//	Variables, err := abi.DecodeFunctionReturn(abiData, funcName, resp)
+//	if err != nil {
+//		return err
+//	}
+//
+//	fmt.Println("contract response:")
+//	for i := range Variables {
+//		fmt.Println("key,value:", Variables[i].Name, Variables[i].Value)
+//	}
+//
+//	return nil
+//}

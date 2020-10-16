@@ -43,7 +43,7 @@ func (c *codeProvider) GetContractAbi(name string) ([]byte, error) {
 	}
 	abiBuf := value.GetPureData().GetValue()
 	if len(abiBuf) == 0 {
-		return nil, errors.New("empty evm abi")
+		return nil, errors.New("empty abi")
 	}
 	return abiBuf, nil
 }

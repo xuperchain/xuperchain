@@ -19,9 +19,9 @@ import (
 
 	"github.com/golang/protobuf/proto"
 
+	"github.com/hyperledger/burrow/execution/evm/abi"
 	"github.com/xuperchain/xuperchain/core/contract"
 	"github.com/xuperchain/xuperchain/core/contract/bridge"
-	"github.com/xuperchain/xuperchain/core/contract/evm"
 	crypto_client "github.com/xuperchain/xuperchain/core/crypto/client"
 	"github.com/xuperchain/xuperchain/core/global"
 	"github.com/xuperchain/xuperchain/core/pb"
@@ -143,7 +143,7 @@ func (c *CommTrans) GenPreExeRes(ctx context.Context) (
 			fmt.Printf("contract response: %s\n", string(res.Body))
 		} else {
 			// print contract response of evm
-			err := evm.DecodeRespWithAbiForEVM(string(c.AbiCode), c.MethodName, res.Body)
+			err := printRespWithAbiForEVM(string(c.AbiCode), c.MethodName, res.Body)
 			if err != nil {
 				return nil, nil, nil
 			}
@@ -682,4 +682,18 @@ func (c *CommTrans) GenTxInputsWithMergeUTXO(ctx context.Context) ([]*pb.TxInput
 	}
 
 	return txInputs, txOutput, nil
+}
+
+func printRespWithAbiForEVM(abiData, funcName string, resp []byte) error {
+	Variables, err := abi.DecodeFunctionReturn(abiData, funcName, resp)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("contract response:")
+	for i := range Variables {
+		fmt.Println("key,value:", Variables[i].Name, Variables[i].Value)
+	}
+
+	return nil
 }

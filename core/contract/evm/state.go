@@ -1,7 +1,6 @@
 package evm
 
 import (
-	"fmt"
 	"math/big"
 	"time"
 
@@ -10,6 +9,7 @@ import (
 	"github.com/hyperledger/burrow/crypto"
 	"github.com/hyperledger/burrow/permission"
 
+	"github.com/xuperchain/xuperchain/core/common/log"
 	"github.com/xuperchain/xuperchain/core/contract/bridge"
 )
 
@@ -54,19 +54,15 @@ func (s *stateManager) GetAccount(address crypto.Address) (*acm.Account, error) 
 // Retrieve a 32-byte value stored at key for the account at address, return Zero256 if key does not exist but
 // error if address does not
 func (s *stateManager) GetStorage(address crypto.Address, key binary.Word256) ([]byte, error) {
-	fmt.Printf("\nget %s %s\n", address, key)
-	fmt.Printf("first address %s\n", s.ctx.ContractName)
-	contractName, _, err := DetermineEVMAddress(address)
+	log.Debug("get storage for evm", "contract", s.ctx.ContractName, address, key)
+	contractName, err := DetermineContractNameFromEVM(address)
 	if err != nil {
 		return nil, nil
 	}
-	fmt.Printf("second address %s\n", contractName)
 	v, err := s.ctx.Cache.Get(contractName, key.Bytes())
 	if err != nil {
-		fmt.Printf("GetStorage error %v\n", err)
 		return nil, nil
 	}
-	fmt.Printf("GetStorage result %v\n", v.GetPureData().GetValue())
 	return v.GetPureData().GetValue(), nil
 }
 
@@ -83,13 +79,11 @@ func (s *stateManager) RemoveAccount(address crypto.Address) error {
 
 // Store a 32-byte value at key for the account at address, setting to Zero256 removes the key
 func (s *stateManager) SetStorage(address crypto.Address, key binary.Word256, value []byte) error {
-	fmt.Printf("\nstore %s %s:%x\n", address, key, value)
-	fmt.Printf("first address %s\n", s.ctx.ContractName)
-	contractName, _, err := DetermineEVMAddress(address)
+	log.Debug("get storage for evm", "contract", s.ctx.ContractName, address, key)
+	contractName, err := DetermineContractNameFromEVM(address)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("second address %s\n", contractName)
 	return s.ctx.Cache.Put(contractName, key.Bytes(), value)
 }
 

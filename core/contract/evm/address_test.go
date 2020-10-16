@@ -108,7 +108,7 @@ func TestDetermineEVMAddress(t *testing.T) {
 		t.Error(err)
 	}
 	if contractNameFromEVMAddr != contractName {
-		t.Errorf("expect %s got %s", contractAccount, contractNameFromEVMAddr)
+		t.Errorf("expect %s got %s", contractName, contractNameFromEVMAddr)
 	}
 	if addrType != contractNameType {
 		t.Errorf("expect %s got %s", contractNameType, addrType)
@@ -175,5 +175,20 @@ func TestDetermineXchainAddress(t *testing.T) {
 	}
 	if addrType != xchainAddrType {
 		t.Errorf("expect %s got %s", xchainAddrType, addrType)
+	}
+}
+
+func TestDetermineContractNameFromEVM(t *testing.T) {
+	// contract name
+	evmAddrHex := "313131312D2D2D73746F72616765646174613131"
+	contractName := "storagedata11"
+	evmAddr, _ := crypto.AddressFromHexString(evmAddrHex)
+
+	contractNameFromEVMAddr, err := DetermineContractNameFromEVM(evmAddr)
+	if err != nil {
+		t.Error(err)
+	}
+	if contractNameFromEVMAddr != contractName {
+		t.Errorf("expect %s got %s", contractName, contractNameFromEVMAddr)
 	}
 }

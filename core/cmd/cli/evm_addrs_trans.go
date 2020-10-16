@@ -27,7 +27,7 @@ func NewEVMAddrTransCommand(cli *Cli) *cobra.Command {
 	c := new(EVMAddrTransCommand)
 	c.cli = cli
 	c.cmd = &cobra.Command{
-		Use:   "addrTrans -t [x2e/e2x] -f from_address",
+		Use:   "addr-trans -t [x2e/e2x] -f from_address",
 		Short: "Address translation between EVM and xchain",
 		Args:  cobra.MinimumNArgs(0),
 		RunE: func(cmd *cobra.Command, args []string) error {
@@ -40,7 +40,7 @@ func NewEVMAddrTransCommand(cli *Cli) *cobra.Command {
 }
 
 func (c *EVMAddrTransCommand) addFlags() {
-	c.cmd.Flags().StringVarP(&c.transType, "transType", "t", "x2e", "the kind of address translation between EVM and xchain")
+	c.cmd.Flags().StringVarP(&c.transType, "type", "t", "（x2e,e2x）", "the kind of address translation between EVM and xchain")
 	c.cmd.Flags().StringVarP(&c.from, "from", "f", "", "from address")
 }
 
@@ -71,7 +71,7 @@ func (c *EVMAddrTransCommand) trans(ctx context.Context) error {
 		return fmt.Errorf("wrong transType, must be x2e or e2x")
 	}
 
-	fmt.Printf("result, addr: %s, addr_type: %s\n", addr, addrType)
+	fmt.Printf("result, %s\t%s\n", addr, addrType)
 
 	return nil
 }

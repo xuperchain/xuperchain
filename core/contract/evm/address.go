@@ -2,6 +2,7 @@ package evm
 
 import (
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/btcsuite/btcutil/base58"
@@ -97,6 +98,26 @@ func DetermineContractAccount(account string) bool {
 // determine whether it is a contract name
 func DetermineContractName(contractName string) error {
 	return common.ValidContractName(contractName)
+}
+
+// determine whether it is a contract name
+func DetermineContractNameFromEVM(evmAddr crypto.Address) (string, error) {
+	var addr string
+	var err error
+
+	evmAddrWithPrefix := evmAddr.Bytes()
+	evmAddrStrWithPrefix := string(evmAddrWithPrefix)
+	if evmAddrStrWithPrefix[0:4] != contractNamePrefixs {
+		return "", fmt.Errorf("not a valid contract name from evm")
+	} else {
+		addr, err = EVMAddressToContractName(evmAddr)
+	}
+
+	if err != nil {
+		return "", err
+	}
+
+	return addr, nil
 }
 
 // determine an EVM address
