@@ -368,7 +368,7 @@ Again:
 		goto Again
 	}
 	// reset proposers when term changed
-	if (pos == 0 || pos == 1) && blockPos == 1 {
+	if pos == 0 && blockPos == 1 {
 		err := tp.notifyTermChanged(tp.curTerm)
 		if err != nil {
 			tp.log.Warn("proposer or term change, bft Update Validators failed", "error", err)
@@ -551,8 +551,14 @@ func (tp *TDpos) ProcessBeforeMiner(timestamp int64) (map[string]interface{}, bo
 	// check bft status
 	if tp.config.enableBFT {
 		// TODO: what if IsLastViewConfirmed failed in competemaster, but succeed in ProcessBeforeMiner?
+		height := tp.ledger.GetMeta().GetTrunkHeight() + 1
 		if !tp.isFirstblock(tp.ledger.GetMeta().GetTrunkHeight() + 1) {
 			if ok, _ := tp.bftPaceMaker.IsLastViewConfirmed(); !ok {
+				// 若view number未更新则先暂停
+				if !tp.bftPaceMaker.CheckViewNumer(height) {
+					tp.log.Warn("Haven't received preLeader's NextViewMsg, hold first.")
+					return nil, false
+				}
 				tp.log.Warn("ProcessBeforeMiner last block not confirmed, walk to previous block")
 				lastBlockid := tp.ledger.GetMeta().GetTipBlockid()
 				lastBlock, err := tp.ledger.QueryBlock(lastBlockid)

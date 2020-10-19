@@ -86,6 +86,7 @@ func NewSmr(
 		qcVoteMsgs:     &sync.Map{},
 		newViewMsgs:    &sync.Map{},
 		effectiveDelay: effectiveDelay,
+		validViewMsgs:  false,
 		lk:             &sync.Mutex{},
 		QuitCh:         make(chan bool, 1),
 	}
@@ -534,7 +535,7 @@ func (s *Smr) addViewMsg(msg *pb.ChainedBftPhaseMessage) error {
 	if justify != nil {
 		s.slog.Info("addViewMsg GetJustifyQC not nil", "justifyId", hex.EncodeToString(justify.GetProposalId()),
 			"proposalId", hex.EncodeToString(s.proposalQC.GetProposalId()), "GetJustifyQC.SignInfos", justify.GetSignInfos())
-		if s.proposalQC != nil && bytes.Equal(s.proposalQC.GetProposalId(), justify.GetProposalId()) && justify.GetViewNumber()+1 == s.proposalQC.GetViewNumber() {
+		if s.proposalQC != nil && bytes.Equal(s.proposalQC.GetProposalId(), justify.GetProposalId()) {
 			if ok, _ := s.IsQuorumCertValidate(justify); ok {
 				s.slog.Info("addViewMsg update local as a new leader")
 				s.updateQcStatus(nil, s.proposalQC, s.generateQC)
@@ -542,6 +543,7 @@ func (s *Smr) addViewMsg(msg *pb.ChainedBftPhaseMessage) error {
 				viewMsgs := []*pb.ChainedBftPhaseMessage{}
 				viewMsgs = append(viewMsgs, msg)
 				s.newViewMsgs.Store(msg.GetViewNumber(), viewMsgs)
+				s.validViewMsgs = true
 			}
 		}
 	}
@@ -550,6 +552,9 @@ func (s *Smr) addViewMsg(msg *pb.ChainedBftPhaseMessage) error {
 
 // CheckViewNumer check if smr has recieved preLeader's UpdateView msg
 func (s *Smr) CheckViewNumer(viewNumber int64) bool {
+	if !s.validViewMsgs {
+		return true
+	}
 	_, ok := s.newViewMsgs.Load(viewNumber)
 	return ok
 }

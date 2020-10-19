@@ -13,7 +13,6 @@ import (
 	"os"
 	"runtime"
 	"sort"
-	"strings"
 	"sync"
 	"time"
 
@@ -50,7 +49,7 @@ var (
 	// ErrInternal p2p internal error
 	ErrInternal = errors.New("cannot sent msg because of internal error")
 	// ErrHaveNoTargetData the callee cannot find data in main-chain
-	ErrTargetDataNotFound = errors.New("peers cannot search the specific data the caller wants")
+	ErrTargetDataNotFound = errors.New("cannot search the specific data the caller wants")
 	// ErrTargetDataNotEnough the callee cannot find enough data
 	ErrTargetDataNotEnough = errors.New("peers cannot search the whole data the caller wants, not enough")
 	// ErrPeersInvalid p2p peers invalid
@@ -347,18 +346,12 @@ func (sn *LedgerKeeper) Init() error {
 
 func InitPeerStatusMap(sn *LedgerKeeper) {
 	// 初始化LedgerKeeper的syncMap
-	localUrl := sn.P2pSvr.GetLocalUrl()
-	var loopUrl string
-	loopSlice := strings.Split(localUrl, ":")
-	if len(loopSlice) == 2 {
-		loopUrl = "127.0.0.1:" + loopSlice[1]
-	}
-	for _, id := range sn.P2pSvr.GetPeerUrls() {
+	for _, id := range sn.P2pSvr.GetPeersConnection() {
 		sn.log.Trace("Init::", "id", id)
-		if id == sn.P2pSvr.GetLocalUrl() || id == loopUrl {
+		if id == sn.P2pSvr.GetLocalUrl() {
 			continue
 		}
-		sn.peersStatusMap.Store("\""+id+"\"", true)
+		sn.peersStatusMap.Store(id, true)
 		initFlag = true
 	}
 }
@@ -517,7 +510,7 @@ func syncBlocksWithTipidAndPeers(node *LedgerKeeper, st *LedgerTask) error {
 			continue
 		}
 		if err != nil {
-			node.log.Warn("syncBlocksWithTipidAndPeers::delete peer", "task", st.GetTargetBlockId(), "address", peer[0])
+			node.log.Warn("syncBlocksWithTipidAndPeers::delete peer", "task", st.GetTargetBlockId(), "address", peer[0], "err", err)
 			node.peersStatusMap.Store(peer[0], false)
 			continue
 		}
@@ -565,7 +558,7 @@ func getBlockIdsWithGetHeadersMsg(node *LedgerKeeper, bcName, beginBlockId strin
 	node.log.Info("getBlockIdsWithGetHeadersMsg::Send GET_HEADERS", "HEADER", beginBlockId)
 	res, err := node.P2pSvr.SendMessageWithResponse(context.Background(), msg, opts...)
 	if err != nil {
-		node.log.Warn("getBlockIdsWithGetHeadersMsg::Sync Headers P2P Error: local error or target error", "Error", err)
+		node.log.Warn("getBlockIdsWithGetHeadersMsg::Sync Headers P2P Error: local error or target error", "Logid", msg.GetHeader().GetLogid(), "Error", err)
 		return true, nil, ErrInternal
 	}
 
@@ -724,7 +717,7 @@ func getBlocksWithGetDataMsg(node *LedgerKeeper, bcName, targetPeer string, peer
 	}
 	res, err := node.P2pSvr.SendMessageWithResponse(context.Background(), msg, opts...)
 	if err != nil {
-		node.log.Warn("getBlocksWithGetDataMsg::Sync GetBlocks P2P Error, local error or target error", "Error", err)
+		node.log.Warn("getBlocksWithGetDataMsg::Sync GetBlocks P2P Error, local error or target error", "Logid", msg.GetHeader().GetLogid(), "Error", err)
 		return ErrInternal
 	}
 
@@ -735,7 +728,7 @@ func getBlocksWithGetDataMsg(node *LedgerKeeper, bcName, targetPeer string, peer
 		return ErrUnmarshal
 	}
 	node.log.Info("getBlocksWithGetDataMsg::GET BLOCKS RESULT", "Logid", blocksMsgBody.GetHeader().GetLogid(), "LEN", len(blocksMsgBody.GetBlocksInfo()))
-	if len(blocksMsgBody.GetBlocksInfo()) == 0 {
+	if len(blocksMsgBody.GetBlocksInfo()) == 0 && len(*peerSyncMap) > 1 {
 		// 目标节点完全未找到任何block
 		return ErrTargetDataNotFound
 	}
@@ -797,7 +790,7 @@ func (sn *LedgerKeeper) handleGetHeadersMsg(ctx context.Context, msg *xuper_p2p.
 	if err != nil {
 		return nil, ErrUnmarshal
 	}
-	nilRes, err := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, bc, "", xuper_p2p.XuperMessage_HEADERS, nilBuf, xuper_p2p.XuperMessage_NONE)
+	nilRes, err := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, bc, msg.GetHeader().GetLogid(), xuper_p2p.XuperMessage_HEADERS, nilBuf, xuper_p2p.XuperMessage_NONE)
 	if err != nil {
 		return nil, ErrInternal
 	}
@@ -841,8 +834,11 @@ func (sn *LedgerKeeper) handleGetHeadersMsg(ctx context.Context, msg *xuper_p2p.
 	}
 	sn.log.Info("handleGetHeadersMsg::GET_HEADER_MSG response...", "response res", resultHeaders.BlockIds)
 	resBuf, _ := proto.Marshal(resultHeaders)
-	res, err := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, bc, "",
+	res, err := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, bc, msg.GetHeader().GetLogid(),
 		xuper_p2p.XuperMessage_HEADERS, resBuf, xuper_p2p.XuperMessage_SUCCESS)
+	if err != nil {
+		sn.log.Info("handleGetHeadersMsg::NewXuperMessage", "err", err)
+	}
 	return res, err
 }
 
@@ -888,13 +884,16 @@ func (sn *LedgerKeeper) handleGetDataMsg(ctx context.Context, msg *xuper_p2p.Xup
 	resultBlocks = pickBlocksForBlocksMsg(sn.maxBlocksMsgSize, resultBlocks)
 	result := &pb.BlocksMsgBody{
 		Header: &pb.Header{
-			Logid: global.Glogid(),
+			Logid: msg.GetHeader().GetLogid(),
 		},
 		BlocksInfo: resultBlocks,
 	}
 	resBuf, _ := proto.Marshal(result)
 	sn.log.Info("handleGetDataMsg::GET_BLOCKS_MSG response...", "Logid", result.Header.Logid, "LEN", len(resultBlocks))
-	res, err := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, bc, "", xuper_p2p.XuperMessage_BLOCKS, resBuf, xuper_p2p.XuperMessage_SUCCESS)
+	res, err := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, bc, msg.GetHeader().GetLogid(), xuper_p2p.XuperMessage_BLOCKS, resBuf, xuper_p2p.XuperMessage_SUCCESS)
+	if err != nil {
+		sn.log.Info("handleGetDataMsg::NewXuperMessage", "err", err)
+	}
 	return res, err
 }
 
@@ -1040,17 +1039,20 @@ func changeSyncBeginPointBackwards(beginBlock *pb.InternalBlock) string {
 func (lk *LedgerKeeper) ConfirmBlocks(hd *global.XContext, originBegin, headerBegin string, blocksMap map[string]*SimpleBlock, headersInfo map[int]string, endFlag bool) (string, bool, error) {
 	// 取这段新链的第一个区块，判断走账本分叉逻辑还是直接账本追加逻辑
 	var err error
+	newBegin := headerBegin
 	index := 0
 	beginSimpleBlock := blocksMap[headersInfo[index]]
-	// 更新的节点是否是账本主干上的末枝，或者是账本上的一个分叉, originBegin表示task初始值，headerBegin表示同步后初始值
-	noFork := global.F(beginSimpleBlock.internalBlock.GetPreHash()) == originBegin
-	newBegin := headerBegin
+	if beginSimpleBlock == nil {
+		return newBegin, false, ErrTargetDataNotFound
+	}
 	lk.log.Debug("ConfirmBlocks", "genesis", global.F(lk.ledger.GetMeta().GetRootBlockid()), "utxo", global.F(lk.utxovm.GetLatestBlockid()),
 		"len(blocksMap)", len(blocksMap), "len(headersInfo)", len(headersInfo), "cost", hd.Timer.Print())
 	listLen := len(headersInfo)
 	if listLen == 0 {
 		return newBegin, false, ErrInternal
 	}
+	// 更新的节点是否是账本主干上的末枝，或者是账本上的一个分叉, originBegin表示task初始值，headerBegin表示同步后初始值
+	noFork := global.F(beginSimpleBlock.internalBlock.GetPreHash()) == originBegin
 	if noFork {
 		lk.log.Debug("ConfirmBlocks::Equal The Same", "cost", hd.Timer.Print())
 		needVerify := (lk.nodeMode == config.NodeModeFastSync)
@@ -1085,6 +1087,9 @@ func (lk *LedgerKeeper) ConfirmBlocks(hd *global.XContext, originBegin, headerBe
 	lk.log.Debug("XXXXXXXXX The NO Same", "cost", hd.Timer.Print())
 	for ; index < listLen; index++ {
 		checkBlock := blocksMap[headersInfo[index]]
+		if checkBlock == nil {
+			break
+		}
 		nextBlockid := global.F(checkBlock.internalBlock.GetBlockid())
 		err, trunkSwitch := lk.confirmForkingBlock(checkBlock)
 		if err != nil && err != ErrBlockExist {

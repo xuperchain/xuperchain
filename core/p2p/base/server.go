@@ -30,6 +30,7 @@ type P2PServer interface {
 
 	GetNetURL() string
 	GetLocalUrl() string
+	GetPeersConnection() []string
 	// 查询所连接节点的信息
 	GetPeerUrls() []string
 	GetPeerIDAndUrls() map[string]string
