@@ -73,6 +73,11 @@ wasm:
   xvm:
     optLevel: 0
 
+# evm合约配置
+evm:
+  driver: "evm"
+  enable: false
+
 # 管理native合约的配置
 native:
   enable: false
