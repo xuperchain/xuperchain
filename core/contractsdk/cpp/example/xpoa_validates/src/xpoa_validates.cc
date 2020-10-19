@@ -15,8 +15,8 @@ private:
 class XpoaValidates : public xchain::Contract {
 private:
     const std::string VALIDATES_KEY = "VALIDATES";
-    const std::string LAST_BLOCKID = "BLOCKID";
     const std::string LAST_HEIGHT = "HEIGHT";
+    const int64_t VALID_HEIGHT_DIS = 10;
 
 public:
     bool checkArg(xchain::Context* ctx, const std::string& key, std::string& value) {
@@ -89,11 +89,11 @@ public:
 
         // 此处写入blockid，通过blockid限制合约多tx并发
         xchain::Block block;
-        if (!ctx->query_block(blockid, &block) || !block.in_trunk) {
+        if (!ctx->query_block(blockid, &block)) {
             ctx->error("initialize fail to check blockid");
             return;
         }
-        if (!ctx->put_object(LAST_BLOCKID, blockid) || !ctx->put_object(LAST_HEIGHT, std::to_string(block.height))) {
+        if (!ctx->put_object(LAST_HEIGHT, std::to_string(block.height))) {
             ctx->error("initialize fail to save blockid");
             return;
         }
@@ -131,20 +131,20 @@ public:
             return;
         }
       // 此处检查用户blockid，通过blockid限制合约多tx并发
-        std::string last_blockid, last_height;
+        std::string last_height;
         xchain::Block block;
-        if (!ctx->get_object(LAST_BLOCKID, &last_blockid) || !ctx->get_object(LAST_HEIGHT, &last_height)|| !ctx->query_block(blockid, &block) || 
-            !block.in_trunk || blockid == last_blockid || !block.next_hash.empty()) {
-            ctx->error("add_validate fail to check blockid");
+        if (!ctx->get_object(LAST_HEIGHT, &last_height)|| !ctx->query_block(blockid, &block)) {
+            ctx->error("add_validate fail to check blockid, block not exist or internal error.");
             return;
         }
         int64_t height = 0;
         height = std::atoll(last_height.c_str());
-        if (!height || height > block.height) {
-            ctx->error("add_validate fail to check blockid, please input tipID from ledger");
+        if (!height || height + VALID_HEIGHT_DIS > block.height) {
+            ctx->error("add_validate fail to check blockid, block's height must higher " + 
+                std::to_string(VALID_HEIGHT_DIS) + " than the latest one.");
             return;
         }
-        if (!ctx->put_object(LAST_BLOCKID, blockid) || !ctx->put_object(LAST_HEIGHT, std::to_string(block.height))) {
+        if (!ctx->put_object(LAST_HEIGHT, std::to_string(block.height))) {
             ctx->error("add_validate fail to save blockid");
             return;
         }
@@ -190,18 +190,18 @@ public:
         // 此处检查用户blockid，通过blockid限制合约多tx并发
         std::string last_blockid, last_height;
         xchain::Block block;
-        if (!ctx->get_object(LAST_BLOCKID, &last_blockid) || !ctx->get_object(LAST_HEIGHT, &last_height) || !ctx->query_block(blockid, &block) ||
-            !block.in_trunk || blockid == last_blockid || !block.next_hash.empty()) {
-            ctx->error("del_validate fail to check blockid");
+        if (!ctx->get_object(LAST_HEIGHT, &last_height) || !ctx->query_block(blockid, &block)) {
+            ctx->error("del_validate fail to check blockid, block not exist or internal error.");
             return;
         }
         int64_t height = 0;
         height = std::atoll(last_height.c_str());
-        if (!height || height > block.height) {
-            ctx->error("add_validate fail to check blockid, please input tipID from ledger");
+        if (!height || height + VALID_HEIGHT_DIS > block.height) {
+            ctx->error("del_validate fail to check blockid, block's height must higher " + 
+                std::to_string(VALID_HEIGHT_DIS) + " than the latest one.");
             return;
         }
-        if (!ctx->put_object(LAST_BLOCKID, blockid) || !ctx->put_object(LAST_HEIGHT, std::to_string(block.height))) {
+        if (!ctx->put_object(LAST_HEIGHT, std::to_string(block.height))) {
             ctx->error("del_validate fail to save blockid");
             return;
         }
@@ -240,18 +240,18 @@ public:
         // 此处检查用户blockid，通过blockid限制合约多tx并发
         std::string last_blockid, last_height;
         xchain::Block block;
-        if (!ctx->get_object(LAST_BLOCKID, &last_blockid)  || !ctx->get_object(LAST_HEIGHT, &last_height) || !ctx->query_block(blockid, &block) || 
-            !block.in_trunk || blockid == last_blockid || !block.next_hash.empty()) {
-            ctx->error("update_validate fail to check blockid");
+        if (!ctx->get_object(LAST_HEIGHT, &last_height) || !ctx->query_block(blockid, &block)) {
+            ctx->error("update_validate fail to check blockid, block not exist or internal error.");
             return;
         }
         int64_t height = 0;
         height = std::atoll(last_height.c_str());
-        if (!height || height > block.height) {
-            ctx->error("add_validate fail to check blockid, please input tipID from ledger");
+        if (!height || height + VALID_HEIGHT_DIS > block.height) {
+            ctx->error("update_validate fail to check blockid, block's height must higher " + 
+                std::to_string(VALID_HEIGHT_DIS) + " than the latest one.");
             return;
         }
-        if (!ctx->put_object(LAST_BLOCKID, blockid) || !ctx->put_object(LAST_HEIGHT, std::to_string(block.height))) {
+        if (!ctx->put_object(LAST_HEIGHT, std::to_string(block.height))) {
             ctx->error("update_validate fail to save blockid");
             return;
         }
