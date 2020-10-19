@@ -359,7 +359,7 @@ Again:
 	if blockPos > tp.config.blockNum || pos >= tp.config.proposerNum {
 		if !sentNewView {
 			// only run once when term or proposer change
-			err := tp.notifyNewView(height)
+			err := tp.notifyNewView()
 			if err != nil {
 				tp.log.Warn("proposer or term change, bft Newview failed", "error", err)
 			}
@@ -378,7 +378,7 @@ Again:
 	// if NewView not sent, send NewView message
 	if !sentNewView {
 		// if no term or proposer change, run NewView before generate block
-		err := tp.notifyNewView(height)
+		err := tp.notifyNewView()
 		if err != nil {
 			tp.log.Warn("proposer not changed, bft Newview failed", "error", err)
 		}
@@ -388,13 +388,13 @@ Again:
 	// master check
 	if tp.isProposer(term, pos, tp.address) {
 		tp.log.Trace("CompeteMaster now xterm infos", "term", term, "pos", pos, "blockPos", blockPos, "un2", un2,
-			"master", true, "height", height)
+			"master", true, "height", tp.ledger.GetMeta().TrunkHeight+1, "origin height", height)
 		tp.curBlockNum = blockPos
 		s := tp.needSync()
 		return true, s
 	}
 	tp.log.Trace("CompeteMaster now xterm infos", "term", term, "pos", pos, "blockPos", blockPos, "un2", un2,
-		"master", false, "height", height)
+		"master", false, "height", tp.ledger.GetMeta().TrunkHeight+1, "origin height", height)
 	return false, false
 }
 
@@ -413,7 +413,7 @@ func (tp *TDpos) needSync() bool {
 	return true
 }
 
-func (tp *TDpos) notifyNewView(height int64) error {
+func (tp *TDpos) notifyNewView() error {
 	if !tp.config.enableBFT {
 		// BFT not enabled, continue
 		return nil
@@ -546,8 +546,14 @@ func (tp *TDpos) ProcessBeforeMiner(timestamp int64) (map[string]interface{}, bo
 	// check bft status
 	if tp.config.enableBFT {
 		// TODO: what if IsLastViewConfirmed failed in competemaster, but succeed in ProcessBeforeMiner?
+		height := tp.ledger.GetMeta().GetTrunkHeight() + 1
 		if !tp.isFirstblock(tp.ledger.GetMeta().GetTrunkHeight() + 1) {
 			if ok, _ := tp.bftPaceMaker.IsLastViewConfirmed(); !ok {
+				// 若view number未更新则先暂停
+				if !tp.bftPaceMaker.CheckViewNumer(height) {
+					tp.log.Warn("Haven't received preLeader's NextViewMsg, hold first.")
+					return nil, false
+				}
 				tp.log.Warn("ProcessBeforeMiner last block not confirmed, walk to previous block")
 				lastBlockid := tp.ledger.GetMeta().GetTipBlockid()
 				lastBlock, err := tp.ledger.QueryBlock(lastBlockid)

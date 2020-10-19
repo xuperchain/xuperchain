@@ -552,7 +552,7 @@ func (xpoa *XPoa) ProcessBeforeMiner(timestamp int64) (map[string]interface{}, b
 		if !xpoa.isFirstBlock(height) {
 			if ok, _ := xpoa.bftPaceMaker.IsLastViewConfirmed(); !ok {
 				// 若view number未更新则先暂停
-				if xpoa.bftPaceMaker.CheckViewNumer(height) {
+				if !xpoa.bftPaceMaker.CheckViewNumer(height) {
 					xpoa.lg.Warn("Haven't received preLeader's NextViewMsg, hold first.")
 					return nil, false
 				}

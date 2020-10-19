@@ -86,6 +86,7 @@ func NewSmr(
 		qcVoteMsgs:     &sync.Map{},
 		newViewMsgs:    &sync.Map{},
 		effectiveDelay: effectiveDelay,
+		validViewMsgs:  false,
 		lk:             &sync.Mutex{},
 		QuitCh:         make(chan bool, 1),
 	}
@@ -319,9 +320,11 @@ func (s *Smr) handleReceivedVoteMsg(msg *p2p_pb.XuperMessage) error {
 			return ErrGetLocalProposalQC
 		}
 		proposQC := v.(*pb.QuorumCert)
-		// 变更QC前需要确定当前收到的proposalQC与generateQC为上下轮关系
-		if proposQC.GetViewNumber() != s.generateQC.GetViewNumber()+1 {
-			s.slog.Error("handleReceivedVoteMsg proposalQC's pre QC != s.generateQC", "proposQC=", proposQC.GetViewNumber(), "s.generateQC=", s.generateQC.GetViewNumber())
+		// 变更QC前需要确定当前收到的proposalQC是s.lockedQC的扩展且高度更高
+		if proposQC.GetViewNumber() <= s.lockedQC.GetViewNumber() {
+			s.slog.Error("handleReceivedVoteMsg proposalQC too old", "proposQC=", proposQC.GetViewNumber(),
+				"s.lockedQC=", s.lockedQC.GetViewNumber(), "s.generateQC=",
+				s.generateQC.GetViewNumber(), "s.proposalQC=", s.proposalQC.GetViewNumber())
 			return ErrGetVotes
 		}
 		s.slog.Debug("updateQcStatus when handleReceivedVoteMsg.")
@@ -540,6 +543,7 @@ func (s *Smr) addViewMsg(msg *pb.ChainedBftPhaseMessage) error {
 				viewMsgs := []*pb.ChainedBftPhaseMessage{}
 				viewMsgs = append(viewMsgs, msg)
 				s.newViewMsgs.Store(msg.GetViewNumber(), viewMsgs)
+				s.validViewMsgs = true
 			}
 		}
 	}
@@ -548,6 +552,9 @@ func (s *Smr) addViewMsg(msg *pb.ChainedBftPhaseMessage) error {
 
 // CheckViewNumer check if smr has recieved preLeader's UpdateView msg
 func (s *Smr) CheckViewNumer(viewNumber int64) bool {
+	if !s.validViewMsgs {
+		return true
+	}
 	_, ok := s.newViewMsgs.Load(viewNumber)
 	return ok
 }
@@ -654,7 +661,8 @@ func (s *Smr) addLocalProposal(qc *pb.QuorumCert) {
 
 // UpdateSmrState 更新smr状态, 解决bpm check IsLastViewConfirmed的问题
 func (s *Smr) UpdateSmrState(generateQC *pb.QuorumCert) {
-	s.slog.Info("UpdateSmrState and update ProposalQCId after block confirmed")
+	s.slog.Info("UpdateSmrState and update ProposalQCId after block confirmed", "generateQC", generateQC.GetViewNumber(),
+		"s.generateQC", s.generateQC.GetViewNumber(), "s.proposalQC", s.proposalQC.GetViewNumber())
 	// 此处需要确定这个generateQC一定比本地的s.generateQC后才行
 	if generateQC.GetViewNumber() == s.generateQC.GetViewNumber()+1 && s.proposalQC.GetViewNumber() == generateQC.GetViewNumber()+1 {
 		s.updateQcStatus(s.proposalQC, generateQC, s.generateQC)
