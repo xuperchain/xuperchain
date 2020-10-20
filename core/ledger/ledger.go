@@ -1074,6 +1074,13 @@ func (l *Ledger) QueryBlockByHeight(height int64) (*pb.InternalBlock, error) {
 	return l.QueryBlock(blockID)
 }
 
+// QueryLastBlock query last block by height
+func (l *Ledger) QueryLastBlock() (*pb.InternalBlock, error) {
+	lastBlockHeight := l.meta.GetTrunkHeight()
+
+	return l.QueryBlockByHeight(lastBlockHeight)
+}
+
 // GetBaseDB get internal db instance
 func (l *Ledger) GetBaseDB() kvdb.Database {
 	return l.baseDB

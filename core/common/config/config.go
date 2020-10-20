@@ -208,6 +208,19 @@ type TEEConfig struct {
 	ConfigPath string `yaml:"configPath"` // config path for the dynamic
 }
 
+type EVMConfig struct {
+	Enable bool
+	Driver string
+}
+
+func (e *EVMConfig) DriverName() string {
+	return e.Driver
+}
+
+func (e *EVMConfig) IsEnable() bool {
+	return e.Enable
+}
+
 type CloudStorageConfig struct {
 	Bucket        string `yaml:"bucket"`        //bucket name of s3 or bos
 	Path          string `yaml:"path"`          //path in the bucket
@@ -256,6 +269,7 @@ type NodeConfig struct {
 	Contract ContractConfig `yaml:"contract,omitempty"`
 	Native   NativeConfig   `yaml:"native,omitempty"`
 	Wasm     WasmConfig     `yaml:"wasm,omitempty"`
+	EVM      EVMConfig      `yaml:"evm,omitempty"`
 
 	DBCache DBCacheConfig `yaml:"dbcache,omitempty"`
 	// 节点模式: NORMAL | FAST_SYNC 两种模式
@@ -394,6 +408,10 @@ func (nc *NodeConfig) defaultNodeConfig() {
 		XVM: XVMConfig{
 			OptLevel: 0,
 		},
+	}
+	nc.EVM = EVMConfig{
+		Driver: "evm",
+		Enable: false,
 	}
 	nc.Contract = ContractConfig{
 		EnableDebugLog: true,

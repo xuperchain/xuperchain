@@ -72,7 +72,7 @@ func (cqc *CrossQueryCache) CrossQuery(
 	crossQuery := cqc.crossQueryCaches[cqc.crossQueryIdx]
 
 	// 验证request、签名等信息
-	for !isCossQueryValid(crossQueryRequest, queryMeta, crossQuery) {
+	if !isCossQueryValid(crossQueryRequest, queryMeta, crossQuery) {
 		return nil, fmt.Errorf("isCossQueryValid check failed")
 	}
 	cqc.crossQueryIdx++

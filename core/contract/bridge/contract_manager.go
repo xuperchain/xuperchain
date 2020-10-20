@@ -57,6 +57,11 @@ func (c *contractManager) DeployContract(contextConfig *contract.ContextConfig, 
 	store.Put("contract", ContractCodeDescKey(contractName), descbuf)
 	store.Put("contract", contractCodeKey(contractName), code)
 
+	if desc.ContractType == string(TypeEvm) {
+		abiBuf := args["contract_abi"]
+		store.Put("contract", contractAbiKey(contractName), abiBuf)
+	}
+
 	contractType, err := getContractType(&desc)
 	if err != nil {
 		return nil, contract.Limits{}, err
@@ -67,7 +72,9 @@ func (c *contractManager) DeployContract(contextConfig *contract.ContextConfig, 
 	}
 	cp := newCodeProvider(store)
 	instance, err := creator.CreateInstance(&Context{
+		Cache:          store,
 		ContractName:   contractName,
+		Method:         "initialize",
 		ResourceLimits: contextConfig.ResourceLimits,
 	}, cp)
 	if err != nil {
@@ -182,12 +189,18 @@ func contractCodeKey(contractName string) []byte {
 	return []byte(contractName + "." + "code")
 }
 
+func contractAbiKey(contractName string) []byte {
+	return []byte(contractName + "." + "abi")
+}
+
 func getContractType(desc *pb.WasmCodeDesc) (ContractType, error) {
 	switch desc.ContractType {
 	case "", "wasm":
 		return TypeWasm, nil
 	case "native":
 		return TypeNative, nil
+	case "evm":
+		return TypeEvm, nil
 	default:
 		return "", fmt.Errorf("unknown contract type:%s", desc.ContractType)
 	}

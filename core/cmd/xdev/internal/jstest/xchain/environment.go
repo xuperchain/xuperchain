@@ -10,6 +10,7 @@ import (
 	"github.com/xuperchain/xuperchain/core/common/config"
 	"github.com/xuperchain/xuperchain/core/contract"
 	"github.com/xuperchain/xuperchain/core/contract/bridge"
+	_ "github.com/xuperchain/xuperchain/core/contract/evm"
 	_ "github.com/xuperchain/xuperchain/core/contract/native"
 	_ "github.com/xuperchain/xuperchain/core/contract/wasm/xvm"
 	"github.com/xuperchain/xuperchain/core/pb"
@@ -33,12 +34,17 @@ func newEnvironment() (*environment, error) {
 	nativeconfig := &config.NativeConfig{
 		Enable: true,
 	}
+	evmconfig := &config.EVMConfig{
+		Enable: true,
+		Driver: "evm",
+	}
 
 	xbridge, err := bridge.New(&bridge.XBridgeConfig{
 		Basedir: basedir,
 		VMConfigs: map[bridge.ContractType]bridge.VMConfig{
 			bridge.TypeWasm:   wasmconfig,
 			bridge.TypeNative: nativeconfig,
+			bridge.TypeEvm:    evmconfig,
 		},
 		XModel:    store,
 		LogWriter: os.Stderr,
@@ -56,17 +62,21 @@ func newEnvironment() (*environment, error) {
 }
 
 type deployArgs struct {
-	Name     string            `json:"name"`
-	Code     string            `json:"code"`
-	Lang     string            `json:"lang"`
-	InitArgs map[string]string `json:"init_args"`
-	Type     string            `json:"type"`
+	Name     string                 `json:"name"`
+	Code     string                 `json:"code"`
+	Lang     string                 `json:"lang"`
+	InitArgs map[string]interface{} `json:"init_args"`
+	Type     string                 `json:"type"`
+	ABIFile  string                 `json:"abi"`
+
+	trueArgs map[string][]byte
+	codeBuf  []byte
 }
 
-func convertArgs(ori map[string]string) map[string][]byte {
+func convertArgs(ori map[string]interface{}) map[string][]byte {
 	ret := make(map[string][]byte)
 	for k, v := range ori {
-		ret[k] = []byte(v)
+		ret[k] = []byte(v.(string))
 	}
 	return ret
 }
@@ -74,12 +84,8 @@ func convertArgs(ori map[string]string) map[string][]byte {
 func (e *environment) Deploy(args deployArgs) (*ContractResponse, error) {
 	dargs := make(map[string][]byte)
 	dargs["contract_name"] = []byte(args.Name)
-	codebuf, err := ioutil.ReadFile(args.Code)
-	if err != nil {
-		return nil, err
-	}
-	dargs["contract_code"] = codebuf
-	initArgs, err := json.Marshal(convertArgs(args.InitArgs))
+	dargs["contract_code"] = args.codeBuf
+	initArgs, err := json.Marshal(args.trueArgs)
 	if err != nil {
 		return nil, err
 	}
@@ -117,9 +123,10 @@ type invokeOptions struct {
 }
 
 type invokeArgs struct {
-	Method  string            `json:"method"`
-	Args    map[string]string `json:"args"`
-	Options invokeOptions
+	Method   string                 `json:"method"`
+	Args     map[string]interface{} `json:"args"`
+	trueArgs map[string][]byte
+	Options  invokeOptions
 }
 
 func (e *environment) ContractExists(name string) bool {
@@ -162,7 +169,8 @@ func (e *environment) Invoke(name string, args invokeArgs) (*ContractResponse, e
 		return nil, err
 	}
 	defer ctx.Release()
-	resp, err := ctx.Invoke(args.Method, convertArgs(args.Args))
+
+	resp, err := ctx.Invoke(args.Method, args.trueArgs)
 	if err != nil {
 		return nil, err
 	}

@@ -20,7 +20,9 @@ import (
 	"github.com/golang/protobuf/proto"
 	"google.golang.org/grpc"
 
+	"github.com/hyperledger/burrow/execution/evm/abi"
 	"github.com/xuperchain/xuperchain/core/contract"
+	"github.com/xuperchain/xuperchain/core/contract/bridge"
 	crypto_client "github.com/xuperchain/xuperchain/core/crypto/client"
 	"github.com/xuperchain/xuperchain/core/global"
 	"github.com/xuperchain/xuperchain/core/pb"
@@ -53,6 +55,9 @@ type CommTrans struct {
 	Keys         string
 	XchainClient pb.XchainClient
 	CryptoType   string
+
+	// evm
+	AbiCode []byte
 
 	// DebugTx if enabled, tx will be printed instead of being posted
 	DebugTx bool
@@ -137,9 +142,31 @@ func (c *CommTrans) GenPreExeRes(ctx context.Context) (
 		if res.Status >= contract.StatusErrorThreshold {
 			return nil, nil, fmt.Errorf("contract error status:%d message:%s", res.Status, res.Message)
 		}
-		fmt.Printf("contract response: %s\n", string(res.Body))
+		if c.ModuleName != string(bridge.TypeEvm) {
+			fmt.Printf("contract response: %s\n", string(res.Body))
+		} else {
+			// print contract response of evm
+			err := printRespWithAbiForEVM(string(c.AbiCode), c.MethodName, res.Body)
+			if err != nil {
+				return nil, nil, nil
+			}
+		}
 	}
 	return preExeRPCRes, preExeRPCRes.Response.Requests, nil
+}
+
+func printRespWithAbiForEVM(abiData, funcName string, resp []byte) error {
+	Variables, err := abi.DecodeFunctionReturn(abiData, funcName, resp)
+	if err != nil {
+		return err
+	}
+
+	fmt.Println("contract response:")
+	for i := range Variables {
+		fmt.Println("key,value:", Variables[i].Name, Variables[i].Value)
+	}
+
+	return nil
 }
 
 // GetInvokeRequestFromDesc get invokerequest from desc file
@@ -743,6 +770,11 @@ func (c *CommTrans) GenPreExeWithSelectUtxoRes(ctx context.Context) (
 		}
 	}
 	extraAmount := int64(c.CliConf.ComplianceCheck.ComplianceCheckEndorseServiceFee)
+	fee, err := strconv.ParseInt(c.Fee, 10, 64)
+	if err != nil {
+		return nil, fmt.Errorf("calculate fee fail.error: %s", err)
+	}
+	extraAmount += fee
 	preExeRPCReq.AuthRequire = append(preExeRPCReq.AuthRequire, c.CliConf.ComplianceCheck.ComplianceCheckEndorseServiceAddr)
 	preSelUTXOReq := &pb.PreExecWithSelectUTXORequest{
 		Bcname:      c.ChainName,
@@ -838,8 +870,7 @@ func (c *CommTrans) GenRealTx(response *pb.PreExecWithSelectUTXOResponse,
 	if !ok {
 		return nil, ErrInvalidAmount
 	}
-	gasUsed := strconv.Itoa(int(response.GetResponse().GasUsed))
-	fee, ok := big.NewInt(0).SetString(gasUsed, 10)
+	fee, ok := big.NewInt(0).SetString(c.Fee, 10)
 	if !ok {
 		return nil, ErrInvalidAmount
 	}
@@ -847,7 +878,7 @@ func (c *CommTrans) GenRealTx(response *pb.PreExecWithSelectUTXOResponse,
 	totalNeed.Add(totalNeed, amount)
 
 	selfAmount := totalSelected.Sub(totalSelected, totalNeed)
-	txOutputs, err := c.GenerateMultiTxOutputs(selfAmount.String(), gasUsed)
+	txOutputs, err := c.GenerateMultiTxOutputs(selfAmount.String(), c.Fee)
 	if err != nil {
 		fmt.Printf("GenRealTx GenerateTxOutput failed.")
 		return nil, fmt.Errorf("GenRealTx GenerateTxOutput err: %v", err)
@@ -1056,6 +1087,19 @@ func (c *CommTrans) GenComplianceCheckTx(utxoOutput *pb.UtxoOutput) (*pb.Transac
 	if err != nil {
 		return nil, err
 	}
+	fromAddr, err := readAddress(c.Keys)
+	if err != nil {
+		return nil, err
+	}
+
+	var authRequire string
+	if c.From != "" {
+		authRequire = c.From + "/" + fromAddr
+	} else {
+		authRequire = fromAddr
+	}
+	tx.AuthRequire = append(tx.AuthRequire, authRequire)
+
 	signTx, err := txhash.ProcessSignTx(cryptoClient, tx, []byte(fromScrkey))
 	if err != nil {
 		return nil, err
@@ -1070,6 +1114,7 @@ func (c *CommTrans) GenComplianceCheckTx(utxoOutput *pb.UtxoOutput) (*pb.Transac
 	signatureInfos = append(signatureInfos, signatureInfo)
 
 	tx.InitiatorSigns = signatureInfos
+	tx.AuthRequireSigns = signatureInfos
 
 	// make txid
 	tx.Txid, _ = txhash.MakeTransactionID(tx)
