@@ -39,6 +39,19 @@ message XuperMessage {
 
         // new node used to add to network automatic
         NEW_NODE = 19;
+
+        /* 消息头同步对(GET_HEADERS <-> HEADERS), 
+         * 发送方通过GET_HEADERS消息询问区间范围内的所有区块哈希信息, 
+         * 接受方发送HEADERS信息, 该消息携带其所知的区间范围内的BlockId列表
+         */
+        GET_HEADERS = 20;
+        HEADERS = 21;
+        /* 消息对(GET_BLOCKS <-> BLOCKS), 
+         * 发送方通过GET_BLOCKS消息询问BlockId列表内的所有对应区块信息, 
+         * 接受方发送BLOCKS信息, 该消息携带具体Block
+         */
+        GET_BLOCKS = 22;
+        BLOCKS = 23;
     }
     enum ErrorType {
         // success 

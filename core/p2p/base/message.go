@@ -84,29 +84,9 @@ func VerifyMsgMatch(msgRaw *xuperp2p.XuperMessage, msgNew *xuperp2p.XuperMessage
 	if msgRaw.GetHeader().GetLogid() != msgNew.GetHeader().GetLogid() {
 		return false
 	}
-	switch msgRaw.GetHeader().GetType() {
-	case xuperp2p.XuperMessage_GET_BLOCK:
-		if msgNew.GetHeader().GetType() == xuperp2p.XuperMessage_GET_BLOCK_RES {
-			return true
-		}
-		return false
-	case xuperp2p.XuperMessage_GET_BLOCKCHAINSTATUS:
-		if msgNew.GetHeader().GetType() == xuperp2p.XuperMessage_GET_BLOCKCHAINSTATUS_RES {
-			return true
-		}
-		return false
-	case xuperp2p.XuperMessage_CONFIRM_BLOCKCHAINSTATUS:
-		if msgNew.GetHeader().GetType() == xuperp2p.XuperMessage_CONFIRM_BLOCKCHAINSTATUS_RES {
-			return true
-		}
-		return false
-	case xuperp2p.XuperMessage_GET_AUTHENTICATION:
-		if msgNew.GetHeader().GetType() == xuperp2p.XuperMessage_GET_AUTHENTICATION_RES {
-			return true
-		}
+	if GetResMsgType(msgRaw.GetHeader().GetType()) != msgNew.GetHeader().GetType() {
 		return false
 	}
-
 	return true
 }
 
@@ -123,6 +103,10 @@ func GetResMsgType(msgType xuperp2p.XuperMessage_MessageType) xuperp2p.XuperMess
 		return xuperp2p.XuperMessage_GET_RPC_PORT_RES
 	case xuperp2p.XuperMessage_GET_AUTHENTICATION:
 		return xuperp2p.XuperMessage_GET_AUTHENTICATION_RES
+	case xuperp2p.XuperMessage_GET_HEADERS:
+		return xuperp2p.XuperMessage_HEADERS
+	case xuperp2p.XuperMessage_GET_BLOCKS:
+		return xuperp2p.XuperMessage_BLOCKS
 	default:
 		return xuperp2p.XuperMessage_MSG_TYPE_NONE
 	}
