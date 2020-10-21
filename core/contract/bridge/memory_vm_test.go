@@ -32,7 +32,9 @@ func (m *memoryInstanceCreator) CreateInstance(ctx *Context, cp ContractCodeProv
 	if err != nil {
 		return nil, err
 	}
-	log.Printf("%T", contract)
+
+	abibuf, err := cp.GetContractAbi(ctx.ContractName)
+	log.Printf("%v", abibuf)
 	return newMemoryInstance(contract, ctx, m.config.SyscallService), nil
 }
 
