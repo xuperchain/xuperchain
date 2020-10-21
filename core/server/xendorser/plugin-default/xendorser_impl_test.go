@@ -16,7 +16,9 @@ type MorkXEndorserServer struct {
 	Txs map[string]*pb.TxStatus
 }
 
-func (s *MorkXEndorserServer) PostTx(context.Context, *pb.TxStatus) (*pb.CommonReply, error)  { return nil, nil }
+func (s *MorkXEndorserServer) PostTx(context.Context, *pb.TxStatus) (*pb.CommonReply, error) {
+	return nil, nil
+}
 func (s *MorkXEndorserServer) QueryTx(context context.Context, txStatus *pb.TxStatus) (*pb.TxStatus, error) {
 	return s.Txs[string(txStatus.Txid)], nil
 }
@@ -28,18 +30,20 @@ func (s *MorkXEndorserServer) PreExec(context.Context, *pb.InvokeRPCRequest) (*p
 }
 
 func TestGetTx(t *testing.T) {
-	morkServer := &MorkXEndorserServer{
-		Txs: make(map[string]*pb.TxStatus),
-	}
-	morkServer.Txs["test123"] = &pb.TxStatus{
-		Tx: &pb.Transaction{
-			Txid: []byte("test123"),
+	os.Chdir(baseDir)
+
+	endorser := NewDefaultXEndorser()
+	params := map[string]interface{}{
+		"server": &MorkXEndorserServer{
+			Txs: map[string]*pb.TxStatus{
+				"test123": {
+					Tx: &pb.Transaction{
+						Txid: []byte("test123"),
+					},
+				},
+			},
 		},
 	}
-	endorser := NewDefaultXEndorser()
-
-	params := make(map[string]interface{})
-	params["server"] = morkServer
 
 	if err := endorser.Init("", params); err != nil {
 		t.Error(err)
@@ -53,7 +57,6 @@ func TestGetTx(t *testing.T) {
 	if err != nil {
 		t.Error("unmarshall reqData error", "err", err.Error())
 	}
-
 	req := &pb.EndorserRequest{
 		RequestName: "TxQuery",
 		BcName:      "xuper",
@@ -61,9 +64,6 @@ func TestGetTx(t *testing.T) {
 	}
 
 	ctx, _ := context.WithTimeout(context.TODO(), 6*time.Second)
-
-	os.Chdir(baseDir)
-
 	endorsorRes, err := endorser.EndorserCall(ctx, req)
 	if err != nil {
 		t.Error(err)
@@ -74,7 +74,7 @@ func TestGetTx(t *testing.T) {
 		t.Error("endorsorQuery Unmarshal error", "err", err)
 	}
 
-	if string(res.Txid) != "test123"{
+	if string(res.Txid) != "test123" {
 		t.Error("endorser query tx res error")
 	}
 }
