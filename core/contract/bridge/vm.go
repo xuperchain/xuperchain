@@ -25,6 +25,7 @@ type NewInstanceCreatorFunc func(config *InstanceCreatorConfig) (InstanceCreator
 type ContractCodeProvider interface {
 	GetContractCodeDesc(name string) (*pb.WasmCodeDesc, error)
 	GetContractCode(name string) ([]byte, error)
+	GetContractAbi(name string) ([]byte, error)
 }
 
 // InstanceCreator is the creator of contract virtual machine instance

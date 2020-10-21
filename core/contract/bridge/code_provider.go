@@ -36,6 +36,18 @@ func (c *codeProvider) GetContractCode(name string) ([]byte, error) {
 	return codebuf, nil
 }
 
+func (c *codeProvider) GetContractAbi(name string) ([]byte, error) {
+	value, err := c.xstore.Get("contract", contractAbiKey(name))
+	if err != nil {
+		return nil, fmt.Errorf("get contract abi for '%s' error:%s", name, err)
+	}
+	abiBuf := value.GetPureData().GetValue()
+	if len(abiBuf) == 0 {
+		return nil, errors.New("empty abi")
+	}
+	return abiBuf, nil
+}
+
 func (c *codeProvider) GetContractCodeDesc(name string) (*pb.WasmCodeDesc, error) {
 	value, err := c.xstore.Get("contract", ContractCodeDescKey(name))
 	if err != nil {

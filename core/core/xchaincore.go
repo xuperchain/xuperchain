@@ -281,6 +281,7 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 		VMConfigs: map[bridge.ContractType]bridge.VMConfig{
 			bridge.TypeWasm:   &cfg.Wasm,
 			bridge.TypeNative: &cfg.Native,
+			bridge.TypeEvm:    &cfg.EVM,
 		},
 		XModel: xc.Utxovm.GetXModel(),
 		Config: cfg.Contract,

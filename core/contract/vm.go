@@ -2,6 +2,7 @@ package contract
 
 import (
 	"errors"
+	"math/big"
 	"sync"
 
 	log "github.com/xuperchain/log15"
@@ -45,6 +46,8 @@ func ToPBContractResponse(resp *Response) *pb.ContractResponse {
 type ChainCore interface {
 	// GetAccountAddress get addresses associated with account name
 	GetAccountAddresses(accountName string) ([]string, error)
+	// GetBalance get account's balance
+	GetBalance(addr string) (*big.Int, error)
 	// VerifyContractPermission verify permission of calling contract
 	VerifyContractPermission(initiator string, authRequire []string, contractName, methodName string) (bool, error)
 	// VerifyContractOwnerPermission verify contract ownership permisson
@@ -53,6 +56,10 @@ type ChainCore interface {
 	QueryTransaction(txid []byte) (*pb.Transaction, error)
 	// QueryBlock query block
 	QueryBlock(blockid []byte) (*pb.InternalBlock, error)
+	// QueryBlockByHeight query block by height
+	QueryBlockByHeight(height int64) (*pb.InternalBlock, error)
+	// QueryLastBlock query last block by height
+	QueryLastBlock() (*pb.InternalBlock, error)
 	// ResolveChain resolve chain endorsorinfos
 	ResolveChain(chainName string) (*pb.CrossQueryMeta, error)
 }
