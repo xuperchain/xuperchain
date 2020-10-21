@@ -1074,12 +1074,12 @@ message ContractEvent {
   bytes body = 3;
 }
 
-message GetHeadersMsgBody {
-  int64 HeadersCount = 1;
+message GetHashesMsgBody {
+  int64 HashesCount = 1;
   string HeaderBlockId = 2;
 }
 
-message HeaderMsgBody {
+message HashesMsgBody {
   repeated string BlockIds = 1;
 }
 

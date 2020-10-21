@@ -305,13 +305,13 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	xc.Utxovm.RegisterVAT("kernel", ker, ker.GetVATWhiteList())
 
 	// 启动Sync节点，负责区块同步
-	sn := NewLedgerKeeper(xc.bcname, xc.log, xc.P2pSvr, xc.Ledger.GetMaxBlockSize(), xc.Ledger, xc.nodeMode, xc.Utxovm, xc.con)
-	if err := sn.Init(); err != nil {
+	lk, err := NewLedgerKeeper(xc.bcname, xc.log, xc.P2pSvr, xc.Ledger, xc.nodeMode, xc.Utxovm, xc.con)
+	if err != nil {
 		xc.log.Warn("Xchaincore::Init::NewLedgerKeeper init error", "err", err)
 		return err
 	}
-	sn.Start()
-	xc.LedgerKeeper = sn
+	lk.Start()
+	xc.LedgerKeeper = lk
 
 	go xc.Speed.ShowLoop(xc.log)
 	go xc.repostOfflineTx()
@@ -364,7 +364,7 @@ func (xc *XChainCore) ProcessSendBlock(in *pb.Block, hd *global.XContext) error 
 
 /*
 	当收到一个区块广播之后，若该区块刚好和本地账本tipID对接上，则此时直接触发LedgerKeeper追加
-	若该区块并不是本地tipID的下一个，则主动触发同步GET_HEADERS
+	若该区块并不是本地tipID的下一个，则主动触发同步GET_HASHES
 	若该区块为tipID高度以下的区块，直接忽略
 */
 func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {

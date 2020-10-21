@@ -203,6 +203,9 @@ func (p *P2PServerV2) GetNetURL() string {
 
 // GetLocalUrl return output ip of the xuper node, ipv4 only
 func (p *P2PServerV2) GetLocalUrl() string {
+	if p.config.IsIpv6 {
+		return fmt.Sprintf("/ip6/%s/tcp/%v/p2p/%s", p.config.Ip, p.config.Port, p.node.id.Pretty())
+	}
 	return fmt.Sprintf("/ip4/%s/tcp/%v/p2p/%s", p.config.Ip, p.config.Port, p.node.id.Pretty())
 }
 

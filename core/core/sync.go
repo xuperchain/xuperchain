@@ -18,6 +18,9 @@ const (
 	MaxSleepMilSecond = 500
 )
 
+/* SyncBatchBlocks sync batch blocks
+ * SyncBatchBlocks 批量同步区块，向ledgerkeeper推批量任务
+ */
 func (xc *XChainCore) SyncBatchBlocks() {
 	hd := &global.XContext{Timer: global.NewXTimer()}
 	tipId := global.F(xc.Ledger.GetMeta().GetTipBlockid())

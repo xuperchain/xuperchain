@@ -136,23 +136,23 @@ func prepareLedgerKeeper(port int32, path string) (*LedgerKeeper, *fakeBlockChai
 
 	p2pSrv := p2pv2.NewP2PServerV2()
 	p2pSrv.Init(testCases["testNewServer"].in, nil, nil)
-	return NewLedgerKeeper("xuper", nil, p2pSrv, 1024*128, bcHolder.Ledger, "Normal", bcHolder.UtxoVM, consensus), bcHolder
+	return NewLedgerKeeper("xuper", nil, p2pSrv, bcHolder.Ledger, "Normal", bcHolder.UtxoVM, consensus), bcHolder
 }
 
 func TestGetBlockIdsWithGetHeadersMsg(t *testing.T) {
 	lk, holder := prepareLedgerKeeper(47101, "../data/netkeys/")
 	lk.Init()
-	body := &pb.GetHeadersMsgBody{
-		HeadersCount:  100,
+	body := &pb.GetHashesMsgBody{
+		HashesCount:   100,
 		HeaderBlockId: global.F(holder.B0.GetBlockid()),
 	}
 	bodyBuf, _ := proto.Marshal(body)
-	msg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, "xuper", "", xuper_p2p.XuperMessage_GET_HEADERS, bodyBuf, xuper_p2p.XuperMessage_NONE)
+	msg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, "xuper", "", xuper_p2p.XuperMessage_GET_HASHES, bodyBuf, xuper_p2p.XuperMessage_NONE)
 	lk.syncMsgChan <- msg
 	returnMsg := <-lk.syncMsgChan
 	xmsg, err := lk.handleGetHeadersMsg(nil, returnMsg)
 
-	headerMsgBody := &pb.HeaderMsgBody{}
+	headerMsgBody := &pb.HashesMsgBody{}
 	err = proto.Unmarshal(xmsg.GetData().GetMsgInfo(), headerMsgBody)
 	if err != nil {
 		t.Error("TestGetBlockIdsWithGetHeadersMsg ErrUnmarshal")
@@ -219,17 +219,17 @@ func TestHandleGetHeadersMsg(t *testing.T) {
 	lk, holder := prepareLedgerKeeper(47101, "../data/netkeys/")
 	lk.Init()
 	t.Log("gBlk:", global.F(holder.B0.GetBlockid()), " nextBlk:", global.F(holder.B1.GetBlockid()), " nextNextBlk:", global.F(holder.B2.GetBlockid()))
-	body := &pb.GetHeadersMsgBody{
-		HeadersCount:  2,
+	body := &pb.GetHashesMsgBody{
+		HashesCount:   2,
 		HeaderBlockId: global.F(holder.B0.GetBlockid()),
 	}
 	bodyBuf, _ := proto.Marshal(body)
-	msg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, "xuper", "", xuper_p2p.XuperMessage_GET_HEADERS, bodyBuf, xuper_p2p.XuperMessage_NONE)
+	msg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, "xuper", "", xuper_p2p.XuperMessage_GET_HASHES, bodyBuf, xuper_p2p.XuperMessage_NONE)
 	returnMsg, err := lk.handleGetHeadersMsg(nil, msg)
 	if err != nil {
 		t.Error("TestHandleGetHeadersMsg test Internal error: ", err.Error())
 	}
-	returnBody := &pb.HeaderMsgBody{}
+	returnBody := &pb.HashesMsgBody{}
 	if err := proto.Unmarshal(returnMsg.GetData().GetMsgInfo(), returnBody); err != nil {
 		t.Error("TestHandleGetHeadersMsg test Internal error: ", err.Error())
 	}

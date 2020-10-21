@@ -47,3 +47,21 @@ func TestValidContractName(t *testing.T) {
 		}
 	}
 }
+
+func TestGetHostIpv4(t *testing.T) {
+	ip := GetHostIpv4()
+	ipSlice := strings.Split(ip, ".")
+	if len(ipSlice) != 4 {
+		t.Error("Not Ipv4:", ip)
+	}
+	if ip == "127.0.0.1" {
+		t.Error("Ipv4 Loopback:", ip)
+	}
+}
+
+func TestGetHostIpv6(t *testing.T) {
+	ip := GetHostIpv6()
+	if strings.Count(ip, ":") < 2 {
+		t.Error("Not Ipv6:", ip)
+	}
+}

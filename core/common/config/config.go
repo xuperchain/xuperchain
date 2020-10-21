@@ -2,12 +2,12 @@ package config
 
 import (
 	"fmt"
-	"net"
 	"time"
 
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb/errors"
+	"github.com/xuperchain/xuperchain/core/common"
 )
 
 // default settings
@@ -451,10 +451,16 @@ func NewNodeConfig() *NodeConfig {
 
 // newP2pConfigWithDefault create default p2p configuration
 func newP2pConfigWithDefault() P2PConfig {
+	var ip string
+	if DefaultNetIsIpv6 {
+		ip = common.GetHostIpv6()
+	} else {
+		ip = common.GetHostIpv4()
+	}
 	return P2PConfig{
 		Module:           DefaultP2PModuleName,
 		Port:             DefaultNetPort,
-		Ip:               GetHostIp(),
+		Ip:               ip,
 		KeyPath:          DefaultNetKeyPath,
 		IsNat:            DefaultNetIsNat,
 		IsTls:            DefaultNetIsTls,
@@ -476,21 +482,6 @@ func newP2pConfigWithDefault() P2PConfig {
 		ServiceName:           DefaultServiceName,
 		IsBroadCast:           DefaultIsBroadCast,
 	}
-}
-
-func GetHostIp() string {
-	addrs, err := net.InterfaceAddrs()
-	if err != nil {
-		return ""
-	}
-	for _, address := range addrs {
-		if ipnet, ok := address.(*net.IPNet); ok && !ipnet.IP.IsLoopback() {
-			if ipnet.IP.To4() != nil {
-				return ipnet.IP.String()
-			}
-		}
-	}
-	return ""
 }
 
 // Validate valid if
