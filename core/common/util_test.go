@@ -61,7 +61,7 @@ func TestGetHostIpv4(t *testing.T) {
 
 func TestGetHostIpv6(t *testing.T) {
 	ip := GetHostIpv6()
-	if strings.Count(ip, ":") < 2 {
+	if ip != "" && strings.Count(ip, ":") < 2 {
 		t.Error("Not Ipv6:", ip)
 	}
 }
