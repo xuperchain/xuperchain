@@ -770,11 +770,13 @@ func (c *CommTrans) GenPreExeWithSelectUtxoRes(ctx context.Context) (
 		}
 	}
 	extraAmount := int64(c.CliConf.ComplianceCheck.ComplianceCheckEndorseServiceFee)
-	fee, err := strconv.ParseInt(c.Fee, 10, 64)
-	if err != nil {
-		return nil, fmt.Errorf("calculate fee fail.error: %s", err)
+	if c.Fee != "" && c.Fee != "0" {
+		fee, err := strconv.ParseInt(c.Fee, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("Invalid Fee: %s", c.Fee)
+		}
+		extraAmount += fee
 	}
-	extraAmount += fee
 	preExeRPCReq.AuthRequire = append(preExeRPCReq.AuthRequire, c.CliConf.ComplianceCheck.ComplianceCheckEndorseServiceAddr)
 	preSelUTXOReq := &pb.PreExecWithSelectUTXORequest{
 		Bcname:      c.ChainName,
