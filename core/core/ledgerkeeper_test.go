@@ -136,12 +136,12 @@ func prepareLedgerKeeper(port int32, path string) (*LedgerKeeper, *fakeBlockChai
 
 	p2pSrv := p2pv2.NewP2PServerV2()
 	p2pSrv.Init(testCases["testNewServer"].in, nil, nil)
-	return NewLedgerKeeper("xuper", nil, p2pSrv, bcHolder.Ledger, "Normal", bcHolder.UtxoVM, consensus), bcHolder
+	l, _ := NewLedgerKeeper("xuper", nil, p2pSrv, bcHolder.Ledger, "Normal", bcHolder.UtxoVM, consensus)
+	return l, bcHolder
 }
 
 func TestGetBlockIdsWithGetHeadersMsg(t *testing.T) {
 	lk, holder := prepareLedgerKeeper(47101, "../data/netkeys/")
-	lk.Init()
 	body := &pb.GetHashesMsgBody{
 		HashesCount:   100,
 		HeaderBlockId: global.F(holder.B0.GetBlockid()),
@@ -175,7 +175,6 @@ func TestGetBlockIdsWithGetHeadersMsg(t *testing.T) {
 
 func TestGetBlocksWithGetDataMsg(t *testing.T) {
 	lk, holder := prepareLedgerKeeper(47101, "../data/netkeys/")
-	lk.Init()
 	body := &pb.GetBlocksMsgBody{
 		BlockList: []string{global.F(holder.B1.GetBlockid()), global.F(holder.B2.GetBlockid())},
 	}
@@ -217,7 +216,6 @@ func TestGetBlocksWithGetDataMsg(t *testing.T) {
 
 func TestHandleGetHeadersMsg(t *testing.T) {
 	lk, holder := prepareLedgerKeeper(47101, "../data/netkeys/")
-	lk.Init()
 	t.Log("gBlk:", global.F(holder.B0.GetBlockid()), " nextBlk:", global.F(holder.B1.GetBlockid()), " nextNextBlk:", global.F(holder.B2.GetBlockid()))
 	body := &pb.GetHashesMsgBody{
 		HashesCount:   2,
@@ -248,7 +246,6 @@ func TestHandleGetHeadersMsg(t *testing.T) {
 
 func TestHandleGetDataMsg(t *testing.T) {
 	lk, holder := prepareLedgerKeeper(47101, "../data/netkeys/")
-	lk.Init()
 	body := &pb.GetBlocksMsgBody{
 		BlockList: []string{global.F(holder.B2.GetBlockid()), global.F(holder.B1.GetBlockid())},
 	}
@@ -346,7 +343,6 @@ func TestPickIndexesWithTargetSize(t *testing.T) {
 
 func TestConfirmForkingBlock(t *testing.T) {
 	lk, holder := prepareLedgerKeeper(47101, "../data/netkeys/")
-	lk.Init()
 	tx := generateTx(false, holder.UtxoVM)
 	b3, err := holder.Ledger.FormatFakeBlock([]*pb.Transaction{tx}, []byte(bobAddress), holder.PrivateKey, time.Now().UnixNano(), 3, 3, holder.B2.GetBlockid(), big.NewInt(0), 3)
 	if err != nil {
@@ -387,7 +383,6 @@ func TestConfirmForkingBlock(t *testing.T) {
 
 func TestConfirmAppendingBlock(t *testing.T) {
 	lk, holder := prepareLedgerKeeper(47101, "../data/netkeys/")
-	lk.Init()
 	tx := generateTx(false, holder.UtxoVM)
 	b3, err := holder.Ledger.FormatFakeBlock([]*pb.Transaction{tx}, []byte(bobAddress), holder.PrivateKey, time.Now().UnixNano(), 3, 3, holder.B2.GetBlockid(), big.NewInt(0), 3)
 	if err != nil {
@@ -425,7 +420,6 @@ func TestConfirmAppendingBlock(t *testing.T) {
 
 func TestConfirmBlocks(t *testing.T) {
 	lk, holder := prepareLedgerKeeper(47101, "../data/netkeys/")
-	lk.Init()
 
 	tx := generateTx(false, holder.UtxoVM)
 	b3, err := holder.Ledger.FormatFakeBlock([]*pb.Transaction{tx}, []byte(bobAddress), holder.PrivateKey, time.Now().UnixNano(), 3, 3, holder.B2.GetBlockid(), big.NewInt(0), 3)
@@ -454,7 +448,7 @@ func TestConfirmBlocks(t *testing.T) {
 			internalBlock: signedBlock,
 		},
 	}
-	newBeginId, ok, err := lk.ConfirmBlocks(&global.XContext{Timer: global.NewXTimer()}, global.F(holder.B2.GetBlockid()), global.F(holder.B2.GetBlockid()), tmpMap,
+	newBeginId, ok, err := lk.confirmBlocks(&global.XContext{Timer: global.NewXTimer()}, global.F(holder.B2.GetBlockid()), global.F(holder.B2.GetBlockid()), tmpMap,
 		map[int]string{
 			0: global.F(signedBlock.GetBlockid()),
 		}, true)
@@ -482,7 +476,7 @@ func TestConfirmBlocks(t *testing.T) {
 			internalBlock: signedBlock,
 		},
 	}
-	newBeginId, ok, err = lk.ConfirmBlocks(&global.XContext{Timer: global.NewXTimer()}, global.F(holder.B2.GetBlockid()), global.F(holder.B2.GetBlockid()), tmpMap,
+	newBeginId, ok, err = lk.confirmBlocks(&global.XContext{Timer: global.NewXTimer()}, global.F(holder.B2.GetBlockid()), global.F(holder.B2.GetBlockid()), tmpMap,
 		map[int]string{
 			0: global.F(signedBlock.GetBlockid()),
 		}, true)
