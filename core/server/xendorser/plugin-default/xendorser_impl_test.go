@@ -12,29 +12,34 @@ import (
 
 var baseDir = os.Getenv("XCHAIN_ROOT")
 
-type MorkXEndorserServer struct {
+type MockXEndorserServer struct {
 	Txs map[string]*pb.TxStatus
 }
 
-func (s *MorkXEndorserServer) PostTx(context.Context, *pb.TxStatus) (*pb.CommonReply, error) {
+func (s *MockXEndorserServer) PostTx(context.Context, *pb.TxStatus) (*pb.CommonReply, error) {
 	return nil, nil
 }
-func (s *MorkXEndorserServer) QueryTx(context context.Context, txStatus *pb.TxStatus) (*pb.TxStatus, error) {
+func (s *MockXEndorserServer) QueryTx(context context.Context, txStatus *pb.TxStatus) (*pb.TxStatus, error) {
 	return s.Txs[string(txStatus.Txid)], nil
 }
-func (s *MorkXEndorserServer) PreExecWithSelectUTXO(context.Context, *pb.PreExecWithSelectUTXORequest) (*pb.PreExecWithSelectUTXOResponse, error) {
+func (s *MockXEndorserServer) PreExecWithSelectUTXO(context.Context, *pb.PreExecWithSelectUTXORequest) (*pb.PreExecWithSelectUTXOResponse, error) {
 	return nil, nil
 }
-func (s *MorkXEndorserServer) PreExec(context.Context, *pb.InvokeRPCRequest) (*pb.InvokeRPCResponse, error) {
+func (s *MockXEndorserServer) PreExec(context.Context, *pb.InvokeRPCRequest) (*pb.InvokeRPCResponse, error) {
 	return nil, nil
 }
 
 func TestGetTx(t *testing.T) {
-	os.Chdir(baseDir)
+	if baseDir == "" {
+		return
+	}
+	if err := os.Chdir(baseDir); err != nil {
+		t.Fatal(err)
+	}
 
 	endorser := NewDefaultXEndorser()
 	params := map[string]interface{}{
-		"server": &MorkXEndorserServer{
+		"server": &MockXEndorserServer{
 			Txs: map[string]*pb.TxStatus{
 				"test123": {
 					Tx: &pb.Transaction{
@@ -46,7 +51,7 @@ func TestGetTx(t *testing.T) {
 	}
 
 	if err := endorser.Init("", params); err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 
 	request := &pb.TxStatus{
@@ -55,7 +60,7 @@ func TestGetTx(t *testing.T) {
 	}
 	reqData, err := json.Marshal(request)
 	if err != nil {
-		t.Error("unmarshall reqData error", "err", err.Error())
+		t.Fatal("unmarshall reqData error", "err", err.Error())
 	}
 	req := &pb.EndorserRequest{
 		RequestName: "TxQuery",
@@ -66,15 +71,15 @@ func TestGetTx(t *testing.T) {
 	ctx, _ := context.WithTimeout(context.TODO(), 6*time.Second)
 	endorsorRes, err := endorser.EndorserCall(ctx, req)
 	if err != nil {
-		t.Error(err)
+		t.Fatal(err)
 	}
 	res := &pb.Transaction{}
 	err = json.Unmarshal(endorsorRes.GetResponseData(), res)
 	if err != nil {
-		t.Error("endorsorQuery Unmarshal error", "err", err)
+		t.Fatal("endorsorQuery Unmarshal error", "err", err)
 	}
 
 	if string(res.Txid) != "test123" {
-		t.Error("endorser query tx res error")
+		t.Fatal("endorser query tx res error")
 	}
 }
