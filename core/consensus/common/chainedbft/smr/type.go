@@ -60,8 +60,6 @@ type Smr struct {
 	newViewMsgs *sync.Map
 	// effectiveDelay is the interval height after validates are changed, where the new validates will become effective to the whole network.
 	effectiveDelay int64
-	// validViewMsgs indicate whether smr has changed proposer
-	validViewMsgs bool
 	// lk lock
 	lk *sync.Mutex
 	// quitCh stop channel

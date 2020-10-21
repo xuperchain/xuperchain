@@ -86,7 +86,6 @@ func NewSmr(
 		qcVoteMsgs:     &sync.Map{},
 		newViewMsgs:    &sync.Map{},
 		effectiveDelay: effectiveDelay,
-		validViewMsgs:  false,
 		lk:             &sync.Mutex{},
 		QuitCh:         make(chan bool, 1),
 	}
@@ -543,20 +542,10 @@ func (s *Smr) addViewMsg(msg *pb.ChainedBftPhaseMessage) error {
 				viewMsgs := []*pb.ChainedBftPhaseMessage{}
 				viewMsgs = append(viewMsgs, msg)
 				s.newViewMsgs.Store(msg.GetViewNumber(), viewMsgs)
-				s.validViewMsgs = true
 			}
 		}
 	}
 	return nil
-}
-
-// CheckViewNumer check if smr has recieved preLeader's UpdateView msg
-func (s *Smr) CheckViewNumer(viewNumber int64) bool {
-	if !s.validViewMsgs {
-		return true
-	}
-	_, ok := s.newViewMsgs.Load(viewNumber)
-	return ok
 }
 
 // addVoteMsg check and add vote msg to smr

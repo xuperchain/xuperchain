@@ -208,17 +208,6 @@ func TestProcessNewView(t *testing.T) {
 	}
 }
 
-func TestCheckViewNumer(t *testing.T) {
-	smr, err := MakeSmr(t)
-	if err != nil {
-		t.Error("TestCheckViewNumer MakeSmr error", err)
-		return
-	}
-	if !smr.CheckViewNumer(1003) {
-		t.Error("TestCheckViewNumer CheckViewNumer error")
-	}
-}
-
 func TestUpdateSmrState(t *testing.T) {
 	smr, err := MakeSmr(t)
 	if err != nil {
