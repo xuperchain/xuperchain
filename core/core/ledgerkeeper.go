@@ -1138,16 +1138,14 @@ func (lk *LedgerKeeper) confirmBlocks(hd *global.XContext, originBegin, headerBe
 				break
 			}
 			newBegin = nextBlockid
+			err = lk.con.ProcessConfirmBlock(checkBlock.internalBlock)
+			if err != nil {
+				lk.log.Debug("ConfirmBlocks::ProcessConfirmBlock error", "logid", checkBlock.header.GetLogid(), "error", err, "cost", hd.Timer.Print())
+			}
 		}
 		if index < 1 {
 			lk.log.Debug("ConfirmBlocks::confirm error", "err", err, "cost", hd.Timer.Print())
 			return newBegin, false, err
-		}
-		simpleBlock := blocksMap[headersInfo[index-1]]
-		b := simpleBlock.internalBlock
-		err = lk.con.ProcessConfirmBlock(b)
-		if err != nil {
-			lk.log.Debug("ConfirmBlocks::ProcessConfirmBlock error", "logid", simpleBlock.header.GetLogid(), "error", err, "cost", hd.Timer.Print())
 		}
 		lk.log.Debug("ConfirmBlocks::Equal The Same, confirm blocks finish", "newBegin", newBegin, "cost", hd.Timer.Print())
 		return newBegin, index == listLen, err
@@ -1173,14 +1171,14 @@ func (lk *LedgerKeeper) confirmBlocks(hd *global.XContext, originBegin, headerBe
 			}
 		}
 		newBegin = nextBlockid
+		err = lk.con.ProcessConfirmBlock(checkBlock.internalBlock)
+		if err != nil {
+			lk.log.Debug("ConfirmBlocks::ProcessConfirmBlock error", "error", err, "cost", hd.Timer.Print())
+		}
 	}
 	// 待块确认后, 共识执行相应的操作
 	if index < 1 {
 		return newBegin, false, nil
-	}
-	err = lk.con.ProcessConfirmBlock(blocksMap[headersInfo[index-1]].internalBlock)
-	if err != nil {
-		lk.log.Debug("ConfirmBlocks::ProcessConfirmBlock error", "error", err, "cost", hd.Timer.Print())
 	}
 	lk.log.Debug("ConfirmBlocks::XXXXXXXXX The NO Same, confirm blocks finish", "newBegin", newBegin, "cost", hd.Timer.Print())
 	return newBegin, index == listLen, err

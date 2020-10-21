@@ -292,11 +292,6 @@ func TestXChainMgBasic(t *testing.T) {
 		Status:  pb.Block_TRUNK,
 		Block:   block,
 	}
-	// save in pending table
-	saveErr := rootXCore.Ledger.SavePendingBlock(globalBlock)
-	if saveErr != nil {
-		t.Error("save error ", saveErr.Error())
-	}
 	txReq.Nonce = "nonce3"
 	txReq.Timestamp = time.Now().UnixNano()
 	txStatus = rootXCore.GenerateTx(txReq, &global.XContext{Timer: global.NewXTimer()})
