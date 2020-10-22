@@ -1,6 +1,7 @@
 package xchaincore
 
 import (
+	"bytes"
 	"container/list"
 	"context"
 	"crypto/rand"
@@ -499,7 +500,7 @@ func appendingBlock(lk *LedgerKeeper, lt *LedgerTask) error {
 	for key, _ := range lt.GetExtBlocks() {
 		headersInfo[i] = key
 	}
-	newBegin, ok, err := lk.confirmBlocks(lt.GetXCtx(), lt.GetTargetBlockId(), lt.GetTargetBlockId(), lt.GetExtBlocks(), headersInfo, true)
+	newBegin, ok, err := lk.confirmBlocks(lt.GetXCtx(), lt.GetTargetBlockId(), lt.GetExtBlocks(), headersInfo, true)
 	lk.log.Trace("appendingBlock::AppendTask try to append ledger directly", "blockid", lt.GetTargetBlockId(), "newbegin", newBegin, "ok", ok, "error", err)
 	return nil
 
@@ -586,7 +587,7 @@ func (lk *LedgerKeeper) syncBlocksWithTipidAndPeers(lt *LedgerTask) error {
 			return nil
 		}
 		// 本轮同步结束，开始写账本
-		newBegin, _, err := lk.confirmBlocks(lt.GetXCtx(), lt.targetBlockId, headerBegin, blocksMap, headersInfo, endFlag)
+		newBegin, _, err := lk.confirmBlocks(lt.GetXCtx(), headerBegin, blocksMap, headersInfo, endFlag)
 		if err != nil {
 			lk.log.Warn("syncBlocksWithTipidAndPeers::ConfirmBlocks error", "err", err)
 			return nil
@@ -953,7 +954,7 @@ func (lk *LedgerKeeper) handleGetDataMsg(ctx context.Context, msg *xuper_p2p.Xup
 /* confirmBlocks 原SendBlock逻辑
  * 账本接受blockMap数据，代替原来的PendingBlocks，正向confirm block
  */
-func (lk *LedgerKeeper) confirmBlocks(hd *global.XContext, originBegin, headerBegin string, blocksMap map[string]*SimpleBlock, headersInfo map[int]string, endFlag bool) (string, bool, error) {
+func (lk *LedgerKeeper) confirmBlocks(hd *global.XContext, headerBegin string, blocksMap map[string]*SimpleBlock, headersInfo map[int]string, endFlag bool) (string, bool, error) {
 	// 取这段新链的第一个区块，判断走账本分叉逻辑还是直接账本追加逻辑
 	var err error
 	newBegin := headerBegin
@@ -968,9 +969,7 @@ func (lk *LedgerKeeper) confirmBlocks(hd *global.XContext, originBegin, headerBe
 	if listLen == 0 {
 		return newBegin, false, ErrInternal
 	}
-	// 更新的节点是否是账本主干上的末枝，或者是账本上的一个分叉, originBegin表示task初始值，headerBegin表示同步后初始值
-	noFork := global.F(beginSimpleBlock.internalBlock.GetPreHash()) == originBegin
-	if noFork {
+	if bytes.Compare(beginSimpleBlock.internalBlock.GetPreHash(), lk.ledger.GetMeta().GetTipBlockid()) == 0 {
 		lk.log.Debug("ConfirmBlocks::Equal The Same", "cost", hd.Timer.Print())
 		needVerify := (lk.nodeMode == config.NodeModeFastSync)
 		for ; index < listLen; index++ {
