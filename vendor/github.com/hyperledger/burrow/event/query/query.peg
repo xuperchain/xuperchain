@@ -1,0 +1,58 @@
+package query
+
+# We specify the name of the generated parse to be QueryParser then Expression is a struct type that we are expected
+# to define to provide parse internal state when we run parser.Execute()
+
+type QueryParser Peg {
+    Expression
+}
+
+# By recursing through OR then AND AND gets stronger precedent. PEG goes depth first so the hooks that are deeper
+# in the AST get run first - this allows us to naturally form code for a stack machine (implemented in Expression)
+
+e <- eor !.
+
+eor <- eand ( or eand { p.Operator(OpOr) })*
+
+eand <- condition ( and condition { p.Operator(OpAnd) })*
+
+condition <- tag sp (le (number / time / date) { p.Operator(OpLessEqual) }
+                      / ge (number / time / date) { p.Operator(OpGreaterEqual) }
+                      / l (number / time / date) { p.Operator(OpLess) }
+                      / g (number / time / date) { p.Operator(OpGreater) }
+                      / equal (number / time / date / qvalue) { p.Operator(OpEqual) }
+                      / contains qvalue { p.Operator(OpContains) }
+                      ) sp / open eor close
+
+## Terminals
+
+tag <- < (![ \t\n\r\\()"'=><] .)+ > sp { p.Tag(buffer[begin:end]) }
+
+qvalue <- '\'' value '\'' sp
+value <- < (!["'] .)* > { p.Value(buffer[begin:end]) }
+
+number <- < ('0' / [1-9] digit* ('.' digit*)?) > { p.Number(buffer[begin:end]) }
+digit <- [0-9]
+
+time <- "TIME " < year '-' month '-' day 'T' digit digit ':' digit digit ':' digit digit (('-' / '+') digit digit ':' digit digit / 'Z') > { p.Time(buffer[begin:end]) }
+
+date <- "DATE " < year '-' month '-' day > { p.Date(buffer[begin:end]) }
+year <- ('1' / '2') digit digit digit
+month <- ('0' / '1') digit
+day <- ('0' / '1' / '2' / '3') digit
+
+## Operators
+
+and <- "AND" sp
+or <- "OR" sp
+equal <- "=" sp
+contains <- "CONTAINS" sp
+le <- "<=" sp
+ge <- ">=" sp
+l <- "<" sp
+g <- ">" sp
+
+# Whitespace and grouping
+open <- '(' sp
+close <- ')' sp
+sp <- (' ' / '\t')*

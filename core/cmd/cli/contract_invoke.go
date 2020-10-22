@@ -8,13 +8,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 
 	"github.com/spf13/cobra"
 
+	"github.com/xuperchain/xuperchain/core/contract/bridge"
+	"github.com/xuperchain/xuperchain/core/contract/evm/abi"
 	"github.com/xuperchain/xuperchain/core/utxo"
 )
 
-// ContractInvokeCommand wasm invoke cmd
+// ContractInvokeCommand wasm/native/evm invoke cmd
 type ContractInvokeCommand struct {
 	cli *Cli
 	cmd *cobra.Command
@@ -29,9 +32,10 @@ type ContractInvokeCommand struct {
 	methodName string
 	amount     string
 	debug      bool
+	abiFile    string
 }
 
-// NewContractInvokeCommand new wasm invoke cmd
+// NewContractInvokeCommand new wasm/native/evm invoke cmd
 func NewContractInvokeCommand(cli *Cli, module string) *cobra.Command {
 	c := new(ContractInvokeCommand)
 	c.cli = cli
@@ -60,12 +64,14 @@ func (c *ContractInvokeCommand) addFlags() {
 	c.cmd.Flags().StringVarP(&c.methodName, "method", "", "invoke", "contract method name")
 	c.cmd.Flags().StringVarP(&c.amount, "amount", "", "", "the amount transfer to contract")
 	c.cmd.Flags().BoolVarP(&c.debug, "debug", "", false, "debug print tx instead of posting")
-
+	if c.module == string(bridge.TypeEvm) {
+		c.cmd.Flags().StringVarP(&c.abiFile, "abi", "", "", "the abi file of contract")
+	}
 }
 
 func (c *ContractInvokeCommand) example() string {
 	return `
-xchain wasm|native invoke $codeaddr --method invoke -a '{"Your method args in json format"}'
+xchain wasm|native|evm invoke $codeaddr --method invoke -a '{"Your method args in json format"}'
 `
 }
 
@@ -101,9 +107,16 @@ func (c *ContractInvokeCommand) invoke(ctx context.Context, codeName string) err
 	if err != nil {
 		return err
 	}
-	ct.Args, err = convertToXuper3Args(args)
-	if err != nil {
-		return err
+	if c.module == string(bridge.TypeEvm) {
+		ct.Args, ct.AbiCode, err = convertToEvmArgsWithAbiFile(c.abiFile, c.methodName, args)
+		if err != nil {
+			return err
+		}
+	} else {
+		ct.Args, err = convertToXuper3Args(args)
+		if err != nil {
+			return err
+		}
 	}
 
 	if c.isMulti {
@@ -125,4 +138,27 @@ func convertToXuper3Args(args map[string]interface{}) (map[string][]byte, error)
 		argmap[k] = []byte(s)
 	}
 	return argmap, nil
+}
+
+func convertToEvmArgsWithAbiFile(abiFile string, method string, args map[string]interface{}) (map[string][]byte, []byte, error) {
+	buf, err := ioutil.ReadFile(abiFile)
+	if err != nil {
+		return nil, nil, err
+	}
+	return convertToEvmArgsWithAbiData(buf, method, args)
+}
+
+func convertToEvmArgsWithAbiData(abiData []byte, method string, args map[string]interface{}) (map[string][]byte, []byte, error) {
+	enc, err := abi.New(abiData)
+	if err != nil {
+		return nil, nil, err
+	}
+	input, err := enc.Encode(method, args)
+	if err != nil {
+		return nil, nil, err
+	}
+	ret := map[string][]byte{
+		"input": input,
+	}
+	return ret, abiData, nil
 }
