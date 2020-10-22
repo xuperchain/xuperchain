@@ -255,7 +255,11 @@ func (xpoa *XPoa) initBFT(cfg *config.NodeConfig, cryptoClient crypto_base.Crypt
 	meta := xpoa.ledger.GetMeta()
 	if meta.TrunkHeight != 0 {
 		blockid := meta.TipBlockid
-		block, _ := xpoa.ledger.QueryBlock(blockid)
+		block, err := xpoa.ledger.QueryBlock(blockid)
+		if err != nil {
+			xpoa.lg.Warn("initBFT: refresh ChainedBft, get tipBlock failed", "error", err)
+			return err
+		}
 		qc[2] = nil
 		qc[1] = &pb.QuorumCert{
 			ProposalId: blockid,
@@ -583,6 +587,28 @@ func (xpoa *XPoa) ProcessBeforeMiner(timestamp int64) (map[string]interface{}, b
 	return res, true
 }
 
+func (xpoa *XPoa) checkNextProposerChanged(height int64) ([]*cons_base.CandidateInfo, bool) {
+	validateBlock, err := xpoa.ledger.QueryBlockByHeight(height)
+	if err != nil {
+		return nil, false
+	}
+	nextValidates, _, err := xpoa.getValidatesByBlockId(validateBlock.GetBlockid())
+	if err != nil {
+		return nil, false
+	}
+
+	nextTime := time.Now().UnixNano() + xpoa.xpoaConf.period
+	nextValidate, err := xpoa.getProposer(nextTime, nextValidates)
+	xpoa.lg.Warn("Cal nextProposer:", "proposer", nextValidate)
+	if err == nil && !xpoa.isInValidateSets(nextValidate.Address) {
+		// 更新发送节点
+		xpoa.lg.Info("Send Proposal to new Validates")
+		nextValidates := append(xpoa.proposerInfos, nextValidate)
+		return nextValidates, true
+	}
+	return nil, false
+}
+
 // ProcessConfirmBlock is the specific implementation of ConsensusInterface
 func (xpoa *XPoa) ProcessConfirmBlock(block *pb.InternalBlock) error {
 	if !xpoa.IsActive() {
@@ -599,21 +625,11 @@ func (xpoa *XPoa) ProcessConfirmBlock(block *pb.InternalBlock) error {
 
 		// 如果是当前矿工，检测到下一轮需变更validates，且下一轮proposer并不在节点列表中，此时需在广播列表中新加入节点
 		validates := xpoa.proposerInfos
-		validateBlock, _ := xpoa.ledger.QueryBlockByHeight(block.GetHeight() + 1 - 3)
-		nextValidates, _, err := xpoa.getValidatesByBlockId(validateBlock.GetBlockid())
-		if err == nil {
-			nextTime := time.Now().UnixNano() + xpoa.xpoaConf.period
-			nextProposer, err := xpoa.getProposer(nextTime, nextValidates)
-			xpoa.lg.Warn("Cal nextProposer:", "proposer", nextProposer)
-			if err == nil && !xpoa.isInValidateSets(nextProposer.Address) {
-				// 更新发送节点
-				xpoa.lg.Info("Send Proposal to new Validates")
-				nextValidates := append(xpoa.proposerInfos, nextProposer)
-				validates = nextValidates
-			}
+		if nextValidates, changeFlag := xpoa.checkNextProposerChanged(block.GetHeight() + 1 - 3); changeFlag {
+			validates = nextValidates
 		}
 
-		err = xpoa.bftPaceMaker.NextNewProposal(block.Blockid, blockData, validates)
+		err := xpoa.bftPaceMaker.NextNewProposal(block.Blockid, blockData, validates)
 		if err != nil {
 			xpoa.lg.Warn("ProcessConfirmBlock: bft next proposal failed", "error", err)
 			return err
