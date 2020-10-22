@@ -569,6 +569,9 @@ func (lk *LedgerKeeper) syncBlocksWithTipidAndPeers(lt *LedgerTask) error {
 			lk.log.Info("syncBlocksWithTipidAndPeers::backtrack start point", "task", lt.GetTargetBlockId(), "headerBegin", headerBegin)
 			continue
 		}
+		if err == ErrInternal {
+			return err
+		}
 		if err != nil {
 			lk.log.Warn("syncBlocksWithTipidAndPeers::delete peer", "task", lt.GetTargetBlockId(), "address", peer[0], "err", err)
 			lk.peersStatusMap.Store(peer[0], false)
@@ -741,7 +744,7 @@ func (lk *LedgerKeeper) peerBlockDownloadTask(peerAddr string, taskBlockIds []st
 
 	err := lk.getBlocksWithGetDataMsg(peerAddr, &peerSyncMap)
 	// 判断是否剔除peer
-	if err != nil && err != ErrTargetDataNotEnough {
+	if err != nil && err != ErrTargetDataNotEnough && err != ErrTargetDataNotFound {
 		return true, err
 	}
 	syncBlockMutex.Lock()
