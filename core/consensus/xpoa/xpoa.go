@@ -19,6 +19,7 @@ import (
 	bft "github.com/xuperchain/xuperchain/core/consensus/common/chainedbft"
 	bft_config "github.com/xuperchain/xuperchain/core/consensus/common/chainedbft/config"
 	crypto_base "github.com/xuperchain/xuperchain/core/crypto/client/base"
+	"github.com/xuperchain/xuperchain/core/global"
 	"github.com/xuperchain/xuperchain/core/ledger"
 	p2p_base "github.com/xuperchain/xuperchain/core/p2p/base"
 	"github.com/xuperchain/xuperchain/core/pb"
@@ -250,24 +251,21 @@ func (xpoa *XPoa) initBFT(cfg *config.NodeConfig, cryptoClient crypto_base.Crypt
 
 	// initialize bft
 	bridge := bft.NewDefaultCbftBridge(xpoa.bcname, xpoa.ledger, xpoa.lg, xpoa)
-	qcNeeded := 3
-	qc := make([]*pb.QuorumCert, qcNeeded)
+	qc := make([]*pb.QuorumCert, 3) // 3为chained-bft的qc存储数目
 	meta := xpoa.ledger.GetMeta()
 	if meta.TrunkHeight != 0 {
 		blockid := meta.TipBlockid
-		for qcNeeded > 0 {
-			qcNeeded--
-			block, err := xpoa.ledger.QueryBlock(blockid)
-			if err != nil {
-				xpoa.lg.Warn("initBFT: get block failed", "error", err, "blockid", string(blockid))
-				return err
-			}
-			qc[qcNeeded] = block.GetJustify()
-			blockid = block.GetPreHash()
-			if blockid == nil {
-				break
-			}
+		block, err := xpoa.ledger.QueryBlock(blockid)
+		if err != nil {
+			xpoa.lg.Warn("initBFT: refresh ChainedBft, get tipBlock failed", "error", err)
+			return err
 		}
+		qc[2] = nil
+		qc[1] = &pb.QuorumCert{
+			ProposalId: blockid,
+			ViewNumber: block.GetHeight(),
+		}
+		qc[0] = block.GetJustify()
 	}
 
 	cbft, err := bft.NewChainedBft(
@@ -338,7 +336,7 @@ Again:
 		return false, false
 	}
 	xpoa.lg.Info("Miner Propcess update validates")
-	if _, err := xpoa.updateValidates(preBlockId.GetBlockid()); err != nil {
+	if _, err := xpoa.updateValidates(height - 3); !ok && err != nil {
 		xpoa.lg.Error("Xpoa update validates error", "error", err.Error())
 		return false, false
 	}
@@ -361,6 +359,9 @@ Again:
 
 // getValidatesByBlockId 根据当前输入blockid，用快照的方式在xmodel中寻找<=当前blockid的最新的候选人值，若无则使用xuper.json中指定的初始值
 func (xpoa *XPoa) getValidatesByBlockId(blockId []byte) ([]*cons_base.CandidateInfo, bool, error) {
+	if blockId == nil {
+		return xpoa.xpoaConf.initProposers, true, nil
+	}
 	reader, err := xpoa.utxoVM.GetSnapShotWithBlock(blockId)
 	if err != nil {
 		xpoa.lg.Error("Xpoa updateValidates getCurrentValidates error", "CreateSnapshot err:", err)
@@ -395,8 +396,22 @@ func (xpoa *XPoa) getValidatesByBlockId(blockId []byte) ([]*cons_base.CandidateI
 // param: initTime time of the latest changed
 // param: curValidates validates of the latest changed
 // return: bool refers whether validates has changed
-func (xpoa *XPoa) updateValidates(blockId []byte) (bool, error) {
-	validates, ok, err := xpoa.getValidatesByBlockId(blockId)
+func (xpoa *XPoa) updateValidates(height int64) (bool, error) {
+	if height <= 0 {
+		err := xpoa.bftPaceMaker.UpdateValidatorSet(xpoa.xpoaConf.initProposers)
+		if err != nil {
+			return false, ErrUpdateValidates
+		}
+		xpoa.proposerInfos = xpoa.xpoaConf.initProposers
+		return true, nil
+	}
+
+	block, err := xpoa.ledger.QueryBlockByHeight(height)
+	if err != nil {
+		xpoa.lg.Error("xpoa.getCurrentValidates", "getBlock", err)
+		return false, err
+	}
+	validates, ok, err := xpoa.getValidatesByBlockId(block.GetBlockid())
 	if err != nil {
 		return ok, err
 	}
@@ -406,7 +421,7 @@ func (xpoa *XPoa) updateValidates(blockId []byte) (bool, error) {
 			return false, ErrUpdateValidates
 		}
 		xpoa.proposerInfos = validates
-		xpoa.lg.Debug("Xpoa updateValidates Successfully", "base on", blockId)
+		xpoa.lg.Debug("Xpoa updateValidates Successfully", "base on", global.F(block.GetBlockid()))
 		for _, v := range xpoa.proposerInfos {
 			xpoa.lg.Debug("updateValidates", "curValidates", v.Address)
 		}
@@ -442,9 +457,9 @@ func (xpoa *XPoa) getProposer(nextTime int64, proposerInfos []*cons_base.Candida
 
 // getProposerWithTime get proposer with timestamp
 // 注意：这里的time需要是一个同步的时间戳
-func (xpoa *XPoa) getProposerWithTime(timestamp int64, blockId []byte) (string, error) {
+func (xpoa *XPoa) getProposerWithTime(timestamp int64, height int64) (string, error) {
 	xpoa.lg.Info("ConfirmBlock Propcess update validates")
-	if _, err := xpoa.updateValidates(blockId); err != nil {
+	if ok, err := xpoa.updateValidates(height - 3); !ok && err != nil {
 		xpoa.lg.Error("Xpoa getProposerWithTime update validates error", "error", err.Error())
 		return "", err
 	}
@@ -495,7 +510,7 @@ func (xpoa *XPoa) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock) (bool
 
 	// 验证矿工身份
 	// get current validates from model
-	proposer, err := xpoa.getProposerWithTime(in.GetTimestamp(), in.GetPreHash())
+	proposer, err := xpoa.getProposerWithTime(in.GetTimestamp(), in.GetHeight())
 	if err != nil {
 		xpoa.lg.Warn("CheckMinerMatch getProposerWithTime error", "error", err.Error())
 		return false, nil
@@ -537,14 +552,8 @@ func (xpoa *XPoa) ProcessBeforeMiner(timestamp int64) (map[string]interface{}, b
 	}
 	res["type"] = TYPE
 	if xpoa.enableBFT {
-		height := xpoa.ledger.GetMeta().GetTrunkHeight() + 1
-		if !xpoa.isFirstBlock(height) {
+		if !xpoa.isFirstBlock(xpoa.ledger.GetMeta().GetTrunkHeight() + 1) {
 			if ok, _ := xpoa.bftPaceMaker.IsLastViewConfirmed(); !ok {
-				// 若view number未更新则先暂停
-				if xpoa.bftPaceMaker.CheckViewNumer(height) {
-					xpoa.lg.Warn("Haven't received preLeader's NextViewMsg, hold first.")
-					return nil, false
-				}
 				if len(xpoa.proposerInfos) == 1 {
 					res["quorum_cert"] = nil
 					return res, true
@@ -578,6 +587,28 @@ func (xpoa *XPoa) ProcessBeforeMiner(timestamp int64) (map[string]interface{}, b
 	return res, true
 }
 
+func (xpoa *XPoa) checkNextProposerChanged(height int64) ([]*cons_base.CandidateInfo, bool) {
+	validateBlock, err := xpoa.ledger.QueryBlockByHeight(height)
+	if err != nil {
+		return nil, false
+	}
+	nextValidates, _, err := xpoa.getValidatesByBlockId(validateBlock.GetBlockid())
+	if err != nil {
+		return nil, false
+	}
+
+	nextTime := time.Now().UnixNano() + xpoa.xpoaConf.period
+	nextValidate, err := xpoa.getProposer(nextTime, nextValidates)
+	xpoa.lg.Warn("Cal nextProposer:", "proposer", nextValidate)
+	if err == nil && !xpoa.isInValidateSets(nextValidate.Address) {
+		// 更新发送节点
+		xpoa.lg.Info("Send Proposal to new Validates")
+		nextValidates := append(xpoa.proposerInfos, nextValidate)
+		return nextValidates, true
+	}
+	return nil, false
+}
+
 // ProcessConfirmBlock is the specific implementation of ConsensusInterface
 func (xpoa *XPoa) ProcessConfirmBlock(block *pb.InternalBlock) error {
 	if !xpoa.IsActive() {
@@ -594,20 +625,11 @@ func (xpoa *XPoa) ProcessConfirmBlock(block *pb.InternalBlock) error {
 
 		// 如果是当前矿工，检测到下一轮需变更validates，且下一轮proposer并不在节点列表中，此时需在广播列表中新加入节点
 		validates := xpoa.proposerInfos
-		nextValidates, _, err := xpoa.getValidatesByBlockId(block.GetBlockid())
-		if err == nil {
-			nextTime := time.Now().UnixNano() + xpoa.xpoaConf.period
-			nextProposer, err := xpoa.getProposer(nextTime, nextValidates)
-			xpoa.lg.Warn("Cal nextProposer:", "proposer", nextProposer)
-			if err == nil && !xpoa.isInValidateSets(nextProposer.Address) {
-				// 更新发送节点
-				xpoa.lg.Info("Send Proposal to new Validates")
-				nextValidates := append(xpoa.proposerInfos, nextProposer)
-				validates = nextValidates
-			}
+		if nextValidates, changeFlag := xpoa.checkNextProposerChanged(block.GetHeight() + 1 - 3); changeFlag {
+			validates = nextValidates
 		}
 
-		err = xpoa.bftPaceMaker.NextNewProposal(block.Blockid, blockData, validates)
+		err := xpoa.bftPaceMaker.NextNewProposal(block.Blockid, blockData, validates)
 		if err != nil {
 			xpoa.lg.Warn("ProcessConfirmBlock: bft next proposal failed", "error", err)
 			return err

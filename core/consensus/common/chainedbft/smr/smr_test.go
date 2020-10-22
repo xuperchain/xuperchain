@@ -208,6 +208,25 @@ func TestProcessNewView(t *testing.T) {
 	}
 }
 
+func TestUpdateSmrState(t *testing.T) {
+	smr, err := MakeSmr(t)
+	if err != nil {
+		t.Error("TestUpdateSmrState MakeSmr error", err)
+		return
+	}
+	proposalQC := &pb.QuorumCert{
+		ProposalId:  []byte("proposalQC ProposalId"),
+		ProposalMsg: []byte("proposalQC ProposalMsg"),
+		Type:        pb.QCState_PREPARE,
+		ViewNumber:  1005,
+	}
+	smr.UpdateSmrState(proposalQC)
+	if smr.proposalQC != nil {
+		t.Error("TestUpdateSmrState UpdateSmrState error")
+		return
+	}
+}
+
 func TestProcessProposal(t *testing.T) {
 	smr, err := MakeSmr(t)
 	if err != nil {
