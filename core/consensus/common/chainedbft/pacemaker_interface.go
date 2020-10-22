@@ -27,8 +27,6 @@ type PacemakerInterface interface {
 	UpdateSmrState(generateQC *pb.QuorumCert)
 	// IsLastViewConfirmed check if last block is confirmed
 	IsLastViewConfirmed() (bool, error)
-	// CheckViewNumer check if the viewNumber given is valid in smr's viewMsgs storage
-	CheckViewNumer(viewNumber int64) bool
 	GetChainedBFT() *ChainedBft
 	Start() error
 	Stop() error

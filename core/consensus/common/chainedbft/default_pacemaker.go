@@ -160,8 +160,3 @@ func (dpm *DefaultPaceMaker) Stop() error {
 func (dpm *DefaultPaceMaker) UpdateSmrState(generateQC *pb.QuorumCert) {
 	dpm.cbft.UpdateSmrState(generateQC)
 }
-
-// CheckViewNumer check if the viewNumber given is valid in smr's viewMsgs storage
-func (dpm *DefaultPaceMaker) CheckViewNumer(viewNumber int64) bool {
-	return dpm.cbft.CheckViewNumer(viewNumber)
-}
