@@ -375,19 +375,23 @@ func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
 	tipId := global.F(xc.Ledger.GetMeta().GetTipBlockid())
 	if bytes.Equal(xc.Utxovm.GetLatestBlockid(), in.GetBlock().GetPreHash()) {
 		xc.log.Trace("Appending block in SendBlock", "time", time.Now().UnixNano(), "blockname", xc.bcname, "tipID", tipId)
-		appendTask := NewLedgerTask(tipId, xc.Ledger.GetMeta().GetTrunkHeight(), Appending, NewLedgerTaskContext(
-			&map[string]*SimpleBlock{
-				global.F(in.GetBlock().GetBlockid()): &SimpleBlock{
-					internalBlock: in.GetBlock(),
-					header:        in.GetHeader(),
-				}}, nil, hd))
-		xc.LedgerKeeper.PutTask(appendTask)
+		ctx := &LedgerTaskContext{
+			extBlocks: &map[string]*SimpleBlock{
+				global.F(in.GetBlock().GetBlockid()): &SimpleBlock{internalBlock: in.GetBlock(), header: in.GetHeader()},
+			},
+			preferPeer: nil,
+			hd:         hd,
+		}
+		xc.LedgerKeeper.PutTask(tipId, xc.Ledger.GetMeta().GetTrunkHeight(), Appending, ctx)
 		return nil
 	}
 	xc.log.Trace("sync blocks in SendBlock", "time", time.Now().UnixNano(), "blockname", xc.bcname, "tipID", tipId)
-	syncTask := NewLedgerTask(tipId, xc.Ledger.GetMeta().GetTrunkHeight(), Syncing, NewLedgerTaskContext(nil,
-		&[]string{in.GetHeader().GetFromNode()}, hd))
-	xc.LedgerKeeper.PutTask(syncTask)
+	ctx := &LedgerTaskContext{
+		extBlocks:  nil,
+		preferPeer: &[]string{in.GetHeader().GetFromNode()},
+		hd:         hd,
+	}
+	xc.LedgerKeeper.PutTask(tipId, xc.Ledger.GetMeta().GetTrunkHeight(), Syncing, ctx)
 	return nil
 }
 
@@ -563,8 +567,9 @@ func (xc *XChainCore) doMiner() {
 		//  3. Mixed_BroadCast_Mode是指出块节点将新块用Full_BroadCast_Mode模式广播，
 		//     其他节点使用Interactive_BroadCast_Mode
 		// broadcast block in Full_BroadCast_Mode since it's the original miner
+		ip, _ := xc.P2pSvr.GetLocalUrl()
 		block := &pb.Block{
-			Header:  &pb.Header{FromNode: xc.P2pSvr.GetLocalUrl()},
+			Header:  &pb.Header{FromNode: ip},
 			Bcname:  xc.bcname,
 			Blockid: freshBlock.Blockid,
 		}

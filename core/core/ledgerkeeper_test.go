@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
+	log "github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperchain/core/common/config"
 	"github.com/xuperchain/xuperchain/core/consensus"
 	crypto_client "github.com/xuperchain/xuperchain/core/crypto/client"
@@ -138,6 +139,14 @@ func prepareLedgerKeeper(port int32, path string) (*LedgerKeeper, *fakeBlockChai
 	p2pSrv.Init(testCases["testNewServer"].in, nil, nil)
 	l, _ := NewLedgerKeeper("xuper", nil, p2pSrv, bcHolder.Ledger, "Normal", bcHolder.UtxoVM, consensus)
 	return l, bcHolder
+}
+
+func TestDoTruncateTask(t *testing.T) {
+	lk, holder := prepareLedgerKeeper(47101, "../data/netkeys/")
+	lk.DoTruncateTask(holder.B1.GetBlockid())
+	if holder.Ledger.GetMeta().GetTrunkHeight() == 2 {
+		t.Error("TestDoTruncateTask truncate error")
+	}
 }
 
 func TestGetBlockIdsWithGetHeadersMsg(t *testing.T) {
@@ -341,12 +350,12 @@ func TestPickIndexesWithTargetSize(t *testing.T) {
 	}
 }
 
-func TestConfirmForkingBlock(t *testing.T) {
+func TestCheckAndComfirm(t *testing.T) {
 	lk, holder := prepareLedgerKeeper(47101, "../data/netkeys/")
 	tx := generateTx(false, holder.UtxoVM)
 	b3, err := holder.Ledger.FormatFakeBlock([]*pb.Transaction{tx}, []byte(bobAddress), holder.PrivateKey, time.Now().UnixNano(), 3, 3, holder.B2.GetBlockid(), big.NewInt(0), 3)
 	if err != nil {
-		t.Error("TestConfirmForkingBlock make fake newblock error")
+		t.Error("TestCheckAndComfirm make fake newblock error")
 		return
 	}
 	qc := &pb.QuorumCert{
@@ -358,62 +367,25 @@ func TestConfirmForkingBlock(t *testing.T) {
 	}
 	signedBlock, err := holder.Ledger.FormatMinerBlock([]*pb.Transaction{tx}, []byte(bobAddress), holder.PrivateKey, time.Now().UnixNano(), 3, 3, holder.B2.GetBlockid(), 0, big.NewInt(0), qc, map[string]string{}, 3)
 	if err != nil {
-		t.Error("TestConfirmForkingBlock make singed newblock error", "error", err)
+		t.Error("TestCheckAndComfirm make singed newblock error", "error", err)
 		return
 	}
 
 	simpleBlock := &SimpleBlock{
 		header: &pb.Header{
-			Logid: "TestConfirmForkingBlock",
+			Logid: "TestCheckAndComfirm",
 		},
 		internalBlock: signedBlock,
 	}
-	err, trunkSwitch := lk.confirmForkingBlock(simpleBlock)
+	err, trunkSwitch := lk.checkAndComfirm(true, simpleBlock)
 	holder.Ledger.Close()
 	holder.UtxoVM.Close()
 	if err != nil {
-		t.Error("TestConfirmForkingBlock::confirmForkingBlock", "error", err)
+		t.Error("TestCheckAndComfirm", "error", err)
 		return
 	}
 	if !signedBlock.InTrunk && trunkSwitch {
-		t.Error("TestConfirmForkingBlock::confirmForkingBlock, invalid switch")
-		return
-	}
-}
-
-func TestConfirmAppendingBlock(t *testing.T) {
-	lk, holder := prepareLedgerKeeper(47101, "../data/netkeys/")
-	tx := generateTx(false, holder.UtxoVM)
-	b3, err := holder.Ledger.FormatFakeBlock([]*pb.Transaction{tx}, []byte(bobAddress), holder.PrivateKey, time.Now().UnixNano(), 3, 3, holder.B2.GetBlockid(), big.NewInt(0), 3)
-	if err != nil {
-		t.Error("TestConfirmForkingBlock make fake newblock error")
-		return
-	}
-	qc := &pb.QuorumCert{
-		ProposalId:  b3.GetBlockid(),
-		ProposalMsg: nil,
-		ViewNumber:  3,
-		Type:        pb.QCState_PREPARE,
-		SignInfos:   &pb.QCSignInfos{},
-	}
-	signedBlock, err := holder.Ledger.FormatMinerBlock([]*pb.Transaction{tx}, []byte(bobAddress), holder.PrivateKey,
-		time.Now().UnixNano(), 3, 3, holder.B2.GetBlockid(), 0, big.NewInt(0), qc, map[string]string{}, 3)
-	if err != nil {
-		t.Error("TestConfirmAppendingBlock make singed newblock error", "error", err)
-		return
-	}
-
-	simpleBlock := &SimpleBlock{
-		header: &pb.Header{
-			Logid: "TestConfirmAppendingBlock",
-		},
-		internalBlock: signedBlock,
-	}
-	err = lk.confirmAppendingBlock(simpleBlock, true, true)
-	holder.Ledger.Close()
-	holder.UtxoVM.Close()
-	if err != nil {
-		t.Error("TestConfirmAppendingBlock", "error", err)
+		t.Error("TestCheckAndComfirm::invalid switch")
 		return
 	}
 }
@@ -448,7 +420,7 @@ func TestConfirmBlocks(t *testing.T) {
 			internalBlock: signedBlock,
 		},
 	}
-	newBeginId, ok, err := lk.confirmBlocks(&global.XContext{Timer: global.NewXTimer()}, global.F(holder.B2.GetBlockid()), global.F(holder.B2.GetBlockid()), tmpMap,
+	newBeginId, ok, err := lk.confirmBlocks(&global.XContext{Timer: global.NewXTimer()}, global.F(holder.B2.GetBlockid()), tmpMap,
 		map[int]string{
 			0: global.F(signedBlock.GetBlockid()),
 		}, true)
@@ -476,12 +448,70 @@ func TestConfirmBlocks(t *testing.T) {
 			internalBlock: signedBlock,
 		},
 	}
-	newBeginId, ok, err = lk.confirmBlocks(&global.XContext{Timer: global.NewXTimer()}, global.F(holder.B2.GetBlockid()), global.F(holder.B2.GetBlockid()), tmpMap,
+	newBeginId, ok, err = lk.confirmBlocks(&global.XContext{Timer: global.NewXTimer()}, global.F(holder.B2.GetBlockid()), tmpMap,
 		map[int]string{
 			0: global.F(signedBlock.GetBlockid()),
 		}, true)
-	if newBeginId == global.F(signedBlock.GetBlockid()) {
+	if newBeginId != global.F(signedBlock.GetBlockid()) {
 		t.Error("TestConfirmBlocks", "error", err, "ok", ok)
 	}
+}
 
+func TestPushBack(t *testing.T) {
+	l := NewTasksList()
+	task := &LedgerTask{
+		targetBlockId: "Test",
+	}
+	l.PushBack(task)
+	if l.PushBack(task) {
+		t.Error("TestPushBack::repeat action")
+	}
+}
+
+func TestFix(t *testing.T) {
+	l := NewTasksList()
+	task1 := &LedgerTask{
+		targetBlockId: "Test1",
+		targetHeight:  1,
+	}
+	task2 := &LedgerTask{
+		targetBlockId: "Test2",
+		targetHeight:  2,
+	}
+	task3 := &LedgerTask{
+		targetBlockId: "Test2",
+		targetHeight:  3,
+	}
+	l.PushBack(task1)
+	l.PushBack(task2)
+	l.PushBack(task3)
+	l.fix(2)
+	if l.Len() == 3 {
+		t.Error("TestFix::fix failed.")
+	}
+}
+
+func TestPutAndGet(t *testing.T) {
+	slog := log.New("module", "syncnode")
+	slog.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
+	stm := newSyncTaskManager(slog)
+	task1 := &LedgerTask{
+		targetBlockId: "Test1",
+		targetHeight:  1,
+		action:        Syncing,
+	}
+	if !stm.Put(task1) {
+		t.Error("TestPutAndGet::put failed.")
+	}
+	task2 := &LedgerTask{
+		targetBlockId: "Test1",
+		targetHeight:  2,
+		action:        Appending,
+	}
+	if !stm.Put(task2) {
+		t.Error("TestPutAndGet::put failed.")
+	}
+	if stm.Get().GetAction() != Appending {
+		t.Error("TestPutAndGet::get failed.")
+	}
 }
