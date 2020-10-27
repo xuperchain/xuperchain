@@ -11,3 +11,8 @@ parsers:
       method: no
       macro: no
 
+comment:
+  behavior: new
+  require_changes: false
+  branches:               
+    - "master"
