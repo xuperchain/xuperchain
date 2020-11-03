@@ -1,10 +1,12 @@
 package utxo
 
 import (
-	"github.com/xuperchain/xuperchain/core/pb"
 	"sort"
 	"strconv"
 	"sync"
+
+	"github.com/xuperchain/xuperchain/core/pb"
+	"github.com/xuperchain/xuperchain/core/xmodel"
 )
 
 const (
@@ -75,6 +77,9 @@ func (sp *SpinLock) ExtractLockKeys(tx *pb.Transaction) []*LockKey {
 		readKeys[k] = true
 	}
 	for _, output := range tx.TxOutputsExt {
+		if string(output.Bucket) == xmodel.TransientBucket {
+			continue
+		}
 		k := string(output.Bucket) + "/" + string(output.Key)
 		delete(readKeys, k)
 		writeKeys[k] = true
