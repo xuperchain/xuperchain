@@ -73,14 +73,14 @@ func (sp *SpinLock) ExtractLockKeys(tx *pb.Transaction) []*LockKey {
 	readKeys := map[string]bool{}
 	writeKeys := map[string]bool{}
 	for _, input := range tx.TxInputsExt {
-		k := string(input.Bucket) + "/" + string(input.Key)
+		k := input.Bucket + "/" + string(input.Key)
 		readKeys[k] = true
 	}
 	for _, output := range tx.TxOutputsExt {
-		if string(output.Bucket) == xmodel.TransientBucket {
+		if output.Bucket == xmodel.TransientBucket {
 			continue
 		}
-		k := string(output.Bucket) + "/" + string(output.Key)
+		k := output.Bucket + "/" + string(output.Key)
 		delete(readKeys, k)
 		writeKeys[k] = true
 	}
