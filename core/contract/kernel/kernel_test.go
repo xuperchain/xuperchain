@@ -637,7 +637,7 @@ func TestRunUpdateReservedContracts(t *testing.T) {
 }
 
 func TestRunUpdateForbiddenContract(t *testing.T) {
-	workSpace, workSpaceErr := ioutil.TempDir("", "./")
+	workSpace, workSpaceErr := ioutil.TempDir("", "TestRunUpdateForbiddenContract")
 	if workSpaceErr != nil {
 		t.Error("create temporary dir failed", workSpaceErr.Error())
 	}

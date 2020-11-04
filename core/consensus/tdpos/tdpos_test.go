@@ -13,8 +13,10 @@ import (
 	"testing"
 	"time"
 
+	log "github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperchain/core/common/config"
 	"github.com/xuperchain/xuperchain/core/consensus"
+	cons_base "github.com/xuperchain/xuperchain/core/consensus/base"
 	crypto_client "github.com/xuperchain/xuperchain/core/crypto/client"
 	"github.com/xuperchain/xuperchain/core/ledger"
 	"github.com/xuperchain/xuperchain/core/pb"
@@ -95,42 +97,77 @@ func prepareBlockchain() *fakeBlockChainHolder {
 	}
 }
 
-func prepareSingleCon(path string, ledger *ledger.Ledger, utxoVM *utxo.UtxoVM) *consensus.PluggableConsensus {
-	cfg := config.NewNodeConfig()
-	cfg.Miner.Keypath = path
+func makeConsensus(ledger *ledger.Ledger, utxoVM *utxo.UtxoVM) *TDpos {
+	tdpos := TDpos{
+		effectiveDelay: 0,
+		bcname:         "xuper",
+		height:         0,
+	}
+	tdpos.Init()
+	extParams := map[string]interface{}{}
+	extParams["bcname"] = "xuper"
+	extParams["ledger"] = ledger
+	extParams["utxovm"] = utxoVM
+	extParams["height"] = 0
 	rootConfig := map[string]interface{}{
 		"name": consensus.ConsensusTypeTdpos,
 		"config": map[string]interface{}{
-			"timestamp":            "1559021720000000000",
-			"proposer_num":         "1",
-			"period":               "3000",
-			"alternate_interval":   "3000",
-			"term_interval":        "6000",
-			"block_num":            "20",
-			"vote_unit_price":      "1",
-			"init_proposer":        "{\"1\":[\"dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN\"]}",
-			"init_proposer_neturl": "{\"1\":[\"127.0.0.1:9001\"]}",
+			"timestamp":          "1559021720000000000",
+			"proposer_num":       "1",
+			"period":             "3000",
+			"alternate_interval": "3000",
+			"term_interval":      "6000",
+			"block_num":          "20",
+			"vote_unit_price":    "1",
+			"bft_config":         "{}",
 		},
 	}
-	plugCons, _ := consensus.NewPluggableConsensus(nil, cfg, "xuper", ledger, utxoVM, rootConfig, crypto_client.CryptoTypeDefault, nil)
-	return plugCons
+	cfg := config.NewNodeConfig()
+	xlog := log.New("module", "consensus")
+	xlog.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
+	tdpos.Configure(xlog, cfg, rootConfig, extParams)
+	tdpos.log = xlog
+	tdpos.state = cons_base.RUNNING
+	tdpos.config.proposerNum = 1
+	tdpos.config.proposerNum = 1
+	tdpos.config.period = 3000
+	tdpos.config.alternateInterval = 3000
+	tdpos.config.termInterval = 6000
+	tdpos.config.blockNum = 20
+	tdpos.config.initProposer = map[int64][]*cons_base.CandidateInfo{
+		1: []*cons_base.CandidateInfo{
+			&cons_base.CandidateInfo{
+				Address:  "dpzuVdosQrF2kmzumhVeFQZa1aYcdgFpN",
+				PeerAddr: "127.0.0.1:9001",
+			},
+		},
+	}
+	return &tdpos
 }
 
 func TestInitBFT(t *testing.T) {
-	//consensus_path := "../data/keys"
 	fakeBlockChainHolder := prepareBlockchain()
-	//plugCons := prepareSingleCon(consensus_path, fakeBlockChainHolder.Ledger, fakeBlockChainHolder.UtxoVM)
-	tdpos := TDpos{
-		height:         0,
-		bcname:         "xuper",
-		ledger:         fakeBlockChainHolder.Ledger,
-		utxoVM:         fakeBlockChainHolder.UtxoVM,
-		effectiveDelay: 0,
-	}
-	cfg := config.NewNodeConfig()
-	tdpos.initBFT(cfg)
+	makeConsensus(fakeBlockChainHolder.Ledger, fakeBlockChainHolder.UtxoVM)
 }
 
 func close() {
 	os.RemoveAll(workspace)
+}
+
+func TestNotifyNewView(t *testing.T) {
+	fakeBlockChainHolder := prepareBlockchain()
+	tdpos := makeConsensus(fakeBlockChainHolder.Ledger, fakeBlockChainHolder.UtxoVM)
+	err := tdpos.notifyNewView()
+	if err != nil {
+		t.Error("TestNotifyNewView error")
+	}
+}
+
+func TestProcessBeforeMiner(t *testing.T) {
+	fakeBlockChainHolder := prepareBlockchain()
+	tdpos := makeConsensus(fakeBlockChainHolder.Ledger, fakeBlockChainHolder.UtxoVM)
+	_, ok := tdpos.ProcessBeforeMiner(time.Now().UnixNano())
+	if ok {
+		t.Error("TestProcessBeforeMiner error")
+	}
 }
