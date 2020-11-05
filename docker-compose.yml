@@ -1,0 +1,20 @@
+version: "3.8"
+services:
+  boot_node:
+    image: xuper/xuperchain:latest
+  node1:
+    image: xuper/xuperchain:latest
+    links:
+      - boot_node
+    command: "bash start-node.sh"
+    depends_on:
+      - boot_node
+
+  node2:
+    image: xuper/xuperchain:latest
+    links:
+      - boot_node
+    command: "bash start-node.sh"
+    depends_on:
+      - boot_node
+

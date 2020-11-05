@@ -18,6 +18,9 @@ PATH := ${PWD}/core/xvm/compile/wabt/build:$(PATH)
 build:
 	PLATFORM=$(PLATFORM) ./core/scripts/build.sh
 
+docker-build:
+	docker build -t xuper/xuperchain:latest .
+
 test:
 	go test -coverprofile=coverage.txt -covermode=atomic ./...
 	# test wasm sdk

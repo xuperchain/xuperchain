@@ -59,4 +59,5 @@ cp -rf core/conf ${output_dir}
 cp -rf core/cmd/relayer/conf/relayer.yaml ${output_dir}/conf
 cp -rf core/cmd/cli/conf/* ${output_dir}/conf
 cp -rf core/cmd/quick_shell/* ${output_dir}
+cp -rf core/scripts/start-node.sh ${output_dir}
 mkdir -p ${output_dir}/data/blockchain
