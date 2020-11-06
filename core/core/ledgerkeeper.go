@@ -706,7 +706,7 @@ func (lk *LedgerKeeper) peerBlockDownloadTask(peerAddr string, taskBlockIds [][]
 	}
 	peerSyncMap, err := lk.getBlocks(peerAddr, refreshTaskBlockIds)
 	// 判断是否剔除peer, 目前保守删除
-	if err != ErrInvalidMsg {
+	if err == ErrInvalidMsg {
 		return true, err
 	}
 
