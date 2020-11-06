@@ -4,12 +4,10 @@ import (
 	"bytes"
 	"container/list"
 	"context"
-	"crypto/rand"
 	"encoding/binary"
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"math/big"
 	math_rand "math/rand"
 	"os"
 	"sort"
@@ -56,7 +54,8 @@ var (
 	ErrAllPeersInvalid = errors.New("All the peers are invalid")
 )
 
-var zeroStr = fmt.Sprintf("%064d", 0)
+// 注意: 64位是和现生成blockId方法严格绑定的
+var zeroBytes = []byte(fmt.Sprintf("%064d", 0))
 
 const (
 	SIZE_OF_UINT32          = 4
@@ -72,8 +71,9 @@ const (
 )
 
 type TasksList struct {
-	tList *list.List       // 存放具体task
-	tMap  *map[string]bool // tList目标BlockId的Set
+	tList *list.List      // 存放具体task
+	tMap  map[string]bool // tList目标BlockId的Set
+	mutex *sync.Mutex     // mutex保护tList的并发操作
 }
 
 /* NewTasksList return a link queue TasksList
@@ -82,7 +82,8 @@ type TasksList struct {
 func NewTasksList() *TasksList {
 	return &TasksList{
 		tList: list.New(),
-		tMap:  &map[string]bool{},
+		tMap:  map[string]bool{},
+		mutex: &sync.Mutex{},
 	}
 }
 
@@ -97,11 +98,13 @@ func (t *TasksList) Len() int {
  * PushBack 向TasksList中的链表做PushBack操作，同时确保push的元素原链表中没有
  */
 func (t *TasksList) PushBack(ledgerTask *LedgerTask) bool {
-	if _, ok := (*t.tMap)[ledgerTask.targetBlockId]; ok {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+	if _, ok := t.tMap[global.F(ledgerTask.targetBlockId)]; ok {
 		return false
 	}
 	t.tList.PushBack(ledgerTask)
-	(*t.tMap)[ledgerTask.targetBlockId] = true
+	t.tMap[global.F(ledgerTask.targetBlockId)] = true
 	return true
 }
 
@@ -109,10 +112,12 @@ func (t *TasksList) PushBack(ledgerTask *LedgerTask) bool {
  * Remove 删除链表中元素，并对应删除set
  */
 func (t *TasksList) Remove(e *list.Element) {
-	if _, ok := (*t.tMap)[e.Value.(*LedgerTask).targetBlockId]; !ok {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
+	if _, ok := t.tMap[global.F(e.Value.(*LedgerTask).targetBlockId)]; !ok {
 		return
 	}
-	delete(*t.tMap, e.Value.(*LedgerTask).targetBlockId)
+	delete(t.tMap, global.F((e.Value.(*LedgerTask).targetBlockId)))
 	t.tList.Remove(e)
 }
 
@@ -120,6 +125,8 @@ func (t *TasksList) Remove(e *list.Element) {
  * Front获取链表头元素
  */
 func (t *TasksList) Front() *list.Element {
+	t.mutex.Lock()
+	defer t.mutex.Unlock()
 	if t.Len() == 0 {
 		return nil
 	}
@@ -143,13 +150,11 @@ func (t *TasksList) fix(targetHeight int64) {
 }
 
 type syncTaskManager struct {
-	syncingTasks     *TasksList      // 账本同步batch操作
-	appendingTasks   *TasksList      // 账本同步追加操作
-	syncMaxSize      int             // sync队列最大size
-	FilterBlockidMap map[string]bool //存储试图同步但收到全0的blockid，在下一次检查时直接过滤
-	log              log.Logger
-	syncMutex        *sync.Mutex
-	taskId           int64
+	syncingTasks   *TasksList // 账本同步batch操作
+	appendingTasks *TasksList // 账本同步追加操作
+	syncMaxSize    int        // sync队列最大size
+	log            log.Logger
+	taskId         int64
 }
 
 /* newSyncTaskManager 生成一个新SyncTaskManager，管理所有任务队列
@@ -158,12 +163,10 @@ type syncTaskManager struct {
  */
 func newSyncTaskManager(log log.Logger) *syncTaskManager {
 	return &syncTaskManager{
-		syncingTasks:     NewTasksList(),
-		appendingTasks:   NewTasksList(),
-		FilterBlockidMap: map[string]bool{},
-		syncMaxSize:      MAX_TASK_MN_SIZE,
-		syncMutex:        &sync.Mutex{},
-		log:              log,
+		syncingTasks:   NewTasksList(),
+		appendingTasks: NewTasksList(),
+		syncMaxSize:    MAX_TASK_MN_SIZE,
+		log:            log,
 	}
 }
 
@@ -177,34 +180,28 @@ func (stm *syncTaskManager) GenerateTaskid() string {
 /* put 由manager操作，直接操作所handle的各个队列
  */
 func (stm *syncTaskManager) Put(ledgerTask *LedgerTask) bool {
-	stm.syncMutex.Lock()
-	defer stm.syncMutex.Unlock()
-	if ledgerTask.GetAction() == Syncing {
-		stm.log.Trace("SyncTaskManager put syncingTasks", "len", stm.syncingTasks.Len())
-		if stm.syncingTasks.Len() > stm.syncMaxSize {
-			stm.log.Trace("SyncTaskManager put task err, too much task, refuse it")
-			return false
-		}
-		stm.syncingTasks.PushBack(ledgerTask)
-		return true
+	var q *TasksList
+	switch ledgerTask.GetAction() {
+	case Syncing:
+		q = stm.syncingTasks
+	case Appending:
+		q = stm.appendingTasks
+	default:
+		stm.log.Error("SyncTaskManager::task error", "type", ledgerTask.GetAction())
+		return false
 	}
-	if ledgerTask.GetAction() == Appending {
-		stm.log.Trace("SyncTaskManager put appendingTasks", "len", stm.appendingTasks.Len())
-		if stm.appendingTasks.Len() > stm.syncMaxSize {
-			stm.log.Trace("SyncTaskManager put task err, too much task, refuse it")
-			return false
-		}
-		stm.appendingTasks.PushBack(ledgerTask)
-		return true
+	stm.log.Trace("SyncTaskManager put task", "len", stm.syncingTasks.Len())
+	if q.Len() > stm.syncMaxSize {
+		stm.log.Trace("SyncTaskManager put task err, too much task, refuse it")
+		return false
 	}
-	return false
+	q.PushBack(ledgerTask)
+	return true
 }
 
 /* get 由manager操作从所有队列中挑选一个队列拿一个任务
  */
-func (stm *syncTaskManager) Get() *LedgerTask {
-	stm.syncMutex.Lock()
-	defer stm.syncMutex.Unlock()
+func (stm *syncTaskManager) Pop() *LedgerTask {
 	var queue *TasksList
 	// 在同步逻辑中，最新块广播的优先级高于其他
 	if stm.appendingTasks.Len() > 0 {
@@ -223,9 +220,7 @@ func (stm *syncTaskManager) Get() *LedgerTask {
 }
 
 // fixTask 清洗队列中失效的任务
-func (stm *syncTaskManager) FixTask(targetHeight int64) {
-	stm.syncMutex.Lock()
-	defer stm.syncMutex.Unlock()
+func (stm *syncTaskManager) ClearTask(targetHeight int64) {
 	stm.syncingTasks.fix(targetHeight)
 	stm.appendingTasks.fix(targetHeight)
 }
@@ -234,13 +229,11 @@ type LedgerKeeper struct {
 	p2pSvr              p2p_base.P2PServer
 	log                 log.Logger
 	syncMsgChan         chan *xuper_p2p.XuperMessage
-	peersStatusMap      *sync.Map        // *map[string]bool 更新同步节点的p2p列表活性
+	peersStatusMap      *sync.Map        // map[string]bool 更新同步节点的p2p列表活性
 	fastFetchBlockCache *common.LRUCache // block header cache, 加速fetchBlock
 	maxBlocksMsgSize    int64            // 取最大区块大小
 	ledger              *ledger.Ledger
 	bcName              string
-	keeperStatus        KeeperStatus // 当前状态
-	ledgerMutex         *sync.Mutex  // 锁, Sync(异步)和Truncate(同步)抢锁
 	syncTaskMg          *syncTaskManager
 	nodeMode            string
 
@@ -251,14 +244,14 @@ type LedgerKeeper struct {
 type LedgerTask struct {
 	taskId        string
 	action        KeeperStatus
-	targetBlockId string
+	targetBlockId []byte
 	targetHeight  int64
 	ctx           *LedgerTaskContext
 }
 
 type LedgerTaskContext struct {
-	extBlocks  *map[string]*SimpleBlock
-	preferPeer *[]string
+	extBlocks  map[string]*SimpleBlock
+	preferPeer []string
 	hd         *global.XContext
 }
 
@@ -273,7 +266,7 @@ type SimpleBlock struct {
  * AppendingTask的目标Blockid表示请求者的本地最高id
  * TruncateingTask的目标Blockid表示请求者需要裁剪到的id
  */
-func (lt *LedgerTask) GetTargetBlockId() string {
+func (lt *LedgerTask) GetTargetBlockId() []byte {
 	return lt.targetBlockId
 }
 
@@ -299,7 +292,7 @@ func (lt *LedgerTask) GetExtBlocks() map[string]*SimpleBlock {
 	if lt.ctx == nil || lt.ctx.extBlocks == nil {
 		return nil
 	}
-	return *lt.ctx.extBlocks
+	return lt.ctx.extBlocks
 }
 
 /* GetPreferPeer get the callee of the task.
@@ -309,7 +302,7 @@ func (lt *LedgerTask) GetPreferPeer() []string {
 	if lt.ctx == nil || lt.ctx.preferPeer == nil {
 		return nil
 	}
-	return *lt.ctx.preferPeer
+	return lt.ctx.preferPeer
 }
 
 // GetXCtx get the context of the task.
@@ -341,7 +334,6 @@ func NewLedgerKeeper(bcName string, slog log.Logger, p2pV2 p2p_base.P2PServer, l
 		bcName:              bcName,
 		utxovm:              utxovm,
 		con:                 con,
-		ledgerMutex:         &sync.Mutex{},
 		syncTaskMg:          newSyncTaskManager(slog),
 		nodeMode:            nodeMode,
 	}
@@ -361,20 +353,22 @@ func NewLedgerKeeper(bcName string, slog log.Logger, p2pV2 p2p_base.P2PServer, l
  * TODO：共识部分也s执行了裁剪工作，但使用的是ledger的Truncate()，后续需要使用LedgerKeeper替代
  */
 func (lk *LedgerKeeper) DoTruncateTask(utxovmLastID []byte) error {
-	lk.ledgerMutex.Lock()
-	defer lk.ledgerMutex.Unlock()
-	lk.keeperStatus = Truncateing
-	return lk.ledger.Truncate(utxovmLastID)
+	err := lk.ledger.Truncate(utxovmLastID)
+	if err != nil {
+		return err
+	}
+	lk.syncTaskMg.ClearTask(lk.ledger.GetMeta().GetTrunkHeight())
+	return nil
 }
 
 /* PutTask create a ledger task and put a task into LedgerKeeper's queues.
  * PutTask 新建一个账本任务，需输入目标blockid(必须), 目标blockid所在的高度(必须),
  * 任务类型(必须: Appending追加、Syncing批量同步、Truncating裁剪),
- * 任务上下文(可选), 任务上下文包括	extBlocks *map[string]*SimpleBlock，追加账本时附带的追加block信息
- *	   preferPeer *[]string，询问邻居节点的地址
+ * 任务上下文(可选), 任务上下文包括	extBlocks map[string]*SimpleBlock，追加账本时附带的追加block信息
+ *	   preferPeer []string，询问邻居节点的地址
  *	   hd *global.XContext，计时context
  */
-func (lk *LedgerKeeper) PutTask(targetBlockId string, targetHeight int64, action KeeperStatus, ctx *LedgerTaskContext) {
+func (lk *LedgerKeeper) PutTask(targetBlockId []byte, targetHeight int64, action KeeperStatus, ctx *LedgerTaskContext) {
 	ledgerTask := &LedgerTask{
 		targetBlockId: targetBlockId,
 		targetHeight:  targetHeight,
@@ -401,26 +395,22 @@ func (lk *LedgerKeeper) startTaskLoop() {
 			continue
 		}
 		action := task.GetAction()
-		lk.log.Trace("StartTaskLoop::Get a task", "action", action, "targetId", task.GetTargetBlockId())
-		method := runKernelFuncMap[action]
-		lk.keeperRun(method, task)
+		lk.log.Trace("StartTaskLoop::Get a task", "action", action, "targetId", global.F(task.GetTargetBlockId()))
+		switch action {
+		case Syncing:
+			lk.handleSyncTask(task)
+		case Appending:
+			lk.handleAppendTask(task)
+		}
 	}
 }
 
 // getTask get a task from LedgerKeeper's queues.
 func (lk *LedgerKeeper) getTask() (*LedgerTask, bool) {
-	lk.ledgerMutex.Lock()
-	defer lk.ledgerMutex.Unlock()
-	// 刚刚完成Truncate操作，需要清除列表中已无效的task
-	if lk.keeperStatus == Truncateing {
-		lk.syncTaskMg.FixTask(lk.ledger.GetMeta().GetTrunkHeight())
-	}
-	task := lk.syncTaskMg.Get()
+	task := lk.syncTaskMg.Pop()
 	if task == nil {
-		lk.keeperStatus = Waiting
 		return nil, false
 	}
-	lk.keeperStatus = task.GetAction()
 	return task, true
 }
 
@@ -441,22 +431,10 @@ func (lk *LedgerKeeper) updatePeerStatusMap() {
 	}
 }
 
-// keeperRun 任务枚举对应的函数指针
-func (lk *LedgerKeeper) keeperRun(method KeeperMethodFunc, lt *LedgerTask) error {
-	return method(lk, lt)
-}
-
-type KeeperMethodFunc func(sn *LedgerKeeper, st *LedgerTask) error
-
-var runKernelFuncMap = map[KeeperStatus]KeeperMethodFunc{
-	Syncing:   syncBlocksWithTipidAndPeers,
-	Appending: appendingBlock,
-}
-
 /* appendingBlock 直接在账本尾追加操作
  * 在广播新块时使用，当有新块产生时，且该新块恰好为本地账本的下一区块，此时直接试图向账本进行写操作，无需同步流程
  */
-func appendingBlock(lk *LedgerKeeper, lt *LedgerTask) error {
+func (lk *LedgerKeeper) handleAppendTask(lt *LedgerTask) error {
 	lk.log.Trace("appendingBlock::Run......")
 	if lt.GetExtBlocks() == nil {
 		lk.log.Warn("appendingBlock::AppendTask input error, len(ExtBlocks)==0")
@@ -467,19 +445,23 @@ func appendingBlock(lk *LedgerKeeper, lt *LedgerTask) error {
 		lk.log.Warn("appendingBlock::AppendTask length error", "ExtBlocks", lt.GetExtBlocks())
 		return ErrInvalidMsg
 	}
-	headersInfo := map[int]string{}
+	headersInfo := map[int][]byte{}
 	i := 0
 	for key, _ := range lt.GetExtBlocks() {
-		headersInfo[i] = key
+		id, err := hex.DecodeString(key)
+		if err != nil {
+			lk.log.Warn("appendingBlock::transfer to bytes error", "error", err, "key", key)
+			return nil
+		}
+		headersInfo[i] = id
 	}
 	newBegin, ok, err := lk.confirmBlocks(lt.GetXContext(), lt.GetTargetBlockId(), lt.GetExtBlocks(), headersInfo, true)
-	lk.log.Trace("appendingBlock::AppendTask try to append ledger directly", "blockid", lt.GetTargetBlockId(), "newbegin", newBegin, "ok", ok, "error", err)
+	lk.log.Trace("appendingBlock::AppendTask try to append ledger directly", "blockid", lt.GetTargetBlockId(), "newbegin", global.F(newBegin), "ok", ok, "error", err)
 	return nil
-
 }
 
-/* syncBlocksWithTipIdAndPeers
- * syncBlocksWithTipIdAndPeers 请求消息头同步逻辑
+/* handleSyncTask
+ * handleSyncTask 请求消息头同步逻辑
  * 输入请求节点列表和起始区块哈希，迭代完成同步
  * 该函数首先完成区块头同步工作，发送GetHHashesMsg给指定peer，试图获取区间内所有区块哈希值
  * 获取到全部区块哈希列表之后，本节点将列表散列成若干份，并向指定列表节点发起同步具体区块工作，发送GetDataMsg请求，试图获取对应的所有详细区块消息
@@ -487,63 +469,46 @@ func appendingBlock(lk *LedgerKeeper, lt *LedgerTask) error {
  * 在该同步过程中顺便标注错误peer
  * 完成一个迭代后，task会向ledger中写数据，同时判断是否需要切换主干并完成写任务
  */
-func syncBlocksWithTipidAndPeers(lk *LedgerKeeper, lt *LedgerTask) error {
-	lk.log.Trace("syncingBlocks::SyncTask by batch", "begin at", lt.GetTargetBlockId())
+func (lk *LedgerKeeper) handleSyncTask(lt *LedgerTask) error {
+	lk.log.Trace("handleSyncTask::SyncTask by batch", "begin at", global.F(lt.GetTargetBlockId()))
 	headerBegin := lt.targetBlockId
 	nextLoop := true
 	// 同步头过程
-	id, err := hex.DecodeString(headerBegin)
-	if err != nil {
-		lk.log.Warn("syncBlocksWithTipidAndPeers::SyncTask parameter err", "task", headerBegin, "err", err)
-	}
-	block, err := lk.ledger.QueryBlock(id)
+	block, err := lk.ledger.QueryBlock(headerBegin)
 	tipHeight := lk.ledger.GetMeta().GetTrunkHeight()
 	// ATTENTION:若任务的target高度过小，会直接忽略该任务
-	//if err != nil || !block.GetInTrunk() || block.GetHeight() < tipHeight-DefaultFilterHeight {
 	if err != nil || block.GetHeight() < tipHeight-DefaultFilterHeight {
-		lk.log.Warn("syncBlocksWithTipidAndPeers::SyncTask old blockid, ignore it", "task", headerBegin)
+		lk.log.Warn("handleSyncTask::SyncTask old blockid, ignore it", "task", global.F(headerBegin))
 		return nil
 	}
-	// 该任务之前无法获取任何值，因此在新的同步开始被筛除
-	if _, ok := lk.syncTaskMg.FilterBlockidMap[headerBegin]; ok && global.F(lk.ledger.GetMeta().GetRootBlockid()) != headerBegin {
-		lk.log.Warn("syncBlocksWithTipidAndPeers::filterBlockidMap return", "headerBegin", headerBegin)
-		return nil
-	}
-	lk.log.Trace("syncBlocksWithTipidAndPeers::Run......")
+	lk.log.Trace("handleSyncTask::Run......")
 	for nextLoop {
 		if getValidPeersNumber(lk.peersStatusMap) == 0 {
-			lk.log.Warn("syncBlocksWithTipidAndPeers::getValidPeersNumber=0", "task", lt.GetTargetBlockId())
+			lk.log.Warn("handleSyncTask::getValidPeersNumber=0", "task", global.F(lt.GetTargetBlockId()))
 			return ErrAllPeersInvalid
 		}
-
+		// 先随机选择一个peer进行询问，找其询问最新的blockids列表, 若走回溯逻辑，则直接选取回溯传入的peer
 		peer := lt.GetPreferPeer()
 		if peer == nil {
-			peer, err = randomPickPeersWithNumber(1, lk.peersStatusMap)
+			peer, err = randomPickPeers(1, lk.peersStatusMap)
 			if err != nil {
-				lk.log.Warn("syncBlocksWithTipidAndPeers::randomPickPeersWithNumber error", "task", lt.GetTargetBlockId(), "err", err)
+				lk.log.Warn("handleSyncTask::randomPickPeers error", "task", global.F(lt.GetTargetBlockId()), "err", err)
 				continue
 			}
-			lk.log.Trace("randomPickPeersWithNumber", "peer", peer[0])
+			lk.log.Trace("randomPickPeers", "peer", peer[0])
 		}
 
-		endFlag, blockIds, err := lk.getBlockIdsWithGetHeadersMsg(headerBegin, HEADER_SYNC_SIZE, peer[0])
-		lk.log.Info("syncBlocksWithTipidAndPeers::getBlockIdsWithGetHeadersMsg result", "task", lt.GetTargetBlockId(), "NEWpeer", peer[0], "err", err, "endFlag", endFlag)
+		endFlag, blockIds, err := lk.getPeerBlockIds(headerBegin, HEADER_SYNC_SIZE, peer[0])
+		lk.log.Info("handleSyncTask::getPeerBlockIds result", "task", global.F(lt.GetTargetBlockId()), "NEWpeer", peer[0], "err", err, "endFlag", endFlag)
 		if err == ErrTargetDataNotFound {
 			// beginBlockId疑似无效，需往前回溯，注意:往前回溯可能会导致主干切换
-			lk.log.Trace("syncBlocksWithTipidAndPeers::get nothing from peers, begin backtracking...", "task", lt.GetTargetBlockId(), "headerBegin", headerBegin)
-			if lt.GetTargetBlockId() != headerBegin {
-				lk.syncTaskMg.FilterBlockidMap[headerBegin] = true
-			}
-			id, err := hex.DecodeString(headerBegin)
-			if err != nil {
-				return ErrInvalidMsg
-			}
-			block, err := lk.ledger.QueryBlock(id)
+			lk.log.Trace("handleSyncTask::get nothing from peers, begin backtracking...", "task", global.F(lt.GetTargetBlockId()), "headerBegin", global.F(headerBegin))
+			block, err := lk.ledger.QueryBlock(headerBegin)
 			if err != nil {
 				return ErrInternal
 			}
 			headerBegin = changeSyncBeginPointBackwards(block)
-			lk.log.Info("syncBlocksWithTipidAndPeers::backtrack start point", "task", lt.GetTargetBlockId(), "headerBegin", headerBegin)
+			lk.log.Info("handleSyncTask::backtrack start point", "task", global.F(lt.GetTargetBlockId()), "headerBegin", global.F(headerBegin))
 			continue
 		}
 		if err == ErrInternal {
@@ -551,67 +516,49 @@ func syncBlocksWithTipidAndPeers(lk *LedgerKeeper, lt *LedgerTask) error {
 		}
 		// ATTENTION:上一次询问失败，因此此处重试
 		if err == ErrTargetPeerInvalid {
-			lk.log.Info("syncBlocksWithTipidAndPeers::peer failed, try again", "task", lt.GetTargetBlockId(), "headerBegin", headerBegin, "peer", peer[0])
+			lk.log.Info("handleSyncTask::peer failed, try again", "task", global.F(lt.GetTargetBlockId()), "headerBegin", global.F(headerBegin), "peer", peer[0])
 			continue
 		}
 		if err != nil {
-			lk.log.Warn("syncBlocksWithTipidAndPeers::delete peer", "task", lt.GetTargetBlockId(), "address", peer[0], "err", err)
+			lk.log.Warn("handleSyncTask::delete peer", "task", global.F(lt.GetTargetBlockId()), "address", peer[0], "err", err)
 			lk.peersStatusMap.Store(peer[0], false)
 			continue
+		}
+		if len(blockIds) == 0 {
+			return nil
 		}
 		if endFlag {
 			nextLoop = false
 		}
-		// headersInfo检查, 更新headersInfo, 删除已经存在的Block, 这部分无需同步, 若全部存在，则直接退出即可
-		headersInfo := lk.initHeadersInfo(blockIds)
-		if len(headersInfo) == 0 {
-			return nil
-		}
-		blocksMap := lk.downloadBlocksWithHeadersList(headersInfo)
-		if len(headersInfo) == 0 || len(blocksMap) == 0 {
+		// TODO: 后续可加入CheckHeaderSafety()对blockIds的安全性证明，例如基于pow的区块链blockids需要满足difficulty公式
+		blocksMap, empty := lk.downloadPeerBlocks(blockIds) // blocksMap中可能有key存在，但值为nil的值，此值标示本地账本已含数据
+		if len(blocksMap) == 0 || empty {
 			// 此处直接return, 加速task消耗
 			return nil
+		}
+		headersInfo := map[int][]byte{}
+		for i, id := range blockIds {
+			headersInfo[i] = id
 		}
 		// 本轮同步结束，开始写账本
 		newBegin, _, err := lk.confirmBlocks(lt.GetXContext(), headerBegin, blocksMap, headersInfo, endFlag)
 		if err != nil {
-			lk.log.Warn("syncBlocksWithTipidAndPeers::ConfirmBlocks error", "err", err)
+			lk.log.Warn("handleSyncTask::ConfirmBlocks error", "err", err)
 			return nil
 		}
 		headerBegin = newBegin
 	}
-	lk.log.Trace("syncBlocksWithTipidAndPeers::Run End......")
+	lk.log.Trace("handleSyncTask::Run End......")
 	return nil
 }
 
-/* initHeadersInfo 检查接受的blockId列表是否合法，返回一个map供后面同步块操作
- */
-func (lk *LedgerKeeper) initHeadersInfo(blockIds []string) map[int]string {
-	// TODO: CheckHeaderSafety() 对blockIds的安全性证明，例如基于pow的区块链blockids需要满足difficulty公式
-	i := 0
-	headersInfo := map[int]string{}
-	for _, blockId := range blockIds {
-		id, err := hex.DecodeString(blockId)
-		if err != nil {
-			lk.log.Warn("initHeadersInfo::Invalid header", "header", blockId)
-			continue
-		}
-		if _, err := lk.ledger.QueryBlockHeader(id); err == nil {
-			continue
-		}
-		headersInfo[i] = blockId
-		i++
-	}
-	return headersInfo
-}
-
-/* getBlockIdsWithGetHeadersMsg
- * getBlockIdsWithGetHeadersMsg 向指定节点发送getHeadersMsg，并根据收到的回复返回相应的error
+/* getPeerBlockIds
+ * getPeerBlockIds 向指定节点发送getHeadersMsg，并根据收到的回复返回相应的error
  * 若未在规定时间内获取任何headers信息则返回超时错误
  * 若收到一个全零的返回，则表示对方节点里没有找到完整的区块头列表(包含该区间不在对方节点主干，该区间并不是对方账本某合法区间两种)
  * 若收到的列表长度小于请求长度，则证明上层整个获取区块头迭代完毕
  */
-func (lk *LedgerKeeper) getBlockIdsWithGetHeadersMsg(beginBlockId string, length int64, targetPeerAddr string) (bool, []string, error) {
+func (lk *LedgerKeeper) getPeerBlockIds(beginBlockId []byte, length int64, targetPeerAddr string) (bool, [][]byte, error) {
 	body := &pb.GetHashesMsgBody{
 		HashesCount:   length,
 		HeaderBlockId: beginBlockId,
@@ -619,17 +566,17 @@ func (lk *LedgerKeeper) getBlockIdsWithGetHeadersMsg(beginBlockId string, length
 	bodyBuf, _ := proto.Marshal(body)
 	msg, err := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, lk.bcName, "", xuper_p2p.XuperMessage_GET_HASHES, bodyBuf, xuper_p2p.XuperMessage_NONE)
 	if err != nil {
-		lk.log.Warn("getBlockIdsWithGetHeadersMsg::Generate GET_HASHES Message Error", "Error", err)
+		lk.log.Warn("getPeerBlockIds::Generate GET_HASHES Message Error", "Error", err)
 		return true, nil, ErrInternal
 	}
 	opts := []p2p_base.MessageOption{
 		p2p_base.WithBcName(lk.bcName),
 		p2p_base.WithTargetPeerAddrs([]string{targetPeerAddr}),
 	}
-	lk.log.Trace("getBlockIdsWithGetHeadersMsg::Send GET_HASHES", "HEADER", beginBlockId)
+	lk.log.Trace("getPeerBlockIds::Send GET_HASHES", "HEADER", global.F(beginBlockId))
 	res, err := lk.p2pSvr.SendMessageWithResponse(context.Background(), msg, opts...)
 	if err != nil {
-		lk.log.Warn("getBlockIdsWithGetHeadersMsg::Sync Headers P2P Error: local error or target error", "Logid", msg.GetHeader().GetLogid(), "Error", err)
+		lk.log.Warn("getPeerBlockIds::Sync Headers P2P Error: local error or target error", "Logid", msg.GetHeader().GetLogid(), "Error", err)
 		return true, nil, ErrInternal
 	}
 
@@ -637,14 +584,18 @@ func (lk *LedgerKeeper) getBlockIdsWithGetHeadersMsg(beginBlockId string, length
 	headerMsgBody := &pb.HashesMsgBody{}
 	err = proto.Unmarshal(response.GetData().GetMsgInfo(), headerMsgBody)
 	if err != nil {
-		lk.log.Warn("getBlockIdsWithGetHeadersMsg::unmarshal error")
+		lk.log.Warn("getPeerBlockIds::unmarshal error")
 		return true, nil, ErrInvalidMsg
 	}
 	blockIds := headerMsgBody.GetBlockIds()
-	lk.log.Info("getBlockIdsWithGetHeadersMsg::GET HEADERS RESULT", "HEADERS", blockIds)
+	printStr := ""
+	for _, id := range blockIds {
+		printStr += global.F(id) + " "
+	}
+	lk.log.Info("getPeerBlockIds::GET HEADERS RESULT", "HEADERS", printStr)
 	// 空值，包含连接错误
 	if len(blockIds) == 0 {
-		return false, nil, ErrTargetPeerInvalid
+		return false, nil, ErrTargetPeerInvalid // 此处并不endFlag，可以找其他peer拿
 	}
 	if int64(len(blockIds)) > length {
 		// 返回消息参数非法
@@ -653,7 +604,7 @@ func (lk *LedgerKeeper) getBlockIdsWithGetHeadersMsg(beginBlockId string, length
 	// 当前同步头的最后一次同步
 	if int64(len(blockIds)) < length {
 		// 若当前接受的区块哈希列表为全0，则表示对方无相应数据
-		if blockIds[0] == zeroStr {
+		if bytes.Compare(blockIds[0], zeroBytes) == 0 {
 			return true, nil, ErrTargetDataNotFound
 		}
 		return true, blockIds, nil
@@ -661,35 +612,26 @@ func (lk *LedgerKeeper) getBlockIdsWithGetHeadersMsg(beginBlockId string, length
 	return false, blockIds, nil
 }
 
-/* downloadBlocksWithHeadersList
- * downloadBlocksWithHeadersList 在节点列表中随机选取若干节点，并将headersList散列到不同的节点任务中，
+/* downloadPeerBlocks
+ * downloadPeerBlocks 在节点列表中随机选取若干节点，并将headersList散列到不同的节点任务中，
  * 输入是一个headersList其包含连续的BlockIds区间
  * 本地节点向对应节点发送GetDataMsg消息，试图获取全部需要的block信息，并将其存入cahche中，
  * 一直循环直到区间被填满
  */
-func (lk *LedgerKeeper) downloadBlocksWithHeadersList(headersList map[int]string) map[string]*SimpleBlock {
+func (lk *LedgerKeeper) downloadPeerBlocks(headersList [][]byte) (map[string]*SimpleBlock, bool) {
+	// 若不收集齐会一直阻塞直到超时
 	// 同步map，放置连续区间内的所有区块指针
 	syncMap := map[string]*SimpleBlock{}
-	// cache并发读写操作时使用的锁
-	syncBlockMutex := &sync.RWMutex{}
-	if len(headersList) == 0 {
-		return nil
-	}
-	// 若不收集齐会一直阻塞直到超时
 	for {
 		// 在targetPeers中随机选择peers个数
 		validPeers := getValidPeersNumber(lk.peersStatusMap)
 		if validPeers == 0 {
-			lk.log.Warn("downloadBlocksWithHeadersList::all peer invalid")
-			return nil
+			lk.log.Warn("downloadPeerBlocks::all peer invalid")
+			return nil, true
 		}
-		randomLen, err := rand.Int(rand.Reader, big.NewInt(validPeers+1))
-		if err != nil {
-			lk.log.Warn("downloadBlocksWithHeadersList::generate random numer error", "error", err)
-			continue
-		}
+		randomLen := math_rand.Int63n(validPeers) // [0, validPeers)
 		// 随机选择Peers数目
-		targetPeers, err := randomPickPeersWithNumber(randomLen.Int64(), lk.peersStatusMap)
+		targetPeers, err := randomPickPeers(randomLen+1, lk.peersStatusMap)
 		if err != nil {
 			continue
 		}
@@ -702,20 +644,22 @@ func (lk *LedgerKeeper) downloadBlocksWithHeadersList(headersList map[int]string
 		wg := sync.WaitGroup{}
 		wg.Add(len(peersTask))
 		ch := make(chan struct{})
+		// cache并发读写操作时使用的锁
+		syncBlockMutex := &sync.RWMutex{}
 		for peer, headers := range peersTask {
-			go func(peer string, headers []string, cache *map[string]*SimpleBlock) {
+			go func(peer string, headers [][]byte, cache map[string]*SimpleBlock) {
 				defer wg.Done()
 				crashFlag, err := lk.peerBlockDownloadTask(peer, headers, cache, syncBlockMutex)
 				if crashFlag {
-					lk.log.Warn("downloadBlocksWithHeadersList::delete peer", "address", peer, "err", err)
+					lk.log.Warn("downloadPeerBlocks::delete peer", "address", peer, "err", err)
 					lk.peersStatusMap.Store(peer, false)
 					return
 				}
 				if err != nil {
-					lk.log.Warn("downloadBlocksWithHeadersList::peerBlockDownloadTask error", "error", err)
+					lk.log.Warn("downloadPeerBlocks::peerBlockDownloadTask error", "error", err)
 					return
 				}
-			}(peer, headers, &syncMap)
+			}(peer, headers, syncMap)
 		}
 		wg.Wait()
 		close(ch)
@@ -723,66 +667,71 @@ func (lk *LedgerKeeper) downloadBlocksWithHeadersList(headersList map[int]string
 		case <-ch:
 			// 若headersList全部被填满，则返回success
 			if len(headersList) == len(syncMap) {
-				return syncMap
+				return syncMap, false
 			}
 			continue
 		case <-time.After(SYNC_BLOCKS_TIMEOUT):
 			break
 		}
 	}
+	emptyFlag := true
+	for _, value := range syncMap {
+		if value != nil {
+			emptyFlag = false
+			break
+		}
+	}
+	return syncMap, emptyFlag
 }
 
 /* peerBlockDownloadTask
  * peerBlockDownloadTask 向指定peer拉取指定区块列表，若该peer未返回任何块，则剔除节点，获取到的区块写入cache，上层逻辑判断是否继续拉取未获取的区块
  */
-func (lk *LedgerKeeper) peerBlockDownloadTask(peerAddr string, taskBlockIds []string, cache *map[string]*SimpleBlock, syncBlockMutex *sync.RWMutex) (bool, error) {
-	peerSyncMap := map[string]*SimpleBlock{}
-	syncBlockMutex.RLock()
+func (lk *LedgerKeeper) peerBlockDownloadTask(peerAddr string, taskBlockIds [][]byte, cache map[string]*SimpleBlock, syncBlockMutex *sync.RWMutex) (bool, error) {
+	syncBlockMutex.Lock()             // 锁cache，进行读
+	refreshTaskBlockIds := [][]byte{} // 筛除cache中已经从别的peer拿到的block，和账本中已有的block，这些block无需重新传递
 	for _, blockId := range taskBlockIds {
-		if v, ok := (*cache)[blockId]; ok && v != nil {
+		if _, ok := cache[global.F(blockId)]; ok {
 			continue
 		}
-		peerSyncMap[blockId] = nil
+		if _, err := lk.ledger.QueryBlockHeader(blockId); err == nil {
+			cache[global.F(blockId)] = nil // 本地已存在，则cache中标识为nil，这样可以保证连续空间
+			continue
+		}
+		refreshTaskBlockIds = append(refreshTaskBlockIds, blockId)
 	}
-	syncBlockMutex.RUnlock()
-
-	err := lk.getBlocksWithGetDataMsg(peerAddr, &peerSyncMap)
-	// 判断是否剔除peer
-	if err != nil && err != ErrTargetDataNotEnough && err != ErrTargetDataNotFound {
+	syncBlockMutex.Unlock()
+	if len(refreshTaskBlockIds) == 0 {
+		return false, nil
+	}
+	peerSyncMap, err := lk.getBlocks(peerAddr, refreshTaskBlockIds)
+	// 判断是否剔除peer, 目前保守删除
+	if err != ErrInvalidMsg {
 		return true, err
 	}
-	syncBlockMutex.Lock()
+
+	syncBlockMutex.Lock() // 锁cache，进行写
 	for blockId, ptr := range peerSyncMap {
-		if ptr == nil {
-			continue
-		}
-		(*cache)[blockId] = ptr
+		cache[blockId] = ptr
 	}
 	syncBlockMutex.Unlock()
 	return false, err
 }
 
-/* getBlocksWithGetDataMsg
- * getBlocksWithGetDataMsg 输入一个map，该map key包含一个peer需要返回的blockId，和一个空指针，随后向特定peer发送GetDataMsg消息，以获取指定区块信息，
+/* getBlocks
+ * getBlocks 输入一个map，该map key包含一个peer需要返回的blockId，和一个空指针，随后向特定peer发送GetDataMsg消息，以获取指定区块信息，
  * 若指定节点并未在规定时间内返回任何区块，则返回节点超时错误
  * 若指定节点仅返回部分区块，则返回缺失提醒
  */
-func (lk *LedgerKeeper) getBlocksWithGetDataMsg(targetPeer string, peerSyncMap *map[string]*SimpleBlock) error {
-	if len(*peerSyncMap) == 0 {
-		return nil
-	}
-	headersList := []string{}
-	for key, _ := range *peerSyncMap {
-		headersList = append(headersList, key)
-	}
+func (lk *LedgerKeeper) getBlocks(targetPeer string, blockIds [][]byte) (map[string]*SimpleBlock, error) {
 	body := &pb.GetBlocksMsgBody{
-		BlockList: headersList,
+		BlockList: blockIds,
 	}
 	bodyBuf, _ := proto.Marshal(body)
 	msg, err := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, lk.bcName, "", xuper_p2p.XuperMessage_GET_BLOCKS, bodyBuf, xuper_p2p.XuperMessage_NONE)
 	if err != nil {
-		lk.log.Warn("getBlocksWithGetDataMsg::Generate GET_BLOCKS Message Error", "Error", err)
-		return ErrInternal
+		lk.log.Warn("getBlocks::Generate GET_BLOCKS Message Error", "Error", err)
+		return nil, ErrInternal
 	}
 	opts := []p2p_base.MessageOption{
 		p2p_base.WithBcName(lk.bcName),
@@ -790,38 +739,39 @@ func (lk *LedgerKeeper) getBlocksWithGetDataMsg(targetPeer string, peerSyncMap *
 	}
 	res, err := lk.p2pSvr.SendMessageWithResponse(context.Background(), msg, opts...)
 	if err != nil {
-		lk.log.Warn("getBlocksWithGetDataMsg::Sync GetBlocks P2P Error, local error or target error", "Logid", msg.GetHeader().GetLogid(), "Error", err)
-		return ErrInternal
+		lk.log.Warn("getBlocks::Sync GetBlocks P2P Error, local error or target error", "Logid", msg.GetHeader().GetLogid(), "Error", err)
+		return nil, ErrInternal
 	}
 
 	response := res[0]
 	blocksMsgBody := &pb.BlocksMsgBody{}
 	err = proto.Unmarshal(response.GetData().GetMsgInfo(), blocksMsgBody)
 	if err != nil {
-		return ErrUnmarshal
+		return nil, ErrUnmarshal
 	}
-	lk.log.Info("getBlocksWithGetDataMsg::GET BLOCKS RESULT", "Logid", blocksMsgBody.GetHeader().GetLogid(), "LEN", len(blocksMsgBody.GetBlocksInfo()))
-	if len(blocksMsgBody.GetBlocksInfo()) == 0 && len(*peerSyncMap) > 1 {
+	lk.log.Info("getBlocks::GET BLOCKS RESULT", "Logid", blocksMsgBody.GetHeader().GetLogid(), "LEN", len(blocksMsgBody.GetBlocksInfo()))
+	if len(blocksMsgBody.GetBlocksInfo()) == 0 && len(blockIds) > 1 {
 		// 目标节点完全未找到任何block
-		return ErrTargetDataNotFound
+		return nil, ErrTargetDataNotFound
 	}
 	blocks := blocksMsgBody.GetBlocksInfo()
+	peerSyncMap := map[string]*SimpleBlock{}
 	for _, block := range blocks {
 		blockId := global.F(block.GetBlockid())
-		mapValue, ok := (*peerSyncMap)[blockId]
-		if !ok || mapValue != nil {
-			return ErrInvalidMsg
+		_, ok := peerSyncMap[blockId]
+		if ok { // 即peer给出了重复了的blocks
+			return nil, ErrInvalidMsg
 		}
-		(*peerSyncMap)[blockId] = &SimpleBlock{
+		peerSyncMap[blockId] = &SimpleBlock{
 			internalBlock: block,
 			header:        blocksMsgBody.GetHeader(),
 		}
 	}
-	if len(blocksMsgBody.GetBlocksInfo()) < len(headersList) {
+	if len(blocksMsgBody.GetBlocksInfo()) < len(blockIds) {
 		// 目标节点并未在其本地找到所有需要的区块，需给上层返回缺失提醒
-		return ErrTargetDataNotEnough
+		return peerSyncMap, ErrTargetDataNotEnough
 	}
-	return nil
+	return peerSyncMap, nil
 }
 
 /* handleGetHeadersMsg response to the GetHeadersMsg with a HeadersMsg containing a list of the block-hashes required.
@@ -850,7 +800,7 @@ func (lk *LedgerKeeper) handleGetHeadersMsg(ctx context.Context, msg *xuper_p2p.
 		return nil, ErrInvalidMsg
 	}
 	nilHeaders := &pb.HashesMsgBody{
-		BlockIds: []string{zeroStr},
+		BlockIds: [][]byte{zeroBytes},
 	}
 	nilBuf, err := proto.Marshal(nilHeaders)
 	if err != nil {
@@ -861,19 +811,14 @@ func (lk *LedgerKeeper) handleGetHeadersMsg(ctx context.Context, msg *xuper_p2p.
 		return nil, ErrInternal
 	}
 	headerBlockId := body.GetHeaderBlockId()
-	lk.log.Trace("handleGetHeadersMsg::GET_HEADER_MSG handling...", "BEGIN HEADER", headerBlockId)
-	id, err := hex.DecodeString(headerBlockId)
+	lk.log.Trace("handleGetHeadersMsg::GET_HEADER_MSG handling...", "BEGIN HEADER", global.F(headerBlockId))
+	headerBlock, err := lk.ledger.QueryBlock(headerBlockId)
 	if err != nil {
-		lk.log.Warn("handleGetHeadersMsg::Invalid header", "header", headerBlockId)
-		return nil, ErrInvalidMsg
-	}
-	headerBlock, err := lk.ledger.QueryBlock(id)
-	if err != nil {
-		lk.log.Warn("handleGetHeadersMsg::internal error", "error", err, "headerBlockId", headerBlockId)
+		lk.log.Warn("handleGetHeadersMsg::internal error", "error", err, "headerBlockId", global.F(headerBlockId))
 		return nilRes, nil
 	}
 	if !headerBlock.GetInTrunk() {
-		lk.log.Warn("handleGetHeadersMsg::not in trunck", "headerBlock", headerBlockId)
+		lk.log.Warn("handleGetHeadersMsg::not in trunck", "headerBlock", global.F(headerBlockId))
 		return nilRes, nil
 	}
 	// 循环获取下一个block，并批量放入Cache中
@@ -892,13 +837,15 @@ func (lk *LedgerKeeper) handleGetHeadersMsg(ctx context.Context, msg *xuper_p2p.
 		return nilRes, nil
 	}
 	resultHeaders := &pb.HashesMsgBody{
-		BlockIds: []string{},
+		BlockIds: [][]byte{},
 	}
+	printStr := ""
 	for _, block := range resultBlocks {
 		lk.fastFetchBlockCache.Add(global.F(block.GetBlockid()), block)
-		resultHeaders.BlockIds = append(resultHeaders.BlockIds, global.F(block.GetBlockid()))
+		resultHeaders.BlockIds = append(resultHeaders.BlockIds, block.GetBlockid())
+		printStr += global.F(block.GetBlockid()) + " "
 	}
-	lk.log.Info("handleGetHeadersMsg::GET_HEADER_MSG response...", "response res", resultHeaders.BlockIds)
+	lk.log.Info("handleGetHeadersMsg::GET_HEADER_MSG response...", "response res", printStr)
 	resBuf, _ := proto.Marshal(resultHeaders)
 	res, err := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, bc, msg.GetHeader().GetLogid(),
 		xuper_p2p.XuperMessage_HASHES, resBuf, xuper_p2p.XuperMessage_SUCCESS)
@@ -923,26 +870,23 @@ func (lk *LedgerKeeper) handleGetDataMsg(ctx context.Context, msg *xuper_p2p.Xup
 	if err := proto.Unmarshal(bodyBytes, body); err != nil {
 		return nil, ErrUnmarshal
 	}
-	lk.log.Trace("handleGetDataMsg::GET_BLOCKS_MSG handling...", "REQUIRE LIST", body.GetBlockList())
 	resultBlocks := []*pb.InternalBlock{}
+	printStr := ""
 	for _, blockId := range body.GetBlockList() {
-		if value, hit := lk.fastFetchBlockCache.Get(blockId); hit {
+		printStr += global.F(blockId) + " "
+		if value, hit := lk.fastFetchBlockCache.Get(global.F(blockId)); hit {
 			block := value.(*pb.InternalBlock)
 			resultBlocks = append(resultBlocks, block)
 			continue
 		}
-		id, err := hex.DecodeString(blockId)
-		if err != nil {
-			lk.log.Error("handleGetDataMsg::Invalid header", "header", blockId)
-			return nil, ErrInvalidMsg
-		}
-		block, err := lk.ledger.QueryBlock(id)
+		block, err := lk.ledger.QueryBlock(blockId)
 		if err != nil {
 			continue
 		}
 		resultBlocks = append(resultBlocks, block)
 		lk.fastFetchBlockCache.Add(global.F(block.GetBlockid()), block)
 	}
+	lk.log.Trace("handleGetDataMsg::GET_BLOCKS_MSG handling...", "REQUIRE LIST", printStr)
 	// peer自己通过区块大小切分Data消息返回， 按照尽可能多的返回区块规则选取区块
 	resultBlocks = pickBlocksForBlocksMsg(lk.maxBlocksMsgSize, resultBlocks)
 	ip, _ := lk.p2pSvr.GetLocalUrl()
@@ -961,31 +905,40 @@ func (lk *LedgerKeeper) handleGetDataMsg(ctx context.Context, msg *xuper_p2p.Xup
 /* confirmBlocks 原SendBlock逻辑
  * 账本接受blockMap数据，代替原来的PendingBlocks，正向confirm block
  */
-func (lk *LedgerKeeper) confirmBlocks(hd *global.XContext, headerBegin string, blocksMap map[string]*SimpleBlock, headersInfo map[int]string, endFlag bool) (string, bool, error) {
+func (lk *LedgerKeeper) confirmBlocks(hd *global.XContext, headerBegin []byte, blocksMap map[string]*SimpleBlock, headersInfo map[int][]byte, endFlag bool) ([]byte, bool, error) {
 	// 取这段新链的第一个区块，判断走账本分叉逻辑还是直接账本追加逻辑
 	var err error
 	newBegin := headerBegin
-	index := 0
-	beginSimpleBlock := blocksMap[headersInfo[index]]
-	if beginSimpleBlock == nil {
-		return newBegin, false, ErrTargetDataNotFound
-	}
 	lk.log.Debug("ConfirmBlocks", "genesis", global.F(lk.ledger.GetMeta().GetRootBlockid()), "utxo", global.F(lk.utxovm.GetLatestBlockid()),
 		"len(blocksMap)", len(blocksMap), "len(headersInfo)", len(headersInfo), "cost", hd.Timer.Print())
 	listLen := len(headersInfo)
 	if listLen == 0 {
 		return newBegin, false, ErrInternal
 	}
+	index := 0
+	for ; index < listLen; index++ { // 获取整个slice中第一个非空的index
+		if blocksMap[global.F(headersInfo[index])] == nil {
+			newBegin = headersInfo[index]
+			continue
+		}
+		break
+	}
+	// ledger已存在的情况
+	if bytes.Compare(newBegin, headersInfo[index-1]) == 0 {
+		lk.log.Debug("ConfirmBlocks::all block exist", "cost", hd.Timer.Print())
+		return newBegin, false, ErrTargetDataNotFound
+	}
+	beginSimpleBlock := blocksMap[global.F(headersInfo[index])]
 	needVerify := (lk.nodeMode == config.NodeModeFastSync)
 	if bytes.Compare(beginSimpleBlock.internalBlock.GetPreHash(), lk.ledger.GetMeta().GetTipBlockid()) == 0 {
 		lk.log.Debug("ConfirmBlocks::Equal The Same", "cost", hd.Timer.Print())
 		for ; index < listLen; index++ {
 			needRepost := (index == listLen-1) && endFlag
-			checkBlock := blocksMap[headersInfo[index]]
+			checkBlock := blocksMap[global.F(headersInfo[index])]
 			if checkBlock == nil {
-				break
+				continue
 			}
-			nextBlockid := global.F(checkBlock.internalBlock.GetBlockid())
+			nextBlockid := checkBlock.internalBlock.GetBlockid()
 			err, _ = lk.checkAndComfirm(needVerify, checkBlock)
 			if err == ErrBlockExist {
 				continue
@@ -1011,17 +964,17 @@ func (lk *LedgerKeeper) confirmBlocks(hd *global.XContext, headerBegin string, b
 			lk.log.Debug("ConfirmBlocks::confirm error", "err", err, "cost", hd.Timer.Print())
 			return newBegin, false, err
 		}
-		lk.log.Debug("ConfirmBlocks::Equal The Same, confirm blocks finish", "newBegin", newBegin, "cost", hd.Timer.Print())
+		lk.log.Debug("ConfirmBlocks::Equal The Same, confirm blocks finish", "newBegin", global.F(newBegin), "cost", hd.Timer.Print())
 		return newBegin, index == listLen, err
 	}
 	//交点不等于utxo latest block
 	lk.log.Debug("XXXXXXXXX The NO Same", "cost", hd.Timer.Print())
 	for ; index < listLen; index++ {
-		checkBlock := blocksMap[headersInfo[index]]
+		checkBlock := blocksMap[global.F(headersInfo[index])]
 		if checkBlock == nil {
-			break
+			continue
 		}
-		nextBlockid := global.F(checkBlock.internalBlock.GetBlockid())
+		nextBlockid := checkBlock.internalBlock.GetBlockid()
 		err, trunkSwitch := lk.checkAndComfirm(needVerify, checkBlock)
 		if err != nil && err != ErrBlockExist {
 			break
@@ -1044,7 +997,7 @@ func (lk *LedgerKeeper) confirmBlocks(hd *global.XContext, headerBegin string, b
 	if index < 1 {
 		return newBegin, false, nil
 	}
-	lk.log.Debug("ConfirmBlocks::XXXXXXXXX The NO Same, confirm blocks finish", "newBegin", newBegin, "cost", hd.Timer.Print())
+	lk.log.Debug("ConfirmBlocks::XXXXXXXXX The NO Same, confirm blocks finish", "newBegin", global.F(newBegin), "cost", hd.Timer.Print())
 	return newBegin, index == listLen, err
 }
 
@@ -1091,7 +1044,7 @@ func pickBlocksForBlocksMsg(maxSize int64, blockList []*pb.InternalBlock) []*pb.
 		size := proto.Size(block)
 		list = append(list, size)
 	}
-	indexes := pickIndexesWithTargetSize(maxSize, list)
+	indexes := pickIndexes(maxSize, list)
 	result := []*pb.InternalBlock{}
 	for _, v := range indexes {
 		result = append(result, blockList[v])
@@ -1099,10 +1052,10 @@ func pickBlocksForBlocksMsg(maxSize int64, blockList []*pb.InternalBlock) []*pb.
 	return result
 }
 
-/* pickIndexesWithTargetSize
- * pickIndexesWithTargetSize 尽可能选择多的区块返回
+/* pickIndexes
+ * pickIndexes 尽可能选择多的区块返回
  */
-func pickIndexesWithTargetSize(targetSize int64, list []int) []int {
+func pickIndexes(targetSize int64, list []int) []int {
 	result := make([]int, 0)
 	sizeMap := make(map[int][]int, 0)
 	indexMap := make(map[int]int, 0)
@@ -1140,10 +1093,10 @@ func getValidPeersNumber(peers *sync.Map) int64 {
 	return number
 }
 
-/* randomPickPeersWithNumber
- * randomPickPeersWithNumber 从现有peersStatusMap中可连接的peers中随机选取number个作为目标节点
+/* randomPickPeers
+ * randomPickPeers 从现有peersStatusMap中可连接的peers中随机选取number个作为目标节点
  */
-func randomPickPeersWithNumber(number int64, peers *sync.Map) ([]string, error) {
+func randomPickPeers(number int64, peers *sync.Map) ([]string, error) {
 	if number == 0 {
 		return nil, nil
 	}
@@ -1163,13 +1116,12 @@ func randomPickPeersWithNumber(number int64, peers *sync.Map) ([]string, error) 
 	remains := len(originPeers)
 	result := make([]int, number)
 	for i := 0; i < len(originPeers); i++ {
-		if random, err := rand.Int(rand.Reader, big.NewInt(int64(remains))); err == nil {
-			if random.Int64() < selection {
-				result[number-selection] = i
-				selection--
-			}
-			remains--
+		random := math_rand.Int63n(int64(remains)) // [0,remains)
+		if random < selection {
+			result[number-selection] = i
+			selection--
 		}
+		remains--
 	}
 	resultPeers := []string{}
 	for _, value := range result {
@@ -1184,29 +1136,26 @@ func randomPickPeersWithNumber(number int64, peers *sync.Map) ([]string, error) 
 /* assignTaskRandomly
  * assignTaskRandomly 随机将需要处理的blockId请求分配给指定的peers
  */
-func assignTaskRandomly(targetPeers []string, headersList map[int]string) (map[string][]string, error) {
+func assignTaskRandomly(targetPeers []string, headersList [][]byte) (map[string][][]byte, error) {
 	if len(targetPeers) == 0 {
 		return nil, ErrInvalidMsg
 	}
-	assignMap := map[uint32][]string{}
+	assignMap := map[uint32][][]byte{}
 	for _, blockId := range headersList {
-		input, err := hex.DecodeString(blockId)
-		if err != nil {
-			return nil, ErrInternal
-		}
 		var index uint32
-		for j := 0; j+SIZE_OF_UINT32 < len(input); j = j + SIZE_OF_UINT32 {
-			pos := binary.BigEndian.Uint32(input[j : j+SIZE_OF_UINT32])
+		// 随机分配给不同index
+		for j := 0; j+SIZE_OF_UINT32 < len(blockId); j = j + SIZE_OF_UINT32 {
+			pos := binary.BigEndian.Uint32(blockId[j : j+SIZE_OF_UINT32])
 			index = index + pos
 		}
 		index = index % uint32(len(targetPeers))
 		if _, ok := assignMap[index]; !ok {
-			assignMap[index] = []string{blockId}
+			assignMap[index] = [][]byte{blockId}
 			continue
 		}
 		assignMap[index] = append(assignMap[index], blockId)
 	}
-	peersTask := map[string][]string{}
+	peersTask := map[string][][]byte{}
 	for peerIndex, taskList := range assignMap {
 		peersTask[targetPeers[int(peerIndex)]] = taskList
 	}
@@ -1217,6 +1166,6 @@ func assignTaskRandomly(targetPeers []string, headersList map[int]string) (map[s
  * changeSyncBeginBlockPoint 当当前beginBlockId无法获取同步头列表时，需要通过输入账本回溯获取新的BlockId
  * 当前提供一种方法，向前回溯一个高度，TODO: 二分查找
  */
-func changeSyncBeginPointBackwards(beginBlock *pb.InternalBlock) string {
-	return global.F(beginBlock.GetPreHash())
+func changeSyncBeginPointBackwards(beginBlock *pb.InternalBlock) []byte {
+	return beginBlock.GetPreHash()
 }

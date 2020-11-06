@@ -23,8 +23,8 @@ const (
  */
 func (xc *XChainCore) SyncBatchBlocks() {
 	hd := &global.XContext{Timer: global.NewXTimer()}
-	tipId := global.F(xc.Ledger.GetMeta().GetTipBlockid())
-	xc.log.Trace("sync blocks in SyncBatchBlocks", "time", time.Now().UnixNano(), "blockname", xc.bcname, "tipID", tipId)
+	tipId := xc.Ledger.GetMeta().GetTipBlockid()
+	xc.log.Trace("sync blocks in SyncBatchBlocks", "time", time.Now().UnixNano(), "blockname", xc.bcname, "tipID", global.F(tipId))
 	ctx := &LedgerTaskContext{
 		extBlocks:  nil,
 		preferPeer: nil,

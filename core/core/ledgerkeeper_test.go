@@ -153,7 +153,7 @@ func TestGetBlockIdsWithGetHeadersMsg(t *testing.T) {
 	lk, holder := prepareLedgerKeeper(47101, "../data/netkeys/")
 	body := &pb.GetHashesMsgBody{
 		HashesCount:   100,
-		HeaderBlockId: global.F(holder.B0.GetBlockid()),
+		HeaderBlockId: holder.B0.GetBlockid(),
 	}
 	bodyBuf, _ := proto.Marshal(body)
 	msg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, "xuper", "", xuper_p2p.XuperMessage_GET_HASHES, bodyBuf, xuper_p2p.XuperMessage_NONE)
@@ -170,12 +170,7 @@ func TestGetBlockIdsWithGetHeadersMsg(t *testing.T) {
 	if len(blockIds) == 0 || int64(len(blockIds)) > 100 {
 		t.Error("TestGetBlockIdsWithGetHeadersMsg Internal Error")
 	}
-	headersInfo := map[int]string{}
-	for i, blockId := range blockIds {
-		headersInfo[i] = blockId
-	}
-	t.Log("TestGetBlockIdsWithGetHeadersMsg headersInfo", headersInfo)
-	if int64(len(headersInfo)) == 100 {
+	if int64(len(blockIds)) == 100 {
 		t.Log("TestGetBlockIdsWithGetHeadersMsg return Error")
 	}
 	holder.Ledger.Close()
@@ -185,7 +180,7 @@ func TestGetBlockIdsWithGetHeadersMsg(t *testing.T) {
 func TestGetBlocksWithGetDataMsg(t *testing.T) {
 	lk, holder := prepareLedgerKeeper(47101, "../data/netkeys/")
 	body := &pb.GetBlocksMsgBody{
-		BlockList: []string{global.F(holder.B1.GetBlockid()), global.F(holder.B2.GetBlockid())},
+		BlockList: [][]byte{holder.B1.GetBlockid(), holder.B2.GetBlockid()},
 	}
 	bodyBuf, _ := proto.Marshal(body)
 	msg, err := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, "xuper", "", xuper_p2p.XuperMessage_GET_BLOCKS, bodyBuf, xuper_p2p.XuperMessage_NONE)
@@ -228,7 +223,7 @@ func TestHandleGetHeadersMsg(t *testing.T) {
 	t.Log("gBlk:", global.F(holder.B0.GetBlockid()), " nextBlk:", global.F(holder.B1.GetBlockid()), " nextNextBlk:", global.F(holder.B2.GetBlockid()))
 	body := &pb.GetHashesMsgBody{
 		HashesCount:   2,
-		HeaderBlockId: global.F(holder.B0.GetBlockid()),
+		HeaderBlockId: holder.B0.GetBlockid(),
 	}
 	bodyBuf, _ := proto.Marshal(body)
 	msg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, "xuper", "", xuper_p2p.XuperMessage_GET_HASHES, bodyBuf, xuper_p2p.XuperMessage_NONE)
@@ -247,7 +242,7 @@ func TestHandleGetHeadersMsg(t *testing.T) {
 		t.Error("TestHandleGetHeadersMsg returnHeaders != 2, headers=", returnHeaders)
 		return
 	}
-	if returnHeaders[0] != global.F(holder.B1.GetBlockid()) || returnHeaders[1] != global.F(holder.B2.GetBlockid()) {
+	if bytes.Compare(returnHeaders[0], holder.B1.GetBlockid()) != 0 || bytes.Compare(returnHeaders[1], holder.B2.GetBlockid()) != 0 {
 		t.Error("TestHandleGetHeadersMsg return different block. ", " block1:", returnHeaders[0], " block2:", returnHeaders[1])
 	}
 	return
@@ -256,7 +251,7 @@ func TestHandleGetHeadersMsg(t *testing.T) {
 func TestHandleGetDataMsg(t *testing.T) {
 	lk, holder := prepareLedgerKeeper(47101, "../data/netkeys/")
 	body := &pb.GetBlocksMsgBody{
-		BlockList: []string{global.F(holder.B2.GetBlockid()), global.F(holder.B1.GetBlockid())},
+		BlockList: [][]byte{holder.B2.GetBlockid(), holder.B1.GetBlockid()},
 	}
 	bodyBuf, _ := proto.Marshal(body)
 	msg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, "xuper", "", xuper_p2p.XuperMessage_GET_BLOCKS, bodyBuf, xuper_p2p.XuperMessage_NONE)
@@ -287,13 +282,9 @@ func TestHandleGetDataMsg(t *testing.T) {
 
 func TestAssignTaskRandomly(t *testing.T) {
 	targetPeers := []string{"NodeA", "NodeB", "NodeC", "NodeD", "NodeE", "NodeF"}
-	headersList := map[int]string{
-		1: "27f05e59d8a4ed9fd12064cef3e08e181986777041e0565cfafb8711e71d46ca",
-		2: "4e61c80855fc902eca5396bc073037354a3a6add6d45999648aa69232bb18bec",
-		3: "445d8643855861800721c21ef1997625be978baa20c6ae8616cc0d32f1526c25",
-		4: "daf5185bdde241950e21dbf5b72b1f8f9d7c080878f26dcf35616741dc11d55c",
+	headersList := [][]byte{
+		[]byte{1}, []byte{2}, []byte{3}, []byte{4},
 	}
-
 	result, err := assignTaskRandomly(targetPeers, headersList)
 	if len(result) == 0 {
 		t.Error("assignTaskRandomly test error: NONE")
@@ -303,7 +294,7 @@ func TestAssignTaskRandomly(t *testing.T) {
 	}
 }
 
-func TestRandomPickPeersWithNumber(t *testing.T) {
+func TestRandomPickPeers(t *testing.T) {
 	randomNumber := int64(3)
 	targetSyncBlocksPeers := new(sync.Map)
 	targetSyncBlocksPeers.Store("NodeA", true)
@@ -312,17 +303,17 @@ func TestRandomPickPeersWithNumber(t *testing.T) {
 	targetSyncBlocksPeers.Store("NodeD", true)
 	targetSyncBlocksPeers.Store("NodeE", true)
 	targetSyncBlocksPeers.Store("NodeF", false)
-	result, err := randomPickPeersWithNumber(randomNumber, targetSyncBlocksPeers)
+	result, err := randomPickPeers(randomNumber, targetSyncBlocksPeers)
 	t.Log("LEN=", len(result))
 	if err != nil || int64(len(result)) != randomNumber {
-		t.Error("randomPickPeersWithNumber test error:", err.Error())
+		t.Error("randomPickPeers test error:", err.Error())
 	}
 
 	randomNumber = int64(0)
-	result, err = randomPickPeersWithNumber(randomNumber, targetSyncBlocksPeers)
+	result, err = randomPickPeers(randomNumber, targetSyncBlocksPeers)
 	t.Log("LEN=", len(result))
 	if err != nil {
-		t.Error("randomPickPeersWithNumber test ZERO error")
+		t.Error("randomPickPeers test ZERO error")
 	}
 }
 
@@ -337,15 +328,15 @@ func TestGetValidPeersNumber(t *testing.T) {
 	}
 }
 
-func TestPickIndexesWithTargetSize(t *testing.T) {
+func TestPickIndexes(t *testing.T) {
 	list := []int{3, 1, 1, 5, 6, 7, 8}
-	result := pickIndexesWithTargetSize(int64(10), list)
+	result := pickIndexes(int64(10), list)
 	if len(result) != 4 {
-		t.Error("getValidPeersNumber test ZERO error")
+		t.Error("TestPickIndexes test ZERO error")
 	}
 	for _, v := range result {
 		if v != 0 && v != 1 && v != 2 && v != 3 {
-			t.Error("getValidPeersNumber test logic error")
+			t.Error("TestPickIndexes test logic error")
 		}
 	}
 }
@@ -420,11 +411,11 @@ func TestConfirmBlocks(t *testing.T) {
 			internalBlock: signedBlock,
 		},
 	}
-	newBeginId, ok, err := lk.confirmBlocks(&global.XContext{Timer: global.NewXTimer()}, global.F(holder.B2.GetBlockid()), tmpMap,
-		map[int]string{
-			0: global.F(signedBlock.GetBlockid()),
+	newBeginId, ok, err := lk.confirmBlocks(&global.XContext{Timer: global.NewXTimer()}, holder.B2.GetBlockid(), tmpMap,
+		map[int][]byte{
+			0: signedBlock.GetBlockid(),
 		}, true)
-	if newBeginId != global.F(signedBlock.GetBlockid()) {
+	if bytes.Compare(newBeginId, signedBlock.GetBlockid()) != 0 {
 		t.Error("TestConfirmBlocks", "error", err, "ok", ok)
 	}
 
@@ -448,11 +439,11 @@ func TestConfirmBlocks(t *testing.T) {
 			internalBlock: signedBlock,
 		},
 	}
-	newBeginId, ok, err = lk.confirmBlocks(&global.XContext{Timer: global.NewXTimer()}, global.F(holder.B2.GetBlockid()), tmpMap,
-		map[int]string{
-			0: global.F(signedBlock.GetBlockid()),
+	newBeginId, ok, err = lk.confirmBlocks(&global.XContext{Timer: global.NewXTimer()}, holder.B2.GetBlockid(), tmpMap,
+		map[int][]byte{
+			0: signedBlock.GetBlockid(),
 		}, true)
-	if newBeginId != global.F(signedBlock.GetBlockid()) {
+	if bytes.Compare(newBeginId, signedBlock.GetBlockid()) != 0 {
 		t.Error("TestConfirmBlocks", "error", err, "ok", ok)
 	}
 }
@@ -460,7 +451,7 @@ func TestConfirmBlocks(t *testing.T) {
 func TestPushBack(t *testing.T) {
 	l := NewTasksList()
 	task := &LedgerTask{
-		targetBlockId: "Test",
+		targetBlockId: []byte{111},
 	}
 	l.PushBack(task)
 	if l.PushBack(task) {
@@ -471,15 +462,15 @@ func TestPushBack(t *testing.T) {
 func TestFix(t *testing.T) {
 	l := NewTasksList()
 	task1 := &LedgerTask{
-		targetBlockId: "Test1",
+		targetBlockId: []byte{221},
 		targetHeight:  1,
 	}
 	task2 := &LedgerTask{
-		targetBlockId: "Test2",
+		targetBlockId: []byte{222},
 		targetHeight:  2,
 	}
 	task3 := &LedgerTask{
-		targetBlockId: "Test2",
+		targetBlockId: []byte{223},
 		targetHeight:  3,
 	}
 	l.PushBack(task1)
@@ -496,7 +487,7 @@ func TestPutAndGet(t *testing.T) {
 	slog.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
 	stm := newSyncTaskManager(slog)
 	task1 := &LedgerTask{
-		targetBlockId: "Test1",
+		targetBlockId: []byte{221},
 		targetHeight:  1,
 		action:        Syncing,
 	}
@@ -504,14 +495,14 @@ func TestPutAndGet(t *testing.T) {
 		t.Error("TestPutAndGet::put failed.")
 	}
 	task2 := &LedgerTask{
-		targetBlockId: "Test1",
+		targetBlockId: []byte{222},
 		targetHeight:  2,
 		action:        Appending,
 	}
 	if !stm.Put(task2) {
 		t.Error("TestPutAndGet::put failed.")
 	}
-	if stm.Get().GetAction() != Appending {
+	if stm.Pop().GetAction() != Appending {
 		t.Error("TestPutAndGet::get failed.")
 	}
 }

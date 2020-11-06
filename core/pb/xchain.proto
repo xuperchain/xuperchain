@@ -1076,15 +1076,15 @@ message ContractEvent {
 
 message GetHashesMsgBody {
   int64 HashesCount = 1;
-  string HeaderBlockId = 2;
+  bytes HeaderBlockId = 2;
 }
 
 message HashesMsgBody {
-  repeated string BlockIds = 1;
+  repeated bytes BlockIds = 1;
 }
 
 message GetBlocksMsgBody {
-  repeated string BlockList= 1;
+  repeated bytes BlockList= 1;
 }
 
 message BlocksMsgBody {
