@@ -100,7 +100,7 @@ function deploy_env()
 			cd $basepath/node$i
 			cd $basepath/node$i && $basepath/node$i/xchain-cli createChain
 			spawn_process "node$i" $basepath/node$i/xchain
-			wait_port 10 37101
+			wait_port 20 37101
 			netUrl=$($basepath/node$i/xchain-cli netURL get)
 			echo $netUrl > $basepath/node$i/neturl.txt
 			#hostname=`ifconfig -a | grep inet | grep -v 127.0.0.1 | grep -v inet6 | awk '{print $2}' | tr -d "addrs:"`
@@ -112,8 +112,8 @@ function deploy_env()
     ##node2,3节点创建链并启动
 	cd $basepath/node2 && $basepath/node2/xchain-cli createChain && spawn_process node2 $basepath/node2/xchain
 	cd $basepath/node3 && $basepath/node3/xchain-cli createChain && spawn_process node3 $basepath/node3/xchain
-	wait_port 10 37102
-	wait_port 10 37103
+	wait_port 20 37102
+	wait_port 20 37103
 
 	get_height
 	get_addrs
