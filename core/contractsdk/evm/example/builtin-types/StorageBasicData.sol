@@ -85,8 +85,8 @@ contract StorageBasicData {
         return (block.number, block.timestamp);
     }
 
-    function getHistoryBlockInfo(uint height) public view returns(bytes32) {
-        return blockhash(height);
+    function getHistoryBlockInfo(uint height) public view returns(string memory) {
+        return Bytes32ToString(blockhash(height));
     }
 
     function getOwnerBalance() public view returns(uint){
@@ -100,6 +100,25 @@ contract StorageBasicData {
 
     function send(address payable receiver, uint amount) public{
         receiver.transfer(amount);
+    }
+
+    function Bytes32ToString(bytes32 bname) public view returns(string memory){
+        bytes memory bytesChar = new bytes(bname.length);
+        uint charCount = 0;
+        for(uint i = 0;i < bname.length; i++){
+            bytes1 char = bname[i];
+
+            if(char != 0){
+                charCount++;
+            }
+        }
+
+        bytes memory bytesName = new bytes(charCount);
+        for(uint j = 0;j < charCount;j++){
+            bytesName[j] = bname[j];
+        }
+
+        return string(bytesName);
     }
 
 }

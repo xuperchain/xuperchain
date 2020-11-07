@@ -119,10 +119,6 @@ github.com/docker/go-connections/nat
 github.com/docker/go-units
 # github.com/dustin/go-humanize v1.0.0
 github.com/dustin/go-humanize
-# github.com/eapache/channels v1.1.0
-github.com/eapache/channels
-# github.com/eapache/queue v1.1.0
-github.com/eapache/queue
 # github.com/edsrzf/mmap-go v1.0.0
 github.com/edsrzf/mmap-go
 # github.com/fsnotify/fsnotify v1.4.7
@@ -233,7 +229,6 @@ github.com/hyperledger/burrow/genesis/spec
 github.com/hyperledger/burrow/keys
 github.com/hyperledger/burrow/logging
 github.com/hyperledger/burrow/logging/errors
-github.com/hyperledger/burrow/logging/loggers
 github.com/hyperledger/burrow/logging/structure
 github.com/hyperledger/burrow/permission
 github.com/hyperledger/burrow/txs
