@@ -281,6 +281,7 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 		VMConfigs: map[bridge.ContractType]bridge.VMConfig{
 			bridge.TypeWasm:   &cfg.Wasm,
 			bridge.TypeNative: &cfg.Native,
+			bridge.TypeEvm:    &cfg.EVM,
 		},
 		XModel: xc.Utxovm.GetXModel(),
 		Config: cfg.Contract,
@@ -472,6 +473,8 @@ func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
 				xc.log.Warn("confirm error", "logid", in.Header.Logid)
 				return ErrConfirmBlock
 			}
+			// 待块确认后, 共识执行相应的操作
+			xc.con.ProcessConfirmBlock(block.Block)
 			isTipBlock := (i == 0)
 			err = xc.Utxovm.PlayAndRepost(block.Blockid, isTipBlock, false)
 			xc.log.Debug("Play Time", "logid", in.Header.Logid, "cost", hd.Timer.Print())
@@ -511,6 +514,8 @@ func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
 				xc.log.Warn("confirm error", "logid", in.Header.Logid)
 				return ErrConfirmBlock
 			}
+			// 待块确认后, 共识执行相应的操作
+			xc.con.ProcessConfirmBlock(block.Block)
 			trunkSwitch = (cs.TrunkSwitch || block.Block.InTrunk)
 		}
 		if !trunkSwitch {
@@ -527,8 +532,6 @@ func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
 			return ErrWalk
 		}
 	}
-	// 待块确认后, 共识执行相应的操作
-	xc.con.ProcessConfirmBlock(in.Block)
 	if proposeBlockMoreThanConfig {
 		return ErrProposeBlockMoreThanConfig
 	}

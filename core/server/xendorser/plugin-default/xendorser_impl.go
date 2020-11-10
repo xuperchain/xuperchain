@@ -5,21 +5,34 @@ import (
 	"errors"
 	"io/ioutil"
 
-	context "golang.org/x/net/context"
+	"golang.org/x/net/context"
 
 	crypto_client "github.com/xuperchain/xuperchain/core/crypto/client"
 	"github.com/xuperchain/xuperchain/core/crypto/hash"
 	"github.com/xuperchain/xuperchain/core/pb"
-	"github.com/xuperchain/xuperchain/core/server"
 	"github.com/xuperchain/xuperchain/core/server/xendorser"
 	"github.com/xuperchain/xuperchain/core/utxo/txhash"
 )
+
+// XEndorserServer is the Server API for endorser
+// Endorser Server API is a subset of pb.XchainServer.
+type XEndorserServer interface {
+	// PostTx post Transaction to a node
+	PostTx(context.Context, *pb.TxStatus) (*pb.CommonReply, error)
+	// QueryTx query Transaction by TxStatus,
+	// Bcname and Txid are required for this
+	QueryTx(context.Context, *pb.TxStatus) (*pb.TxStatus, error)
+	// PreExecWithSelectUTXO preExec & selectUtxo
+	PreExecWithSelectUTXO(context.Context, *pb.PreExecWithSelectUTXORequest) (*pb.PreExecWithSelectUTXOResponse, error)
+	// 预执行合约
+	PreExec(context.Context, *pb.InvokeRPCRequest) (*pb.InvokeRPCResponse, error)
+}
 
 // DefaultXEndorser default implementation of XEndorser
 // Endorser service can implement the interface in their own way and follow
 // the protocol defined in xendorser.proto.
 type DefaultXEndorser struct {
-	svr         *server.Server
+	svr         XEndorserServer
 	requestType map[string]bool
 }
 
@@ -46,6 +59,7 @@ func NewDefaultXEndorser() *DefaultXEndorser {
 			"PreExecWithFee":    true,
 			"ComplianceCheck":   true,
 			"CrossQueryPreExec": true,
+			"TxQuery":           true,
 		},
 	}
 }
@@ -53,7 +67,7 @@ func NewDefaultXEndorser() *DefaultXEndorser {
 // Init initialize
 func (dxe *DefaultXEndorser) Init(confPath string, params map[string]interface{}) error {
 	if svr, ok := params["server"]; ok {
-		dxe.svr = svr.(*server.Server)
+		dxe.svr = svr.(XEndorserServer)
 	}
 	return nil
 }
@@ -121,6 +135,20 @@ func (dxe *DefaultXEndorser) EndorserCall(ctx context.Context, req *pb.EndorserR
 			return dxe.generateErrorResponse(req, resHeader, err)
 		}
 		return dxe.generateSuccessResponse(req, resData, addr, sign, resHeader)
+	case "TxQuery":
+		resData, errcode, err := dxe.getTxResult(ctx, req)
+		if err != nil {
+			resHeader.Error = errcode
+			return dxe.generateErrorResponse(req, resHeader, err)
+		}
+		data := append(req.RequestData[:], resData[:]...)
+		digest := hash.UsingSha256(data)
+		addr, sign, err := dxe.signData(ctx, digest, DefaultKeyPath)
+		if err != nil {
+			resHeader.Error = errcode
+			return dxe.generateErrorResponse(req, resHeader, err)
+		}
+		return dxe.generateSuccessResponse(req, resData, addr, sign, resHeader)
 	}
 
 	return nil, nil
@@ -176,6 +204,34 @@ func (dxe *DefaultXEndorser) getCrossQueryResult(ctx context.Context, req *pb.En
 	}
 
 	sData, err := json.Marshal(res)
+	if err != nil {
+		return nil, pb.XChainErrorEnum_SERVICE_REFUSED_ERROR, err
+	}
+
+	return sData, pb.XChainErrorEnum_SUCCESS, nil
+}
+
+func (dxe *DefaultXEndorser) getTxResult(ctx context.Context, req *pb.EndorserRequest) ([]byte, pb.XChainErrorEnum, error) {
+	request := &pb.TxStatus{}
+	err := json.Unmarshal(req.GetRequestData(), request)
+	if err != nil {
+		return nil, pb.XChainErrorEnum_SERVICE_REFUSED_ERROR, err
+	}
+
+	reply, err := dxe.svr.QueryTx(ctx, request)
+	if err != nil {
+		return nil, reply.GetHeader().GetError(), err
+	}
+
+	if reply.GetHeader().GetError() != pb.XChainErrorEnum_SUCCESS {
+		return nil, reply.GetHeader().GetError(), errors.New("QueryTx not success")
+	}
+
+	if reply.Tx == nil {
+		return nil, reply.GetHeader().GetError(), errors.New("tx not found")
+	}
+
+	sData, err := json.Marshal(reply.Tx)
 	if err != nil {
 		return nil, pb.XChainErrorEnum_SERVICE_REFUSED_ERROR, err
 	}

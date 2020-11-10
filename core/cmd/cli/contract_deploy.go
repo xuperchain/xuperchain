@@ -6,17 +6,19 @@ package main
 
 import (
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"io/ioutil"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/spf13/cobra"
 
+	"github.com/xuperchain/xuperchain/core/contract/bridge"
 	"github.com/xuperchain/xuperchain/core/pb"
 	"github.com/xuperchain/xuperchain/core/utxo"
 )
 
-// ContractDeployCommand wasm deploy cmd
+// ContractDeployCommand wasm/native/evm deploy cmd
 type ContractDeployCommand struct {
 	cli *Cli
 	cmd *cobra.Command
@@ -30,9 +32,10 @@ type ContractDeployCommand struct {
 	isMulti      bool
 	multiAddrs   string
 	output       string
+	abiFile      string
 }
 
-// NewContractDeployCommand new wasm deploy cmd
+// NewContractDeployCommand new wasm/native/evm deploy cmd
 func NewContractDeployCommand(cli *Cli, module string) *cobra.Command {
 	c := new(ContractDeployCommand)
 	c.cli = cli
@@ -59,6 +62,9 @@ func (c *ContractDeployCommand) addFlags() {
 	c.cmd.Flags().BoolVarP(&c.isMulti, "isMulti", "m", false, "multisig scene")
 	c.cmd.Flags().StringVarP(&c.multiAddrs, "multiAddrs", "A", "data/acl/addrs", "multiAddrs if multisig scene")
 	c.cmd.Flags().StringVarP(&c.output, "output", "o", "./tx.out", "tx draw data")
+	if c.module == string(bridge.TypeEvm) {
+		c.cmd.Flags().StringVarP(&c.abiFile, "abi", "", "", "the abi file of contract")
+	}
 }
 
 func (c *ContractDeployCommand) deploy(ctx context.Context, codepath string) error {
@@ -88,28 +94,67 @@ func (c *ContractDeployCommand) deploy(ctx context.Context, codepath string) err
 		return err
 	}
 
+	var codeBuf, abiCode []byte
+	var evmCode string
+	if c.module == string(bridge.TypeEvm) {
+		codeBuf, err = ioutil.ReadFile(codepath)
+		if err != nil {
+			return err
+		}
+		evmCode = string(codeBuf)
+
+		abiCode, err = ioutil.ReadFile(c.abiFile)
+		if err != nil {
+			return err
+		}
+
+		codeBuf, err = hex.DecodeString(evmCode)
+		if err != nil {
+			return err
+		}
+	} else {
+		codeBuf, err = ioutil.ReadFile(codepath)
+		if err != nil {
+			return err
+		}
+	}
+
 	// generate preExe params
 	args := make(map[string]interface{})
 	err = json.Unmarshal([]byte(c.args), &args)
 	if err != nil {
 		return err
 	}
-	x3args, err := convertToXuper3Args(args)
-	if err != nil {
-		return err
+
+	var x3args map[string][]byte
+	if c.module == string(bridge.TypeEvm) && c.args != "" {
+		x3args, ct.AbiCode, err = convertToEvmArgsWithAbiData(abiCode, "", args)
+		if err != nil {
+			return err
+		}
+		callData := hex.EncodeToString(x3args["input"])
+		evmCode = evmCode + callData
+		codeBuf, err = hex.DecodeString(evmCode)
+		if err != nil {
+			return err
+		}
+	} else {
+		x3args, err = convertToXuper3Args(args)
+		if err != nil {
+			return err
+		}
 	}
 	initArgs, _ := json.Marshal(x3args)
-	codebuf, err := ioutil.ReadFile(codepath)
-	if err != nil {
-		return err
-	}
-	descbuf := c.prepareCodeDesc()
+
+	descBuf := c.prepareCodeDesc()
+
 	ct.Args = map[string][]byte{
 		"account_name":  []byte(c.account),
 		"contract_name": []byte(c.contractName),
-		"contract_code": codebuf,
-		"contract_desc": descbuf,
+		"contract_code": codeBuf,
+		"contract_desc": descBuf,
 		"init_args":     initArgs,
+		"contract_abi":  abiCode,
 	}
 
 	if c.isMulti {

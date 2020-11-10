@@ -5,6 +5,8 @@ github.com/Azure/go-ansiterm
 github.com/Azure/go-ansiterm/winterm
 # github.com/BurntSushi/toml v0.3.1
 github.com/BurntSushi/toml
+# github.com/ChainSafe/go-schnorrkel v0.0.0-20200626160457-b38283118816
+github.com/ChainSafe/go-schnorrkel
 # github.com/Microsoft/go-winio v0.4.15-0.20190919025122-fc70bd9a86b5
 github.com/Microsoft/go-winio
 github.com/Microsoft/go-winio/pkg/guid
@@ -68,6 +70,10 @@ github.com/containerd/continuity/syscallx
 github.com/containerd/continuity/sysx
 # github.com/coreos/go-semver v0.3.0
 github.com/coreos/go-semver/semver
+# github.com/cosmos/go-bip39 v0.0.0-20180819234021-555e2067c45d
+github.com/cosmos/go-bip39
+# github.com/davecgh/go-spew v1.1.1
+github.com/davecgh/go-spew/spew
 # github.com/ddliu/motto v0.3.1
 github.com/ddliu/motto
 github.com/ddliu/motto/underscore
@@ -113,18 +119,37 @@ github.com/docker/go-connections/nat
 github.com/docker/go-units
 # github.com/dustin/go-humanize v1.0.0
 github.com/dustin/go-humanize
+# github.com/eapache/channels v1.1.0
+github.com/eapache/channels
+# github.com/eapache/queue v1.1.0
+github.com/eapache/queue
 # github.com/edsrzf/mmap-go v1.0.0
 github.com/edsrzf/mmap-go
 # github.com/fsnotify/fsnotify v1.4.7
 github.com/fsnotify/fsnotify
 # github.com/fsouza/go-dockerclient v1.6.0
 github.com/fsouza/go-dockerclient
+# github.com/go-kit/kit v0.9.0
+github.com/go-kit/kit/log
+github.com/go-kit/kit/log/level
+github.com/go-kit/kit/log/term
+github.com/go-kit/kit/metrics
+github.com/go-kit/kit/metrics/discard
+github.com/go-kit/kit/metrics/internal/lv
+github.com/go-kit/kit/metrics/prometheus
+# github.com/go-logfmt/logfmt v0.5.0
+github.com/go-logfmt/logfmt
 # github.com/go-stack/stack v1.8.0
 github.com/go-stack/stack
-# github.com/gogo/protobuf v1.3.0
+# github.com/gogo/protobuf v1.3.1
+github.com/gogo/protobuf/gogoproto
 github.com/gogo/protobuf/io
+github.com/gogo/protobuf/jsonpb
 github.com/gogo/protobuf/proto
-# github.com/golang/protobuf v1.3.2
+github.com/gogo/protobuf/protoc-gen-gogo/descriptor
+github.com/gogo/protobuf/sortkeys
+github.com/gogo/protobuf/types
+# github.com/golang/protobuf v1.3.3
 github.com/golang/protobuf/jsonpb
 github.com/golang/protobuf/proto
 github.com/golang/protobuf/protoc-gen-go/descriptor
@@ -137,7 +162,7 @@ github.com/golang/protobuf/ptypes/duration
 github.com/golang/protobuf/ptypes/struct
 github.com/golang/protobuf/ptypes/timestamp
 github.com/golang/protobuf/ptypes/wrappers
-# github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db
+# github.com/golang/snappy v0.0.1
 github.com/golang/snappy
 # github.com/google/uuid v1.1.1
 github.com/google/uuid
@@ -151,6 +176,13 @@ github.com/grpc-ecosystem/go-grpc-prometheus
 github.com/grpc-ecosystem/grpc-gateway/internal
 github.com/grpc-ecosystem/grpc-gateway/runtime
 github.com/grpc-ecosystem/grpc-gateway/utilities
+# github.com/gtank/merlin v0.1.1-0.20191105220539-8318aed1a79f
+github.com/gtank/merlin
+# github.com/gtank/ristretto255 v0.1.2
+github.com/gtank/ristretto255
+github.com/gtank/ristretto255/internal/edwards25519
+github.com/gtank/ristretto255/internal/radix51
+github.com/gtank/ristretto255/internal/scalar
 # github.com/hashicorp/golang-lru v0.5.3
 github.com/hashicorp/golang-lru
 github.com/hashicorp/golang-lru/simplelru
@@ -173,6 +205,40 @@ github.com/huin/goupnp/httpu
 github.com/huin/goupnp/scpd
 github.com/huin/goupnp/soap
 github.com/huin/goupnp/ssdp
+# github.com/hyperledger/burrow v0.30.5 => github.com/xuperchain/burrow v0.30.6-0.20200922024403-90193b5a35dd
+github.com/hyperledger/burrow/acm
+github.com/hyperledger/burrow/acm/acmstate
+github.com/hyperledger/burrow/acm/balance
+github.com/hyperledger/burrow/acm/validator
+github.com/hyperledger/burrow/binary
+github.com/hyperledger/burrow/crypto
+github.com/hyperledger/burrow/deploy/compile
+github.com/hyperledger/burrow/encoding
+github.com/hyperledger/burrow/encoding/rlp
+github.com/hyperledger/burrow/event
+github.com/hyperledger/burrow/event/pubsub
+github.com/hyperledger/burrow/event/query
+github.com/hyperledger/burrow/execution/engine
+github.com/hyperledger/burrow/execution/errors
+github.com/hyperledger/burrow/execution/evm
+github.com/hyperledger/burrow/execution/evm/abi
+github.com/hyperledger/burrow/execution/evm/asm
+github.com/hyperledger/burrow/execution/evm/asm/bc
+github.com/hyperledger/burrow/execution/exec
+github.com/hyperledger/burrow/execution/names
+github.com/hyperledger/burrow/execution/native
+github.com/hyperledger/burrow/execution/registry
+github.com/hyperledger/burrow/genesis
+github.com/hyperledger/burrow/genesis/spec
+github.com/hyperledger/burrow/keys
+github.com/hyperledger/burrow/logging
+github.com/hyperledger/burrow/logging/errors
+github.com/hyperledger/burrow/logging/loggers
+github.com/hyperledger/burrow/logging/structure
+github.com/hyperledger/burrow/permission
+github.com/hyperledger/burrow/txs
+github.com/hyperledger/burrow/txs/payload
+github.com/hyperledger/burrow/util/slice
 # github.com/inconshreveable/mousetrap v1.0.0
 github.com/inconshreveable/mousetrap
 # github.com/ipfs/go-cid v0.0.3
@@ -327,18 +393,20 @@ github.com/libp2p/go-ws-transport
 github.com/libp2p/go-yamux
 # github.com/lunixbochs/vtclean v0.0.0-20180621232353-2d01aacdc34a
 github.com/lunixbochs/vtclean
-# github.com/magiconair/properties v1.8.0
+# github.com/magiconair/properties v1.8.1
 github.com/magiconair/properties
 # github.com/manifoldco/promptui v0.7.0
 github.com/manifoldco/promptui
 github.com/manifoldco/promptui/list
 github.com/manifoldco/promptui/screenbuf
-# github.com/mattn/go-colorable v0.1.1
+# github.com/mattn/go-colorable v0.1.2
 github.com/mattn/go-colorable
-# github.com/mattn/go-isatty v0.0.5
+# github.com/mattn/go-isatty v0.0.8
 github.com/mattn/go-isatty
 # github.com/matttproud/golang_protobuf_extensions v1.0.1
 github.com/matttproud/golang_protobuf_extensions/pbutil
+# github.com/mimoo/StrobeGo v0.0.0-20181016162300-f8f6d4d2b643
+github.com/mimoo/StrobeGo/strobe
 # github.com/minio/blake2b-simd v0.0.0-20160723061019-3f5f724cb5b1
 github.com/minio/blake2b-simd
 # github.com/minio/sha256-simd v0.1.1
@@ -387,7 +455,7 @@ github.com/pkg/errors
 github.com/prometheus/client_golang/prometheus
 github.com/prometheus/client_golang/prometheus/internal
 github.com/prometheus/client_golang/prometheus/promhttp
-# github.com/prometheus/client_model v0.0.0-20190129233127-fd36f4220a90
+# github.com/prometheus/client_model v0.0.0-20190812154241-14fe0d1b01d4
 github.com/prometheus/client_model/go
 # github.com/prometheus/common v0.6.0
 github.com/prometheus/common/expfmt
@@ -422,9 +490,11 @@ github.com/spf13/cobra
 github.com/spf13/jwalterweatherman
 # github.com/spf13/pflag v1.0.5
 github.com/spf13/pflag
-# github.com/spf13/viper v1.4.0
+# github.com/spf13/viper v1.6.2
 github.com/spf13/viper
-# github.com/syndtr/goleveldb v1.0.0
+# github.com/subosito/gotenv v1.2.0
+github.com/subosito/gotenv
+# github.com/syndtr/goleveldb v1.0.1-0.20190923125748-758128399b1d
 github.com/syndtr/goleveldb/leveldb
 github.com/syndtr/goleveldb/leveldb/cache
 github.com/syndtr/goleveldb/leveldb/comparer
@@ -437,6 +507,57 @@ github.com/syndtr/goleveldb/leveldb/opt
 github.com/syndtr/goleveldb/leveldb/storage
 github.com/syndtr/goleveldb/leveldb/table
 github.com/syndtr/goleveldb/leveldb/util
+# github.com/tendermint/go-amino v0.14.1
+github.com/tendermint/go-amino
+# github.com/tendermint/tendermint v0.33.1
+github.com/tendermint/tendermint/abci/types
+github.com/tendermint/tendermint/config
+github.com/tendermint/tendermint/crypto
+github.com/tendermint/tendermint/crypto/ed25519
+github.com/tendermint/tendermint/crypto/encoding/amino
+github.com/tendermint/tendermint/crypto/merkle
+github.com/tendermint/tendermint/crypto/multisig
+github.com/tendermint/tendermint/crypto/multisig/bitarray
+github.com/tendermint/tendermint/crypto/secp256k1
+github.com/tendermint/tendermint/crypto/secp256k1/internal/secp256k1
+github.com/tendermint/tendermint/crypto/sr25519
+github.com/tendermint/tendermint/crypto/tmhash
+github.com/tendermint/tendermint/libs/async
+github.com/tendermint/tendermint/libs/bits
+github.com/tendermint/tendermint/libs/bytes
+github.com/tendermint/tendermint/libs/cmap
+github.com/tendermint/tendermint/libs/flowrate
+github.com/tendermint/tendermint/libs/kv
+github.com/tendermint/tendermint/libs/log
+github.com/tendermint/tendermint/libs/math
+github.com/tendermint/tendermint/libs/net
+github.com/tendermint/tendermint/libs/os
+github.com/tendermint/tendermint/libs/pubsub
+github.com/tendermint/tendermint/libs/pubsub/query
+github.com/tendermint/tendermint/libs/rand
+github.com/tendermint/tendermint/libs/service
+github.com/tendermint/tendermint/libs/strings
+github.com/tendermint/tendermint/libs/timer
+github.com/tendermint/tendermint/p2p
+github.com/tendermint/tendermint/p2p/conn
+github.com/tendermint/tendermint/types
+github.com/tendermint/tendermint/types/time
+github.com/tendermint/tendermint/version
+# github.com/tmthrgd/atomics v0.0.0-20190904060638-dc7a5fcc7e0d
+github.com/tmthrgd/atomics
+# github.com/tmthrgd/go-bitset v0.0.0-20190904054048-394d9a556c05
+github.com/tmthrgd/go-bitset
+github.com/tmthrgd/go-bitset/internal/bitwise
+# github.com/tmthrgd/go-bitwise v0.0.0-20190904053232-1430ee983fca
+github.com/tmthrgd/go-bitwise
+# github.com/tmthrgd/go-byte-test v0.0.0-20190904060354-2794345b9929
+github.com/tmthrgd/go-byte-test
+# github.com/tmthrgd/go-hex v0.0.0-20190303111820-0bdcb15db631
+github.com/tmthrgd/go-hex
+# github.com/tmthrgd/go-memset v0.0.0-20190904060434-6fb7a21f88f1
+github.com/tmthrgd/go-memset
+# github.com/tmthrgd/go-popcount v0.0.0-20190904054823-afb1ace8b04f
+github.com/tmthrgd/go-popcount
 # github.com/twitchyliquid64/golang-asm v0.0.0-20190126203739-365674df15fc
 github.com/twitchyliquid64/golang-asm
 github.com/twitchyliquid64/golang-asm/asm/arch
@@ -484,12 +605,22 @@ go.opencensus.io/stats
 go.opencensus.io/stats/internal
 go.opencensus.io/stats/view
 go.opencensus.io/tag
-# golang.org/x/crypto v0.0.0-20190927123631-a832865fa7ad
+# golang.org/x/crypto v0.0.0-20191206172530-e9b2fee46413
 golang.org/x/crypto/blake2s
+golang.org/x/crypto/chacha20
+golang.org/x/crypto/chacha20poly1305
+golang.org/x/crypto/curve25519
 golang.org/x/crypto/ed25519
 golang.org/x/crypto/ed25519/internal/edwards25519
+golang.org/x/crypto/hkdf
+golang.org/x/crypto/internal/subtle
+golang.org/x/crypto/nacl/box
+golang.org/x/crypto/nacl/secretbox
 golang.org/x/crypto/pbkdf2
+golang.org/x/crypto/poly1305
 golang.org/x/crypto/ripemd160
+golang.org/x/crypto/salsa20/salsa
+golang.org/x/crypto/scrypt
 golang.org/x/crypto/sha3
 # golang.org/x/net v0.0.0-20200202094626-16171245cfb2
 golang.org/x/net/bpf
@@ -542,8 +673,10 @@ google.golang.org/genproto/googleapis/api/annotations
 google.golang.org/genproto/googleapis/api/httpbody
 google.golang.org/genproto/googleapis/rpc/status
 google.golang.org/genproto/protobuf/field_mask
-# google.golang.org/grpc v1.24.0
+# google.golang.org/grpc v1.27.1
 google.golang.org/grpc
+google.golang.org/grpc/attributes
+google.golang.org/grpc/backoff
 google.golang.org/grpc/balancer
 google.golang.org/grpc/balancer/base
 google.golang.org/grpc/balancer/roundrobin
@@ -559,10 +692,13 @@ google.golang.org/grpc/internal
 google.golang.org/grpc/internal/backoff
 google.golang.org/grpc/internal/balancerload
 google.golang.org/grpc/internal/binarylog
+google.golang.org/grpc/internal/buffer
 google.golang.org/grpc/internal/channelz
 google.golang.org/grpc/internal/envconfig
 google.golang.org/grpc/internal/grpcrand
 google.golang.org/grpc/internal/grpcsync
+google.golang.org/grpc/internal/resolver/dns
+google.golang.org/grpc/internal/resolver/passthrough
 google.golang.org/grpc/internal/syscall
 google.golang.org/grpc/internal/transport
 google.golang.org/grpc/keepalive
@@ -572,14 +708,14 @@ google.golang.org/grpc/peer
 google.golang.org/grpc/reflection
 google.golang.org/grpc/reflection/grpc_reflection_v1alpha
 google.golang.org/grpc/resolver
-google.golang.org/grpc/resolver/dns
-google.golang.org/grpc/resolver/passthrough
 google.golang.org/grpc/serviceconfig
 google.golang.org/grpc/stats
 google.golang.org/grpc/status
 google.golang.org/grpc/tap
+# gopkg.in/ini.v1 v1.51.0
+gopkg.in/ini.v1
 # gopkg.in/sourcemap.v1 v1.0.5
 gopkg.in/sourcemap.v1
 gopkg.in/sourcemap.v1/base64vlq
-# gopkg.in/yaml.v2 v2.2.2
+# gopkg.in/yaml.v2 v2.2.4
 gopkg.in/yaml.v2

@@ -12,6 +12,7 @@ import (
 
 type memCodeProvider struct {
 	code []byte
+	abi  []byte
 	desc *pb.WasmCodeDesc
 }
 
@@ -20,6 +21,9 @@ func (m *memCodeProvider) GetContractCodeDesc(name string) (*pb.WasmCodeDesc, er
 }
 func (m *memCodeProvider) GetContractCode(name string) ([]byte, error) {
 	return m.code, nil
+}
+func (m *memCodeProvider) GetContractAbi(name string) ([]byte, error) {
+	return m.abi, nil
 }
 
 type fakeCode struct {

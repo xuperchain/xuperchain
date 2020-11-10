@@ -115,8 +115,3 @@ func (cb *ChainedBft) UnRegisterToNetwork() error {
 func (cb *ChainedBft) UpdateSmrState(generateQC *pb.QuorumCert) {
 	cb.smr.UpdateSmrState(generateQC)
 }
-
-// CheckViewNumer check if the viewNumber given is valid in smr's viewMsgs storage
-func (cb *ChainedBft) CheckViewNumer(viewNumber int64) bool {
-	return cb.smr.CheckViewNumer(viewNumber)
-}
