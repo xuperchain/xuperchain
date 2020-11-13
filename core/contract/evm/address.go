@@ -11,6 +11,7 @@ import (
 
 	"github.com/xuperchain/xuperchain/core/common"
 	"github.com/xuperchain/xuperchain/core/crypto/hash"
+	"github.com/xuperchain/xuperchain/core/permission/acl"
 	"github.com/xuperchain/xuperchain/core/permission/acl/utils"
 )
 
@@ -92,6 +93,9 @@ func EVMAddressToContractAccount(evmAddr crypto.Address) (string, error) {
 
 // determine whether it is a contract account
 func DetermineContractAccount(account string) bool {
+	if acl.IsAccount(account) != 1 {
+		return false
+	}
 	return strings.Index(account, "@xuper") != -1
 }
 
