@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
-	"sync"
 	"syscall"
 	"time"
 
@@ -93,8 +92,6 @@ type XChainCore struct {
 	nodeMode     string
 	CryptoClient crypto_base.CryptoClient
 
-	mutex *sync.RWMutex
-
 	Speed *probe.SpeedCalc
 	// post_cache map[string] bool
 	stopFlag bool
@@ -134,7 +131,6 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 		return err
 	}
 
-	xc.mutex = &sync.RWMutex{}
 	xc.Speed = probe.NewSpeedCalc(bcname)
 	// this.mutex.Lock()
 	// defer this.mutex.Unlock()
@@ -397,14 +393,18 @@ func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
 
 func (xc *XChainCore) doMiner() {
 	minerTimer := global.NewXTimer()
-	xc.mutex.Lock()
+	// 矿工和ledgerkeeper抢同一把锁，该锁保证了矿工在当前不会打包一个旧tx进到新块里
+	// 矿工在doMiner会将UnconfirmedTx拿出来，也会进行uxtovm Play，而此时也有可能ledgerkeeper同步块做同样操作
+	// 该锁保护了当前仅有两者中的一个对象进行操作
+	xc.LedgerKeeper.CoreLock()
 	lockHold := true
 	minerTimer.Mark("GetLock")
 	defer func() {
 		if lockHold {
-			xc.mutex.Unlock()
+			xc.LedgerKeeper.CoreUnlock()
 		}
 	}()
+
 	ledgerLastID := xc.Ledger.GetMeta().TipBlockid
 	utxovmLastID := xc.Utxovm.GetLatestBlockid()
 
@@ -544,7 +544,7 @@ func (xc *XChainCore) doMiner() {
 		}
 		return
 	}
-	xc.mutex.Unlock() //后面放开锁
+	xc.LedgerKeeper.CoreUnlock() //后面放开锁
 	lockHold = false
 	xc.Utxovm.SetBlockGenEvent()
 	defer xc.Utxovm.NotifyFinishBlockGen()

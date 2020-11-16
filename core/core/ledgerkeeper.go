@@ -239,6 +239,9 @@ type LedgerKeeper struct {
 
 	utxovm *utxo.UtxoVM
 	con    *consensus.PluggableConsensus
+	// 该锁保护同一时间内只有矿工or账本keeper对象中的一个对ledger及utxovm操作
+	// ledgledgerKeeper同步块和xchaincore 矿工doMiner抢锁
+	coreMutex sync.RWMutex
 }
 
 type LedgerTask struct {
@@ -346,6 +349,16 @@ func NewLedgerKeeper(bcName string, slog log.Logger, p2pV2 p2p_base.P2PServer, l
 	}
 	lk.updatePeerStatusMap()
 	return lk, nil
+}
+
+// CoreLock 锁coreMutex
+func (lk *LedgerKeeper) CoreLock() {
+	lk.coreMutex.Lock()
+}
+
+// CoreUnlock 解锁coreMutex
+func (lk *LedgerKeeper) CoreUnlock() {
+	lk.coreMutex.Unlock()
 }
 
 /* DoTruncateTask Truncate truncate ledger and set tipblock to utxovmLastID
@@ -930,6 +943,15 @@ func (lk *LedgerKeeper) confirmBlocks(hd *global.XContext, headerBegin []byte, b
 	}
 	beginSimpleBlock := blocksMap[global.F(headersInfo[index])]
 	needVerify := (lk.nodeMode == config.NodeModeFastSync)
+
+	/* ledgerkeeper和矿工抢同一把锁，该锁保证了ledgerkeeper在当前确认tx和打包区块不会冲突
+	 * 矿工在doMiner会将UnconfirmedTx拿出来，也会进行uxtovm Play，而此时也有可能ledgerkeeper同步块做同样操作
+	 * 该锁保护了当前仅有两者中的一个对象进行操作
+	 * 原有SendBlock中多个同步进程抢这把锁的问题已经通过同步串行解决
+	 */
+	lk.coreMutex.Lock()
+	defer lk.coreMutex.Unlock()
+
 	if bytes.Compare(beginSimpleBlock.internalBlock.GetPreHash(), lk.ledger.GetMeta().GetTipBlockid()) == 0 {
 		lk.log.Debug("ConfirmBlocks::Equal The Same", "cost", hd.Timer.Print())
 		for ; index < listLen; index++ {
