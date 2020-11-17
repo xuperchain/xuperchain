@@ -20,6 +20,10 @@ jobs:
         make && make test
         if command -v docker && docker info; then XDEV_CC_IMAGE=xuper/emcc:1.38.30 make contractsdk; fi
         cd ./core/test && bash -x ci_pipeline.sh
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v1
+      with:
+        file: ./coverage.txt
 
   contract-java-sdk:
     strategy:
