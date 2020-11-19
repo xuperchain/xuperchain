@@ -157,7 +157,7 @@ func TestGetBlockIdsWithGetHeadersMsg(t *testing.T) {
 	}
 	bodyBuf, _ := proto.Marshal(body)
 	msg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, "xuper", "", xuper_p2p.XuperMessage_GET_BLOCKIDS, bodyBuf, xuper_p2p.XuperMessage_NONE)
-	xmsg, err := lk.handleGetHeadersMsg(nil, msg)
+	xmsg, err := lk.handleGetBlockIds(nil, msg)
 
 	headerMsgBody := &pb.GetBlockIdsResponse{}
 	err = proto.Unmarshal(xmsg.GetData().GetMsgInfo(), headerMsgBody)
@@ -191,7 +191,7 @@ func TestGetBlocksWithGetDataMsg(t *testing.T) {
 	if msgType != xuper_p2p.XuperMessage_GET_BLOCKS {
 		t.Error("TestGetBlocksWithGetDataMsg test Internal error")
 	}
-	xmsg, err := lk.handleGetDataMsg(nil, returnMsg)
+	xmsg, err := lk.handleGetBlocks(nil, returnMsg)
 	peerSyncMap := &map[string]*pb.InternalBlock{
 		global.F(holder.B1.GetBlockid()): nil,
 		global.F(holder.B2.GetBlockid()): nil,
@@ -228,7 +228,7 @@ func TestHandleGetHeadersMsg(t *testing.T) {
 	}
 	bodyBuf, _ := proto.Marshal(body)
 	msg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, "xuper", "", xuper_p2p.XuperMessage_GET_BLOCKIDS, bodyBuf, xuper_p2p.XuperMessage_NONE)
-	returnMsg, err := lk.handleGetHeadersMsg(nil, msg)
+	returnMsg, err := lk.handleGetBlockIds(nil, msg)
 	if err != nil {
 		t.Error("TestHandleGetHeadersMsg test Internal error: ", err.Error())
 	}
@@ -256,7 +256,7 @@ func TestHandleGetDataMsg(t *testing.T) {
 	}
 	bodyBuf, _ := proto.Marshal(body)
 	msg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, "xuper", "", xuper_p2p.XuperMessage_GET_BLOCKS, bodyBuf, xuper_p2p.XuperMessage_NONE)
-	returnMsg, err := lk.handleGetDataMsg(nil, msg)
+	returnMsg, err := lk.handleGetBlocks(nil, msg)
 	if err != nil {
 		t.Error("TestHandleGetDataMsg test Internal error: ", err.Error())
 	}
@@ -367,7 +367,7 @@ func TestCheckAndComfirm(t *testing.T) {
 		logid:         "TestCheckAndComfirm",
 		internalBlock: signedBlock,
 	}
-	err, trunkSwitch := lk.checkAndComfirm(true, simpleBlock)
+	err, trunkSwitch := lk.checkAndConfirm(true, simpleBlock)
 	holder.Ledger.Close()
 	holder.UtxoVM.Close()
 	if err != nil {
@@ -406,9 +406,9 @@ func TestConfirmBlocks(t *testing.T) {
 		logid:         "TestConfirmBlocks",
 		internalBlock: signedBlock,
 	}}
-	newBeginId, ok, err := lk.confirmBlocks(&global.XContext{Timer: global.NewXTimer()}, tmpSlice, true)
+	newBeginId, err := lk.confirmBlocks(&global.XContext{Timer: global.NewXTimer()}, tmpSlice, true)
 	if bytes.Compare(newBeginId, signedBlock.GetBlockid()) != 0 {
-		t.Error("TestConfirmBlocks", "error", err, "ok", ok)
+		t.Error("TestConfirmBlocks", "error", err)
 	}
 
 	// 模拟分叉情况
@@ -428,9 +428,9 @@ func TestConfirmBlocks(t *testing.T) {
 			logid:         "TestConfirmBlocks",
 			internalBlock: signedBlock,
 		}}
-	newBeginId, ok, err = lk.confirmBlocks(&global.XContext{Timer: global.NewXTimer()}, tmpSlice, true)
+	newBeginId, err = lk.confirmBlocks(&global.XContext{Timer: global.NewXTimer()}, tmpSlice, true)
 	if bytes.Compare(newBeginId, signedBlock.GetBlockid()) != 0 {
-		t.Error("TestConfirmBlocks", "error", err, "ok", ok)
+		t.Error("TestConfirmBlocks", "error", err)
 	}
 }
 
