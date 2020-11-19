@@ -23,14 +23,13 @@ const (
  */
 func (xc *XChainCore) SyncBatchBlocks() {
 	hd := &global.XContext{Timer: global.NewXTimer()}
-	tipId := xc.Ledger.GetMeta().GetTipBlockid()
-	xc.log.Trace("sync blocks in SyncBatchBlocks", "time", time.Now().UnixNano(), "blockname", xc.bcname, "tipID", global.F(tipId))
+	xc.log.Trace("sync blocks in SyncBatchBlocks", "time", time.Now().UnixNano(), "blockname", xc.bcname, "tipID", global.F(xc.Ledger.GetMeta().GetTipBlockid()))
 	ctx := &LedgerTaskContext{
 		extBlocks:  nil,
 		preferPeer: nil,
 		hd:         hd,
 	}
-	xc.LedgerKeeper.PutTask(tipId, xc.Ledger.GetMeta().GetTrunkHeight(), Syncing, ctx)
+	xc.LedgerKeeper.PutTask(-1, Syncing, ctx)
 }
 
 // SyncBlocks sync block while start to miner

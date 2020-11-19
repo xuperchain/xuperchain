@@ -368,26 +368,26 @@ func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
 		xc.log.Debug("Block is exist", "logid", in.Header.Logid, "cost", hd.Timer.Print())
 		return nil
 	}
-	tipId := xc.Ledger.GetMeta().GetTipBlockid()
 	if bytes.Equal(xc.Utxovm.GetLatestBlockid(), in.GetBlock().GetPreHash()) {
-		xc.log.Trace("Appending block in SendBlock", "time", time.Now().UnixNano(), "blockname", xc.bcname, "tipID", global.F(tipId))
+		xc.log.Trace("Appending block in SendBlock", "time", time.Now().UnixNano(), "blockname", xc.bcname, "tipID", global.F(xc.Utxovm.GetLatestBlockid()))
 		ctx := &LedgerTaskContext{
-			extBlocks: map[string]*SimpleBlock{
-				global.F(in.GetBlock().GetBlockid()): &SimpleBlock{internalBlock: in.GetBlock(), header: in.GetHeader()},
+			extBlocks: []*SimpleBlock{
+				&SimpleBlock{internalBlock: in.GetBlock(), logid: in.GetHeader().GetLogid() + "_" + in.GetHeader().GetFromNode()},
 			},
 			preferPeer: nil,
 			hd:         hd,
 		}
-		xc.LedgerKeeper.PutTask(tipId, xc.Ledger.GetMeta().GetTrunkHeight(), Appending, ctx)
+		xc.LedgerKeeper.PutTask(-1, Appending, ctx)
 		return nil
 	}
-	xc.log.Trace("sync blocks in SendBlock", "time", time.Now().UnixNano(), "blockname", xc.bcname, "tipID", global.F(tipId))
+	xc.log.Trace("sync blocks in SendBlock", "time", time.Now().UnixNano(), "blockname", xc.bcname, "tipID", global.F(xc.Utxovm.GetLatestBlockid()))
 	ctx := &LedgerTaskContext{
 		extBlocks:  nil,
 		preferPeer: []string{in.GetHeader().GetFromNode()},
 		hd:         hd,
 	}
-	xc.LedgerKeeper.PutTask(tipId, xc.Ledger.GetMeta().GetTrunkHeight(), Syncing, ctx)
+	xc.log.Trace("!!!!!GetFromNode TEST", "node", in.GetHeader().GetFromNode())
+	xc.LedgerKeeper.PutTask(-1, Syncing, ctx)
 	return nil
 }
 

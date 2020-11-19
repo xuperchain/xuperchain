@@ -1074,20 +1074,21 @@ message ContractEvent {
   bytes body = 3;
 }
 
-message GetHashesMsgBody {
-  int64 HashesCount = 1;
-  bytes HeaderBlockId = 2;
+message GetBlockIdsRequest {
+  int64 count = 1;
+  bytes blockId = 2;
 }
 
-message HashesMsgBody {
-  repeated bytes BlockIds = 1;
+message GetBlockIdsResponse {
+  bytes tipBlockId = 1;
+  repeated bytes blockIds = 2;
 }
 
-message GetBlocksMsgBody {
-  repeated bytes BlockList= 1;
+message GetBlocksRequest {
+  repeated bytes blockIds= 1;
 }
 
-message BlocksMsgBody {
-  Header header = 1;
-  repeated pb.InternalBlock BlocksInfo = 2;
+message GetBlocksResponse {
+  //Header header = 1;
+  repeated pb.InternalBlock blocksInfo = 2;
 }

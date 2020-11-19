@@ -44,14 +44,14 @@ message XuperMessage {
          * 发送方通过GET_HASHES消息询问区间范围内的所有区块哈希信息, 
          * 接受方发送HASHES信息, 该消息携带其所知的区间范围内的BlockId列表
          */
-        GET_HASHES = 20;
-        HASHES = 21;
+        GET_BLOCKIDS = 20;
+        GET_BLOCKIDS_RES = 21;
         /* 消息对(GET_BLOCKS <-> BLOCKS), 
          * 发送方通过GET_BLOCKS消息询问BlockId列表内的所有对应区块信息, 
          * 接受方发送BLOCKS信息, 该消息携带具体Block
          */
         GET_BLOCKS = 22;
-        BLOCKS = 23;
+        GET_BLOCKS_RES = 23;
     }
     enum ErrorType {
         // success 

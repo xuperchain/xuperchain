@@ -151,27 +151,28 @@ func TestDoTruncateTask(t *testing.T) {
 
 func TestGetBlockIdsWithGetHeadersMsg(t *testing.T) {
 	lk, holder := prepareLedgerKeeper(47101, "../data/netkeys/")
-	body := &pb.GetHashesMsgBody{
-		HashesCount:   100,
-		HeaderBlockId: holder.B0.GetBlockid(),
+	body := &pb.GetBlockIdsRequest{
+		Count:   100,
+		BlockId: holder.B0.GetBlockid(),
 	}
 	bodyBuf, _ := proto.Marshal(body)
-	msg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, "xuper", "", xuper_p2p.XuperMessage_GET_HASHES, bodyBuf, xuper_p2p.XuperMessage_NONE)
-	lk.syncMsgChan <- msg
-	returnMsg := <-lk.syncMsgChan
-	xmsg, err := lk.handleGetHeadersMsg(nil, returnMsg)
+	msg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, "xuper", "", xuper_p2p.XuperMessage_GET_BLOCKIDS, bodyBuf, xuper_p2p.XuperMessage_NONE)
+	xmsg, err := lk.handleGetHeadersMsg(nil, msg)
 
-	headerMsgBody := &pb.HashesMsgBody{}
+	headerMsgBody := &pb.GetBlockIdsResponse{}
 	err = proto.Unmarshal(xmsg.GetData().GetMsgInfo(), headerMsgBody)
 	if err != nil {
 		t.Error("TestGetBlockIdsWithGetHeadersMsg ErrUnmarshal")
 	}
 	blockIds := headerMsgBody.GetBlockIds()
+	tipId := headerMsgBody.GetTipBlockId()
 	if len(blockIds) == 0 || int64(len(blockIds)) > 100 {
-		t.Error("TestGetBlockIdsWithGetHeadersMsg Internal Error")
+		t.Error("TestGetBlockIdsWithGetHeadersMsg Internal Error", "tipId", global.F(tipId), "len", len(blockIds), "B0", global.F(holder.B0.GetBlockid()))
+		return
 	}
 	if int64(len(blockIds)) == 100 {
 		t.Log("TestGetBlockIdsWithGetHeadersMsg return Error")
+		return
 	}
 	holder.Ledger.Close()
 	holder.UtxoVM.Close()
@@ -179,8 +180,8 @@ func TestGetBlockIdsWithGetHeadersMsg(t *testing.T) {
 
 func TestGetBlocksWithGetDataMsg(t *testing.T) {
 	lk, holder := prepareLedgerKeeper(47101, "../data/netkeys/")
-	body := &pb.GetBlocksMsgBody{
-		BlockList: [][]byte{holder.B1.GetBlockid(), holder.B2.GetBlockid()},
+	body := &pb.GetBlocksRequest{
+		BlockIds: [][]byte{holder.B1.GetBlockid(), holder.B2.GetBlockid()},
 	}
 	bodyBuf, _ := proto.Marshal(body)
 	msg, err := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, "xuper", "", xuper_p2p.XuperMessage_GET_BLOCKS, bodyBuf, xuper_p2p.XuperMessage_NONE)
@@ -196,7 +197,7 @@ func TestGetBlocksWithGetDataMsg(t *testing.T) {
 		global.F(holder.B2.GetBlockid()): nil,
 	}
 	t.Log("peerSyncMap LEN=", len(*peerSyncMap), "INFO=", *peerSyncMap)
-	blocksMsgBody := &pb.BlocksMsgBody{}
+	blocksMsgBody := &pb.GetBlocksResponse{}
 	err = proto.Unmarshal(xmsg.GetData().GetMsgInfo(), blocksMsgBody)
 	if err != nil {
 		t.Error("TestGetBlocksWithGetDataMsg ErrUnmarshal")
@@ -221,17 +222,17 @@ func TestGetBlocksWithGetDataMsg(t *testing.T) {
 func TestHandleGetHeadersMsg(t *testing.T) {
 	lk, holder := prepareLedgerKeeper(47101, "../data/netkeys/")
 	t.Log("gBlk:", global.F(holder.B0.GetBlockid()), " nextBlk:", global.F(holder.B1.GetBlockid()), " nextNextBlk:", global.F(holder.B2.GetBlockid()))
-	body := &pb.GetHashesMsgBody{
-		HashesCount:   2,
-		HeaderBlockId: holder.B0.GetBlockid(),
+	body := &pb.GetBlockIdsRequest{
+		Count:   2,
+		BlockId: holder.B0.GetBlockid(),
 	}
 	bodyBuf, _ := proto.Marshal(body)
-	msg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, "xuper", "", xuper_p2p.XuperMessage_GET_HASHES, bodyBuf, xuper_p2p.XuperMessage_NONE)
+	msg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, "xuper", "", xuper_p2p.XuperMessage_GET_BLOCKIDS, bodyBuf, xuper_p2p.XuperMessage_NONE)
 	returnMsg, err := lk.handleGetHeadersMsg(nil, msg)
 	if err != nil {
 		t.Error("TestHandleGetHeadersMsg test Internal error: ", err.Error())
 	}
-	returnBody := &pb.HashesMsgBody{}
+	returnBody := &pb.GetBlockIdsResponse{}
 	if err := proto.Unmarshal(returnMsg.GetData().GetMsgInfo(), returnBody); err != nil {
 		t.Error("TestHandleGetHeadersMsg test Internal error: ", err.Error())
 	}
@@ -243,15 +244,15 @@ func TestHandleGetHeadersMsg(t *testing.T) {
 		return
 	}
 	if bytes.Compare(returnHeaders[0], holder.B1.GetBlockid()) != 0 || bytes.Compare(returnHeaders[1], holder.B2.GetBlockid()) != 0 {
-		t.Error("TestHandleGetHeadersMsg return different block. ", " block1:", returnHeaders[0], " block2:", returnHeaders[1])
+		t.Error("TestHandleGetHeadersMsg return different block. ", " block1:", global.F(returnHeaders[0]), " block2:", global.F(returnHeaders[1]))
 	}
 	return
 }
 
 func TestHandleGetDataMsg(t *testing.T) {
 	lk, holder := prepareLedgerKeeper(47101, "../data/netkeys/")
-	body := &pb.GetBlocksMsgBody{
-		BlockList: [][]byte{holder.B2.GetBlockid(), holder.B1.GetBlockid()},
+	body := &pb.GetBlocksRequest{
+		BlockIds: [][]byte{holder.B2.GetBlockid(), holder.B1.GetBlockid()},
 	}
 	bodyBuf, _ := proto.Marshal(body)
 	msg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, "xuper", "", xuper_p2p.XuperMessage_GET_BLOCKS, bodyBuf, xuper_p2p.XuperMessage_NONE)
@@ -259,7 +260,7 @@ func TestHandleGetDataMsg(t *testing.T) {
 	if err != nil {
 		t.Error("TestHandleGetDataMsg test Internal error: ", err.Error())
 	}
-	returnBody := &pb.BlocksMsgBody{}
+	returnBody := &pb.GetBlocksResponse{}
 	if err := proto.Unmarshal(returnMsg.GetData().GetMsgInfo(), returnBody); err != nil {
 		t.Error("TestHandleGetDataMsg test Internal error: ", err.Error())
 	}
@@ -363,9 +364,7 @@ func TestCheckAndComfirm(t *testing.T) {
 	}
 
 	simpleBlock := &SimpleBlock{
-		header: &pb.Header{
-			Logid: "TestCheckAndComfirm",
-		},
+		logid:         "TestCheckAndComfirm",
 		internalBlock: signedBlock,
 	}
 	err, trunkSwitch := lk.checkAndComfirm(true, simpleBlock)
@@ -403,18 +402,11 @@ func TestConfirmBlocks(t *testing.T) {
 		t.Error("TestConfirmAppendingBlock make singed newblock error", "error", err)
 		return
 	}
-	tmpMap := map[string]*SimpleBlock{
-		global.F(signedBlock.GetBlockid()): &SimpleBlock{
-			header: &pb.Header{
-				Logid: "TestConfirmBlocks",
-			},
-			internalBlock: signedBlock,
-		},
-	}
-	newBeginId, ok, err := lk.confirmBlocks(&global.XContext{Timer: global.NewXTimer()}, holder.B2.GetBlockid(), tmpMap,
-		map[int][]byte{
-			0: signedBlock.GetBlockid(),
-		}, true)
+	tmpSlice := []*SimpleBlock{&SimpleBlock{
+		logid:         "TestConfirmBlocks",
+		internalBlock: signedBlock,
+	}}
+	newBeginId, ok, err := lk.confirmBlocks(&global.XContext{Timer: global.NewXTimer()}, tmpSlice, true)
 	if bytes.Compare(newBeginId, signedBlock.GetBlockid()) != 0 {
 		t.Error("TestConfirmBlocks", "error", err, "ok", ok)
 	}
@@ -431,18 +423,12 @@ func TestConfirmBlocks(t *testing.T) {
 	}
 	signedBlock, _ = holder.Ledger.FormatMinerBlock([]*pb.Transaction{tx}, []byte(bobAddress), holder.PrivateKey,
 		time.Now().UnixNano(), 3, 3, holder.B2.GetBlockid(), 0, big.NewInt(0), qc, map[string]string{}, 3)
-	tmpMap = map[string]*SimpleBlock{
-		global.F(signedBlock.GetBlockid()): &SimpleBlock{
-			header: &pb.Header{
-				Logid: "TestConfirmBlocks",
-			},
+	tmpSlice = []*SimpleBlock{
+		&SimpleBlock{
+			logid:         "TestConfirmBlocks",
 			internalBlock: signedBlock,
-		},
-	}
-	newBeginId, ok, err = lk.confirmBlocks(&global.XContext{Timer: global.NewXTimer()}, holder.B2.GetBlockid(), tmpMap,
-		map[int][]byte{
-			0: signedBlock.GetBlockid(),
-		}, true)
+		}}
+	newBeginId, ok, err = lk.confirmBlocks(&global.XContext{Timer: global.NewXTimer()}, tmpSlice, true)
 	if bytes.Compare(newBeginId, signedBlock.GetBlockid()) != 0 {
 		t.Error("TestConfirmBlocks", "error", err, "ok", ok)
 	}
@@ -450,11 +436,9 @@ func TestConfirmBlocks(t *testing.T) {
 
 func TestPushBack(t *testing.T) {
 	l := NewTasksList()
-	task := &LedgerTask{
-		targetBlockId: []byte{111},
-	}
+	task := &LedgerTask{}
 	l.PushBack(task)
-	if l.PushBack(task) {
+	if !l.PushBack(task) {
 		t.Error("TestPushBack::repeat action")
 	}
 }
@@ -462,16 +446,13 @@ func TestPushBack(t *testing.T) {
 func TestFix(t *testing.T) {
 	l := NewTasksList()
 	task1 := &LedgerTask{
-		targetBlockId: []byte{221},
-		targetHeight:  1,
+		targetHeight: 1,
 	}
 	task2 := &LedgerTask{
-		targetBlockId: []byte{222},
-		targetHeight:  2,
+		targetHeight: 2,
 	}
 	task3 := &LedgerTask{
-		targetBlockId: []byte{223},
-		targetHeight:  3,
+		targetHeight: 3,
 	}
 	l.PushBack(task1)
 	l.PushBack(task2)
@@ -487,17 +468,15 @@ func TestPutAndGet(t *testing.T) {
 	slog.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
 	stm := newSyncTaskManager(slog)
 	task1 := &LedgerTask{
-		targetBlockId: []byte{221},
-		targetHeight:  1,
-		action:        Syncing,
+		targetHeight: 1,
+		action:       Syncing,
 	}
 	if !stm.Put(task1) {
 		t.Error("TestPutAndGet::put failed.")
 	}
 	task2 := &LedgerTask{
-		targetBlockId: []byte{222},
-		targetHeight:  2,
-		action:        Appending,
+		targetHeight: 2,
+		action:       Appending,
 	}
 	if !stm.Put(task2) {
 		t.Error("TestPutAndGet::put failed.")
