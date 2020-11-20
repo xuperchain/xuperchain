@@ -185,13 +185,11 @@ func TestGetBlocksWithGetDataMsg(t *testing.T) {
 	}
 	bodyBuf, _ := proto.Marshal(body)
 	msg, err := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, "xuper", "", xuper_p2p.XuperMessage_GET_BLOCKS, bodyBuf, xuper_p2p.XuperMessage_NONE)
-	lk.syncMsgChan <- msg
-	returnMsg := <-lk.syncMsgChan
-	msgType := returnMsg.GetHeader().GetType()
+	msgType := msg.GetHeader().GetType()
 	if msgType != xuper_p2p.XuperMessage_GET_BLOCKS {
 		t.Error("TestGetBlocksWithGetDataMsg test Internal error")
 	}
-	xmsg, err := lk.handleGetBlocks(nil, returnMsg)
+	xmsg, err := lk.handleGetBlocks(nil, msg)
 	peerSyncMap := &map[string]*pb.InternalBlock{
 		global.F(holder.B1.GetBlockid()): nil,
 		global.F(holder.B2.GetBlockid()): nil,
@@ -286,7 +284,7 @@ func TestAssignTaskRandomly(t *testing.T) {
 	headersList := [][]byte{
 		[]byte{1}, []byte{2}, []byte{3}, []byte{4},
 	}
-	result, err := assignTaskRandomly(targetPeers, headersList)
+	result, _, err := assignTaskRandomly(targetPeers, headersList)
 	if len(result) == 0 {
 		t.Error("assignTaskRandomly test error: NONE")
 	}
@@ -326,19 +324,6 @@ func TestGetValidPeersNumber(t *testing.T) {
 	number := getValidPeersNumber(targetSyncBlocksPeers)
 	if number == 0 {
 		t.Error("getValidPeersNumber test ZERO error")
-	}
-}
-
-func TestPickIndexes(t *testing.T) {
-	list := []int{3, 1, 1, 5, 6, 7, 8}
-	result := pickIndexes(int64(10), list)
-	if len(result) != 4 {
-		t.Error("TestPickIndexes test ZERO error")
-	}
-	for _, v := range result {
-		if v != 0 && v != 1 && v != 2 && v != 3 {
-			t.Error("TestPickIndexes test logic error")
-		}
 	}
 }
 
