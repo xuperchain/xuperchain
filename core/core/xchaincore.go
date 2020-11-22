@@ -378,7 +378,6 @@ func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
 	}
 	xc.log.Trace("sync blocks in SendBlock", "time", time.Now().UnixNano(), "blockname", xc.bcname, "tipID", global.F(xc.Utxovm.GetLatestBlockid()))
 	ctx := CreateLedgerTaskCtx(nil, []string{in.GetHeader().GetFromNode()}, hd)
-	xc.log.Trace("!!!!!GetFromNode TEST", "node", in.GetHeader().GetFromNode())
 	xc.LedgerKeeper.PutTask(-1, Syncing, ctx)
 	return nil
 }

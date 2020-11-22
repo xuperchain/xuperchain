@@ -186,7 +186,6 @@ func (stm *syncTaskManager) Pop() *LedgerTask {
 		queue = stm.syncingTasks
 	}
 	if queue.Len() == 0 {
-		stm.log.Debug("SyncTaskManager::queues' Len == 0")
 		return nil
 	}
 	element := queue.Front()
@@ -369,7 +368,6 @@ func (lk *LedgerKeeper) PutTask(targetHeight int64, action KeeperStatus, ctx *Le
 func (lk *LedgerKeeper) Start() {
 	go func() {
 		for {
-			lk.log.Trace("StartTaskLoop::Start......")
 			lk.updatePeerStatusMap()
 			task, ok := lk.getTask()
 			if !ok {
@@ -567,9 +565,9 @@ func (lk *LedgerKeeper) getPeerBlockIds(beginBlockId []byte, length int64, targe
 	}
 	blockIds := headerMsgBody.GetBlockIds()
 	tip := headerMsgBody.GetTipBlockId()
-	var printStr string
+	var printStr []string
 	for _, id := range blockIds {
-		printStr += global.F(id) + " "
+		printStr = append(printStr, global.F(id))
 	}
 	lk.log.Info("getPeerBlockIds::GET_BLOCKIDS RESULT", "HEADERS", printStr, "TIP", global.F(tip))
 
@@ -635,11 +633,11 @@ func (lk *LedgerKeeper) downloadPeerBlocks(headersList [][]byte) []*SimpleBlock 
 		ch := make(chan bool, len(peersTask))
 		syncBlockMutex := &sync.RWMutex{}
 		for peer, headers := range peersTask {
-			go func(peer string, headers [][]byte, cache map[string]*SimpleBlock) {
+			go func(peer string, headers [][]byte) {
 				defer func() {
 					ch <- true
 				}()
-				crashFlag, err := lk.peerBlockDownloadTask(ctx, peer, headers, cache, syncBlockMutex)
+				crashFlag, err := lk.peerBlockDownloadTask(ctx, peer, headers, syncMap, syncBlockMutex)
 				if crashFlag {
 					lk.log.Warn("downloadPeerBlocks::delete peer", "address", peer, "err", err)
 					lk.peersStatusMap.Store(peer, false)
@@ -649,7 +647,7 @@ func (lk *LedgerKeeper) downloadPeerBlocks(headersList [][]byte) []*SimpleBlock 
 					lk.log.Warn("downloadPeerBlocks::peerBlockDownloadTask error", "error", err)
 					return
 				}
-			}(peer, headers, syncMap)
+			}(peer, headers)
 		}
 		for {
 			select {
@@ -818,7 +816,7 @@ func (lk *LedgerKeeper) handleGetBlockIds(ctx context.Context, msg *xuper_p2p.Xu
 
 	resultHeaders := &pb.GetBlockIdsResponse{
 		TipBlockId: localTip,
-		BlockIds:   [][]byte{},
+		BlockIds:   make([][]byte, 0, headersCount),
 	}
 	// 已经是最高高度，直接返回tipBlockId
 	if bytes.Equal(localTip, headerBlockId) {
@@ -846,9 +844,9 @@ func (lk *LedgerKeeper) handleGetBlockIds(ctx context.Context, msg *xuper_p2p.Xu
 	resBuf, _ := proto.Marshal(resultHeaders)
 	res, err := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, bc, msg.GetHeader().GetLogid(),
 		xuper_p2p.XuperMessage_GET_BLOCKIDS_RES, resBuf, xuper_p2p.XuperMessage_SUCCESS)
-	var printStr string
+	var printStr []string
 	for _, blockId := range resultHeaders.BlockIds {
-		printStr += global.F(blockId) + " "
+		printStr = append(printStr, global.F(blockId))
 	}
 	lk.log.Info("handleGetBlockIds::GET_BLOCKIDS_RES response...", "response res", printStr)
 	return res, err
@@ -874,11 +872,11 @@ func (lk *LedgerKeeper) handleGetBlocks(ctx context.Context, msg *xuper_p2p.Xupe
 		return nil, ErrUnmarshal
 	}
 	resultBlocks := []*pb.InternalBlock{}
-	var printStr string
+	var printStr []string
 	// 最大大小为一个块的最大大小
 	leftSize := lk.maxBlocksMsgSize
 	for _, blockId := range body.GetBlockIds() {
-		printStr += global.F(blockId) + " "
+		printStr = append(printStr, global.F(blockId))
 		block, err := lk.ledger.QueryBlock(blockId)
 		if err != nil {
 			continue
@@ -1062,7 +1060,7 @@ func randomPickPeers(number int64, peers *sync.Map) ([]string, error) {
 	if number == 0 {
 		return nil, nil
 	}
-	originPeers := []string{}
+	originPeers := make([]string, 0)
 	peers.Range(func(key, value interface{}) bool {
 		peer := key.(string)
 		valid := value.(bool)
@@ -1082,27 +1080,22 @@ func randomPickPeers(number int64, peers *sync.Map) ([]string, error) {
 
 /* assignTaskRandomly 随机将需要处理的blockId请求分配给指定的peers
  */
-func assignTaskRandomly(targetPeers []string, headersList [][]byte) (map[string][][]byte, string, error) {
-	var assignStr string
+func assignTaskRandomly(targetPeers []string, headersList [][]byte) (map[string][][]byte, map[string][]string, error) {
+	assignStr := map[string][]string{}
 	if len(targetPeers) == 0 {
 		return nil, assignStr, ErrInvalidMsg
 	}
 	peersTask := map[string][][]byte{}
 	for i, id := range headersList {
-		if v, ok := peersTask[targetPeers[i%len(targetPeers)]]; ok {
-			v = append(v, id)
-			continue
-		}
-		newS := [][]byte{}
-		newS = append(newS, id)
-		peersTask[targetPeers[i%len(targetPeers)]] = newS
+		index := i % len(targetPeers)
+		peersTask[targetPeers[index]] = append(peersTask[targetPeers[index]], id)
 	}
 	for peer, ids := range peersTask {
-		peerStr := peer + ":: "
+		var ps []string
 		for _, v := range ids {
-			peerStr += global.F(v) + " "
+			ps = append(ps, global.F(v))
 		}
-		assignStr += peerStr + ";"
+		assignStr[peer] = ps
 	}
 	return peersTask, assignStr, nil
 }

@@ -287,9 +287,23 @@ func TestAssignTaskRandomly(t *testing.T) {
 	result, _, err := assignTaskRandomly(targetPeers, headersList)
 	if len(result) == 0 {
 		t.Error("assignTaskRandomly test error: NONE")
+		return
 	}
 	if err != nil {
 		t.Error("assignTaskRandomly test error:", err.Error())
+		return
+	}
+	targetPeers = []string{"NodeA"}
+	headersList = [][]byte{
+		[]byte{11}, []byte{22},
+	}
+	result, s, err := assignTaskRandomly(targetPeers, headersList)
+	if err != nil {
+		t.Error("assignTaskRandomly test error:", err.Error())
+		return
+	}
+	if len(result) != 1 {
+		t.Error("assignTaskRandomly test error", "str", s)
 	}
 }
 
