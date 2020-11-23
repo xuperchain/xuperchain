@@ -47,14 +47,15 @@ var (
 	// ErrPeersInvalid p2p peers invalid
 	ErrAllPeersInvalid = errors.New("All the peers are invalid")
 	// ErrPeerFinish no more new block valid
-	ErrPeerFinish = errors.New("Node has become main-chain-holder in the network and no more new blockId is valid.")
+	ErrPeerFinish  = errors.New("Node has become main-chain-holder in the network and no more new blockId is valid.")
+	ErrSyncTimeout = errors.New("Cannot get the whole blocks in time.")
 )
 
 const (
-	SIZE_OF_UINT32      = 4
-	SYNC_BLOCKS_TIMEOUT = 10 * time.Second // 一次GET_BLOCKS最大超时时间
-	HEADER_SYNC_SIZE    = 100              // 一次返回的最大区块头大小
-	MAX_TASK_MN_SIZE    = 20
+	SYNC_BLOCKS_TIMEOUT   = 10 * time.Second // 一次GET_BLOCKS最大超时时间
+	HEADER_SYNC_SIZE      = 100              // 一次返回的最大区块头大小
+	MAX_TASK_MN_SIZE      = 20
+	EMPTY_TASK_SLEEP_TIME = 500 * time.Millisecond // 无同步任务时sleep时常
 )
 
 type TasksList struct {
@@ -371,6 +372,7 @@ func (lk *LedgerKeeper) Start() {
 			lk.updatePeerStatusMap()
 			task, ok := lk.getTask()
 			if !ok {
+				time.Sleep(EMPTY_TASK_SLEEP_TIME)
 				continue
 			}
 			action := task.GetAction()
@@ -445,7 +447,7 @@ func (lk *LedgerKeeper) handleSyncTask(lt *LedgerTask) error {
 	headerBegin := lk.utxovm.GetLatestBlockid()
 	headerBeginStr := global.F(headerBegin)
 	// 同步头过程
-	lk.log.Trace("handleSyncTask::Run......", "task", lt.taskId, "headerBegin", headerBeginStr)
+	lk.log.Debug("handleSyncTask::Run......", "task", lt.taskId, "headerBegin", headerBeginStr, "cost", lt.GetXContext().Timer.Print())
 	for nextLoop {
 		if getValidPeersNumber(lk.peersStatusMap) == 0 {
 			lk.log.Warn("handleSyncTask::getValidPeersNumber=0", "task", lt.taskId, "headerBegin", headerBeginStr)
@@ -501,12 +503,14 @@ func (lk *LedgerKeeper) handleSyncTask(lt *LedgerTask) error {
 		if endFlag {
 			nextLoop = false
 		}
+		lk.log.Debug("handleSyncTask::blockIds sync done", "task", lt.taskId, "headerBegin", headerBeginStr, "len(blockIds)", len(blockIds), "cost", lt.GetXContext().Timer.Print())
 		// TODO: 后续可加入CheckHeaderSafety()对blockIds的安全性证明，例如基于pow的区块链blockids需要满足difficulty公式
 		blocksSlice := lk.downloadPeerBlocks(blockIds) // blocksMap中可能有key存在，但值为nil的值，此值标示本地账本已含数据
 		if blocksSlice == nil {
 			// 此处直接return, 加速task消耗
 			return nil
 		}
+		lk.log.Debug("handleSyncTask::blocks sync done", "task", lt.taskId, "headerBegin", headerBeginStr, "len(blocksSlice)", len(blocksSlice), "cost", lt.GetXContext().Timer.Print())
 		// 本轮同步结束，开始写账本
 		newBegin, err := lk.confirmBlocks(lt.GetXContext(), blocksSlice, endFlag)
 		if err != nil {
@@ -630,39 +634,19 @@ func (lk *LedgerKeeper) downloadPeerBlocks(headersList [][]byte) []*SimpleBlock 
 		// cache并发读写操作时使用的锁
 		ctx, cancel := context.WithTimeout(context.TODO(), SYNC_BLOCKS_TIMEOUT)
 		defer cancel()
-		ch := make(chan bool, len(peersTask))
-		syncBlockMutex := &sync.RWMutex{}
-		for peer, headers := range peersTask {
-			go func(peer string, headers [][]byte) {
-				defer func() {
-					ch <- true
-				}()
-				crashFlag, err := lk.peerBlockDownloadTask(ctx, peer, headers, syncMap, syncBlockMutex)
-				if crashFlag {
-					lk.log.Warn("downloadPeerBlocks::delete peer", "address", peer, "err", err)
-					lk.peersStatusMap.Store(peer, false)
-					return
-				}
-				if err != nil {
-					lk.log.Warn("downloadPeerBlocks::peerBlockDownloadTask error", "error", err)
-					return
-				}
-			}(peer, headers)
-		}
-		for {
-			select {
-			case <-ch:
-				if len(headersList) == len(syncMap) {
-					for _, id := range headersList {
-						returnBlocks = append(returnBlocks, syncMap[global.F(id)])
-					}
-					return returnBlocks
-				}
-			case <-ctx.Done():
-				goto GetTrash
+		syncBlockMutex := &sync.Mutex{}
+		err = lk.parallelDownload(ctx, peersTask, syncBlockMutex, syncMap, len(headersList))
+		switch err {
+		case ErrTargetDataNotEnough:
+			continue
+		case ErrSyncTimeout:
+			goto GetTrash
+		case nil:
+			for _, id := range headersList {
+				returnBlocks = append(returnBlocks, syncMap[global.F(id)])
 			}
+			return returnBlocks
 		}
-
 	}
 GetTrash:
 	// 看看剩下的cache里面有什么能捡的，找出从开头为始最长的连续存储返回
@@ -679,10 +663,48 @@ GetTrash:
 	return returnBlocks
 }
 
+func (lk *LedgerKeeper) parallelDownload(ctx context.Context, peersTask map[string][][]byte,
+	syncBlockMutex *sync.Mutex, syncMap map[string]*SimpleBlock, targetLen int) error {
+	ch := make(chan bool, len(peersTask))
+	counter := 0
+	for peer, headers := range peersTask {
+		go func(peer string, headers [][]byte) {
+			defer func() {
+				ch <- true
+			}()
+			crashFlag, err := lk.peerBlockDownloadTask(ctx, peer, headers, syncMap, syncBlockMutex)
+			if crashFlag {
+				lk.log.Warn("downloadPeerBlocks::delete peer", "address", peer, "err", err)
+				lk.peersStatusMap.Store(peer, false)
+				return
+			}
+			if err != nil {
+				lk.log.Warn("downloadPeerBlocks::peerBlockDownloadTask error", "error", err)
+				return
+			}
+		}(peer, headers)
+	}
+	for {
+		select {
+		case <-ch:
+			counter++
+			if counter != len(peersTask) {
+				continue
+			}
+			if len(syncMap) == targetLen {
+				return nil
+			}
+			return ErrTargetDataNotEnough
+		case <-ctx.Done():
+			return ErrSyncTimeout
+		}
+	}
+}
+
 /* peerBlockDownloadTask
  * peerBlockDownloadTask 向指定peer拉取指定区块列表，若该peer未返回任何块，则剔除节点，获取到的区块写入cache，上层逻辑判断是否继续拉取未获取的区块
  */
-func (lk *LedgerKeeper) peerBlockDownloadTask(ctx context.Context, peerAddr string, taskBlockIds [][]byte, cache map[string]*SimpleBlock, syncBlockMutex *sync.RWMutex) (bool, error) {
+func (lk *LedgerKeeper) peerBlockDownloadTask(ctx context.Context, peerAddr string, taskBlockIds [][]byte, cache map[string]*SimpleBlock, syncBlockMutex *sync.Mutex) (bool, error) {
 	syncBlockMutex.Lock()             // 锁cache，进行读
 	refreshTaskBlockIds := [][]byte{} // 筛除cache中已经从别的peer拿到的block，这些block无需重新传递
 	for _, blockId := range taskBlockIds {
