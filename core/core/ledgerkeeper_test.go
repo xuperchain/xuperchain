@@ -2,6 +2,7 @@ package xchaincore
 
 import (
 	"bytes"
+	"context"
 	"crypto/ecdsa"
 	"encoding/hex"
 	"fmt"
@@ -173,6 +174,44 @@ func TestGetBlockIdsWithGetHeadersMsg(t *testing.T) {
 	}
 	if int64(len(blockIds)) == 100 {
 		t.Log("TestGetBlockIdsWithGetHeadersMsg return Error")
+		return
+	}
+
+	body = &pb.GetBlockIdsRequest{
+		Count:   100,
+		BlockId: holder.B2.GetBlockid(),
+	}
+	bodyBuf, _ = proto.Marshal(body)
+	msg, _ = p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, "xuper", "", xuper_p2p.XuperMessage_GET_BLOCKIDS, bodyBuf, xuper_p2p.XuperMessage_NONE)
+	xmsg, err = lk.handleGetBlockIds(nil, msg)
+	headerMsgBody = &pb.GetBlockIdsResponse{}
+	err = proto.Unmarshal(xmsg.GetData().GetMsgInfo(), headerMsgBody)
+	if err != nil {
+		t.Error("TestGetBlockIdsWithGetHeadersMsg ErrUnmarshal")
+		return
+	}
+	tip := headerMsgBody.GetTipBlockId()
+	if !bytes.Equal(tip, holder.B2.GetBlockid()) {
+		t.Error("TestGetBlockIdsWithGetHeadersMsg tip error")
+		return
+	}
+
+	body = &pb.GetBlockIdsRequest{
+		Count:   100,
+		BlockId: []byte{9},
+	}
+	bodyBuf, _ = proto.Marshal(body)
+	msg, _ = p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, "xuper", "", xuper_p2p.XuperMessage_GET_BLOCKIDS, bodyBuf, xuper_p2p.XuperMessage_NONE)
+	xmsg, err = lk.handleGetBlockIds(nil, msg)
+	headerMsgBody = &pb.GetBlockIdsResponse{}
+	err = proto.Unmarshal(xmsg.GetData().GetMsgInfo(), headerMsgBody)
+	if err != nil {
+		t.Error("TestGetBlockIdsWithGetHeadersMsg ErrUnmarshal")
+		return
+	}
+	blockIds = headerMsgBody.GetBlockIds()
+	if len(blockIds) != 0 {
+		t.Error("TestGetBlockIdsWithGetHeadersMsg nil error")
 		return
 	}
 	holder.Ledger.Close()
@@ -634,5 +673,45 @@ func TestUpdatePeerStatusMap(t *testing.T) {
 	_, ok := lk.peersStatusMap.Load("127.0.0.1")
 	if ok {
 		t.Error("TestUpdatePeerStatusMap error.")
+	}
+}
+
+func TestPeerBlockDownloadTask(t *testing.T) {
+	lk, _ := prepareLedgerKeeper(47101, "../data/netkeys/")
+	m := &sync.Mutex{}
+	taskBlockIds := [][]byte{
+		[]byte{1},
+		[]byte{2},
+		[]byte{3},
+	}
+	cache := map[string]*SimpleBlock{
+		global.F([]byte{1}): &SimpleBlock{
+			logid: "1",
+		},
+		global.F([]byte{2}): &SimpleBlock{
+			logid: "2",
+		},
+		global.F([]byte{3}): &SimpleBlock{
+			logid: "3",
+		},
+	}
+	ok, err := lk.peerBlockDownloadTask(nil, "", taskBlockIds, cache, m)
+	if ok || err != nil {
+		t.Error("TestPeerBlockDownloadTask empty error.")
+	}
+}
+
+func TestParallelDownload(t *testing.T) {
+	lk, _ := prepareLedgerKeeper(47101, "../data/netkeys/")
+	ctx, cancel := context.WithTimeout(context.TODO(), SYNC_BLOCKS_TIMEOUT)
+	defer cancel()
+	syncBlockMutex := &sync.Mutex{}
+	peersTask := map[string][][]byte{
+		"NodeA": [][]byte{[]byte{1}},
+	}
+	syncMap := map[string]*SimpleBlock{}
+	err := lk.parallelDownload(ctx, peersTask, syncBlockMutex, syncMap, 1)
+	if err != ErrTargetDataNotEnough {
+		t.Error("TestParallelDownload error.")
 	}
 }
