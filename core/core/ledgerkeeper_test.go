@@ -163,6 +163,7 @@ func TestGetBlockIdsWithGetHeadersMsg(t *testing.T) {
 	err = proto.Unmarshal(xmsg.GetData().GetMsgInfo(), headerMsgBody)
 	if err != nil {
 		t.Error("TestGetBlockIdsWithGetHeadersMsg ErrUnmarshal")
+		return
 	}
 	blockIds := headerMsgBody.GetBlockIds()
 	tipId := headerMsgBody.GetTipBlockId()
@@ -199,9 +200,11 @@ func TestGetBlocksWithGetDataMsg(t *testing.T) {
 	err = proto.Unmarshal(xmsg.GetData().GetMsgInfo(), blocksMsgBody)
 	if err != nil {
 		t.Error("TestGetBlocksWithGetDataMsg ErrUnmarshal")
+		return
 	}
 	if len(blocksMsgBody.GetBlocksInfo()) == 0 {
 		t.Error("TestGetBlocksWithGetDataMsg ErrTargetDataNotFound")
+		return
 	}
 	blocks := blocksMsgBody.GetBlocksInfo()
 	for _, block := range blocks {
@@ -221,20 +224,54 @@ func TestHandleGetHeadersMsg(t *testing.T) {
 	lk, holder := prepareLedgerKeeper(47101, "../data/netkeys/")
 	t.Log("gBlk:", global.F(holder.B0.GetBlockid()), " nextBlk:", global.F(holder.B1.GetBlockid()), " nextNextBlk:", global.F(holder.B2.GetBlockid()))
 	body := &pb.GetBlockIdsRequest{
-		Count:   2,
+		Count:   0,
 		BlockId: holder.B0.GetBlockid(),
 	}
 	bodyBuf, _ := proto.Marshal(body)
 	msg, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, "xuper", "", xuper_p2p.XuperMessage_GET_BLOCKIDS, bodyBuf, xuper_p2p.XuperMessage_NONE)
 	returnMsg, err := lk.handleGetBlockIds(nil, msg)
+	if returnMsg != nil {
+		t.Error("TestHandleGetHeadersMsg test zero headersCount error")
+		return
+	}
+	body = &pb.GetBlockIdsRequest{
+		Count:   1,
+		BlockId: holder.B2.GetBlockid(),
+	}
+	bodyBuf, _ = proto.Marshal(body)
+	msg, _ = p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, "xuper", "", xuper_p2p.XuperMessage_GET_BLOCKIDS, bodyBuf, xuper_p2p.XuperMessage_NONE)
+	returnMsg, err = lk.handleGetBlockIds(nil, msg)
 	if err != nil {
-		t.Error("TestHandleGetHeadersMsg test Internal error: ", err.Error())
+		t.Error("TestHandleGetHeadersMsg test tip headersCount error")
+		return
 	}
 	returnBody := &pb.GetBlockIdsResponse{}
 	if err := proto.Unmarshal(returnMsg.GetData().GetMsgInfo(), returnBody); err != nil {
-		t.Error("TestHandleGetHeadersMsg test Internal error: ", err.Error())
+		t.Error("TestHandleGetHeadersMsg test tip Internal error: ", err.Error())
+		return
 	}
 	returnHeaders := returnBody.GetBlockIds()
+	if len(returnHeaders) != 0 {
+		t.Error("TestHandleGetHeadersMsg test tip error: ")
+		return
+	}
+	body = &pb.GetBlockIdsRequest{
+		Count:   2,
+		BlockId: holder.B0.GetBlockid(),
+	}
+	bodyBuf, _ = proto.Marshal(body)
+	msg, _ = p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, "xuper", "", xuper_p2p.XuperMessage_GET_BLOCKIDS, bodyBuf, xuper_p2p.XuperMessage_NONE)
+	returnMsg, err = lk.handleGetBlockIds(nil, msg)
+	if err != nil {
+		t.Error("TestHandleGetHeadersMsg test Internal error: ", err.Error())
+		return
+	}
+	returnBody = &pb.GetBlockIdsResponse{}
+	if err := proto.Unmarshal(returnMsg.GetData().GetMsgInfo(), returnBody); err != nil {
+		t.Error("TestHandleGetHeadersMsg test Internal error: ", err.Error())
+		return
+	}
+	returnHeaders = returnBody.GetBlockIds()
 	holder.Ledger.Close()
 	holder.UtxoVM.Close()
 	if len(returnHeaders) != 2 {
@@ -257,17 +294,19 @@ func TestHandleGetDataMsg(t *testing.T) {
 	returnMsg, err := lk.handleGetBlocks(nil, msg)
 	if err != nil {
 		t.Error("TestHandleGetDataMsg test Internal error: ", err.Error())
+		return
 	}
 	returnBody := &pb.GetBlocksResponse{}
 	if err := proto.Unmarshal(returnMsg.GetData().GetMsgInfo(), returnBody); err != nil {
 		t.Error("TestHandleGetDataMsg test Internal error: ", err.Error())
+		return
 	}
 	blocks := returnBody.GetBlocksInfo()
 	holder.Ledger.Close()
 	holder.UtxoVM.Close()
 	if len(blocks) != 2 {
 		t.Error("TestHandleGetDataMsg blocks != 2, LEN=", len(blocks))
-		//return
+		return
 	}
 	if bytes.Compare(blocks[0].GetBlockid(), holder.B2.GetBlockid()) != 0 {
 		t.Error("TestHandleGetDataMsg BlocksInfo, 0=", global.F(blocks[0].GetBlockid()))
@@ -280,11 +319,17 @@ func TestHandleGetDataMsg(t *testing.T) {
 }
 
 func TestAssignTaskRandomly(t *testing.T) {
-	targetPeers := []string{"NodeA", "NodeB", "NodeC", "NodeD", "NodeE", "NodeF"}
+	var targetPeers []string
 	headersList := [][]byte{
 		[]byte{1}, []byte{2}, []byte{3}, []byte{4},
 	}
 	result, _, err := assignTaskRandomly(targetPeers, headersList)
+	if err != ErrInvalidMsg {
+		t.Error("assignTaskRandomly nil error")
+		return
+	}
+	targetPeers = []string{"NodeA", "NodeB", "NodeC", "NodeD", "NodeE", "NodeF"}
+	result, _, err = assignTaskRandomly(targetPeers, headersList)
 	if len(result) == 0 {
 		t.Error("assignTaskRandomly test error: NONE")
 		return
@@ -320,6 +365,7 @@ func TestRandomPickPeers(t *testing.T) {
 	t.Log("LEN=", len(result))
 	if err != nil || int64(len(result)) != randomNumber {
 		t.Error("randomPickPeers test error:", err.Error())
+		return
 	}
 
 	randomNumber = int64(0)
@@ -327,9 +373,13 @@ func TestRandomPickPeers(t *testing.T) {
 	t.Log("LEN=", len(result))
 	if err != nil {
 		t.Error("randomPickPeers test ZERO error")
+		return
+	}
+	result, err = randomPickPeers(int64(10), targetSyncBlocksPeers)
+	if result != nil {
+		t.Error("randomPickPeers test nil error")
 	}
 }
-
 func TestGetValidPeersNumber(t *testing.T) {
 	targetSyncBlocksPeers := new(sync.Map)
 	targetSyncBlocksPeers.Store("NodeA", true)
@@ -382,6 +432,10 @@ func TestCheckAndComfirm(t *testing.T) {
 func TestConfirmBlocks(t *testing.T) {
 	lk, holder := prepareLedgerKeeper(47101, "../data/netkeys/")
 
+	newBeginId, err := lk.confirmBlocks(&global.XContext{Timer: global.NewXTimer()}, []*SimpleBlock{}, true)
+	if err == nil {
+		t.Error("TestConfirmBlocks nil error")
+	}
 	tx := generateTx(false, holder.UtxoVM)
 	b3, err := holder.Ledger.FormatFakeBlock([]*pb.Transaction{tx}, []byte(bobAddress), holder.PrivateKey, time.Now().UnixNano(), 3, 3, holder.B2.GetBlockid(), big.NewInt(0), 3)
 	if err != nil {
@@ -405,7 +459,7 @@ func TestConfirmBlocks(t *testing.T) {
 		logid:         "TestConfirmBlocks",
 		internalBlock: signedBlock,
 	}}
-	newBeginId, err := lk.confirmBlocks(&global.XContext{Timer: global.NewXTimer()}, tmpSlice, true)
+	newBeginId, err = lk.confirmBlocks(&global.XContext{Timer: global.NewXTimer()}, tmpSlice, true)
 	if bytes.Compare(newBeginId, signedBlock.GetBlockid()) != 0 {
 		t.Error("TestConfirmBlocks", "error", err)
 	}
@@ -472,6 +526,7 @@ func TestPutAndGet(t *testing.T) {
 	}
 	if !stm.Put(task1) {
 		t.Error("TestPutAndGet::put failed.")
+		return
 	}
 	task2 := &LedgerTask{
 		targetHeight: 2,
@@ -479,8 +534,105 @@ func TestPutAndGet(t *testing.T) {
 	}
 	if !stm.Put(task2) {
 		t.Error("TestPutAndGet::put failed.")
+		return
 	}
 	if stm.Pop().GetAction() != Appending {
 		t.Error("TestPutAndGet::get failed.")
+		return
+	}
+}
+
+func TestDownloadPeerBlocks(t *testing.T) {
+	var headersList [][]byte
+	lk, _ := prepareLedgerKeeper(47101, "../data/netkeys/")
+	blocks := lk.downloadPeerBlocks(headersList)
+	if blocks != nil {
+		t.Error("TestDownloadPeerBlocks::no peer error.")
+		return
+	}
+	lk.peersStatusMap.Store("NodeA", true)
+	blocks = lk.downloadPeerBlocks(headersList)
+	if blocks != nil {
+		t.Error("TestDownloadPeerBlocks::zero error.")
+		return
+	}
+}
+
+func TestHandleSyncTask(t *testing.T) {
+	ctx := CreateLedgerTaskCtx(nil, nil, &global.XContext{Timer: global.NewXTimer()})
+	task := &LedgerTask{
+		taskId:       "111",
+		action:       Syncing,
+		targetHeight: 13,
+		ctx:          ctx,
+	}
+	lk, _ := prepareLedgerKeeper(47101, "../data/netkeys/")
+	err := lk.handleSyncTask(task)
+	if err != ErrAllPeersInvalid {
+		t.Error("TestHandleSyncTask::nil peer error.")
+	}
+	lk.peersStatusMap.Store("NodeA", true)
+	err = lk.handleSyncTask(task)
+	if err == nil {
+		t.Error("TestHandleSyncTask::sync error.", "error", err)
+	}
+}
+
+func TestHandleAppendTask(t *testing.T) {
+	ctx := CreateLedgerTaskCtx(nil, nil, &global.XContext{Timer: global.NewXTimer()})
+	task := &LedgerTask{
+		taskId:       "111",
+		action:       Syncing,
+		targetHeight: 13,
+		ctx:          ctx,
+	}
+	lk, holder := prepareLedgerKeeper(47101, "../data/netkeys/")
+	err := lk.handleAppendTask(task)
+	if err != ErrInvalidMsg {
+		t.Error("TestHandleAppendTask::nil error.")
+		return
+	}
+	t1 := generateTx(false, holder.UtxoVM)
+	block1, _ := holder.Ledger.FormatFakeBlock([]*pb.Transaction{t1}, []byte(bobAddress), holder.PrivateKey, time.Now().UnixNano(), 1, 1, holder.B2.GetBlockid(), big.NewInt(0), 1)
+	simB1 := &SimpleBlock{
+		internalBlock: block1,
+		logid:         "B3",
+	}
+	block2, _ := holder.Ledger.FormatFakeBlock([]*pb.Transaction{t1}, []byte(bobAddress), holder.PrivateKey, time.Now().UnixNano(), 1, 1, block1.GetBlockid(), big.NewInt(0), 1)
+	simB2 := &SimpleBlock{
+		internalBlock: block2,
+		logid:         "B4",
+	}
+	ctx = CreateLedgerTaskCtx([]*SimpleBlock{simB1, simB2}, nil, &global.XContext{Timer: global.NewXTimer()})
+	task = &LedgerTask{
+		taskId:       "222",
+		action:       Syncing,
+		targetHeight: 3,
+		ctx:          ctx,
+	}
+	err = lk.handleAppendTask(task)
+	if err != ErrInvalidMsg {
+		t.Error("TestHandleAppendTask::too many blocks error.")
+		return
+	}
+	ctx = CreateLedgerTaskCtx([]*SimpleBlock{simB1}, nil, &global.XContext{Timer: global.NewXTimer()})
+	task = &LedgerTask{
+		taskId:       "333",
+		action:       Syncing,
+		targetHeight: 3,
+		ctx:          ctx,
+	}
+	err = lk.handleAppendTask(task)
+	if err != nil {
+		t.Error("TestHandleAppendTask error.")
+	}
+}
+
+func TestUpdatePeerStatusMap(t *testing.T) {
+	lk, _ := prepareLedgerKeeper(47101, "../data/netkeys/")
+	lk.updatePeerStatusMap()
+	_, ok := lk.peersStatusMap.Load("127.0.0.1")
+	if ok {
+		t.Error("TestUpdatePeerStatusMap error.")
 	}
 }
