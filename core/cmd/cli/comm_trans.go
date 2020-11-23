@@ -163,7 +163,12 @@ func printRespWithAbiForEVM(abiData, funcName string, resp []byte) error {
 
 	fmt.Println("contract response:")
 	for i := range Variables {
-		fmt.Println("key,value:", Variables[i].Name, Variables[i].Value)
+		if len(Variables[i].Value) == 32 {
+			// evm bytes32 for solidity
+			fmt.Println("key,value:", Variables[i].Name, hex.EncodeToString([]byte(Variables[i].Value)))
+		} else {
+			fmt.Println("key,value:", Variables[i].Name, Variables[i].Value)
+		}
 	}
 
 	return nil
