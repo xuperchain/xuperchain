@@ -76,7 +76,6 @@ type Ledger struct {
 	xlog             log.Logger       //日志库
 	meta             *pb.LedgerMeta   //账本关键的元数据{genesis, tip, height}
 	GenesisBlock     *GenesisBlock    //创始块
-	pendingTable     kvdb.Database    //保存临时的block区块
 	heightTable      kvdb.Database    //保存高度到Blockid的映射
 	blockCache       *common.LRUCache // block cache, 加速QueryBlock
 	blkHeaderCache   *common.LRUCache // block header cache, 加速fetchBlock
@@ -139,7 +138,6 @@ func newLedger(storePath string, xlog log.Logger, otherPaths []string, kvEngineT
 	ledger.metaTable = kvdb.NewTable(baseDB, pb.MetaTablePrefix)
 	ledger.confirmedTable = kvdb.NewTable(baseDB, pb.ConfirmedTablePrefix)
 	ledger.blocksTable = kvdb.NewTable(baseDB, pb.BlocksTablePrefix)
-	ledger.pendingTable = kvdb.NewTable(baseDB, pb.PendingBlocksTablePrefix)
 	ledger.heightTable = kvdb.NewTable(baseDB, pb.BlockHeightPrefix)
 	ledger.xlog = xlog
 	ledger.meta = &pb.LedgerMeta{}
@@ -726,8 +724,6 @@ func (l *Ledger) ConfirmBlock(block *pb.InternalBlock, isRoot bool) ConfirmStatu
 		}
 	}
 	blkTimer.Mark("saveAllTxs")
-	//删除pendingBlock中对应的数据
-	batchWrite.Delete(append([]byte(pb.PendingBlocksTablePrefix), block.Blockid...))
 	//改meta
 	metaBuf, pbErr := proto.Marshal(newMeta)
 	if pbErr != nil {
@@ -1008,45 +1004,6 @@ func (l *Ledger) GetNoFee() bool {
 	return l.GenesisBlock.GetConfig().NoFee
 }
 
-// SavePendingBlock put block into pending table
-func (l *Ledger) SavePendingBlock(block *pb.Block) error {
-	l.xlog.Debug("begin save pending block", "blockid", fmt.Sprintf("%x", block.Block.Blockid), "tx_count", len(block.Block.Transactions))
-	block.Blockid = block.Block.Blockid
-	blockBuf, pbErr := proto.Marshal(block)
-	if pbErr != nil {
-		l.xlog.Warn("save pending block fail, because marshal block fail", "pbErr", pbErr)
-		return pbErr
-	}
-	saveErr := l.pendingTable.Put(block.Block.Blockid, blockBuf)
-	if saveErr != nil {
-		l.xlog.Warn("save pending block to ldb fail", "err", saveErr)
-		return saveErr
-	}
-	return nil
-}
-
-// GetPendingBlock get block from pending table
-func (l *Ledger) GetPendingBlock(blockID []byte) (*pb.Block, error) {
-	l.xlog.Debug("get pending block", "bockid", fmt.Sprintf("%x", blockID))
-	blockBuf, ldbErr := l.pendingTable.Get(blockID)
-	if ldbErr != nil {
-		if common.NormalizedKVError(ldbErr) != common.ErrKVNotFound { //其他kv错误
-			l.xlog.Warn("get pending block fail", "err", ldbErr, "blockid", fmt.Sprintf("%x", blockID))
-		} else { //不存在表里面
-			l.xlog.Debug("the block not in pending blocks", "blocid", fmt.Sprintf("%x", blockID))
-			return nil, ErrBlockNotExist
-		}
-		return nil, ldbErr
-	}
-	block := &pb.Block{}
-	unMarshalErr := proto.Unmarshal(blockBuf, block)
-	if unMarshalErr != nil {
-		l.xlog.Warn("unmarshal block failed", "err", unMarshalErr)
-		return nil, unMarshalErr
-	}
-	return block, nil
-}
-
 // GetEstimatedTotal estimate total assets of chain
 func (l *Ledger) GetEstimatedTotal() *big.Int {
 	total := big.NewInt(0)
@@ -1168,17 +1125,20 @@ func (l *Ledger) Truncate(utxovmLastID []byte) error {
 }
 
 // StartPowMinning set the value of enablePowMinning true to tell the miner to start minning
-func (l *Ledger) StartPowMinning() {
+func (l *Ledger) StartPowMinning(height int64) {
 	l.powMutex.Lock()
 	defer l.powMutex.Unlock()
 	l.enablePowMinning = true
+	powMinningHeight = height
 }
 
 // AbortPowMinning set the value of enablePowMinning false to tell the miner to stop minning
-func (l *Ledger) AbortPowMinning() {
+func (l *Ledger) AbortPowMinning(height int64) {
 	l.powMutex.Lock()
 	defer l.powMutex.Unlock()
-	l.enablePowMinning = false
+	if height >= powMinningHeight {
+		l.enablePowMinning = false
+	}
 }
 
 // IsEnablePowMinning get the value of enablePowMinning

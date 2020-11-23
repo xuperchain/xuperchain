@@ -7,6 +7,7 @@ package main
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"math/big"
 	"strconv"
@@ -142,6 +143,16 @@ func (pc *PowConsensus) CompeteMaster(height int64) (bool, bool) {
 
 // CheckMinerMatch is the specific implementation of ConsensusInterface
 func (pc *PowConsensus) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock) (bool, error) {
+	newBlockHeight := in.GetHeight()
+	if newBlockHeight < pc.ledger.GetMeta().GetTrunkHeight() {
+		log.Warn("invalid block: new block's height is not enough", "new block's height->", newBlockHeight, "miner trunk height->", pc.ledger.GetMeta().GetTrunkHeight())
+		return false, nil
+	}
+	actualTargetBits := in.GetTargetBits()
+	if !ledger.IsProofed(in.GetBlockid(), actualTargetBits) {
+		log.Warn("receive a new block actual difficulty doesn't match blockid", "blockid->", fmt.Sprintf("%x", in.GetBlockid()), "proposer->", in.GetProposer())
+		return false, nil
+	}
 
 	blkid, err := ledger.MakeBlockID(in)
 	if err != nil {
@@ -198,8 +209,12 @@ func (pc *PowConsensus) CheckMinerMatch(header *pb.Header, in *pb.InternalBlock)
 	if err != nil {
 		pc.log.Warn("VerifyECDSA error", "logid", header.Logid, "error", err)
 	}
+	if valid {
+		//xcore.Ledger.StartPowBlockState()
+		// a valid new block shows up, let's interrupt the process of the miner to welcome it.
+		pc.ledger.AbortPowMinning(in.GetHeight())
+	}
 	return valid, nil
-
 }
 
 // InitCurrent is the specific implementation of ConsensusInterface
