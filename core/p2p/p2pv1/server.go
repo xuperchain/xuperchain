@@ -251,6 +251,15 @@ func (p *P2PServerV1) GetNetURL() string {
 	return fmt.Sprintf("/ip4/127.0.0.1/tcp/%v", p.config.Port)
 }
 
+// GetLocalUrl return output ip of the xuper node, ipv4 only
+func (p *P2PServerV1) GetLocalUrl() (string, string) {
+	if p.config.IsIpv6 {
+		return fmt.Sprintf("%s:%v", p.config.Ip, p.config.Port), fmt.Sprintf("::1:%v", p.config.Port)
+	}
+	return fmt.Sprintf("%s:%v", p.config.Ip, p.config.Port), fmt.Sprintf("127.0.0.1:%v", p.config.Port)
+
+}
+
 func (p *P2PServerV1) sendMessage(ctx context.Context, msg *p2pPb.XuperMessage, peerids []string) error {
 	// send message to all peers
 	p.log.Trace("Server SendMessage", "logid", msg.GetHeader().GetLogid(),
@@ -389,6 +398,10 @@ func (p *P2PServerV1) GetPeerUrls() []string {
 		res = append(res, id)
 	}
 	return res
+}
+
+func (p *P2PServerV1) GetPeersConnection() []string {
+	return p.GetPeerUrls()
 }
 
 func (p *P2PServerV1) GetPeerIDAndUrls() map[string]string {
