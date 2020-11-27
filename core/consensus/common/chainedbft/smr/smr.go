@@ -492,7 +492,7 @@ func (s *Smr) voteProposal(propsQC *pb.QuorumCert, voteTo, logid string) error {
 }
 
 func (s *Smr) getValidates(viewNumer int64) []*cons_base.CandidateInfo {
-	s.slog.Error("getValidates", "effectiveDelay", s.effectiveDelay, "s.vscView", s.vscView)
+	s.slog.Debug("getValidates", "effectiveDelay", s.effectiveDelay, "s.vscView", s.vscView)
 	// 根据不同共识的生效延时，判断当前view是否需要使用哪个验证集合，viewNumer为新视图，vscView为上次变更候选人视图
 	if s.effectiveDelay > 0 && viewNumer == s.vscView+s.effectiveDelay {
 		for _, v := range s.preValidates {
