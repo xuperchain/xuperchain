@@ -1069,7 +1069,26 @@ message CrossQueryInfo {
 }
 
 message ContractEvent {
-    string contract = 1;
-    string name = 2;
-    bytes body = 3;
+  string contract = 1;
+  string name = 2;
+  bytes body = 3;
+}
+
+message GetBlockIdsRequest {
+  int64 count = 1;
+  bytes blockId = 2;
+}
+
+message GetBlockIdsResponse {
+  bytes tipBlockId = 1;
+  repeated bytes blockIds = 2;
+}
+
+message GetBlocksRequest {
+  repeated bytes blockIds= 1;
+}
+
+message GetBlocksResponse {
+  //Header header = 1;
+  repeated pb.InternalBlock blocksInfo = 2;
 }
