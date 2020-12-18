@@ -436,8 +436,7 @@ func TestConfirmBlocks(t *testing.T) {
 func TestPushBack(t *testing.T) {
 	l := NewTasksList()
 	task := &LedgerTask{}
-	l.PushBack(task)
-	if !l.PushBack(task) {
+	if !l.RPUSH(task) {
 		t.Error("TestPushBack::repeat action")
 	}
 }
@@ -453,10 +452,10 @@ func TestFix(t *testing.T) {
 	task3 := &LedgerTask{
 		targetHeight: 3,
 	}
-	l.PushBack(task1)
-	l.PushBack(task2)
-	l.PushBack(task3)
-	l.fix(2)
+	l.RPUSH(task1)
+	l.RPUSH(task2)
+	l.RPUSH(task3)
+	l.GC(2)
 	if l.Len() == 3 {
 		t.Error("TestFix::fix failed.")
 	}
