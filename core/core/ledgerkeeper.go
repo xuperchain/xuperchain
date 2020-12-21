@@ -636,7 +636,7 @@ func (lk *LedgerKeeper) handleGetBlockIds(ctx context.Context, msg *xuper_p2p.Xu
 	// 故可使用height查找区块链，并且保证中途不存在切换导致的slice append错误
 	// 循环获取下一个block，并批量放入Cache中
 	h := headerBlock.GetHeight()
-	for i := int64(1); i < headersCount; i++ {
+	for i := int64(1); i <= headersCount; i++ {
 		block, err := lk.ledger.QueryBlockByHeight(h + i)
 		if err != nil {
 			lk.log.Warn("handleGetBlockIds::QueryBlock error", "error", err, "height", h)
