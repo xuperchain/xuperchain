@@ -355,7 +355,7 @@ func (lk *LedgerKeeper) getPeerBlockIds(beginBlockId []byte, length int64, targe
 	for _, id := range blockIds {
 		printStr = append(printStr, global.F(id))
 	}
-	lk.log.Info("getPeerBlockIds::GET_BLOCKIDS RESULT", "HEADERS", printStr, "TIP", global.F(tip))
+	lk.log.Info("getPeerBlockIds::GET_BLOCKIDS RESULT", "HEADERS", printStr, "TIP", global.F(tip), "FROM", response.GetHeader().From)
 
 	// 空值，包含连接错误
 	if len(blockIds) == 0 && tip == nil {
@@ -607,21 +607,11 @@ func (lk *LedgerKeeper) handleGetBlockIds(ctx context.Context, msg *xuper_p2p.Xu
 		return nil, ErrInternal
 	}
 	headerBlockId := body.GetBlockId()
-	lk.log.Trace("handleGetBlockIds::GET_BLOCKIDS handling...", "Logid", msg.GetHeader().GetLogid(), "BEGIN HEADER", global.F(headerBlockId))
-	headerBlock, err := lk.ledger.QueryBlock(headerBlockId)
-	if err != nil {
-		lk.log.Warn("handleGetBlockIds::not found blockId", "Logid", msg.GetHeader().GetLogid(), "BEGIN HEADER", "error", err, "headerBlockId", global.F(headerBlockId))
-		return nilRes, nil
-	}
-	if !headerBlock.GetInTrunk() {
-		lk.log.Warn("handleGetBlockIds::not in trunck", "Logid", msg.GetHeader().GetLogid(), "BEGIN HEADER", "headerBlock", global.F(headerBlockId))
-		return nilRes, nil
-	}
-
 	resultHeaders := &pb.GetBlockIdsResponse{
 		TipBlockId: localTip,
 		BlockIds:   make([][]byte, 0, headersCount),
 	}
+	lk.log.Trace("handleGetBlockIds::GET_BLOCKIDS handling...", "Logid", msg.GetHeader().GetLogid(), "BEGIN HEADER", global.F(headerBlockId))
 	// 已经是最高高度，直接返回tipBlockId
 	if bytes.Equal(localTip, headerBlockId) {
 		resBuf, _ := proto.Marshal(resultHeaders)
@@ -630,18 +620,31 @@ func (lk *LedgerKeeper) handleGetBlockIds(ctx context.Context, msg *xuper_p2p.Xu
 		lk.log.Info("handleGetBlockIds::GET_BLOCKIDS_RES response...", "response res: TipBlockId = beginBlockId")
 		return res, err
 	}
+	var headerBlock *pb.InternalBlock
+	// 对方tipId不在本地账本
+	headerBlock, err = lk.ledger.QueryBlock(headerBlockId)
+	if err != nil {
+		lk.log.Warn("handleGetBlockIds::not found blockId", "Logid", msg.GetHeader().GetLogid(), "BEGIN HEADER", "error", err, "headerBlockId", global.F(headerBlockId))
+		return nilRes, nil
+	}
+	// 对方tipId不在主干
+	if !headerBlock.GetInTrunk() {
+		lk.log.Warn("handleGetBlockIds::not in trunck", "Logid", msg.GetHeader().GetLogid(), "BEGIN HEADER", "headerBlock", global.F(headerBlockId))
+		return nilRes, nil
+	}
+	// 同一时间sync任务只会有一个，因此不存在sync中途其余sync导致主干切换的问题；同理，miner也不会导致主干切换
+	// 故可使用height查找区块链，并且保证中途不存在切换导致的slice append错误
 	// 循环获取下一个block，并批量放入Cache中
-	b := headerBlock
-	for i := int64(1); i <= headersCount; i++ {
-		nextHash := b.GetNextHash()
-		block, err := lk.ledger.QueryBlockHeader(nextHash)
+	h := headerBlock.GetHeight()
+	for i := int64(1); i < headersCount; i++ {
+		block, err := lk.ledger.QueryBlockByHeight(h + i)
 		if err != nil {
-			lk.log.Warn("handleGetBlockIds::QueryBlock error", "error", err, "blockId", global.F(nextHash))
+			lk.log.Warn("handleGetBlockIds::QueryBlock error", "error", err, "height", h)
 			break
 		}
 		resultHeaders.BlockIds = append(resultHeaders.BlockIds, block.GetBlockid())
-		b = block
-		if bytes.Equal(localTip, nextHash) {
+		headerBlock = block
+		if bytes.Equal(localTip, block.GetBlockid()) {
 			break
 		}
 	}
