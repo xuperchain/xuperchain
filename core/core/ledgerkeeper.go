@@ -624,12 +624,12 @@ func (lk *LedgerKeeper) handleGetBlockIds(ctx context.Context, msg *xuper_p2p.Xu
 	// 对方tipId不在本地账本
 	headerBlock, err = lk.ledger.QueryBlock(headerBlockId)
 	if err != nil {
-		lk.log.Warn("handleGetBlockIds::not found blockId", "Logid", msg.GetHeader().GetLogid(), "BEGIN HEADER", "error", err, "headerBlockId", global.F(headerBlockId))
+		lk.log.Warn("handleGetBlockIds::not found blockId", "Logid", msg.GetHeader().GetLogid(), "BEGIN HEADER", global.F(headerBlockId), "error", err, "headerBlockId", global.F(headerBlockId))
 		return nilRes, nil
 	}
 	// 对方tipId不在主干
 	if !headerBlock.GetInTrunk() {
-		lk.log.Warn("handleGetBlockIds::not in trunck", "Logid", msg.GetHeader().GetLogid(), "BEGIN HEADER", "headerBlock", global.F(headerBlockId))
+		lk.log.Warn("handleGetBlockIds::not in trunck", "Logid", msg.GetHeader().GetLogid(), "BEGIN HEADER", global.F(headerBlockId), "headerBlock", global.F(headerBlockId))
 		return nilRes, nil
 	}
 	// 同一时间sync任务只会有一个，因此不存在sync中途其余sync导致主干切换的问题；同理，miner也不会导致主干切换
