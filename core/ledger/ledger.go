@@ -347,7 +347,10 @@ func (l *Ledger) saveBlock(block *pb.InternalBlock, batchWrite kvdb.Batch) error
 		l.xlog.Warn("marshal block fail", "pbErr", pbErr)
 		return pbErr
 	}
-	batchWrite.Put(append([]byte(pb.BlocksTablePrefix), block.Blockid...), blockBuf)
+	err := batchWrite.Put(append([]byte(pb.BlocksTablePrefix), block.Blockid...), blockBuf)
+	if err != nil {
+		return err
+	}
 	if block.InTrunk {
 		sHeight := []byte(fmt.Sprintf("%020d", block.Height))
 		batchWrite.Put(append([]byte(pb.BlockHeightPrefix), sHeight...), block.Blockid)
