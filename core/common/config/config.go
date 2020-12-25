@@ -127,8 +127,6 @@ type MinerConfig struct {
 	Keypath string `yaml:"keypath,omitempty"`
 	// 同步区块头时一次同步的区块头数量
 	SyncSize int64 `yaml:"syncSize,omitempty"`
-	// 一次同步区块时最大等待延时, 单位为s
-	SyncTimeout int64 `yaml:"syncTimeout,omitempty"`
 }
 
 // UtxoConfig is the config of UtxoVM

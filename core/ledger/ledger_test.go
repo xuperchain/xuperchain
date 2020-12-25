@@ -436,7 +436,7 @@ func TestBlockHeader(t *testing.T) {
 	limit, _ := strconv.Atoi(limitstr)
 	ledger, err := NewLedger(path, nil, nil, DefaultKvEngine, crypto_client.CryptoTypeDefault)
 	if err != nil {
-		t.Fatal(err)
+		return
 	}
 	fmt.Printf("start:%s\n", startstr)
 	fmt.Printf("limit:%s\n", limitstr)

@@ -52,8 +52,7 @@ var (
 )
 
 const (
-	SYNC_BLOCKS_TIMEOUT   = 10 * time.Second // 一次GET_BLOCKS最大超时时间
-	HEADER_SYNC_SIZE      = 100              // 一次返回的最大区块头大小
+	HEADER_SYNC_SIZE      = 100 // 一次返回的最大区块头大小
 	MAX_TASK_MN_SIZE      = 20
 	EMPTY_TASK_SLEEP_TIME = 500 * time.Millisecond // 无同步任务时sleep时常
 )
@@ -73,9 +72,8 @@ type LedgerKeeper struct {
 	// ledgledgerKeeper同步块和xchaincore 矿工doMiner抢锁
 	coreMutex sync.RWMutex
 
-	maxBlocksMsgSize  int64         // 取最大区块大小
-	syncHeaderSize    int64         // 一次同步头的大小
-	syncBlocksTimeout time.Duration // 一次同步块的最大延时，单位为秒
+	maxBlocksMsgSize int64 // 取最大区块大小
+	syncHeaderSize   int64 // 一次同步头的大小
 }
 
 /* NewLedgerKeeper create a LedgerKeeper.
@@ -89,24 +87,20 @@ func NewLedgerKeeper(bcName string, slog log.Logger, p2pV2 p2p_base.P2PServer, l
 		slog.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
 	}
 	lk := &LedgerKeeper{
-		p2pSvr:            p2pV2,
-		log:               slog,
-		maxBlocksMsgSize:  ledger.GetMaxBlockSize(),
-		peersStatusMap:    new(sync.Map),
-		ledger:            ledger,
-		bcName:            bcName,
-		utxovm:            utxovm,
-		con:               con,
-		syncTaskMg:        newSyncTaskManager(slog),
-		nodeMode:          nodeMode,
-		syncHeaderSize:    HEADER_SYNC_SIZE,
-		syncBlocksTimeout: SYNC_BLOCKS_TIMEOUT,
+		p2pSvr:           p2pV2,
+		log:              slog,
+		maxBlocksMsgSize: ledger.GetMaxBlockSize(),
+		peersStatusMap:   new(sync.Map),
+		ledger:           ledger,
+		bcName:           bcName,
+		utxovm:           utxovm,
+		con:              con,
+		syncTaskMg:       newSyncTaskManager(slog),
+		nodeMode:         nodeMode,
+		syncHeaderSize:   HEADER_SYNC_SIZE,
 	}
 	if cfg.SyncSize > 0 {
 		lk.syncHeaderSize = cfg.SyncSize
-	}
-	if cfg.SyncTimeout > 0 {
-		lk.syncBlocksTimeout = time.Duration(cfg.SyncTimeout) * time.Second
 	}
 	lk.log.Trace("ledgerkeeper::Start to Register Subscriber")
 	if _, err := lk.p2pSvr.Register(lk.p2pSvr.NewSubscriber(nil, xuper_p2p.XuperMessage_GET_BLOCKIDS, lk.handleGetBlockIds, "", lk.log)); err != nil {
@@ -431,14 +425,11 @@ func (lk *LedgerKeeper) downloadPeerBlocks(headersList [][]byte) []*SimpleBlock 
 		lk.log.Debug("ledgerkeeper::assignTaskRandomly", "peersTask", s, "err", err)
 		// 对于单个peer，先查看cache中是否有该区块，选择cache中没有的生成列表，向peer发送GetDataMsg
 		// cache并发读写操作时使用的锁
-		ctx, cancel := context.WithTimeout(context.TODO(), lk.syncBlocksTimeout)
-		defer cancel()
+		ctx := context.Background()
 		syncBlockMutex := &sync.Mutex{}
 		err = lk.parallelDownload(ctx, peersTask, syncBlockMutex, syncMap, len(headersList))
 		switch err {
 		case ErrTargetDataNotEnough:
-			continue
-		case ErrSyncTimeout:
 			goto GetTrash
 		case nil:
 			for _, id := range headersList {
@@ -494,9 +485,6 @@ func (lk *LedgerKeeper) parallelDownload(ctx context.Context, peersTask map[stri
 				return nil
 			}
 			return ErrTargetDataNotEnough
-		case <-ctx.Done():
-			lk.log.Warn("ledgerkeeper::downloadPeerBlocks::context TIMEOUT")
-			return ErrSyncTimeout
 		}
 	}
 }
