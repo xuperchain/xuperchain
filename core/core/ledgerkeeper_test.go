@@ -137,7 +137,7 @@ func prepareLedgerKeeper(port int32, path string) (*LedgerKeeper, *fakeBlockChai
 
 	p2pSrv := p2pv2.NewP2PServerV2()
 	p2pSrv.Init(testCases["testNewServer"].in, nil, nil)
-	l, _ := NewLedgerKeeper("xuper", nil, p2pSrv, bcHolder.Ledger, "Normal", bcHolder.UtxoVM, consensus, &config.MinerConfig{})
+	l, _ := NewLedgerKeeper("xuper", nil, p2pSrv, bcHolder.Ledger, "Normal", bcHolder.UtxoVM, consensus, &config.LedgerKeeperConfig{SyncSize: 100})
 	return l, bcHolder
 }
 

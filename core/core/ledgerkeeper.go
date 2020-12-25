@@ -52,7 +52,6 @@ var (
 )
 
 const (
-	HEADER_SYNC_SIZE      = 100 // 一次返回的最大区块头大小
 	MAX_TASK_MN_SIZE      = 20
 	EMPTY_TASK_SLEEP_TIME = 500 * time.Millisecond // 无同步任务时sleep时常
 )
@@ -81,7 +80,7 @@ type LedgerKeeper struct {
  * LedgerKeeper会管理一组task队列，task为外界对其的请求封装，分为直接追加账本(Appending)、批量同步(Syncing)，Truncate单独作为同步处理
  */
 func NewLedgerKeeper(bcName string, slog log.Logger, p2pV2 p2p_base.P2PServer, ledger *ledger.Ledger, nodeMode string,
-	utxovm *utxo.UtxoVM, con *consensus.PluggableConsensus, cfg *config.MinerConfig) (*LedgerKeeper, error) {
+	utxovm *utxo.UtxoVM, con *consensus.PluggableConsensus, cfg *config.LedgerKeeperConfig) (*LedgerKeeper, error) {
 	if slog == nil { //如果外面没传进来log对象的话
 		slog = log.New("module", "syncnode")
 		slog.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
@@ -97,10 +96,7 @@ func NewLedgerKeeper(bcName string, slog log.Logger, p2pV2 p2p_base.P2PServer, l
 		con:              con,
 		syncTaskMg:       newSyncTaskManager(slog),
 		nodeMode:         nodeMode,
-		syncHeaderSize:   HEADER_SYNC_SIZE,
-	}
-	if cfg.SyncSize > 0 {
-		lk.syncHeaderSize = cfg.SyncSize
+		syncHeaderSize:   cfg.SyncSize,
 	}
 	lk.log.Trace("ledgerkeeper::Start to Register Subscriber")
 	if _, err := lk.p2pSvr.Register(lk.p2pSvr.NewSubscriber(nil, xuper_p2p.XuperMessage_GET_BLOCKIDS, lk.handleGetBlockIds, "", lk.log)); err != nil {
