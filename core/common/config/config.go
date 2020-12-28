@@ -127,6 +127,12 @@ type MinerConfig struct {
 	Keypath string `yaml:"keypath,omitempty"`
 }
 
+// LedgerConfig is the config of miner
+type LedgerKeeperConfig struct {
+	// 同步区块头时一次同步的区块头数量
+	SyncSize int64 `yaml:"syncSize,omitempty"`
+}
+
 // UtxoConfig is the config of UtxoVM
 type UtxoConfig struct {
 	CacheSize             int                        `yaml:"cachesize,omitempty"`
@@ -257,13 +263,14 @@ type NodeConfig struct {
 	Datapath        string          `yaml:"datapath,omitempty"`
 	DatapathOthers  []string        `yaml:"datapathOthers,omitempty"` //扩展盘的路径
 	ConsoleConfig   ConsoleConfig
-	Utxo            UtxoConfig      `yaml:"utxo,omitempty"`
-	DedupCacheSize  int             `yaml:"dedupCacheSize,omitempty"`
-	DedupTimeLimit  int             `yaml:"dedupTimeLimit,omitempty"`
-	Kernel          KernelConfig    `yaml:"kernel,omitempty"`
-	CPUProfile      string          `yaml:"cpuprofile,omitempty"`
-	MemProfile      string          `yaml:"memprofile,omitempty"`
-	MemberWhiteList map[string]bool `yaml:"memberWhiteList,omitempty"`
+	Utxo            UtxoConfig         `yaml:"utxo,omitempty"`
+	DedupCacheSize  int                `yaml:"dedupCacheSize,omitempty"`
+	DedupTimeLimit  int                `yaml:"dedupTimeLimit,omitempty"`
+	Kernel          KernelConfig       `yaml:"kernel,omitempty"`
+	CPUProfile      string             `yaml:"cpuprofile,omitempty"`
+	MemProfile      string             `yaml:"memprofile,omitempty"`
+	MemberWhiteList map[string]bool    `yaml:"memberWhiteList,omitempty"`
+	LedgerKeeper    LedgerKeeperConfig `yaml:"ledgerkeeper,omitempty"`
 
 	// 合约相关配置
 	Contract ContractConfig `yaml:"contract,omitempty"`
@@ -375,6 +382,9 @@ func (nc *NodeConfig) defaultNodeConfig() {
 	nc.P2p = newP2pConfigWithDefault()
 	nc.Miner = MinerConfig{
 		Keypath: "./data/keys",
+	}
+	nc.LedgerKeeper = LedgerKeeperConfig{
+		SyncSize: 100,
 	}
 	nc.PluginConfPath = "./conf/plugins.conf"
 	nc.PluginLoadPath = "./plugins/autoload/"
@@ -544,6 +554,10 @@ func (mc *MinerConfig) applyFlags(flags *pflag.FlagSet) {
 	flags.StringVar(&mc.Keypath, "keypath", mc.Keypath, "used for config overwrite --keypath <node keypath>")
 }
 
+func (lc *LedgerKeeperConfig) applyFlags(flags *pflag.FlagSet) {
+	flags.Int64Var(&lc.SyncSize, "syncSize", lc.SyncSize, "used for config overwrite --syncSize <node syncSize>")
+}
+
 func (utxo *UtxoConfig) applyFlags(flags *pflag.FlagSet) {
 	flags.IntVar(&utxo.CacheSize, "cachesize", utxo.CacheSize, "used for config overwrite --cachesize <utxo LRU cache size>")
 	flags.IntVar(&utxo.TmpLockSeconds, "tmplockSeconds", utxo.TmpLockSeconds, "used for config overwrite --tmplockSeconds <How long to lock utxo referenced by GenerateTx>")
@@ -560,6 +574,7 @@ func (nc *NodeConfig) ApplyFlags(flags *pflag.FlagSet) {
 	nc.ConsoleConfig.ApplyFlags(flags)
 	nc.Utxo.applyFlags(flags)
 	nc.Wasm.applyFlags(flags)
+	nc.LedgerKeeper.applyFlags(flags)
 
 	// for backward compatibility
 	if nc.Wasm.EnableUpgrade {

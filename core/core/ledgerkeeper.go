@@ -52,27 +52,27 @@ var (
 )
 
 const (
-	SYNC_BLOCKS_TIMEOUT   = 10 * time.Second // 一次GET_BLOCKS最大超时时间
-	HEADER_SYNC_SIZE      = 100              // 一次返回的最大区块头大小
 	MAX_TASK_MN_SIZE      = 20
 	EMPTY_TASK_SLEEP_TIME = 500 * time.Millisecond // 无同步任务时sleep时常
 )
 
 type LedgerKeeper struct {
-	p2pSvr           p2p_base.P2PServer
-	log              log.Logger
-	peersStatusMap   *sync.Map // map[string]bool 更新同步节点的p2p列表活性
-	maxBlocksMsgSize int64     // 取最大区块大小
-	ledger           *ledger.Ledger
-	bcName           string
-	syncTaskMg       *syncTaskManager
-	nodeMode         string
+	p2pSvr         p2p_base.P2PServer
+	log            log.Logger
+	peersStatusMap *sync.Map // map[string]bool 更新同步节点的p2p列表活性
+	ledger         *ledger.Ledger
+	bcName         string
+	syncTaskMg     *syncTaskManager
+	nodeMode       string
 
 	utxovm *utxo.UtxoVM
 	con    *consensus.PluggableConsensus
 	// 该锁保护同一时间内只有矿工or账本keeper对象中的一个对ledger及utxovm操作
 	// ledgledgerKeeper同步块和xchaincore 矿工doMiner抢锁
 	coreMutex sync.RWMutex
+
+	maxBlocksMsgSize int64 // 取最大区块大小
+	syncHeaderSize   int64 // 一次同步头的大小
 }
 
 /* NewLedgerKeeper create a LedgerKeeper.
@@ -80,7 +80,7 @@ type LedgerKeeper struct {
  * LedgerKeeper会管理一组task队列，task为外界对其的请求封装，分为直接追加账本(Appending)、批量同步(Syncing)，Truncate单独作为同步处理
  */
 func NewLedgerKeeper(bcName string, slog log.Logger, p2pV2 p2p_base.P2PServer, ledger *ledger.Ledger, nodeMode string,
-	utxovm *utxo.UtxoVM, con *consensus.PluggableConsensus) (*LedgerKeeper, error) {
+	utxovm *utxo.UtxoVM, con *consensus.PluggableConsensus, cfg *config.LedgerKeeperConfig) (*LedgerKeeper, error) {
 	if slog == nil { //如果外面没传进来log对象的话
 		slog = log.New("module", "syncnode")
 		slog.SetHandler(log.StreamHandler(os.Stderr, log.LogfmtFormat()))
@@ -96,6 +96,7 @@ func NewLedgerKeeper(bcName string, slog log.Logger, p2pV2 p2p_base.P2PServer, l
 		con:              con,
 		syncTaskMg:       newSyncTaskManager(slog),
 		nodeMode:         nodeMode,
+		syncHeaderSize:   cfg.SyncSize,
 	}
 	lk.log.Trace("ledgerkeeper::Start to Register Subscriber")
 	if _, err := lk.p2pSvr.Register(lk.p2pSvr.NewSubscriber(nil, xuper_p2p.XuperMessage_GET_BLOCKIDS, lk.handleGetBlockIds, "", lk.log)); err != nil {
@@ -251,7 +252,7 @@ func (lk *LedgerKeeper) handleSyncTask(lt *LedgerTask) error {
 			lk.log.Trace("ledgerkeeper::randomPickPeers", "peer", peer[0], "task", lt.taskId, "headerBegin", global.F(headerBegin))
 		}
 		lk.log.Debug("ledgerkeeper::handleSyncTask::getPeerBlockIds round start", "task", lt.taskId, "headerBegin", global.F(headerBegin), "sync cost", lt.GetXContext().Timer.Print())
-		endFlag, blockIds, err := lk.getPeerBlockIds(headerBegin, HEADER_SYNC_SIZE, peer[0])
+		endFlag, blockIds, err := lk.getPeerBlockIds(headerBegin, lk.syncHeaderSize, peer[0])
 		lk.log.Info("ledgerkeeper::handleSyncTask::getPeerBlockIds result", "task", lt.taskId, "headerBegin", global.F(headerBegin), "NEWpeer", peer[0], "err", err, "endFlag", endFlag)
 		if err == ErrPeerFinish {
 			// 本账本已达到最新区块高度，消解此任务
@@ -420,14 +421,11 @@ func (lk *LedgerKeeper) downloadPeerBlocks(headersList [][]byte) []*SimpleBlock 
 		lk.log.Debug("ledgerkeeper::assignTaskRandomly", "peersTask", s, "err", err)
 		// 对于单个peer，先查看cache中是否有该区块，选择cache中没有的生成列表，向peer发送GetDataMsg
 		// cache并发读写操作时使用的锁
-		ctx, cancel := context.WithTimeout(context.TODO(), SYNC_BLOCKS_TIMEOUT)
-		defer cancel()
+		ctx := context.Background()
 		syncBlockMutex := &sync.Mutex{}
 		err = lk.parallelDownload(ctx, peersTask, syncBlockMutex, syncMap, len(headersList))
 		switch err {
 		case ErrTargetDataNotEnough:
-			continue
-		case ErrSyncTimeout:
 			goto GetTrash
 		case nil:
 			for _, id := range headersList {
@@ -483,8 +481,6 @@ func (lk *LedgerKeeper) parallelDownload(ctx context.Context, peersTask map[stri
 				return nil
 			}
 			return ErrTargetDataNotEnough
-		case <-ctx.Done():
-			return ErrSyncTimeout
 		}
 	}
 }
@@ -584,6 +580,8 @@ func (lk *LedgerKeeper) getBlocks(ctx context.Context, targetPeer string, blockI
  * 注意: 本次处理暂将消息区间不在主干在分支，以及账本无消息区间作为同样情况返回。
  */
 func (lk *LedgerKeeper) handleGetBlockIds(ctx context.Context, msg *xuper_p2p.XuperMessage) (*xuper_p2p.XuperMessage, error) {
+	timer := global.NewXTimer()
+	lk.log.Debug("ledgerkeeper::handleGetBlockIds::handleGetBlockIds begin", "Logid", msg.GetHeader().GetLogid(), "handle cost", timer.Print())
 	bc := msg.GetHeader().GetBcname()
 	if !p2p_base.VerifyDataCheckSum(msg) {
 		lk.log.Error("ledgerkeeper::handleGetBlockIds::verify msg error")
@@ -599,12 +597,8 @@ func (lk *LedgerKeeper) handleGetBlockIds(ctx context.Context, msg *xuper_p2p.Xu
 		lk.log.Warn("ledgerkeeper::handleGetBlockIds::Invalid headersCount, no service provided", "headersCount", headersCount)
 		return nil, ErrInvalidMsg
 	}
-	tipB, err := lk.ledger.QueryLastBlock()
-	if err != nil {
-		lk.log.Warn("ledgerkeeper::handleGetBlockIds::QueryLastBlock error", "err", err)
-		return nil, err
-	}
-	localTip := tipB.GetBlockid()
+	tipB := lk.ledger.GetMeta()
+	localTip := tipB.GetTipBlockid()
 	nilHeaders := &pb.GetBlockIdsResponse{
 		TipBlockId: localTip,
 		BlockIds:   [][]byte{},
@@ -622,7 +616,7 @@ func (lk *LedgerKeeper) handleGetBlockIds(ctx context.Context, msg *xuper_p2p.Xu
 		TipBlockId: localTip,
 		BlockIds:   make([][]byte, 0, headersCount),
 	}
-	lk.log.Trace("ledgerkeeper::handleGetBlockIds::GET_BLOCKIDS handling...", "Logid", msg.GetHeader().GetLogid(), "BEGIN HEADER", global.F(headerBlockId))
+	lk.log.Debug("ledgerkeeper::handleGetBlockIds::GET_BLOCKIDS handling...", "Logid", msg.GetHeader().GetLogid(), "BEGIN HEADER", global.F(headerBlockId), "FROM", msg.GetHeader().From)
 	// 已经是最高高度，直接返回tipBlockId
 	if bytes.Equal(localTip, headerBlockId) {
 		resBuf, _ := proto.Marshal(resultHeaders)
@@ -635,20 +629,24 @@ func (lk *LedgerKeeper) handleGetBlockIds(ctx context.Context, msg *xuper_p2p.Xu
 	// 对方tipId不在本地账本
 	headerBlock, err = lk.ledger.QueryBlockHeader(headerBlockId)
 	if err != nil {
-		lk.log.Warn("ledgerkeeper::handleGetBlockIds::not found blockId", "Logid", msg.GetHeader().GetLogid(), "BEGIN HEADER", global.F(headerBlockId), "error", err, "headerBlockId", global.F(headerBlockId))
+		lk.log.Warn("ledgerkeeper::handleGetBlockIds::not found blockId", "Logid", msg.GetHeader().GetLogid(), "handle cost", timer.Print(), "BEGIN HEADER", global.F(headerBlockId), "error", err, "headerBlockId", global.F(headerBlockId))
 		return nilRes, nil
 	}
 	// 对方tipId不在主干
 	if !headerBlock.GetInTrunk() {
-		lk.log.Warn("ledgerkeeper::handleGetBlockIds::not in trunck", "Logid", msg.GetHeader().GetLogid(), "BEGIN HEADER", global.F(headerBlockId), "headerBlock", global.F(headerBlockId))
+		lk.log.Warn("ledgerkeeper::handleGetBlockIds::not in trunck", "Logid", msg.GetHeader().GetLogid(), "handle cost", timer.Print(), "BEGIN HEADER", global.F(headerBlockId), "headerBlock", global.F(headerBlockId))
 		return nilRes, nil
 	}
 	// 循环获取blockId
 	h := headerBlock.GetHeight()
 	// 找到需要回传的最后一个block，然后往前追溯直至headerBlock，这样做的原因是1.规避异步模式没有nextHash的问题 2.使用QueryBlockHeader增加速度
 	var lastB *pb.InternalBlock
-	if tipB.GetHeight() <= h+headersCount {
-		lastB = tipB
+	if tipB.GetTrunkHeight() <= h+headersCount {
+		lastB, err = lk.ledger.QueryBlockHeader(localTip)
+		if err != nil {
+			lk.log.Warn("ledgerkeeper::handleGetBlockIds::Query TipBlock error", "error", err)
+			return nilRes, nil
+		}
 	} else {
 		lastB, err = lk.ledger.QueryBlockByHeight(h + headersCount)
 	}
@@ -671,7 +669,7 @@ func (lk *LedgerKeeper) handleGetBlockIds(ctx context.Context, msg *xuper_p2p.Xu
 	for _, blockId := range resultHeaders.BlockIds {
 		printStr = append(printStr, global.F(blockId))
 	}
-	lk.log.Info("ledgerkeeper::handleGetBlockIds::GET_BLOCKIDS_RES response...", "response res", printStr)
+	lk.log.Info("ledgerkeeper::handleGetBlockIds::GET_BLOCKIDS_RES response...", "handle cost", timer.Print(), "response res", printStr)
 	return res, err
 }
 
@@ -685,6 +683,8 @@ func (lk *LedgerKeeper) handleGetBlockIds(ctx context.Context, msg *xuper_p2p.Xu
  * TODO：尽可能选择多的区块返回, peer自己通过区块大小切分Data消息返回， 按照尽可能多的返回区块规则选取区块
  */
 func (lk *LedgerKeeper) handleGetBlocks(ctx context.Context, msg *xuper_p2p.XuperMessage) (*xuper_p2p.XuperMessage, error) {
+	timer := global.NewXTimer()
+	lk.log.Debug("ledgerkeeper::handleGetBlocks::handleGetBlocks begin", "Logid", msg.GetHeader().GetLogid(), "handle cost", timer.Print())
 	bc := msg.GetHeader().GetBcname()
 	if !p2p_base.VerifyDataCheckSum(msg) {
 		return nil, ErrInvalidMsg
@@ -710,14 +710,14 @@ func (lk *LedgerKeeper) handleGetBlocks(ctx context.Context, msg *xuper_p2p.Xupe
 		resultBlocks = append(resultBlocks, block)
 		leftSize -= int64(proto.Size(block))
 	}
-	lk.log.Trace("ledgerkeeper::handleGetBlocks::GET_BLOCKS_RES handling...", "REQUIRE LIST", printStr)
+	lk.log.Trace("ledgerkeeper::handleGetBlocks::GET_BLOCKS_RES handling...", "REQUIRE LIST", printStr, "FROM", msg.GetHeader().From)
 	result := &pb.GetBlocksResponse{
 		BlocksInfo: resultBlocks,
 	}
 	resBuf, _ := proto.Marshal(result)
 	msg.Header.From, _ = lk.p2pSvr.GetLocalUrl()
-	lk.log.Info("ledgerkeeper::handleGetBlocks::GET_BLOCKS response...", "Logid", msg.GetHeader().GetLogid(), "LEN", len(resultBlocks))
 	res, err := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, bc, msg.GetHeader().GetLogid(), xuper_p2p.XuperMessage_GET_BLOCKS_RES, resBuf, xuper_p2p.XuperMessage_SUCCESS)
+	lk.log.Info("ledgerkeeper::handleGetBlocks::GET_BLOCKS response...", "Logid", msg.GetHeader().GetLogid(), "handle cost", timer.Print(), "LEN", len(resultBlocks))
 	return res, err
 }
 

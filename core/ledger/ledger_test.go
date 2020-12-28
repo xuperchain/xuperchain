@@ -4,11 +4,14 @@ import (
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"io/ioutil"
 	"math/big"
 	"os"
+	"strconv"
 	"testing"
+	"time"
 
 	"github.com/golang/protobuf/proto"
 	crypto_client "github.com/xuperchain/xuperchain/core/crypto/client"
@@ -424,4 +427,38 @@ func TestTruncate(t *testing.T) {
 	t.Log(ledger.meta)
 
 	ledger.Close()
+}
+
+func TestBlockHeader(t *testing.T) {
+	path := os.Getenv("DB")
+	startstr := os.Getenv("START")
+	limitstr := os.Getenv("LIMIT")
+	limit, _ := strconv.Atoi(limitstr)
+	ledger, err := NewLedger(path, nil, nil, DefaultKvEngine, crypto_client.CryptoTypeDefault)
+	if err != nil {
+		return
+	}
+	fmt.Printf("start:%s\n", startstr)
+	fmt.Printf("limit:%s\n", limitstr)
+	startBlockid, _ := hex.DecodeString(startstr)
+	blockid := startBlockid
+	tstart := time.Now()
+	sizem := make(map[int]int)
+	for i := 0; i < limit; i++ {
+		// blk, err := ledger.QueryBlockHeader(blockid)
+		blk, err := ledger.QueryBlock(blockid)
+		if err != nil {
+			blockid = startBlockid
+			continue
+		}
+		blockid = blk.GetPreHash()
+		size := proto.Size(blk)
+		for _, s := range []int{100, 50, 25, 10, 5, 2, 1} {
+			if size < (1 << 20 * s) {
+				sizem[s]++
+			}
+		}
+	}
+	fmt.Printf("%v\n", sizem)
+	fmt.Printf("used:%s\n", time.Now().Sub(tstart))
 }

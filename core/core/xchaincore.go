@@ -301,7 +301,7 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	xc.Utxovm.RegisterVAT("kernel", ker, ker.GetVATWhiteList())
 
 	// 启动Sync节点，负责区块同步
-	lk, err := NewLedgerKeeper(xc.bcname, xc.log, xc.P2pSvr, xc.Ledger, xc.nodeMode, xc.Utxovm, xc.con)
+	lk, err := NewLedgerKeeper(xc.bcname, xc.log, xc.P2pSvr, xc.Ledger, xc.nodeMode, xc.Utxovm, xc.con, &cfg.LedgerKeeper)
 	if err != nil {
 		xc.log.Warn("Xchaincore::Init::NewLedgerKeeper init error", "err", err)
 		return err
