@@ -161,6 +161,9 @@ func (lk *LedgerKeeper) Start() {
 			}
 			action := task.GetAction()
 			lk.log.Trace("ledgerkeeper::startTaskLoop::Get a task", "action", action, "taskId", task.taskId)
+			if !lk.confirmStatus() {
+				return
+			}
 			switch action {
 			case Syncing:
 				lk.handleSyncTask(task)
@@ -169,6 +172,26 @@ func (lk *LedgerKeeper) Start() {
 			}
 		}
 	}()
+}
+
+// StatusConfirm 同步前需要保证账本和utxovm保持一致
+func (lk *LedgerKeeper) confirmStatus() bool {
+	ledgerLastID := lk.ledger.GetMeta().TipBlockid
+	utxovmLastID := lk.utxovm.GetLatestBlockid()
+	if bytes.Equal(ledgerLastID, utxovmLastID) {
+		return true
+	}
+	lk.log.Warn("ledgerkeeper::StatusConfirm::ledger last blockid is not equal utxovm last id")
+	if err := lk.utxovm.Walk(ledgerLastID, false); err == nil {
+		lk.log.Debug("ledgerkeeper::StatusConfirm::walk success", "targetId", global.F(ledgerLastID))
+		return true
+	}
+	// Walk失败时，ledger向utxoVM看齐
+	if err := lk.DoTruncateTask(utxovmLastID); err == nil {
+		return true
+	}
+	lk.log.Error("ledgerkeeper::StatusConfirm::truncate err, utxovm and ledger stop.")
+	return false
 }
 
 // getTask get a task from LedgerKeeper's queues.
@@ -770,7 +793,7 @@ func (lk *LedgerKeeper) confirmBlocks(hd *global.XContext, blocksSlice []*Simple
 			}
 			// 判断是否是最新区块及最长链，若是则最新区块需广播
 			err = lk.utxovm.PlayAndRepost(checkBlock.internalBlock.GetBlockid(), needRepost, false)
-			lk.log.Debug("ledgerkeeper::ConfirmAppendingBlock::Play", "logid", checkBlock.logid)
+			lk.log.Debug("ledgerkeeper::ConfirmAppendingBlock::Play", "logid", checkBlock.logid, "BlockId", global.F(checkBlock.internalBlock.GetBlockid()), "height", checkBlock.internalBlock.GetHeight())
 			if err != nil {
 				lk.log.Warn("ledgerkeeper::ConfirmAppendingBlock::utxo vm play err", "logid", checkBlock.logid, "err", err)
 				return nil, err
