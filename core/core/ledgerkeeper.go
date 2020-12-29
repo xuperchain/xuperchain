@@ -545,7 +545,7 @@ func (lk *LedgerKeeper) getBlocks(ctx context.Context, targetPeer string, blockI
 	if err != nil {
 		return nil, ErrUnmarshal
 	}
-	lk.log.Info("ledgerkeeper::getBlocks::GET BLOCKS RESULT", "Logid", msg.GetHeader().GetLogid(), "From", msg.GetHeader().From, "LEN", len(blocksMsgBody.GetBlocksInfo()))
+	lk.log.Info("ledgerkeeper::getBlocks::GET BLOCKS RESULT", "Logid", msg.GetHeader().GetLogid(), "From", msg.GetHeader(), "LEN", len(blocksMsgBody.GetBlocksInfo()))
 	if len(blocksMsgBody.GetBlocksInfo()) == 0 && len(blockIds) > 1 {
 		// 目标节点完全未找到任何block
 		return nil, ErrTargetDataNotFound
@@ -616,7 +616,7 @@ func (lk *LedgerKeeper) handleGetBlockIds(ctx context.Context, msg *xuper_p2p.Xu
 		TipBlockId: localTip,
 		BlockIds:   make([][]byte, 0, headersCount),
 	}
-	lk.log.Debug("ledgerkeeper::handleGetBlockIds::GET_BLOCKIDS handling...", "Logid", msg.GetHeader().GetLogid(), "BEGIN HEADER", global.F(headerBlockId), "FROM", msg.GetHeader().From)
+	lk.log.Debug("ledgerkeeper::handleGetBlockIds::GET_BLOCKIDS handling...", "Logid", msg.GetHeader().GetLogid(), "BEGIN HEADER", global.F(headerBlockId), "FROM", msg.GetHeader())
 	// 已经是最高高度，直接返回tipBlockId
 	if bytes.Equal(localTip, headerBlockId) {
 		resBuf, _ := proto.Marshal(resultHeaders)
@@ -710,7 +710,7 @@ func (lk *LedgerKeeper) handleGetBlocks(ctx context.Context, msg *xuper_p2p.Xupe
 		resultBlocks = append(resultBlocks, block)
 		leftSize -= int64(proto.Size(block))
 	}
-	lk.log.Trace("ledgerkeeper::handleGetBlocks::GET_BLOCKS_RES handling...", "REQUIRE LIST", printStr, "FROM", msg.GetHeader().From)
+	lk.log.Trace("ledgerkeeper::handleGetBlocks::GET_BLOCKS_RES handling...", "REQUIRE LIST", printStr, "FROM", msg.GetHeader())
 	result := &pb.GetBlocksResponse{
 		BlocksInfo: resultBlocks,
 	}
