@@ -161,9 +161,6 @@ func (lk *LedgerKeeper) Start() {
 			}
 			action := task.GetAction()
 			lk.log.Trace("ledgerkeeper::startTaskLoop::Get a task", "action", action, "taskId", task.taskId)
-			if !lk.confirmStatus() {
-				return
-			}
 			switch action {
 			case Syncing:
 				lk.handleSyncTask(task)
@@ -172,26 +169,6 @@ func (lk *LedgerKeeper) Start() {
 			}
 		}
 	}()
-}
-
-// StatusConfirm 同步前需要保证账本和utxovm保持一致
-func (lk *LedgerKeeper) confirmStatus() bool {
-	ledgerLastID := lk.ledger.GetMeta().TipBlockid
-	utxovmLastID := lk.utxovm.GetLatestBlockid()
-	if bytes.Equal(ledgerLastID, utxovmLastID) {
-		return true
-	}
-	lk.log.Warn("ledgerkeeper::StatusConfirm::ledger last blockid is not equal utxovm last id")
-	if err := lk.utxovm.Walk(ledgerLastID, false); err == nil {
-		lk.log.Debug("ledgerkeeper::StatusConfirm::walk success", "targetId", global.F(ledgerLastID))
-		return true
-	}
-	// Walk失败时，ledger向utxoVM看齐
-	if err := lk.DoTruncateTask(utxovmLastID); err == nil {
-		return true
-	}
-	lk.log.Error("ledgerkeeper::StatusConfirm::truncate err, utxovm and ledger stop.")
-	return false
 }
 
 // getTask get a task from LedgerKeeper's queues.
@@ -763,7 +740,7 @@ func (lk *LedgerKeeper) getValidBlocks(blocksSlice []*SimpleBlock) []*SimpleBloc
 func (lk *LedgerKeeper) confirmBlocks(hd *global.XContext, blocksSlice []*SimpleBlock, endFlag bool) ([]byte, error) {
 	// 取这段新链的第一个区块，判断走账本分叉逻辑还是直接账本追加逻辑
 	lk.log.Debug("ledgerkeeper::ConfirmBlocks", "genesis", global.F(lk.ledger.GetMeta().GetRootBlockid()), "utxo", global.F(lk.utxovm.GetLatestBlockid()),
-		"len(blocksSlice)", len(blocksSlice), "cost", hd.Timer.Print())
+		"ledger", lk.ledger.GetMeta().GetTipBlockid(), "len(blocksSlice)", len(blocksSlice), "cost", hd.Timer.Print())
 	listLen := len(blocksSlice)
 	if listLen == 0 {
 		// 此处newBegin脏读没有关系，上层for循环仍能得到全网最新值
@@ -779,7 +756,7 @@ func (lk *LedgerKeeper) confirmBlocks(hd *global.XContext, blocksSlice []*Simple
 	 * 原有SendBlock中多个同步进程抢这把锁的问题已经通过同步串行解决
 	 */
 	var index int
-	if bytes.Compare(blocksSlice[0].internalBlock.GetPreHash(), lk.ledger.GetMeta().GetTipBlockid()) == 0 {
+	if bytes.Compare(blocksSlice[0].internalBlock.GetPreHash(), lk.utxovm.GetLatestBlockid()) == 0 {
 		lk.log.Debug("ledgerkeeper::ConfirmBlocks::Equal The Same", "cost", hd.Timer.Print())
 		for i, checkBlock := range blocksSlice {
 			needRepost := (i == listLen-1) && endFlag
