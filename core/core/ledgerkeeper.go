@@ -348,28 +348,32 @@ func (lk *LedgerKeeper) getPeerBlockIds(beginBlockId []byte, length int64, targe
 		lk.log.Warn("ledgerkeeper::getPeerBlockIds::Sync Headers P2P Error: local error or target error", "Logid", msg.GetHeader().GetLogid(), "Error", err)
 		return true, nil, ErrInternal
 	}
-	var response *xuper_p2p.XuperMessage
+	var blockIds [][]byte
+	var tip []byte
+	var from string
 	for _, msg := range res {
-		if msg.GetHeader().GetBcname() == lk.bcName {
-			response = msg
+		if msg.GetHeader().GetBcname() != lk.bcName {
+			continue
+		}
+		headerMsgBody := &pb.GetBlockIdsResponse{}
+		err = proto.Unmarshal(msg.GetData().GetMsgInfo(), headerMsgBody)
+		if err != nil {
+			continue
+		}
+		blockIds = headerMsgBody.GetBlockIds()
+		tip = headerMsgBody.GetTipBlockId()
+		if msg.GetHeader() != nil {
+			from = msg.GetHeader().GetFrom()
 		}
 	}
-	if response == nil {
+	if len(blockIds) == 0 {
 		return false, nil, ErrTargetPeerInvalid
 	}
-	headerMsgBody := &pb.GetBlockIdsResponse{}
-	err = proto.Unmarshal(response.GetData().GetMsgInfo(), headerMsgBody)
-	if err != nil {
-		lk.log.Warn("ledgerkeeper::getPeerBlockIds::unmarshal error", "error", err)
-		return false, nil, ErrInvalidMsg
-	}
-	blockIds := headerMsgBody.GetBlockIds()
-	tip := headerMsgBody.GetTipBlockId()
 	var printStr []string
 	for _, id := range blockIds {
 		printStr = append(printStr, global.F(id))
 	}
-	lk.log.Info("ledgerkeeper::getPeerBlockIds::GET_BLOCKIDS RESULT", "HEADERS", printStr, "TIP", global.F(tip), "FROM", response.GetHeader())
+	lk.log.Info("ledgerkeeper::getPeerBlockIds::GET_BLOCKIDS RESULT", "HEADERS", printStr, "TIP", global.F(tip), "FROM", from)
 
 	// 空值，包含连接错误
 	if len(blockIds) == 0 && tip == nil {
@@ -460,12 +464,16 @@ func (lk *LedgerKeeper) parallelDownload(ctx context.Context, peersTask map[stri
 	syncBlockMutex *sync.Mutex, syncMap map[string]*SimpleBlock, targetLen int) error {
 	ch := make(chan bool, len(peersTask))
 	counter := 0
+	var peers []string
+	for peer, _ := range peersTask {
+		peers = append(peers, peer)
+	}
 	for peer, headers := range peersTask {
 		go func(peer string, headers [][]byte) {
 			defer func() {
 				ch <- true
 			}()
-			crashFlag, err := lk.peerBlockDownloadTask(ctx, peer, headers, syncMap, syncBlockMutex)
+			crashFlag, err := lk.peerBlockDownloadTask(ctx, peers, headers, syncMap, syncBlockMutex)
 			if crashFlag {
 				lk.log.Warn("ledgerkeeper::downloadPeerBlocks::delete peer", "address", peer, "err", err)
 				lk.peersStatusMap.Store(peer, false)
@@ -495,7 +503,7 @@ func (lk *LedgerKeeper) parallelDownload(ctx context.Context, peersTask map[stri
 /* peerBlockDownloadTask
  * peerBlockDownloadTask 向指定peer拉取指定区块列表，若该peer未返回任何块，则剔除节点，获取到的区块写入cache，上层逻辑判断是否继续拉取未获取的区块
  */
-func (lk *LedgerKeeper) peerBlockDownloadTask(ctx context.Context, peerAddr string, taskBlockIds [][]byte, cache map[string]*SimpleBlock, syncBlockMutex *sync.Mutex) (bool, error) {
+func (lk *LedgerKeeper) peerBlockDownloadTask(ctx context.Context, peerAddrs []string, taskBlockIds [][]byte, cache map[string]*SimpleBlock, syncBlockMutex *sync.Mutex) (bool, error) {
 	syncBlockMutex.Lock()             // 锁cache，进行读
 	refreshTaskBlockIds := [][]byte{} // 筛除cache中已经从别的peer拿到的block，这些block无需重新传递
 	for _, blockId := range taskBlockIds {
@@ -508,7 +516,7 @@ func (lk *LedgerKeeper) peerBlockDownloadTask(ctx context.Context, peerAddr stri
 	if len(refreshTaskBlockIds) == 0 {
 		return false, nil
 	}
-	blocks, err := lk.getBlocks(ctx, peerAddr, refreshTaskBlockIds)
+	blocks, err := lk.getBlocks(ctx, peerAddrs, refreshTaskBlockIds)
 	// 判断是否剔除peer, 目前保守删除
 	if err == ErrInvalidMsg {
 		return true, err
@@ -526,7 +534,7 @@ func (lk *LedgerKeeper) peerBlockDownloadTask(ctx context.Context, peerAddr stri
  * 若指定节点并未在规定时间内返回任何区块，则返回节点超时错误
  * 若指定节点仅返回部分区块，则返回缺失提醒
  */
-func (lk *LedgerKeeper) getBlocks(ctx context.Context, targetPeer string, blockIds [][]byte) (map[string]*SimpleBlock, error) {
+func (lk *LedgerKeeper) getBlocks(ctx context.Context, targetPeers []string, blockIds [][]byte) (map[string]*SimpleBlock, error) {
 	body := &pb.GetBlocksRequest{
 		BlockIds: blockIds,
 	}
@@ -538,33 +546,34 @@ func (lk *LedgerKeeper) getBlocks(ctx context.Context, targetPeer string, blockI
 	}
 	opts := []p2p_base.MessageOption{
 		p2p_base.WithBcName(lk.bcName),
-		p2p_base.WithTargetPeerAddrs([]string{targetPeer}),
+		p2p_base.WithTargetPeerAddrs(targetPeers),
 	}
 	res, err := lk.p2pSvr.SendMessageWithResponse(ctx, msg, opts...)
 	if err != nil {
 		lk.log.Warn("ledgerkeeper::getBlocks::Sync GetBlocks P2P Error, local error or target error", "Logid", msg.GetHeader().GetLogid(), "Error", err)
 		return nil, ErrInternal
 	}
-	var response *xuper_p2p.XuperMessage
+	var maxLen int
+	var blocks []*pb.InternalBlock
 	for _, msg := range res {
-		if msg.GetHeader().GetBcname() == lk.bcName {
-			response = msg
+		if msg.GetHeader().GetBcname() != lk.bcName {
+			continue
+		}
+		// 选取最大返回长度解析
+		blocksMsgBody := &pb.GetBlocksResponse{}
+		err = proto.Unmarshal(msg.GetData().GetMsgInfo(), blocksMsgBody)
+		if err != nil {
+			continue
+		}
+		if len(blocksMsgBody.GetBlocksInfo()) > maxLen {
+			blocks = blocksMsgBody.GetBlocksInfo()
 		}
 	}
-	if response == nil {
-		return nil, ErrInternal
-	}
-	blocksMsgBody := &pb.GetBlocksResponse{}
-	err = proto.Unmarshal(response.GetData().GetMsgInfo(), blocksMsgBody)
-	if err != nil {
-		return nil, ErrUnmarshal
-	}
-	lk.log.Info("ledgerkeeper::getBlocks::GET BLOCKS RESULT", "Logid", msg.GetHeader().GetLogid(), "From", msg.GetHeader(), "LEN", len(blocksMsgBody.GetBlocksInfo()))
-	if len(blocksMsgBody.GetBlocksInfo()) == 0 && len(blockIds) > 1 {
+	lk.log.Info("ledgerkeeper::getBlocks::GET BLOCKS RESULT", "Logid", msg.GetHeader().GetLogid(), "From", msg.GetHeader(), "LEN", len(blocks))
+	if len(blocks) == 0 {
 		// 目标节点完全未找到任何block
 		return nil, ErrTargetDataNotFound
 	}
-	blocks := blocksMsgBody.GetBlocksInfo()
 	peerSyncMap := map[string]*SimpleBlock{}
 	for _, block := range blocks {
 		blockId := global.F(block.GetBlockid())
@@ -577,7 +586,7 @@ func (lk *LedgerKeeper) getBlocks(ctx context.Context, targetPeer string, blockI
 			logid:         msg.GetHeader().GetLogid() + "_" + msg.GetHeader().GetFrom(),
 		}
 	}
-	if len(blocksMsgBody.GetBlocksInfo()) < len(blockIds) {
+	if len(blocks) < len(blockIds) {
 		// 目标节点并未在其本地找到所有需要的区块，需给上层返回缺失提醒
 		return peerSyncMap, ErrTargetDataNotEnough
 	}
