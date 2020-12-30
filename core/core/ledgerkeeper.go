@@ -354,6 +354,9 @@ func (lk *LedgerKeeper) getPeerBlockIds(beginBlockId []byte, length int64, targe
 			response = msg
 		}
 	}
+	if response == nil {
+		return false, nil, ErrTargetPeerInvalid
+	}
 	headerMsgBody := &pb.GetBlockIdsResponse{}
 	err = proto.Unmarshal(response.GetData().GetMsgInfo(), headerMsgBody)
 	if err != nil {
@@ -547,6 +550,9 @@ func (lk *LedgerKeeper) getBlocks(ctx context.Context, targetPeer string, blockI
 		if msg.GetHeader().GetBcname() == lk.bcName {
 			response = msg
 		}
+	}
+	if response == nil {
+		return nil, ErrInternal
 	}
 	blocksMsgBody := &pb.GetBlocksResponse{}
 	err = proto.Unmarshal(response.GetData().GetMsgInfo(), blocksMsgBody)
