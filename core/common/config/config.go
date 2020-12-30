@@ -37,6 +37,7 @@ const (
 	DefaultP2PModuleName         = "p2pv2"
 	DefaultServiceName           = ""
 	DefaultIsBroadCast           = true
+	DefaultSyncSize              = 50
 )
 
 // LogConfig is the log config of node
@@ -384,7 +385,7 @@ func (nc *NodeConfig) defaultNodeConfig() {
 		Keypath: "./data/keys",
 	}
 	nc.LedgerKeeper = LedgerKeeperConfig{
-		SyncSize: 100,
+		SyncSize: DefaultSyncSize,
 	}
 	nc.PluginConfPath = "./conf/plugins.conf"
 	nc.PluginLoadPath = "./plugins/autoload/"

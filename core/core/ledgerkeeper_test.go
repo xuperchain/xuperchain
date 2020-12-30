@@ -335,8 +335,8 @@ func TestGetValidPeersNumber(t *testing.T) {
 	targetSyncBlocksPeers.Store("NodeA", true)
 	targetSyncBlocksPeers.Store("NodeB", true)
 	targetSyncBlocksPeers.Store("NodeC", false)
-	number := getValidPeersNumber(targetSyncBlocksPeers)
-	if number == 0 {
+	number := getValidPeers(targetSyncBlocksPeers)
+	if len(number) == 0 {
 		t.Error("getValidPeersNumber test ZERO error")
 	}
 }
