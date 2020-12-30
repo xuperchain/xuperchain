@@ -348,8 +348,12 @@ func (lk *LedgerKeeper) getPeerBlockIds(beginBlockId []byte, length int64, targe
 		lk.log.Warn("ledgerkeeper::getPeerBlockIds::Sync Headers P2P Error: local error or target error", "Logid", msg.GetHeader().GetLogid(), "Error", err)
 		return true, nil, ErrInternal
 	}
-
-	response := res[0]
+	var response *xuper_p2p.XuperMessage
+	for _, msg := range res {
+		if msg.GetHeader().GetBcname() == lk.bcName {
+			response = msg
+		}
+	}
 	headerMsgBody := &pb.GetBlockIdsResponse{}
 	err = proto.Unmarshal(response.GetData().GetMsgInfo(), headerMsgBody)
 	if err != nil {
@@ -362,7 +366,7 @@ func (lk *LedgerKeeper) getPeerBlockIds(beginBlockId []byte, length int64, targe
 	for _, id := range blockIds {
 		printStr = append(printStr, global.F(id))
 	}
-	lk.log.Info("ledgerkeeper::getPeerBlockIds::GET_BLOCKIDS RESULT", "HEADERS", printStr, "TIP", global.F(tip), "FROM", response.GetHeader().From)
+	lk.log.Info("ledgerkeeper::getPeerBlockIds::GET_BLOCKIDS RESULT", "HEADERS", printStr, "TIP", global.F(tip), "FROM", response.GetHeader())
 
 	// 空值，包含连接错误
 	if len(blockIds) == 0 && tip == nil {
@@ -465,7 +469,7 @@ func (lk *LedgerKeeper) parallelDownload(ctx context.Context, peersTask map[stri
 				return
 			}
 			if err != nil {
-				lk.log.Warn("ledgerkeeper::downloadPeerBlocks::peerBlockDownloadTask error", "error", err)
+				lk.log.Debug("ledgerkeeper::downloadPeerBlocks::peerBlockDownloadTask error", "error", err)
 				return
 			}
 		}(peer, headers)
@@ -538,8 +542,12 @@ func (lk *LedgerKeeper) getBlocks(ctx context.Context, targetPeer string, blockI
 		lk.log.Warn("ledgerkeeper::getBlocks::Sync GetBlocks P2P Error, local error or target error", "Logid", msg.GetHeader().GetLogid(), "Error", err)
 		return nil, ErrInternal
 	}
-
-	response := res[0]
+	var response *xuper_p2p.XuperMessage
+	for _, msg := range res {
+		if msg.GetHeader().GetBcname() == lk.bcName {
+			response = msg
+		}
+	}
 	blocksMsgBody := &pb.GetBlocksResponse{}
 	err = proto.Unmarshal(response.GetData().GetMsgInfo(), blocksMsgBody)
 	if err != nil {
@@ -583,19 +591,24 @@ func (lk *LedgerKeeper) handleGetBlockIds(ctx context.Context, msg *xuper_p2p.Xu
 	timer := global.NewXTimer()
 	lk.log.Debug("ledgerkeeper::handleGetBlockIds::handleGetBlockIds begin", "Logid", msg.GetHeader().GetLogid(), "handle cost", timer.Print())
 	bc := msg.GetHeader().GetBcname()
+	errorRes, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, bc, msg.GetHeader().GetLogid(),
+		xuper_p2p.XuperMessage_GET_BLOCKIDS_RES, []byte("unknown"), xuper_p2p.XuperMessage_UNKNOW_ERROR)
+	if bc != lk.bcName {
+		return errorRes, nil
+	}
 	if !p2p_base.VerifyDataCheckSum(msg) {
 		lk.log.Error("ledgerkeeper::handleGetBlockIds::verify msg error")
-		return nil, ErrInvalidMsg
+		return errorRes, ErrInvalidMsg
 	}
 	bodyBytes := msg.GetData().GetMsgInfo()
 	body := &pb.GetBlockIdsRequest{}
 	if err := proto.Unmarshal(bodyBytes, body); err != nil {
-		return nil, ErrUnmarshal
+		return errorRes, ErrUnmarshal
 	}
 	headersCount := body.GetCount()
 	if headersCount <= 0 {
 		lk.log.Warn("ledgerkeeper::handleGetBlockIds::Invalid headersCount, no service provided", "headersCount", headersCount)
-		return nil, ErrInvalidMsg
+		return errorRes, ErrInvalidMsg
 	}
 	tipB := lk.ledger.GetMeta()
 	localTip := tipB.GetTipBlockid()
@@ -605,11 +618,11 @@ func (lk *LedgerKeeper) handleGetBlockIds(ctx context.Context, msg *xuper_p2p.Xu
 	}
 	nilBuf, err := proto.Marshal(nilHeaders)
 	if err != nil {
-		return nil, ErrUnmarshal
+		return errorRes, ErrUnmarshal
 	}
 	nilRes, err := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, bc, msg.GetHeader().GetLogid(), xuper_p2p.XuperMessage_GET_BLOCKIDS_RES, nilBuf, xuper_p2p.XuperMessage_NONE)
 	if err != nil {
-		return nil, ErrInternal
+		return errorRes, ErrInternal
 	}
 	headerBlockId := body.GetBlockId()
 	resultHeaders := &pb.GetBlockIdsResponse{
@@ -629,7 +642,7 @@ func (lk *LedgerKeeper) handleGetBlockIds(ctx context.Context, msg *xuper_p2p.Xu
 	// 对方tipId不在本地账本
 	headerBlock, err = lk.ledger.QueryBlockHeader(headerBlockId)
 	if err != nil {
-		lk.log.Warn("ledgerkeeper::handleGetBlockIds::not found blockId", "Logid", msg.GetHeader().GetLogid(), "handle cost", timer.Print(), "BEGIN HEADER", global.F(headerBlockId), "error", err, "headerBlockId", global.F(headerBlockId))
+		lk.log.Debug("ledgerkeeper::handleGetBlockIds::not found blockId", "Logid", msg.GetHeader().GetLogid(), "handle cost", timer.Print(), "BEGIN HEADER", global.F(headerBlockId), "error", err, "headerBlockId", global.F(headerBlockId))
 		return nilRes, nil
 	}
 	// 对方tipId不在主干
@@ -686,13 +699,18 @@ func (lk *LedgerKeeper) handleGetBlocks(ctx context.Context, msg *xuper_p2p.Xupe
 	timer := global.NewXTimer()
 	lk.log.Debug("ledgerkeeper::handleGetBlocks::handleGetBlocks begin", "Logid", msg.GetHeader().GetLogid(), "handle cost", timer.Print())
 	bc := msg.GetHeader().GetBcname()
+	errorRes, _ := p2p_base.NewXuperMessage(p2p_base.XuperMsgVersion2, bc, msg.GetHeader().GetLogid(),
+		xuper_p2p.XuperMessage_GET_BLOCKIDS_RES, []byte("unknown"), xuper_p2p.XuperMessage_UNKNOW_ERROR)
+	if bc != lk.bcName {
+		return errorRes, nil
+	}
 	if !p2p_base.VerifyDataCheckSum(msg) {
-		return nil, ErrInvalidMsg
+		return errorRes, ErrInvalidMsg
 	}
 	bodyBytes := msg.GetData().GetMsgInfo()
 	body := &pb.GetBlocksRequest{}
 	if err := proto.Unmarshal(bodyBytes, body); err != nil {
-		return nil, ErrUnmarshal
+		return errorRes, ErrUnmarshal
 	}
 	resultBlocks := []*pb.InternalBlock{}
 	var printStr []string

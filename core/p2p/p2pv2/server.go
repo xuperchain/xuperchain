@@ -163,7 +163,7 @@ func (p *P2PServerV2) SendMessageWithResponse(ctx context.Context, msg *p2pPb.Xu
 		peersRes = peers.([]peer.ID)
 	}
 	percentage := msgOpts.Percentage
-	p.log.Trace("Server SendMessage with response", "logid", msg.GetHeader().GetLogid(), "bcname", msg.GetHeader().GetBcname,
+	p.log.Trace("Server SendMessage with response", "logid", msg.GetHeader().GetLogid(), "bcname", msg.GetHeader().GetBcname(),
 		"msgType", msg.GetHeader().GetType(), "checksum", msg.GetHeader().GetDataCheckSum(), "peers", peersRes)
 
 	if p.enableMetric {
