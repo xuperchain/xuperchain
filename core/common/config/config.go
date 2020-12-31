@@ -37,7 +37,7 @@ const (
 	DefaultP2PModuleName         = "p2pv2"
 	DefaultServiceName           = ""
 	DefaultIsBroadCast           = true
-	DefaultSyncSize              = 50
+	DefaultSyncSize              = 10
 )
 
 // LogConfig is the log config of node
