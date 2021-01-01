@@ -55,11 +55,11 @@ func newBuildCommand() *cobra.Command {
 			return c.build(args)
 		},
 	}
-	cmd.Flags().BoolVarP(&c.makeFileOnly, "makefile", "m", false, "generate makefile and exits")
+	cmd.Flags().BoolVarP(&c.makeFileOnly, "makefile", "m", false, "generate makefile and exit")
 	cmd.Flags().BoolVarP(&c.genCompileCommand, "compile_command", "p", false, "generate compile_commands.json for IDE")
 	cmd.Flags().StringVarP(&c.output, "output", "o", "", "output file name")
 	cmd.Flags().StringVarP(&c.compiler, "compiler", "", "docker", "compiler env docker|host")
-	cmd.Flags().StringVarP(&c.makeFlags, "mkflags", "", "", "extra flags passing to make command")
+	cmd.Flags().StringVarP(&c.makeFlags, "mkflags", "", "", "extra flags passing to make command") // TODO better choise 
 	return cmd
 }
 

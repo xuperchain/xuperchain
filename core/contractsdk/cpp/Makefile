@@ -7,4 +7,7 @@ build:
 	./build.sh
 
 test:
-	xdev test	
+	xdev test
+
+clean:
+	rm -rf build

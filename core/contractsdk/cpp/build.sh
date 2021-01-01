@@ -36,4 +36,3 @@ for elem in `ls example`; do
     fi
     echo 
 done
-

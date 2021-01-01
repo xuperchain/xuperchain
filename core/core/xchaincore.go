@@ -187,7 +187,7 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	// 暂时可以不改
 	keypath := cfg.Miner.Keypath
 
-	// this.address = utils.GetAddressFromPublicKey(1, this.publicKey)
+	// this.address = utils1.GetAddressFromPublicKey(1, this.publicKey)
 	addr, pub, pri, err := account.GetAccInfoFromFile(keypath)
 	if err != nil {
 		xlog.Warn("load address and publickey and privatekey error", "path", keypath+"/address")

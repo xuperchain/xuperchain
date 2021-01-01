@@ -271,7 +271,7 @@ func RetrieveAccountByMnemonic(mnemonic string, language int) (*account.ECDSAAcc
 	}
 
 	// 通过随机数种子来生成椭圆曲线加密的私钥
-	//	privateKey, err := utils.GenerateKeyBySeed(elliptic.P256(), seed)
+	//	privateKey, err := utils1.GenerateKeyBySeed(elliptic.P256(), seed)
 	privateKey, err := utils.GenerateKeyBySeed(curve, seed)
 
 	if err != nil {
@@ -368,7 +368,7 @@ func GenerateAccountByMnemonic(mnemonic string, language int) (*account.ECDSAAcc
 	}
 
 	// 通过随机数种子来生成椭圆曲线加密的私钥
-	//	privateKey, err := utils.GenerateKeyBySeed(elliptic.P256(), seed)
+	//	privateKey, err := utils1.GenerateKeyBySeed(elliptic.P256(), seed)
 	privateKey, err := utils.GenerateKeyBySeed(curve, seed)
 
 	if err != nil {

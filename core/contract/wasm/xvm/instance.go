@@ -109,12 +109,13 @@ func (x *xvmInstance) InitDebugWriter(syscall *bridge.SyscallService) {
 }
 
 func (x *xvmInstance) guessEntry() (string, error) {
-	switch x.desc.GetRuntime() {
+	runtime := x.desc.GetRuntime()
+	switch runtime {
 	case "go":
 		return "run", nil
 	case "c":
 		return "_" + x.bridgeCtx.Method, nil
 	default:
-		return "", errors.New("bad runtime")
+		return "", errors.New("runtime must be either go or c")
 	}
 }

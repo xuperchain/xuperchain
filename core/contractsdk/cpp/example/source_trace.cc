@@ -87,7 +87,7 @@ public:
         std::string goodsKey =  GOODS + id;
         std::string value;
         if (ctx->get_object(goodsKey, &value)) {
-            ctx->error("the id is already exist, please check again");
+            ctx->error("the id already exist, please check again");
             return;
         }
         ctx->put_object(goodsKey, desc);

@@ -3,6 +3,7 @@ package xchain
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 
@@ -61,6 +62,10 @@ func newEnvironment() (*environment, error) {
 	}, nil
 }
 
+type OptionArgs struct {
+	Account string `json:"account"`
+	Amount  string `json:"amount"`
+}
 type deployArgs struct {
 	Name     string                 `json:"name"`
 	Code     string                 `json:"code"`
@@ -68,6 +73,7 @@ type deployArgs struct {
 	InitArgs map[string]interface{} `json:"init_args"`
 	Type     string                 `json:"type"`
 	ABIFile  string                 `json:"abi"`
+	Options  OptionArgs             `json:"options"`
 
 	trueArgs map[string][]byte
 	codeBuf  []byte
@@ -105,6 +111,7 @@ func (e *environment) Deploy(args deployArgs) (*ContractResponse, error) {
 		XMCache:        xcache,
 		ResourceLimits: contract.MaxLimits,
 		Core:           new(chainCore),
+		Initiator:      args.Options.Account,
 	}, dargs)
 	if err != nil {
 		return nil, err
@@ -114,6 +121,7 @@ func (e *environment) Deploy(args deployArgs) (*ContractResponse, error) {
 	if err != nil {
 		return nil, err
 	}
+	fmt.Printf("deploy body:%s,message:%s \n", string(resp.Body), resp.Message)
 	return newContractResponse(resp), nil
 }
 
@@ -154,7 +162,6 @@ func (e *environment) Invoke(name string, args invokeArgs) (*ContractResponse, e
 	if !ok {
 		return nil, errors.New("vm not found")
 	}
-
 	xcache := e.model.NewCache()
 
 	ctx, err := vm.NewContext(&contract.ContextConfig{
@@ -183,7 +190,7 @@ func (e *environment) Invoke(name string, args invokeArgs) (*ContractResponse, e
 	if err != nil {
 		return nil, err
 	}
-
+	fmt.Println("invoke body:", string(resp.Body), "message ", string(resp.Message))
 	return newContractResponse(resp), nil
 }
 

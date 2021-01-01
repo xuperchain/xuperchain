@@ -36,7 +36,8 @@ public:
         const std::string userKey = UserBucket + "/" + user_id + "/" + topic + "/" + title;
         if (topic.length() > TOPIC_LENGTH_LIMIT || title.length() > TITLE_LENGTH_LIMIT ||
             content.length() > CONTENT_LENGTH_LIMIT) {
-            ctx->error("The length of topic or title or content is more than limitation");
+            const std::string userKey = UserBucket + "/" + user_id + "/" + topic + "/" + title;
+                   ctx->error("The length of topic or title or content is more than limitation");
             return;
         }
         if (ctx->put_object(userKey, content)) {

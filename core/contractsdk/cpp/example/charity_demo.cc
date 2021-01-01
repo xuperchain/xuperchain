@@ -59,6 +59,7 @@ private:
     const std::string USERDONATE = "UserDonate_";
     const std::string ALLDONATE = "AllDonate_";
     const std::string ALLCOST = "AllCost_";
+//    why?
     const std::string TOTALRECEIVED = "TotalDonates";
     const std::string TOTALCOSTS = "TotalCosts";
     const std::string BALANCE = "Balance";
@@ -101,7 +102,7 @@ private:
 public:
     void initialize() {
         xchain::Context* ctx = this->context();
-        const std::string& admin = ctx->arg(ADMIN);
+        const std::string& admin = ctx->arg(ADMIN); // TODO 这里不ok
         if (admin.empty()) {
             ctx->error("missing admin address");
             return;
@@ -124,7 +125,7 @@ public:
         }
 
         if (!isAdmin(ctx, caller)) {
-            ctx->error("only the admin can add donate record");
+            ctx->error("only admin can add donate record");
             return;
         }
 
@@ -180,7 +181,7 @@ public:
 
         std::string donateID = getIDFromNum(donateCnt);
 
-        std::string userDonateKey = USERDONATE + donor + "%" + donateID;
+        std::string userDonateKey = USERDONATE + donor + "%" + donateID;  // TODO 为什么是 %
         std::string allDonateKey = ALLDONATE + donateID;
         std::string donateDetail =
             "donor=" + donor + "," + "amount=" + amountStr + ", " +
@@ -205,7 +206,7 @@ public:
         }
 
         if (!isAdmin(ctx, caller)) {
-            ctx->error("only the admin can add cost record");
+            ctx->error("only  admin can add cost record");
             return;
         }
 
@@ -358,7 +359,7 @@ public:
                 selected++;
                 std::string donateID = res.first.substr(ALLDONATE.length());
                 std::string content = res.second;
-                result += "id=" + donateID + ", " + content + '\n';
+                result += "id=" + donateID + ", " + content + '\n'; // TODO
             }
         }
         ctx->ok(result);

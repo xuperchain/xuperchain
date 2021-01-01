@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strconv"
+	"strings"
 )
 
 const Version = "2.0"
@@ -67,7 +68,7 @@ func CompileNativeLibrary(cfg *Config, target, source string) error {
 	if err != nil {
 		return err
 	}
-	defer os.RemoveAll(tmpdir)
+	//defer os.RemoveAll(tmpdir)
 
 	csource := filepath.Join(tmpdir, "wasm.c")
 	err = CompileCSource(cfg, csource, source)
@@ -90,6 +91,7 @@ func CompileNativeLibrary(cfg *Config, target, source string) error {
 		csource,
 		"-lm",
 	)
+	fmt.Printf("cc command is: %s %s", cmd.Path, strings.Join(cmd.Args, " "))
 	cmd.Stderr = stderr
 	err = cmd.Run()
 	if err != nil {

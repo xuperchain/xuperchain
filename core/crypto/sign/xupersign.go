@@ -48,7 +48,7 @@ func XuperSign(k *ecdsa.PrivateKey, msg []byte) (signature []byte, err error) {
 
 // XuperVerify verify message's signature using public key for all kinds of signature
 func XuperVerify(k *ecdsa.PublicKey, sig, msg []byte) (valid bool, err error) {
-	//	r, s, err := utils.UnmarshalECDSASignature(signature)
+	//	r, s, err := utils1.UnmarshalECDSASignature(signature)
 	signature := new(common.ECDSASignature)
 	err = json.Unmarshal(sig, signature)
 	if err != nil {

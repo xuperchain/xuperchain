@@ -2,7 +2,7 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package utils file implements the Elliptic Curve Digital Signature Algorithm, as
+// Package utils1 file implements the Elliptic Curve Digital Signature Algorithm, as
 // defined in FIPS 186-3.
 //
 // This implementation  derives the nonce from an AES-CTR CSPRNG keyed by

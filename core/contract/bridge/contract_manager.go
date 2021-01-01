@@ -93,7 +93,7 @@ func (c *contractManager) DeployContract(contextConfig *contract.ContextConfig, 
 		if _, ok := err.(*ContractError); !ok {
 			creator.RemoveCache(contractName)
 		}
-		log.Error("call contract initialize method error", "error", err, "contract", contractName)
+		fmt.Println("call contract initialize method error", "error", err.Error(), "contract", contractName)
 		return nil, contract.Limits{}, err
 	}
 	return out, resourceUsed, nil

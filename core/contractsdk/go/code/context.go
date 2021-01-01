@@ -28,7 +28,11 @@ type Context interface {
 	EmitJSONEvent(name string, body interface{}) error
 
 	Logf(fmt string, args ...interface{})
+
+	//Read(interface{}) error // 从链上读数据
+	//Write(interface{}) error // 把数据写到链上
 }
+
 
 // Iterator iterates over key/value pairs in key order
 type Iterator interface {

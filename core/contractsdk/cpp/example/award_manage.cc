@@ -168,6 +168,7 @@ public:
             ctx->error("key not found");
         }
     }
+
     void allowance() {
         xchain::Context* ctx = this->context();
         const std::string& from = ctx->arg("from");
@@ -389,7 +390,7 @@ public:
         snprintf(buf, 32, "%d", allowance_balance);
         ctx->put_object(allowance_key, buf);
 
-        ctx->ok("approve success");
+        ctx->ok("approve succeed");
     }
 };
 

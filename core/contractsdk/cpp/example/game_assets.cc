@@ -96,7 +96,7 @@ public:
         std::string assetTypeKey = ASSETTYPE + typeId;
         std::string value;
         if (ctx->get_object(assetTypeKey, &value)) {
-            ctx->error("the typeid is already exist, please check again");
+            ctx->error("typeid does already exist");
             return;
         }
         ctx->put_object(assetTypeKey, typeDesc);
@@ -111,7 +111,7 @@ public:
         while (iter->next()) {
             std::pair<std::string, std::string> res;
             iter->get(&res);
-            if (res.first.length() > ASSETTYPE.length()) {
+            if (res.first.length() > ASSETTYPE.length()) { // TODO why check
                 result += res.first.substr(ASSETTYPE.length()) + ":" +
                           res.second + '\n';
             }
@@ -223,6 +223,7 @@ public:
             ctx->error("missing assetid");
             return;
         }
+
         std::string userAssetKey = USERASSET + from + "_" + assetId;
         std::string assetType;
         if (!ctx->get_object(userAssetKey, &assetType)) {

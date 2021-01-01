@@ -1,4 +1,4 @@
-// Package utils defines some crypto/signature utilities
+// Package utils1 defines some crypto/signature utilities
 package utils
 
 import (

@@ -76,11 +76,11 @@ wasm:
 # evm合约配置
 evm:
   driver: "evm"
-  enable: false
+  enable: true
 
 # 管理native合约的配置
 native:
-  enable: false
+  enable: true
 
   # docker相关配置
   docker:

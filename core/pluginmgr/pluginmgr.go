@@ -6,6 +6,7 @@ package pluginmgr
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"os"
 	"path"
 	"path/filepath"
@@ -116,7 +117,7 @@ func (pm *PluginMgr) loadOnePlugin(name string, subtype string) (pi interface{},
 	pg, err := plugin.Open(pluginPath)
 	if err != nil {
 		pm.xlog.Warn("Warn: plugin open failed!", "pluginname", name, "err", err)
-		err = errors.New("plugin open failed")
+		err = fmt.Errorf("plugin open failed,path:%s,error:%s", pluginPath, err.Error())
 		return
 	}
 

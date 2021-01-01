@@ -1,0 +1,6 @@
+[package]
+name = "main"
+
+[[dependencies]]
+name = "luck_draw"
+modules = ["xchain/xrc01"]

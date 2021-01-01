@@ -81,6 +81,7 @@ func (xk *XuperKernel) NewContext(ctxCfg *contract.ContextConfig) (contract.Cont
 // Invoke entrance for kernel contract method invoke
 func (kc *KContext) Invoke(methodName string, args map[string][]byte) (*contract.Response, error) {
 	method := kc.xk.methods[methodName]
+	fmt.Printf("start kernel invoke,methodName: %s\n", methodName)
 	if method == nil {
 		return nil, fmt.Errorf("Mehotd %s not exists in %s", methodName, ModuleName)
 	}

@@ -1,0 +1,78 @@
+package com.baidu.xuper;
+
+import java.util.Iterator;
+
+/**
+ * Counter
+ */
+public class HashDeposit implements Contract {
+    final String USER_BUCKET = "USER";
+    final String HASH_BUCKET = "HASH";
+
+    @Override
+    @ContractMethod
+    public Response initialize(Context ctx) {
+        return Response.ok("ok".getBytes());
+    }
+
+    @ContractMethod
+    public Response storeFileInfo(Context ctx) {
+        String user_id = new String(ctx.args().get("user_id"));
+        String hash_id = new String(ctx.args().get("hash_id"));
+        String file_name = new String(ctx.args().get("file_name"));
+        String userKey = USER_BUCKET + "/" + user_id + hash_id;
+        String hashKey = HASH_BUCKET + "/" + hash_id;
+        String value = user_id + "\t" + "\t" + file_name;
+        if (ctx.getObject(hashKey.getBytes()).length > 0) {
+            return Response.error("hash id" + hash_id + "already exists");
+        }
+        ctx.putObject(userKey.getBytes(), value.getBytes());
+        ctx.putObject(hashKey.getBytes(), value.getBytes());
+        return Response.ok("".getBytes());
+    }
+
+    @ContractMethod
+    public Response queryUserList(Context ctx) {
+        String key = USER_BUCKET + "/";
+        String start = key;
+        String end = key + "~";
+        Iterator<ContractIteratorItem> iter = ctx.newIterator(start.getBytes(), end.getBytes());
+        StringBuffer buf = new StringBuffer();
+        iter.forEachRemaining(
+                item -> {
+                    buf.append(new String(item.getValue()));
+                }
+        );
+        return Response.ok(buf.toString().getBytes());
+    }
+
+    ;
+
+    @ContractMethod
+    public Response queryFileInfoByUser(Context ctx) {
+        String key = USER_BUCKET + "/" + new String(ctx.args().get("user_id"));
+        String start = key;
+        String end = start + "~";
+        StringBuffer buf = new StringBuffer();
+        ctx.newIterator(start.getBytes(), end.getBytes()).forEachRemaining(
+                item -> {
+                    buf.append(new String(item.getValue()) + "\n");
+                }
+        );
+        return Response.ok(buf.toString().getBytes());
+    }
+
+    @ContractMethod
+    public Response queryFileInfoByHash(Context ctx) {
+        String key = HASH_BUCKET + "/" + new String(ctx.args().get("hash_id"));
+        byte[] info = ctx.getObject(key.getBytes());
+        if (info.length == 0) {
+            return Response.error("file info not exists");
+        }
+        return Response.ok(info);
+    }
+
+    public static void main(String[] args) {
+        Driver.serve(new HashDeposit());
+    }
+}
