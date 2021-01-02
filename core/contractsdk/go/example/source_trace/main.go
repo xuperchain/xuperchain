@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
+	"math/big"
+	"strings"
+
 	"github.com/xuperchain/xuperchain/core/contractsdk/go/code"
 	"github.com/xuperchain/xuperchain/core/contractsdk/go/driver"
 	"github.com/xuperchain/xuperchain/core/contractsdk/go/utils"
-	"math/big"
-	"strings"
 )
 
 const (
@@ -22,7 +23,7 @@ type sourceTrace struct {
 
 func (st *sourceTrace) Initialize(ctx code.Context) code.Response {
 	args := struct {
-		Admin string `json:"admin",required:"true"`
+		Admin string `json:"admin" required:"true"`
 	}{}
 	if err := utils.Validate(ctx.Args(), &args); err != nil {
 		return code.Error(err)
@@ -31,7 +32,7 @@ func (st *sourceTrace) Initialize(ctx code.Context) code.Response {
 		return code.Error(err)
 	}
 
-	return code.OK(nil)
+	return code.OK([]byte("ok"))
 }
 
 func (st *sourceTrace) CreateGoods(ctx code.Context) code.Response {
@@ -49,16 +50,16 @@ func (st *sourceTrace) CreateGoods(ctx code.Context) code.Response {
 		return code.Error(utils.ErrPermissionDenied)
 	}
 	args := struct {
-		Id   string `json:"id",required:"true''"`
-		Desc string `json:"desc",required:"desc"`
+		Id   string `json:"id" required:"true''"`
+		Desc string `json:"desc" required:"desc"`
 	}{}
 	if err := utils.Validate(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 	goodsKey := GOODS + args.Id
 
-	if _, err := ctx.GetObject([]byte(goodsKey)); err != nil {
-		return code.Error(fmt.Errorf("goods type %s aleready exists", goodsKey))
+	if _, err := ctx.GetObject([]byte(goodsKey)); err == nil {
+		return code.Error(fmt.Errorf("goods type %s aleready exists", goodsKey[len(GOODS):]))
 	}
 
 	if err := ctx.PutObject([]byte(goodsKey), []byte(args.Desc)); err != nil {
@@ -74,10 +75,11 @@ func (st *sourceTrace) CreateGoods(ctx code.Context) code.Response {
 	if err := ctx.PutObject([]byte(goodsRecordsTopKey), value); err != nil {
 		return code.Error(err)
 	}
-	return code.OK([]byte("ok~"))
+	return code.OK([]byte(args.Id))
+
 }
 
-func (st *sourceTrace) updateGoods(ctx code.Context) code.Response {
+func (st *sourceTrace) UpdateGoods(ctx code.Context) code.Response {
 	caller := ctx.Initiator()
 	if caller == "" {
 		return code.Error(utils.ErrMissingCaller)
@@ -92,8 +94,8 @@ func (st *sourceTrace) updateGoods(ctx code.Context) code.Response {
 		return code.Error(utils.ErrPermissionDenied)
 	}
 	args := struct {
-		Id     string `json:"id",required:"true"`
-		Reason string `json:"reason",required:"true"`
+		Id     string `json:"id" required:"true"`
+		Reason string `json:"reason" required:"true"`
 	}{}
 
 	if err := utils.Validate(ctx.Args(), &args); err != nil {
@@ -118,7 +120,7 @@ func (st *sourceTrace) updateGoods(ctx code.Context) code.Response {
 
 func (st *sourceTrace) QueryRecords(ctx code.Context) code.Response {
 	args := struct {
-		Id string `json:"id",required:"true"`
+		Id string `json:"id" required:"true"`
 	}{}
 	if err := utils.Validate(ctx.Args(), &args); err != nil {
 		return code.Error(err)

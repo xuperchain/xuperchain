@@ -1,0 +1,5 @@
+FROM xuperchain:dev
+COPY solidity .
+RUN  cd solidity && cmake -DCMAKE_BUILD_TYPE=Release -DTESTS=0 -DSTATIC_LINKING=1                             && \
+  cd solidity && make solc && install -s  solc/solc /usr/bin                                               && \
+  cd / && rm -rf solidity

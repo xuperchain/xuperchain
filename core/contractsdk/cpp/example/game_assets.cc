@@ -167,8 +167,8 @@ public:
         }
 
         if (!isAdmin(ctx, caller)) {
-            ctx->error("only the admin can add new asset type");
-            return;
+            ctx->error("only the admin can add asset");
+            return; 
         }
 
         const std::string& userId = ctx->arg("userid");

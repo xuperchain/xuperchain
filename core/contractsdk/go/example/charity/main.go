@@ -1,14 +1,14 @@
 package main
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
+	"math/big"
+	"strings"
+
 	"github.com/xuperchain/xuperchain/core/contractsdk/go/code"
 	"github.com/xuperchain/xuperchain/core/contractsdk/go/driver"
 	"github.com/xuperchain/xuperchain/core/contractsdk/go/utils"
-	"math/big"
-	"strings"
 )
 
 type charityDonation struct {
@@ -32,11 +32,13 @@ var (
 )
 
 func (cd *charityDonation) Initialize(ctx code.Context) code.Response {
-	admin, err := ctx.GetObject([]byte(ADMIN))
-	if err != nil { // 这里的err 什么情况，不存在会是err么？
+	args := &struct {
+		Admin string `json:"admin" required:"true"`
+	}{}
+	if err := utils.Validate(ctx.Args(), args); err != nil {
 		return code.Error(err)
 	}
-	if err := ctx.PutObject([]byte(ADMIN), admin); err != nil {
+	if err := ctx.PutObject([]byte(ADMIN), []byte(args.Admin)); err != nil {
 		return code.Error(err)
 	}
 	if err := ctx.PutObject([]byte(TOTAL_RECEIVED), []byte("0")); err != nil {
@@ -63,10 +65,10 @@ func (cd *charityDonation) Donate(ctx code.Context) code.Response {
 		return code.Error(err)
 	}
 	args := struct {
-		Donor     string     `json:"donor",required:"true"`
-		Amount    *big.Float `json:"amount",required:"true"`
-		Timestamp string     `json:"timestamp",required:"true"`
-		Comments  string     `json:"comments",required:"comment"`
+		Donor     string     `json:"donor" required:"true"`
+		Amount    *big.Float `json:"amount" required:"true"`
+		Timestamp string     `json:"timestamp" required:"true"`
+		Comments  string     `json:"comments" required:"comment"`
 	}{}
 	if err := utils.Validate(ctx.Args(), &args); err != nil {
 		return code.Error(err)
@@ -77,7 +79,7 @@ func (cd *charityDonation) Donate(ctx code.Context) code.Response {
 	}
 	donateCount, _ := big.NewFloat(0).SetString(string(donateCountByte)) // TODO
 	donateCount = donateCount.Add(donateCount, big.NewFloat(1))
-
+	// TODO 添加时间戳校验
 	totalReceivedByte, err := ctx.GetObject([]byte(TOTAL_RECEIVED))
 	if err != nil {
 		return code.Error(err)
@@ -93,10 +95,10 @@ func (cd *charityDonation) Donate(ctx code.Context) code.Response {
 
 	balance = balance.Add(balance, args.Amount)
 
-	donateID := fmt.Sprintf("%06d", 12) //TODO
-	userDonateKey := USER_DONATE + args.Donor + donateID
+	donateID := fmt.Sprintf("%020s", donateCount.String())
+	userDonateKey := USER_DONATE + args.Donor + "_" + donateID
 	allDonateKey := ALL_DONATE + donateID
-	donateDetail := fmt.Sprintf("donor=%s,amount=%s,timestamp=%s,commnets=%s", args.Donor, args.Amount, args.Timestamp, args.Comments)
+	donateDetail := fmt.Sprintf("donor=%s,amount=%s,timestamp=%s,commnets=%s", args.Donor, args.Amount.String(), args.Timestamp, args.Comments)
 
 	if err := ctx.PutObject([]byte(userDonateKey), []byte(donateDetail)); err != nil {
 		return code.Error(err)
@@ -122,10 +124,10 @@ func (cd *charityDonation) Cost(ctx code.Context) code.Response {
 		return code.Error(err)
 	}
 	args := struct {
-		To        string     `json:"to",required:"true"`
-		Amount    *big.Float `json:"amount",required:"true"`
-		Timestamp string     `json:"timestamp",required:"true"`
-		Comments  string     `json:"comments",required:"comment"`
+		To        string     `json:"to" required:"true"`
+		Amount    *big.Float `json:"amount" required:"true"`
+		Timestamp string     `json:"timestamp" required:"true"`
+		Comments  string     `json:"comments" required:"comment"`
 	}{}
 	if err := utils.Validate(ctx.Args(), &args); err != nil {
 		return code.Error(err)
@@ -147,18 +149,18 @@ func (cd *charityDonation) Cost(ctx code.Context) code.Response {
 	balance, _ := big.NewFloat(0).SetString(string(balanceByte))
 
 	if balance.Cmp(args.Amount) < 0 {
-
 		return code.Error(utils.ErrBalanceLow)
 	}
 
 	totalCost = totalCost.Add(totalCost, args.Amount)
 	balance = balance.Sub(balance, args.Amount)
-	costCount = costCount.Add(costCount, big.NewInt(0))
-	costId := "0" //TODO @fengjin
+	costCount = costCount.Add(costCount, big.NewInt(1))
+	costId := fmt.Sprintf("%020d", costCount.Int64())
 	allCostKey := ALL_COST + costId
 	costDetails := fmt.Sprintf(
 		"to=%s,amount=%s,timestamp=%s,comments=%s",
-		args.To, args.Amount.String(),
+		args.To,
+		args.Amount.String(),
 		args.Timestamp,
 		args.Comments)
 
@@ -179,7 +181,6 @@ func (cd *charityDonation) Cost(ctx code.Context) code.Response {
 }
 
 func (cd *charityDonation) Statistics(ctx code.Context) code.Response {
-	buf := bytes.NewBuffer([]byte{})
 	totalReceived, err := ctx.GetObject([]byte(TOTAL_RECEIVED))
 	if err != nil {
 		return code.Error(ErrLimitExceeded)
@@ -192,24 +193,26 @@ func (cd *charityDonation) Statistics(ctx code.Context) code.Response {
 	if err != nil {
 		return code.Error(err)
 	}
-	// TODO @chenfengjin buffer size limit
-	buf.WriteString("totalDonates=")
-	buf.Write(totalReceived)
-	buf.WriteString("totalCost=")
-	buf.Write(totalCost)
-	buf.WriteString("fundBalance=")
-	buf.Write(balance)
-	return code.OK(buf.Bytes())
+
+	builder := strings.Builder{}
+	builder.WriteString("totalDonates=")
+	builder.Write(totalReceived)
+	builder.WriteString(",totalCost=")
+	builder.Write(totalCost)
+	builder.WriteString(",fundBalance=")
+	builder.Write(balance)
+	return code.OK([]byte(builder.String()))
 }
 
-func (cd *charityDonation) QueryDoner(ctx code.Context) code.Response {
+func (cd *charityDonation) QueryDonor(ctx code.Context) code.Response {
 	args := struct {
-		Donar string `json:"donar",required:"true"`
+		Donar string `json:"donor" required:"true"`
 	}{}
 	if err := utils.Validate(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
-	start := USER_DONATE + args.Donar + "%"
+
+	start := USER_DONATE + args.Donar + "_"
 	end := start + "~"
 	iter := ctx.NewIterator([]byte(start), []byte(end))
 	donateCount := big.NewInt(0)
@@ -224,22 +227,27 @@ func (cd *charityDonation) QueryDoner(ctx code.Context) code.Response {
 		builder.Write(iter.Value())
 		builder.WriteString("\n")
 	}
+	if err := iter.Error(); err != nil {
+		return code.Error(err)
+	}
 	return code.OK([]byte("total donate count:" +
 		donateCount.String() + "\n" + builder.String()))
 }
 
 func (cd *charityDonation) QueryDonates(ctx code.Context) code.Response {
 	args := struct {
-		StartId string   `json:"startid",required:"true"`
-		Limit   *big.Int `json:"limit,"required:"true"`
+		Start string   `json:"start" required:"true" length:"20"`
+		Limit *big.Int `json:"limit" required:"true"`
 	}{}
+
 	if err := utils.Validate(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 	if args.Limit.Cmp(big.NewInt(MAX_LIMIT)) > 0 {
 		return code.Error(ErrLimitExceeded)
 	}
-	donateKey := ALL_DONATE + args.StartId
+	// startID 校验
+	donateKey := ALL_DONATE + args.Start
 	start := donateKey
 	end := donateKey + "~"
 	iter := ctx.NewIterator([]byte(start), []byte(end))
@@ -247,8 +255,7 @@ func (cd *charityDonation) QueryDonates(ctx code.Context) code.Response {
 	selected := int64(0)
 	builder := strings.Builder{}
 	for iter.Next() {
-
-		if selected < args.Limit.Int64() {
+		if selected >= args.Limit.Int64() { // TODO 边界
 			break
 		}
 		selected += 1
@@ -264,16 +271,17 @@ func (cd *charityDonation) QueryDonates(ctx code.Context) code.Response {
 
 func (cd *charityDonation) QueryCosts(ctx code.Context) code.Response {
 	args := struct {
-		StartId string  `json:"startid",required:"true"`
-		Limit   big.Int `json:"limit,"required:"true"`
+		Start string   `json:"start" required:"true"`
+		Limit *big.Int `json:"limit" required:"true"`
 	}{}
+
 	if err := utils.Validate(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
-	if args.Limit.Cmp(big.NewInt(MAX_LIMIT)) <= 0 { //TODO @fengjin
+	if args.Limit.Cmp(big.NewInt(MAX_LIMIT)) > 0 { //TODO @fengjin
 		return code.Error(ErrLimitExceeded)
 	}
-	costKey := ALL_COST + args.StartId
+	costKey := ALL_COST + args.Start
 	start := costKey
 	end := costKey + "~"
 	iter := ctx.NewIterator([]byte(start), []byte(end))
@@ -281,7 +289,7 @@ func (cd *charityDonation) QueryCosts(ctx code.Context) code.Response {
 	selected := int64(0)
 	builder := strings.Builder{}
 	for iter.Next() {
-		if selected > args.Limit.Int64() { // TODO 边界
+		if selected >= args.Limit.Int64() { // TODO 边界
 			break
 		}
 		selected += 1
@@ -303,7 +311,11 @@ func (cd *charityDonation) checkPermission(ctx code.Context) error {
 	if caller == "" {
 		return utils.ErrMissingCaller
 	}
-	if caller != ADMIN {
+	admin, err := ctx.GetObject([]byte(ADMIN))
+	if err != nil {
+		return err
+	}
+	if caller != string(admin) {
 		return utils.ErrPermissionDenied
 	}
 	return nil

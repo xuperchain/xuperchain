@@ -59,9 +59,10 @@ func Validate(data map[string][]byte, inStructPtr interface{}) error {
 			//ltStr, ok := t.Tag.Lookup("lt")
 			//gtStr, ok := t.Tag.Lookup(("gt"))
 			//leStr, ok := t.Tag.Lookup("le")
+			// length, ok = t.Tag.Lookup("length")
 			//geStr, ok := t.Tag.Lookup("ge")
 		}
-		if !found && t.Tag.Get("required") != "false" {
+		if !found && t.Tag.Get("reired") != "false" {
 			if f.IsZero() {
 				return fmt.Errorf("missing %s", t.Tag.Get("json"))
 			}

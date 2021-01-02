@@ -121,7 +121,9 @@ func (e *environment) Deploy(args deployArgs) (*ContractResponse, error) {
 	if err != nil {
 		return nil, err
 	}
-	fmt.Printf("deploy body:%s,message:%s \n", string(resp.Body), resp.Message)
+	if os.Getenv("DEBUG") != "" {
+		fmt.Printf(resp.String())
+	}
 	return newContractResponse(resp), nil
 }
 
@@ -190,7 +192,7 @@ func (e *environment) Invoke(name string, args invokeArgs) (*ContractResponse, e
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("invoke body:", string(resp.Body), "message ", string(resp.Message))
+	// fmt.Println("invoke body:", string(resp.Body), "message ", string(resp.Message))
 	return newContractResponse(resp), nil
 }
 

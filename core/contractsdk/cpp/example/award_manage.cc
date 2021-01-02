@@ -75,7 +75,7 @@ public:
             return;
         }
         if (atoi(totalSupply.c_str()) <= 0) {
-            ctx->error("totalSupply is overflow");
+            ctx->error("totalSupply overflow");
             return;
         }
 

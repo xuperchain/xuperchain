@@ -2,11 +2,12 @@ package main
 
 import (
 	"errors"
+	"math/big"
+	"math/rand"
+
 	"github.com/xuperchain/xuperchain/core/contractsdk/go/code"
 	"github.com/xuperchain/xuperchain/core/contractsdk/go/driver"
 	"github.com/xuperchain/xuperchain/core/contractsdk/go/utils"
-	"math/big"
-	"math/rand"
 )
 
 const (
@@ -30,7 +31,7 @@ func (ld *luckDraw) Initialize(ctx code.Context) code.Response {
 	if err := ctx.PutObject([]byte(ADMIN), []byte(args.Admin)); err != nil {
 		return code.Error(err)
 	}
-	err := ctx.PutObject([]byte("tickets"), []byte("0"))
+	err := ctx.PutObject([]byte(TICKETS), []byte("0"))
 	if err != nil {
 		return code.Error(err)
 	}

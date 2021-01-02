@@ -102,7 +102,7 @@ private:
 public:
     void initialize() {
         xchain::Context* ctx = this->context();
-        const std::string& admin = ctx->arg(ADMIN); // TODO 这里不ok
+        const std::string& admin = ctx->arg(ADMIN);
         if (admin.empty()) {
             ctx->error("missing admin address");
             return;
