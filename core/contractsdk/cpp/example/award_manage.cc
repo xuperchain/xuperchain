@@ -284,7 +284,7 @@ public:
         }
         int token = atoi(token_str.c_str());
         if (token <= 0) {
-            ctx->error("token is overflow");
+            ctx->error("token overflow");
             return;
         }
 
@@ -337,7 +337,7 @@ public:
     }
     void approve() {
         xchain::Context* ctx = this->context();
-        const std::string& from = ctx->arg("from");
+        const std::string& from = ctx->initiator();
         if (from.empty()) {
             ctx->error("missing from");
             return;
@@ -361,19 +361,13 @@ public:
         }
         int token = atoi(token_str.c_str());
         if (token <= 0) {
-            ctx->error("token is overflow");
+            ctx->error("token overflow");
             return;
         }
 
         std::string from_key = BALANCEPRE + from;
         std::string value;
-        if (ctx->get_object(from_key, &value)) {
-            int from_balance = atoi(value.c_str()); 
-            if (from_balance < token) {
-                ctx->error("The balance of from not enough");
-                return;
-            }  
-        } else {
+        if (!(ctx->get_object(from_key, &value))) {
             ctx->error("From no balance");
             return;
         }

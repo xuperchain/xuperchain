@@ -1,12 +1,15 @@
 var assert = require("assert");
 
 var codePath = "../wasm/award_manage.wasm";
+var lang ="go"
+var type="wasm"
 
 function deploy(totalSupply) {
     return xchain.Deploy({
         name: "award_manage",
         code: codePath,
-        lang: "go",
+        lang: lang,
+        type: type,
         init_args: {"totalSupply":totalSupply},
         options:{"account":"xchain"}
     });
@@ -70,6 +73,8 @@ function TransferFrom(t){
     resp = c.Invoke("TransferFrom",{"from":"xchain","token":"300"},{"account":"user2"})
     assert.equal(resp.Message,"allowance balance not enough")
 }
+
+
 Test("AddAward",AddAward)
 Test("Balance",Balance)
 Test("Transfer",Transfer)

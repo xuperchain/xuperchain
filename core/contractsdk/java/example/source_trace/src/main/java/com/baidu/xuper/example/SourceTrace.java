@@ -113,6 +113,5 @@ public class SourceTrace implements Contract {
 
     public static void main(String[] args) {
         Driver.serve(new SourceTrace());
-        System.out.println(BigDecimal.ZERO.toPlainString().getBytes() == "0".getBytes());
     }
 }

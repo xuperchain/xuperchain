@@ -4,10 +4,10 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.baidu.xuper</groupId>
-  <artifactId>counter</artifactId>
+  <artifactId>luck_draw</artifactId>
   <version>0.1.0</version>
 
-  <name>counter</name>
+  <name>luck_draw</name>
   <url>https://xuper.baidu.com</url>
 
   <properties>
@@ -84,7 +84,7 @@
         <configuration>
           <archive>
             <manifest>
-              <mainClass>com.baidu.xuper.luckydraw</mainClass>
+              <mainClass>com.baidu.xuper.LuckDraw</mainClass>
             </manifest>
           </archive>
           <descriptorRefs>

@@ -7,7 +7,7 @@ export GOFLAGS=-mod=vendor
 XCHAIN_ROOT := ${PWD}/core
 export XCHAIN_ROOT
 PATH := ${PWD}/core/xvm/compile/wabt/build:$(PATH)
-
+#  生成所有需要的文件并且
 build:contractsdk
 	./core/scripts/build.sh
 	make -C core/xvm/compile/wabt -j 8 &&cp core/xvm/compile/wabt/build/wasm2c ./
@@ -34,8 +34,10 @@ contractsdk-test:contractsdk
 
 contract:
 	docker build -t xuper/xuperchain-local . && docker run -it --name xchain --rm xuper/xuperchain-dev && docker exec -it xchain bash ../core/scripts/start.sh 
-
+#  build by docker and output to local storage
 docker-build:
 
-
 docker-test:
+#  build docker image 
+build-image:
+	# 

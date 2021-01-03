@@ -2,11 +2,15 @@ var assert = require("assert");
 
 var codePath = "../wasm/score_record.wasm";
 
+var lang ="go"
+var type="wasm"
+
 function deploy() {
     return xchain.Deploy({
         name: "award_manage",
         code: codePath,
-        lang: "go",
+        lang: lang,
+        type: type,
         init_args: {"owner": "xchain"}
     });
 }

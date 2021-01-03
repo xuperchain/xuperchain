@@ -1,3 +1,9 @@
+# pb check
+# golang check
+# gcc check
+# java check
+# emcc check
+
 all:build
 
 build:

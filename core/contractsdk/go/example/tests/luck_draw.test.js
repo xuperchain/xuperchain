@@ -1,12 +1,16 @@
 var assert = require("assert");
+const { type } = require("os");
 
 var codePath = "../wasm/luck_draw.wasm";
+var lang ="go"
+var type="wasm"
 
 function deploy(totalSupply) {
     return xchain.Deploy({
         name: "luck_draw",
         code: codePath,
-        lang: "go",
+        lang: lang,
+        type:type,
         init_args: { "admin": "xchain" },
     });
 }

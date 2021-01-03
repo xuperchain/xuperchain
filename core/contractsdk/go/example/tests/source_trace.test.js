@@ -1,12 +1,15 @@
 var assert = require("assert");
 
 var codePath = "../wasm/source_trace.wasm";
+var lang ="go"
+var type="wasm"
 
 function deploy(totalSupply) {
     return xchain.Deploy({
         name: "source_trace",
         code: codePath,
-        lang: "go",
+        lang: lang,
+        type:type,
         init_args: { "admin": "xchain" },
     });
 }

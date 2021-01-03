@@ -1,13 +1,15 @@
 var assert = require("assert");
 
 var codePath = "../../../cpp/build/hash_deposit.wasm";
+var lang ="go"
+var type="wasm"
 
 function deploy() {
     return xchain.Deploy({
         name: "hash_deposit",
         code: codePath,
-        lang: "c",
-        type:"wasm",
+        lang: lang,
+        type:type,
         init_args: {},
         options:{"account":"xchain"}
     });

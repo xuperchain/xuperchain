@@ -1,12 +1,14 @@
 var assert = require("assert");
 
 var codePath = "../wasm/charity.wasm";
-
+var lang ="go"
+var type="wasm"
 function deploy(totalSupply) {
     return xchain.Deploy({
         name: "award_manage",
         code: codePath,
-        lang: "go",
+        lang: lang,
+        type:type,
         init_args: { "admin": "xchain" },
     });
 }

@@ -38,3 +38,25 @@ core/contractsdk/go/example/wasm/
 # vendor 
 vendor/
 vendor/*
+
+core/contractsdk/java/example/award_manage/target/
+core/contractsdk/java/example/builtin-types/target/
+core/contractsdk/java/example/builtin_types/target/
+core/contractsdk/java/example/charity/
+core/contractsdk/java/example/counter/target/
+core/contractsdk/java/example/cross-query-demo/target/
+core/contractsdk/java/example/cross_chain/target/
+core/contractsdk/java/example/crypto/target/
+core/contractsdk/java/example/erc20/target/
+core/contractsdk/java/example/features/target/
+core/contractsdk/java/example/game_assets/target/
+core/contractsdk/java/example/group_chain/target/
+core/contractsdk/java/example/hash_deposit/target/
+core/contractsdk/java/example/identity/target/
+core/contractsdk/java/example/luck_draw/target/
+core/contractsdk/java/example/move/target/
+core/contractsdk/java/example/score_record/target/
+core/contractsdk/java/example/short_content/target/
+core/contractsdk/java/example/source_trace/target/
+core/contractsdk/java/example/tests/
+core/contractsdk/java/target/

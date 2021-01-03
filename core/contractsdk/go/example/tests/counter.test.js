@@ -2,11 +2,14 @@ var assert = require("assert");
 
 var codePath = "../wasm/counter.wasm";
 
+var lang ="go"
+var type="wasm"
 function deploy() {
     return xchain.Deploy({
         name: "counter",
         code: codePath,
-        lang: "go",
+        lang: lang,
+        type:type,
         init_args: {"creator":"xchain"}
     });
 }
