@@ -5,6 +5,7 @@ core/xvm/compile/wabt/build/
 core/contractsdk/cpp/build
 output
 event_client
+core/contractsdk/go/example/wasm/
 
 # Compiled source
 *.com

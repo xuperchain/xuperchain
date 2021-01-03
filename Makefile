@@ -1,38 +1,41 @@
 all: build
+
+.PHONY: all test clean
+
 export GO111MODULE=on
 export GOFLAGS=-mod=vendor
 XCHAIN_ROOT := ${PWD}/core
 export XCHAIN_ROOT
 PATH := ${PWD}/core/xvm/compile/wabt/build:$(PATH)
 
-build:
+build:contractsdk
 	./core/scripts/build.sh
+	make -C core/xvm/compile/wabt -j 8 &&cp core/xvm/compile/wabt/build/wasm2c ./
 
-test:
+install: build
+	echo set env to xchain 
+
+
+
+test:contractsdk-test
 	go test -coverprofile=coverage.txt -covermode=atomic ./...
-	# test wasm sdk
-	GOOS=js GOARCH=wasm go build github.com/xuperchain/xuperchain/core/contractsdk/go/driver
+	make -C 
+	# GOOS=js GOARCH=wasm go build github.com/xuperchain/xuperchain/core/contractsdk/go/driver 这个测试测的啥
+
+clean:
+	rm -rf core/xvm/compile/wabt/build
+	find . -name '*.so.*' -exec rm {} \;
 
 contractsdk:
-	make -C core/contractsdk/cpp build
-	make -C core/contractsdk/cpp test
+	make -C core/contractsdk build
+
+contractsdk-test:contractsdk
+	make -C core/contractsdk test
 
 contract:
 	docker build -t xuper/xuperchain-local . && docker run -it --name xchain --rm xuper/xuperchain-dev && docker exec -it xchain bash ../core/scripts/start.sh 
 
-centos-build:
-	docker run --rm -u `id -u`:`id -g` -v `pwd`:`pwd` -w `pwd` xuper/centos-builder:0.1 make
+docker-build:
 
-ubuntu-build:
-	docker run --rm -u `id -u`:`id -g` -v `pwd`:`pwd` -w `pwd` xuper/ubuntu-builder:0.1 make
 
-clean:
-	rm -rf output
-	rm -f xchain-cli
-	rm -f xchain
-	rm -f dump_chain
-	rm -f event_client
-	rm -rf core/xvm/compile/wabt/build
-	find . -name '*.so.*' -exec rm {} \;
-
-.PHONY: all test clean
+docker-test:
