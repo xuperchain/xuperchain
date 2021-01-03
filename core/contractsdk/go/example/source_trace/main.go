@@ -137,16 +137,16 @@ func (st *sourceTrace) QueryRecords(ctx code.Context) code.Response {
 	defer iter.Close()
 	buf := strings.Builder{}
 	for iter.Next() {
-		goodsRecord := string(iter.Key())[:len(GOODSRECORD)] //TODO @fengjin 确认下标没问题
+		goodsRecord := string(iter.Key())[len(GOODSRECORD):] //TODO @fengjin 确认下标没问题
 		pos := strings.Index(goodsRecord, "_")
 		goodsId := goodsRecord[:pos]
 		updateRecord := goodsRecord[pos+1:]
 		reason := iter.Value()
 		buf.WriteString("goodsId=")
 		buf.WriteString(goodsId)
-		buf.WriteString("updateRecord=")
+		buf.WriteString(",updateRecord=")
 		buf.WriteString(updateRecord)
-		buf.WriteString("reason=")
+		buf.WriteString(",reason=")
 		buf.Write(reason)
 	}
 	if err := iter.Error(); err != nil {

@@ -24,17 +24,22 @@ function CreateGoods() {
         resp = c.Invoke("CreateGoods", { "id": "id2", "desc": "goods2" }, { "account": "xchain" })
         assert.equal(resp.Message, "goods type id2 aleready exists")
     }
-    c.Invoke("QueryRecords",{})
-    assert.equal()
-
-    c.Invoke("UpdateGods")
-    assert.equal()
-    c.Invoke("UpdateGods")
-    c.Invoke("UpdateGods")
-    c.Invoke("UpdateGods")
-    c.Invoke("UpdateGods")
-    c.Invoke("QueryRecords")
-    assert.equal()
+    resp = c.Invoke("QueryRecords", { "id": "id1" })
+    assert.equal(resp.Status, 200)
+    assert.equal(resp.Body, "goodsId=id1,updateRecord=0,reason=CREATE")
+    resp = c.Invoke("UpdateGoods",{"id":"id1","reason":"reason0"})
+    assert.equal(resp.Message, "missing caller")
+    resp = c.Invoke("UpdateGoods",{"id":"id1","reason":"reason0"},{"account":"xchain"})
+    assert.equal(resp.Body,"1")
+    {
+        c.Invoke("UpdateGoods", { "id": "id1", "reason": "reason1" })
+        c.Invoke("UpdateGoods", { "id": "id1", "reason": "reason2" })
+        c.Invoke("UpdateGoods", { "id": "id1", "reason": "reason3" })
+        c.Invoke("UpdateGoods", { "id": "id1", "reason": "reason4" })
+        c.Invoke("UpdateGoods", { "id": "id1", "reason": "reason5" })
+    }
+    resp = c.Invoke("QueryRecords",{"id":"id1"})
+    assert.equal(resp.Body, "goodsId=id1,updateRecord=0,reason=CREATEgoodsId=id1,updateRecord=1,reason=reason0")
 }
 
 Test("CreateGoods", CreateGoods)
