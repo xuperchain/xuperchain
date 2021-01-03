@@ -11,9 +11,7 @@ function deploy(totalSupply) {
     });
 }
 
-
 function CreateGoods() {
-
     c = deploy()
     resp = c.Invoke("CreateGoods", { "id": "id1", "desc": "goods1" })
     assert.equal(resp.Message, "missing caller")

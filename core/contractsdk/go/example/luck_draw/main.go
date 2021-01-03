@@ -53,9 +53,9 @@ func (ld *luckDraw) GetLuckId(ctx code.Context) code.Response {
 	}
 	_, err := ctx.GetObject([]byte(RESULT))
 	if err == nil { //TODO @fengjin
-		return code.Error(errors.New(" the lock draw has finished"))
+		return code.Error(errors.New("the luck draw has finished"))
 	}
-	if userVal, err := ctx.GetObject([]byte(USERID + caller)); err != nil {
+	if userVal, err := ctx.GetObject([]byte(USERID + caller)); err == nil {
 		return code.OK(userVal)
 	}
 	lastIdByte, err := ctx.GetObject([]byte(TICKETS))
@@ -86,7 +86,7 @@ func (ld *luckDraw) StartLuckDraw(ctx code.Context) code.Response {
 		return code.Error(utils.ErrPermissionDenied)
 	}
 	args := struct {
-		Seed big.Int `json:"seed",required:"true"`
+		Seed *big.Int `json:"seed" required:"true"`
 	}{}
 	if err := utils.Validate(ctx.Args(), &args); err != nil {
 		return code.Error(err)
@@ -99,22 +99,25 @@ func (ld *luckDraw) StartLuckDraw(ctx code.Context) code.Response {
 	lastId, _ := big.NewInt(0).SetString(string(lastIdByte), 10)
 	rand.Seed(args.Seed.Int64()) // TODO @fengjin 截断问题
 	luckId := big.NewInt(rand.Int63())
-	luckId = luckId.Div(luckId, lastId) //TODO @fengjin
+	luckId = luckId.Mod(luckId, lastId) //TODO @fengjin
 
-	//if lastid==0??
-	if luckUser, err := ctx.GetObject([]byte(TICKTID + luckId.String())); err != nil {
-		return code.Error(err)
-	} else {
-		return code.OK(luckUser)
+	luckUser, err := ctx.GetObject([]byte(TICKTID + luckId.String()))
+	if err != nil {
+		return code.Error(errors.New(TICKTID + luckId.String()))
 	}
+
+	if err := ctx.PutObject([]byte(RESULT), luckUser); err != nil {
+		return code.Error(err)
+	}
+	return code.OK(luckUser)
 }
 
 func (ld *luckDraw) GetResult(ctx code.Context) code.Response {
-	if luckUser, err := ctx.GetObject([]byte(RESULT)); err != nil {
+	luckUser, err := ctx.GetObject([]byte(RESULT))
+	if err != nil {
 		return code.Error(err)
-	} else {
-		return code.OK(luckUser)
 	}
+	return code.OK(luckUser)
 }
 
 func main() {
