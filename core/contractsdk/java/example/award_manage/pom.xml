@@ -23,25 +23,10 @@
       <version>4.11</version>
       <scope>test</scope>
     </dependency>
-<!--    <dependency>-->
-<!--      <groupId>com.baidu.xuper</groupId>-->
-<!--      <artifactId>java-contract-sdk</artifactId>-->
-<!--      <version>0.1.0</version>-->
-<!--    </dependency>-->
     <dependency>
       <groupId>com.baidu.xuper</groupId>
       <artifactId>java-contract-sdk</artifactId>
       <version>0.1.0</version>
-      <scope>system</scope>
-      <systemPath>${project.basedir}/../../target/java-contract-sdk-0.1.0.jar</systemPath>
-    </dependency>
-
-
-    <dependency>
-      <groupId>org.jetbrains</groupId>
-      <artifactId>annotations-java5</artifactId>
-      <version>RELEASE</version>
-      <scope>compile</scope>
     </dependency>
   </dependencies>
 
