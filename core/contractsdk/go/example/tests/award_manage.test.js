@@ -14,50 +14,63 @@ function deploy(totalSupply) {
 
 function beforeTest(){
     c =  deploy("1000")
-    c.Invoke("Transfer",{"from":"xchain","to":"user1","amount":"200"})
+    resp = c.Invoke("Transfer",{"to":"user1","token":"200"},{"account":"xchain"})
+    assert.equal(resp.Body,"ok~")
     return c
 }
 
 function  AddAward(t) {
     var c = beforeTest()
-    resp = c.Invoke("AddAward",{"amount":"200"})
+    resp = c.Invoke("AddAward",{"amount":"200"},{"account":"user1"})
     assert.equal(resp.Message,"you do not have permission to call this method")
+    var resp = c.Invoke("AddAward",{"amount":"0"},{"account":"xchain"})
+    assert.equal(resp.Message,"amount must be greater than 0")
     var resp = c.Invoke("AddAward",{"amount":"200"},{"account":"xchain"});
     assert.equal(resp.Body, "1200");
+    resp = c.Invoke("TotalSupply",{})
+    assert.equal(resp.Body,"1200")
 }
 
 
 
 function Balance(t){
     var c = beforeTest()
-    resp = c.Invoke("Balance",{"caller":"xchain"})
-    assert.equal(resp.Body,"1000")
-    resp = c.Invoke("Balance",{"caller":"user1"})
-    assert.equal(resp.Message,"200")
+    resp = c.Invoke("Balance",{},{"account":"xchain"})
+    assert.equal(resp.Body,"800")
+    resp = c.Invoke("Balance",{},{"account":"user1"})
+    assert.equal(resp.Body,"200")
 }
 
 function Transfer(){
     c = beforeTest()
-    c.Invoke("Transfer",{"from":"addr1","to":"addr2","token":"100"})
-    assert.equal(resp.Body,"100")
-    c.Invoke(Transfer,{"from":"addr1","to":"addr2","token":"5000"})
-    assert.equal(resp.Message,"balance too low")
+    resp = c.Invoke("Transfer",{"to":"user2","token":"100"},{"account":"user1"})
+    console.log(resp.Message)
+    assert.equal(resp.Body,"ok~")
+    
+    resp = c.Invoke("Transfer",{"to":"user2","token":"5000"},{"account":"user1"})
+    assert.equal(resp.Message,"balance not enough")
+
+    resp = c.Invoke("Transfer",{"to":"user1","token":"100"},{"account":"user1"})
+    assert.equal(resp.Message,"can not transfer to yourself")
 }
 
-function TransferFrom(){
-    c = berofeTest()
-    c.Invoke("Appro",{"from":"addr1","to":"addr2"})
-    assert()
-    resp = c.Invoke("TransferFrom",{"from":"addr1","to":"addr2","amount":"100"})
-    assert()
+function TransferFrom(t){
+    c = beforeTest()
 
-    resp = c.Invoke("Approve",{"from":"addr1","to":"addr2","amount":"200"})
-    assert()
-    resp = c.Invoke("TransferFrom",{"from":"addr1","to":"addr2","amount":"100"})
-    // resp = c.Invoke("Balance",{""})
+    {
+        resp = c.Invoke("TransferFrom",{"from":"xchain","token":"200"},{"account":"user2"})
+        assert.equal(resp.Status,500)
+    }
+    resp = c.Invoke("Approve",{"to":"user2","token":"200"},{"account":"xchain"})
+    assert.equal(resp.Body,"ok~")
 
+    resp = c.Invoke("TransferFrom",{"from":"xchain","token":"100"},{"account":"user2"})
+    assert.equal(resp.Body,"ok~")
+
+    resp = c.Invoke("TransferFrom",{"from":"xchain","token":"300"},{"account":"user2"})
+    assert.equal(resp.Message,"allowance balance not enough")
 }
 Test("AddAward",AddAward)
 Test("Balance",Balance)
 Test("Transfer",Transfer)
-// Test("TransferFrom",TransferFrom)
+Test("TransferFrom",TransferFrom)
