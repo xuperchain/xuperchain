@@ -4,16 +4,16 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>com.baidu.xuper</groupId>
-  <artifactId>counter</artifactId>
+  <artifactId>game_assets</artifactId>
   <version>0.1.0</version>
 
-  <name>counter</name>
+  <name>game_assets</name>
   <url>https://xuper.baidu.com</url>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.source>1.7</maven.compiler.source>
-    <maven.compiler.target>1.7</maven.compiler.target>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
   </properties>
 
   <dependencies>
@@ -27,8 +27,12 @@
       <groupId>com.baidu.xuper</groupId>
       <artifactId>java-contract-sdk</artifactId>
       <version>0.1.0</version>
-      <scope>system</scope>
-      <systemPath>${project.basedir}/../../target/java-contract-sdk-0.1.0.jar</systemPath>
+    </dependency>
+    <!-- https://mvnrepository.com/artifact/javax.validation/validation-api -->
+    <dependency>
+      <groupId>javax.validation</groupId>
+      <artifactId>validation-api</artifactId>
+      <version>2.0.1.Final</version>
     </dependency>
   </dependencies>
 
@@ -86,7 +90,7 @@
         <configuration>
           <archive>
             <manifest>
-              <mainClass>com.baidu.xuper.example.GameAssets</mainClass>
+              <mainClass>com.baidu.xuper.GameAssets</mainClass>
             </manifest>
           </archive>
           <descriptorRefs>

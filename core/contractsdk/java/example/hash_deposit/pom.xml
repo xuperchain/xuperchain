@@ -84,7 +84,7 @@
         <configuration>
           <archive>
             <manifest>
-              <mainClass>com.baidu.xuper.example.HashDeposit</mainClass>
+              <mainClass>com.baidu.xuper.HashDeposit</mainClass>
             </manifest>
           </archive>
           <descriptorRefs>

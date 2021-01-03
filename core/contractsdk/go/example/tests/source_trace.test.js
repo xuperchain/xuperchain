@@ -25,7 +25,7 @@ function CreateGoods() {
     assert.equal(resp.Body, "id2")
     {
         resp = c.Invoke("CreateGoods", { "id": "id2", "desc": "goods2" }, { "account": "xchain" })
-        assert.equal(resp.Message, "goods type id2 aleready exists")
+        assert.equal(resp.Message, "goods type id2 alreadt exists")
     }
     resp = c.Invoke("QueryRecords", { "id": "id1" })
     assert.equal(resp.Status, 200)

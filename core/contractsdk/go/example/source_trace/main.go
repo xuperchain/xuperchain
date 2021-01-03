@@ -59,7 +59,7 @@ func (st *sourceTrace) CreateGoods(ctx code.Context) code.Response {
 	goodsKey := GOODS + args.Id
 
 	if _, err := ctx.GetObject([]byte(goodsKey)); err == nil {
-		return code.Error(fmt.Errorf("goods type %s aleready exists", goodsKey[len(GOODS):]))
+		return code.Error(fmt.Errorf("goods type %s already exists", goodsKey[len(GOODS):]))
 	}
 
 	if err := ctx.PutObject([]byte(goodsKey), []byte(args.Desc)); err != nil {

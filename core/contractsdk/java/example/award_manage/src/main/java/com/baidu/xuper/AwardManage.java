@@ -1,4 +1,4 @@
-package com.baidu.xuper.example;
+package com.baidu.xuper;
 
 import java.math.BigDecimal;
 

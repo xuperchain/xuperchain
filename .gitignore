@@ -30,6 +30,8 @@ core/contractsdk/go/example/wasm/
 
 # idea
 .idea
+*.iml
+
 
 # Log files
 *.log

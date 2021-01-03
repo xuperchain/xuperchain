@@ -1,4 +1,4 @@
-package com.baidu.xuper.example;
+package com.baidu.xuper;
 
 import java.math.BigDecimal;
 
@@ -20,10 +20,12 @@ public class SourceTrace implements Contract {
     @Override
     @ContractMethod
     public Response initialize(Context ctx) {
-        String admin = new String(ctx.args().get("admin".getBytes()));
-        if (admin.length() == 0) {
-            return Response.error("missing admin address");
+        byte[]adminByte = ctx.args().get("admin");
+        if (adminByte==null||adminByte.length==0){
+            return Response.error("missing admin");
         }
+        String admin = new String(adminByte);
+
         ctx.putObject("admin".getBytes(), admin.getBytes());
         return Response.ok("ok".getBytes());
     }
@@ -35,6 +37,9 @@ public class SourceTrace implements Contract {
 
     private boolean isAdmin(Context ctx) {
         String caller = ctx.caller();
+        if (caller==null || caller==""){
+            return false;
+        }
         return isAdmin(ctx, caller);
     }
 
@@ -43,16 +48,22 @@ public class SourceTrace implements Contract {
         if (!isAdmin(ctx)) {
             return Response.error("only the admin can create new goods");
         }
-        String id = new String(ctx.args().get("id".getBytes()));
-        String desc = new String(ctx.args().get("desc".getBytes()));
+        if (ctx.args().get("id")==null||ctx.args().get("desc")==null){
+            return Response.error("missing id or desc");
+        }
+
+        String id = new String(ctx.args().get("id"));
+        String desc = new String(ctx.args().get("desc"));
 
         if (id.length() == 0 || desc.length() == 0) {
             return Response.error("missing id or desc");
         }
+
         String goodsKey = GOODS + id;
-        if (ctx.getObject(goodsKey.getBytes()).length > 0) {
-            return Response.error("the id  already exist, please check again");
+        if (ctx.getObject(goodsKey.getBytes())!=null) {
+            return Response.error("goods type "+ id+" already exists");
         }
+
         ctx.putObject(goodsKey.getBytes(), desc.getBytes());
         String goodsRecordsKey = GOODSRECORD + id + "_0";
         String goodsRecordsTopKey = GOODSRECORDTOP + id;
@@ -66,8 +77,8 @@ public class SourceTrace implements Contract {
         if (!isAdmin(ctx)) {
             return Response.error("only the admin can update goods");
         }
-        String id = new String(ctx.args().get("id".getBytes()));
-        String reason = new String(ctx.args().get("reason".getBytes()));
+        String id = new String(ctx.args().get("id"));
+        String reason = new String(ctx.args().get("reason"));
         if (id.length() == 0 || reason.length() == 0) {
             return Response.error("missing argument id or argument reason");
         }
@@ -82,7 +93,7 @@ public class SourceTrace implements Contract {
     }
 
     @ContractMethod
-    public Response queryRerords(Context ctx) {
+    public Response queryRecords(Context ctx) {
         String id = new String(ctx.args().get("id"));
         if (id.length() == 0) {
             return Response.error("missing argument id");
@@ -95,17 +106,16 @@ public class SourceTrace implements Contract {
         String start = goodsRecordKey;
         String end = start + "~";
         StringBuffer buf = new StringBuffer();
-        buf.append("\n");
 
         ctx.newIterator(start.getBytes(), end.getBytes()).forEachRemaining(
                 elem -> {
-                    String key = elem.getKey().toString();
-                    String[] goodsRecords = key.substring(GOODSRECORD.length()).split("_");
-                    String goodsId = goodsRecords[0];
-                    String updateRecord = goodsRecords[1];
+                    String key = new String(elem.getKey());
+                    String[] goodsRecords = key.split("_");
+                    String goodsId = goodsRecords[1];
+                    String updateRecord = goodsRecords[2];
                     String reason = new String(elem.getValue());
-                    String record = "goodIds=" + goodsId + ",updateRecord=" + updateRecord + ",reason=" + reason + "\n";
-                    buf.append(record.getBytes());
+                    String record = "goodIds=" + goodsId + ",updateRecord=" + updateRecord + ",reason=" + reason;
+                    buf.append(record);
                 }
         );
         return Response.ok(buf.toString().getBytes());

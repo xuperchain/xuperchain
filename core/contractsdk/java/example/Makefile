@@ -1,6 +1,6 @@
 build:
 	bash scripts/build.sh
-test:
+test: 
 	xdev test
 clean:
 	bash scripts/clean.sh

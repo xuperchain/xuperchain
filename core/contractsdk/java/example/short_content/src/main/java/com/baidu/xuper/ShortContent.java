@@ -1,8 +1,5 @@
 package com.baidu.xuper;
 
-/**
- * ShortContent
- */
 public class ShortContent implements Contract {
     final private String userBucket = "USER";
     final private int titleLengthLimit = 100;
@@ -16,60 +13,78 @@ public class ShortContent implements Contract {
 
     @ContractMethod
     public Response storeShortContent(Context ctx) {
-        String userId =new String( ctx.args().get("user_id"));
-        String  title = new String(ctx.args().get("title"));
-        String topic =  new String( ctx.args().get("topic"));
+        if (ctx.args().get("user_id") == null ||
+                ctx.args().get("title") == null ||
+                ctx.args().get("topic") == null ||
+                ctx.args().get("content") == null) {
+            return Response.error("missing user_id or title of topic or content");
+        }
+        String userId = new String(ctx.args().get("user_id"));
+        String title = new String(ctx.args().get("title"));
+        String topic = new String(ctx.args().get("topic"));
         String content = new String(ctx.args().get("content"));
-        String userKey = userBucket+"/"+userId+"/"+topic+"/"+title;
+        String userKey = userBucket + "/" + userId + "/" + topic + "/" + title;
 
-        if( topic.length()  > contentLengthLimit||title.length() > titleLengthLimit || content.length() > contentLengthLimit){
+        if (topic.length() > contentLengthLimit || title.length() > titleLengthLimit || content.length() > contentLengthLimit) {
             return Response.error("The length of topic or title or content is more than limitation");
         }
 
-        ctx.putObject(userKey.getBytes(),content.getBytes());
-        return Response.ok("ok".getBytes());
+        ctx.putObject(userKey.getBytes(), content.getBytes());
+        return Response.ok("ok~".getBytes());
     }
 
     @ContractMethod
-    public Response queryByUser(Context ctx){
-        String userId =new String( ctx.args().get("user_id"));
+    public Response queryByUser(Context ctx) {
+        if (ctx.args().get("user_id") ==null){
+            return  Response.error("missing user_id");
+        }
+        String userId = new String(ctx.args().get("user_id"));
         StringBuffer buf = new StringBuffer();
 
-        String start = userBucket + "/"  + userId + "/";
+        String start = userBucket + "/" + userId + "/";
         String end = start + "~";
 
-        ctx.newIterator(start.getBytes(),end.getBytes()).forEachRemaining(
-                item ->{
+        ctx.newIterator(start.getBytes(), end.getBytes()).forEachRemaining(
+                item -> {
                     buf.append(new String(item.getKey()))
                             .append("\n")
                             .append(new String(item.getValue()))
                             .append("\n");
                 }
         );
-        return Response.ok("ok".getBytes());
+        return Response.ok(buf.toString().getBytes());
     }
 
     @ContractMethod
-    public Response queryByTitle(Context ctx){
+    public Response queryByTitle(Context ctx) {
+        if (ctx.args().get("user_id") ==null||
+        ctx.args().get("title")==null||
+        ctx.args().get("topic")==null){
+            return Response.error("missing user_id of title or topic");
+        }
         String userId = new String(ctx.args().get("user_id"));
-        String  title = new String(ctx.args().get("title"));
-        String topic =  new String(ctx.args().get("topic"));
+        String title = new String(ctx.args().get("title"));
+        String topic = new String(ctx.args().get("topic"));
         String key = userBucket + "/" + userId + "/" + "/" + topic + "/" + title;
-        return Response.ok(ctx.getObject(key.getBytes()));
+        byte[] value = ctx.getObject(key.getBytes());
+        if (value==null){
+            return Response.error("content not found");
+        }
+        return Response.ok(value);
     }
 
     @ContractMethod
-    public Response queryByTopic(Context ctx){
-        String userId =new String(ctx.args().get("user_id"));
-        String  topic =  new String(ctx.args().get("topic"));
+    public Response queryByTopic(Context ctx) {
+        String userId = new String(ctx.args().get("user_id"));
+        String topic = new String(ctx.args().get("topic"));
 
-        String key = String.join("/",new String[]{userBucket,userId,topic});
+        String key = String.join("/", new String[]{userBucket, userId, topic});
         String start = key;
-        String end = key+"~";
+        String end = key + "~";
 
         StringBuffer buf = new StringBuffer();
-        ctx.newIterator(start.getBytes(),end.getBytes()).forEachRemaining(
-                item ->{
+        ctx.newIterator(start.getBytes(), end.getBytes()).forEachRemaining(
+                item -> {
                     buf.append(new String(item.getKey()))
                             .append("\n")
                             .append(new String(item.getKey()))

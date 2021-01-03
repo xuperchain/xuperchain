@@ -17,13 +17,19 @@ public class HashDeposit implements Contract {
 
     @ContractMethod
     public Response storeFileInfo(Context ctx) {
+        if (ctx.args().get("hash_id") == null||
+        ctx.args().get("hash_id") == null||
+        ctx.args().get("file_name") == null
+        ){
+            return Response.error("missing user_id or hash_id or filename");
+        }
         String user_id = new String(ctx.args().get("user_id"));
         String hash_id = new String(ctx.args().get("hash_id"));
         String file_name = new String(ctx.args().get("file_name"));
         String userKey = USER_BUCKET + "/" + user_id + hash_id;
         String hashKey = HASH_BUCKET + "/" + hash_id;
         String value = user_id + "\t" + "\t" + file_name;
-        if (ctx.getObject(hashKey.getBytes()).length > 0) {
+        if (ctx.getObject(hashKey.getBytes()) !=null) {
             return Response.error("hash id" + hash_id + "already exists");
         }
         ctx.putObject(userKey.getBytes(), value.getBytes());
@@ -56,7 +62,8 @@ public class HashDeposit implements Contract {
         StringBuffer buf = new StringBuffer();
         ctx.newIterator(start.getBytes(), end.getBytes()).forEachRemaining(
                 item -> {
-                    buf.append(new String(item.getValue()) + "\n");
+                    buf.append(new String(item.getValue()));
+                    buf.append("\n");
                 }
         );
         return Response.ok(buf.toString().getBytes());
@@ -66,7 +73,7 @@ public class HashDeposit implements Contract {
     public Response queryFileInfoByHash(Context ctx) {
         String key = HASH_BUCKET + "/" + new String(ctx.args().get("hash_id"));
         byte[] info = ctx.getObject(key.getBytes());
-        if (info.length == 0) {
+        if (info ==null) {
             return Response.error("file info not exists");
         }
         return Response.ok(info);
