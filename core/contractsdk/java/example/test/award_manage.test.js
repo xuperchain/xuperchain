@@ -77,17 +77,7 @@ function TransferFrom(t) {
     assert.equal(resp.Message, "allowance balance not enough")
 }
 
-
-function Approve(t){
-    c = beforeTest()
-    var resp = c.Invoke("approve", { "to": "user2", "token": "200" }, { "account": "xchain" })
-    console.log(resp.Message)
-    assert.equal(resp.Body,"ok~")
-
-}
-Test("Setup",beforeTest) // TODO sync to golang
-Test("Approve",Approve) // TODO sync to golang
-Test("AddAward", AddAward) 
+Test("AddAward", AddAward)
 Test("Balance", Balance)
 Test("Transfer", Transfer)
 Test("TransferFrom", TransferFrom)

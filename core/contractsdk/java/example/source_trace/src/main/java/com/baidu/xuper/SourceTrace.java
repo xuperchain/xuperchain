@@ -15,13 +15,13 @@ public class SourceTrace implements Contract {
     final String GOODS = "GOODS_";
     final String GOODSRECORD = "GOODSRECORD_";
     final String GOODSRECORDTOP = "GOODSRECORDTOP_";
-    final String CREATE = "CREATE_";
+    final String CREATE = "CREATE";
 
     @Override
     @ContractMethod
     public Response initialize(Context ctx) {
-        byte[]adminByte = ctx.args().get("admin");
-        if (adminByte==null||adminByte.length==0){
+        byte[] adminByte = ctx.args().get("admin");
+        if (adminByte == null || adminByte.length == 0) {
             return Response.error("missing admin");
         }
         String admin = new String(adminByte);
@@ -30,25 +30,19 @@ public class SourceTrace implements Contract {
         return Response.ok("ok".getBytes());
     }
 
-    private boolean isAdmin(Context ctx, String caller) {
-        String admin = new String(ctx.getObject("admin".getBytes()));
-        return admin.equals(caller);
-    }
-
-    private boolean isAdmin(Context ctx) {
-        String caller = ctx.caller();
-        if (caller==null || caller==""){
-            return false;
-        }
-        return isAdmin(ctx, caller);
-    }
 
     @ContractMethod
     public Response createGoods(Context ctx) {
-        if (!isAdmin(ctx)) {
-            return Response.error("only the admin can create new goods");
+        String caller = ctx.caller();
+        if (caller == null || caller.length() == 0) {
+            return Response.error("missing caller");
         }
-        if (ctx.args().get("id")==null||ctx.args().get("desc")==null){
+        byte[] admin = ctx.getObject("admin".getBytes());
+        if (!new String(admin).equals(caller)) {
+            return Response.error("you do not have permission to call this method");
+        }
+
+        if (ctx.args().get("id") == null || ctx.args().get("desc") == null) {
             return Response.error("missing id or desc");
         }
 
@@ -60,8 +54,8 @@ public class SourceTrace implements Contract {
         }
 
         String goodsKey = GOODS + id;
-        if (ctx.getObject(goodsKey.getBytes())!=null) {
-            return Response.error("goods type "+ id+" already exists");
+        if (ctx.getObject(goodsKey.getBytes()) != null) {
+            return Response.error("goods type " + id + " already exists");
         }
 
         ctx.putObject(goodsKey.getBytes(), desc.getBytes());
@@ -74,9 +68,15 @@ public class SourceTrace implements Contract {
 
     @ContractMethod
     public Response updateGoods(Context ctx) {
-        if (!isAdmin(ctx)) {
-            return Response.error("only the admin can update goods");
+        String caller = ctx.caller();
+        if (caller == null || caller.length() == 0) {
+            return Response.error("missing caller");
         }
+        byte[] admin = ctx.getObject("admin".getBytes());
+        if (! new String(admin).equals( caller)) {
+            return Response.error("you do not have permission to call this method");
+        }
+
         String id = new String(ctx.args().get("id"));
         String reason = new String(ctx.args().get("reason"));
         if (id.length() == 0 || reason.length() == 0) {
@@ -114,7 +114,7 @@ public class SourceTrace implements Contract {
                     String goodsId = goodsRecords[1];
                     String updateRecord = goodsRecords[2];
                     String reason = new String(elem.getValue());
-                    String record = "goodIds=" + goodsId + ",updateRecord=" + updateRecord + ",reason=" + reason;
+                    String record = "goodsId=" + goodsId + ",updateRecord=" + updateRecord + ",reason=" + reason;
                     buf.append(record);
                 }
         );

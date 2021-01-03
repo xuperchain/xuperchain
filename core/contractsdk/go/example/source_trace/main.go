@@ -15,7 +15,7 @@ const (
 	GOODSRECORD    = "GOODSSRECORD_"
 	GOODSRECORDTOP = "GOODSSRECORDTOP_"
 	CREATE         = "CREATE"
-	ADMIN          = "admin"
+	ADMIN          = "ADMIN"
 )
 
 type sourceTrace struct {
@@ -125,11 +125,10 @@ func (st *sourceTrace) QueryRecords(ctx code.Context) code.Response {
 	if err := utils.Validate(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
-	value, err := ctx.GetObject([]byte(GOODS + args.Id))
-	_ = value // TODO @fengjin
-	if err != nil {
-		return code.Error(err)
-	}
+	// value, err := ctx.GetObject([]byte(GOODS + args.Id))
+	// if err != nil {
+	// return code.Error(err)
+	// }
 	goodsRecordsKey := GOODSRECORD + args.Id + "_"
 	start := goodsRecordsKey
 	end := start + "~"
