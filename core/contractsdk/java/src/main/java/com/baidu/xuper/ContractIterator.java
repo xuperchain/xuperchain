@@ -107,18 +107,3 @@ public class ContractIterator implements Iterator<ContractIteratorItem> {
     }
 }
 
-class ContractIteratorItem {
-    private Contract.IteratorItem item;
-
-    public ContractIteratorItem(Contract.IteratorItem item) {
-        this.item = item;
-    }
-
-    public byte[] getKey() {
-        return this.item.getKey().toByteArray();
-    }
-
-    public byte[] getValue() {
-        return this.item.getValue().toByteArray();
-    }
-}

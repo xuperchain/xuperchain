@@ -1,0 +1,1 @@
+../../../cpp/example/score_record.cc
