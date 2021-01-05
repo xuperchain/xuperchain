@@ -1,9 +1,9 @@
-build:buildsdk build-example
+build: build-sdk build-example
 test: testsdk test-example
 build-sdk:
 	mvn package
 
-build-example
+build-example:
 	make -C example  build 
 
 test-sdk:

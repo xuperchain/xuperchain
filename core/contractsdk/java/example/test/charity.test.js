@@ -43,7 +43,7 @@ function beforetest() {
     var resp = c.Invoke("donate", { "donor": "donor1", "amount": "10000", "timestamp": "1609590581", "comments": "comments1" }, { "account": "xchain" })
     var resp = c.Invoke("donate", { "donor": "donor1", "amount": "10000", "timestamp": "1609590581", "comments": "comments1" }, { "account": "xchain" })
     var resp = c.Invoke("donate", { "donor": "donor1", "amount": "10000", "timestamp": "1609590581", "comments": "comments1" }, { "account": "xchain" })
-    var resp = c.Invoke("donate", { "donor": "donor1", "amount": "10000", "timestamp": "1609590581", "comments": "comments1" }, { "account": "xchain" })
+    var resp = c.Invoke("donate", { "donor": "donor2", "amount": "10000", "timestamp": "1609590581", "comments": "comments1" }, { "account": "xchain" })
     return c
 }
 function Cost(t) {
@@ -53,16 +53,16 @@ function Cost(t) {
     var resp = c.Invoke("cost", { "to": "to", "amount": "100", "timestamp": "1609590581", "comments": "comments" }, { "account": "bitcoin" })
     assert.equal(resp.Message, "you do not have permission to call this method")
     {
-        var resp = c.Invoke("cost", { "to": "to", "amount": "100", "timestamp": "1609590581", "comments": "comments" }, { "account": "xchain" })
-        var resp = c.Invoke("cost", { "to": "to", "amount": "100", "timestamp": "1609590581", "comments": "comments" }, { "account": "xchain" })
-        var resp = c.Invoke("cost", { "to": "to", "amount": "100", "timestamp": "1609590581", "comments": "comments" }, { "account": "xchain" })
-        var resp = c.Invoke("cost", { "to": "to", "amount": "100", "timestamp": "1609590581", "comments": "comments" }, { "account": "xchain" })
-        var resp = c.Invoke("cost", { "to": "to", "amount": "100", "timestamp": "1609590581", "comments": "comments" }, { "account": "xchain" })
-        var resp = c.Invoke("cost", { "to": "to", "amount": "100", "timestamp": "1609590581", "comments": "comments" }, { "account": "xchain" })
-        var resp = c.Invoke("cost", { "to": "to", "amount": "100", "timestamp": "1609590581", "comments": "comments" }, { "account": "xchain" })
-        var resp = c.Invoke("cost", { "to": "to", "amount": "100", "timestamp": "1609590581", "comments": "comments" }, { "account": "xchain" })
-        var resp = c.Invoke("cost", { "to": "to", "amount": "100", "timestamp": "1609590581", "comments": "comments" }, { "account": "xchain" })
-        var resp = c.Invoke("cost", { "to": "to", "amount": "100", "timestamp": "1609590581", "comments": "comments" }, { "account": "xchain" })
+        resp = c.Invoke("cost", { "to": "to", "amount": "100", "timestamp": "1609590581", "comments": "comments" }, { "account": "xchain" })
+        resp = c.Invoke("cost", { "to": "to", "amount": "100", "timestamp": "1609590581", "comments": "comments" }, { "account": "xchain" })
+        resp = c.Invoke("cost", { "to": "to", "amount": "100", "timestamp": "1609590581", "comments": "comments" }, { "account": "xchain" })
+        resp = c.Invoke("cost", { "to": "to", "amount": "100", "timestamp": "1609590581", "comments": "comments" }, { "account": "xchain" })
+        resp = c.Invoke("cost", { "to": "to", "amount": "100", "timestamp": "1609590581", "comments": "comments" }, { "account": "xchain" })
+        resp = c.Invoke("cost", { "to": "to", "amount": "100", "timestamp": "1609590581", "comments": "comments" }, { "account": "xchain" })
+        resp = c.Invoke("cost", { "to": "to", "amount": "100", "timestamp": "1609590581", "comments": "comments" }, { "account": "xchain" })
+        resp = c.Invoke("cost", { "to": "to", "amount": "100", "timestamp": "1609590581", "comments": "comments" }, { "account": "xchain" })
+        resp = c.Invoke("cost", { "to": "to", "amount": "100", "timestamp": "1609590581", "comments": "comments" }, { "account": "xchain" })
+        resp = c.Invoke("cost", { "to": "to", "amount": "100", "timestamp": "1609590581", "comments": "comments" }, { "account": "xchain" })
         assert.equal(resp.Status, 200)
         assert.equal(resp.Body, "00000000000000000010")
     }
@@ -74,30 +74,26 @@ function Cost(t) {
 function Statistics(t) {
     c = Cost(t)
     var resp = c.Invoke("statistics", {})
-    assert.equal(resp.Body, "totalDonates=10000,totalCost=400,fundBalance=9600")
+    assert.equal(resp.Body, "totalDonates=210000,totalCosts=1000,fundBalance=209000")
 }
 
 
 function QueryDonor(t) {
     c = Cost(t)
-    var resp = c.Invoke("queryDonor", { "donor": "donor1" })
-    console.log(resp.Message)
-    assert.equal(resp.Body, "total donate count:1\nid=000000000000000000001,donor=donor1,amount=10000,timestamp=1609590581,commnets=comments1\n")
+    var resp = c.Invoke("queryDonor", { "donor": "donor2" })
+    assert.equal(resp.Body, "id=21,content=donor=donor2,amount=10000,timestamp=1609590581,comments = comments1\n")
 }
 
 function QueryDonates(t) {
     c = Cost(t)
-    var resp = c.Invoke("queryDonates", { "start": "00000000000000000005", "limit": "10" })
-    console.log(resp.Body)
-    console.log(resp.Message)
-    assert.equal(resp.Body, "id=00000000000000000005,donor=donor1,amount=10000,timestamp=1609590581,commnets=comments1") // TODO 
+    var resp = c.Invoke("queryDonates", { "start": "00000000000000000005", "limit": "1" })
+    assert.equal(resp.Body, "id=00000000000000000005,donor=donor1,amount=10000,timestamp=1609590581,comments = comments1\n")
 }
 
 function QueryCosts(t) {
     c = Cost(t)
-    var resp = c.Invoke("queryCosts", { "start": "00000000000000000001", "limit": "10" })
-    console.log(resp.Message)
-    assert.equal(resp.Body, "id=00000000000000000001to=to,amount=100,timestamp=1609590581,comments=comments\n")
+    var resp = c.Invoke("queryCosts", { "start": "00000000000000000001", "limit": "1" })
+    assert.equal(resp.Body, "id=00000000000000000001,to=to,amount=100,timestamp=1609590581,comments=comments\n")
     var resp = c.Invoke("queryCosts", { "start": "00000000000000000001", "limit": "10000" })
     assert.equal(resp.Message, "limit exceeded")
 

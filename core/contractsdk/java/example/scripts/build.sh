@@ -1,1 +1,5 @@
-for contract in `ls`;do   [[ -f $contract/pom.xml ]] && mvn -f $contract/pom.xml package;done
+for dir in `ls`;do
+  if [ -f ${dir}/pom.xml ] ;then
+  bash -c "cd $dir;mvn package"
+  fi
+done
