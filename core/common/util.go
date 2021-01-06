@@ -8,7 +8,6 @@ import (
 	"bytes"
 	"encoding/gob"
 	"fmt"
-	"net"
 	"regexp"
 
 	"github.com/xuperchain/xuperchain/core/permission/acl/utils"
@@ -59,40 +58,4 @@ func DeepCopy(dst, src interface{}) error {
 		return err
 	}
 	return gob.NewDecoder(bytes.NewBuffer(buf.Bytes())).Decode(dst)
-}
-
-// GetHostIp() Get the public ipv4 address
-func GetHostIpv4() string {
-	addrs, err := net.InterfaceAddrs()
-	if err != nil {
-		return ""
-	}
-	for _, address := range addrs {
-		ipnet, ok := address.(*net.IPNet)
-		if !ok || ipnet.IP.IsLoopback() {
-			continue
-		}
-		if ipnet.IP.To4() != nil {
-			return ipnet.IP.String()
-		}
-	}
-	return ""
-}
-
-// GetHostIp() Get the public ipv6 address
-func GetHostIpv6() string {
-	addrs, err := net.InterfaceAddrs()
-	if err != nil {
-		return ""
-	}
-	for _, address := range addrs {
-		ipnet, ok := address.(*net.IPNet)
-		if !ok || ipnet.IP.IsLoopback() {
-			continue
-		}
-		if ipnet.IP.To4() == nil && ipnet.IP.To16() != nil {
-			return ipnet.IP.String()
-		}
-	}
-	return ""
 }

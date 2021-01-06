@@ -264,9 +264,24 @@ func TestSplitFunc(t *testing.T) {
 		block3.Blockid, big.NewInt(0),
 	)
 	t.Logf("bolock4 id %x", block4.Blockid)
+	ib := &pb.Block{Blockid: block4.Blockid, Block: block4}
+	ibErr := ledger.SavePendingBlock(ib)
+	if ibErr != nil {
+		t.Fatal("save pending block fail", ibErr)
+	}
+	ibBlock, ibLookErr := ledger.GetPendingBlock(ib.Block.Blockid)
+	if ibBlock == nil || ibLookErr != nil {
+		t.Fatal("fail to get pending block", ibLookErr)
+	} else {
+		t.Log("pending block got", ibBlock)
+	}
 	confirmStatus = ledger.ConfirmBlock(block4, false)
 	if !confirmStatus.Succ {
 		t.Fatal("confirm block fail 4")
+	}
+	_, ibLookErr = ledger.GetPendingBlock(ib.Blockid)
+	if ibLookErr != nil && ibLookErr != ErrBlockNotExist {
+		t.Fatal("pending block is expected to be deleted", ibLookErr)
 	}
 	dumpLayer, dumpErr := ledger.Dump()
 	if dumpErr != nil {

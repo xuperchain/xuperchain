@@ -7,7 +7,6 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb/errors"
-	"github.com/xuperchain/xuperchain/core/common"
 )
 
 // default settings
@@ -37,7 +36,6 @@ const (
 	DefaultP2PModuleName         = "p2pv2"
 	DefaultServiceName           = ""
 	DefaultIsBroadCast           = true
-	DefaultSyncSize              = 10
 )
 
 // LogConfig is the log config of node
@@ -76,8 +74,6 @@ type P2PConfig struct {
 	Module string `yaml:"module,omitempty"`
 	// port the p2p network listened
 	Port int32 `yaml:"port,omitempty"`
-	// Address the p2p network connect with, ipv4
-	Ip string `yaml:"ip,omitempty"`
 	// keyPath is the node private key path, xuper will gen a random one if is nil
 	KeyPath string `yaml:"keyPath,omitempty"`
 	// isNat config whether the node use NAT manager
@@ -126,12 +122,6 @@ type P2PConfig struct {
 // MinerConfig is the config of miner
 type MinerConfig struct {
 	Keypath string `yaml:"keypath,omitempty"`
-}
-
-// LedgerConfig is the config of miner
-type LedgerKeeperConfig struct {
-	// 同步区块头时一次同步的区块头数量
-	SyncSize int64 `yaml:"syncSize,omitempty"`
 }
 
 // UtxoConfig is the config of UtxoVM
@@ -264,14 +254,13 @@ type NodeConfig struct {
 	Datapath        string          `yaml:"datapath,omitempty"`
 	DatapathOthers  []string        `yaml:"datapathOthers,omitempty"` //扩展盘的路径
 	ConsoleConfig   ConsoleConfig
-	Utxo            UtxoConfig         `yaml:"utxo,omitempty"`
-	DedupCacheSize  int                `yaml:"dedupCacheSize,omitempty"`
-	DedupTimeLimit  int                `yaml:"dedupTimeLimit,omitempty"`
-	Kernel          KernelConfig       `yaml:"kernel,omitempty"`
-	CPUProfile      string             `yaml:"cpuprofile,omitempty"`
-	MemProfile      string             `yaml:"memprofile,omitempty"`
-	MemberWhiteList map[string]bool    `yaml:"memberWhiteList,omitempty"`
-	LedgerKeeper    LedgerKeeperConfig `yaml:"ledgerkeeper,omitempty"`
+	Utxo            UtxoConfig      `yaml:"utxo,omitempty"`
+	DedupCacheSize  int             `yaml:"dedupCacheSize,omitempty"`
+	DedupTimeLimit  int             `yaml:"dedupTimeLimit,omitempty"`
+	Kernel          KernelConfig    `yaml:"kernel,omitempty"`
+	CPUProfile      string          `yaml:"cpuprofile,omitempty"`
+	MemProfile      string          `yaml:"memprofile,omitempty"`
+	MemberWhiteList map[string]bool `yaml:"memberWhiteList,omitempty"`
 
 	// 合约相关配置
 	Contract ContractConfig `yaml:"contract,omitempty"`
@@ -384,9 +373,6 @@ func (nc *NodeConfig) defaultNodeConfig() {
 	nc.Miner = MinerConfig{
 		Keypath: "./data/keys",
 	}
-	nc.LedgerKeeper = LedgerKeeperConfig{
-		SyncSize: DefaultSyncSize,
-	}
 	nc.PluginConfPath = "./conf/plugins.conf"
 	nc.PluginLoadPath = "./plugins/autoload/"
 	nc.Datapath = "./data/blockchain"
@@ -462,16 +448,9 @@ func NewNodeConfig() *NodeConfig {
 
 // newP2pConfigWithDefault create default p2p configuration
 func newP2pConfigWithDefault() P2PConfig {
-	var ip string
-	if DefaultNetIsIpv6 {
-		ip = common.GetHostIpv6()
-	} else {
-		ip = common.GetHostIpv4()
-	}
 	return P2PConfig{
 		Module:           DefaultP2PModuleName,
 		Port:             DefaultNetPort,
-		Ip:               ip,
 		KeyPath:          DefaultNetKeyPath,
 		IsNat:            DefaultNetIsNat,
 		IsTls:            DefaultNetIsTls,
@@ -555,10 +534,6 @@ func (mc *MinerConfig) applyFlags(flags *pflag.FlagSet) {
 	flags.StringVar(&mc.Keypath, "keypath", mc.Keypath, "used for config overwrite --keypath <node keypath>")
 }
 
-func (lc *LedgerKeeperConfig) applyFlags(flags *pflag.FlagSet) {
-	flags.Int64Var(&lc.SyncSize, "syncSize", lc.SyncSize, "used for config overwrite --syncSize <node syncSize>")
-}
-
 func (utxo *UtxoConfig) applyFlags(flags *pflag.FlagSet) {
 	flags.IntVar(&utxo.CacheSize, "cachesize", utxo.CacheSize, "used for config overwrite --cachesize <utxo LRU cache size>")
 	flags.IntVar(&utxo.TmpLockSeconds, "tmplockSeconds", utxo.TmpLockSeconds, "used for config overwrite --tmplockSeconds <How long to lock utxo referenced by GenerateTx>")
@@ -575,7 +550,6 @@ func (nc *NodeConfig) ApplyFlags(flags *pflag.FlagSet) {
 	nc.ConsoleConfig.ApplyFlags(flags)
 	nc.Utxo.applyFlags(flags)
 	nc.Wasm.applyFlags(flags)
-	nc.LedgerKeeper.applyFlags(flags)
 
 	// for backward compatibility
 	if nc.Wasm.EnableUpgrade {

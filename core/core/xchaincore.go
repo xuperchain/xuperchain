@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"path/filepath"
+	"sync"
 	"syscall"
 	"time"
 
@@ -81,7 +82,6 @@ type XChainCore struct {
 	Ledger       *ledger.Ledger
 	Utxovm       *utxo.UtxoVM
 	P2pSvr       p2p_base.P2PServer
-	LedgerKeeper *LedgerKeeper
 	bcname       string
 	log          log.Logger
 	status       int
@@ -91,6 +91,8 @@ type XChainCore struct {
 	award        string
 	nodeMode     string
 	CryptoClient crypto_base.CryptoClient
+
+	mutex *sync.RWMutex
 
 	Speed *probe.SpeedCalc
 	// post_cache map[string] bool
@@ -131,6 +133,7 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 		return err
 	}
 
+	xc.mutex = &sync.RWMutex{}
 	xc.Speed = probe.NewSpeedCalc(bcname)
 	// this.mutex.Lock()
 	// defer this.mutex.Unlock()
@@ -300,15 +303,6 @@ func (xc *XChainCore) Init(bcname string, xlog log.Logger, cfg *config.NodeConfi
 	xc.Utxovm.RegisterVAT("consensus", xc.con, xc.con.GetVATWhiteList())
 	xc.Utxovm.RegisterVAT("kernel", ker, ker.GetVATWhiteList())
 
-	// 启动Sync节点，负责区块同步
-	lk, err := NewLedgerKeeper(xc.bcname, xc.log, xc.P2pSvr, xc.Ledger, xc.nodeMode, xc.Utxovm, xc.con, &cfg.LedgerKeeper)
-	if err != nil {
-		xc.log.Warn("Xchaincore::Init::NewLedgerKeeper init error", "err", err)
-		return err
-	}
-	lk.Start()
-	xc.LedgerKeeper = lk
-
 	go xc.Speed.ShowLoop(xc.log)
 	go xc.repostOfflineTx()
 	return nil
@@ -358,44 +352,196 @@ func (xc *XChainCore) ProcessSendBlock(in *pb.Block, hd *global.XContext) error 
 	return xc.SendBlock(in, hd)
 }
 
-/*
-	当收到一个区块广播之后，若该区块刚好和本地账本tipID对接上，则此时直接触发LedgerKeeper追加
-	若该区块并不是本地tipID的下一个，则主动触发同步GET_HASHES
-	若该区块为tipID高度以下的区块，直接忽略
-*/
+// SendBlock send block
 func (xc *XChainCore) SendBlock(in *pb.Block, hd *global.XContext) error {
-	if xc.Ledger.ExistBlock(in.GetBlock().GetBlockid()) {
+	if xc.Status() != global.Normal {
+		xc.log.Debug("refused a connection at function call GenerateTx", "logid", in.Header.Logid, "cost", hd.Timer.Print())
+		return ErrServiceRefused
+	}
+	blockSize := int64(proto.Size(in.Block))
+	maxBlockSize := xc.Utxovm.GetMaxBlockSize()
+	if blockSize > maxBlockSize {
+		xc.log.Debug("refused a connection because block is too large", "logid", in.Header.Logid, "cost", hd.Timer.Print(), "size", blockSize)
+		return ErrServiceRefused
+	}
+
+	xc.mutex.Lock()
+	defer xc.mutex.Unlock()
+
+	nonVerify := (xc.nodeMode == config.NodeModeFastSync)
+
+	// 如果已经存在，则立即返回
+	if xc.Ledger.ExistBlock(in.Blockid) {
 		xc.log.Debug("Block is exist", "logid", in.Header.Logid, "cost", hd.Timer.Print())
-		return nil
+		return ErrBlockExist
 	}
-	if bytes.Equal(xc.Utxovm.GetLatestBlockid(), in.GetBlock().GetPreHash()) {
-		xc.log.Trace("Appending block in SendBlock", "time", time.Now().UnixNano(), "blockname", xc.bcname, "tipID", global.F(xc.Utxovm.GetLatestBlockid()))
-		ctx := CreateLedgerTaskCtx([]*SimpleBlock{
-			&SimpleBlock{internalBlock: in.GetBlock(), logid: in.GetHeader().GetLogid() + "_" + in.GetHeader().GetFromNode()},
-		}, nil, hd)
-		xc.LedgerKeeper.PutTask(-1, Appending, ctx)
-		return nil
+
+	//在锁外校验block中的tx合法性
+	xc.mutex.Unlock()
+	for idx, tx := range in.Block.Transactions {
+		if !xc.Ledger.IsValidTx(idx, tx, in.Block) {
+			xc.log.Warn("invalid tx got from the block", "txid", global.F(tx.Txid), "blkid", global.F(in.Block.Blockid))
+			xc.mutex.Lock()
+			return ErrInvalidBlock
+		}
 	}
-	xc.log.Trace("sync blocks in SendBlock", "time", time.Now().UnixNano(), "blockname", xc.bcname, "tipID", global.F(xc.Utxovm.GetLatestBlockid()))
-	ctx := CreateLedgerTaskCtx(nil, []string{in.GetHeader().GetFromNode()}, hd)
-	xc.LedgerKeeper.PutTask(-1, Syncing, ctx)
+	xc.mutex.Lock()
+	if xc.Ledger.ExistBlock(in.Blockid) {
+		//放锁期间，可能这个块已经被另外一个线程存进去了，所以需要再次判断
+		xc.log.Debug("Block is exist", "logid", in.Header.Logid, "cost", hd.Timer.Print())
+		return ErrBlockExist
+	}
+	// Note in BFT case, we should accept blocks with same hight
+	if in.Block.Height <= xc.Ledger.GetMeta().TrunkHeight-3 {
+		xc.log.Warn("refuse short chain of blocks", "remote", in.Block.Height, "local", xc.Ledger.GetMeta().TrunkHeight)
+		return ErrServiceRefused
+	}
+	blocksIds := []string{}
+	//如果是接收到老的block（版本是1）, TODO
+	blocksIds = append(blocksIds, string(in.Block.Blockid))
+	err := xc.Ledger.SavePendingBlock(in)
+	if err != nil {
+		xc.log.Warn("Save Pending Block error! ", "logid", in.Header.Logid, "blockid", in.Block.Blockid)
+		return ErrCannotSyncBlock
+	}
+	// var preblk *pb.InternalBlock = in.Block
+	proposeBlockMoreThanConfig := false //块是否为非法块
+	preblkhash := in.Block.PreHash
+	for {
+		xc.log.Debug("Start to Find ExistBlock", "logid", in.Header.Logid, "cost", hd.Timer.Print(), "prehash", global.F(preblkhash))
+		if xc.Ledger.ExistBlock(preblkhash) {
+			xc.log.Debug("Find Same Block", "logid", in.Header.Logid, "prehash", global.F(preblkhash))
+			break
+		}
+		// call for prehash
+		ib, _ := xc.Ledger.GetPendingBlock(preblkhash)
+		if ib == nil {
+			xc.log.Debug("Start to BroadCastGetBlock", "logid", in.Header.Logid, "cost", hd.Timer.Print())
+			ib = xc.BroadCastGetBlock(&pb.BlockID{Header: in.Header, Bcname: in.Bcname, Blockid: preblkhash, NeedContent: true})
+			if ib == nil {
+				xc.log.Warn("Can't Get a Block", "logid", in.Header.Logid, "blockid", global.F(preblkhash))
+				return ErrCannotSyncBlock
+			} else if ib.Block == nil {
+				xc.log.Warn("Get a Block Content error", "logid", in.Header.Logid, "blokid", global.F(preblkhash), "error", in.Header.Error)
+				return ErrCannotSyncBlock
+			} else {
+				err := xc.Ledger.SavePendingBlock(ib)
+				if err != nil {
+					xc.log.Warn("Save Pending Block error, after got it from network! ", "logid", in.Header.Logid, "blockid", in.Block.Blockid)
+					return ErrCannotSyncBlock
+				}
+				ibSize := int64(proto.Size(ib.Block))
+				maxSize := xc.Utxovm.GetMaxBlockSize()
+				if ibSize > maxSize {
+					xc.log.Warn("too large block", "size", ibSize, "blockid", global.F(ib.Block.Blockid))
+					return ErrBlockTooLarge
+				}
+			}
+		}
+		preblkhash = ib.Block.PreHash
+		blocksIds = append(blocksIds, string(ib.Block.Blockid))
+	}
+
+	xc.log.Debug("End to Find the same", "logid", in.Header.Logid, "blocks size", len(blocksIds), "cost", hd.Timer.Print(),
+		"genesis", global.F(xc.Ledger.GetMeta().RootBlockid),
+		"prehash", global.F(preblkhash), "utxo", global.F(xc.Utxovm.GetLatestBlockid()))
+	// preblk 是跟区块同步的交点，判断preblk是不是当前utxo的位置
+	if bytes.Equal(xc.Utxovm.GetLatestBlockid(), preblkhash) {
+		xc.log.Debug("Equal The Same", "logid", in.Header.Logid, "cost", hd.Timer.Print())
+		for i := len(blocksIds) - 1; i >= 0; i-- {
+			block, err := xc.Ledger.GetPendingBlock([]byte(blocksIds[i]))
+			if block == nil {
+				xc.log.Warn("GetPendingBlock from ledger error", "logid", in.Header.Logid, "cost", hd.Timer.Print(), "err", err)
+				return ErrConfirmBlock
+			}
+			// 区块加解密有效性检查
+			if !nonVerify {
+				if res, _ := xc.con.CheckMinerMatch(in.Header, block.Block); !res {
+					xc.log.Warn("refused a connection becausefo check miner error", "logid", in.Header.Logid, "cost", hd.Timer.Print())
+					return ErrServiceRefused
+				}
+			}
+			cs := xc.Ledger.ConfirmBlock(block.Block, false)
+			xc.log.Debug("ConfirmBlock Time", "logid", in.Header.Logid, "cost", hd.Timer.Print())
+			if !cs.Succ {
+				xc.log.Warn("confirm error", "logid", in.Header.Logid)
+				return ErrConfirmBlock
+			}
+			// 待块确认后, 共识执行相应的操作
+			xc.con.ProcessConfirmBlock(block.Block)
+			isTipBlock := (i == 0)
+			err = xc.Utxovm.PlayAndRepost(block.Blockid, isTipBlock, false)
+			xc.log.Debug("Play Time", "logid", in.Header.Logid, "cost", hd.Timer.Print())
+			if err != nil {
+				xc.log.Warn("utxo vm play err", "logid", in.Header.Logid, "err", err)
+				return ErrUTXOVMPlay
+			}
+		}
+	} else {
+		//交点不等于utxo latest block
+		xc.log.Debug("XXXXXXXXX The NO Same", "logid", in.Header.Logid, "cost", hd.Timer.Print())
+		block0 := &pb.Block{}
+		trunkSwitch := false //是否发生主干切换
+		for i := len(blocksIds) - 1; i >= 0; i-- {
+			block, err := xc.Ledger.GetPendingBlock([]byte(blocksIds[i]))
+			if err != nil {
+				xc.log.Warn("GetPendingBlock from leadger error", "logid", in.Header.Logid, "cost", hd.Timer.Print())
+				return ErrConfirmBlock
+			}
+			if i == 0 {
+				block0 = block
+			}
+
+			if res, err := xc.con.CheckMinerMatch(in.Header, block.Block); !res {
+				if err != nil && err == tdpos.ErrProposeBlockMoreThanConfig {
+					proposeBlockMoreThanConfig = true
+					xc.log.Warn("CheckMinerMatch ErrProposeBlockMoreThanConfig", "logid", in.Header.Logid, "cost", hd.Timer.Print())
+					break
+				}
+				xc.log.Warn("refused a connection becausefo check miner error", "logid", in.Header.Logid, "cost", hd.Timer.Print())
+				return ErrServiceRefused
+			}
+
+			cs := xc.Ledger.ConfirmBlock(block.Block, false)
+			xc.log.Debug("ConfirmBlock Time", "logid", in.Header.Logid, "cost", hd.Timer.Print(), "blockid", global.F(block.Blockid))
+			if !cs.Succ {
+				xc.log.Warn("confirm error", "logid", in.Header.Logid)
+				return ErrConfirmBlock
+			}
+			// 待块确认后, 共识执行相应的操作
+			xc.con.ProcessConfirmBlock(block.Block)
+			trunkSwitch = (cs.TrunkSwitch || block.Block.InTrunk)
+		}
+		if !trunkSwitch {
+			xc.log.Warn("no need to do walk", "trunkSwitch", trunkSwitch, "blockid", global.F(block0.Blockid))
+			if proposeBlockMoreThanConfig {
+				return ErrProposeBlockMoreThanConfig
+			}
+			return nil
+		}
+		err := xc.Utxovm.Walk(block0.Blockid, false)
+		xc.log.Debug("Walk Time", "logid", in.Header.Logid, "cost", hd.Timer.Print())
+		if err != nil {
+			xc.log.Warn("Walk error", "logid", in.Header.Logid, "err", err)
+			return ErrWalk
+		}
+	}
+	if proposeBlockMoreThanConfig {
+		return ErrProposeBlockMoreThanConfig
+	}
 	return nil
 }
 
 func (xc *XChainCore) doMiner() {
 	minerTimer := global.NewXTimer()
-	// 矿工和ledgerkeeper抢同一把锁，该锁保证了矿工在当前不会打包一个旧tx进到新块里
-	// 矿工在doMiner会将UnconfirmedTx拿出来，也会进行uxtovm Play，而此时也有可能ledgerkeeper同步块做同样操作
-	// 该锁保护了当前仅有两者中的一个对象进行操作
-	xc.LedgerKeeper.CoreLock()
+	xc.mutex.Lock()
 	lockHold := true
 	minerTimer.Mark("GetLock")
 	defer func() {
 		if lockHold {
-			xc.LedgerKeeper.CoreUnlock()
+			xc.mutex.Unlock()
 		}
 	}()
-
 	ledgerLastID := xc.Ledger.GetMeta().TipBlockid
 	utxovmLastID := xc.Utxovm.GetLatestBlockid()
 
@@ -409,7 +555,7 @@ func (xc *XChainCore) doMiner() {
 					"utxo blockid", global.F(utxovmLastID))
 				return
 			} else {
-				err := xc.LedgerKeeper.DoTruncateTask(utxovmLastID)
+				err := xc.Ledger.Truncate(utxovmLastID)
 				if err != nil {
 					return
 				}
@@ -535,7 +681,7 @@ func (xc *XChainCore) doMiner() {
 		}
 		return
 	}
-	xc.LedgerKeeper.CoreUnlock() //后面放开锁
+	xc.mutex.Unlock() //后面放开锁
 	lockHold = false
 	xc.Utxovm.SetBlockGenEvent()
 	defer xc.Utxovm.NotifyFinishBlockGen()
@@ -558,9 +704,7 @@ func (xc *XChainCore) doMiner() {
 		//  3. Mixed_BroadCast_Mode是指出块节点将新块用Full_BroadCast_Mode模式广播，
 		//     其他节点使用Interactive_BroadCast_Mode
 		// broadcast block in Full_BroadCast_Mode since it's the original miner
-		ip, _ := xc.P2pSvr.GetLocalUrl()
 		block := &pb.Block{
-			Header:  &pb.Header{FromNode: ip},
 			Bcname:  xc.bcname,
 			Blockid: freshBlock.Blockid,
 		}
@@ -885,7 +1029,7 @@ func (xc *XChainCore) GetBlockChainStatus(in *pb.BCStatus, viewOption pb.ViewOpt
 		utxoMeta := xc.Utxovm.GetMeta()
 		out.UtxoMeta = utxoMeta
 	}
-	ib, err := xc.Ledger.QueryBlockHeader(meta.TipBlockid)
+	ib, err := xc.Ledger.QueryBlock(meta.TipBlockid)
 	if err != nil {
 		out.Header.Error = HandlerLedgerError(err)
 		return out
