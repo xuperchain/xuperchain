@@ -1029,7 +1029,7 @@ func (xc *XChainCore) GetBlockChainStatus(in *pb.BCStatus, viewOption pb.ViewOpt
 		utxoMeta := xc.Utxovm.GetMeta()
 		out.UtxoMeta = utxoMeta
 	}
-	ib, err := xc.Ledger.QueryBlock(meta.TipBlockid)
+	ib, err := xc.Ledger.QueryBlockHeader(meta.TipBlockid)
 	if err != nil {
 		out.Header.Error = HandlerLedgerError(err)
 		return out
