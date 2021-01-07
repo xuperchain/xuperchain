@@ -39,11 +39,11 @@ var fileDescriptor_ad098daeda4239f7 = []byte{
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
-var _ grpc.ClientConn
+var _ grpc.ClientConnInterface
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion4
+const _ = grpc.SupportPackageIsVersion6
 
 // P2PServiceClient is the client API for P2PService service.
 //
@@ -53,10 +53,10 @@ type P2PServiceClient interface {
 }
 
 type p2PServiceClient struct {
-	cc *grpc.ClientConn
+	cc grpc.ClientConnInterface
 }
 
-func NewP2PServiceClient(cc *grpc.ClientConn) P2PServiceClient {
+func NewP2PServiceClient(cc grpc.ClientConnInterface) P2PServiceClient {
 	return &p2PServiceClient{cc}
 }
 

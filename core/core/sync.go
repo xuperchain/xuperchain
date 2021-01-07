@@ -2,6 +2,7 @@ package xchaincore
 
 import (
 	"context"
+	"math/rand"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -18,19 +19,31 @@ const (
 	MaxSleepMilSecond = 500
 )
 
-/* SyncBatchBlocks sync batch blocks
- * SyncBatchBlocks 批量同步区块，向ledgerkeeper推批量任务
- */
-func (xc *XChainCore) SyncBatchBlocks() {
-	hd := &global.XContext{Timer: global.NewXTimer()}
-	xc.log.Trace("sync blocks in SyncBatchBlocks", "time", time.Now().UnixNano(), "blockname", xc.bcname, "tipID", global.F(xc.Ledger.GetMeta().GetTipBlockid()))
-	ctx := CreateLedgerTaskCtx(nil, nil, hd)
-	xc.LedgerKeeper.PutTask(-1, Syncing, ctx)
-}
-
 // SyncBlocks sync block while start to miner
 func (xc *XChainCore) SyncBlocks() {
-	xc.SyncBatchBlocks()
+	hd := &global.XContext{Timer: global.NewXTimer()}
+	for i := 0; i < MaxSyncTimes; i++ {
+		xc.log.Trace("sync blocks", "blockname", xc.bcname, "try times", i)
+		bc, confirm := xc.syncForOnce()
+		xc.log.Trace("sync blocks", "bc", bc, "confirm", confirm)
+		if bc == nil || bc.GetBlock() == nil {
+			time.Sleep(time.Duration(rand.Intn(MaxSleepMilSecond)) * time.Millisecond)
+			continue
+		}
+		if !confirm && i < MaxSyncTimes-1 {
+			time.Sleep(time.Duration(rand.Intn(MaxSleepMilSecond)) * time.Millisecond)
+			continue
+		}
+		err := xc.SendBlock(
+			&pb.Block{
+				Header:  global.GHeader(),
+				Bcname:  xc.bcname,
+				Blockid: bc.Block.Blockid,
+				Block:   bc.Block}, hd)
+		if err == nil || err.Error() == ErrBlockExist.Error() {
+			break
+		}
+	}
 }
 
 // syncForOnce sync block from peer nodes for one times

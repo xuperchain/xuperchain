@@ -163,7 +163,7 @@ func (p *P2PServerV2) SendMessageWithResponse(ctx context.Context, msg *p2pPb.Xu
 		peersRes = peers.([]peer.ID)
 	}
 	percentage := msgOpts.Percentage
-	p.log.Trace("Server SendMessage with response", "logid", msg.GetHeader().GetLogid(), "bcname", msg.GetHeader().GetBcname(),
+	p.log.Trace("Server SendMessage with response", "logid", msg.GetHeader().GetLogid(), "bcname", msg.GetHeader().GetBcname,
 		"msgType", msg.GetHeader().GetType(), "checksum", msg.GetHeader().GetDataCheckSum(), "peers", peersRes)
 
 	if p.enableMetric {
@@ -199,16 +199,6 @@ func (p *P2PServerV2) GetNetURL() string {
 	}
 
 	return fmt.Sprintf("/ip4/127.0.0.1/tcp/%v/p2p/%s", p.config.Port, p.node.id.Pretty())
-}
-
-// GetLocalUrl return output ip of the xuper node, ipv4 only
-func (p *P2PServerV2) GetLocalUrl() (string, string) {
-	if p.config.IsIpv6 {
-		return fmt.Sprintf("/ip6/%s/tcp/%v/p2p/%s", p.config.Ip, p.config.Port, p.node.id.Pretty()),
-			fmt.Sprintf("/ip6/::1/tcp/%v/p2p/%s", p.config.Port, p.node.id.Pretty())
-	}
-	return fmt.Sprintf("/ip4/%s/tcp/%v/p2p/%s", p.config.Ip, p.config.Port, p.node.id.Pretty()),
-		fmt.Sprintf("/ip4/127.0.0.1/tcp/%v/p2p/%s", p.config.Port, p.node.id.Pretty())
 }
 
 func (p *P2PServerV2) getCompress(opts *p2p_base.MsgOptions) bool {
@@ -299,18 +289,6 @@ func (p *P2PServerV2) GetPeerUrls() []string {
 		}
 	}
 	return urls
-}
-
-func (p *P2PServerV2) GetPeersConnection() []string {
-	cons := []string{}
-	peers := p.node.ListPeers()
-	for _, v := range peers {
-		if s, err := p.node.strPool.FindStream(v); err == nil {
-			con := s.addr.String() + "/p2p/" + v.Pretty()
-			cons = append(cons, con)
-		}
-	}
-	return cons
 }
 
 func (p *P2PServerV2) GetPeerIDAndUrls() map[string]string {
