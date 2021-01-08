@@ -518,7 +518,6 @@ func (lk *LedgerKeeper) getBlocks(ctx context.Context, targetPeers []string, blo
 		return nil, ErrInternal
 	}
 	opts := []p2p_base.MessageOption{
-		p2p_base.WithFilters([]p2p_base.FilterStrategy{p2p_base.NearestBucketStrategy}),
 		p2p_base.WithBcName(lk.bcName),
 		p2p_base.WithTargetPeerAddrs(targetPeers),
 	}
