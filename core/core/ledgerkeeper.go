@@ -49,6 +49,7 @@ var (
 	// ErrPeerFinish no more new block valid
 	ErrPeerFinish  = errors.New("Node has become main-chain-holder in the network and no more new blockId is valid.")
 	ErrSyncTimeout = errors.New("Cannot get the whole blocks in time.")
+	ErrPeerLower   = errors.New("Peer's blockchain is lower than yours.")
 )
 
 const (
@@ -261,6 +262,11 @@ func (lk *LedgerKeeper) handleSyncTask(lt *LedgerTask) error {
 			// 本账本已达到最新区块高度，消解此任务
 			return nil
 		}
+		if err == ErrPeerLower {
+			lk.log.Trace("ledgerkeeper::handleSyncTask::get nothing", "task", lt.taskId, "err", err, "sync cost", lt.GetXContext().Timer.Print())
+			lk.updatePeerStatusMap()
+			continue
+		}
 		if err == ErrTargetDataNotFound {
 			// beginBlockId疑似无效，需往前回溯，注意:往前回溯可能会导致主干切换
 			lk.log.Trace("ledgerkeeper::handleSyncTask::get nothing from peers, begin backtracking...", "task", lt.taskId, "headerBegin", global.F(headerBegin), "sync cost", lt.GetXContext().Timer.Print())
@@ -288,7 +294,7 @@ func (lk *LedgerKeeper) handleSyncTask(lt *LedgerTask) error {
 		if err != nil { // 其他问题疑似对方节点发送有误or恶意发送，delete peer
 			lk.log.Warn("ledgerkeeper::handleSyncTask::delete peer", "task", lt.taskId, "headerBegin", global.F(headerBegin), "address", peer[0], "err", err)
 			lk.peersStatusMap.Store(peer[0], false)
-			continue
+			return err
 		}
 		if endFlag {
 			nextLoop = false
@@ -385,6 +391,12 @@ func (lk *LedgerKeeper) getPeerBlockIds(beginBlockId []byte, length int64, targe
 	// 该beginBlockId已经是对方最高ti—pId
 	if bytes.Equal(tip, beginBlockId) {
 		return true, nil, ErrPeerFinish
+	}
+	if peerTip, err := lk.ledger.QueryBlockHeader(tip); err == nil {
+		// 对方在主干子集状态
+		if peerTip.GetInTrunk() {
+			return false, nil, ErrPeerLower
+		}
 	}
 	// 该beginBlockId不在对方主干上，开启回溯
 	// TODO: 此处不一定不在主干上，可能是这个TipId在主干中的一个结点，即需同步的节点已经是最新的了
