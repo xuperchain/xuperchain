@@ -3,7 +3,7 @@ package base
 import (
 	"context"
 	"errors"
-	"strconv"
+	"fmt"
 	"sync"
 	"time"
 
@@ -112,7 +112,7 @@ func (hm *HandlerMap) UnRegister(sub Subscriber) error {
 func (hm *HandlerMap) MarkMsgAsHandled(msg *xuperp2p.XuperMessage) {
 	hm.lg.Trace("MarkMsgAsHandled ", "logid", msg.GetHeader().GetLogid(), "msgType", msg.GetHeader().GetType(), "checksum", msg.GetHeader().GetDataCheckSum())
 	msgHash := msg.GetHeader().GetDataCheckSum()
-	key := msg.GetHeader().GetLogid() + "_" + strconv.FormatUint(uint64(msgHash), 10)
+	key := fmt.Sprintf("%s_%d_%s", msg.GetHeader().GetLogid(), msgHash, msg.Header.GetFrom())
 	hm.lg.Trace("MarkMsgAsHandled", "key", key)
 	hm.msgHandled.Set(key, true, time.Duration(3)*time.Second)
 }
@@ -120,7 +120,7 @@ func (hm *HandlerMap) MarkMsgAsHandled(msg *xuperp2p.XuperMessage) {
 // IsMsgAsHandled used to check whether the msg has been dealt with.
 func (hm *HandlerMap) IsMsgAsHandled(msg *xuperp2p.XuperMessage) bool {
 	msgHash := msg.GetHeader().GetDataCheckSum()
-	key := msg.GetHeader().GetLogid() + "_" + strconv.FormatUint(uint64(msgHash), 10)
+	key := fmt.Sprintf("%s_%d_%s", msg.GetHeader().GetLogid(), msgHash, msg.Header.GetFrom())
 	hm.lg.Trace("IsMsgAsHandled", "key", key)
 	_, ok := hm.msgHandled.Get(key)
 	return ok
