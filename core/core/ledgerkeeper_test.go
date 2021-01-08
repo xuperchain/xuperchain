@@ -279,34 +279,6 @@ func TestHandleGetDataMsg(t *testing.T) {
 	return
 }
 
-func TestAssignTaskRandomly(t *testing.T) {
-	targetPeers := []string{"NodeA", "NodeB", "NodeC", "NodeD", "NodeE", "NodeF"}
-	headersList := [][]byte{
-		[]byte{1}, []byte{2}, []byte{3}, []byte{4},
-	}
-	result, _, err := assignTaskRandomly(targetPeers, headersList)
-	if len(result) == 0 {
-		t.Error("assignTaskRandomly test error: NONE")
-		return
-	}
-	if err != nil {
-		t.Error("assignTaskRandomly test error:", err.Error())
-		return
-	}
-	targetPeers = []string{"NodeA"}
-	headersList = [][]byte{
-		[]byte{11}, []byte{22},
-	}
-	result, s, err := assignTaskRandomly(targetPeers, headersList)
-	if err != nil {
-		t.Error("assignTaskRandomly test error:", err.Error())
-		return
-	}
-	if len(result) != 1 {
-		t.Error("assignTaskRandomly test error", "str", s)
-	}
-}
-
 func TestRoundRobinPick(t *testing.T) {
 	targetSyncBlocksPeers := new(sync.Map)
 	targetSyncBlocksPeers.Store("NodeA", true)
