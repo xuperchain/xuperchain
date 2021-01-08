@@ -307,26 +307,37 @@ func TestAssignTaskRandomly(t *testing.T) {
 	}
 }
 
-func TestRandomPickPeers(t *testing.T) {
-	randomNumber := int64(3)
+func TestRoundRobinPick(t *testing.T) {
 	targetSyncBlocksPeers := new(sync.Map)
 	targetSyncBlocksPeers.Store("NodeA", true)
 	targetSyncBlocksPeers.Store("NodeB", true)
-	targetSyncBlocksPeers.Store("NodeC", false)
+	targetSyncBlocksPeers.Store("NodeC", true)
 	targetSyncBlocksPeers.Store("NodeD", true)
 	targetSyncBlocksPeers.Store("NodeE", true)
-	targetSyncBlocksPeers.Store("NodeF", false)
-	result, err := randomPickPeers(randomNumber, targetSyncBlocksPeers)
-	t.Log("LEN=", len(result))
-	if err != nil || int64(len(result)) != randomNumber {
+	targetSyncBlocksPeers.Store("NodeF", true)
+	lk, _ := prepareLedgerKeeper(47101, "../data/netkeys/")
+	lk.peersStatusMap = targetSyncBlocksPeers
+	peers := []string{"NodeA", "NodeB", "NodeC", "NodeD", "NodeE", "NodeF"}
+
+	result1, err := lk.roundRobinPick()
+	t.Log("LEN=", len(result1))
+	if err != nil {
 		t.Error("randomPickPeers test error:", err.Error())
 	}
+	index := 0
+	for i, v := range peers {
+		if v == result1[0] {
+			index = i
+		}
+	}
 
-	randomNumber = int64(0)
-	result, err = randomPickPeers(randomNumber, targetSyncBlocksPeers)
-	t.Log("LEN=", len(result))
+	result2, err := lk.roundRobinPick()
+	t.Log("LEN=", len(result2))
 	if err != nil {
 		t.Error("randomPickPeers test ZERO error")
+	}
+	if peers[(index+1)%len(peers)] != result2[0] {
+		t.Error("roundRobin error", result1, result2)
 	}
 }
 
