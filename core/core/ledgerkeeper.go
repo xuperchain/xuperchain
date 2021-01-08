@@ -249,15 +249,10 @@ func (lk *LedgerKeeper) handleSyncTask(lt *LedgerTask) error {
 			return ErrAllPeersInvalid
 		}
 		// 先随机选择一个peer进行询问，找其询问最新的blockids列表, 若走回溯逻辑，则直接选取回溯传入的peer
-		peer := lt.GetPreferPeer()
-		if peer == nil {
-			var err error
-			peer, err = lk.roundRobinPick()
-			if err != nil {
-				lk.log.Warn("ledgerkeeper::handleSyncTask::roundRobinPick error", "task", lt.taskId, "headerBegin", global.F(headerBegin), "err", err)
-				continue
-			}
-			lk.log.Trace("ledgerkeeper::roundRobinPick", "peer", peer[0], "task", lt.taskId, "headerBegin", global.F(headerBegin))
+		peer, err := lk.roundRobinPick()
+		if err != nil {
+			lk.log.Warn("ledgerkeeper::handleSyncTask::roundRobinPick error", "task", lt.taskId, "headerBegin", global.F(headerBegin), "err", err)
+			continue
 		}
 		lk.log.Trace("ledgerkeeper::handleSyncTask::getPeerBlockIds round start", "task", lt.taskId, "headerBegin", global.F(headerBegin), "sync cost", lt.GetXContext().Timer.Print(), "peer", peer[0])
 		endFlag, blockIds, err := lk.getPeerBlockIds(headerBegin, lk.syncHeaderSize, peer[0])
@@ -278,7 +273,7 @@ func (lk *LedgerKeeper) handleSyncTask(lt *LedgerTask) error {
 				return nil // genesisBlock有问题，暂不解决
 			}
 			// 回溯逻辑直接向全零返回的peer发送GetBlockIdsRequest
-			lt.setPreferPeer(peer[0])
+			// lt.setPreferPeer(peer[0])
 			lk.log.Info("ledgerkeeper::handleSyncTask::backtrack start point", "task", lt.taskId, "headerBegin", global.F(headerBegin), "sync cost", lt.GetXContext().Timer.Print())
 			continue
 		}
@@ -383,10 +378,6 @@ func (lk *LedgerKeeper) getPeerBlockIds(beginBlockId []byte, length int64, targe
 	}
 	lk.log.Info("ledgerkeeper::getPeerBlockIds::GET_BLOCKIDS RESULT", "HEADERS", printStr, "TIP", global.F(tip), "FROM", from)
 
-	// 空值，包含连接错误
-	if len(blockIds) == 0 && tip == nil {
-		return false, nil, ErrTargetPeerInvalid // 此处并不endFlag，可以找其他peer拿
-	}
 	if tip == nil && len(blockIds) != 0 || int64(len(blockIds)) > length {
 		// 返回消息参数非法
 		return false, nil, ErrInvalidMsg
@@ -898,28 +889,6 @@ func (lk *LedgerKeeper) roundRobinPick() ([]string, error) {
 	}
 	lk.pickPeer = originPeers[(index+1)%len(originPeers)]
 	return []string{lk.pickPeer}, nil
-}
-
-/* assignTaskRandomly 随机将需要处理的blockId请求分配给指定的peers
- */
-func assignTaskRandomly(targetPeers []string, headersList [][]byte) (map[string][][]byte, map[string][]string, error) {
-	assignStr := map[string][]string{}
-	if len(targetPeers) == 0 {
-		return nil, assignStr, ErrInvalidMsg
-	}
-	peersTask := map[string][][]byte{}
-	for i, id := range headersList {
-		index := i % len(targetPeers)
-		peersTask[targetPeers[index]] = append(peersTask[targetPeers[index]], id)
-	}
-	for peer, ids := range peersTask {
-		var ps []string
-		for _, v := range ids {
-			ps = append(ps, global.F(v))
-		}
-		assignStr[peer] = ps
-	}
-	return peersTask, assignStr, nil
 }
 
 /* changeSyncBeginBlockPoint 当当前beginBlockId无法获取同步头列表时，需要通过输入账本回溯获取新的BlockId
