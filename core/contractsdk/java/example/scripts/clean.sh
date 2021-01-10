@@ -1,1 +1,5 @@
-for contract in `ls`;do   [[ -f $contract/pom.xml ]] && mvn -f $contract/pom.xml clean;done
+for dir in `ls`;do
+  if [ -f ${dir}/pom.xml ] ;then
+  bash -c "cd $dir;mvn clean"
+  fi
+done

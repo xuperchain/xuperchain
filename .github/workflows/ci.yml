@@ -25,19 +25,28 @@ jobs:
       with:
         file: ./coverage.txt
 
-  contract-java-sdk:
+  contract-template-sdk:
     strategy:
       matrix:
+        go-version: [1.13.x]
         platform: [ubuntu-latest, macos-latest]
     runs-on: ${{ matrix.platform }}
-
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout code
+      uses: actions/checkout@v2
+      
+    - name: Install Go
+      uses: actions/setup-go@v1
+      with:
+        go-version: ${{ matrix.go-version }}
+        
     - name: Set up JDK 1.8
       uses: actions/setup-java@v1
       with:
         java-version: 1.8
-    - name: Build with Maven
+    - name: Build and Test
       run: |
-        mvn install -f ./core/contractsdk/java/pom.xml
-        mvn package -f ./core/contractsdk/java/example/counter/pom.xml
+        go build -o xdev github.com/xuperchain/xuperchain/core/cmd/xdev
+        export PATH=${PATH}:`pwd`
+        go install github.com/xuperchain/xuperchain/core/cmd/xdev
+        make -C core/contractsdk/java build && make -C core/contractsdk/java test
