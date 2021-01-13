@@ -62,10 +62,6 @@ func newEnvironment() (*environment, error) {
 	}, nil
 }
 
-type OptionArgs struct {
-	Account string `json:"account"`
-	Amount  string `json:"amount"`
-}
 type deployArgs struct {
 	Name     string                 `json:"name"`
 	Code     string                 `json:"code"`
@@ -73,7 +69,7 @@ type deployArgs struct {
 	InitArgs map[string]interface{} `json:"init_args"`
 	Type     string                 `json:"type"`
 	ABIFile  string                 `json:"abi"`
-	Options  OptionArgs             `json:"options"`
+	Options  invokeOptions          `json:"options"`
 
 	trueArgs map[string][]byte
 	codeBuf  []byte
