@@ -148,7 +148,7 @@ func (c *CommTrans) GenPreExeRes(ctx context.Context) (
 			// print contract response of evm
 			err := printRespWithAbiForEVM(string(c.AbiCode), c.MethodName, res.Body)
 			if err != nil {
-				return nil, nil, nil
+				fmt.Printf("contract response: %s\n", string(res.Body))
 			}
 		}
 	}
