@@ -1809,8 +1809,10 @@ func (uv *UtxoVM) RollBackUnconfirmedTx() (map[string]bool, TxLists, error) {
 	}
 
 	// 回滚完成从未确认交易表删除
-	for txid := range undoDone {
-		uv.unconfirmTxInMem.Delete(txid)
+	// 由于这里操作不是原子操作，需要保持按回滚顺序delete
+	for _, tx := range undoList {
+		uv.unconfirmTxInMem.Delete(string(tx.Txid))
+		uv.xlog.Trace("delete from unconfirm tx memory", "txid", global.F(tx.Txid))
 	}
 	return undoDone, undoList, nil
 }
