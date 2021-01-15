@@ -33,3 +33,7 @@ event_client
 # Log files
 *.log
 *.log.wf
+
+
+coverage.txt
+*.pem
