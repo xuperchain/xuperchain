@@ -54,4 +54,4 @@ require (
 	gopkg.in/yaml.v2 v2.2.4
 )
 
-replace github.com/hyperledger/burrow => github.com/xuperchain/burrow v0.30.6-0.20200922024403-90193b5a35dd
+replace github.com/hyperledger/burrow => github.com/xuperchain/burrow v0.30.6-0.20210115120720-3da1be35a1e2
