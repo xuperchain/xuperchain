@@ -20,9 +20,9 @@ type awardManage struct{}
 
 func (am *awardManage) Initialize(ctx code.Context) code.Response {
 	args := struct {
-		TotalSupply *big.Int `json:"totalSupply" gt:"0"`
+		TotalSupply *big.Int `json:"totalSupply" validate:"gt=0"`
 	}{}
-	if err := utils.Validate(ctx.Args(), &args); err != nil {
+	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 
@@ -62,10 +62,10 @@ func (am *awardManage) AddAward(ctx code.Context) code.Response {
 	}
 
 	args := struct {
-		Amount *big.Float `json:"amount" gt:"0"`
+		Amount *big.Int `json:"amount" validate:"gt=0"`
 	}{}
 
-	if err := utils.Validate(ctx.Args(), &args); err != nil {
+	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 
@@ -74,8 +74,8 @@ func (am *awardManage) AddAward(ctx code.Context) code.Response {
 		return code.Error(err)
 	}
 
-	totalSupply, _ := big.NewFloat(0).SetString(string(totalSupplyByte))
-	totalSupply = big.NewFloat(0).Add(totalSupply, args.Amount)
+	totalSupply, _ := big.NewInt(0).SetString(string(totalSupplyByte), 10)
+	totalSupply = big.NewInt(0).Add(totalSupply, args.Amount)
 
 	if err := ctx.PutObject([]byte(TOTAL_SUPPLY), []byte(totalSupply.String())); err != nil {
 		return code.Error(err)
@@ -108,7 +108,7 @@ func (am *awardManage) Allowance(ctx code.Context) code.Response {
 		From string `json:"from"`
 		To   string `json:"to"`
 	}{}
-	if err := utils.Validate(ctx.Args(), &args); err != nil {
+	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 
@@ -126,11 +126,11 @@ func (am *awardManage) Transfer(ctx code.Context) code.Response {
 		return code.Error(utils.ErrMissingCaller)
 	}
 	args := struct {
-		To    string     `json:"to" required:"true"`
-		Token *big.Float `json:"token" required:"true"`
+		To    string   `json:"to" validate:"required"`
+		Token *big.Int `json:"token" validate:"required"`
 	}{}
 
-	if err := utils.Validate(ctx.Args(), &args); err != nil {
+	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 	if from == args.To {
@@ -141,7 +141,7 @@ func (am *awardManage) Transfer(ctx code.Context) code.Response {
 	if err != nil {
 		return code.Error(err)
 	}
-	fromBalance, _ := big.NewFloat(0).SetString(string(fromBalanceByte))
+	fromBalance, _ := big.NewInt(0).SetString(string(fromBalanceByte), 10)
 
 	if fromBalance.Cmp(args.Token) < 0 {
 		return code.Error(errors.New("balance not enough"))
@@ -151,28 +151,28 @@ func (am *awardManage) Transfer(ctx code.Context) code.Response {
 	if err != nil { // errors!=nil means account not found
 		toBalanceByte = []byte("0")
 	}
-	toBalance, _ := big.NewFloat(0).SetString(string(toBalanceByte))
+	toBalance, _ := big.NewInt(0).SetString(string(toBalanceByte), 10)
 
-	if err := ctx.PutObject([]byte(BALANCEPRE+from), []byte(big.NewFloat(0).Sub(fromBalance, args.Token).String())); err != nil {
+	if err := ctx.PutObject([]byte(BALANCEPRE+from), []byte(big.NewInt(0).Sub(fromBalance, args.Token).String())); err != nil {
 		return code.Error(err)
 	}
-	if err := ctx.PutObject([]byte(BALANCEPRE+args.To), []byte(big.NewFloat(0).Add(toBalance, args.Token).String())); err != nil {
+	if err := ctx.PutObject([]byte(BALANCEPRE+args.To), []byte(big.NewInt(0).Add(toBalance, args.Token).String())); err != nil {
 		return code.Error(err)
 	}
 
-	return code.OK([]byte("ok~"))
+	return code.OK([]byte("ok"))
 }
 
 func (am *awardManage) TransferFrom(ctx code.Context) code.Response {
 	args := struct {
-		From  string     `json:"from" required:"true"`
-		Token *big.Float `json:"token" required:"true"`
+		From  string   `json:"from" validate:"required"`
+		Token *big.Int `json:"token" validate:"required"`
 	}{}
 	caller := ctx.Caller()
 	if caller == "" {
 		return code.Error(utils.ErrMissingCaller)
 	}
-	if err := utils.Validate(ctx.Args(), &args); err != nil {
+	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 
@@ -181,7 +181,7 @@ func (am *awardManage) TransferFrom(ctx code.Context) code.Response {
 		return code.Error(err)
 	}
 
-	fromBalance, _ := big.NewFloat(0).SetString(string(fromBalanceByte))
+	fromBalance, _ := big.NewInt(0).SetString(string(fromBalanceByte), 10)
 	if fromBalance.Cmp(args.Token) < 0 {
 		return code.Error(utils.ErrBalanceLow)
 	}
@@ -192,15 +192,15 @@ func (am *awardManage) TransferFrom(ctx code.Context) code.Response {
 	if err != nil {
 		return code.Error(err)
 	}
-	allowanceBalance, _ := big.NewFloat(0).SetString(string(allowanceBalanceByte))
+	allowanceBalance, _ := big.NewInt(0).SetString(string(allowanceBalanceByte), 10)
 	if allowanceBalance.Cmp(args.Token) < 0 {
 		return code.Error(errors.New("allowance balance not enough"))
 	}
 
-	toBalance := big.NewFloat(0)
+	toBalance := big.NewInt(0)
 	toBalanceByte, err := ctx.GetObject([]byte(BALANCEPRE + caller))
 	if err == nil {
-		toBalance.SetString(string(toBalanceByte))
+		toBalance.SetString(string(toBalanceByte), 10)
 	}
 
 	fromBalance = fromBalance.Sub(fromBalance, args.Token)
@@ -216,20 +216,20 @@ func (am *awardManage) TransferFrom(ctx code.Context) code.Response {
 	if err := ctx.PutObject([]byte(BALANCEPRE+caller), []byte(toBalance.String())); err != nil {
 		return code.Error(err)
 	}
-	return code.OK([]byte("ok~"))
+	return code.OK([]byte("ok"))
 }
 
 func (am *awardManage) Approve(ctx code.Context) code.Response {
 	args := struct {
-		To    string     `json:"to" required:"true"`
-		Token *big.Float `json:"token" required:"true"`
+		To    string   `json:"to" validte:"required"`
+		Token *big.Int `json:"token" validate:"required"`
 	}{}
 	from := ctx.Caller()
 	if len(from) == 0 {
 		return code.Error(utils.ErrMissingCaller)
 	}
 
-	if err := utils.Validate(ctx.Args(), &args); err != nil {
+	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 
@@ -240,12 +240,12 @@ func (am *awardManage) Approve(ctx code.Context) code.Response {
 		allowanceByte = value
 	}
 
-	allowanceBalance, _ := big.NewFloat(0).SetString(string(allowanceByte))
+	allowanceBalance, _ := big.NewInt(0).SetString(string(allowanceByte), 10)
 	allowanceBalance = allowanceBalance.Add(allowanceBalance, args.Token)
 	if err := ctx.PutObject(allowanceKey, []byte(allowanceBalance.String())); err != nil {
 		return code.Error(err)
 	}
-	return code.OK([]byte("ok~"))
+	return code.OK([]byte("ok"))
 }
 
 func main() {

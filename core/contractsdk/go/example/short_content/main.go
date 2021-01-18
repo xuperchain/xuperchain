@@ -20,21 +20,23 @@ var (
 	ErrContentLengthTooLong = errors.New("the length of topic or title or content is larger than limitation")
 )
 
+type content struct {
+	UserId  string `json:"user_id" validte:"required"`
+	Title   string `json:"title" validte:"required"`
+	Topic   string `json:"topic" validte:"required"`
+	Content string `json:"content" validte:"required"`
+}
+
 type shortContent struct {
 }
 
 func (sc *shortContent) Initialize(ctx code.Context) code.Response {
-	return code.OK([]byte("ok~"))
+	return code.OK([]byte("ok"))
 }
 
 func (sc *shortContent) StoreShortContent(ctx code.Context) code.Response {
-	args := struct {
-		UserId  string `json:"user_id" required:"true"`
-		Title   string `json:"title" required:"true"`
-		Topic   string `json:"topic" required:"true"`
-		Content string `json:"content" required:"true"`
-	}{}
-	if err := utils.Validate(ctx.Args(), &args); err != nil {
+	args := content{}
+	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 	userKey := USER_BUCKET + "/" + args.UserId + "/" + args.Topic + "/" + args.Title
@@ -46,40 +48,42 @@ func (sc *shortContent) StoreShortContent(ctx code.Context) code.Response {
 	if err := ctx.PutObject([]byte(userKey), []byte(args.Content)); err != nil {
 		return code.Error(err)
 	}
-	return code.OK([]byte("ok~"))
+	return code.OK([]byte("ok"))
 }
 
 func (sc *shortContent) QueryByUser(ctx code.Context) code.Response {
 	args := struct {
-		UserID string `json:"user_id" required:"true"`
+		UserID string `json:"user_id" validte:"required"`
 	}{}
-	if err := utils.Validate(ctx.Args(), &args); err != nil {
+	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
-	start := USER_BUCKET + "/" + args.UserID + "/"
-	end := start + "~"
-	builder := strings.Builder{}
-	iter := ctx.NewIterator([]byte(start), []byte(end))
+	prefix := USER_BUCKET + "/" + args.UserID + "/"
+	iter := ctx.NewIterator(code.PrefixRange([]byte(prefix)))
 	defer iter.Close()
+	contents := []content{}
 	for iter.Next() {
-		builder.Write(iter.Key()[len(USER_BUCKET):])
-		builder.WriteString("\n")
-		builder.Write(iter.Value())
-		builder.WriteString("\n")
+		value := strings.Split(string(iter.Key()[len(USER_BUCKET):]), "/")
+		contents = append(contents, content{
+			UserId:  args.UserID,
+			Topic:   value[0],
+			Title:   value[1],
+			Content: string(iter.Value()),
+		})
 	}
 	if err := iter.Error(); err != nil {
 		return code.Error(err)
 	}
-	return code.OK([]byte(builder.String()))
+	return code.JSON(contents)
 }
 
 func (sc *shortContent) QueryByTitle(ctx code.Context) code.Response {
 	args := struct {
-		UserId string `json:"user_id" required:"true"`
-		Topic  string `json:"topic" required:"true"`
-		Title  string `json:"title" required:"true"`
+		UserId string `json:"user_id" validte:"required"`
+		Topic  string `json:"topic" validte:"required"`
+		Title  string `json:"title" validte:"required"`
 	}{}
-	if err := utils.Validate(ctx.Args(), &args); err != nil {
+	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 	value, err := ctx.GetObject([]byte(USER_BUCKET + "/" + args.UserId + "/" + args.Topic + "/" + args.Title))
@@ -91,25 +95,27 @@ func (sc *shortContent) QueryByTitle(ctx code.Context) code.Response {
 
 func (sc *shortContent) QueryByTopic(ctx code.Context) code.Response {
 	args := struct {
-		UserId string `json:"user_id" required:"true"`
-		Topic  string `json:"topic" required:"true"`
+		UserId string `json:"user_id" validte:"required"`
+		Topic  string `json:"topic" validte:"required"`
 	}{}
-	start := USER_BUCKET + "/" + args.UserId + "/" + args.Topic + "/"
-	end := start + "~"
-	iter := ctx.NewIterator([]byte(start), []byte(end))
+	prefix := USER_BUCKET + "/" + args.UserId + "/" + args.Topic + "/"
+	iter := ctx.NewIterator(code.PrefixRange([]byte(prefix)))
 	defer iter.Close()
 
-	builder := strings.Builder{}
+	contents := []content{}
+
 	for iter.Next() {
-		builder.Write(iter.Key())
-		builder.WriteString("\n")
-		builder.Write(iter.Value())
-		builder.WriteString("\n")
+		contents = append(contents, content{
+			UserId:  args.UserId,
+			Topic:   args.Topic,
+			Title:   string(iter.Key())[len(prefix):],
+			Content: string(iter.Value()),
+		})
 	}
 	if err := iter.Error(); err != nil {
 		return code.Error(err)
 	}
-	return code.OK([]byte(builder.String()))
+	return code.JSON(contents)
 }
 
 func main() {

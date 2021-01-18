@@ -74,7 +74,7 @@ function Cost(t) {
 function Statistics(t) {
     c = Cost(t)
     resp = c.Invoke("Statistics", {})
-    assert.equal(resp.Body, "totalDonates=210000,totalCost=1000,fundBalance=209000")
+    assert.deepStrictEqual(JSON.parse(resp.Body), { "total_donate": "210000", "total_cost": "1000", "fund_balance": "209000" })
 }
 
 
@@ -82,22 +82,30 @@ function QueryDonor(t) {
     c = Cost(t)
     resp = c.Invoke("QueryDonor", { "donor": "donor2" })
     console.log(resp.Body)
-    console.log(resp.Status,200)
-    assert.equal(resp.Body, "total donate count:1\nid=00000000000000000021,donor=donor2,amount=10000,timestamp=1609590581,commnets=comments1\n")
+    console.log(resp.Status, 200)
+    console.log(resp.Message)
+    assert.deepStrictEqual(JSON.parse(resp.Body), [
+        {
+            "id": "00000000000000000021",
+            "donor": "donor2",
+            "amount": "10000",
+            "timestamp": "1609590581",
+            "comments": "comments1"
+        }
+    ])
 }
 
 function QueryDonates(t) {
     c = Cost(t)
     resp = c.Invoke("QueryDonates", { "start": "00000000000000000005", "limit": "1" })
-    // console.log(resp.Body)
-    assert.equal(resp.Body, "id=00000000000000000005,donor=donor1,amount=10000,timestamp=1609590581,commnets=comments1\n")
+    assert.deepStrictEqual(JSON.parse(resp.Body), [{ "id": "00000000000000000005", "donor": "donor1", "amount": "10000", "timestamp": "1609590581", "comments": "comments1" }])
 }
 
 function QueryCosts(t) {
     c = Cost(t)
     resp = c.Invoke("QueryCosts", { "start": "00000000000000000001", "limit": "1" })
     console.log(resp.Message)
-    assert.equal(resp.Body, "id=00000000000000000001to=to,amount=100,timestamp=1609590581,comments=comments\n")
+    assert.deepStrictEqual(JSON.parse(resp.Body), [{ "id": "00000000000000000001", "to": "to", "amount": "100", "timestamp": "1609590581", "comments": "comments" }])
     resp = c.Invoke("QueryCosts", { "start": "00000000000000000001", "limit": "10000" })
     assert.equal(resp.Message, "limit exceeded")
 }

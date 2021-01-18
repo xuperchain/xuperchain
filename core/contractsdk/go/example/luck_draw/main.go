@@ -25,7 +25,7 @@ func (ld *luckDraw) Initialize(ctx code.Context) code.Response {
 	args := struct {
 		Admin string `json:"admin"`
 	}{}
-	if err := utils.Validate(ctx.Args(), &args); err != nil {
+	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 	if err := ctx.PutObject([]byte(ADMIN), []byte(args.Admin)); err != nil {
@@ -88,10 +88,10 @@ func (ld *luckDraw) StartLuckDraw(ctx code.Context) code.Response {
 		return code.Error(utils.ErrPermissionDenied)
 	}
 	args := struct {
-		Seed *big.Int `json:"seed" required:"true"`
+		Seed *big.Int `json:"seed" validte:"required"`
 	}{}
 
-	if err := utils.Validate(ctx.Args(), &args); err != nil {
+	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 
@@ -101,9 +101,8 @@ func (ld *luckDraw) StartLuckDraw(ctx code.Context) code.Response {
 	}
 
 	lastId, _ := big.NewInt(0).SetString(string(lastIdByte), 10)
-	rand.Seed(args.Seed.Int64())
-
-	luckId := big.NewInt(rand.Int63()) //TODO @fengjin
+	r := rand.NewSource(args.Seed.Int64())
+	luckId := big.NewInt(r.Int63())
 	luckId = luckId.Mod(luckId, lastId)
 	luckId = luckId.Add(luckId, big.NewInt(1))
 

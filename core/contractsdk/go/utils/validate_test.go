@@ -1,47 +1,43 @@
 package utils
 
 import (
-	"fmt"
 	"math/big"
 	"testing"
 )
 
-func TestValidate(t *testing.T) {
+func TestInt(t *testing.T) {
 	args := &struct {
-		Count *big.Int   `json:"count"`
-		Value *big.Float `json:"value"`
-		Name  string     `json:"name"`
+		Count *big.Int `json:"count" validate:"lte=30"`
 	}{}
-	data := map[string][]byte{
-		"count": []byte("1234"),
-		"value": []byte("12.34"),
-		"name":  []byte("zhagnsan"),
+
+	data1 := map[string][]byte{
+		"count": []byte(big.NewInt(30).String()),
 	}
-	err := Validate(data, args)
-	if err != nil {
+	if err := Unmarshal(data1, args); err != nil {
 		t.Error(err)
 	}
-	fmt.Println(args.Count)
-	fmt.Println(args.Value)
-	fmt.Println(args.Name)
+	data2 := map[string][]byte{
+		"count": []byte(big.NewInt(31).String()),
+	}
+	if err := Unmarshal(data2, args); err == nil {
+		t.Error("error")
+	}
 }
 
-func TestValidate2(t *testing.T) {
-	args := &struct {
-		Count *big.Int   `json:"count" required:"true"`
-		Value *big.Float `json:"value" required:"true"`
-		Name  string     `json:"name" required:"false"`
-	}{}
-	data := map[string][]byte{
-		"count": []byte("1234"),
-		"value": []byte("12.34"),
-		//"name":  []byte("zhagnsan"),
+func TestNil(t *testing.T) {
+	type testcase struct {
+		Name *big.Int `json:"name" validate:"required"`
 	}
-	err := Validate(data, args)
-	if err != nil {
+	case1 := &testcase{}
+	case2 := &testcase{}
+
+	data := map[string][]byte{
+		"name": []byte("100"),
+	}
+	if err := Unmarshal(data, case1); err != nil {
 		t.Error(err)
 	}
-	fmt.Println(args.Count)
-	fmt.Println(args.Value)
-	fmt.Println(args.Name)
+	if err := Unmarshal(map[string][]byte{}, case2); err == nil {
+		t.Error("want error,get nil")
+	}
 }

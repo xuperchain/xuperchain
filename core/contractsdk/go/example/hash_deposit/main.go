@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -16,25 +17,27 @@ const (
 
 type hashDeposit struct {
 }
+type fileInfo struct {
+	UserID   string `json:"user_id" validte:"required"`
+	HashID   string `json:"hash_id" validte:"required"`
+	FileName string `json:"file_name" validte:"required"`
+}
 
 func (hd *hashDeposit) Initialize(ctx code.Context) code.Response {
-	return code.OK([]byte("ok~"))
+	return code.OK([]byte("ok"))
 }
 
 func (hd *hashDeposit) StoreFileInfo(ctx code.Context) code.Response {
-	args := struct {
-		UsedID   string `json:"user_id" required:"true"`
-		HashID   string `json:"hash_id" required:"true"`
-		FileName string `json:"file_name" required:"true"`
-	}{}
-	err := utils.Validate(ctx.Args(), &args)
+	args := fileInfo{}
+	err := utils.Unmarshal(ctx.Args(), &args)
 	if err != nil {
 		return code.Error(err)
 	}
 
-	userKey := UserBucket + args.UsedID + "/" + args.HashID
+	userKey := UserBucket + args.UserID + "/" + args.HashID
 	hashKey := HashBucket + args.HashID
-	value := args.UsedID + "\t" + args.HashID + "\t" + args.FileName
+
+	value, _ := json.Marshal(args)
 
 	if _, err = ctx.GetObject([]byte(hashKey)); err == nil {
 		return code.Error(fmt.Errorf("hash id %s already exists\n", args.HashID))
@@ -50,51 +53,52 @@ func (hd *hashDeposit) StoreFileInfo(ctx code.Context) code.Response {
 }
 
 func (hd *hashDeposit) QueryUserList(ctx code.Context) code.Response {
-	key := UserBucket
-	iter := ctx.NewIterator([]byte(key), []byte(key+"~"))
+	prefix := UserBucket
+	iter := ctx.NewIterator(code.PrefixRange([]byte(prefix)))
 	defer iter.Close()
-	builder := strings.Builder{}
+	users := []string{}
 	for iter.Next() {
 		userKey := string(iter.Key()[len(UserBucket):])
-		builder.WriteString(strings.Split(userKey, "/")[0])
-		builder.WriteString("\n")
+		users = append(users, strings.Split(userKey, "/")[0])
 	}
 	if err := iter.Error(); err != nil {
 		return code.Error(err)
 	}
-	return code.OK([]byte(builder.String()))
+	// TODO
+	return code.JSON(users)
 }
 
 func (hd *hashDeposit) QueryFileInfoByUser(ctx code.Context) code.Response {
 	args := struct {
-		UserID string `json:"user_id" required:"true"`
+		UserID string `json:"user_id" validte:"required"`
 	}{}
-	if err := utils.Validate(ctx.Args(), &args); err != nil {
+	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 
-	builder := strings.Builder{}
-
-	start := UserBucket + args.UserID
-	end := start + "~"
-	iter := ctx.NewIterator([]byte(start), []byte(end))
-
+	prefix := UserBucket + args.UserID + "/"
+	iter := ctx.NewIterator(code.PrefixRange([]byte(prefix)))
 	defer iter.Close()
+
+	fileInfos := []fileInfo{}
 	for iter.Next() {
-		builder.Write(iter.Value())
-		builder.WriteString("\n")
+		info := fileInfo{}
+		if err := json.Unmarshal(iter.Value(), &info); err != nil {
+			return code.Error(err)
+		}
+		fileInfos = append(fileInfos, info)
 	}
 	if err := iter.Error(); err != nil {
 		return code.Error(err)
 	}
-	return code.OK([]byte(builder.String()))
+	return code.JSON(fileInfos)
 }
 
 func (hd *hashDeposit) QueryFileInfoByHash(ctx code.Context) code.Response {
 	args := struct {
-		HashID string `json:"hash_id" required:"true"`
+		HashID string `json:"hash_id" validte:"required"`
 	}{}
-	if err := utils.Validate(ctx.Args(), &args); err != nil {
+	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 	key := HashBucket + args.HashID

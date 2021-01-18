@@ -3,7 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/xuperchain/xuperchain/core/contractsdk/go/code"
 	"github.com/xuperchain/xuperchain/core/contractsdk/go/driver"
@@ -20,12 +19,23 @@ const (
 	ASSET2USER = "Asset2User_"
 )
 
+type assetType struct {
+	TypeID   string `json:"type_id" validate:"required"`
+	TypeDesc string `json:"type_desc" validat:"required"`
+}
+
+type asset struct {
+	Id     string `json:"id"`
+	TypeId string `json:"type_id"`
+	Desc   string `json:"asset_desc"`
+}
+
 func (ga *gameAssets) Initialize(ctx code.Context) code.Response {
 	args := struct {
-		Admin string `json:"admin" required:"true"`
+		Admin string `json:"admin" validte:"required"`
 	}{}
 
-	if err := utils.Validate(ctx.Args(), &args); err != nil {
+	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 	if err := ctx.PutObject([]byte(ADMIN), []byte(args.Admin)); err != nil {
@@ -51,11 +61,8 @@ func (ga *gameAssets) AddAssetType(ctx code.Context) code.Response {
 	if !ga.isAdmin(ctx, caller) {
 		return code.Error(utils.ErrPermissionDenied)
 	}
-	args := struct {
-		TypeID   string `json:"type_id" required:"true"`
-		TypeDesc string `json:"type_desc" required:"true"`
-	}{}
-	if err := utils.Validate(ctx.Args(), &args); err != nil {
+	args := assetType{}
+	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 
@@ -71,19 +78,17 @@ func (ga *gameAssets) AddAssetType(ctx code.Context) code.Response {
 }
 
 func (ga *gameAssets) ListAssetType(ctx code.Context) code.Response {
-	start := ASSETTYPE
-	end := ASSETTYPE + "~"
-	iter := ctx.NewIterator([]byte(start), []byte(end))
+	iter := ctx.NewIterator(code.PrefixRange([]byte(ASSETTYPE)))
 	defer iter.Close()
 
-	buf := strings.Builder{}
+	assetTypes := []assetType{}
 	for iter.Next() {
-		buf.Write(iter.Key()[len([]byte(ASSETTYPE)):])
-		buf.WriteString(":")
-		buf.Write(iter.Value())
-		buf.WriteString("\n")
+		assetTypes = append(assetTypes, assetType{
+			string(iter.Key()[len([]byte(ASSETTYPE)):]),
+			string(iter.Value()),
+		})
 	}
-	return code.OK([]byte(buf.String()))
+	return code.JSON(assetTypes)
 }
 
 func (ga *gameAssets) NewAssetToUser(ctx code.Context) code.Response {
@@ -95,11 +100,11 @@ func (ga *gameAssets) NewAssetToUser(ctx code.Context) code.Response {
 		return code.Error(utils.ErrPermissionDenied)
 	}
 	args := struct {
-		UserId  string `json:"user_id" required:"true"`
-		TypeId  string `json:"type_id" required:"true"`
-		AssetId string `json:"asset_id" required:"true"`
+		UserId  string `json:"user_id" validte:"required"`
+		TypeId  string `json:"type_id" validte:"required"`
+		AssetId string `json:"asset_id" validte:"required"`
 	}{}
-	if err := utils.Validate(ctx.Args(), &args); err != nil {
+	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 	assetTypeKey := ASSETTYPE + args.TypeId
@@ -130,10 +135,10 @@ func (ga *gameAssets) TradeAsset(ctx code.Context) code.Response {
 		return code.Error(utils.ErrMissingCaller)
 	}
 	args := struct {
-		To      string `json:"to" required:"true"`
-		AssetId string `json:"asset_id" required:"true"`
+		To      string `json:"to" validte:"required"`
+		AssetId string `json:"asset_id" validte:"required"`
 	}{}
-	if err := utils.Validate(ctx.Args(), &args); err != nil {
+	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 	userAssetKey := USERASSET + from + "_" + args.AssetId
@@ -163,22 +168,20 @@ func (ga *gameAssets) GetAssetByUser(ctx code.Context) code.Response {
 	}
 	userId := caller
 	args := struct {
-		UserID string `json:"user_id" required:"true"`
+		UserID string `json:"user_id" validte:"required"`
 	}{}
 
 	if ga.isAdmin(ctx, caller) {
-		if err := utils.Validate(ctx.Args(), &args); err == nil {
+		if err := utils.Unmarshal(ctx.Args(), &args); err == nil {
 			userId = args.UserID
 		}
 	}
 
 	userAssetKey := USERASSET + userId + "_"
-	start := userAssetKey
-	end := start + "~"
-	iter := ctx.NewIterator([]byte(start), []byte(end))
+	iter := ctx.NewIterator(code.PrefixRange([]byte(userAssetKey)))
 	defer iter.Close()
 
-	buf := strings.Builder{}
+	assets := []asset{}
 	var getObjectErr error
 
 	for iter.Next() {
@@ -192,13 +195,11 @@ func (ga *gameAssets) GetAssetByUser(ctx code.Context) code.Response {
 			getObjectErr = errors.New("get asset desc error,access type key: " + assetTypeKey)
 			break
 		} else {
-			buf.WriteString("assetId=")
-			buf.Write(assetId)
-			buf.WriteString(",typeId=")
-			buf.Write(typeId[len(ASSETTYPE):])
-			buf.WriteString(",assetDesc=")
-			buf.Write(assetDesc)
-			buf.WriteString("\n")
+			assets = append(assets, asset{
+				Id:     string(assetId),
+				TypeId: string(typeId[len(ASSETTYPE):]),
+				Desc:   string(assetDesc),
+			})
 		}
 	}
 	if getObjectErr != nil {
@@ -208,7 +209,7 @@ func (ga *gameAssets) GetAssetByUser(ctx code.Context) code.Response {
 		return code.Error(err)
 	}
 
-	return code.OK([]byte(buf.String()))
+	return code.JSON(assets)
 }
 func main() {
 	driver.Serve(new(gameAssets))

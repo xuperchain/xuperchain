@@ -1,9 +1,9 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/big"
-	"strings"
 
 	"github.com/xuperchain/xuperchain/core/contractsdk/go/code"
 	"github.com/xuperchain/xuperchain/core/contractsdk/go/driver"
@@ -18,14 +18,19 @@ const (
 	ADMIN          = "ADMIN"
 )
 
+type updateRecord struct {
+	UpdateReccord string `json:"update_record'`
+	Reason        string `json:"reason"`
+}
+
 type sourceTrace struct {
 }
 
 func (st *sourceTrace) Initialize(ctx code.Context) code.Response {
 	args := struct {
-		Admin string `json:"admin" required:"true"`
+		Admin string `json:"admin" validte:"required"`
 	}{}
-	if err := utils.Validate(ctx.Args(), &args); err != nil {
+	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 	if err := ctx.PutObject([]byte(ADMIN), []byte(args.Admin)); err != nil {
@@ -54,7 +59,7 @@ func (st *sourceTrace) CreateGoods(ctx code.Context) code.Response {
 		Id   string `json:"id" required:"true''"`
 		Desc string `json:"desc" required:"desc"`
 	}{}
-	if err := utils.Validate(ctx.Args(), &args); err != nil {
+	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 	goodsKey := GOODS + args.Id
@@ -94,11 +99,11 @@ func (st *sourceTrace) UpdateGoods(ctx code.Context) code.Response {
 		return code.Error(utils.ErrPermissionDenied)
 	}
 	args := struct {
-		Id     string `json:"id" required:"true"`
-		Reason string `json:"reason" required:"true"`
+		Id     string `json:"id" validte:"required"`
+		Reason string `json:"reason" validte:"required"`
 	}{}
 
-	if err := utils.Validate(ctx.Args(), &args); err != nil {
+	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 
@@ -120,33 +125,31 @@ func (st *sourceTrace) UpdateGoods(ctx code.Context) code.Response {
 
 func (st *sourceTrace) QueryRecords(ctx code.Context) code.Response {
 	args := struct {
-		Id string `json:"id" required:"true"`
+		Id string `json:"id" validte:"required"`
 	}{}
-	if err := utils.Validate(ctx.Args(), &args); err != nil {
+	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 
 	goodsRecordsKey := GOODSRECORD + args.Id + "_"
-	start := goodsRecordsKey
-	end := start + "~"
-	iter := ctx.NewIterator([]byte(start), []byte(end))
+	iter := ctx.NewIterator(code.PrefixRange([]byte(goodsRecordsKey)))
 	defer iter.Close()
+	records := []updateRecord{}
 
-	buf := strings.Builder{}
 	for iter.Next() {
 		goodsRecord := string(iter.Key())[len(goodsRecordsKey):]
 		reason := iter.Value()
-
-		buf.WriteString("updateRecord=")
-		buf.WriteString(goodsRecord)
-		buf.WriteString(",reason=")
-		buf.Write(reason)
-		buf.WriteString(("\n"))
+		records = append(records, updateRecord{
+			goodsRecord,
+			string(reason),
+		})
 	}
 	if err := iter.Error(); err != nil {
 		return code.Error(err)
 	}
-	return code.OK([]byte(buf.String()))
+	recordsByte, _ := json.Marshal(records)
+
+	return code.OK(recordsByte)
 }
 
 func main() {
