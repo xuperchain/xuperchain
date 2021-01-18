@@ -907,6 +907,13 @@ func (c *CommTrans) GenRealTx(response *pb.PreExecWithSelectUTXOResponse,
 		Nonce:     global.GenNonce(),
 	}
 
+	if response.Response.GetUtxoInputs() != nil {
+		tx.TxInputs = append(tx.TxInputs, response.GetResponse().GetUtxoInputs()...)
+	}
+	if response.Response.GetUtxoOutputs() != nil {
+		tx.TxOutputs = append(tx.TxOutputs, response.GetResponse().GetUtxoOutputs()...)
+	}
+
 	desc, _ := c.GetDesc()
 	tx.Desc = desc
 	tx.TxInputsExt = response.GetResponse().GetInputs()
