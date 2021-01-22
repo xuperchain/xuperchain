@@ -1,6 +1,6 @@
 package com.baidu.xuper;
 
-import java.math.BigDecimal;
+import java.math.BigInteger;
 
 import com.baidu.xuper.Context;
 import com.baidu.xuper.Contract;
@@ -81,8 +81,8 @@ public class SourceTrace implements Contract {
         if (topRecordValue == null || topRecordValue.length == 0) {
             return Response.error("goods " + id + " not found");
         }
-        BigDecimal topRecord = new BigDecimal(new String(topRecordValue));
-        topRecord = topRecord.add(BigDecimal.ONE);
+        BigInteger topRecord = new BigInteger(new String(topRecordValue));
+        topRecord = topRecord.add(BigInteger.ONE);
         String goodsRecordsKey = GOODSRECORD + id + "_" + topRecord.toString();
         ctx.putObject(goodsRecordsKey.getBytes(), reason.getBytes());
         ctx.putObject(goodsRecordsTopKey.getBytes(), topRecord.toString().getBytes());
@@ -113,7 +113,7 @@ public class SourceTrace implements Contract {
             String goodsId = goodsRecords[1];
             String updateRecord = goodsRecords[2];
             String reason = new String(elem.getValue());
-            String record ="updateRecord=" + updateRecord + ",reason=" + reason+"\n";
+            String record = "updateRecord=" + updateRecord + ",reason=" + reason + "\n";
             buf.append(record);
         });
         return Response.ok(buf.toString().getBytes());

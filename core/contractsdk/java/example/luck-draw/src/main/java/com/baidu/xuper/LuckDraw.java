@@ -1,6 +1,6 @@
 package com.baidu.xuper;
 
-import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Random;
 
 /**
@@ -40,8 +40,8 @@ public class LuckDraw implements Contract {
         if (userVal != null && userVal.length != 0) {
             return Response.ok(userVal);
         }
-        BigDecimal lastId = new BigDecimal(new String(ctx.getObject(TICKETS.getBytes())));
-        lastId = lastId.add(BigDecimal.ONE);
+        BigInteger lastId = new BigInteger(new String(ctx.getObject(TICKETS.getBytes())));
+        lastId = lastId.add(BigInteger.ONE);
 
         ctx.putObject((USER_ID + lastId).getBytes(), caller.getBytes());
         ctx.putObject(TICKETS.getBytes(), lastId.toString().getBytes());
@@ -67,13 +67,13 @@ public class LuckDraw implements Contract {
             return Response.error("missing seed");
         }
 
-        BigDecimal seed = new BigDecimal(new String(seedByte));
-        if (seed.compareTo(BigDecimal.ZERO) == 0) {
+        BigInteger seed = new BigInteger(new String(seedByte));
+        if (seed.compareTo(BigInteger.ZERO) == 0) {
             return Response.error("parse seed error");
         }
 
-        BigDecimal lastId = new BigDecimal(new String(ctx.getObject(TICKETS.getBytes())));
-        if (lastId.compareTo(BigDecimal.ZERO) == 0) {
+        BigInteger lastId = new BigInteger(new String(ctx.getObject(TICKETS.getBytes())));
+        if (lastId.compareTo(BigInteger.ZERO) == 0) {
             return Response.error("no luck draw tickets");
         }
 

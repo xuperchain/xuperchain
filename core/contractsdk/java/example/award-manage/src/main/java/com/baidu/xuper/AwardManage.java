@@ -1,6 +1,6 @@
 package com.baidu.xuper;
 
-import java.math.BigDecimal;
+import java.math.BigInteger;
 
 import com.baidu.xuper.Context;
 import com.baidu.xuper.Contract;
@@ -24,8 +24,8 @@ public class AwardManage implements Contract {
         if (totalSupplyByte == null || totalSupplyByte.length == 0) {
             return Response.error("missing totalSupply");
         }
-        BigDecimal totalSupply = new BigDecimal(new String(totalSupplyByte));
-        if (totalSupply.compareTo(BigDecimal.ZERO) <= 0) {
+        BigInteger totalSupply = new BigInteger(new String(totalSupplyByte));
+        if (totalSupply.compareTo(BigInteger.ZERO) <= 0) {
             return Response.error("totalSupply must be positive");
         }
 
@@ -51,17 +51,17 @@ public class AwardManage implements Contract {
             return Response.error("missing amount");
         }
 
-        BigDecimal amount = new BigDecimal(new String(ctx.args().get("amount")));
-        if (amount.compareTo(BigDecimal.ZERO)<= 0) {
+        BigInteger amount = new BigInteger(new String(ctx.args().get("amount")));
+        if (amount.compareTo(BigInteger.ZERO) <= 0) {
             return Response.error("amount must be greater than 0");
         }
 
-        BigDecimal totalSupply = new BigDecimal(new String(ctx.getObject("totalSupply".getBytes())));
+        BigInteger totalSupply = new BigInteger(new String(ctx.getObject("totalSupply".getBytes())));
 
         ctx.putObject("totalSupply".getBytes(), totalSupply.add(amount).toString().getBytes());
 
         String key = BALANCE + ctx.caller();
-        BigDecimal value = new BigDecimal(new String(ctx.getObject(key.getBytes())));
+        BigInteger value = new BigInteger(new String(ctx.getObject(key.getBytes())));
 
         ctx.putObject(key.getBytes(), value.add(amount).toString().getBytes());
         return Response.ok("ok~".getBytes());
@@ -92,7 +92,7 @@ public class AwardManage implements Contract {
         String from = new String(fromByte);
         String to = new String(toByte);
         byte[] allowanceByte = ctx.getObject((ALLOWANCE + from + "_" + to).getBytes());
-        if (allowanceByte==null || allowanceByte.length == 0) {
+        if (allowanceByte == null || allowanceByte.length == 0) {
             return Response.error("allowance from " + from + " to " + to + " not found");
         }
         return Response.ok(allowanceByte);
@@ -112,13 +112,13 @@ public class AwardManage implements Contract {
         }
 
         String to = new String((toByte));
-        BigDecimal token = new BigDecimal(new String(tokenByte));
+        BigInteger token = new BigInteger(new String(tokenByte));
 
         if (from.equals(to)) {
             return Response.error("can not transfer to yourself");
         }
 
-        if (token.compareTo(BigDecimal.ZERO) <= 0) {
+        if (token.compareTo(BigInteger.ZERO) <= 0) {
             return Response.error("token must be more than 0");
         }
 
@@ -127,16 +127,16 @@ public class AwardManage implements Contract {
         if (balanceFromByte == null || balanceFromByte.length == 0) {
             return Response.error("balance of " + from + " not found");
         }
-        BigDecimal fromBalance = new BigDecimal(new String(balanceFromByte));
-        if (fromBalance.compareTo(token)<0){
+        BigInteger fromBalance = new BigInteger(new String(balanceFromByte));
+        if (fromBalance.compareTo(token) < 0) {
             return Response.error("balance not enough");
         }
 
         String toKey = BALANCE + to;
         byte[] balanceToByte = ctx.getObject(toKey.getBytes());
-        BigDecimal toBalance = new BigDecimal(0);
+        BigInteger toBalance = new BigInteger("0");
         if (balanceToByte != null && balanceToByte.length != 0) {
-            toBalance = new BigDecimal(new String(balanceToByte));
+            toBalance = new BigInteger(new String(balanceToByte));
         }
 
         ctx.putObject(fromKey.getBytes(), fromBalance.subtract(token).toString().getBytes());
@@ -151,21 +151,21 @@ public class AwardManage implements Contract {
             return Response.error("missing caller");
         }
 
-        if (ctx.args().get("from") == null || ctx.args().get("from").length == 0
-                || ctx.args().get("token") == null|| ctx.args().get("token").length == 0) {
+        if (ctx.args().get("from") == null || ctx.args().get("from").length == 0 || ctx.args().get("token") == null
+                || ctx.args().get("token").length == 0) {
             return Response.error("missing from or token");
         }
 
         String from = new String(ctx.args().get("from"));
-        BigDecimal token = new BigDecimal(new String(ctx.args().get("token")));
+        BigInteger token = new BigInteger(new String(ctx.args().get("token")));
 
-        if (token.compareTo(BigDecimal.ZERO) == 0) {
+        if (token.compareTo(BigInteger.ZERO) == 0) {
             return Response.error("missing token");
         }
         if (from.equals(to)) {
             return Response.error("can not transfer from yourself");
         }
-        if (token.compareTo(BigDecimal.ZERO) <= 0) {
+        if (token.compareTo(BigInteger.ZERO) <= 0) {
             return Response.error("token must be more than 0");
         }
 
@@ -175,27 +175,27 @@ public class AwardManage implements Contract {
             return Response.error("allowance from " + from + " to " + to + " not found");
         }
 
-        BigDecimal allowance = new BigDecimal(new String(allowanceByte));
+        BigInteger allowance = new BigInteger(new String(allowanceByte));
 
         if (allowance.compareTo(token) < 0) {
             return Response.error("allowance not enough");
         }
         String fromKey = BALANCE + from;
-        String toKey = BALANCE+ to;
+        String toKey = BALANCE + to;
         byte[] fromBalanceByte = ctx.getObject(fromKey.getBytes());
         if (fromBalanceByte == null || fromBalanceByte.length == 0) {
             return Response.error("balance of" + from + " not found");
         }
 
-        BigDecimal fromBalance = new BigDecimal(new String(fromBalanceByte));
+        BigInteger fromBalance = new BigInteger(new String(fromBalanceByte));
         if (fromBalance.compareTo(token) < 0) {
             return Response.error("from balancfe not enough");
         }
 
-        BigDecimal toBalance = new BigDecimal(0);
-        byte[]value = ctx.getObject((BALANCE + to).getBytes());
+        BigInteger toBalance = new BigInteger("0");
+        byte[] value = ctx.getObject((BALANCE + to).getBytes());
         if (value != null && value.length > 0) {
-            toBalance = new BigDecimal(new String(value));
+            toBalance = new BigInteger(new String(value));
         }
         ctx.putObject(fromKey.getBytes(), fromBalance.subtract(token).toString().getBytes());
         ctx.putObject((toKey).getBytes(), toBalance.add(token).toString().getBytes());
@@ -210,18 +210,16 @@ public class AwardManage implements Contract {
             return Response.error("missing caller");
         }
 
-        if (ctx.caller() == null || ctx.caller().isEmpty()
-                || ctx.args().get("token") == null
-                || ctx.args().get("token").length == 0
-                || ctx.args().get("to") == null
+        if (ctx.caller() == null || ctx.caller().isEmpty() || ctx.args().get("token") == null
+                || ctx.args().get("token").length == 0 || ctx.args().get("to") == null
                 || ctx.args().get("to").length == 0) {
             return Response.error("missing caller to or token");
         }
 
         String to = new String(ctx.args().get("to"));
-        BigDecimal token = new BigDecimal(new String(ctx.args().get("token")));
+        BigInteger token = new BigInteger(new String(ctx.args().get("token")));
 
-        if (token.compareTo(BigDecimal.ZERO) <= 0) {
+        if (token.compareTo(BigInteger.ZERO) <= 0) {
             return Response.error("token must be greater than 0");
         }
         if (from.equals(to)) {
@@ -229,10 +227,10 @@ public class AwardManage implements Contract {
         }
 
         String allowanceKey = ALLOWANCE + from + "_" + to;
-        BigDecimal allowance = new BigDecimal(0);
+        BigInteger allowance = new BigInteger("0");
         byte[] value = ctx.getObject(allowanceKey.getBytes());
         if (value != null) {
-            allowance = new BigDecimal(new String(value));
+            allowance = new BigInteger(new String(value));
         }
 
         allowance = allowance.add(token);

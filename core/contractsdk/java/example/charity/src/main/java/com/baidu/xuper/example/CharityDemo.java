@@ -1,6 +1,6 @@
 package com.baidu.xuper.example;
 
-import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.baidu.xuper.Context;
@@ -22,8 +22,7 @@ public class CharityDemo implements Contract {
     final String DONATECOUNT = "DonateCount_";
     final String COSTCOUNT = "CostCount_";
     final String ADMIN = "admin";
-    final int MAX_LIMIT = 100;
-
+    final String MAX_LIMIT = "100";
 
     @Override
     @ContractMethod
@@ -46,7 +45,7 @@ public class CharityDemo implements Contract {
         return new String(ctx.getObject(ADMIN.getBytes())).equals(caller);
     }
 
-    private String getIdFromNum(BigDecimal num) {
+    private String getIdFromNum(BigInteger num) {
 
         String numStr = num.toString();
         if (numStr.length() >= 20) {
@@ -78,29 +77,27 @@ public class CharityDemo implements Contract {
         }
 
         String donor = new String(ctx.args().get("donor"));
-        BigDecimal amount = new BigDecimal(new String(ctx.args().get("amount")));
+        BigInteger amount = new BigInteger(new String(ctx.args().get("amount")));
         String timestamp = new String(ctx.args().get("timestamp"));
         String comments = new String(ctx.args().get("comments"));
 
-        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+        if (amount.compareTo(BigInteger.ZERO) <= 0) {
             return Response.error("amount must be positive");
         }
-        BigDecimal donateCount = new BigDecimal(new String(ctx.getObject(DONATECOUNT.getBytes())));
-        BigDecimal totalDonates = new BigDecimal(new String(ctx.getObject(TOTALDONATES.getBytes())));
-        BigDecimal balance = new BigDecimal(new String(ctx.getObject(BALANCE.getBytes())));
+        BigInteger donateCount = new BigInteger(new String(ctx.getObject(DONATECOUNT.getBytes())));
+        BigInteger totalDonates = new BigInteger(new String(ctx.getObject(TOTALDONATES.getBytes())));
+        BigInteger balance = new BigInteger(new String(ctx.getObject(BALANCE.getBytes())));
 
         totalDonates = totalDonates.add(amount);
         balance = balance.add(amount);
-        donateCount = donateCount.add(BigDecimal.ONE);
+        donateCount = donateCount.add(BigInteger.ONE);
 
         String donateId = getIdFromNum(donateCount);
 
         String userDonateKey = USERDONATE + donor + "%" + donateCount.toString();
         String allDonateKey = ALLDONATE + donateId;
-        String donateDetail = "donor=" + donor +
-                ",amount=" + amount +
-                ",timestamp=" + timestamp +
-                ",comments = " + comments;
+        String donateDetail = "donor=" + donor + ",amount=" + amount + ",timestamp=" + timestamp + ",comments = "
+                + comments;
         ctx.putObject(userDonateKey.getBytes(), donateDetail.getBytes());
         ctx.putObject(allDonateKey.getBytes(), donateDetail.getBytes());
         ctx.putObject(DONATECOUNT.getBytes(), donateCount.toString().getBytes());
@@ -128,32 +125,28 @@ public class CharityDemo implements Contract {
         }
 
         String to = new String(ctx.args().get("to"));
-        BigDecimal amount = new BigDecimal(new String(ctx.args().get("amount")));
+        BigInteger amount = new BigInteger(new String(ctx.args().get("amount")));
         String timestamp = new String(ctx.args().get("timestamp"));
         String comments = new String(ctx.args().get("comments"));
 
-        if (amount.compareTo(BigDecimal.ZERO) <= 0) {
+        if (amount.compareTo(BigInteger.ZERO) <= 0) {
             return Response.error("amount must greater than 0");
         }
 
-        BigDecimal totalCost = new BigDecimal(new String(ctx.getObject(TOTALCOSTS.getBytes())));
-        BigDecimal balance = new BigDecimal(new String(ctx.getObject(BALANCE.getBytes())));
+        BigInteger totalCost = new BigInteger(new String(ctx.getObject(TOTALCOSTS.getBytes())));
+        BigInteger balance = new BigInteger(new String(ctx.getObject(BALANCE.getBytes())));
         if (balance.compareTo(amount) < 0) {
             return Response.error("balance not enough");
         }
         balance = balance.subtract(amount);
         totalCost = totalCost.add(amount);
 
-        BigDecimal costCount = new BigDecimal(new String(ctx.getObject(COSTCOUNT.getBytes())));
-        costCount = costCount.add(BigDecimal.ONE);
+        BigInteger costCount = new BigInteger(new String(ctx.getObject(COSTCOUNT.getBytes())));
+        costCount = costCount.add(BigInteger.ONE);
 
         String costId = getIdFromNum(costCount);
         String allCostKey = ALLCOST + costId;
-        String costDetail = "to=" + to +
-                ",amount=" + amount +
-                ",timestamp=" + timestamp +
-                ",comments=" + comments;
-
+        String costDetail = "to=" + to + ",amount=" + amount + ",timestamp=" + timestamp + ",comments=" + comments;
 
         ctx.putObject(allCostKey.getBytes(), costDetail.getBytes());
         ctx.putObject(COSTCOUNT.getBytes(), costCount.toString().getBytes());
@@ -167,10 +160,8 @@ public class CharityDemo implements Contract {
         String totalCost = new String(ctx.getObject(TOTALCOSTS.getBytes()));
         String balance = new String(ctx.getObject(BALANCE.getBytes()));
         String totalDonates = new String(ctx.getObject(TOTALDONATES.getBytes()));
-        String result =
-                "totalDonates=" + totalDonates + "," +
-                        "totalCosts=" + totalCost + "," +
-                        "fundBalance=" + balance;
+        String result = "totalDonates=" + totalDonates + "," + "totalCosts=" + totalCost + "," + "fundBalance="
+                + balance;
         return Response.ok(result.getBytes());
     }
 
@@ -183,17 +174,12 @@ public class CharityDemo implements Contract {
         String userDonateKey = USERDONATE + donor + "%";
         StringBuffer buf = new StringBuffer();
         AtomicInteger donateCount = new AtomicInteger();
-        ctx.newIterator(userDonateKey.getBytes(), (userDonateKey + "~").getBytes()).forEachRemaining(
-                elem -> {
-                    donateCount.getAndIncrement();
-                    String donateId = new String(elem.getKey()).substring(userDonateKey.length());
-                    String content = new String(elem.getValue());
-                    buf.append((
-                            "id=" + donateId + "," +
-                                    "content=" + content + "\n"
-                    ));
-                }
-        );
+        ctx.newIterator(userDonateKey.getBytes(), (userDonateKey + "~").getBytes()).forEachRemaining(elem -> {
+            donateCount.getAndIncrement();
+            String donateId = new String(elem.getKey()).substring(userDonateKey.length());
+            String content = new String(elem.getValue());
+            buf.append(("id=" + donateId + "," + "content=" + content + "\n"));
+        });
         return Response.ok(buf.toString().getBytes());
 
     }
@@ -207,34 +193,27 @@ public class CharityDemo implements Contract {
             return Response.error("missing limit");
         }
         String start = new String(ctx.args().get("start"));
-        BigDecimal limit = new BigDecimal(new String(ctx.args().get("limit")));
+        BigInteger limit = new BigInteger(new String(ctx.args().get("limit")));
 
-        if (limit.compareTo(new BigDecimal(MAX_LIMIT)) >= 0) {
+        if (limit.compareTo(new BigInteger(MAX_LIMIT)) >= 0) {
             return Response.error("limit exceeded");
         }
 
         String startKey = ALLDONATE + start;
-        String endKey = ALLDONATE + getIdFromNum(new BigDecimal(start).add(limit));
+        String endKey = ALLDONATE + getIdFromNum(new BigInteger(start).add(limit));
         AtomicInteger selected = new AtomicInteger();
         StringBuffer buf = new StringBuffer();
-        ctx.newIterator(startKey.getBytes(), (endKey).getBytes())
-                .forEachRemaining(
-                        elem -> {
-                            if (selected.get() >= limit.intValue()) {
-                                return;
-                            }
-                            selected.incrementAndGet();
-                            String donateId = new String(elem.getKey()).substring(ALLDONATE.length());
-                            String content = new String(elem.getValue());
-                            buf.append(
-                                    "id=" + donateId + "," +
-                                            content + "\n"
-                            );
-                        }
-                );
+        ctx.newIterator(startKey.getBytes(), (endKey).getBytes()).forEachRemaining(elem -> {
+            if (selected.get() >= limit.intValue()) {
+                return;
+            }
+            selected.incrementAndGet();
+            String donateId = new String(elem.getKey()).substring(ALLDONATE.length());
+            String content = new String(elem.getValue());
+            buf.append("id=" + donateId + "," + content + "\n");
+        });
         return Response.ok(buf.toString().getBytes());
     }
-
 
     @ContractMethod
     public Response queryCosts(Context ctx) {
@@ -245,38 +224,31 @@ public class CharityDemo implements Contract {
             return Response.error("limit");
         }
         String startId = new String(ctx.args().get("start"));
-        BigDecimal limit = new BigDecimal(new String(ctx.args().get("limit")));
+        BigInteger limit = new BigInteger(new String(ctx.args().get("limit")));
 
-        if (limit.compareTo(BigDecimal.ZERO) <= 0) {
+        if (limit.compareTo(BigInteger.ZERO) <= 0) {
             return Response.error("limit must be positive");
         }
 
-        if (limit.compareTo(new BigDecimal(MAX_LIMIT)) >= 0) {
+        if (limit.compareTo(new BigInteger(MAX_LIMIT)) >= 0) {
             return Response.error("limit exceeded");
         }
 
         String startKey = ALLCOST + startId;
-        String endKey = ALLCOST + getIdFromNum(new BigDecimal(startId).add(limit));
+        String endKey = ALLCOST + getIdFromNum(new BigInteger(startId).add(limit));
         AtomicInteger selected = new AtomicInteger();
         StringBuffer buf = new StringBuffer();
-        ctx.newIterator(startKey.getBytes(), endKey.getBytes()).forEachRemaining(
-                elem -> {
-                    if (selected.get() >= limit.intValue()) {
-                        return;
-                    }
-                    selected.getAndIncrement();
-                    String donateId = new String(elem.getKey()).substring(ALLCOST.length());
-                    String content = new String(elem.getValue());
-                    buf.append(
-                            "id=" + donateId +
-                                    "," + content
-                                    + "\n"
-                    );
-                }
-        );
+        ctx.newIterator(startKey.getBytes(), endKey.getBytes()).forEachRemaining(elem -> {
+            if (selected.get() >= limit.intValue()) {
+                return;
+            }
+            selected.getAndIncrement();
+            String donateId = new String(elem.getKey()).substring(ALLCOST.length());
+            String content = new String(elem.getValue());
+            buf.append("id=" + donateId + "," + content + "\n");
+        });
         return Response.ok(buf.toString().getBytes());
     }
-
 
     public static void main(String[] args) {
         Driver.serve(new CharityDemo());
