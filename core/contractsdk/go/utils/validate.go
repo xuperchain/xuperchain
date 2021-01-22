@@ -13,9 +13,10 @@ var (
 	typeString = reflect.TypeOf("")
 )
 
-var validate = validator.New()
+var validate *validator.Validate
 
 func init() {
+	validate = validator.New()
 	validate.RegisterStructValidation(func(sl validator.StructLevel) {
 		rvalue := sl.Top().Elem()
 		rtype := sl.Top().Elem().Type()
