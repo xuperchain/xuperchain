@@ -7,7 +7,6 @@ import (
 
 	"github.com/xuperchain/xuperchain/core/contractsdk/go/code"
 	"github.com/xuperchain/xuperchain/core/contractsdk/go/driver"
-	"github.com/xuperchain/xuperchain/core/contractsdk/go/utils"
 )
 
 const (
@@ -30,7 +29,7 @@ func (st *sourceTrace) Initialize(ctx code.Context) code.Response {
 	args := struct {
 		Admin string `json:"admin" validte:"required"`
 	}{}
-	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
+	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 	if err := ctx.PutObject([]byte(ADMIN), []byte(args.Admin)); err != nil {
@@ -43,7 +42,7 @@ func (st *sourceTrace) Initialize(ctx code.Context) code.Response {
 func (st *sourceTrace) CreateGoods(ctx code.Context) code.Response {
 	initiator := ctx.Initiator()
 	if initiator == "" {
-		return code.Error(utils.ErrMissingInitiator)
+		return code.Error(code.ErrMissingInitiator)
 	}
 
 	admin, err := ctx.GetObject([]byte(ADMIN))
@@ -52,14 +51,14 @@ func (st *sourceTrace) CreateGoods(ctx code.Context) code.Response {
 	}
 
 	if string(admin) != initiator {
-		return code.Error(utils.ErrPermissionDenied)
+		return code.Error(code.ErrPermissionDenied)
 	}
 
 	args := struct {
 		Id   string `json:"id" required:"true''"`
 		Desc string `json:"desc" required:"desc"`
 	}{}
-	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
+	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 	goodsKey := GOODS + args.Id
@@ -87,7 +86,7 @@ func (st *sourceTrace) CreateGoods(ctx code.Context) code.Response {
 func (st *sourceTrace) UpdateGoods(ctx code.Context) code.Response {
 	initiator := ctx.Initiator()
 	if initiator == "" {
-		return code.Error(utils.ErrMissingInitiator)
+		return code.Error(code.ErrMissingInitiator)
 	}
 
 	admin, err := ctx.GetObject([]byte(ADMIN))
@@ -96,14 +95,14 @@ func (st *sourceTrace) UpdateGoods(ctx code.Context) code.Response {
 	}
 
 	if string(admin) != initiator {
-		return code.Error(utils.ErrPermissionDenied)
+		return code.Error(code.ErrPermissionDenied)
 	}
 	args := struct {
 		Id     string `json:"id" validte:"required"`
 		Reason string `json:"reason" validte:"required"`
 	}{}
 
-	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
+	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 
@@ -127,7 +126,7 @@ func (st *sourceTrace) QueryRecords(ctx code.Context) code.Response {
 	args := struct {
 		Id string `json:"id" validte:"required"`
 	}{}
-	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
+	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 

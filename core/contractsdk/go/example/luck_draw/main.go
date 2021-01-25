@@ -7,7 +7,6 @@ import (
 
 	"github.com/xuperchain/xuperchain/core/contractsdk/go/code"
 	"github.com/xuperchain/xuperchain/core/contractsdk/go/driver"
-	"github.com/xuperchain/xuperchain/core/contractsdk/go/utils"
 )
 
 const (
@@ -25,7 +24,7 @@ func (ld *luckDraw) Initialize(ctx code.Context) code.Response {
 	args := struct {
 		Admin string `json:"admin"`
 	}{}
-	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
+	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 	if err := ctx.PutObject([]byte(ADMIN), []byte(args.Admin)); err != nil {
@@ -49,7 +48,7 @@ func (ld *luckDraw) isAdmin(ctx code.Context, initiator string) bool {
 func (ld *luckDraw) GetLuckId(ctx code.Context) code.Response {
 	initiator := ctx.Initiator()
 	if initiator == "" {
-		return code.Error(utils.ErrMissingInitiator)
+		return code.Error(code.ErrMissingInitiator)
 	}
 	_, err := ctx.GetObject([]byte(RESULT))
 	if err == nil {
@@ -82,16 +81,16 @@ func (ld *luckDraw) GetLuckId(ctx code.Context) code.Response {
 func (ld *luckDraw) StartLuckDraw(ctx code.Context) code.Response {
 	initiator := ctx.Initiator()
 	if initiator == "" {
-		return code.Error(utils.ErrMissingInitiator)
+		return code.Error(code.ErrMissingInitiator)
 	}
 	if !ld.isAdmin(ctx, initiator) {
-		return code.Error(utils.ErrPermissionDenied)
+		return code.Error(code.ErrPermissionDenied)
 	}
 	args := struct {
 		Seed *big.Int `json:"seed" validte:"required"`
 	}{}
 
-	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
+	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 

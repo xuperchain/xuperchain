@@ -6,7 +6,6 @@ import (
 
 	"github.com/xuperchain/xuperchain/core/contractsdk/go/code"
 	"github.com/xuperchain/xuperchain/core/contractsdk/go/driver"
-	"github.com/xuperchain/xuperchain/core/contractsdk/go/utils"
 )
 
 const (
@@ -22,7 +21,7 @@ func (am *awardManage) Initialize(ctx code.Context) code.Response {
 	args := struct {
 		TotalSupply *big.Int `json:"totalSupply" validate:"gt=0"`
 	}{}
-	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
+	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 
@@ -49,7 +48,7 @@ func (am *awardManage) Initialize(ctx code.Context) code.Response {
 func (am *awardManage) AddAward(ctx code.Context) code.Response {
 	initiator := ctx.Initiator()
 	if initiator == "" {
-		return code.Error(utils.ErrMissingInitiator)
+		return code.Error(code.ErrMissingInitiator)
 	}
 	masterBytes, err := ctx.GetObject([]byte(MASTERPRE))
 	if err != nil {
@@ -58,14 +57,14 @@ func (am *awardManage) AddAward(ctx code.Context) code.Response {
 	master := string(masterBytes)
 
 	if master != initiator {
-		return code.Error(utils.ErrPermissionDenied)
+		return code.Error(code.ErrPermissionDenied)
 	}
 
 	args := struct {
 		Amount *big.Int `json:"amount" validate:"gt=0"`
 	}{}
 
-	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
+	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 
@@ -94,7 +93,7 @@ func (am *awardManage) TotalSupply(ctx code.Context) code.Response {
 func (am *awardManage) Balance(ctx code.Context) code.Response {
 	initiator := ctx.Initiator()
 	if initiator == "" {
-		return code.Error(utils.ErrMissingInitiator)
+		return code.Error(code.ErrMissingInitiator)
 	}
 	value, err := ctx.GetObject([]byte(BALANCEPRE + initiator))
 	if err != nil {
@@ -108,7 +107,7 @@ func (am *awardManage) Allowance(ctx code.Context) code.Response {
 		From string `json:"from"`
 		To   string `json:"to"`
 	}{}
-	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
+	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 
@@ -123,14 +122,14 @@ func (am *awardManage) Transfer(ctx code.Context) code.Response {
 	initiator := ctx.Initiator()
 	from := initiator
 	if from == "" {
-		return code.Error(utils.ErrMissingInitiator)
+		return code.Error(code.ErrMissingInitiator)
 	}
 	args := struct {
 		To    string   `json:"to" validate:"required"`
 		Token *big.Int `json:"token" validate:"required"`
 	}{}
 
-	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
+	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 	if from == args.To {
@@ -170,9 +169,9 @@ func (am *awardManage) TransferFrom(ctx code.Context) code.Response {
 	}{}
 	initiator := ctx.Initiator()
 	if initiator == "" {
-		return code.Error(utils.ErrMissingInitiator)
+		return code.Error(code.ErrMissingInitiator)
 	}
-	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
+	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 
@@ -183,7 +182,7 @@ func (am *awardManage) TransferFrom(ctx code.Context) code.Response {
 
 	fromBalance, _ := big.NewInt(0).SetString(string(fromBalanceByte), 10)
 	if fromBalance.Cmp(args.Token) < 0 {
-		return code.Error(utils.ErrBalanceLow)
+		return code.Error(code.ErrBalanceLow)
 	}
 
 	allowanceKey := ALLOWANCEPRE + args.From + "_" + initiator
@@ -226,10 +225,10 @@ func (am *awardManage) Approve(ctx code.Context) code.Response {
 	}{}
 	from := ctx.Initiator()
 	if len(from) == 0 {
-		return code.Error(utils.ErrMissingInitiator)
+		return code.Error(code.ErrMissingInitiator)
 	}
 
-	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
+	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 

@@ -8,7 +8,6 @@ import (
 
 	"github.com/xuperchain/xuperchain/core/contractsdk/go/code"
 	"github.com/xuperchain/xuperchain/core/contractsdk/go/driver"
-	"github.com/xuperchain/xuperchain/core/contractsdk/go/utils"
 )
 
 type charityDonation struct {
@@ -51,7 +50,7 @@ func (cd *charityDonation) Initialize(ctx code.Context) code.Response {
 	args := &struct {
 		Admin string `json:"admin" validate:"required"`
 	}{}
-	if err := utils.Unmarshal(ctx.Args(), args); err != nil {
+	if err := code.Unmarshal(ctx.Args(), args); err != nil {
 		return code.Error(err)
 	}
 	if err := ctx.PutObject([]byte(ADMIN), []byte(args.Admin)); err != nil {
@@ -86,7 +85,7 @@ func (cd *charityDonation) Donate(ctx code.Context) code.Response {
 		Timestamp string   `json:"timestamp" validate:"required"`
 		Comments  string   `json:"comments" validate:"required"`
 	}{}
-	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
+	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 	donateCountByte, err := ctx.GetObject([]byte(DONATE_COUNT))
@@ -150,7 +149,7 @@ func (cd *charityDonation) Cost(ctx code.Context) code.Response {
 		Timestamp string   `json:"timestamp" validate:"required"`
 		Comments  string   `json:"comments" validate:"required"`
 	}{}
-	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
+	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 	costCountByte, err := ctx.GetObject([]byte(COST_COUNT))
@@ -173,7 +172,7 @@ func (cd *charityDonation) Cost(ctx code.Context) code.Response {
 	}
 	balance, _ := big.NewInt(0).SetString(string(balanceByte), 10)
 	if balance.Cmp(args.Amount) < 0 {
-		return code.Error(utils.ErrBalanceLow)
+		return code.Error(code.ErrBalanceLow)
 	}
 	balance = balance.Sub(balance, args.Amount)
 	data := costDetail{
@@ -232,7 +231,7 @@ func (cd *charityDonation) QueryDonor(ctx code.Context) code.Response {
 	args := struct {
 		Donar string `json:"donor" validate:"required"`
 	}{}
-	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
+	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 
@@ -266,7 +265,7 @@ func (cd *charityDonation) QueryDonates(ctx code.Context) code.Response {
 		Limit *big.Int `json:"limit" validate:"required"`
 	}{}
 
-	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
+	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 	if args.Limit.Cmp(big.NewInt(MAX_LIMIT)) > 0 {
@@ -303,7 +302,7 @@ func (cd *charityDonation) QueryCosts(ctx code.Context) code.Response {
 		Limit *big.Int `json:"limit" validate:"required"`
 	}{}
 
-	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
+	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 	if args.Limit.Cmp(big.NewInt(MAX_LIMIT)) > 0 {
@@ -336,14 +335,14 @@ func (cd *charityDonation) QueryCosts(ctx code.Context) code.Response {
 func (cd *charityDonation) checkPermission(ctx code.Context) error {
 	initiator := ctx.Initiator()
 	if initiator == "" {
-		return utils.ErrMissingInitiator
+		return code.ErrMissingInitiator
 	}
 	admin, err := ctx.GetObject([]byte(ADMIN))
 	if err != nil {
 		return err
 	}
 	if initiator != string(admin) {
-		return utils.ErrPermissionDenied
+		return code.ErrPermissionDenied
 	}
 	return nil
 }

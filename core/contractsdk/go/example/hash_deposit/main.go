@@ -7,7 +7,6 @@ import (
 
 	"github.com/xuperchain/xuperchain/core/contractsdk/go/code"
 	"github.com/xuperchain/xuperchain/core/contractsdk/go/driver"
-	"github.com/xuperchain/xuperchain/core/contractsdk/go/utils"
 )
 
 const (
@@ -29,7 +28,7 @@ func (hd *hashDeposit) Initialize(ctx code.Context) code.Response {
 
 func (hd *hashDeposit) StoreFileInfo(ctx code.Context) code.Response {
 	args := fileInfo{}
-	err := utils.Unmarshal(ctx.Args(), &args)
+	err := code.Unmarshal(ctx.Args(), &args)
 	if err != nil {
 		return code.Error(err)
 	}
@@ -72,7 +71,7 @@ func (hd *hashDeposit) QueryFileInfoByUser(ctx code.Context) code.Response {
 	args := struct {
 		UserID string `json:"user_id" validte:"required"`
 	}{}
-	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
+	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 
@@ -98,7 +97,7 @@ func (hd *hashDeposit) QueryFileInfoByHash(ctx code.Context) code.Response {
 	args := struct {
 		HashID string `json:"hash_id" validte:"required"`
 	}{}
-	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
+	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 	key := HashBucket + args.HashID

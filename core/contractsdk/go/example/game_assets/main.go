@@ -6,7 +6,6 @@ import (
 
 	"github.com/xuperchain/xuperchain/core/contractsdk/go/code"
 	"github.com/xuperchain/xuperchain/core/contractsdk/go/driver"
-	"github.com/xuperchain/xuperchain/core/contractsdk/go/utils"
 )
 
 type gameAssets struct {
@@ -35,7 +34,7 @@ func (ga *gameAssets) Initialize(ctx code.Context) code.Response {
 		Admin string `json:"admin" validte:"required"`
 	}{}
 
-	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
+	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 	if err := ctx.PutObject([]byte(ADMIN), []byte(args.Admin)); err != nil {
@@ -56,13 +55,13 @@ func (ga *gameAssets) isAdmin(ctx code.Context, initiator string) bool {
 func (ga *gameAssets) AddAssetType(ctx code.Context) code.Response {
 	initiator := ctx.Initiator()
 	if initiator == "" {
-		return code.Error(utils.ErrMissingInitiator)
+		return code.Error(code.ErrMissingInitiator)
 	}
 	if !ga.isAdmin(ctx, initiator) {
-		return code.Error(utils.ErrPermissionDenied)
+		return code.Error(code.ErrPermissionDenied)
 	}
 	args := assetType{}
-	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
+	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 
@@ -94,17 +93,17 @@ func (ga *gameAssets) ListAssetType(ctx code.Context) code.Response {
 func (ga *gameAssets) NewAssetToUser(ctx code.Context) code.Response {
 	initiator := ctx.Initiator()
 	if initiator == "" {
-		return code.Error(utils.ErrMissingInitiator)
+		return code.Error(code.ErrMissingInitiator)
 	}
 	if !ga.isAdmin(ctx, initiator) {
-		return code.Error(utils.ErrPermissionDenied)
+		return code.Error(code.ErrPermissionDenied)
 	}
 	args := struct {
 		UserId  string `json:"user_id" validte:"required"`
 		TypeId  string `json:"type_id" validte:"required"`
 		AssetId string `json:"asset_id" validte:"required"`
 	}{}
-	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
+	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 	assetTypeKey := ASSETTYPE + args.TypeId
@@ -132,13 +131,13 @@ func (ga *gameAssets) NewAssetToUser(ctx code.Context) code.Response {
 func (ga *gameAssets) TradeAsset(ctx code.Context) code.Response {
 	from := ctx.Initiator()
 	if from == "" {
-		return code.Error(utils.ErrMissingInitiator)
+		return code.Error(code.ErrMissingInitiator)
 	}
 	args := struct {
 		To      string `json:"to" validte:"required"`
 		AssetId string `json:"asset_id" validte:"required"`
 	}{}
-	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
+	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 	userAssetKey := USERASSET + from + "_" + args.AssetId
@@ -164,7 +163,7 @@ func (ga *gameAssets) TradeAsset(ctx code.Context) code.Response {
 func (ga *gameAssets) GetAssetByUser(ctx code.Context) code.Response {
 	initiator := ctx.Initiator()
 	if initiator == "" {
-		return code.Error(utils.ErrMissingInitiator)
+		return code.Error(code.ErrMissingInitiator)
 	}
 	userId := initiator
 	args := struct {
@@ -172,7 +171,7 @@ func (ga *gameAssets) GetAssetByUser(ctx code.Context) code.Response {
 	}{}
 
 	if ga.isAdmin(ctx, initiator) {
-		if err := utils.Unmarshal(ctx.Args(), &args); err == nil {
+		if err := code.Unmarshal(ctx.Args(), &args); err == nil {
 			userId = args.UserID
 		}
 	}

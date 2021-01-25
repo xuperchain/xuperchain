@@ -6,7 +6,6 @@ import (
 
 	"github.com/xuperchain/xuperchain/core/contractsdk/go/code"
 	"github.com/xuperchain/xuperchain/core/contractsdk/go/driver"
-	"github.com/xuperchain/xuperchain/core/contractsdk/go/utils"
 )
 
 const (
@@ -36,7 +35,7 @@ func (sc *shortContent) Initialize(ctx code.Context) code.Response {
 
 func (sc *shortContent) StoreShortContent(ctx code.Context) code.Response {
 	args := content{}
-	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
+	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 	userKey := USER_BUCKET + "/" + args.UserId + "/" + args.Topic + "/" + args.Title
@@ -55,7 +54,7 @@ func (sc *shortContent) QueryByUser(ctx code.Context) code.Response {
 	args := struct {
 		UserID string `json:"user_id" validte:"required"`
 	}{}
-	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
+	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 	prefix := USER_BUCKET + "/" + args.UserID + "/"
@@ -83,7 +82,7 @@ func (sc *shortContent) QueryByTitle(ctx code.Context) code.Response {
 		Topic  string `json:"topic" validte:"required"`
 		Title  string `json:"title" validte:"required"`
 	}{}
-	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
+	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 	value, err := ctx.GetObject([]byte(USER_BUCKET + "/" + args.UserId + "/" + args.Topic + "/" + args.Title))
