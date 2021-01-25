@@ -38,25 +38,25 @@ func (ld *luckDraw) Initialize(ctx code.Context) code.Response {
 	return code.OK(nil)
 }
 
-func (ld *luckDraw) isAdmin(ctx code.Context, caller string) bool {
+func (ld *luckDraw) isAdmin(ctx code.Context, initiator string) bool {
 	admin, err := ctx.GetObject([]byte(ADMIN))
 	if err != nil {
 		return false
 	}
-	return string(admin) == caller
+	return string(admin) == initiator
 }
 
 func (ld *luckDraw) GetLuckId(ctx code.Context) code.Response {
-	caller := ctx.Initiator()
-	if caller == "" {
-		return code.Error(utils.ErrMissingCaller)
+	initiator := ctx.Initiator()
+	if initiator == "" {
+		return code.Error(utils.ErrMissingInitiator)
 	}
 	_, err := ctx.GetObject([]byte(RESULT))
 	if err == nil {
 		return code.Error(errors.New("the luck draw has finished"))
 	}
 
-	if userVal, err := ctx.GetObject([]byte(USERID + caller)); err == nil {
+	if userVal, err := ctx.GetObject([]byte(USERID + initiator)); err == nil {
 		return code.OK(userVal)
 	}
 
@@ -67,10 +67,10 @@ func (ld *luckDraw) GetLuckId(ctx code.Context) code.Response {
 	lastId, _ := big.NewInt(0).SetString(string(lastIdByte), 10)
 
 	lastId = lastId.Add(lastId, big.NewInt(1))
-	if err := ctx.PutObject([]byte(USERID+caller), []byte(lastId.String())); err != nil {
+	if err := ctx.PutObject([]byte(USERID+initiator), []byte(lastId.String())); err != nil {
 		return code.Error(err)
 	}
-	if err := ctx.PutObject([]byte(TICKTID+lastId.String()), []byte(caller)); err != nil {
+	if err := ctx.PutObject([]byte(TICKTID+lastId.String()), []byte(initiator)); err != nil {
 		return code.Error(err)
 	}
 	if err := ctx.PutObject([]byte(TICKETS), []byte(lastId.String())); err != nil {
@@ -80,11 +80,11 @@ func (ld *luckDraw) GetLuckId(ctx code.Context) code.Response {
 }
 
 func (ld *luckDraw) StartLuckDraw(ctx code.Context) code.Response {
-	caller := ctx.Initiator()
-	if caller == "" {
-		return code.Error(utils.ErrMissingCaller)
+	initiator := ctx.Initiator()
+	if initiator == "" {
+		return code.Error(utils.ErrMissingInitiator)
 	}
-	if !ld.isAdmin(ctx, caller) {
+	if !ld.isAdmin(ctx, initiator) {
 		return code.Error(utils.ErrPermissionDenied)
 	}
 	args := struct {

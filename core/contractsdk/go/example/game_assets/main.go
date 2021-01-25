@@ -45,20 +45,20 @@ func (ga *gameAssets) Initialize(ctx code.Context) code.Response {
 	}
 }
 
-func (ga *gameAssets) isAdmin(ctx code.Context, caller string) bool {
+func (ga *gameAssets) isAdmin(ctx code.Context, initiator string) bool {
 	admin, err := ctx.GetObject([]byte(ADMIN))
 	if err != nil { // return false if GetObject failed
 		return false
 	}
-	return caller == string(admin)
+	return initiator == string(admin)
 }
 
 func (ga *gameAssets) AddAssetType(ctx code.Context) code.Response {
-	caller := ctx.Initiator()
-	if caller == "" {
-		return code.Error(utils.ErrMissingCaller)
+	initiator := ctx.Initiator()
+	if initiator == "" {
+		return code.Error(utils.ErrMissingInitiator)
 	}
-	if !ga.isAdmin(ctx, caller) {
+	if !ga.isAdmin(ctx, initiator) {
 		return code.Error(utils.ErrPermissionDenied)
 	}
 	args := assetType{}
@@ -92,11 +92,11 @@ func (ga *gameAssets) ListAssetType(ctx code.Context) code.Response {
 }
 
 func (ga *gameAssets) NewAssetToUser(ctx code.Context) code.Response {
-	caller := ctx.Initiator()
-	if caller == "" {
-		return code.Error(utils.ErrMissingCaller)
+	initiator := ctx.Initiator()
+	if initiator == "" {
+		return code.Error(utils.ErrMissingInitiator)
 	}
-	if !ga.isAdmin(ctx, caller) {
+	if !ga.isAdmin(ctx, initiator) {
 		return code.Error(utils.ErrPermissionDenied)
 	}
 	args := struct {
@@ -132,7 +132,7 @@ func (ga *gameAssets) NewAssetToUser(ctx code.Context) code.Response {
 func (ga *gameAssets) TradeAsset(ctx code.Context) code.Response {
 	from := ctx.Initiator()
 	if from == "" {
-		return code.Error(utils.ErrMissingCaller)
+		return code.Error(utils.ErrMissingInitiator)
 	}
 	args := struct {
 		To      string `json:"to" validte:"required"`
@@ -162,16 +162,16 @@ func (ga *gameAssets) TradeAsset(ctx code.Context) code.Response {
 }
 
 func (ga *gameAssets) GetAssetByUser(ctx code.Context) code.Response {
-	caller := ctx.Caller()
-	if caller == "" {
-		return code.Error(utils.ErrMissingCaller)
+	initiator := ctx.Initiator()
+	if initiator == "" {
+		return code.Error(utils.ErrMissingInitiator)
 	}
-	userId := caller
+	userId := initiator
 	args := struct {
 		UserID string `json:"user_id" validte:"required"`
 	}{}
 
-	if ga.isAdmin(ctx, caller) {
+	if ga.isAdmin(ctx, initiator) {
 		if err := utils.Unmarshal(ctx.Args(), &args); err == nil {
 			userId = args.UserID
 		}

@@ -19,7 +19,7 @@ function deploy() {
 function AddScore(t) {
     var c = deploy()
     var resp = c.Invoke("AddScore", { "user_id": "user1" })
-    assert.equal(resp.Message, "missing caller")
+    assert.equal(resp.Message, "missing initiator")
     var resp = c.Invoke("AddScore", { "user_id": "user1", "data": "data1" }, { "account": "xchain" })
     assert.equal(resp.Body, "user1")
 }
@@ -32,7 +32,7 @@ function QueryScore(t) {
     assert.equal(resp.Body, "user2")
 
     resp = c.Invoke("AddScore", { "user_id": "user3" })
-    assert.equal(resp.Message, "missing caller")
+    assert.equal(resp.Message, "missing initiator")
 
 
     resp = c.Invoke("AddScore", { "user_id": "user3" }, { "account": "xchain" })

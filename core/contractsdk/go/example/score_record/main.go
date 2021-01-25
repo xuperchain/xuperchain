@@ -29,15 +29,15 @@ func (sr *scoreRecord) Initialize(ctx code.Context) code.Response {
 }
 
 func (sc *scoreRecord) AddScore(ctx code.Context) code.Response {
-	caller := ctx.Caller()
-	if caller == "" {
-		return code.Error(utils.ErrMissingCaller)
+	initiator := ctx.Initiator()
+	if initiator == "" {
+		return code.Error(utils.ErrMissingInitiator)
 	}
 	owner, err := ctx.GetObject([]byte(OWNER_KEY))
 	if err != nil {
 		return code.Error(err)
 	}
-	if string(owner) != caller {
+	if string(owner) != initiator {
 		return code.Error(utils.ErrPermissionDenied)
 	}
 	args := struct {

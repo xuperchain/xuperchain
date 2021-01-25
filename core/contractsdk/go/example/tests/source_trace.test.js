@@ -17,7 +17,7 @@ function deploy(totalSupply) {
 function CreateGoods() {
     c = deploy()
     resp = c.Invoke("CreateGoods", { "id": "id1", "desc": "goods1" })
-    assert.equal(resp.Message, "missing caller")
+    assert.equal(resp.Message, "missing initiator")
     resp = c.Invoke("CreateGoods", { "id": "id1", "desc": "goods1" }, { "account": "xchain" })
     console.log(resp.Message)
     assert.equal(resp.Body, "id1")
@@ -31,7 +31,7 @@ function CreateGoods() {
     assert.equal(resp.Status, 200)
     assert.deepStrictEqual(JSON.parse(resp.Body), [{ "UpdateReccord": "0", "reason": "CREATE" }])
     resp = c.Invoke("UpdateGoods", { "id": "id1", "reason": "reason0" })
-    assert.equal(resp.Message, "missing caller")
+    assert.equal(resp.Message, "missing initiator")
     resp = c.Invoke("UpdateGoods", { "id": "id1", "reason": "reason0" }, { "account": "xchain" })
     assert.equal(resp.Body, "1")
     {

@@ -50,7 +50,7 @@ function AssetOperations() {
 
 
     resp = c.Invoke("NewAssetToUser", { "user_id": "user_id1", "type_id": "type_id1", "asset_id": "asset_id1" })
-    assert.equal(resp.Message, "missing caller")
+    assert.equal(resp.Message, "missing initiator")
     {
         resp = c.Invoke("NewAssetToUser", { "user_id": "user_id1", "type_id": "type_id1", "asset_id": "asset_id1" }, { "account": "unknown" })
         assert.equal(resp.Message, "you do not have permission to call this method")

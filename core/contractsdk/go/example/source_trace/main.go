@@ -41,9 +41,9 @@ func (st *sourceTrace) Initialize(ctx code.Context) code.Response {
 }
 
 func (st *sourceTrace) CreateGoods(ctx code.Context) code.Response {
-	caller := ctx.Initiator()
-	if caller == "" {
-		return code.Error(utils.ErrMissingCaller)
+	initiator := ctx.Initiator()
+	if initiator == "" {
+		return code.Error(utils.ErrMissingInitiator)
 	}
 
 	admin, err := ctx.GetObject([]byte(ADMIN))
@@ -51,7 +51,7 @@ func (st *sourceTrace) CreateGoods(ctx code.Context) code.Response {
 		return code.Error(err)
 	}
 
-	if string(admin) != caller {
+	if string(admin) != initiator {
 		return code.Error(utils.ErrPermissionDenied)
 	}
 
@@ -85,9 +85,9 @@ func (st *sourceTrace) CreateGoods(ctx code.Context) code.Response {
 }
 
 func (st *sourceTrace) UpdateGoods(ctx code.Context) code.Response {
-	caller := ctx.Initiator()
-	if caller == "" {
-		return code.Error(utils.ErrMissingCaller)
+	initiator := ctx.Initiator()
+	if initiator == "" {
+		return code.Error(utils.ErrMissingInitiator)
 	}
 
 	admin, err := ctx.GetObject([]byte(ADMIN))
@@ -95,7 +95,7 @@ func (st *sourceTrace) UpdateGoods(ctx code.Context) code.Response {
 		return code.Error(err)
 	}
 
-	if string(admin) != caller {
+	if string(admin) != initiator {
 		return code.Error(utils.ErrPermissionDenied)
 	}
 	args := struct {

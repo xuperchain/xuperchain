@@ -334,15 +334,15 @@ func (cd *charityDonation) QueryCosts(ctx code.Context) code.Response {
 }
 
 func (cd *charityDonation) checkPermission(ctx code.Context) error {
-	caller := ctx.Caller()
-	if caller == "" {
-		return utils.ErrMissingCaller
+	initiator := ctx.Initiator()
+	if initiator == "" {
+		return utils.ErrMissingInitiator
 	}
 	admin, err := ctx.GetObject([]byte(ADMIN))
 	if err != nil {
 		return err
 	}
-	if caller != string(admin) {
+	if initiator != string(admin) {
 		return utils.ErrPermissionDenied
 	}
 	return nil

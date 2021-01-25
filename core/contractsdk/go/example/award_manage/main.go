@@ -26,11 +26,11 @@ func (am *awardManage) Initialize(ctx code.Context) code.Response {
 		return code.Error(err)
 	}
 
-	caller := ctx.Initiator()
-	if len(caller) == 0 {
-		return code.Error(errors.New("missing caller"))
+	initiator := ctx.Initiator()
+	if len(initiator) == 0 {
+		return code.Error(errors.New("missing initiator"))
 	}
-	err := ctx.PutObject([]byte(BALANCEPRE+caller), []byte(args.TotalSupply.String()))
+	err := ctx.PutObject([]byte(BALANCEPRE+initiator), []byte(args.TotalSupply.String()))
 	if err != nil {
 		return code.Error(err)
 	}
@@ -39,7 +39,7 @@ func (am *awardManage) Initialize(ctx code.Context) code.Response {
 		return code.Error(err)
 	}
 
-	if err := ctx.PutObject([]byte(MASTERPRE), []byte(caller)); err != nil {
+	if err := ctx.PutObject([]byte(MASTERPRE), []byte(initiator)); err != nil {
 		return code.Error(err)
 	}
 
@@ -47,9 +47,9 @@ func (am *awardManage) Initialize(ctx code.Context) code.Response {
 }
 
 func (am *awardManage) AddAward(ctx code.Context) code.Response {
-	caller := ctx.Caller()
-	if caller == "" {
-		return code.Error(utils.ErrMissingCaller)
+	initiator := ctx.Initiator()
+	if initiator == "" {
+		return code.Error(utils.ErrMissingInitiator)
 	}
 	masterBytes, err := ctx.GetObject([]byte(MASTERPRE))
 	if err != nil {
@@ -57,7 +57,7 @@ func (am *awardManage) AddAward(ctx code.Context) code.Response {
 	}
 	master := string(masterBytes)
 
-	if master != caller {
+	if master != initiator {
 		return code.Error(utils.ErrPermissionDenied)
 	}
 
@@ -92,11 +92,11 @@ func (am *awardManage) TotalSupply(ctx code.Context) code.Response {
 }
 
 func (am *awardManage) Balance(ctx code.Context) code.Response {
-	caller := ctx.Caller()
-	if caller == "" {
-		return code.Error(utils.ErrMissingCaller)
+	initiator := ctx.Initiator()
+	if initiator == "" {
+		return code.Error(utils.ErrMissingInitiator)
 	}
-	value, err := ctx.GetObject([]byte(BALANCEPRE + caller))
+	value, err := ctx.GetObject([]byte(BALANCEPRE + initiator))
 	if err != nil {
 		return code.Error(err)
 	}
@@ -120,10 +120,10 @@ func (am *awardManage) Allowance(ctx code.Context) code.Response {
 }
 
 func (am *awardManage) Transfer(ctx code.Context) code.Response {
-	caller := ctx.Caller()
-	from := caller
+	initiator := ctx.Initiator()
+	from := initiator
 	if from == "" {
-		return code.Error(utils.ErrMissingCaller)
+		return code.Error(utils.ErrMissingInitiator)
 	}
 	args := struct {
 		To    string   `json:"to" validate:"required"`
@@ -168,9 +168,9 @@ func (am *awardManage) TransferFrom(ctx code.Context) code.Response {
 		From  string   `json:"from" validate:"required"`
 		Token *big.Int `json:"token" validate:"required"`
 	}{}
-	caller := ctx.Caller()
-	if caller == "" {
-		return code.Error(utils.ErrMissingCaller)
+	initiator := ctx.Initiator()
+	if initiator == "" {
+		return code.Error(utils.ErrMissingInitiator)
 	}
 	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
@@ -186,7 +186,7 @@ func (am *awardManage) TransferFrom(ctx code.Context) code.Response {
 		return code.Error(utils.ErrBalanceLow)
 	}
 
-	allowanceKey := ALLOWANCEPRE + args.From + "_" + caller
+	allowanceKey := ALLOWANCEPRE + args.From + "_" + initiator
 
 	allowanceBalanceByte, err := ctx.GetObject([]byte(allowanceKey))
 	if err != nil {
@@ -198,7 +198,7 @@ func (am *awardManage) TransferFrom(ctx code.Context) code.Response {
 	}
 
 	toBalance := big.NewInt(0)
-	toBalanceByte, err := ctx.GetObject([]byte(BALANCEPRE + caller))
+	toBalanceByte, err := ctx.GetObject([]byte(BALANCEPRE + initiator))
 	if err == nil {
 		toBalance.SetString(string(toBalanceByte), 10)
 	}
@@ -213,7 +213,7 @@ func (am *awardManage) TransferFrom(ctx code.Context) code.Response {
 	if err := ctx.PutObject([]byte(BALANCEPRE+args.From), []byte(fromBalance.String())); err != nil {
 		return code.Error(err)
 	}
-	if err := ctx.PutObject([]byte(BALANCEPRE+caller), []byte(toBalance.String())); err != nil {
+	if err := ctx.PutObject([]byte(BALANCEPRE+initiator), []byte(toBalance.String())); err != nil {
 		return code.Error(err)
 	}
 	return code.OK([]byte("ok"))
@@ -224,9 +224,9 @@ func (am *awardManage) Approve(ctx code.Context) code.Response {
 		To    string   `json:"to" validte:"required"`
 		Token *big.Int `json:"token" validate:"required"`
 	}{}
-	from := ctx.Caller()
+	from := ctx.Initiator()
 	if len(from) == 0 {
-		return code.Error(utils.ErrMissingCaller)
+		return code.Error(utils.ErrMissingInitiator)
 	}
 
 	if err := utils.Unmarshal(ctx.Args(), &args); err != nil {

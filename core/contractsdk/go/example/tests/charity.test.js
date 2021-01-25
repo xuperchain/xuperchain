@@ -49,7 +49,7 @@ function beforetest() {
 function Cost(t) {
     c = beforetest()
     resp = c.Invoke("Cost", { "to": "to", "amount": "100", "timestamp": "1609590581", "comments": "comments" })
-    assert.equal(resp.Message, "missing caller")
+    assert.equal(resp.Message, "missing initiator")
     resp = c.Invoke("Cost", { "to": "to", "amount": "100", "timestamp": "1609590581", "comments": "comments" }, { "account": "bitcoin" })
     assert.equal(resp.Message, "you do not have permission to call this method")
     {
