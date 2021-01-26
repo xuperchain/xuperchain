@@ -3,7 +3,7 @@ on: [push]
 name: Docker test
 jobs:
   docker_test:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     steps:
       - name: docker version 
         run: |
