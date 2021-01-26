@@ -7,4 +7,4 @@ jobs:
     steps:
       - name: docker version 
         run: |
-        brew cask install docker
+          brew cask install docker
