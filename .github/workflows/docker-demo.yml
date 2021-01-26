@@ -13,4 +13,4 @@ jobs:
           open -a docker
       - name: docker version
         run: |
-          docker version
+          /usr/local/bin/docker version
