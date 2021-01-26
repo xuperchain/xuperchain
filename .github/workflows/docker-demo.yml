@@ -1,0 +1,10 @@
+on: [push]
+
+name: Create Release
+jobs:
+  create_release:
+    runs-on: macos-latest
+    steps:
+      - name: docker version 
+        run: |
+          docker version
