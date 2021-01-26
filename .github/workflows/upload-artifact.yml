@@ -20,6 +20,9 @@ jobs:
           release_name: Release ${{ github.ref }}
           draft: true
           prerelease: false
+      - name: echo upload-dir
+        run: |
+          echo ${{ job.create_release.steps.create_release.outputs.upload_url }}
 
   build-linux:
     strategy:
