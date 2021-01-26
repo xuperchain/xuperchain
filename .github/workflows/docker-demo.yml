@@ -21,22 +21,22 @@ jobs:
           make 
       - name: Build tar package 
         run: |
-          tar zcvf  xuperchain-${{ matrix.platform }}.tar.gz output
+          tar zcvf  xuperchain-linux-amd64.tar.gz output
       - name: upload artificts
         uses: actions/upload-artifact@v2
         with:
-          name: xuperchain-${{ matrix.platform }}.tar.gz
-          path: xuperchain-${{ matrix.platform }}.tar.gz
+          name: xuperchain-linux-amd64.tar.gz
+          path: xuperchain-linux-amd64.tar.gz
 
       - uses: actions/download-artifact@v2
         with:
-          name: xuperchain-${{ matrix.platform }}.tar.gz
+          name: xuperchain-linux-amd64.tar.gz
 
   build-darwin:
     strategy:
       matrix:
         go-version: [1.13.x]
-    name: build-linux
+    name: build-darwin
     runs-on: macos-latest
     steps:
       - name: Install Go
@@ -50,12 +50,12 @@ jobs:
           make 
       - name: Build tar package 
         run: |
-          tar zcvf  xuperchain-${{ matrix.platform }}.tar.gz output
+          tar zcvf  xuperchain-darwin-amd64.tar.gz output
       - name: upload artificts
         uses: actions/upload-artifact@v2
         with:
-          name: xuperchain-${{ matrix.platform }}.tar.gz
-          path: xuperchain-${{ matrix.platform }}.tar.gz
+          name: xuperchain-darwin-amd64.tar.gz
+          path: xuperchain-darwin-amd64.tar.gz
 
 
   create_release:
@@ -71,9 +71,14 @@ jobs:
           release_name: Release ${{ github.ref }}
           draft: true
           prerelease: false
-      - name: echo upload-dir
-        run: |
-          echo ${{ steps.create_release.outputs.upload_url }}
+      - uses: actions/download-artifact@v2
+        with:
+          name: xuperchain-linux-amd64.tar.gz
+
+      - uses: actions/download-artifact@v2
+        with:
+          name: xuperchain-darwin-amd64.tar.gz
+
 
       - name: Upload Release Asset
         id: upload-release-asset 
@@ -82,39 +87,17 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-          asset_path: xuperchain-${{ matrix.platform }}.tar.gz
-          asset_name:  xuperchain-${{ matrix.platform }}.tar.gz
+          asset_path: xuperchain-linux-amd64.tar.gz
+          asset_name:  xuperchain-linux-amd64.tar.gz
           asset_content_type: application/x-tar
 
-  # build-darwin:
-  #   strategy:
-  #     matrix:
-  #       go-version: [1.13.x]
-  #       platform: [ubuntu-latest, macos-latest]
-  #   # runs-on: ${{ matrix.platform }}
-  #   name: build-linux
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Install Go
-  #       uses: actions/setup-go@v1
-  #       with:
-  #         go-version: ${{ matrix.go-version }}
-  #     - name: Checkout code
-  #       uses: actions/checkout@v2
-  #     - name: Build project # This would actually build your project, using zip for an example artifact
-  #       run: |
-  #         make 
-  #     - name: Build tar package 
-  #       run: |
-  #         tar zcvf  xuperchain-${{ matrix.platform }}.tar.gz output
-
-  #     - name: Upload Release Asset
-  #       id: upload-release-asset 
-  #       uses: actions/upload-release-asset@v1
-  #       env:
-  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-  #       with:
-  #         upload_url:${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
-  #         asset_path: xuperchain-${{ matrix.platform }}.tar.gz
-  #         asset_name:  xuperchain-${{ matrix.platform }}.tar.gz
-  #         asset_content_type: application/x-tar
+      - name: Upload Release Asset
+        id: upload-release-asset 
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+          asset_path: xuperchain-darwin-amd64.tar.gz
+          asset_name:  xuperchain-darwin-amd64.tar.gz
+          asset_content_type: application/x-tar
