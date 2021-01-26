@@ -1,13 +1,16 @@
 on: [push]
 
-name: Docker Cast
+name: Docker Cask
 jobs:
   docker_test:
     runs-on: macos-latest
     steps:
       - name: install docker 
         run: |
-          brew install --cask docker && brew install docker
+          brew install --cask docker && open -a docker
+      - name: start docker
+        run: |
+          open -a docker
       - name: docker version
         run: |
           docker version
