@@ -5,6 +5,9 @@ jobs:
   docker_test:
     runs-on: ubuntu-latest
     steps:
-      - name: docker version 
+      - name: install docker 
         run: |
           brew install --cast docker
+      - name: docker version
+        run: |
+          docker version
