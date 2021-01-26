@@ -3,11 +3,11 @@ on: [push]
 name: Docker Cast
 jobs:
   docker_test:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     steps:
       - name: install docker 
         run: |
-          brew tap  homebrew/cask && brew install --cask docker
+          brew install --cask docker
       - name: docker version
         run: |
           docker version
