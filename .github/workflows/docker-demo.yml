@@ -7,7 +7,7 @@ jobs:
     steps:
       - name: install docker 
         run: |
-          brew tap phinze/homebrew-cask && brew install brew-cask && brew install --cask docker
+          brew tap  homebrew/cask && brew install brew-cask && brew install --cask docker
       - name: docker version
         run: |
           docker version
