@@ -8,6 +8,7 @@ on:
 name: Create Release
 jobs:
   create_release:
+    runs-on: ubuntu-latest
     steps:
       - name: Create Release
         id: create_release
