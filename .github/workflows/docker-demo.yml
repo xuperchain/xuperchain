@@ -7,10 +7,10 @@ jobs:
     steps:
       - name: install docker 
         run: |
-          brew install --cask docker &&  brew install docker && open -a docker
+          brew install --cask --no-quarantine docker &&  brew install docker && sudo open -a docker
       - name: start docker
         run: |
-          open -a docker
+          sudo open -a docker
       - name: docker version
         run: |
-          /usr/local/bin/docker version
+          docker version
