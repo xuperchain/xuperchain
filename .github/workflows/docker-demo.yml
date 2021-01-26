@@ -1,6 +1,6 @@
 on: [push]
 
-name: Docker test
+name: Docker Cast
 jobs:
   docker_test:
     runs-on: ubuntu-latest
