@@ -22,7 +22,7 @@ jobs:
           prerelease: false
       - name: echo upload-dir
         run: |
-          echo ${{ job.create_release.steps.create_release.outputs.upload_url }}
+          echo ${{ steps.create_release.outputs.upload_url }}
 
   build-linux:
     strategy:
@@ -50,7 +50,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
           asset_path: xuperchain-${{ matrix.platform }}.tar.gz
           asset_name:  xuperchain-${{ matrix.platform }}.tar.gz
           asset_content_type: application/x-tar
@@ -83,7 +83,7 @@ jobs:
   #       env:
   #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   #       with:
-  #         upload_url: ${{ job.create_release.steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
+  #         upload_url:${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps 
   #         asset_path: xuperchain-${{ matrix.platform }}.tar.gz
   #         asset_name:  xuperchain-${{ matrix.platform }}.tar.gz
   #         asset_content_type: application/x-tar
