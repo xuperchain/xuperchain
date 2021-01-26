@@ -25,6 +25,7 @@ jobs:
       with:
         file: ./coverage.txt
 
+
   contract-java-sdk:
     strategy:
       matrix:
