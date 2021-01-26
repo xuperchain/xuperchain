@@ -7,7 +7,7 @@ jobs:
     steps:
       - name: install docker 
         run: |
-          brew install --cask docker && && brew install docker && open -a docker
+          brew install --cask docker &&  brew install docker && open -a docker
       - name: start docker
         run: |
           open -a docker
