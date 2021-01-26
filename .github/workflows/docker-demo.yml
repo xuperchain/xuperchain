@@ -57,9 +57,9 @@ jobs:
           name: xuperchain-darwin-amd64.tar.gz
           path: xuperchain-darwin-amd64.tar.gz
 
-
   create_release:
     runs-on: ubuntu-latest
+    needs: [build-linux, build-darwin]
     steps:
       - name: Create Release
         id: create_release
