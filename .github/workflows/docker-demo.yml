@@ -1,8 +1,8 @@
 on: [push]
 
-name: Create Release
+name: Docker test
 jobs:
-  create_release:
+  docker_test:
     runs-on: macos-latest
     steps:
       - name: docker version 
