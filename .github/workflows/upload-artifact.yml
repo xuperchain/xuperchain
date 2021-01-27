@@ -8,6 +8,8 @@ on:
 name: Binary Release
 jobs:
   build-linux-amd64:
+    strategy:
+      matrix:
         go-version: [1.13.x]
     name: build-linux
     runs-on: ubuntu-18.64
