@@ -32,7 +32,7 @@ jobs:
           name: xuperchain-linux-amd64.tar.gz
           path: xuperchain-linux-amd64.tar.gz
 
-  build-darwin:
+  build-darwin-amd64:
     strategy:
       matrix:
         go-version: [1.13.x]
