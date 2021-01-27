@@ -59,7 +59,7 @@ jobs:
 
   create_release:
     runs-on: ubuntu-latest
-    needs: [build-linux, build-darwin]
+    needs: [build-linux-amd64, build-darwin-amd64]
     steps:
       - name: Create Release
         id: create_release
