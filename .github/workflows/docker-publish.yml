@@ -1,13 +1,13 @@
 name: Publish Docker Image
 
-on:
-  create:
-    ref_type: branch
-    # Sequence of patterns matched against refs/tags
-    tags:
-      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+# on:
+#   create:
+#     ref_type: branch
+#     # Sequence of patterns matched against refs/tags
+#     tags:
+#       - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
 
-
+on: [push]
 env:
   # TODO: Change variable to your image's name.
   ORG_NAME: c18716533655
