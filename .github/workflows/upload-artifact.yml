@@ -1,10 +1,8 @@
 on:
   create:
     ref_type: branch
-    # Sequence of patterns matched against refs/tags
     tags:
-      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
-# on: [push]
+      - 'v*' 
 name: Binary Release
 jobs:
   build-linux-amd64:
@@ -14,9 +12,6 @@ jobs:
     name: build-linux-amd64
     runs-on: ubuntu-18.04
     steps:
-      - name: uname
-        run: |
-          uname -a 
       - name: Install Go
         uses: actions/setup-go@v1
         with:
@@ -26,6 +21,10 @@ jobs:
       - name: Build project # This would actually build your project, using zip for an example artifact
         run: |
           make 
+      - name: Add license
+        run: |
+            cp LICENSE output
+            
       - name: Build tar package 
         run: |
           tar zcvf  xuperchain-linux-amd64.tar.gz output
@@ -57,7 +56,7 @@ jobs:
         run: |
           make 
       - name: Add license
-          run: |
+        run: |
             cp LICENSE output
 
       - name: Build tar package 
@@ -89,9 +88,6 @@ jobs:
               * Add new feature [#32 ](http://xuper.baidu.com)
               * Fix config file bug [#33](http://xuper.baidu.com)
 
-
-
-
       - uses: actions/download-artifact@v2
         with:
           name: xuperchain-linux-amd64.tar.gz
@@ -109,9 +105,6 @@ jobs:
           asset_path: xuperchain-linux-amd64.tar.gz
           asset_name:  xuperchain-linux-amd64.tar.gz
           asset_content_type: application/x-tar
-      - name: Add license
-          run: |
-            cp LICENSE output
         
       - name: Upload Darwin Amd64
         id: upload-darwin-amd64
