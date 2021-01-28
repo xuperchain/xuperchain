@@ -78,6 +78,9 @@ func VerifyDataCheckSum(msg *xuperp2p.XuperMessage) bool {
 
 // VerifyMsgMatch 用于带返回的请求场景下验证收到的消息是否为预期的消息
 func VerifyMsgMatch(msgRaw *xuperp2p.XuperMessage, msgNew *xuperp2p.XuperMessage, peerID string) bool {
+	if msgNew == nil {
+		return false
+	}
 	if msgNew.GetHeader().GetFrom() != peerID {
 		return false
 	}

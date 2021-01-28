@@ -162,6 +162,9 @@ func (s *Stream) writeData(msg *p2pPb.XuperMessage) error {
 	if !s.valid() {
 		return ErrStrNotValid
 	}
+	if msg == nil {
+		return ErrNullResult
+	}
 	s.lk.Lock()
 	defer s.lk.Unlock()
 	msg.Header.From = s.node.NodeID()
