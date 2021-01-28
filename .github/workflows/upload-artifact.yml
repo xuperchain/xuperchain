@@ -1,10 +1,10 @@
-# on:
-#   create:
-#     ref_type: branch
-#     # Sequence of patterns matched against refs/tags
-#     tags:
-#       - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
-on: [push]
+on:
+  create:
+    ref_type: branch
+    # Sequence of patterns matched against refs/tags
+    tags:
+      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+# on: [push]
 name: Binary Release
 jobs:
   build-linux-amd64:
@@ -56,6 +56,10 @@ jobs:
       - name: Build project
         run: |
           make 
+      - name: Add license
+          run: |
+            cp LICENSE output
+
       - name: Build tar package 
         run: |
           tar zcvf  xuperchain-darwin-amd64.tar.gz output
@@ -105,7 +109,10 @@ jobs:
           asset_path: xuperchain-linux-amd64.tar.gz
           asset_name:  xuperchain-linux-amd64.tar.gz
           asset_content_type: application/x-tar
-
+      - name: Add license
+          run: |
+            cp LICENSE output
+        
       - name: Upload Darwin Amd64
         id: upload-darwin-amd64
         uses: actions/upload-release-asset@v1
