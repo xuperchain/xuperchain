@@ -135,6 +135,13 @@ github.com/go-kit/kit/metrics/internal/lv
 github.com/go-kit/kit/metrics/prometheus
 # github.com/go-logfmt/logfmt v0.5.0
 github.com/go-logfmt/logfmt
+# github.com/go-playground/locales v0.13.0
+github.com/go-playground/locales
+github.com/go-playground/locales/currency
+# github.com/go-playground/universal-translator v0.17.0
+github.com/go-playground/universal-translator
+# github.com/go-playground/validator/v10 v10.4.1
+github.com/go-playground/validator/v10
 # github.com/go-stack/stack v1.8.0
 github.com/go-stack/stack
 # github.com/gogo/protobuf v1.3.1
@@ -274,6 +281,8 @@ github.com/juju/ansiterm/tabwriter
 github.com/konsorten/go-windows-terminal-sequences
 # github.com/koron/go-ssdp v0.0.0-20180514024734-4a0ed625a78b
 github.com/koron/go-ssdp
+# github.com/leodido/go-urn v1.2.0
+github.com/leodido/go-urn
 # github.com/libp2p/go-addr-util v0.0.1
 github.com/libp2p/go-addr-util
 # github.com/libp2p/go-buffer-pool v0.0.2
@@ -600,7 +609,8 @@ go.opencensus.io/stats
 go.opencensus.io/stats/internal
 go.opencensus.io/stats/view
 go.opencensus.io/tag
-# golang.org/x/crypto v0.0.0-20191206172530-e9b2fee46413
+# golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
+golang.org/x/crypto/blake2b
 golang.org/x/crypto/blake2s
 golang.org/x/crypto/chacha20
 golang.org/x/crypto/chacha20poly1305
