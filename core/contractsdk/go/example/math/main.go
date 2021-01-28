@@ -20,7 +20,6 @@ func (m *math) Initialize(nci code.Context) code.Response {
 		if err != nil {
 			return code.Error(err)
 		}
-
 		body += fmt.Sprintf("[%s]=[%s]", key, value)
 	}
 
