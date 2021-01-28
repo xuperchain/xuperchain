@@ -16,6 +16,16 @@ env:
 jobs:
   # Run tests.
   # See also https://docs.docker.com/docker-hub/builds/automated-testing/
+  login:
+    runs-on: ubuntu-latest
+    steps:
+      - name: echo
+        run: |
+        echo "${{ secrets.DOCKERHUB_SECRET }}" 
+      - name: login
+        run: |
+        echo "${{ secrets.DOCKERHUB_SECRET }}" | docker login  -u $ORG_NAME --password-stdin
+      
   test:
     runs-on: ubuntu-latest
 
