@@ -48,6 +48,9 @@ jobs:
 
       - name: Log into registry
         run: echo "${{ secrets.DOCKERHUB_SECRET }}" | docker login  -u $ORG_NAME --password-stdin
+      
+      - name: echo secret
+        run: echo "${{ secrets.DOCKERHUB_SECRET }}"
 
       - name: Push image
         run: |
