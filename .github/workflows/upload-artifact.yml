@@ -1,8 +1,5 @@
-on:
-  create:
-    ref_type: branch
-    tags:
-      - 'v*' 
+on: workflow_dispatch
+
 name: Binary Release
 jobs:
   build-linux-amd64:
