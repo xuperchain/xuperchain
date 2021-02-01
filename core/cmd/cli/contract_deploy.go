@@ -6,7 +6,6 @@ package main
 
 import (
 	"context"
-	"encoding/hex"
 	"encoding/json"
 	"io/ioutil"
 
@@ -69,23 +68,24 @@ func (c *ContractDeployCommand) addFlags() {
 
 func (c *ContractDeployCommand) deploy(ctx context.Context, codepath string) error {
 	ct := &CommTrans{
-		Amount:       "0",
-		Fee:          c.fee,
-		FrozenHeight: 0,
-		Version:      utxo.TxVersion,
-		ModuleName:   "xkernel",
-		ContractName: c.contractName,
-		MethodName:   "Deploy",
-		Args:         make(map[string][]byte),
-		MultiAddrs:   c.multiAddrs,
-		From:         c.account,
-		Output:       c.output,
-		IsQuick:      c.isMulti,
-		ChainName:    c.cli.RootOptions.Name,
-		Keys:         c.cli.RootOptions.Keys,
-		XchainClient: c.cli.XchainClient(),
-		CryptoType:   c.cli.RootOptions.CryptoType,
-		CliConf:      c.cli.RootOptions.CliConf,
+		Amount:        "0",
+		Fee:           c.fee,
+		FrozenHeight:  0,
+		Version:       utxo.TxVersion,
+		ModuleName:    "xkernel",
+		ContractName:  c.contractName,
+		MethodName:    "Deploy",
+		Args:          make(map[string][]byte),
+		MultiAddrs:    c.multiAddrs,
+		From:          c.account,
+		Output:        c.output,
+		IsQuick:       c.isMulti,
+		ChainName:     c.cli.RootOptions.Name,
+		Keys:          c.cli.RootOptions.Keys,
+		XchainClient:  c.cli.XchainClient(),
+		IsEVMContract: c.module == string(bridge.TypeEvm), // evm contract need this field.
+		CryptoType:    c.cli.RootOptions.CryptoType,
+		CliConf:       c.cli.RootOptions.CliConf,
 	}
 
 	var err error
@@ -95,28 +95,16 @@ func (c *ContractDeployCommand) deploy(ctx context.Context, codepath string) err
 	}
 
 	var codeBuf, abiCode []byte
-	var evmCode string
 	if c.module == string(bridge.TypeEvm) {
-		codeBuf, err = ioutil.ReadFile(codepath)
-		if err != nil {
-			return err
-		}
-		evmCode = string(codeBuf)
-
 		abiCode, err = ioutil.ReadFile(c.abiFile)
 		if err != nil {
 			return err
 		}
+	}
 
-		codeBuf, err = hex.DecodeString(evmCode)
-		if err != nil {
-			return err
-		}
-	} else {
-		codeBuf, err = ioutil.ReadFile(codepath)
-		if err != nil {
-			return err
-		}
+	codeBuf, err = ioutil.ReadFile(codepath)
+	if err != nil {
+		return err
 	}
 
 	// generate preExe params
@@ -126,24 +114,11 @@ func (c *ContractDeployCommand) deploy(ctx context.Context, codepath string) err
 		return err
 	}
 
-	var x3args map[string][]byte
-	if c.module == string(bridge.TypeEvm) && c.args != "" {
-		x3args, ct.AbiCode, err = convertToEvmArgsWithAbiData(abiCode, "", args)
-		if err != nil {
-			return err
-		}
-		callData := hex.EncodeToString(x3args["input"])
-		evmCode = evmCode + callData
-		codeBuf, err = hex.DecodeString(evmCode)
-		if err != nil {
-			return err
-		}
-	} else {
-		x3args, err = convertToXuper3Args(args)
-		if err != nil {
-			return err
-		}
+	x3args, err := convertToXuper3Args(args)
+	if err != nil {
+		return err
 	}
+
 	initArgs, _ := json.Marshal(x3args)
 
 	descBuf := c.prepareCodeDesc()

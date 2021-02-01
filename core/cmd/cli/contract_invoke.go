@@ -8,12 +8,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 
 	"github.com/spf13/cobra"
 
 	"github.com/xuperchain/xuperchain/core/contract/bridge"
-	"github.com/xuperchain/xuperchain/core/contract/evm/abi"
 	"github.com/xuperchain/xuperchain/core/utxo"
 )
 
@@ -77,24 +75,26 @@ xchain wasm|native|evm invoke $codeaddr --method invoke -a '{"Your method args i
 
 func (c *ContractInvokeCommand) invoke(ctx context.Context, codeName string) error {
 	ct := &CommTrans{
-		Fee:          c.fee,
-		FrozenHeight: 0,
-		Version:      utxo.TxVersion,
-		From:         c.account,
-		ModuleName:   c.module,
-		ContractName: codeName,
-		MethodName:   c.methodName,
-		Args:         make(map[string][]byte),
-		MultiAddrs:   c.multiAddrs,
-		IsQuick:      c.isMulti,
-		Output:       c.output,
-		ChainName:    c.cli.RootOptions.Name,
-		Keys:         c.cli.RootOptions.Keys,
-		XchainClient: c.cli.XchainClient(),
-		CryptoType:   c.cli.RootOptions.CryptoType,
-		DebugTx:      c.debug,
-		CliConf:      c.cli.RootOptions.CliConf,
+		Fee:           c.fee,
+		FrozenHeight:  0,
+		Version:       utxo.TxVersion,
+		From:          c.account,
+		ModuleName:    c.module,
+		ContractName:  codeName,
+		MethodName:    c.methodName,
+		Args:          make(map[string][]byte),
+		MultiAddrs:    c.multiAddrs,
+		IsQuick:       c.isMulti,
+		Output:        c.output,
+		ChainName:     c.cli.RootOptions.Name,
+		Keys:          c.cli.RootOptions.Keys,
+		XchainClient:  c.cli.XchainClient(),
+		CryptoType:    c.cli.RootOptions.CryptoType,
+		IsEVMContract: c.module == string(bridge.TypeEvm), // evm contract need this field.
+		DebugTx:       c.debug,
+		CliConf:       c.cli.RootOptions.CliConf,
 	}
+
 	// transfer to contract
 	if c.amount != "" {
 		ct.To = ct.ContractName
@@ -107,16 +107,10 @@ func (c *ContractInvokeCommand) invoke(ctx context.Context, codeName string) err
 	if err != nil {
 		return err
 	}
-	if c.module == string(bridge.TypeEvm) {
-		ct.Args, ct.AbiCode, err = convertToEvmArgsWithAbiFile(c.abiFile, c.methodName, args)
-		if err != nil {
-			return err
-		}
-	} else {
-		ct.Args, err = convertToXuper3Args(args)
-		if err != nil {
-			return err
-		}
+
+	ct.Args, err = convertToXuper3Args(args)
+	if err != nil {
+		return err
 	}
 
 	if c.isMulti {
@@ -140,25 +134,25 @@ func convertToXuper3Args(args map[string]interface{}) (map[string][]byte, error)
 	return argmap, nil
 }
 
-func convertToEvmArgsWithAbiFile(abiFile string, method string, args map[string]interface{}) (map[string][]byte, []byte, error) {
-	buf, err := ioutil.ReadFile(abiFile)
-	if err != nil {
-		return nil, nil, err
-	}
-	return convertToEvmArgsWithAbiData(buf, method, args)
-}
+// func convertToEvmArgsWithAbiFile(abiFile string, method string, args map[string]interface{}) (map[string][]byte, []byte, error) {
+// 	buf, err := ioutil.ReadFile(abiFile)
+// 	if err != nil {
+// 		return nil, nil, err
+// 	}
+// 	return convertToEvmArgsWithAbiData(buf, method, args)
+// }
 
-func convertToEvmArgsWithAbiData(abiData []byte, method string, args map[string]interface{}) (map[string][]byte, []byte, error) {
-	enc, err := abi.New(abiData)
-	if err != nil {
-		return nil, nil, err
-	}
-	input, err := enc.Encode(method, args)
-	if err != nil {
-		return nil, nil, err
-	}
-	ret := map[string][]byte{
-		"input": input,
-	}
-	return ret, abiData, nil
-}
+// func convertToEvmArgsWithAbiData(abiData []byte, method string, args map[string]interface{}) (map[string][]byte, []byte, error) {
+// 	enc, err := abi.New(abiData)
+// 	if err != nil {
+// 		return nil, nil, err
+// 	}
+// 	input, err := enc.Encode(method, args)
+// 	if err != nil {
+// 		return nil, nil, err
+// 	}
+// 	ret := map[string][]byte{
+// 		"input": input,
+// 	}
+// 	return ret, abiData, nil
+// }

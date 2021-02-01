@@ -117,6 +117,7 @@ func (v *vmImpl) NewContext(ctxCfg *contract.ContextConfig) (contract.Context, e
 	ctx.Core = ctxCfg.Core
 	ctx.TransferAmount = ctxCfg.TransferAmount
 	ctx.ContractSet = ctxCfg.ContractSet
+	ctx.AbiNotEncoded = ctxCfg.AbiNotEncoded
 	if ctx.ContractSet == nil {
 		ctx.ContractSet = make(map[string]bool)
 		ctx.ContractSet[ctx.ContractName] = true

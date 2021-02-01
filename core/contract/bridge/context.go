@@ -23,6 +23,8 @@ type Context struct {
 
 	Args map[string][]byte
 
+	AbiNotEncoded bool
+
 	Method string
 
 	Initiator string

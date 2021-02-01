@@ -795,6 +795,7 @@ message InvokeRequest {
   // amount is the amount transfer to the contract
   // attention: In one transaction, transfer to only one contract is allowed
   string amount = 6;
+  bool abi_not_encoded = 7;
 }
 
 // 预执行的返回结构

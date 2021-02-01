@@ -82,6 +82,9 @@ type ContextConfig struct {
 	// Whether contract can be initialized
 	CanInitialize bool
 
+	// Whether contract args have been encoded for EVM
+	AbiNotEncoded bool
+
 	// The chain service
 	Core ChainCore
 
