@@ -54,10 +54,6 @@ type CommTrans struct {
 	XchainClient pb.XchainClient
 	CryptoType   string
 
-	// evm
-	// AbiCode []byte
-	IsEVMContract bool
-
 	// DebugTx if enabled, tx will be printed instead of being posted
 	DebugTx bool
 	CliConf *CliConfig
@@ -83,18 +79,16 @@ func (c *CommTrans) GenPreExeRes(ctx context.Context) (
 	if c.ModuleName != "" {
 		if c.ModuleName == "xkernel" {
 			preExeReqs = append(preExeReqs, &pb.InvokeRequest{
-				ModuleName:    c.ModuleName,
-				MethodName:    c.MethodName,
-				Args:          c.Args,
-				AbiNotEncoded: c.IsEVMContract,
+				ModuleName: c.ModuleName,
+				MethodName: c.MethodName,
+				Args:       c.Args,
 			})
 		} else {
 			invokeReq := &pb.InvokeRequest{
-				ModuleName:    c.ModuleName,
-				ContractName:  c.ContractName,
-				MethodName:    c.MethodName,
-				Args:          c.Args,
-				AbiNotEncoded: c.IsEVMContract,
+				ModuleName:   c.ModuleName,
+				ContractName: c.ContractName,
+				MethodName:   c.MethodName,
+				Args:         c.Args,
 			}
 			// transfer to contract
 			if c.To == c.ContractName {

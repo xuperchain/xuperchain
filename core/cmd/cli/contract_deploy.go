@@ -68,41 +68,27 @@ func (c *ContractDeployCommand) addFlags() {
 
 func (c *ContractDeployCommand) deploy(ctx context.Context, codepath string) error {
 	ct := &CommTrans{
-		Amount:        "0",
-		Fee:           c.fee,
-		FrozenHeight:  0,
-		Version:       utxo.TxVersion,
-		ModuleName:    "xkernel",
-		ContractName:  c.contractName,
-		MethodName:    "Deploy",
-		Args:          make(map[string][]byte),
-		MultiAddrs:    c.multiAddrs,
-		From:          c.account,
-		Output:        c.output,
-		IsQuick:       c.isMulti,
-		ChainName:     c.cli.RootOptions.Name,
-		Keys:          c.cli.RootOptions.Keys,
-		XchainClient:  c.cli.XchainClient(),
-		IsEVMContract: c.module == string(bridge.TypeEvm), // evm contract need this field.
-		CryptoType:    c.cli.RootOptions.CryptoType,
-		CliConf:       c.cli.RootOptions.CliConf,
+		Amount:       "0",
+		Fee:          c.fee,
+		FrozenHeight: 0,
+		Version:      utxo.TxVersion,
+		ModuleName:   "xkernel",
+		ContractName: c.contractName,
+		MethodName:   "Deploy",
+		Args:         make(map[string][]byte),
+		MultiAddrs:   c.multiAddrs,
+		From:         c.account,
+		Output:       c.output,
+		IsQuick:      c.isMulti,
+		ChainName:    c.cli.RootOptions.Name,
+		Keys:         c.cli.RootOptions.Keys,
+		XchainClient: c.cli.XchainClient(),
+		CryptoType:   c.cli.RootOptions.CryptoType,
+		CliConf:      c.cli.RootOptions.CliConf,
 	}
 
 	var err error
 	ct.To, err = readAddress(ct.Keys)
-	if err != nil {
-		return err
-	}
-
-	var codeBuf, abiCode []byte
-	if c.module == string(bridge.TypeEvm) {
-		abiCode, err = ioutil.ReadFile(c.abiFile)
-		if err != nil {
-			return err
-		}
-	}
-
-	codeBuf, err = ioutil.ReadFile(codepath)
 	if err != nil {
 		return err
 	}
@@ -114,7 +100,24 @@ func (c *ContractDeployCommand) deploy(ctx context.Context, codepath string) err
 		return err
 	}
 
-	x3args, err := convertToXuper3Args(args)
+	var codeBuf, abiCode []byte
+	var x3args map[string][]byte
+
+	if c.module == string(bridge.TypeEvm) {
+		if abiCode, err = ioutil.ReadFile(c.abiFile); err != nil {
+			return err
+		}
+
+		if x3args, err = convertToXuper3EvmArgs(args); err != nil {
+			return err
+		}
+	} else {
+		if x3args, err = convertToXuper3Args(args); err != nil {
+			return err
+		}
+	}
+
+	codeBuf, err = ioutil.ReadFile(codepath)
 	if err != nil {
 		return err
 	}

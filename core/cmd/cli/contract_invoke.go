@@ -75,24 +75,23 @@ xchain wasm|native|evm invoke $codeaddr --method invoke -a '{"Your method args i
 
 func (c *ContractInvokeCommand) invoke(ctx context.Context, codeName string) error {
 	ct := &CommTrans{
-		Fee:           c.fee,
-		FrozenHeight:  0,
-		Version:       utxo.TxVersion,
-		From:          c.account,
-		ModuleName:    c.module,
-		ContractName:  codeName,
-		MethodName:    c.methodName,
-		Args:          make(map[string][]byte),
-		MultiAddrs:    c.multiAddrs,
-		IsQuick:       c.isMulti,
-		Output:        c.output,
-		ChainName:     c.cli.RootOptions.Name,
-		Keys:          c.cli.RootOptions.Keys,
-		XchainClient:  c.cli.XchainClient(),
-		CryptoType:    c.cli.RootOptions.CryptoType,
-		IsEVMContract: c.module == string(bridge.TypeEvm), // evm contract need this field.
-		DebugTx:       c.debug,
-		CliConf:       c.cli.RootOptions.CliConf,
+		Fee:          c.fee,
+		FrozenHeight: 0,
+		Version:      utxo.TxVersion,
+		From:         c.account,
+		ModuleName:   c.module,
+		ContractName: codeName,
+		MethodName:   c.methodName,
+		Args:         make(map[string][]byte),
+		MultiAddrs:   c.multiAddrs,
+		IsQuick:      c.isMulti,
+		Output:       c.output,
+		ChainName:    c.cli.RootOptions.Name,
+		Keys:         c.cli.RootOptions.Keys,
+		XchainClient: c.cli.XchainClient(),
+		CryptoType:   c.cli.RootOptions.CryptoType,
+		DebugTx:      c.debug,
+		CliConf:      c.cli.RootOptions.CliConf,
 	}
 
 	// transfer to contract
@@ -108,9 +107,14 @@ func (c *ContractInvokeCommand) invoke(ctx context.Context, codeName string) err
 		return err
 	}
 
-	ct.Args, err = convertToXuper3Args(args)
-	if err != nil {
-		return err
+	if c.module == string(bridge.TypeEvm) {
+		if ct.Args, err = convertToXuper3EvmArgs(args); err != nil {
+			return err
+		}
+	} else {
+		if ct.Args, err = convertToXuper3Args(args); err != nil {
+			return err
+		}
 	}
 
 	if c.isMulti {
@@ -132,6 +136,21 @@ func convertToXuper3Args(args map[string]interface{}) (map[string][]byte, error)
 		argmap[k] = []byte(s)
 	}
 	return argmap, nil
+}
+
+// evm contract args to xuper3 args.
+func convertToXuper3EvmArgs(args map[string]interface{}) (map[string][]byte, error) {
+	input, err := json.Marshal(args)
+	if err != nil {
+		return nil, err
+	}
+
+	// 此处与 server 端结构相同，如果 jsonEncoded 字段修改，server 端也要修改（core/contract/evm/creator.go）。
+	ret := map[string][]byte{
+		"input":       input,
+		"jsonEncoded": []byte("true"),
+	}
+	return ret, nil
 }
 
 // func convertToEvmArgsWithAbiFile(abiFile string, method string, args map[string]interface{}) (map[string][]byte, []byte, error) {
