@@ -1,6 +1,7 @@
 package evm
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/big"
 
@@ -8,11 +9,13 @@ import (
 	"github.com/hyperledger/burrow/execution/engine"
 	"github.com/hyperledger/burrow/execution/errors"
 	"github.com/hyperledger/burrow/execution/evm"
+	"github.com/hyperledger/burrow/execution/evm/abi"
 	"github.com/hyperledger/burrow/execution/exec"
 
 	"github.com/xuperchain/xuperchain/core/contract"
 	"github.com/xuperchain/xuperchain/core/contract/bridge"
 	"github.com/xuperchain/xuperchain/core/contractsdk/go/pb"
+	xchainpb "github.com/xuperchain/xuperchain/core/pb"
 )
 
 const (
@@ -154,6 +157,47 @@ func (e *evmInstance) Call(call *exec.CallEvent, exception *errors.Exception) er
 }
 
 func (e *evmInstance) Log(log *exec.LogEvent) error {
+	contractAbiByte, err := e.cp.GetContractAbi(e.ctx.ContractName)
+	if err != nil {
+		return err
+	}
+	var eventID abi.EventID
+	copy(eventID[:], log.GetTopic(0).Bytes())
+
+	spec, err := abi.ReadSpec(contractAbiByte)
+	if err != nil {
+		return err
+	}
+	eventSpec, ok := spec.EventsByID[eventID]
+	if !ok {
+		return fmt.Errorf("The Event By ID Not Found ")
+	}
+
+	vals := make([]interface{}, len(eventSpec.Inputs))
+	for i := range vals {
+		vals[i] = new(string)
+	}
+	if err := abi.UnpackEvent(eventSpec, log.Topics, log.Data, vals...); err != nil {
+		return err
+	}
+
+	fields := []interface{}{}
+	for i := range vals {
+		val := vals[i].(*string)
+		m := make(map[string]string)
+		m[eventSpec.Inputs[i].Name] = *val
+		fields = append(fields, m)
+	}
+	event := &xchainpb.ContractEvent{
+		Contract: e.ctx.ContractName,
+	}
+	event.Name = eventSpec.Name
+	data, err := json.Marshal(fields)
+	if err != nil {
+		return err
+	}
+	event.Body = data
+	e.ctx.Cache.AddEvent(event)
 	return nil
 }
 
