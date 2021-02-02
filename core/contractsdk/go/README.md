@@ -1,6 +1,6 @@
 ## 使用本地环境构建
 1. 安装依赖工具
-    go get -u -v github.com/xuperchain//xuperchain/core/cmd/xdev
+    go get -u -v github.com/xuperchain/xuperchain/core/cmd/xdev
 
 2. 合约编译和测试
    go get -u -v github.com/xuperchain/xuperchain/core/contractsdk/go
