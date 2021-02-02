@@ -195,7 +195,7 @@ func (e *evmInstance) deployContract() error {
 	jsonEncoded, ok := e.ctx.Args[evmParamJSONEncoded]
 	if !ok || string(jsonEncoded) != "true" {
 		// 客户端传来的参数是已经 abi 编码的。
-		input = e.ctx.Args[evmInput]
+		input = e.code
 	} else {
 		// 客户端未将参数编码。
 		if input, err = e.encodeDeployInput(); err != nil {
