@@ -2,6 +2,7 @@ package contract
 
 import (
 	"errors"
+	"fmt"
 	"math/big"
 	"sync"
 
@@ -34,6 +35,11 @@ type Response struct {
 	Body []byte `json:"body"`
 }
 
+func (r *Response) String() string {
+	// TODO @engjin body may be non-string
+	return fmt.Sprintf("{\"status\":\"%d\",\"message\":\"%s\",\"body\":\"%s\"}", r.Status, r.Message, string(r.Body))
+
+}
 func ToPBContractResponse(resp *Response) *pb.ContractResponse {
 	return &pb.ContractResponse{
 		Status:  int32(resp.Status),

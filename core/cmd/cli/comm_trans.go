@@ -148,7 +148,7 @@ func (c *CommTrans) GenPreExeRes(ctx context.Context) (
 			// print contract response of evm
 			err := printRespWithAbiForEVM(string(c.AbiCode), c.MethodName, res.Body)
 			if err != nil {
-				return nil, nil, nil
+				fmt.Printf("contract response: %s\n", string(res.Body))
 			}
 		}
 	}
@@ -905,6 +905,13 @@ func (c *CommTrans) GenRealTx(response *pb.PreExecWithSelectUTXOResponse,
 		TxOutputs: txOutputs,
 		Initiator: initiator,
 		Nonce:     global.GenNonce(),
+	}
+
+	if response.Response.GetUtxoInputs() != nil {
+		tx.TxInputs = append(tx.TxInputs, response.GetResponse().GetUtxoInputs()...)
+	}
+	if response.Response.GetUtxoOutputs() != nil {
+		tx.TxOutputs = append(tx.TxOutputs, response.GetResponse().GetUtxoOutputs()...)
 	}
 
 	desc, _ := c.GetDesc()

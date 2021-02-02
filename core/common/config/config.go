@@ -7,7 +7,6 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb/errors"
-	"github.com/xuperchain/xuperchain/core/common"
 )
 
 // default settings
@@ -75,8 +74,6 @@ type P2PConfig struct {
 	Module string `yaml:"module,omitempty"`
 	// port the p2p network listened
 	Port int32 `yaml:"port,omitempty"`
-	// Address the p2p network connect with, ipv4
-	Ip string `yaml:"ip,omitempty"`
 	// keyPath is the node private key path, xuper will gen a random one if is nil
 	KeyPath string `yaml:"keyPath,omitempty"`
 	// isNat config whether the node use NAT manager
@@ -451,16 +448,9 @@ func NewNodeConfig() *NodeConfig {
 
 // newP2pConfigWithDefault create default p2p configuration
 func newP2pConfigWithDefault() P2PConfig {
-	var ip string
-	if DefaultNetIsIpv6 {
-		ip = common.GetHostIpv6()
-	} else {
-		ip = common.GetHostIpv4()
-	}
 	return P2PConfig{
 		Module:           DefaultP2PModuleName,
 		Port:             DefaultNetPort,
-		Ip:               ip,
 		KeyPath:          DefaultNetKeyPath,
 		IsNat:            DefaultNetIsNat,
 		IsTls:            DefaultNetIsTls,

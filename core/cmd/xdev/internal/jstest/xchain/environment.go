@@ -3,6 +3,7 @@ package xchain
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"os"
 
@@ -68,6 +69,7 @@ type deployArgs struct {
 	InitArgs map[string]interface{} `json:"init_args"`
 	Type     string                 `json:"type"`
 	ABIFile  string                 `json:"abi"`
+	Options  invokeOptions          `json:"options"`
 
 	trueArgs map[string][]byte
 	codeBuf  []byte
@@ -105,6 +107,7 @@ func (e *environment) Deploy(args deployArgs) (*ContractResponse, error) {
 		XMCache:        xcache,
 		ResourceLimits: contract.MaxLimits,
 		Core:           new(chainCore),
+		Initiator:      args.Options.Account,
 	}, dargs)
 	if err != nil {
 		return nil, err
@@ -113,6 +116,9 @@ func (e *environment) Deploy(args deployArgs) (*ContractResponse, error) {
 	err = e.model.Commit(xcache)
 	if err != nil {
 		return nil, err
+	}
+	if os.Getenv("DEBUG") != "" {
+		fmt.Printf(resp.String())
 	}
 	return newContractResponse(resp), nil
 }
@@ -154,7 +160,6 @@ func (e *environment) Invoke(name string, args invokeArgs) (*ContractResponse, e
 	if !ok {
 		return nil, errors.New("vm not found")
 	}
-
 	xcache := e.model.NewCache()
 
 	ctx, err := vm.NewContext(&contract.ContextConfig{

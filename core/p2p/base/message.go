@@ -103,10 +103,6 @@ func GetResMsgType(msgType xuperp2p.XuperMessage_MessageType) xuperp2p.XuperMess
 		return xuperp2p.XuperMessage_GET_RPC_PORT_RES
 	case xuperp2p.XuperMessage_GET_AUTHENTICATION:
 		return xuperp2p.XuperMessage_GET_AUTHENTICATION_RES
-	case xuperp2p.XuperMessage_GET_BLOCKIDS:
-		return xuperp2p.XuperMessage_GET_BLOCKIDS_RES
-	case xuperp2p.XuperMessage_GET_BLOCKS:
-		return xuperp2p.XuperMessage_GET_BLOCKS_RES
 	default:
 		return xuperp2p.XuperMessage_MSG_TYPE_NONE
 	}
