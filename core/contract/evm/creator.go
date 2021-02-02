@@ -3,13 +3,13 @@ package evm
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/hyperledger/burrow/execution/evm/abi"
 	"math/big"
 
 	"github.com/hyperledger/burrow/crypto"
 	"github.com/hyperledger/burrow/execution/engine"
 	"github.com/hyperledger/burrow/execution/errors"
 	"github.com/hyperledger/burrow/execution/evm"
+	"github.com/hyperledger/burrow/execution/evm/abi"
 	"github.com/hyperledger/burrow/execution/exec"
 
 	"github.com/xuperchain/xuperchain/core/contract"
