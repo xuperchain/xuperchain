@@ -898,6 +898,7 @@ func (uv *UtxoVM) PreExec(req *pb.InvokeRPCRequest, hd *global.XContext) (*pb.In
 		} else {
 			contextConfig.TransferAmount = ""
 		}
+
 		ctx, err := vm.NewContext(contextConfig)
 		if err != nil {
 			// FIXME zq @icexin need to return contract not found error
