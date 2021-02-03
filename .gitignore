@@ -37,3 +37,18 @@ event_client
 
 coverage.txt
 *.pem
+
+
+#  a better choise is write to a temp file 
+core/crypto/client/gm/gmsm/sm2/cert.pem
+core/crypto/client/gm/gmsm/sm2/ifile
+core/crypto/client/gm/gmsm/sm2/ofile
+core/crypto/client/gm/gmsm/sm2/priv.pem
+core/crypto/client/gm/gmsm/sm2/pub.pem
+core/crypto/client/gm/gmsm/sm2/req.pem
+core/crypto/client/gm/gmsm/sm3/ifile
+core/crypto/client/gm/gmsm/sm4/key.pem
+core/ledger/ledger/
+
+# go contract build output
+core/contractsdk/go/example/wasm/
