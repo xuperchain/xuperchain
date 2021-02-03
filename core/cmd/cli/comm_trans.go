@@ -20,9 +20,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"google.golang.org/grpc"
 
-	"github.com/hyperledger/burrow/execution/evm/abi"
 	"github.com/xuperchain/xuperchain/core/contract"
-	"github.com/xuperchain/xuperchain/core/contract/bridge"
 	crypto_client "github.com/xuperchain/xuperchain/core/crypto/client"
 	"github.com/xuperchain/xuperchain/core/global"
 	"github.com/xuperchain/xuperchain/core/pb"
@@ -55,9 +53,6 @@ type CommTrans struct {
 	Keys         string
 	XchainClient pb.XchainClient
 	CryptoType   string
-
-	// evm
-	AbiCode []byte
 
 	// DebugTx if enabled, tx will be printed instead of being posted
 	DebugTx bool
@@ -142,37 +137,29 @@ func (c *CommTrans) GenPreExeRes(ctx context.Context) (
 		if res.Status >= contract.StatusErrorThreshold {
 			return nil, nil, fmt.Errorf("contract error status:%d message:%s", res.Status, res.Message)
 		}
-		if c.ModuleName != string(bridge.TypeEvm) {
-			fmt.Printf("contract response: %s\n", string(res.Body))
-		} else {
-			// print contract response of evm
-			err := printRespWithAbiForEVM(string(c.AbiCode), c.MethodName, res.Body)
-			if err != nil {
-				fmt.Printf("contract response: %s\n", string(res.Body))
-			}
-		}
+		fmt.Printf("contract response: %s\n", string(res.Body))
 	}
 	return preExeRPCRes, preExeRPCRes.Response.Requests, nil
 }
 
-func printRespWithAbiForEVM(abiData, funcName string, resp []byte) error {
-	Variables, err := abi.DecodeFunctionReturn(abiData, funcName, resp)
-	if err != nil {
-		return err
-	}
+// func printRespWithAbiForEVM(abiData, funcName string, resp []byte) error {
+// 	Variables, err := abi.DecodeFunctionReturn(abiData, funcName, resp)
+// 	if err != nil {
+// 		return err
+// 	}
 
-	fmt.Println("contract response:")
-	for i := range Variables {
-		if len(Variables[i].Value) == 32 {
-			// evm bytes32 for solidity
-			fmt.Println("key,value:", Variables[i].Name, hex.EncodeToString([]byte(Variables[i].Value)))
-		} else {
-			fmt.Println("key,value:", Variables[i].Name, Variables[i].Value)
-		}
-	}
+// 	fmt.Println("contract response:")
+// 	for i := range Variables {
+// 		if len(Variables[i].Value) == 32 {
+// 			// evm bytes32 for solidity
+// 			fmt.Println("key,value:", Variables[i].Name, hex.EncodeToString([]byte(Variables[i].Value)))
+// 		} else {
+// 			fmt.Println("key,value:", Variables[i].Name, Variables[i].Value)
+// 		}
+// 	}
 
-	return nil
-}
+// 	return nil
+// }
 
 // GetInvokeRequestFromDesc get invokerequest from desc file
 func (c *CommTrans) GetInvokeRequestFromDesc() (*pb.InvokeRequest, error) {

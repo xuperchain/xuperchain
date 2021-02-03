@@ -6,7 +6,6 @@ package main
 
 import (
 	"context"
-	"encoding/hex"
 	"encoding/json"
 	"io/ioutil"
 
@@ -94,31 +93,6 @@ func (c *ContractDeployCommand) deploy(ctx context.Context, codepath string) err
 		return err
 	}
 
-	var codeBuf, abiCode []byte
-	var evmCode string
-	if c.module == string(bridge.TypeEvm) {
-		codeBuf, err = ioutil.ReadFile(codepath)
-		if err != nil {
-			return err
-		}
-		evmCode = string(codeBuf)
-
-		abiCode, err = ioutil.ReadFile(c.abiFile)
-		if err != nil {
-			return err
-		}
-
-		codeBuf, err = hex.DecodeString(evmCode)
-		if err != nil {
-			return err
-		}
-	} else {
-		codeBuf, err = ioutil.ReadFile(codepath)
-		if err != nil {
-			return err
-		}
-	}
-
 	// generate preExe params
 	args := make(map[string]interface{})
 	err = json.Unmarshal([]byte(c.args), &args)
@@ -126,24 +100,28 @@ func (c *ContractDeployCommand) deploy(ctx context.Context, codepath string) err
 		return err
 	}
 
+	var codeBuf, abiCode []byte
 	var x3args map[string][]byte
-	if c.module == string(bridge.TypeEvm) && c.args != "" {
-		x3args, ct.AbiCode, err = convertToEvmArgsWithAbiData(abiCode, "", args)
-		if err != nil {
+
+	if c.module == string(bridge.TypeEvm) {
+		if abiCode, err = ioutil.ReadFile(c.abiFile); err != nil {
 			return err
 		}
-		callData := hex.EncodeToString(x3args["input"])
-		evmCode = evmCode + callData
-		codeBuf, err = hex.DecodeString(evmCode)
-		if err != nil {
+
+		if x3args, err = convertToXuper3EvmArgs(args); err != nil {
 			return err
 		}
 	} else {
-		x3args, err = convertToXuper3Args(args)
-		if err != nil {
+		if x3args, err = convertToXuper3Args(args); err != nil {
 			return err
 		}
 	}
+
+	codeBuf, err = ioutil.ReadFile(codepath)
+	if err != nil {
+		return err
+	}
+
 	initArgs, _ := json.Marshal(x3args)
 
 	descBuf := c.prepareCodeDesc()
