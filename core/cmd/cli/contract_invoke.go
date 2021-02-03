@@ -8,12 +8,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 
 	"github.com/spf13/cobra"
 
 	"github.com/xuperchain/xuperchain/core/contract/bridge"
-	"github.com/xuperchain/xuperchain/core/contract/evm/abi"
 	"github.com/xuperchain/xuperchain/core/utxo"
 )
 
@@ -95,6 +93,7 @@ func (c *ContractInvokeCommand) invoke(ctx context.Context, codeName string) err
 		DebugTx:      c.debug,
 		CliConf:      c.cli.RootOptions.CliConf,
 	}
+
 	// transfer to contract
 	if c.amount != "" {
 		ct.To = ct.ContractName
@@ -107,14 +106,13 @@ func (c *ContractInvokeCommand) invoke(ctx context.Context, codeName string) err
 	if err != nil {
 		return err
 	}
+
 	if c.module == string(bridge.TypeEvm) {
-		ct.Args, ct.AbiCode, err = convertToEvmArgsWithAbiFile(c.abiFile, c.methodName, args)
-		if err != nil {
+		if ct.Args, err = convertToXuper3EvmArgs(args); err != nil {
 			return err
 		}
 	} else {
-		ct.Args, err = convertToXuper3Args(args)
-		if err != nil {
+		if ct.Args, err = convertToXuper3Args(args); err != nil {
 			return err
 		}
 	}
@@ -140,25 +138,40 @@ func convertToXuper3Args(args map[string]interface{}) (map[string][]byte, error)
 	return argmap, nil
 }
 
-func convertToEvmArgsWithAbiFile(abiFile string, method string, args map[string]interface{}) (map[string][]byte, []byte, error) {
-	buf, err := ioutil.ReadFile(abiFile)
+// evm contract args to xuper3 args.
+func convertToXuper3EvmArgs(args map[string]interface{}) (map[string][]byte, error) {
+	input, err := json.Marshal(args)
 	if err != nil {
-		return nil, nil, err
+		return nil, err
 	}
-	return convertToEvmArgsWithAbiData(buf, method, args)
+
+	// 此处与 server 端结构相同，如果 jsonEncoded 字段修改，server 端也要修改（core/contract/evm/creator.go）。
+	ret := map[string][]byte{
+		"input":       input,
+		"jsonEncoded": []byte("true"),
+	}
+	return ret, nil
 }
 
-func convertToEvmArgsWithAbiData(abiData []byte, method string, args map[string]interface{}) (map[string][]byte, []byte, error) {
-	enc, err := abi.New(abiData)
-	if err != nil {
-		return nil, nil, err
-	}
-	input, err := enc.Encode(method, args)
-	if err != nil {
-		return nil, nil, err
-	}
-	ret := map[string][]byte{
-		"input": input,
-	}
-	return ret, abiData, nil
-}
+// func convertToEvmArgsWithAbiFile(abiFile string, method string, args map[string]interface{}) (map[string][]byte, []byte, error) {
+// 	buf, err := ioutil.ReadFile(abiFile)
+// 	if err != nil {
+// 		return nil, nil, err
+// 	}
+// 	return convertToEvmArgsWithAbiData(buf, method, args)
+// }
+
+// func convertToEvmArgsWithAbiData(abiData []byte, method string, args map[string]interface{}) (map[string][]byte, []byte, error) {
+// 	enc, err := abi.New(abiData)
+// 	if err != nil {
+// 		return nil, nil, err
+// 	}
+// 	input, err := enc.Encode(method, args)
+// 	if err != nil {
+// 		return nil, nil, err
+// 	}
+// 	ret := map[string][]byte{
+// 		"input": input,
+// 	}
+// 	return ret, abiData, nil
+// }
