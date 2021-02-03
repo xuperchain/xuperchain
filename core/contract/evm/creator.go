@@ -166,16 +166,25 @@ func (e *evmInstance) Log(log *exec.LogEvent) error {
 	if err != nil {
 		return err
 	}
-	var eventID abi.EventID
-	copy(eventID[:], log.GetTopic(0).Bytes())
-
-	spec, err := abi.ReadSpec(contractAbiByte)
+	event,err := unpackEventFromAbi(contractAbiByte,contractName,log)
 	if err != nil {
 		return err
 	}
+	e.ctx.Cache.AddEvent(event)
+	return nil
+}
+
+
+func unpackEventFromAbi(abiByte []byte,contractName string,log *exec.LogEvent) (*xchainpb.ContractEvent,error){
+	var eventID abi.EventID
+	copy(eventID[:], log.GetTopic(0).Bytes())
+	spec, err := abi.ReadSpec(abiByte)
+	if err != nil {
+		return nil,err
+	}
 	eventSpec, ok := spec.EventsByID[eventID]
 	if !ok {
-		return fmt.Errorf("The Event By ID Not Found ")
+		return nil,fmt.Errorf("The Event By ID Not Found ")
 	}
 
 	vals := make([]interface{}, len(eventSpec.Inputs))
@@ -183,7 +192,7 @@ func (e *evmInstance) Log(log *exec.LogEvent) error {
 		vals[i] = new(string)
 	}
 	if err := abi.UnpackEvent(eventSpec, log.Topics, log.Data, vals...); err != nil {
-		return err
+		return nil,err
 	}
 
 	fields := []interface{}{}
@@ -199,12 +208,14 @@ func (e *evmInstance) Log(log *exec.LogEvent) error {
 	event.Name = eventSpec.Name
 	data, err := json.Marshal(fields)
 	if err != nil {
-		return err
+		return nil,err
 	}
 	event.Body = data
-	e.ctx.Cache.AddEvent(event)
-	return nil
+	return event,nil
 }
+
+
+
 
 func (e *evmInstance) deployContract() error {
 	var caller crypto.Address
@@ -285,3 +296,6 @@ func init() {
 //
 //	return nil
 //}
+
+
+func
