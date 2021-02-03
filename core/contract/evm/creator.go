@@ -1,6 +1,8 @@
 package evm
 
 import (
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"math/big"
 
@@ -8,15 +10,19 @@ import (
 	"github.com/hyperledger/burrow/execution/engine"
 	"github.com/hyperledger/burrow/execution/errors"
 	"github.com/hyperledger/burrow/execution/evm"
+	"github.com/hyperledger/burrow/execution/evm/abi"
 	"github.com/hyperledger/burrow/execution/exec"
 
 	"github.com/xuperchain/xuperchain/core/contract"
 	"github.com/xuperchain/xuperchain/core/contract/bridge"
+	xabi "github.com/xuperchain/xuperchain/core/contract/evm/abi"
 	"github.com/xuperchain/xuperchain/core/contractsdk/go/pb"
 )
 
 const (
-	initializeMethod = "initialize"
+	initializeMethod    = "initialize"
+	evmParamJSONEncoded = "jsonEncoded"
+	evmInput            = "input"
 )
 
 type evmCreator struct {
@@ -61,30 +67,19 @@ type evmInstance struct {
 
 func (e *evmInstance) Exec() error {
 	var err error
-	if e.ctx.Method == initializeMethod {
-		code, err := e.cp.GetContractCode(e.ctx.ContractName)
-		if err != nil {
-			return err
-		}
-		//abi, err := e.cp.GetContractAbi(e.ctx.ContractName)
-		//if err != nil {
-		//	return err
-		//}
-		e.code = code
-		e.abi = e.ctx.Args["contract_abi"]
-	} else {
-		e.code, err = e.cp.GetContractCode(e.ctx.ContractName)
-		if err != nil {
-			fmt.Println("get evm code error")
-			return err
-		}
-		// there is no need to get evm abi
-		//e.abi, err = e.cp.GetContractAbi(e.ctx.ContractName)
-		//if err != nil {
-		//	fmt.Println("get evm abi error")
-		//	return err
-		//}
+
+	// 获取合约的 code。
+	e.code, err = e.cp.GetContractCode(e.ctx.ContractName)
+	if err != nil {
+		return err
 	}
+
+	// 部署合约或者调用合约时参数未使用 abi 编码时需要获取到合约的 abi。执行结果也需要使用 abi 解析。
+	e.abi, err = e.cp.GetContractAbi(e.ctx.ContractName)
+	if err != nil {
+		return err
+	}
+
 	if e.ctx.Method == initializeMethod {
 		return e.deployContract()
 	}
@@ -105,10 +100,22 @@ func (e *evmInstance) Exec() error {
 	}
 
 	gas := uint64(contract.MaxLimits.Cpu)
-	input := e.ctx.Args["input"]
+
+	// 如果客户端已经将参数进行了 abi 编码，那么此处不需要再进行编码，而且返回的结果也不需要 abi 解码。否则此处需要将参数 abi 编码同时将结果 abi 解码。
+	needDecodeResp := false
+	input := []byte{}
+	jsonEncoded, ok := e.ctx.Args[evmParamJSONEncoded]
+	if !ok || string(jsonEncoded) != "true" {
+		input = e.ctx.Args[evmInput]
+	} else {
+		needDecodeResp = true
+		if input, err = e.encodeInvokeInput(); err != nil {
+			return err
+		}
+	}
 
 	value := big.NewInt(0)
-	ok := false
+	ok = false
 	if e.ctx.TransferAmount != "" {
 		value, ok = new(big.Int).SetString(e.ctx.TransferAmount, 0)
 		if !ok {
@@ -126,6 +133,14 @@ func (e *evmInstance) Exec() error {
 	out, err := e.vm.Execute(e.state, e.blockState, e, params, e.code)
 	if err != nil {
 		return err
+	}
+
+	if needDecodeResp {
+		// 执行结果根据 abi 解码，返回 json 格式的数组。
+		out, err = decodeRespWithAbiForEVM(string(e.abi), e.ctx.Method, out)
+		if err != nil {
+			return err
+		}
 	}
 
 	e.gasUsed = uint64(contract.MaxLimits.Cpu) - *params.Gas
@@ -175,7 +190,19 @@ func (e *evmInstance) deployContract() error {
 	}
 
 	gas := uint64(contract.MaxLimits.Cpu)
-	input := e.code
+
+	input := []byte{}
+	jsonEncoded, ok := e.ctx.Args[evmParamJSONEncoded]
+	if !ok || string(jsonEncoded) != "true" {
+		// 客户端传来的参数是已经 abi 编码的。
+		input = e.code
+	} else {
+		// 客户端未将参数编码。
+		if input, err = e.encodeDeployInput(); err != nil {
+			return err
+		}
+	}
+
 	params := engine.CallParams{
 		CallType: exec.CallTypeCode,
 		Origin:   caller,
@@ -185,10 +212,11 @@ func (e *evmInstance) deployContract() error {
 		Value:    big.NewInt(0),
 		Gas:      &gas,
 	}
-	contractCode, err := e.vm.Execute(e.state, e.blockState, e, params, e.code)
+	contractCode, err := e.vm.Execute(e.state, e.blockState, e, params, input)
 	if err != nil {
 		return err
 	}
+
 	key := evmCodeKey(e.ctx.ContractName)
 	err = e.ctx.Cache.Put("contract", key, contractCode)
 	if err != nil {
@@ -215,24 +243,87 @@ func init() {
 	bridge.Register(bridge.TypeEvm, "evm", newEvmCreator)
 }
 
-//func encodeArgsWithAbiForEVM(abiData []byte, funcName string, args []byte) ([]byte, error) {
-//	packedBytes, _, err := abi.EncodeFunctionCall(string(abiData), funcName, nil, args)
-//	if err != nil {
-//		return nil, err
-//	}
-//	return packedBytes, nil
-//}
+// func encodeArgsWithAbiForEVM(abiData []byte, funcName string, args []byte) ([]byte, error) {
+// 	packedBytes, _, err := abi.EncodeFunctionCall(string(abiData), funcName, nil, args)
+// 	if err != nil {
+// 		return nil, err
+// 	}
+// 	return packedBytes, nil
+// }
 
-//func DecodeRespWithAbiForEVM(abiData, funcName string, resp []byte) error {
-//	Variables, err := abi.DecodeFunctionReturn(abiData, funcName, resp)
-//	if err != nil {
-//		return err
-//	}
-//
-//	fmt.Println("contract response:")
-//	for i := range Variables {
-//		fmt.Println("key,value:", Variables[i].Name, Variables[i].Value)
-//	}
-//
-//	return nil
-//}
+func decodeRespWithAbiForEVM(abiData, funcName string, resp []byte) ([]byte, error) {
+	Variables, err := abi.DecodeFunctionReturn(abiData, funcName, resp)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make([]map[string]string, 0, len(Variables))
+	for _, v := range Variables {
+		result = append(result, map[string]string{
+			v.Name: v.Value,
+		})
+	}
+
+	out, err := json.Marshal(result)
+	if err != nil {
+		return nil, err
+	}
+
+	return out, nil
+}
+
+func (e *evmInstance) encodeDeployInput() ([]byte, error) {
+	// 客户端如果未将参数进行 abi 编码，那么通过 input 获取的是参数 json 序列化的结果。
+	argsBytes, ok := e.ctx.Args[evmInput]
+	if !ok {
+		return nil, nil
+	}
+
+	// map 的类型与客户端一致，如果 cli 或者 SDK 对此结构有改动，需要同时修改。
+	args := make(map[string]interface{})
+	if err := json.Unmarshal(argsBytes, &args); err != nil {
+		return nil, err
+	}
+
+	enc, err := xabi.New(e.abi)
+	if err != nil {
+		return nil, err
+	}
+
+	input, err := enc.Encode("", args)
+	if err != nil {
+		return nil, err
+	}
+
+	evmCode := string(e.code) + hex.EncodeToString(input)
+	codeBuf, err := hex.DecodeString(evmCode)
+	if err != nil {
+		return nil, err
+	}
+
+	return codeBuf, nil
+}
+
+func (e *evmInstance) encodeInvokeInput() ([]byte, error) {
+	argsBytes, ok := e.ctx.Args[evmInput]
+	if !ok {
+		return nil, nil
+	}
+
+	args := make(map[string]interface{})
+	if err := json.Unmarshal(argsBytes, &args); err != nil {
+		return nil, err
+	}
+
+	enc, err := xabi.New(e.abi)
+	if err != nil {
+		return nil, err
+	}
+
+	input, err := enc.Encode(e.ctx.Method, args)
+	if err != nil {
+		return nil, err
+	}
+
+	return input, nil
+}
