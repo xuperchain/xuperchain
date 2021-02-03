@@ -157,7 +157,12 @@ func (e *evmInstance) Call(call *exec.CallEvent, exception *errors.Exception) er
 }
 
 func (e *evmInstance) Log(log *exec.LogEvent) error {
-	contractAbiByte, err := e.cp.GetContractAbi(e.ctx.ContractName)
+	contractName, _, err := DetermineEVMAddress(log.Address)
+	if err != nil {
+		return err
+	}
+
+	contractAbiByte, err := e.cp.GetContractAbi(contractName)
 	if err != nil {
 		return err
 	}
@@ -189,7 +194,7 @@ func (e *evmInstance) Log(log *exec.LogEvent) error {
 		fields = append(fields, m)
 	}
 	event := &xchainpb.ContractEvent{
-		Contract: e.ctx.ContractName,
+		Contract: contractName,
 	}
 	event.Name = eventSpec.Name
 	data, err := json.Marshal(fields)
