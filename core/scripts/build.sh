@@ -45,14 +45,15 @@ go build --buildmode=plugin -o core/plugins/xendorser/xendorser-default.so.1.0.0
 go build --buildmode=plugin -o core/plugins/xendorser/xendorser-proxy.so.1.0.0 github.com/xuperchain/xuperchain/core/server/xendorser/plugin-proxy
 
 # build output dir
-mkdir -p output
+mkdir -p output/bin
 output_dir=output
-mv xchain-cli xchain ${output_dir}
-mv xchain-httpgw ${output_dir}
-mv wasm2c ${output_dir}
-mv dump_chain ${output_dir}
-mv xdev ${output_dir}
-mv relayer ${output_dir}
+mv xchain-cli xchain ${output_dir}/bin
+mv xchain-httpgw ${output_dir}/bin
+mv wasm2c ${output_dir}/bin
+mv dump_chain ${output_dir}/bin
+mv xdev ${output_dir}/bin
+mv relayer ${output_dir}/bin
+
 cp -rf core/plugins ${output_dir}
 cp -rf core/data ${output_dir}
 cp -rf core/conf ${output_dir}
