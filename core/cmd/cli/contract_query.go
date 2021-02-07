@@ -84,14 +84,13 @@ func (c *ContractQueryCommand) query(ctx context.Context, codeName string) error
 	if err != nil {
 		return err
 	}
+
 	if c.module == string(bridge.TypeEvm) {
-		ct.Args, ct.AbiCode, err = convertToEvmArgsWithAbiFile(c.abiFile, c.methodName, args)
-		if err != nil {
+		if ct.Args, err = convertToXuper3EvmArgs(args); err != nil {
 			return err
 		}
 	} else {
-		ct.Args, err = convertToXuper3Args(args)
-		if err != nil {
+		if ct.Args, err = convertToXuper3Args(args); err != nil {
 			return err
 		}
 	}
