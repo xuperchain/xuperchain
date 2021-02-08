@@ -183,6 +183,7 @@ func (e *evmInstance) Log(log *exec.LogEvent) error {
 	if err != nil {
 		return err
 	}
+	e.ctx.Events = append(e.ctx.Events, event)
 	e.ctx.Cache.AddEvent(event)
 	return nil
 }
@@ -198,27 +199,15 @@ func unpackEventFromAbi(abiByte []byte, contractName string, log *exec.LogEvent)
 	if !ok {
 		return nil, fmt.Errorf("The Event By ID Not Found ")
 	}
-
-	vals := make([]interface{}, len(eventSpec.Inputs))
-	for i := range vals {
-		vals[i] = new(string)
-	}
+	vals := abi.GetPackingTypes(eventSpec.Inputs)
 	if err := abi.UnpackEvent(eventSpec, log.Topics, log.Data, vals...); err != nil {
 		return nil, err
-	}
-
-	fields := []interface{}{}
-	for i := range vals {
-		val := vals[i].(*string)
-		m := make(map[string]string)
-		m[eventSpec.Inputs[i].Name] = *val
-		fields = append(fields, m)
 	}
 	event := &xchainpb.ContractEvent{
 		Contract: contractName,
 	}
 	event.Name = eventSpec.Name
-	data, err := json.Marshal(fields)
+	data, err := json.Marshal(vals)
 	if err != nil {
 		return nil, err
 	}
