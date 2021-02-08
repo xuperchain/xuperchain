@@ -17,6 +17,7 @@ import (
 	"github.com/xuperchain/xuperchain/core/contract/bridge"
 	xabi "github.com/xuperchain/xuperchain/core/contract/evm/abi"
 	"github.com/xuperchain/xuperchain/core/contractsdk/go/pb"
+	xchainpb "github.com/xuperchain/xuperchain/core/pb"
 )
 
 const (
@@ -169,7 +170,49 @@ func (e *evmInstance) Call(call *exec.CallEvent, exception *errors.Exception) er
 }
 
 func (e *evmInstance) Log(log *exec.LogEvent) error {
+	contractName, _, err := DetermineEVMAddress(log.Address)
+	if err != nil {
+		return err
+	}
+
+	contractAbiByte, err := e.cp.GetContractAbi(contractName)
+	if err != nil {
+		return err
+	}
+	event, err := unpackEventFromAbi(contractAbiByte, contractName, log)
+	if err != nil {
+		return err
+	}
+	e.ctx.Events = append(e.ctx.Events, event)
+	e.ctx.Cache.AddEvent(event)
 	return nil
+}
+
+func unpackEventFromAbi(abiByte []byte, contractName string, log *exec.LogEvent) (*xchainpb.ContractEvent, error) {
+	var eventID abi.EventID
+	copy(eventID[:], log.GetTopic(0).Bytes())
+	spec, err := abi.ReadSpec(abiByte)
+	if err != nil {
+		return nil, err
+	}
+	eventSpec, ok := spec.EventsByID[eventID]
+	if !ok {
+		return nil, fmt.Errorf("The Event By ID Not Found ")
+	}
+	vals := abi.GetPackingTypes(eventSpec.Inputs)
+	if err := abi.UnpackEvent(eventSpec, log.Topics, log.Data, vals...); err != nil {
+		return nil, err
+	}
+	event := &xchainpb.ContractEvent{
+		Contract: contractName,
+	}
+	event.Name = eventSpec.Name
+	data, err := json.Marshal(vals)
+	if err != nil {
+		return nil, err
+	}
+	event.Body = data
+	return event, nil
 }
 
 func (e *evmInstance) deployContract() error {
