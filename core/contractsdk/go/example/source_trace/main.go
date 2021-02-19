@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/big"
 
@@ -128,6 +129,11 @@ func (st *sourceTrace) QueryRecords(ctx code.Context) code.Response {
 	}{}
 	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
+	}
+	goodsKey := GOODS + args.Id
+
+	if _, err := ctx.GetObject([]byte(goodsKey)); err != nil {
+		return code.Error(errors.New("goods not found"))
 	}
 
 	goodsRecordsKey := GOODSRECORD + args.Id + "_"
