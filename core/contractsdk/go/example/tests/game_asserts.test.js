@@ -74,11 +74,11 @@ function AssetOperations() {
         c.Invoke("NewAssetToUser", { "user_id": "user_id1", "type_id": "type_id1", "asset_id": "asset_id4" }, { "account": "xchain" })
     }
 
-    resp = c.Invoke("GetAssetByUser", { "user_id": "user_id1" }, { "account": "xchain" })
+    resp = c.Invoke("GetAssetsByUser", { "user_id": "user_id1" }, { "account": "xchain" })
     console.log(resp.Body)
     assert.deepEqual(JSON.parse(resp.Body), [{ "id": "asset_id1", "type_id": "type_id1", "asset_desc": "type_desc1" }, { "id": "asset_id4", "type_id": "type_id1", "asset_desc": "type_desc1" }])
 
-    resp = c.Invoke("GetAssetByUser", { "user_id": "user_id2" }, { "account": "xchain" })
+    resp = c.Invoke("GetAssetsByUser", { "user_id": "user_id2" }, { "account": "xchain" })
     assert.deepEqual(JSON.parse(resp.Body), [{ "id": "asset_id2", "type_id": "type_id3", "asset_desc": "type_desc3" }, { "id": "asset_id3", "type_id": "type_id1", "asset_desc": "type_desc1" }])
     {
         resp = c.Invoke("TradeAsset", { "to": "user_id2", "asset_id": "asset_id2" }, { "account": "user_id1" })
@@ -87,10 +87,10 @@ function AssetOperations() {
 
     resp = c.Invoke("TradeAsset", { "to": "user_id2", "asset_id": "asset_id1" }, { "account": "user_id1" })
     assert.equal(resp.Status, 200)
-    resp = c.Invoke("GetAssetByUser", { "user_id": "user_id1" }, { "account": "xchain" })
+    resp = c.Invoke("GetAssetsByUser", { "user_id": "user_id1" }, { "account": "xchain" })
     assert.deepEqual(JSON.parse(resp.Body), [{ "id": "asset_id4", "type_id": "type_id1", "asset_desc": "type_desc1" }])
 
-    resp = c.Invoke("GetAssetByUser", { "user_id": "user_id2" }, { "account": "xchain" })
+    resp = c.Invoke("GetAssetsByUser", { "user_id": "user_id2" }, { "account": "xchain" })
     console.log(resp.Body)
     assert.deepEqual(JSON.parse(resp.Body), [{ "id": "asset_id1", "type_id": "type_id1", "asset_desc": "type_desc1" }, { "id": "asset_id2", "type_id": "type_id3", "asset_desc": "type_desc3" }, { "id": "asset_id3", "type_id": "type_id1", "asset_desc": "type_desc1" }])
 }

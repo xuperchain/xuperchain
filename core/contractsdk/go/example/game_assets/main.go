@@ -160,7 +160,7 @@ func (ga *gameAssets) TradeAsset(ctx code.Context) code.Response {
 	return code.OK([]byte(args.AssetId))
 }
 
-func (ga *gameAssets) GetAssetByUser(ctx code.Context) code.Response {
+func (ga *gameAssets) GetAssetsByUser(ctx code.Context) code.Response {
 	initiator := ctx.Initiator()
 	if initiator == "" {
 		return code.Error(code.ErrMissingInitiator)
