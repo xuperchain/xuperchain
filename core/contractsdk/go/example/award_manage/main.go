@@ -220,7 +220,7 @@ func (am *awardManage) TransferFrom(ctx code.Context) code.Response {
 
 func (am *awardManage) Approve(ctx code.Context) code.Response {
 	args := struct {
-		To    string   `json:"to" validte:"required"`
+		To    string   `json:"to" validate:"required"`
 		Token *big.Int `json:"token" validate:"required"`
 	}{}
 	from := ctx.Initiator()

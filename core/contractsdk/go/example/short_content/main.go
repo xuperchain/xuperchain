@@ -20,10 +20,10 @@ var (
 )
 
 type content struct {
-	UserId  string `json:"user_id" validte:"required"`
-	Title   string `json:"title" validte:"required"`
-	Topic   string `json:"topic" validte:"required"`
-	Content string `json:"content" validte:"required"`
+	UserId  string `json:"user_id" validate:"required"`
+	Title   string `json:"title" validate:"required"`
+	Topic   string `json:"topic" validate:"required"`
+	Content string `json:"content" validate:"required"`
 }
 
 type shortContent struct {
@@ -52,7 +52,7 @@ func (sc *shortContent) StoreShortContent(ctx code.Context) code.Response {
 
 func (sc *shortContent) QueryByUser(ctx code.Context) code.Response {
 	args := struct {
-		UserID string `json:"user_id" validte:"required"`
+		UserID string `json:"user_id" validate:"required"`
 	}{}
 	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
@@ -78,9 +78,9 @@ func (sc *shortContent) QueryByUser(ctx code.Context) code.Response {
 
 func (sc *shortContent) QueryByTitle(ctx code.Context) code.Response {
 	args := struct {
-		UserId string `json:"user_id" validte:"required"`
-		Topic  string `json:"topic" validte:"required"`
-		Title  string `json:"title" validte:"required"`
+		UserId string `json:"user_id" validate:"required"`
+		Topic  string `json:"topic" validate:"required"`
+		Title  string `json:"title" validate:"required"`
 	}{}
 	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
@@ -94,8 +94,8 @@ func (sc *shortContent) QueryByTitle(ctx code.Context) code.Response {
 
 func (sc *shortContent) QueryByTopic(ctx code.Context) code.Response {
 	args := struct {
-		UserId string `json:"user_id" validte:"required"`
-		Topic  string `json:"topic" validte:"required"`
+		UserId string `json:"user_id" validate:"required"`
+		Topic  string `json:"topic" validate:"required"`
 	}{}
 	prefix := USER_BUCKET + "/" + args.UserId + "/" + args.Topic + "/"
 	iter := ctx.NewIterator(code.PrefixRange([]byte(prefix)))

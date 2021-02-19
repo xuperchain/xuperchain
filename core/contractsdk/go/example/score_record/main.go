@@ -15,7 +15,7 @@ type scoreRecord struct {
 
 func (sr *scoreRecord) Initialize(ctx code.Context) code.Response {
 	args := struct {
-		Owner string `json:"owner" validte:"required"`
+		Owner string `json:"owner" validate:"required"`
 	}{}
 
 	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
@@ -40,8 +40,8 @@ func (sc *scoreRecord) AddScore(ctx code.Context) code.Response {
 		return code.Error(code.ErrPermissionDenied)
 	}
 	args := struct {
-		UserId string `json:"user_id" validte:"required"`
-		Data   string `json:"data" validte:"required"`
+		UserId string `json:"user_id" validate:"required"`
+		Data   string `json:"data" validate:"required"`
 	}{}
 
 	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
@@ -56,7 +56,7 @@ func (sc *scoreRecord) AddScore(ctx code.Context) code.Response {
 
 func (sr *scoreRecord) QueryScore(ctx code.Context) code.Response {
 	args := struct {
-		UserId string `json:"user_id" validte:"required"`
+		UserId string `json:"user_id" validate:"required"`
 	}{}
 	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)

@@ -17,9 +17,9 @@ const (
 type hashDeposit struct {
 }
 type fileInfo struct {
-	UserID   string `json:"user_id" validte:"required"`
-	HashID   string `json:"hash_id" validte:"required"`
-	FileName string `json:"file_name" validte:"required"`
+	UserID   string `json:"user_id" validate:"required"`
+	HashID   string `json:"hash_id" validate:"required"`
+	FileName string `json:"file_name" validate:"required"`
 }
 
 func (hd *hashDeposit) Initialize(ctx code.Context) code.Response {
@@ -69,7 +69,7 @@ func (hd *hashDeposit) QueryUserList(ctx code.Context) code.Response {
 
 func (hd *hashDeposit) QueryFileInfoByUser(ctx code.Context) code.Response {
 	args := struct {
-		UserID string `json:"user_id" validte:"required"`
+		UserID string `json:"user_id" validate:"required"`
 	}{}
 	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
@@ -95,7 +95,7 @@ func (hd *hashDeposit) QueryFileInfoByUser(ctx code.Context) code.Response {
 
 func (hd *hashDeposit) QueryFileInfoByHash(ctx code.Context) code.Response {
 	args := struct {
-		HashID string `json:"hash_id" validte:"required"`
+		HashID string `json:"hash_id" validate:"required"`
 	}{}
 	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)

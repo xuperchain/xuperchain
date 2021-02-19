@@ -31,7 +31,7 @@ type asset struct {
 
 func (ga *gameAssets) Initialize(ctx code.Context) code.Response {
 	args := struct {
-		Admin string `json:"admin" validte:"required"`
+		Admin string `json:"admin" validate:"required"`
 	}{}
 
 	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
@@ -99,9 +99,9 @@ func (ga *gameAssets) NewAssetToUser(ctx code.Context) code.Response {
 		return code.Error(code.ErrPermissionDenied)
 	}
 	args := struct {
-		UserId  string `json:"user_id" validte:"required"`
-		TypeId  string `json:"type_id" validte:"required"`
-		AssetId string `json:"asset_id" validte:"required"`
+		UserId  string `json:"user_id" validate:"required"`
+		TypeId  string `json:"type_id" validate:"required"`
+		AssetId string `json:"asset_id" validate:"required"`
 	}{}
 	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
@@ -134,8 +134,8 @@ func (ga *gameAssets) TradeAsset(ctx code.Context) code.Response {
 		return code.Error(code.ErrMissingInitiator)
 	}
 	args := struct {
-		To      string `json:"to" validte:"required"`
-		AssetId string `json:"asset_id" validte:"required"`
+		To      string `json:"to" validate:"required"`
+		AssetId string `json:"asset_id" validate:"required"`
 	}{}
 	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
@@ -167,7 +167,7 @@ func (ga *gameAssets) GetAssetByUser(ctx code.Context) code.Response {
 	}
 	userId := initiator
 	args := struct {
-		UserID string `json:"user_id" validte:"required"`
+		UserID string `json:"user_id" validate:"required"`
 	}{}
 
 	if ga.isAdmin(ctx, initiator) {

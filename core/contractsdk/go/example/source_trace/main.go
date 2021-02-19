@@ -28,7 +28,7 @@ type sourceTrace struct {
 
 func (st *sourceTrace) Initialize(ctx code.Context) code.Response {
 	args := struct {
-		Admin string `json:"admin" validte:"required"`
+		Admin string `json:"admin" validate:"required"`
 	}{}
 	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
@@ -56,8 +56,8 @@ func (st *sourceTrace) CreateGoods(ctx code.Context) code.Response {
 	}
 
 	args := struct {
-		Id   string `json:"id" required:"true''"`
-		Desc string `json:"desc" required:"desc"`
+		Id   string `json:"id" validate:"required"`
+		Desc string `json:"desc" validate:"required"`
 	}{}
 	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
@@ -99,8 +99,8 @@ func (st *sourceTrace) UpdateGoods(ctx code.Context) code.Response {
 		return code.Error(code.ErrPermissionDenied)
 	}
 	args := struct {
-		Id     string `json:"id" validte:"required"`
-		Reason string `json:"reason" validte:"required"`
+		Id     string `json:"id" validate:"required"`
+		Reason string `json:"reason" validate:"required"`
 	}{}
 
 	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
@@ -125,7 +125,7 @@ func (st *sourceTrace) UpdateGoods(ctx code.Context) code.Response {
 
 func (st *sourceTrace) QueryRecords(ctx code.Context) code.Response {
 	args := struct {
-		Id string `json:"id" validte:"required"`
+		Id string `json:"id" validate:"required"`
 	}{}
 	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
