@@ -55,16 +55,20 @@ func (hd *hashDeposit) QueryUserList(ctx code.Context) code.Response {
 	prefix := UserBucket
 	iter := ctx.NewIterator(code.PrefixRange([]byte(prefix)))
 	defer iter.Close()
-	users := []string{}
+	users := make(map[string]struct{})
+
 	for iter.Next() {
 		userKey := string(iter.Key()[len(UserBucket):])
-		users = append(users, strings.Split(userKey, "/")[0])
+		users[strings.Split(userKey, "/")[0]] = struct{}{}
 	}
 	if err := iter.Error(); err != nil {
 		return code.Error(err)
 	}
-	// TODO
-	return code.JSON(users)
+	usersList := []string{}
+	for k := range users {
+		usersList = append(usersList, k)
+	}
+	return code.JSON(usersList)
 }
 
 func (hd *hashDeposit) QueryFileInfoByUser(ctx code.Context) code.Response {
