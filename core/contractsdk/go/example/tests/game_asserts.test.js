@@ -78,6 +78,8 @@ function AssetOperations() {
     console.log(resp.Body)
     assert.deepEqual(JSON.parse(resp.Body), [{ "id": "asset_id1", "type_id": "type_id1", "asset_desc": "type_desc1" }, { "id": "asset_id4", "type_id": "type_id1", "asset_desc": "type_desc1" }])
 
+
+
     resp = c.Invoke("GetAssetsByUser", { "user_id": "user_id2" }, { "account": "xchain" })
     assert.deepEqual(JSON.parse(resp.Body), [{ "id": "asset_id2", "type_id": "type_id3", "asset_desc": "type_desc3" }, { "id": "asset_id3", "type_id": "type_id1", "asset_desc": "type_desc1" }])
     {
@@ -92,8 +94,20 @@ function AssetOperations() {
 
     resp = c.Invoke("GetAssetsByUser", { "user_id": "user_id2" }, { "account": "xchain" })
     console.log(resp.Body)
-    assert.deepEqual(JSON.parse(resp.Body), [{ "id": "asset_id1", "type_id": "type_id1", "asset_desc": "type_desc1" }, { "id": "asset_id2", "type_id": "type_id3", "asset_desc": "type_desc3" }, { "id": "asset_id3", "type_id": "type_id1", "asset_desc": "type_desc1" }])
+    assert.deepEqual(JSON.parse(resp.Body), [{
+        "id": "asset_id1", "type_id": "type_id1", "asset_desc": "type_desc1"
+    }, {
+        "id": "asset_id2", "type_id": "type_id3", "asset_desc": "type_desc3"
+    }, {
+        "id": "asset_id3", "type_id": "type_id1", "asset_desc": "type_desc1"
+    }])
+    {
+        c.Invoke("NewAssetToUser", { "user_id": "xchain", "type_id": "type_id1", "asset_id": "asset_id5" }, { "account": "xchain" })
+        resp = c.Invoke("GetAssetsByUser", {}, { "account": "xchain" })
+        asset.deepEqual(resp.Body, [{ "id": "asset_id5", "type_id": "type_id1", "asset_desc": "type_desc1" }])
+    }
 }
+
 
 Test("AddAsset", AddAsset)
 Test("ListAssetType", ListAssetType)
