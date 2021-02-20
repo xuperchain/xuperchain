@@ -19,6 +19,8 @@ function Donate(t) {
     assert.equal(resp.Message, "you do not have permission to call this method")
     resp = c.Invoke("Donate", { "donor": "donor1", "amount": "1000", "timestamp": "1609590581", "comments": "comments1" }, { "account": "xchain" })
     assert.equal(resp.Message, "")
+    resp = c.Invoke("Donate", { "donor": "donor1", "amount": "-100", "timestamp": "1609590581", "comments": "comments1" }, { "account": "xchain" })
+    assert.equal(resp.Status, 500)
 }
 
 function beforetest() {
@@ -69,6 +71,8 @@ function Cost(t) {
 
     resp = c.Invoke("Cost", { "to": "to", "amount": "1000000", "timestamp": "1609590581", "comments": "comments" }, { "account": "xchain" })
     assert.equal(resp.Message, "balance not enough")
+    resp = c.Invoke("Cost", { "donor": "donor1", "amount": "-100", "timestamp": "1609590581", "comments": "comments1" }, { "account": "xchain" })
+    assert.equal(resp.Status, 500)
     return c
 }
 function Statistics(t) {

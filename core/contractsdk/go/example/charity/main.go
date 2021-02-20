@@ -81,7 +81,7 @@ func (cd *charityDonation) Donate(ctx code.Context) code.Response {
 	}
 	args := struct {
 		Donor     string   `json:"donor" validate:"required"`
-		Amount    *big.Int `json:"amount" validate:"required"`
+		Amount    *big.Int `json:"amount" validate:"required,gt=0"`
 		Timestamp string   `json:"timestamp" validate:"required"`
 		Comments  string   `json:"comments" validate:"required"`
 	}{}
@@ -145,7 +145,7 @@ func (cd *charityDonation) Cost(ctx code.Context) code.Response {
 	}
 	args := struct {
 		To        string   `json:"to" validate:"required"`
-		Amount    *big.Int `json:"amount" validate:"required"`
+		Amount    *big.Int `json:"amount" validate:"required,gt=0"`
 		Timestamp string   `json:"timestamp" validate:"required"`
 		Comments  string   `json:"comments" validate:"required"`
 	}{}
