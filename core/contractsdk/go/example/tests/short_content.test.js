@@ -12,13 +12,13 @@ function deploy() {
         code: codePath,
         lang: lang,
         type: type,
-        init_args: {"owner": "xchain"}
+        init_args: { "owner": "xchain" }
     });
 }
 
 function StoreShortContent() {
     var c = deploy()
-    resp = c.Invoke("StoreShortContent", {"user_id": "user1", "topic": "topic1", "title": "title1"})
+    resp = c.Invoke("StoreShortContent", { "user_id": "user1", "topic": "topic1", "title": "title1" })
     assert.equal(resp.Status >= 500, true)
     // assert.equal(resp.Message, "missing content")
     resp = c.Invoke("StoreShortContent", {
@@ -52,19 +52,22 @@ function beforeTest() {
 
 function QueryByUser() {
     c = beforeTest()
-    resp = c.Invoke("QueryByUser", {"user_id": "user1"})
+    resp = c.Invoke("QueryByUser", { "user_id": "user1" })
+    console.log(resp.Body)
+    console.log(resp.Message)
     assert.equal(resp.Status, 200)
 }
 
 function QueryByTitle() {
     var c = beforeTest()
-    resp = c.Invoke("QueryByUser", {"user_id": "user1", "topic": "topic1", "title": "title1"})
+    resp = c.Invoke("QueryByUser", { "user_id": "user1", "topic": "topic1", "title": "title1" })
     assert.equal(resp.Status, 200)
 }
 
 function QueryByTopic() {
     var c = beforeTest()
-    resp = c.Invoke("QueryByUser", {"user_id": "user1", "topic": "topic1"})
+    resp = c.Invoke("QueryByTopic", { "user_id": "user1", "topic": "topic1" })
+    console.log(resp.Body)
     assert.equal(resp.Status, 200)
 }
 

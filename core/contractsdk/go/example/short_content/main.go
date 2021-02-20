@@ -62,11 +62,11 @@ func (sc *shortContent) QueryByUser(ctx code.Context) code.Response {
 	defer iter.Close()
 	contents := []content{}
 	for iter.Next() {
-		value := strings.Split(string(iter.Key()[len(USER_BUCKET):]), "/")
+		value := strings.Split(string(iter.Key()[len(USER_BUCKET)+1:]), "/") // add 1 as USER_BUCKET does not contains suffix /
 		contents = append(contents, content{
 			UserId:  args.UserID,
-			Topic:   value[0],
-			Title:   value[1],
+			Topic:   value[1],
+			Title:   value[2],
 			Content: string(iter.Value()),
 		})
 	}
@@ -93,10 +93,14 @@ func (sc *shortContent) QueryByTitle(ctx code.Context) code.Response {
 }
 
 func (sc *shortContent) QueryByTopic(ctx code.Context) code.Response {
-	args := struct {
+	args := &struct {
 		UserId string `json:"user_id" validate:"required"`
 		Topic  string `json:"topic" validate:"required"`
 	}{}
+	if err := code.Unmarshal(ctx.Args(), args); err != nil {
+		return code.Error(err)
+	}
+
 	prefix := USER_BUCKET + "/" + args.UserId + "/" + args.Topic + "/"
 	iter := ctx.NewIterator(code.PrefixRange([]byte(prefix)))
 	defer iter.Close()
