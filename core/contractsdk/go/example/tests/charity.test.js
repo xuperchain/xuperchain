@@ -97,15 +97,29 @@ function QueryDonor(t) {
 
 function QueryDonates(t) {
     c = Cost(t)
-    resp = c.Invoke("QueryDonates", { "start": "00000000000000000005", "limit": "1" })
-    assert.deepStrictEqual(JSON.parse(resp.Body), [{ "id": "00000000000000000005", "donor": "donor1", "amount": "10000", "timestamp": "1609590581", "comments": "comments1" }])
+    resp = c.Invoke("QueryDonates", { "start": "00000000000000000005", "limit": "3" })
+    console.log(resp.Body)
+    assert.deepStrictEqual(JSON.parse(resp.Body), [{
+        "id": "00000000000000000005", "donor": "donor1", "amount": "10000", "timestamp": "1609590581", "comments": "comments1"
+    }, {
+        "id": "00000000000000000006", "donor": "donor1", "amount": "10000", "timestamp": "1609590581", "comments": "comments1"
+    }, {
+        "id": "00000000000000000007", "donor": "donor1", "amount": "10000", "timestamp": "1609590581", "comments": "comments1"
+    }])
 }
 
 function QueryCosts(t) {
     c = Cost(t)
-    resp = c.Invoke("QueryCosts", { "start": "00000000000000000001", "limit": "1" })
-    console.log(resp.Message)
-    assert.deepStrictEqual(JSON.parse(resp.Body), [{ "id": "00000000000000000001", "to": "to", "amount": "100", "timestamp": "1609590581", "comments": "comments" }])
+    resp = c.Invoke("QueryCosts", { "start": "00000000000000000001", "limit": "3" })
+    console.log(resp.Body)
+    assert.deepStrictEqual(JSON.parse(resp.Body), [{
+        "id": "00000000000000000001", "to": "to", "amount": "100", "timestamp": "1609590581", "comments": "comments"
+    }, {
+        "id": "00000000000000000002", "to": "to", "amount": "100", "timestamp": "1609590581", "comments": "comments"
+    },
+    {
+        "id": "00000000000000000003", "to": "to", "amount": "100", "timestamp": "1609590581", "comments": "comments"
+    }])
     resp = c.Invoke("QueryCosts", { "start": "00000000000000000001", "limit": "10000" })
     assert.equal(resp.Message, "limit exceeded")
 }

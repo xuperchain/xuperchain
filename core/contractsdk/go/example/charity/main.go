@@ -261,20 +261,23 @@ func (cd *charityDonation) QueryDonor(ctx code.Context) code.Response {
 
 func (cd *charityDonation) QueryDonates(ctx code.Context) code.Response {
 	args := struct {
-		Start string   `json:"start" validate:"required,len=20"`
+		Start *big.Int `json:"start" validate:"required"`
 		Limit *big.Int `json:"limit" validate:"required"`
 	}{}
 
 	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
+
 	if args.Limit.Cmp(big.NewInt(MAX_LIMIT)) > 0 {
 		return code.Error(ErrLimitExceeded)
 	}
-
-	donateKey := ALL_DONATE + args.Start
-	iter := ctx.NewIterator(code.PrefixRange([]byte(donateKey)))
+	end := big.NewInt(0).Add(args.Start, args.Limit)
+	ctx.Logf(args.Start.String())
+	ctx.Logf(end.String())
+	iter := ctx.NewIterator([]byte(ALL_DONATE+fmt.Sprintf("%020s", args.Start.String())), []byte(ALL_DONATE+fmt.Sprintf("%020s", end.String())))
 	defer iter.Close()
+
 	donateDetails := []donateDetail{}
 	selected := int64(0) // use selected is safe as we check limit before
 	for iter.Next() {
@@ -298,7 +301,7 @@ func (cd *charityDonation) QueryDonates(ctx code.Context) code.Response {
 
 func (cd *charityDonation) QueryCosts(ctx code.Context) code.Response {
 	args := struct {
-		Start string   `json:"start" validate:"required"`
+		Start *big.Int `json:"start" validate:"required"`
 		Limit *big.Int `json:"limit" validate:"required"`
 	}{}
 
@@ -309,8 +312,10 @@ func (cd *charityDonation) QueryCosts(ctx code.Context) code.Response {
 		return code.Error(ErrLimitExceeded)
 	}
 
-	costKey := ALL_COST + args.Start
-	iter := ctx.NewIterator(code.PrefixRange([]byte(costKey)))
+	end := big.NewInt(0).Add(args.Start, args.Limit)
+
+	iter := ctx.NewIterator([]byte(ALL_COST+fmt.Sprintf("%020s", args.Start.String())), []byte(ALL_COST+fmt.Sprintf("%020s", end.String())))
+
 	defer iter.Close()
 
 	selected := int64(0)
