@@ -54,6 +54,12 @@ mv dump_chain ${output_dir}/bin
 mv xdev ${output_dir}/bin
 mv relayer ${output_dir}/bin
 
+# for backward compatibility
+
+for i in `ls bin`;do 
+    ln -s bin/$i $i;
+done
+
 cp -rf core/plugins ${output_dir}
 cp -rf core/data ${output_dir}
 cp -rf core/conf ${output_dir}
