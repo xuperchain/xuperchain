@@ -36,14 +36,16 @@ func TestXchainToEVMAddress(t *testing.T) {
 func TestContractNameToEVMAddress(t *testing.T) {
 	// testtoken1    0x313131312D2D2D2D2D2D74657374746F6B656E31
 	// storagedata11    0x313131312D2D2D73746F72616765646174613131
-	contractName := "storagedata11"
+	//contractName := "storagedata11"
+	contractName := "mike_test_sol_31"
 	contractNameEvmAddr, err := ContractNameToEVMAddress(contractName)
 	if err != nil {
 		t.Error(err)
 	}
 
 	// 0x313131312D2D2D73746F72616765646174613131
-	evmAddr := "313131312D2D2D73746F72616765646174613131"
+	//evmAddr := "313131312D2D2D73746F72616765646174613131"
+	evmAddr := "313131316D696B655F746573745F736F6C5F3331"
 	if contractNameEvmAddr.String() != evmAddr {
 		t.Errorf("expect %s got %s", evmAddr, contractNameEvmAddr.String())
 	}
