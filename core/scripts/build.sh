@@ -56,8 +56,8 @@ mv relayer ${output_dir}/bin
 
 # for backward compatibility
 
-for i in `ls bin`;do 
-    ln -s bin/$i $i;
+for i in `ls output/bin`;do 
+    ln -s bin/$i output/$i;
 done
 
 cp -rf core/plugins ${output_dir}
