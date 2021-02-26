@@ -273,8 +273,6 @@ func (cd *charityDonation) QueryDonates(ctx code.Context) code.Response {
 		return code.Error(ErrLimitExceeded)
 	}
 	end := big.NewInt(0).Add(args.Start, args.Limit)
-	ctx.Logf(args.Start.String())
-	ctx.Logf(end.String())
 	iter := ctx.NewIterator([]byte(ALL_DONATE+fmt.Sprintf("%020s", args.Start.String())), []byte(ALL_DONATE+fmt.Sprintf("%020s", end.String())))
 	defer iter.Close()
 
