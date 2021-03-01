@@ -13,13 +13,13 @@ type gameAssets struct {
 
 const (
 	ADMIN      = "admin"
-	ASSETTYPE  = "AssetType_"
-	USERASSET  = "UserAsset_"
-	ASSET2USER = "Asset2User_"
+	ASSETTYPE  = "AssetType/"
+	USERASSET  = "UserAsset/"
+	ASSET2USER = "Asset2User"
 )
 
 type assetType struct {
-	TypeID   string `json:"type_id" validate:"required"`
+	TypeID   string `json:"type_id" validate:"required,excludes=/"`
 	TypeDesc string `json:"type_desc" validat:"required"`
 }
 
@@ -99,9 +99,9 @@ func (ga *gameAssets) NewAssetToUser(ctx code.Context) code.Response {
 		return code.Error(code.ErrPermissionDenied)
 	}
 	args := struct {
-		UserId  string `json:"user_id" validate:"required"`
-		TypeId  string `json:"type_id" validate:"required"`
-		AssetId string `json:"asset_id" validate:"required"`
+		UserId  string `json:"user_id" validate:"required",excludes=/`
+		TypeId  string `json:"type_id" validate:"required,excludes=/"`
+		AssetId string `json:"asset_id" validate:"required,excludes=/"`
 	}{}
 	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
@@ -120,7 +120,7 @@ func (ga *gameAssets) NewAssetToUser(ctx code.Context) code.Response {
 		return code.Error(err)
 	}
 
-	userAssetKey := USERASSET + args.UserId + "_" + args.AssetId
+	userAssetKey := USERASSET + args.UserId + "/" + args.AssetId
 	if err := ctx.PutObject([]byte(userAssetKey), []byte(ASSETTYPE+args.TypeId)); err != nil {
 		return code.Error(err)
 	}
@@ -135,12 +135,12 @@ func (ga *gameAssets) TradeAsset(ctx code.Context) code.Response {
 	}
 	args := struct {
 		To      string `json:"to" validate:"required"`
-		AssetId string `json:"asset_id" validate:"required"`
+		AssetId string `json:"asset_id" validate:"required,excludes=/"`
 	}{}
 	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
-	userAssetKey := USERASSET + from + "_" + args.AssetId
+	userAssetKey := USERASSET + from + "/" + args.AssetId
 	assetType, err := ctx.GetObject([]byte(userAssetKey))
 	if err != nil {
 		return code.Error(fmt.Errorf("asset %s of user %s not found", args.AssetId, from))
@@ -150,7 +150,7 @@ func (ga *gameAssets) TradeAsset(ctx code.Context) code.Response {
 	}
 
 	assetKey := ASSET2USER + args.AssetId
-	newuserAssetKey := USERASSET + args.To + "_" + args.AssetId
+	newuserAssetKey := USERASSET + args.To + "/" + args.AssetId
 	if err := ctx.PutObject([]byte(newuserAssetKey), assetType); err != nil {
 		return code.Error(err)
 	}
@@ -176,7 +176,7 @@ func (ga *gameAssets) GetAssetsByUser(ctx code.Context) code.Response {
 		}
 	}
 
-	userAssetKey := USERASSET + userId + "_"
+	userAssetKey := USERASSET + userId + "/"
 	iter := ctx.NewIterator(code.PrefixRange([]byte(userAssetKey)))
 	defer iter.Close()
 

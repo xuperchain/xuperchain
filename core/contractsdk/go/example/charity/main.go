@@ -14,9 +14,9 @@ type charityDonation struct {
 }
 
 const (
-	USER_DONATE    = "UserDonate_"
-	ALL_DONATE     = "AllDonate_"
-	ALL_COST       = "AllCost_"
+	USER_DONATE    = "UserDonate/"
+	ALL_DONATE     = "AllDonate/"
+	ALL_COST       = "AllCost/"
 	TOTAL_RECEIVED = "TotalDonates"
 	TOTAL_COSTS    = "TotalCosts"
 	BALANCE        = "Balance"
@@ -80,7 +80,7 @@ func (cd *charityDonation) Donate(ctx code.Context) code.Response {
 		return code.Error(err)
 	}
 	args := struct {
-		Donor     string   `json:"donor" validate:"required"`
+		Donor     string   `json:"donor" validate:"required,excludes=/"`
 		Amount    *big.Int `json:"amount" validate:"required,gt=0"`
 		Timestamp string   `json:"timestamp" validate:"required"`
 		Comments  string   `json:"comments" validate:"required"`
@@ -118,7 +118,7 @@ func (cd *charityDonation) Donate(ctx code.Context) code.Response {
 		Comments:  args.Comments,
 	})
 
-	userDonateKey := USER_DONATE + args.Donor + "_" + donateID
+	userDonateKey := USER_DONATE + args.Donor + "/" + donateID
 	if err := ctx.PutObject([]byte(userDonateKey), donateDetailByte); err != nil {
 		return code.Error(err)
 	}
@@ -229,13 +229,13 @@ func (cd *charityDonation) Statistics(ctx code.Context) code.Response {
 
 func (cd *charityDonation) QueryDonor(ctx code.Context) code.Response {
 	args := struct {
-		Donar string `json:"donor" validate:"required"`
+		Donar string `json:"donor" validate:"required,excludes=/"`
 	}{}
 	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 
-	prefix := USER_DONATE + args.Donar + "_"
+	prefix := USER_DONATE + args.Donar + "/"
 	iter := ctx.NewIterator(code.PrefixRange([]byte(prefix)))
 	donateCount := big.NewInt(0)
 	defer iter.Close()

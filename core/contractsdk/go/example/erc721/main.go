@@ -29,12 +29,12 @@ func newERC721() *erc721 {
 }
 
 func (e *erc721) makeBalanceOfKey(from string) string {
-	return "balanceOf_" + from
+	return "balanceOf/" + from
 }
 
 // makeApprovalOfKey a_b a allow b to spend a's asset
 func (e *erc721) makeApprovalOfKey(from string, to string) string {
-	return "approvalOf_" + from + "_" + to
+	return "approvalOf/" + from + "/" + to
 }
 
 func (e *erc721) fillBalanceOf(addr string) {

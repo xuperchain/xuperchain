@@ -78,9 +78,9 @@ func (sc *shortContent) QueryByUser(ctx code.Context) code.Response {
 
 func (sc *shortContent) QueryByTitle(ctx code.Context) code.Response {
 	args := struct {
-		UserId string `json:"user_id" validate:"required"`
-		Topic  string `json:"topic" validate:"required"`
-		Title  string `json:"title" validate:"required"`
+		UserId string `json:"user_id" validate:"required,excludes=/"`
+		Topic  string `json:"topic" validate:"required,excludes=/"`
+		Title  string `json:"title" validate:"required,excludes=/"`
 	}{}
 	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
@@ -94,8 +94,8 @@ func (sc *shortContent) QueryByTitle(ctx code.Context) code.Response {
 
 func (sc *shortContent) QueryByTopic(ctx code.Context) code.Response {
 	args := &struct {
-		UserId string `json:"user_id" validate:"required"`
-		Topic  string `json:"topic" validate:"required"`
+		UserId string `json:"user_id" validate:"required,excludes=/"`
+		Topic  string `json:"topic" validate:"required,excludes=/"`
 	}{}
 	if err := code.Unmarshal(ctx.Args(), args); err != nil {
 		return code.Error(err)

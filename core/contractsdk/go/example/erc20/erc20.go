@@ -187,7 +187,7 @@ func (e *erc20) TransferFrom(ctx code.Context) code.Response {
 		return code.Errors("bad amount number")
 	}
 
-	allowance := e.allowance.Get(from + "_" + caller)
+	allowance := e.allowance.Get(from + "/" + caller)
 	if allowance.Cmp(amount) < 0 {
 		return code.Errors("allowance less than amount")
 	}
@@ -212,7 +212,7 @@ func (e *erc20) Approve(ctx code.Context) code.Response {
 		return code.Errors("missing amount argument")
 	}
 
-	amount := e.allowance.Get(caller + "_" + spender)
+	amount := e.allowance.Get(caller + "/" + spender)
 	_, ok := amount.SetString(amountstr, 10)
 	if !ok {
 		return code.Errors("bad amount number")
@@ -232,7 +232,7 @@ func (e *erc20) Allowance(ctx code.Context) code.Response {
 		return code.Errors("missing owner argument")
 	}
 
-	amount := e.allowance.Get(owner + "_" + spender)
+	amount := e.allowance.Get(owner + "/" + spender)
 	return code.OK([]byte(amount.String()))
 }
 

@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	BALANCEPRE   = "balanceOf_"
-	ALLOWANCEPRE = "allowanceOf_"
+	BALANCEPRE   = "balanceOf/"
+	ALLOWANCEPRE = "allowanceOf/"
 	MASTERPRE    = "admin"
 	TOTAL_SUPPLY = "TotalSupply"
 )
@@ -111,7 +111,7 @@ func (am *awardManage) Allowance(ctx code.Context) code.Response {
 		return code.Error(err)
 	}
 
-	value, err := ctx.GetObject([]byte(ALLOWANCEPRE + args.From + "_" + args.To))
+	value, err := ctx.GetObject([]byte(ALLOWANCEPRE + args.From + "/" + args.To))
 	if err != nil {
 		return code.Error(err)
 	}
@@ -125,7 +125,7 @@ func (am *awardManage) Transfer(ctx code.Context) code.Response {
 		return code.Error(code.ErrMissingInitiator)
 	}
 	args := struct {
-		To    string   `json:"to" validate:"required"`
+		To    string   `json:"to" validate:"required,excludes=/"`
 		Token *big.Int `json:"token" validate:"required"`
 	}{}
 
@@ -164,7 +164,7 @@ func (am *awardManage) Transfer(ctx code.Context) code.Response {
 
 func (am *awardManage) TransferFrom(ctx code.Context) code.Response {
 	args := struct {
-		From  string   `json:"from" validate:"required"`
+		From  string   `json:"from" validate:"required,excludes=/"`
 		Token *big.Int `json:"token" validate:"required"`
 	}{}
 	initiator := ctx.Initiator()
@@ -185,7 +185,7 @@ func (am *awardManage) TransferFrom(ctx code.Context) code.Response {
 		return code.Error(code.ErrBalanceLow)
 	}
 
-	allowanceKey := ALLOWANCEPRE + args.From + "_" + initiator
+	allowanceKey := ALLOWANCEPRE + args.From + "/" + initiator
 
 	allowanceBalanceByte, err := ctx.GetObject([]byte(allowanceKey))
 	if err != nil {
@@ -220,7 +220,7 @@ func (am *awardManage) TransferFrom(ctx code.Context) code.Response {
 
 func (am *awardManage) Approve(ctx code.Context) code.Response {
 	args := struct {
-		To    string   `json:"to" validate:"required"`
+		To    string   `json:"to" validate:"required,excludes=/"`
 		Token *big.Int `json:"token" validate:"required"`
 	}{}
 	from := ctx.Initiator()
@@ -232,7 +232,7 @@ func (am *awardManage) Approve(ctx code.Context) code.Response {
 		return code.Error(err)
 	}
 
-	allowanceKey := []byte(ALLOWANCEPRE + from + "_" + args.To)
+	allowanceKey := []byte(ALLOWANCEPRE + from + "/" + args.To)
 
 	allowanceByte := []byte("0")
 	if value, err := ctx.GetObject(allowanceKey); err == nil {
