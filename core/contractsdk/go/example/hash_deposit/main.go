@@ -59,7 +59,7 @@ func (hd *hashDeposit) QueryUserList(ctx code.Context) code.Response {
 
 	for iter.Next() {
 		userKey := string(iter.Key()[len(UserBucket):])
-		users[strings.Split(userKey, "/")[0]] = struct{}{}
+		users[strings.Split(userKey, "/")[1]] = struct{}{}
 	}
 	if err := iter.Error(); err != nil {
 		return code.Error(err)
@@ -73,7 +73,7 @@ func (hd *hashDeposit) QueryUserList(ctx code.Context) code.Response {
 
 func (hd *hashDeposit) QueryFileInfoByUser(ctx code.Context) code.Response {
 	args := struct {
-		UserID string `json:"user_id" validate:"required"`
+		UserID string `json:"user_id" validate:"required,excludes=/"`
 	}{}
 	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
@@ -99,7 +99,7 @@ func (hd *hashDeposit) QueryFileInfoByUser(ctx code.Context) code.Response {
 
 func (hd *hashDeposit) QueryFileInfoByHash(ctx code.Context) code.Response {
 	args := struct {
-		HashID string `json:"hash_id" validate:"required"`
+		HashID string `json:"hash_id" validate:"required,excludes=/"`
 	}{}
 	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)

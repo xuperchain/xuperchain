@@ -104,7 +104,11 @@ function AssetOperations() {
     {
         c.Invoke("NewAssetToUser", { "user_id": "xchain", "type_id": "type_id1", "asset_id": "asset_id5" }, { "account": "xchain" })
         resp = c.Invoke("GetAssetsByUser", {}, { "account": "xchain" })
-        assert.deepEqual(resp.Body, [{ "id": "asset_id5", "type_id": "type_id1", "asset_desc": "type_desc1" }])
+        assert.deepEqual(JSON.parse(resp.Body), [{
+            "id": "asset_id5",
+            "type_id": "type_id1",
+            "asset_desc": "type_desc1"
+        }])
     }
 }
 
