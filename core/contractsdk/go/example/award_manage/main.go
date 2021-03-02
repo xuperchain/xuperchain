@@ -19,7 +19,7 @@ type awardManage struct{}
 
 func (am *awardManage) Initialize(ctx code.Context) code.Response {
 	args := struct {
-		TotalSupply *big.Int `json:"totalSupply" validate:"gt=0"`
+		TotalSupply *big.Int `json:"total_supply" validate:"gt=0"`
 	}{}
 	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
@@ -104,8 +104,8 @@ func (am *awardManage) Balance(ctx code.Context) code.Response {
 
 func (am *awardManage) Allowance(ctx code.Context) code.Response {
 	args := struct {
-		From string `json:"from"`
-		To   string `json:"to"`
+		From string `json:"from,excludes=/"`
+		To   string `json:"to,excludes=/"`
 	}{}
 	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
