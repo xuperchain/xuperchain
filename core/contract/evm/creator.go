@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"reflect"
 
 	"github.com/hyperledger/burrow/crypto"
 	"github.com/hyperledger/burrow/execution/engine"
@@ -24,6 +25,7 @@ const (
 	initializeMethod    = "initialize"
 	evmParamJSONEncoded = "jsonEncoded"
 	evmInput            = "input"
+	uint8Type			= "*[]uint8"
 )
 
 type evmCreator struct {
@@ -207,6 +209,13 @@ func unpackEventFromAbi(abiByte []byte, contractName string, log *exec.LogEvent)
 		Contract: contractName,
 	}
 	event.Name = eventSpec.Name
+	for i:=0 ;i< len(vals);i++ {
+		t := reflect.TypeOf(vals[i])
+		if t.String() == uint8Type{
+			s := fmt.Sprintf("%x",vals[i])
+			vals[i] = s[1:]
+		}
+	}
 	data, err := json.Marshal(vals)
 	if err != nil {
 		return nil, err
