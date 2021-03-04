@@ -74,6 +74,10 @@ func init() {
 
 func argGetter(argSpec []Argument, args []interface{}, ptr bool) (func(int) interface{}, error) {
 	if len(args) == 1 {
+		rt := reflect.TypeOf(args[0])
+		if rt.String() == "*big.Int"{
+			return func(i int) interface{} { return args[i] }, nil
+		}
 		rv := reflect.ValueOf(args[0])
 		if rv.Kind() == reflect.Ptr {
 			rv = rv.Elem()
