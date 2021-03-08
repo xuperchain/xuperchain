@@ -33,5 +33,6 @@ clean:
 	rm -f xchain
 	rm -f dump_chain
 	rm -f event_client
+	rm -rf ./core/xvm/compile/wabt/build/
 
 .PHONY: all test clean
