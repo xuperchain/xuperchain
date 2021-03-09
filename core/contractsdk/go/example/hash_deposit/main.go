@@ -10,16 +10,16 @@ import (
 )
 
 const (
-	UserBucket = "USER_"
-	HashBucket = "HASH_"
+	UserBucket = "USER"
+	HashBucket = "HASH"
 )
 
 type hashDeposit struct {
 }
 type fileInfo struct {
-	UserID   string `json:"user_id" validte:"required"`
-	HashID   string `json:"hash_id" validte:"required"`
-	FileName string `json:"file_name" validte:"required"`
+	UserID   string `json:"user_id" validate:"required,excludes=/"`
+	HashID   string `json:"hash_id" validate:"required,excludes=/"`
+	FileName string `json:"file_name" validate:"required,excludes=/"`
 }
 
 func (hd *hashDeposit) Initialize(ctx code.Context) code.Response {
@@ -33,8 +33,8 @@ func (hd *hashDeposit) StoreFileInfo(ctx code.Context) code.Response {
 		return code.Error(err)
 	}
 
-	userKey := UserBucket + args.UserID + "/" + args.HashID
-	hashKey := HashBucket + args.HashID
+	userKey := UserBucket + "/" + args.UserID + "/" + args.HashID
+	hashKey := HashBucket + "/" + args.HashID
 
 	value, _ := json.Marshal(args)
 
@@ -55,27 +55,31 @@ func (hd *hashDeposit) QueryUserList(ctx code.Context) code.Response {
 	prefix := UserBucket
 	iter := ctx.NewIterator(code.PrefixRange([]byte(prefix)))
 	defer iter.Close()
-	users := []string{}
+	users := make(map[string]struct{})
+
 	for iter.Next() {
 		userKey := string(iter.Key()[len(UserBucket):])
-		users = append(users, strings.Split(userKey, "/")[0])
+		users[strings.Split(userKey, "/")[1]] = struct{}{}
 	}
 	if err := iter.Error(); err != nil {
 		return code.Error(err)
 	}
-	// TODO
-	return code.JSON(users)
+	usersList := []string{}
+	for k := range users {
+		usersList = append(usersList, k)
+	}
+	return code.JSON(usersList)
 }
 
 func (hd *hashDeposit) QueryFileInfoByUser(ctx code.Context) code.Response {
 	args := struct {
-		UserID string `json:"user_id" validte:"required"`
+		UserID string `json:"user_id" validate:"required,excludes=/"`
 	}{}
 	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 
-	prefix := UserBucket + args.UserID + "/"
+	prefix := UserBucket + "/" + args.UserID + "/"
 	iter := ctx.NewIterator(code.PrefixRange([]byte(prefix)))
 	defer iter.Close()
 
@@ -95,12 +99,12 @@ func (hd *hashDeposit) QueryFileInfoByUser(ctx code.Context) code.Response {
 
 func (hd *hashDeposit) QueryFileInfoByHash(ctx code.Context) code.Response {
 	args := struct {
-		HashID string `json:"hash_id" validte:"required"`
+		HashID string `json:"hash_id" validate:"required,excludes=/"`
 	}{}
 	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
-	key := HashBucket + args.HashID
+	key := HashBucket + "/" + args.HashID
 	value, err := ctx.GetObject([]byte(key))
 	if err != nil {
 		return code.Error(err)
