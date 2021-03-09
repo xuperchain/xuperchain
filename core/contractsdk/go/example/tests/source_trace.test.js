@@ -43,4 +43,11 @@ function CreateGoods() {
     assert.deepStrictEqual(JSON.parse(resp.Body), [{ "UpdateReccord": "0", "reason": "CREATE" }, { "UpdateReccord": "1", "reason": "reason0" }, { "UpdateReccord": "2", "reason": "reason1" }, { "UpdateReccord": "3", "reason": "reason2" }])
 }
 
+function QueryRecords() {
+    c = deploy()
+    resp = c.Invoke("QueryRecords", { "id": "not_exist" })
+    assert.deepStrictEqual("resp.Message", "goods not found")
+}
+
 Test("CreateGoods", CreateGoods)
+

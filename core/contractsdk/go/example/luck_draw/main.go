@@ -87,7 +87,7 @@ func (ld *luckDraw) StartLuckDraw(ctx code.Context) code.Response {
 		return code.Error(code.ErrPermissionDenied)
 	}
 	args := struct {
-		Seed *big.Int `json:"seed" validte:"required"`
+		Seed *big.Int `json:"seed" validate:"required"`
 	}{}
 
 	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
