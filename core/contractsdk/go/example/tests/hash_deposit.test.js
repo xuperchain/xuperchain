@@ -32,7 +32,9 @@ Test("HashDeposit", function (t) {
     assert.equal(resp.Message, "hash id hash_id1 already exists\n")
 
     var resp = c.Invoke("queryUserList", {})
-    assert.deepStrictEqual(JSON.parse(resp.Body), ["xchain1", "xchain2", "xchain3"])
+    console.log(resp.Body)
+
+    assert.deepStrictEqual(JSON.parse(resp.Body).sort(), ["xchain1", "xchain2", "xchain3"].sort())
     var resp = c.Invoke("queryFileInfoByUser", { "user_id": "xchain1" })
     console.log(resp.Message)
     assert.deepStrictEqual(JSON.parse(resp.Body), [{
