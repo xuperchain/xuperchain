@@ -91,11 +91,13 @@ func (am *awardManage) TotalSupply(ctx code.Context) code.Response {
 }
 
 func (am *awardManage) Balance(ctx code.Context) code.Response {
-	initiator := ctx.Initiator()
-	if initiator == "" {
-		return code.Error(code.ErrMissingInitiator)
+	// in cpp we use "caller", which may be confusing with ctx.Caller()
+	// we use "owner" in golang contract template, consistent with erc20
+	ownerByte, ok := ctx.Args()["owner"]
+	if !ok || len(ownerByte) == 0 {
+		return code.Error(errors.New("missing owner"))
 	}
-	value, err := ctx.GetObject([]byte(BALANCEPRE + initiator))
+	value, err := ctx.GetObject([]byte(BALANCEPRE + string(ownerByte)))
 	if err != nil {
 		return code.Error(err)
 	}
