@@ -21,6 +21,7 @@ function clear_up()
 	if  [ -d  "/data/blockchain/xuper"  ]; then
 		rm -rf /data/blockchain/xuper
 	fi
+	cd $basepath
 }
 
 function spawn_process()
