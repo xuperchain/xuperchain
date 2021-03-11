@@ -12,6 +12,13 @@ outputpath=$(cd `dirname $0`; cd ../..; pwd)
 echo "--------> basepath=$basepath"
 echo "--------> outputpath=$outputpath"
 
+function clear_up()
+{
+	cd $outputpath
+	rm -r ./output/
+	make
+}
+
 function spawn_process()
 {
     local name=$1
@@ -332,6 +339,9 @@ function deploy_invoke_contract()
 }
 echo "--------> start to gen relate file"
 gen_file
+sleep 2
+echo "--------> start to clear up env"
+clear_up
 sleep 2
 echo "--------> start to deploy env"
 deploy_env
