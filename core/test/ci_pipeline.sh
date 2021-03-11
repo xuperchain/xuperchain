@@ -90,9 +90,9 @@ function deploy_env()
 			block_num=5
 		    echo "timestamp=$timestamp proposer_num=$proposer_num addr2=$addr2 neturl2=$neturl2"
 			cp $basepath/relate_file/xuper.json $basepath/node$i/data/config/xuper.json
-			sed -i'' -e 's/\("timestamp": "\).*/\1'"$timestamp"'000000000"\,/' $basepath/node$i/data/config/xuper.json
-			sed -i'' -e 's/\("proposer_num": "\).*/\1'"$proposer_num"'"\,/' $basepath/node$i/data/config/xuper.json
-			sed -i'' -e 's/\("block_num": "\).*/\1'"$block_num"'"\,/' $basepath/node$i/data/config/xuper.json
+ 			sed -i'' -e 's/\("timestamp": "\)[^"]*\("\)/\1000000000\2/g' $basepath/node$i/data/config/xuper.json
+			sed -i'' -e 's/\("proposer_num": "\)[^"]*\("\)/\1'$proposer_num'\2/g' $basepath/node$i/data/config/xuper.json
+			sed -i'' -e 's/\("block_num": "\)[^"]*\("\)/\1'$block_num'\2/g' $basepath/node$i/data/config/xuper.json	
 			sed -i'' -e "s/nodeaddress/$addr2/" $basepath/node$i/data/config/xuper.json
             sed -i'' -e "s@nodeneturl@$neturl2@" $basepath/node$i/data/config/xuper.json
             cp $basepath/node1/data/config/xuper.json $basepath/node2/data/config/xuper.json
@@ -149,8 +149,8 @@ function tdpos_nominate()
 		nominate_addr=$(cat $basepath/node$i/data/keys/address)
 		nominate_url=$(cd $basepath/node$i && ./xchain-cli netURL preview --port 4710$i)
 		cd $basepath/node1
-		sed -i'' -e 's@\("neturl": "\).*@\1'"$nominate_url"'"\,@' $basepath/relate_file/nominate.json
-		sed -i'' -e 's/\("candidate": "\).*/\1'"$nominate_addr"'"/' $basepath/relate_file/nominate.json
+		sed -i'' -e 's/\("neturl": "\)[^"]*\("\)/\1'$nominate_url'\2/g' $basepath/relate_file/nominate.json
+		sed -i'' -e 's/\("candidate": "\)[^"]*\("\)/\1'$nominate_addr'\2/g' $basepath/relate_file/nominate.json
 		echo $addr1 > $basepath/node1/addrs
 		echo ${addr[$i-1]} >> $basepath/node1/addrs
 		./xchain-cli multisig gen --to=$(cat ./data/keys/address) --desc=$basepath/relate_file/nominate.json --multiAddrs=$basepath/node1/addrs --amount=1100000000027440 --frozen=-1
