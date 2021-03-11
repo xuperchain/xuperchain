@@ -149,7 +149,7 @@ function tdpos_nominate()
 		nominate_addr=$(cat $basepath/node$i/data/keys/address)
 		nominate_url=$(cd $basepath/node$i && ./xchain-cli netURL preview --port 4710$i)
 		cd $basepath/node1
-		sed -i'' -e 's/\("neturl": "\)[^"]*\("\)/\1'$nominate_url'\2/g' $basepath/relate_file/nominate.json
+		sed -i'' -e 's#\("neturl": "\)[^"]*\("\)#\1'$nominate_url'\2#g' $basepath/relate_file/nominate.json
 		sed -i'' -e 's/\("candidate": "\)[^"]*\("\)/\1'$nominate_addr'\2/g' $basepath/relate_file/nominate.json
 		echo $addr1 > $basepath/node1/addrs
 		echo ${addr[$i-1]} >> $basepath/node1/addrs
