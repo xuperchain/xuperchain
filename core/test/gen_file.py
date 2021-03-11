@@ -3,30 +3,11 @@
 import sys
 import json
 
-body1 = {
-    "module": "tdpos",
-    "method": "nominate_candidate",
-    "args": {
-        "candidate": "提名address",
-        "neturl": "提名neturl"
-    }
-}
+body1 = {"module":"tdpos","method":"nominate_candidate","args":{"candidate":"提名address","neturl":"提名neturl"}}
 
-body2 = {
-    "module": "tdpos",
-    "method": "vote",
-    "args": {
-        "candidates": ["提名过的address"]
-    }
-}
+body2 = {"module":"tdpos","method":"vote","args":{"candidates":["提名过的address"]}}
 
-body3 = {
-    "module": "proposal",
-    "method": "Thaw",
-    "args": {
-        "txid": "提名或者投票addresss时返回的txid"
-    }
-}
+body3 = {"module":"proposal","method":"Thaw","args":{"txid":"提名或者投票addresss时返回的txid"}}
 
 body4 = {
     "module_name": "xkernel",
