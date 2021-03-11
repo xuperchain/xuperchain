@@ -82,7 +82,7 @@ body5 = {
 body_dict = {'./relate_file/nominate.json': body1, './relate_file/vote.json': body2,
              './relate_file/revoke.json': body3, './relate_file/account.json': body4, './relate_file/xuper.json': body5}
 for key in body_dict:
-    body_file = json.dumps(body_dict[key], indent=4)
+    body_file = json.dumps(body_dict[key])
     f = open(key, 'w')
     f.writelines(body_file)
     f.close()
