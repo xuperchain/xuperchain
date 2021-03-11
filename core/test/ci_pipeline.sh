@@ -14,9 +14,13 @@ echo "--------> outputpath=$outputpath"
 
 function clear_up()
 {
-	cd $outputpath
-	rm -r ./output/
-	make
+	cd $outputpath/output/
+	if  [ -d  "/logs"  ]; then
+		rm -rf /logs
+	fi
+	if  [ -d  "/data/blockchain/xuper"  ]; then
+		rm -rf /data/blockchain/xuper
+	fi
 }
 
 function spawn_process()
