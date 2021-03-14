@@ -306,6 +306,11 @@ public:
             return;
         }
 
+        if (donor.find("/") != std::string::npos) {
+            ctx->error("donor should not contain /");
+            return;
+        }
+
         std::string userDonateKey = USERDONATE + donor + "/";
         std::unique_ptr<xchain::Iterator> iter =
             ctx->new_iterator(userDonateKey, userDonateKey + "~");
