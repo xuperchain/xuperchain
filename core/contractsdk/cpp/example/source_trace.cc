@@ -125,6 +125,10 @@ public:
         std::string goodsRecordsTopKey = GOODSRECORDTOP + id;
         std::string value;
         ctx->get_object(goodsRecordsTopKey, &value);
+        if (value.length == 0) {
+            ctx->error("goods " + id + " not found");
+            return;
+        }
         int topRecord = 0;
         topRecord = atoi(value.c_str()) + 1;
 
