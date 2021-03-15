@@ -28,7 +28,7 @@ jobs:
   contract-java-sdk:
     strategy:
       matrix:
-        platform: [ubuntu-latest, macos-latest]
+        platform: [ubuntu-18.04, macos-10.15]
     runs-on: ${{ matrix.platform }}
 
     steps:
