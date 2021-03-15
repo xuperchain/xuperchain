@@ -10,7 +10,7 @@ function deploy(totalSupply) {
         code: codePath,
         lang: lang,
         type: type,
-        init_args: { "totalSupply": totalSupply },
+        init_args: { "total_supply": totalSupply },
         options: { "account": "xchain" }
     });
 }
@@ -28,7 +28,7 @@ function AddAward(t) {
     resp = c.Invoke("AddAward", { "amount": "200" }, { "account": "user1" })
     assert.equal(resp.Message, "you do not have permission to call this method")
     var resp = c.Invoke("AddAward", { "amount": "0" }, { "account": "xchain" })
-    assert.equal(resp.Status >=500,true )
+    assert.equal(resp.Status >= 500, true)
     // assert.equal(resp.Message, "amount must be greater than 0")
     var resp = c.Invoke("AddAward", { "amount": "200" }, { "account": "xchain" });
     assert.equal(resp.Body, "1200");
