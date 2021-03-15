@@ -25,7 +25,6 @@ const (
 	initializeMethod    = "initialize"
 	evmParamJSONEncoded = "jsonEncoded"
 	evmInput            = "input"
-	uint8Type           = "*[]uint8"
 )
 
 type evmCreator struct {
@@ -208,10 +207,11 @@ func unpackEventFromAbi(abiByte []byte, contractName string, log *exec.LogEvent)
 	event := &xchainpb.ContractEvent{
 		Contract: contractName,
 	}
+	var uint8type = reflect.TypeOf((*[]uint8)(nil))
 	event.Name = eventSpec.Name
 	for i := 0; i < len(vals); i++ {
 		t := reflect.TypeOf(vals[i])
-		if t.String() == uint8Type {
+		if t == uint8type {
 			s := fmt.Sprintf("%x", vals[i])
 			vals[i] = s[1:]
 		}
