@@ -67,7 +67,7 @@ public:
         // 检查是否存在抽奖结果，如果存在则不再继续发放奖券
         std::string result;
         if (ctx->get_object(RESULT, &result)) {
-            ctx->error("this luck draw is finished");
+            ctx->error("the luck draw has finished");
             return;
         }
 
