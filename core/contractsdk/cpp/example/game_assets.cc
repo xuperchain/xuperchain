@@ -1,3 +1,5 @@
+#include <sstream>
+
 #include "xchain/xchain.h"
 
 // 游戏装备资产模板
@@ -87,9 +89,9 @@ public:
             return;
         }
 
-        const std::string& typeDesc = ctx->arg("typedesc");
+        const std::string& typeDesc = ctx->arg("type_desc");
         if (typeDesc.empty()) {
-            ctx->error("missing 'typedesc' as type description");
+            ctx->error("missing type_desc");
             return;
         }
 
@@ -129,7 +131,7 @@ public:
         std::string userId = caller;
         if (isAdmin(ctx, caller)) {
             // admin can get the asset data of other users
-            const std::string& userId2 = ctx->arg("userid");
+            const std::string& userId2 = ctx->arg("user_id");
             if (!userId2.empty()) {
                 userId = userId2;
             }
@@ -171,7 +173,7 @@ public:
             return;
         }
 
-        const std::string& userId = ctx->arg("userid");
+        const std::string& userId = ctx->arg("user_id");
         if (userId.empty()) {
             ctx->error("missing userid");
             return;
@@ -182,16 +184,27 @@ public:
             ctx->error("missing type_id");
             return;
         }
+        std::string assetTypeKey = ASSETTYPE + typeId;
+        std::string value;
 
-        const std::string& assetId = ctx->arg("assetid");
+        std::stringstream ss;
+
+        ctx->get_object(assetTypeKey, &value);
+        if (value.empty()) {
+            ss << "asset type " << typeId << " not found";
+            ctx->error(ss.str());
+            return;
+        }
+
+        const std::string& assetId = ctx->arg("asset_id");
         if (assetId.empty()) {
             ctx->error("missing assetid");
             return;
         }
 
         std::string assetKey = ASSET2USER + assetId;
-        std::string value;
-        if (ctx->get_object(assetKey, &value)) {
+        std::string tmp;
+        if (ctx->get_object(assetKey, &tmp)) {
             ctx->error("the asset id is already exist, please check again");
             return;
         }
@@ -218,7 +231,7 @@ public:
             return;
         }
 
-        const std::string& assetId = ctx->arg("assetid");
+        const std::string& assetId = ctx->arg("asset_id");
         if (assetId.empty()) {
             ctx->error("missing assetid");
             return;
