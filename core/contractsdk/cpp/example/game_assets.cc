@@ -12,7 +12,7 @@ public:
     /*
      * func: 新增装备类型
      * @param: initiator:交易发起者,只有交易发起者等于admin账户才能执行成功
-     * @param: typeid: 游戏状态的参数和属性描述
+     * @param: type_id: 游戏状态的参数和属性描述
      * @param: typedesc: 游戏状态的参数和属性描述
      */
     virtual void addAssetType() = 0;
@@ -28,7 +28,7 @@ public:
     virtual void getAssetsByUser() = 0;
     /*
      * func: 系统新生成的新装备，发放给特定用户，只能由管理员调用
-     * @param: typeid: 游戏装备类型id
+     * @param: type_id: 游戏装备类型id
      * @param: assetid:
      * 游戏装备唯一id(先从外部获取装备id,也可以实现成一个自增计数器)
      * @param: userid: 获得游戏装备的用户
@@ -81,9 +81,9 @@ public:
             return;
         }
 
-        const std::string& typeId = ctx->arg("typeid");
+        const std::string& typeId = ctx->arg("type_id");
         if (typeId.empty()) {
-            ctx->error("missing 'typeid' as asset type identity");
+            ctx->error("missing 'type_id' as asset type identity");
             return;
         }
 
@@ -96,7 +96,7 @@ public:
         std::string assetTypeKey = ASSETTYPE + typeId;
         std::string value;
         if (ctx->get_object(assetTypeKey, &value)) {
-            ctx->error("the typeid is already exist, please check again");
+            ctx->error("the type_id is already exist, please check again");
             return;
         }
         ctx->put_object(assetTypeKey, typeDesc);
@@ -151,7 +151,7 @@ public:
                     // asset type id not found ,skip this asset
                     continue;
                 }
-                result += "assetid=" + assetId + ",typeid=" + typeId +
+                result += "assetid=" + assetId + ",type_id=" + typeId +
                           ",assetDesc=" + assetDesc + '\n';
             }
         }
@@ -177,9 +177,9 @@ public:
             return;
         }
 
-        const std::string& typeId = ctx->arg("typeid");
+        const std::string& typeId = ctx->arg("type_id");
         if (typeId.empty()) {
-            ctx->error("missing typeid");
+            ctx->error("missing type_id");
             return;
         }
 
