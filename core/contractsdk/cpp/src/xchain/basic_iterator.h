@@ -14,16 +14,15 @@ public:
     bool get(ElemType* t);
     xchain::Error error;
 
-    Iterator(const std::string& s,
-            const std::string& e, size_t l);
+    Iterator(const std::string& s, const std::string& e, size_t l);
 
 private:
     Iterator(const Iterator&);
-    Iterator &operator=(const Iterator&);
+    Iterator& operator=(const Iterator&);
     bool load();
     bool end();
     bool range_query(const std::string& s, const std::string& e,
-            const size_t limit, std::vector<ElemType>* res);
+                     const size_t limit, std::vector<ElemType>* res);
 
 private:
     size_t _it;
@@ -34,4 +33,4 @@ private:
     std::vector<ElemType> _buf;
 };
 
-}
+}  // namespace xchain

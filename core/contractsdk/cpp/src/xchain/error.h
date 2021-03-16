@@ -22,25 +22,19 @@ static const std::string errno_to_message(ErrorType no) {
 
 class Error {
 public:
-    Error(): _errno(ErrorType::kSuccess) {
+    Error() : _errno(ErrorType::kSuccess) {
         _message = errno_to_message(ErrorType::kSuccess);
     }
 
-    Error(ErrorType no):  _errno(no) {
-        _message = errno_to_message(no);
-    }
-    Error(ErrorType no, const std::string msg): _errno(no), _message(msg) {}
+    Error(ErrorType no) : _errno(no) { _message = errno_to_message(no); }
+    Error(ErrorType no, const std::string msg) : _errno(no), _message(msg) {}
 
-    bool operator()() {
-        return ErrorType::kSuccess != _errno;
-    }
+    bool operator()() { return ErrorType::kSuccess != _errno; }
 
-    const std::string& operator()(bool) {
-        return _message;
-    }
+    const std::string& operator()(bool) { return _message; }
 
 private:
     ErrorType _errno;
     std::string _message;
 };
-} //end of xchain
+}  // namespace xchain

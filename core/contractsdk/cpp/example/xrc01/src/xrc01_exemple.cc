@@ -65,7 +65,7 @@ public:
     virtual void get_balance() = 0;
     /*
      * func: 查询账户被授权的金额
-     * @param: account: 被查询账户 
+     * @param: account: 被查询账户
      * @param: token_id: 资产id
      */
     virtual void get_authorized() = 0;
@@ -76,15 +76,15 @@ public:
     virtual void get_owner_of() = 0;
     /*
      * func: 查询账户某资产的授权详情
-     * @param: account: 被查询账户 
+     * @param: account: 被查询账户
      * @param: token_id: 资产id
-    */
+     */
     virtual void get_authorize_infos() = 0;
     /*
      * func: 查询账户某资产被授权详情
-     * @param: account: 被查询账户 
+     * @param: account: 被查询账户
      * @param: token_id: 资产id
-    */
+     */
     virtual void get_authorized_infos() = 0;
 };
 
@@ -108,7 +108,7 @@ public:
         for (int i = 0; i < in.size(); i++) {
             if (in[i] < '0' || in[i] > '9') {
                 return false;
-            }    
+            }
         }
         std::string::size_type sz = 0;
         (*out) = std::stoull(in, &sz);
@@ -220,7 +220,7 @@ public:
             ctx->error("withdraw_authorization token failed!");
             return;
         }
-        ctx->ok("withdraw_authorization succeed");       
+        ctx->ok("withdraw_authorization succeed");
     }
 
     void transfer() {
@@ -245,7 +245,7 @@ public:
             ctx->error("transfer token failed!");
             return;
         }
-        ctx->ok("transfer succeed"); 
+        ctx->ok("transfer succeed");
     }
 
     void authorize_transfer() {
@@ -353,7 +353,7 @@ public:
             return;
         }
         for (auto iter = authorize_infos.begin(); iter != authorize_infos.end();
-            ++iter) {
+             ++iter) {
             printf(
                 "get_authorize_infos result from=%s, to=%s, token_id=%llu, "
                 "anount=%llu \n",
@@ -379,15 +379,15 @@ public:
             ctx->error("get_authorized_infos failed!");
             return;
         }
-        for (auto iter = authorized_infos.begin(); iter != authorized_infos.end();
-            ++iter) {
+        for (auto iter = authorized_infos.begin();
+             iter != authorized_infos.end(); ++iter) {
             printf(
                 "get_authorized_infos result from=%s, to=%s, token_id=%llu, "
                 "anount=%llu \n",
                 iter->from().c_str(), iter->to().c_str(), iter->token_id(),
                 iter->amount());
         }
-        ctx->ok("get_authorized_infos success!");     
+        ctx->ok("get_authorized_infos success!");
     }
 };
 
@@ -397,7 +397,9 @@ DEFINE_METHOD(XRC01_Demo, issue) { self.issue(); }
 
 DEFINE_METHOD(XRC01_Demo, authorization) { self.authorization(); }
 
-DEFINE_METHOD(XRC01_Demo, withdraw_authorization) { self.withdraw_authorization(); }
+DEFINE_METHOD(XRC01_Demo, withdraw_authorization) {
+    self.withdraw_authorization();
+}
 
 DEFINE_METHOD(XRC01_Demo, transfer) { self.transfer(); }
 

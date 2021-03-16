@@ -7,7 +7,8 @@ namespace pb = xchain::contract::sdk;
 
 namespace xchain {
 
-Iterator::Iterator(const std::string& start, const std::string& limit, size_t cap) {
+Iterator::Iterator(const std::string& start, const std::string& limit,
+                   size_t cap) {
     _cap = cap;
     _start = start;
     _limit = limit;
@@ -67,12 +68,11 @@ bool Iterator::get(ElemType* t) {
     return true;
 }
 
-bool Iterator::end() {
-    return _it >= _buf.size() || _it < 0;
-}
+bool Iterator::end() { return _it >= _buf.size() || _it < 0; }
 
-bool Iterator::range_query(const std::string& s, const std::string& e,
-        const size_t limit, std::vector<std::pair<std::string, std::string>>* res) {
+bool Iterator::range_query(
+    const std::string& s, const std::string& e, const size_t limit,
+    std::vector<std::pair<std::string, std::string>>* res) {
     pb::IteratorRequest req;
     pb::IteratorResponse resp;
     req.set_limit(e);
@@ -88,4 +88,4 @@ bool Iterator::range_query(const std::string& s, const std::string& e,
     return true;
 }
 
-}
+}  // namespace xchain

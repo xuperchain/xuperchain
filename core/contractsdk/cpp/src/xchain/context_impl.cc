@@ -18,7 +18,7 @@ bool ContextImpl::init() {
     if (!ok) {
         return false;
     }
-    for (int i=0; i<_call_args.args_size(); i++) {
+    for (int i = 0; i < _call_args.args_size(); i++) {
         auto arg_pair = _call_args.args(i);
         _args.insert(std::make_pair(arg_pair.key(), arg_pair.value()));
     }
@@ -39,7 +39,6 @@ const std::string& ContextImpl::arg(const std::string& name) const {
     }
     return kUnknownKey;
 }
-
 
 const std::string& ContextImpl::initiator() const {
     return _call_args.initiator();
@@ -88,7 +87,7 @@ bool ContextImpl::delete_object(const std::string& key) {
     return true;
 }
 
-bool ContextImpl::query_tx(const std::string &txid, Transaction* tx) {
+bool ContextImpl::query_tx(const std::string& txid, Transaction* tx) {
     pb::QueryTxRequest req;
     pb::QueryTxResponse rep;
 
@@ -103,7 +102,7 @@ bool ContextImpl::query_tx(const std::string &txid, Transaction* tx) {
     return true;
 }
 
-bool ContextImpl::query_block(const std::string &blockid, Block* block) {
+bool ContextImpl::query_block(const std::string& blockid, Block* block) {
     pb::QueryBlockRequest req;
     pb::QueryBlockResponse rep;
 
@@ -132,8 +131,10 @@ Response* ContextImpl::mutable_response() { return &_resp; }
 
 const Response& ContextImpl::get_response() { return _resp; }
 
-std::unique_ptr<Iterator> ContextImpl::new_iterator(const std::string& start, const std::string& limit) {
-    return std::unique_ptr<Iterator>(new Iterator(start, limit, ITERATOR_BATCH_SIZE));
+std::unique_ptr<Iterator> ContextImpl::new_iterator(const std::string& start,
+                                                    const std::string& limit) {
+    return std::unique_ptr<Iterator>(
+        new Iterator(start, limit, ITERATOR_BATCH_SIZE));
 }
 
 Account& ContextImpl::sender() { return _account; }
@@ -143,15 +144,15 @@ const std::string& ContextImpl::transfer_amount() const {
 }
 
 bool ContextImpl::call(const std::string& module, const std::string& contract,
-                      const std::string& method,
-                      const std::map<std::string, std::string>& args,
-                      Response* xresponse) {
+                       const std::string& method,
+                       const std::map<std::string, std::string>& args,
+                       Response* xresponse) {
     pb::ContractCallRequest request;
     pb::ContractCallResponse response;
     request.set_module(module);
     request.set_contract(contract);
     request.set_method(method);
-    for (auto it=args.begin(); it!=args.end(); it++) {
+    for (auto it = args.begin(); it != args.end(); it++) {
         auto arg = request.add_args();
         arg->set_key(it->first);
         arg->set_value(it->second);
@@ -167,12 +168,12 @@ bool ContextImpl::call(const std::string& module, const std::string& contract,
 }
 
 bool ContextImpl::cross_query(const std::string& uri,
-                      const std::map<std::string, std::string>& args,
-                      Response* xresponse) {
+                              const std::map<std::string, std::string>& args,
+                              Response* xresponse) {
     pb::CrossContractQueryRequest request;
     pb::CrossContractQueryResponse response;
     request.set_uri(uri);
-    for (auto it=args.begin(); it!=args.end(); it++) {
+    for (auto it = args.begin(); it != args.end(); it++) {
         auto arg = request.add_args();
         arg->set_key(it->first);
         arg->set_value(it->second);

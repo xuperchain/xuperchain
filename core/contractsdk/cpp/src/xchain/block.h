@@ -4,8 +4,10 @@
 namespace xchain {
 namespace contract {
 namespace sdk {
-    class Block;
-}}}
+class Block;
+}
+}  // namespace contract
+}  // namespace xchain
 
 namespace xchain {
 

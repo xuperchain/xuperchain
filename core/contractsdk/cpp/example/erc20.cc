@@ -57,14 +57,14 @@ DEFINE_METHOD(ERC20, mint) {
         ctx->error("get totalSupply error");
         return;
     }
-    
+
     int increaseSupplyint = atoi(increaseSupply.c_str());
     int valueint = atoi(value.c_str());
     int totalSupplyint = increaseSupplyint + valueint;
     char buf[32];
     snprintf(buf, 32, "%d", totalSupplyint);
-    ctx->put_object("totalSupply", buf); 
-    
+    ctx->put_object("totalSupply", buf);
+
     std::string key = BALANCEPRE + caller;
     if (!ctx->get_object(key, &value)) {
         ctx->error("get caller balance error");
@@ -73,8 +73,8 @@ DEFINE_METHOD(ERC20, mint) {
     valueint = atoi(value.c_str());
     int callerint = increaseSupplyint + valueint;
     snprintf(buf, 32, "%d", callerint);
-    ctx->put_object(key, buf); 
-    
+    ctx->put_object(key, buf);
+
     ctx->ok(buf);
 }
 
@@ -95,7 +95,7 @@ DEFINE_METHOD(ERC20, balance) {
         ctx->error("missing caller");
         return;
     }
-    
+
     std::string key = BALANCEPRE + caller;
     std::string value;
     if (ctx->get_object(key, &value)) {
@@ -112,7 +112,7 @@ DEFINE_METHOD(ERC20, allowance) {
         ctx->error("missing from");
         return;
     }
-   
+
     const std::string& to = ctx->arg("to");
     if (to.empty()) {
         ctx->error("missing to");
@@ -135,7 +135,7 @@ DEFINE_METHOD(ERC20, transfer) {
         ctx->error("missing from");
         return;
     }
-   
+
     const std::string& to = ctx->arg("to");
     if (to.empty()) {
         ctx->error("missing to");
@@ -153,11 +153,11 @@ DEFINE_METHOD(ERC20, transfer) {
     std::string value;
     int from_balance = 0;
     if (ctx->get_object(from_key, &value)) {
-        from_balance = atoi(value.c_str()); 
+        from_balance = atoi(value.c_str());
         if (from_balance < token) {
             ctx->error("The balance of from not enough");
             return;
-        }  
+        }
     } else {
         ctx->error("key not found");
         return;
@@ -168,11 +168,11 @@ DEFINE_METHOD(ERC20, transfer) {
     if (ctx->get_object(to_key, &value)) {
         to_balance = atoi(value.c_str());
     }
-   
+
     from_balance = from_balance - token;
     to_balance = to_balance + token;
-   
-    char buf[32]; 
+
+    char buf[32];
     snprintf(buf, 32, "%d", from_balance);
     ctx->put_object(from_key, buf);
     snprintf(buf, 32, "%d", to_balance);
@@ -188,7 +188,7 @@ DEFINE_METHOD(ERC20, transferFrom) {
         ctx->error("missing from");
         return;
     }
-  
+
     const std::string& caller = ctx->arg("caller");
     if (caller.empty()) {
         ctx->error("missing caller");
@@ -212,11 +212,11 @@ DEFINE_METHOD(ERC20, transferFrom) {
     std::string value;
     int allowance_balance = 0;
     if (ctx->get_object(allowance_key, &value)) {
-        allowance_balance = atoi(value.c_str()); 
+        allowance_balance = atoi(value.c_str());
         if (allowance_balance < token) {
             ctx->error("The allowance of from_to not enough");
             return;
-        }  
+        }
     } else {
         ctx->error("You need to add allowance from_to");
         return;
@@ -225,11 +225,11 @@ DEFINE_METHOD(ERC20, transferFrom) {
     std::string from_key = BALANCEPRE + from;
     int from_balance = 0;
     if (ctx->get_object(from_key, &value)) {
-        from_balance = atoi(value.c_str()); 
+        from_balance = atoi(value.c_str());
         if (from_balance < token) {
             ctx->error("The balance of from not enough");
             return;
-        }  
+        }
     } else {
         ctx->error("From no balance");
         return;
@@ -240,12 +240,12 @@ DEFINE_METHOD(ERC20, transferFrom) {
     if (ctx->get_object(to_key, &value)) {
         to_balance = atoi(value.c_str());
     }
-   
+
     from_balance = from_balance - token;
     to_balance = to_balance + token;
     allowance_balance = allowance_balance - token;
 
-    char buf[32]; 
+    char buf[32];
     snprintf(buf, 32, "%d", from_balance);
     ctx->put_object(from_key, buf);
     snprintf(buf, 32, "%d", to_balance);
@@ -263,7 +263,7 @@ DEFINE_METHOD(ERC20, approve) {
         ctx->error("missing from");
         return;
     }
-   
+
     const std::string& to = ctx->arg("to");
     if (to.empty()) {
         ctx->error("missing to");
@@ -280,11 +280,11 @@ DEFINE_METHOD(ERC20, approve) {
     std::string from_key = BALANCEPRE + from;
     std::string value;
     if (ctx->get_object(from_key, &value)) {
-        int from_balance = atoi(value.c_str()); 
+        int from_balance = atoi(value.c_str());
         if (from_balance < token) {
             ctx->error("The balance of from not enough");
             return;
-        }  
+        }
     } else {
         ctx->error("From no balance");
         return;
@@ -293,17 +293,14 @@ DEFINE_METHOD(ERC20, approve) {
     std::string allowance_key = ALLOWANCEPRE + from + "_" + to;
     int allowance_balance = 0;
     if (ctx->get_object(allowance_key, &value)) {
-        allowance_balance = atoi(value.c_str()); 
+        allowance_balance = atoi(value.c_str());
     }
 
     allowance_balance = allowance_balance + token;
-   
-    char buf[32]; 
+
+    char buf[32];
     snprintf(buf, 32, "%d", allowance_balance);
     ctx->put_object(allowance_key, buf);
 
     ctx->ok("approve success");
 }
-
-
-

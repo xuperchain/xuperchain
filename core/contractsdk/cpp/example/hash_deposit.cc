@@ -27,7 +27,7 @@ public:
         ctx->ok("initialize success");
     }
     void storeFileInfo() {
-        xchain::Context* ctx = this->context();    
+        xchain::Context* ctx = this->context();
         std::string user_id = ctx->arg("user_id");
         std::string hash_id = ctx->arg("hash_id");
         std::string file_name = ctx->arg("file_name");
@@ -39,21 +39,23 @@ public:
             ctx->error("storeFileInfo failed, such hash has existed already");
             return;
         }
-        if (ctx->put_object(userKey, value) && ctx->put_object(hashKey, value)) {
+        if (ctx->put_object(userKey, value) &&
+            ctx->put_object(hashKey, value)) {
             ctx->ok("storeFileInfo success");
             return;
         }
         ctx->error("storeFileInfo failed");
     }
-    
+
     void queryUserList() {
         xchain::Context* ctx = this->context();
         const std::string key = UserBucket + "/";
-        std::unique_ptr<xchain::Iterator> iter = ctx->new_iterator(key, key + "～");
+        std::unique_ptr<xchain::Iterator> iter =
+            ctx->new_iterator(key, key + "～");
         std::string result;
         while (iter->next()) {
             std::pair<std::string, std::string> res;
-            iter->get(&res);    
+            iter->get(&res);
             if (res.first.length() > UserBucket.length() + 1) {
                 result += res.first.substr(UserBucket.length() + 1) + "\n";
             }
@@ -63,7 +65,8 @@ public:
     void queryFileInfoByUser() {
         xchain::Context* ctx = this->context();
         const std::string key = UserBucket + "/" + ctx->arg("user_id");
-        std::unique_ptr<xchain::Iterator> iter = ctx->new_iterator(key, key + "～");
+        std::unique_ptr<xchain::Iterator> iter =
+            ctx->new_iterator(key, key + "～");
         std::string result;
         while (iter->next()) {
             std::pair<std::string, std::string> res;
@@ -74,7 +77,7 @@ public:
     }
     void queryFileInfoByHash() {
         xchain::Context* ctx = this->context();
-        
+
         const std::string key = HashBucket + "/" + ctx->arg("hash_id");
         std::string value;
         bool ret = ctx->get_object(key, &value);
@@ -86,22 +89,12 @@ public:
     }
 };
 
-DEFINE_METHOD(HashDeposit, initialize) {
-    self.initialize();
-}
+DEFINE_METHOD(HashDeposit, initialize) { self.initialize(); }
 
-DEFINE_METHOD(HashDeposit, storeFileInfo) {
-    self.storeFileInfo();
-}
+DEFINE_METHOD(HashDeposit, storeFileInfo) { self.storeFileInfo(); }
 
-DEFINE_METHOD(HashDeposit, queryUserList) {
-    self.queryUserList();
-}
+DEFINE_METHOD(HashDeposit, queryUserList) { self.queryUserList(); }
 
-DEFINE_METHOD(HashDeposit, queryFileInfoByUser) {
-    self.queryFileInfoByUser();
-}
+DEFINE_METHOD(HashDeposit, queryFileInfoByUser) { self.queryFileInfoByUser(); }
 
-DEFINE_METHOD(HashDeposit, queryFileInfoByHash) {
-    self.queryFileInfoByHash();
-}
+DEFINE_METHOD(HashDeposit, queryFileInfoByHash) { self.queryFileInfoByHash(); }

@@ -4,32 +4,31 @@
 #include "xchain/table/table.tpl.h"
 #include "anchor.pb.h"
 
-//data anchoring
+// data anchoring
 struct Anchor : public xchain::Contract {
 public:
-    Anchor(): _entity(this->context(), "entity") {}
+    Anchor() : _entity(this->context(), "entity") {}
 
     // 1. rowkey can not be same with index
-    struct entity: public anchor::Entity {
+    struct entity : public anchor::Entity {
         DEFINE_ROWKEY(name);
         DEFINE_INDEX_BEGIN(2)
-            DEFINE_INDEX_ADD(0, id, name)
-            DEFINE_INDEX_ADD(1, name, desc)
+        DEFINE_INDEX_ADD(0, id, name)
+        DEFINE_INDEX_ADD(1, name, desc)
         DEFINE_INDEX_END();
     };
+
 private:
     xchain::cdt::Table<entity> _entity;
 
 public:
-    decltype(_entity)& get_entity() {
-        return _entity;
-    }
+    decltype(_entity)& get_entity() { return _entity; }
 };
 
 //初始化
 DEFINE_METHOD(Anchor, initialize) {
     xchain::Context* ctx = self.context();
-    const std::string& id= ctx->arg("id");
+    const std::string& id = ctx->arg("id");
     const std::string& name = ctx->arg("name");
     const std::string& desc = ctx->arg("desc");
 
@@ -54,7 +53,7 @@ DEFINE_METHOD(Anchor, get) {
 
 DEFINE_METHOD(Anchor, set) {
     xchain::Context* ctx = self.context();
-    const std::string& id= ctx->arg("id");
+    const std::string& id = ctx->arg("id");
     const std::string& name = ctx->arg("name");
     const std::string& desc = ctx->arg("desc");
 
@@ -68,7 +67,7 @@ DEFINE_METHOD(Anchor, set) {
 
 DEFINE_METHOD(Anchor, del) {
     xchain::Context* ctx = self.context();
-    const std::string& id= ctx->arg("id");
+    const std::string& id = ctx->arg("id");
     const std::string& name = ctx->arg("name");
     const std::string& desc = ctx->arg("desc");
 
@@ -84,12 +83,12 @@ DEFINE_METHOD(Anchor, scan) {
     xchain::Context* ctx = self.context();
     const std::string& name = ctx->arg("name");
     const std::string& id = ctx->arg("id");
-    //const std::string& desc = ctx->arg("desc");
-    auto it = self.get_entity().scan({{"id", id},{"name", name}});
+    // const std::string& desc = ctx->arg("desc");
+    auto it = self.get_entity().scan({{"id", id}, {"name", name}});
     Anchor::entity ent;
     int i = 0;
     std::map<std::string, bool> kv;
-    while(it->next()) {
+    while (it->next()) {
         if (it->get(&ent)) {
             /*
             std::cout << "id: " << ent.id()<< std::endl;

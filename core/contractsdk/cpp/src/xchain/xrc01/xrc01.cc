@@ -315,7 +315,8 @@ bool XRC01::transfer_from(const std::string& from, const std::string& to,
     XRC01::asset_info asset_info_to;
     XRC01::authorize_info authorize_info;
 
-    std::string authorize_info_id = make_authorize_info_id(from, caller, token_id);
+    std::string authorize_info_id =
+        make_authorize_info_id(from, caller, token_id);
     if (!_authorize_info.find({{"id", authorize_info_id}}, &authorize_info)) {
         printf(
             "Transfer_from failed, from=%s to=%s, caller=%s can not be "

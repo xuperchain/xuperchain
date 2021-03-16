@@ -26,4 +26,3 @@ void Block::init(const pb::Block& pbblock) {
 }
 
 }  // namespace xchain
-

@@ -18,10 +18,9 @@ static bool syscall_raw(const std::string& method, const std::string& request,
     uint32_t response_len = 0;
     uint32_t success = 0;
 
-    response_len = call_method_v2(method.data(), uint32_t(method.size()),
-                                  request.data(), uint32_t(request.size()),
-                                  &buf[0], buf_len,
-                                  &success);
+    response_len =
+        call_method_v2(method.data(), uint32_t(method.size()), request.data(),
+                       uint32_t(request.size()), &buf[0], buf_len, &success);
     // method has no return and no error
     if (response_len <= 0) {
         return true;
@@ -29,8 +28,8 @@ static bool syscall_raw(const std::string& method, const std::string& request,
 
     // buf can hold the response
     if (response_len <= buf_len) {
-      response->assign(buf, response_len);
-      return success == 1;
+        response->assign(buf, response_len);
+        return success == 1;
     }
 
     // slow path
@@ -52,4 +51,4 @@ bool syscall(const std::string& method,
     response->ParseFromString(rep);
     return true;
 }
-}
+}  // namespace xchain
