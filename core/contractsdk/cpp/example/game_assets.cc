@@ -79,7 +79,7 @@ public:
         }
 
         if (!isAdmin(ctx, caller)) {
-            ctx->error("only the admin can add new asset type");
+            ctx->error("you do not have permission to call this method");
             return;
         }
 
@@ -169,7 +169,7 @@ public:
         }
 
         if (!isAdmin(ctx, caller)) {
-            ctx->error("only the admin can add new asset type");
+            ctx->error("you do not have permission to call this method");
             return;
         }
 
