@@ -167,7 +167,7 @@ public:
 
 DEFINE_METHOD(LuckDrawDemo, initialize) { self.initialize(); }
 
-DEFINE_METHOD(LuckDrawDemo, getLuckid) { self.getLuckid(); }
+DEFINE_METHOD(LuckDrawDemo, getLuckid) { self.getLuckId(); }
 
 DEFINE_METHOD(LuckDrawDemo, startLuckDraw) { self.startLuckDraw(); }
 
