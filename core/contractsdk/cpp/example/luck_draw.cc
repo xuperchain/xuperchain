@@ -19,7 +19,7 @@ public:
      * func: 获得一个抽奖券
      * @param: initiator: 玩家的address，获得一个抽奖券
      */
-    virtual void getLuckid() = 0;
+    virtual void getLuckId() = 0;
     /*
      * func: 开始抽奖
      * @param: seed:
@@ -56,7 +56,7 @@ public:
         return (admin == caller);
     }
 
-    void getLuckid() {
+    void getLuckId() {
         xchain::Context* ctx = this->context();
         const std::string& caller = ctx->initiator();
         if (caller.empty()) {
