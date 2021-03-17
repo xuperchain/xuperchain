@@ -40,9 +40,9 @@ function AddAward(t) {
 
 function Balance(t) {
     var c = beforeTest()
-    resp = c.Invoke("Balance", {}, { "account": "xchain" })
+    resp = c.Invoke("Balance", {"owner":"xchain"})
     assert.equal(resp.Body, "800")
-    resp = c.Invoke("Balance", {}, { "account": "user1" })
+    resp = c.Invoke("Balance", {"owner":"user1"})
     assert.equal(resp.Body, "200")
 }
 
