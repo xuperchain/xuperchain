@@ -1,3 +1,5 @@
+#include <sstream>
+
 #include "xchain/xchain.h"
 
 // 游戏装备资产模板
@@ -12,7 +14,7 @@ public:
     /*
      * func: 新增装备类型
      * @param: initiator:交易发起者,只有交易发起者等于admin账户才能执行成功
-     * @param: typeid: 游戏状态的参数和属性描述
+     * @param: type_id: 游戏状态的参数和属性描述
      * @param: typedesc: 游戏状态的参数和属性描述
      */
     virtual void addAssetType() = 0;
@@ -28,7 +30,7 @@ public:
     virtual void getAssetsByUser() = 0;
     /*
      * func: 系统新生成的新装备，发放给特定用户，只能由管理员调用
-     * @param: typeid: 游戏装备类型id
+     * @param: type_id: 游戏装备类型id
      * @param: assetid:
      * 游戏装备唯一id(先从外部获取装备id,也可以实现成一个自增计数器)
      * @param: userid: 获得游戏装备的用户
@@ -77,26 +79,26 @@ public:
         }
 
         if (!isAdmin(ctx, caller)) {
-            ctx->error("only the admin can add new asset type");
+            ctx->error("you do not have permission to call this method");
             return;
         }
 
-        const std::string& typeId = ctx->arg("typeid");
+        const std::string& typeId = ctx->arg("type_id");
         if (typeId.empty()) {
-            ctx->error("missing 'typeid' as asset type identity");
+            ctx->error("missing 'type_id' as asset type identity");
             return;
         }
 
-        const std::string& typeDesc = ctx->arg("typedesc");
+        const std::string& typeDesc = ctx->arg("type_desc");
         if (typeDesc.empty()) {
-            ctx->error("missing 'typedesc' as type description");
+            ctx->error("missing type_desc");
             return;
         }
 
         std::string assetTypeKey = ASSETTYPE + typeId;
         std::string value;
         if (ctx->get_object(assetTypeKey, &value)) {
-            ctx->error("the typeid is already exist, please check again");
+            ctx->error("the type_id is already exist, please check again");
             return;
         }
         ctx->put_object(assetTypeKey, typeDesc);
@@ -129,7 +131,7 @@ public:
         std::string userId = caller;
         if (isAdmin(ctx, caller)) {
             // admin can get the asset data of other users
-            const std::string& userId2 = ctx->arg("userid");
+            const std::string& userId2 = ctx->arg("user_id");
             if (!userId2.empty()) {
                 userId = userId2;
             }
@@ -151,7 +153,7 @@ public:
                     // asset type id not found ,skip this asset
                     continue;
                 }
-                result += "assetid=" + assetId + ",typeid=" + typeId +
+                result += "assetid=" + assetId + ",type_id=" + typeId +
                           ",assetDesc=" + assetDesc + '\n';
             }
         }
@@ -167,31 +169,42 @@ public:
         }
 
         if (!isAdmin(ctx, caller)) {
-            ctx->error("only the admin can add new asset type");
+            ctx->error("you do not have permission to call this method");
             return;
         }
 
-        const std::string& userId = ctx->arg("userid");
+        const std::string& userId = ctx->arg("user_id");
         if (userId.empty()) {
             ctx->error("missing userid");
             return;
         }
 
-        const std::string& typeId = ctx->arg("typeid");
+        const std::string& typeId = ctx->arg("type_id");
         if (typeId.empty()) {
-            ctx->error("missing typeid");
+            ctx->error("missing type_id");
+            return;
+        }
+        std::string assetTypeKey = ASSETTYPE + typeId;
+        std::string value;
+
+        std::stringstream ss;
+
+        ctx->get_object(assetTypeKey, &value);
+        if (value.empty()) {
+            ss << "asset type " << typeId << " not found";
+            ctx->error(ss.str());
             return;
         }
 
-        const std::string& assetId = ctx->arg("assetid");
+        const std::string& assetId = ctx->arg("asset_id");
         if (assetId.empty()) {
             ctx->error("missing assetid");
             return;
         }
 
         std::string assetKey = ASSET2USER + assetId;
-        std::string value;
-        if (ctx->get_object(assetKey, &value)) {
+        std::string tmp;
+        if (ctx->get_object(assetKey, &tmp)) {
             ctx->error("the asset id is already exist, please check again");
             return;
         }
@@ -218,7 +231,7 @@ public:
             return;
         }
 
-        const std::string& assetId = ctx->arg("assetid");
+        const std::string& assetId = ctx->arg("asset_id");
         if (assetId.empty()) {
             ctx->error("missing assetid");
             return;
