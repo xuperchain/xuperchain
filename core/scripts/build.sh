@@ -11,9 +11,9 @@ cp core/xvm/compile/wabt/build/wasm2c ./
 function buildpkg() {
     output=$1
     pkg=$2
-    buildVersion=`git rev-parse --abbrev-ref HEAD`
+    buildVersion=`git rev-parse --abbrev-ref HEAD||echo unknown`
     buildDate=$(date "+%Y-%m-%d-%H:%M:%S")
-    commitHash=`git rev-parse --short HEAD`
+    commitHash=`git rev-parse --short HEAD||echo unknow`
     go build -o $output -ldflags "-X main.buildVersion=$buildVersion -X main.buildDate=$buildDate -X main.commitHash=$commitHash" $pkg
 }
 
