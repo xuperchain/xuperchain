@@ -1,6 +1,5 @@
 #include "xchain/xchain.h"
 
-
 // 商品溯源合约模板
 // 参数由xchain::Contract中的context提供
 class SourceTrace {
@@ -29,7 +28,6 @@ public:
      * @param: id: 商品id
      */
     virtual void queryRecords() = 0;
-
 };
 
 struct SourceTraceDemo : public SourceTrace, public xchain::Contract {
@@ -84,7 +82,7 @@ public:
             return;
         }
 
-        std::string goodsKey =  GOODS + id;
+        std::string goodsKey = GOODS + id;
         std::string value;
         if (ctx->get_object(goodsKey, &value)) {
             ctx->error("the id is already exist, please check again");
@@ -92,8 +90,8 @@ public:
         }
         ctx->put_object(goodsKey, desc);
 
-        std::string goodsRecordsKey =  GOODSRECORD + id + "_0";
-        std::string goodsRecordsTopKey =  GOODSRECORDTOP + id;
+        std::string goodsRecordsKey = GOODSRECORD + id + "_0";
+        std::string goodsRecordsTopKey = GOODSRECORDTOP + id;
         ctx->put_object(goodsRecordsKey, CREATE);
         ctx->put_object(goodsRecordsTopKey, 0);
         ctx->ok(id);
@@ -108,7 +106,7 @@ public:
         }
 
         if (!isAdmin(ctx, caller)) {
-            ctx->error("only the admin can create new goods");
+            ctx->error("only the admin can update goods");
             return;
         }
 
@@ -127,12 +125,16 @@ public:
         std::string goodsRecordsTopKey = GOODSRECORDTOP + id;
         std::string value;
         ctx->get_object(goodsRecordsTopKey, &value);
+        if (value.length() == 0) {
+            ctx->error("goods " + id + " not found");
+            return;
+        }
         int topRecord = 0;
         topRecord = atoi(value.c_str()) + 1;
 
         char topRecordVal[32];
         snprintf(topRecordVal, 32, "%d", topRecord);
-        std::string goodsRecordsKey =  GOODSRECORD + id + "_" + topRecordVal;
+        std::string goodsRecordsKey = GOODSRECORD + id + "_" + topRecordVal;
 
         ctx->put_object(goodsRecordsKey, reason);
         ctx->put_object(goodsRecordsTopKey, topRecordVal);
@@ -147,7 +149,7 @@ public:
             return;
         }
 
-        std::string goodsKey =  GOODS + id;
+        std::string goodsKey = GOODS + id;
         std::string value;
         if (!ctx->get_object(goodsKey, &value)) {
             ctx->error("the id not exist, please check again");
@@ -163,32 +165,27 @@ public:
             std::pair<std::string, std::string> res;
             iter->get(&res);
             if (res.first.length() > goodsRecordsKey.length()) {
-                std::string goodsRecord = res.first.substr(GOODSRECORD.length());
+                std::string goodsRecord =
+                    res.first.substr(GOODSRECORD.length());
                 std::string::size_type pos = goodsRecord.find("_");
                 std::string goodsId = goodsRecord.substr(0, pos);
-                std::string updateRecord = goodsRecord.substr(pos+1, goodsRecord.length());
+                std::string updateRecord =
+                    goodsRecord.substr(pos + 1, goodsRecord.length());
                 std::string reason = res.second;
 
-                result += "goodsId=" + goodsId + ",updateRecord=" + updateRecord +
+                result += "goodsId=" + goodsId +
+                          ",updateRecord=" + updateRecord +
                           ",reason=" + reason + '\n';
             }
         }
         ctx->ok(result);
-    }  
+    }
 };
 
-DEFINE_METHOD(SourceTraceDemo, initialize) {
-    self.initialize();
-}
+DEFINE_METHOD(SourceTraceDemo, initialize) { self.initialize(); }
 
-DEFINE_METHOD(SourceTraceDemo, createGoods) {
-    self.createGoods();
-}
+DEFINE_METHOD(SourceTraceDemo, createGoods) { self.createGoods(); }
 
-DEFINE_METHOD(SourceTraceDemo, updateGoods) {
-    self.updateGoods();
-}
+DEFINE_METHOD(SourceTraceDemo, updateGoods) { self.updateGoods(); }
 
-DEFINE_METHOD(SourceTraceDemo, queryRecords) {
-    self.queryRecords();
-}
+DEFINE_METHOD(SourceTraceDemo, queryRecords) { self.queryRecords(); }

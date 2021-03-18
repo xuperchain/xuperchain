@@ -67,7 +67,7 @@ jobs:
           
 
   create_release:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     needs: [build-linux-amd64, build-darwin-amd64]
     steps:
       - name: Create Release
