@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/big"
 
@@ -10,9 +11,9 @@ import (
 )
 
 const (
-	GOODS          = "GOODS_"
-	GOODSRECORD    = "GOODSSRECORD_"
-	GOODSRECORDTOP = "GOODSSRECORDTOP_"
+	GOODS          = "GOODS/"
+	GOODSRECORD    = "GOODSSRECORD/"
+	GOODSRECORDTOP = "GOODSSRECORDTOP/"
 	CREATE         = "CREATE"
 	ADMIN          = "ADMIN"
 )
@@ -27,7 +28,7 @@ type sourceTrace struct {
 
 func (st *sourceTrace) Initialize(ctx code.Context) code.Response {
 	args := struct {
-		Admin string `json:"admin" validte:"required"`
+		Admin string `json:"admin" validate:"required"`
 	}{}
 	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
@@ -55,8 +56,8 @@ func (st *sourceTrace) CreateGoods(ctx code.Context) code.Response {
 	}
 
 	args := struct {
-		Id   string `json:"id" required:"true''"`
-		Desc string `json:"desc" required:"desc"`
+		Id   string `json:"id" validate:"required,excludes=/"`
+		Desc string `json:"desc" validate:"required"`
 	}{}
 	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
@@ -71,7 +72,7 @@ func (st *sourceTrace) CreateGoods(ctx code.Context) code.Response {
 		return code.Error(err)
 	}
 
-	goodsRecordsKey := GOODSRECORD + args.Id + "_0"
+	goodsRecordsKey := GOODSRECORD + args.Id + "/0"
 	goodsRecordsTopKey := GOODSRECORDTOP + args.Id
 	if err := ctx.PutObject([]byte(goodsRecordsKey), []byte(CREATE)); err != nil {
 		return code.Error(err)
@@ -98,8 +99,8 @@ func (st *sourceTrace) UpdateGoods(ctx code.Context) code.Response {
 		return code.Error(code.ErrPermissionDenied)
 	}
 	args := struct {
-		Id     string `json:"id" validte:"required"`
-		Reason string `json:"reason" validte:"required"`
+		Id     string `json:"id" validate:"required"`
+		Reason string `json:"reason" validate:"required"`
 	}{}
 
 	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
@@ -113,7 +114,7 @@ func (st *sourceTrace) UpdateGoods(ctx code.Context) code.Response {
 	topRecord, _ := big.NewInt(0).SetString(string(topRecordByte), 10)
 	topRecord = topRecord.Add(topRecord, big.NewInt(1))
 
-	if err := ctx.PutObject([]byte(GOODSRECORD+args.Id+"_"+topRecord.String()), []byte(args.Reason)); err != nil {
+	if err := ctx.PutObject([]byte(GOODSRECORD+args.Id+"/"+topRecord.String()), []byte(args.Reason)); err != nil {
 		return code.Error(err)
 	}
 	if err := ctx.PutObject([]byte(GOODSRECORDTOP+args.Id), []byte(topRecord.String())); err != nil {
@@ -124,13 +125,18 @@ func (st *sourceTrace) UpdateGoods(ctx code.Context) code.Response {
 
 func (st *sourceTrace) QueryRecords(ctx code.Context) code.Response {
 	args := struct {
-		Id string `json:"id" validte:"required"`
+		Id string `json:"id" validate:"required,excludes=/"`
 	}{}
 	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
+	goodsKey := GOODS + args.Id
 
-	goodsRecordsKey := GOODSRECORD + args.Id + "_"
+	if _, err := ctx.GetObject([]byte(goodsKey)); err != nil {
+		return code.Error(errors.New("goods not found"))
+	}
+
+	goodsRecordsKey := GOODSRECORD + args.Id + "/"
 	iter := ctx.NewIterator(code.PrefixRange([]byte(goodsRecordsKey)))
 	defer iter.Close()
 	records := []updateRecord{}
