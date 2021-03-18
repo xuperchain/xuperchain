@@ -19,7 +19,7 @@ public:
      * func: 获得一个抽奖券
      * @param: initiator: 玩家的address，获得一个抽奖券
      */
-    virtual void getLuckid() = 0;
+    virtual void getLuckId() = 0;
     /*
      * func: 开始抽奖
      * @param: seed:
@@ -56,7 +56,7 @@ public:
         return (admin == caller);
     }
 
-    void getLuckid() {
+    void getLuckId() {
         xchain::Context* ctx = this->context();
         const std::string& caller = ctx->initiator();
         if (caller.empty()) {
@@ -67,7 +67,7 @@ public:
         // 检查是否存在抽奖结果，如果存在则不再继续发放奖券
         std::string result;
         if (ctx->get_object(RESULT, &result)) {
-            ctx->error("this luck draw is finished");
+            ctx->error("the luck draw has finished");
             return;
         }
 
@@ -110,7 +110,7 @@ public:
         }
 
         if (!isAdmin(ctx, caller)) {
-            ctx->error("only the admin can add new asset type");
+            ctx->error("you do not have permission to call this method");
             return;
         }
 
@@ -167,7 +167,7 @@ public:
 
 DEFINE_METHOD(LuckDrawDemo, initialize) { self.initialize(); }
 
-DEFINE_METHOD(LuckDrawDemo, getLuckid) { self.getLuckid(); }
+DEFINE_METHOD(LuckDrawDemo, getLuckid) { self.getLuckId(); }
 
 DEFINE_METHOD(LuckDrawDemo, startLuckDraw) { self.startLuckDraw(); }
 
