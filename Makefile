@@ -8,8 +8,10 @@ else
   endif
 endif
 
+
 all: build
 
+export GO111MODULE=on
 XCHAIN_ROOT := ${PWD}/core
 export XCHAIN_ROOT
 PATH := ${PWD}/core/xvm/compile/wabt/build:$(PATH)
