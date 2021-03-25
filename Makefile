@@ -8,9 +8,10 @@ else
   endif
 endif
 
-all: build 
-export GO111MODULE=on
-export GOFLAGS=-mod=vendor
+all: build
+
+export  GOPROXY=https://goproxy.cn,direct
+
 XCHAIN_ROOT := ${PWD}/core
 export XCHAIN_ROOT
 PATH := ${PWD}/core/xvm/compile/wabt/build:$(PATH)
