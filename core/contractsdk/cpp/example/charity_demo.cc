@@ -13,7 +13,7 @@ public:
     virtual void initialize() = 0;
     /*
      * func: 新增捐款
-     * @param: donor:捐款人id（注意不能包含%字符）
+     * @param: donor:捐款人id（注意不能包含/字符）
      * @param: amount: 捐款金额
      * @param: timestamp: 捐款时间
      * @param: comments: 备注
@@ -180,7 +180,7 @@ public:
 
         std::string donateID = getIDFromNum(donateCnt);
 
-        std::string userDonateKey = USERDONATE + donor + "%" + donateID;
+        std::string userDonateKey = USERDONATE + donor + "/" + donateID;
         std::string allDonateKey = ALLDONATE + donateID;
         std::string donateDetail =
             "donor=" + donor + "," + "amount=" + amountStr + ", " +
@@ -306,7 +306,12 @@ public:
             return;
         }
 
-        std::string userDonateKey = USERDONATE + donor + "%";
+        if (donor.find("/") != std::string::npos) {
+            ctx->error("donor should not contain /");
+            return;
+        }
+
+        std::string userDonateKey = USERDONATE + donor + "/";
         std::unique_ptr<xchain::Iterator> iter =
             ctx->new_iterator(userDonateKey, userDonateKey + "~");
         std::string result;
