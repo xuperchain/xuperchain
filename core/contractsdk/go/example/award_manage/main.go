@@ -9,8 +9,8 @@ import (
 )
 
 const (
-	BALANCEPRE   = "balanceOf_"
-	ALLOWANCEPRE = "allowanceOf_"
+	BALANCEPRE   = "balanceOf/"
+	ALLOWANCEPRE = "allowanceOf/"
 	MASTERPRE    = "admin"
 	TOTAL_SUPPLY = "TotalSupply"
 )
@@ -19,7 +19,7 @@ type awardManage struct{}
 
 func (am *awardManage) Initialize(ctx code.Context) code.Response {
 	args := struct {
-		TotalSupply *big.Int `json:"totalSupply" validate:"gt=0"`
+		TotalSupply *big.Int `json:"total_supply" validate:"gt=0"`
 	}{}
 	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
@@ -91,11 +91,13 @@ func (am *awardManage) TotalSupply(ctx code.Context) code.Response {
 }
 
 func (am *awardManage) Balance(ctx code.Context) code.Response {
-	initiator := ctx.Initiator()
-	if initiator == "" {
-		return code.Error(code.ErrMissingInitiator)
+	// in cpp we use "caller", which may be confusing with ctx.Caller()
+	// we use "owner" in golang contract template, consistent with erc20
+	ownerByte, ok := ctx.Args()["owner"]
+	if !ok || len(ownerByte) == 0 {
+		return code.Error(errors.New("missing owner"))
 	}
-	value, err := ctx.GetObject([]byte(BALANCEPRE + initiator))
+	value, err := ctx.GetObject([]byte(BALANCEPRE + string(ownerByte)))
 	if err != nil {
 		return code.Error(err)
 	}
@@ -104,14 +106,14 @@ func (am *awardManage) Balance(ctx code.Context) code.Response {
 
 func (am *awardManage) Allowance(ctx code.Context) code.Response {
 	args := struct {
-		From string `json:"from"`
-		To   string `json:"to"`
+		From string `json:"from,excludes=/"`
+		To   string `json:"to,excludes=/"`
 	}{}
 	if err := code.Unmarshal(ctx.Args(), &args); err != nil {
 		return code.Error(err)
 	}
 
-	value, err := ctx.GetObject([]byte(ALLOWANCEPRE + args.From + "_" + args.To))
+	value, err := ctx.GetObject([]byte(ALLOWANCEPRE + args.From + "/" + args.To))
 	if err != nil {
 		return code.Error(err)
 	}
@@ -125,7 +127,7 @@ func (am *awardManage) Transfer(ctx code.Context) code.Response {
 		return code.Error(code.ErrMissingInitiator)
 	}
 	args := struct {
-		To    string   `json:"to" validate:"required"`
+		To    string   `json:"to" validate:"required,excludes=/"`
 		Token *big.Int `json:"token" validate:"required"`
 	}{}
 
@@ -164,7 +166,7 @@ func (am *awardManage) Transfer(ctx code.Context) code.Response {
 
 func (am *awardManage) TransferFrom(ctx code.Context) code.Response {
 	args := struct {
-		From  string   `json:"from" validate:"required"`
+		From  string   `json:"from" validate:"required,excludes=/"`
 		Token *big.Int `json:"token" validate:"required"`
 	}{}
 	initiator := ctx.Initiator()
@@ -185,7 +187,7 @@ func (am *awardManage) TransferFrom(ctx code.Context) code.Response {
 		return code.Error(code.ErrBalanceLow)
 	}
 
-	allowanceKey := ALLOWANCEPRE + args.From + "_" + initiator
+	allowanceKey := ALLOWANCEPRE + args.From + "/" + initiator
 
 	allowanceBalanceByte, err := ctx.GetObject([]byte(allowanceKey))
 	if err != nil {
@@ -220,7 +222,7 @@ func (am *awardManage) TransferFrom(ctx code.Context) code.Response {
 
 func (am *awardManage) Approve(ctx code.Context) code.Response {
 	args := struct {
-		To    string   `json:"to" validte:"required"`
+		To    string   `json:"to" validate:"required,excludes=/"`
 		Token *big.Int `json:"token" validate:"required"`
 	}{}
 	from := ctx.Initiator()
@@ -232,7 +234,7 @@ func (am *awardManage) Approve(ctx code.Context) code.Response {
 		return code.Error(err)
 	}
 
-	allowanceKey := []byte(ALLOWANCEPRE + from + "_" + args.To)
+	allowanceKey := []byte(ALLOWANCEPRE + from + "/" + args.To)
 
 	allowanceByte := []byte("0")
 	if value, err := ctx.GetObject(allowanceKey); err == nil {
