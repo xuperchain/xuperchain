@@ -24,3 +24,4 @@ func (t testDeps) WriteProfileTo(string, io.Writer, int) error { return nil }
 func (t testDeps) ImportPath() string                          { return "" }
 func (t testDeps) StartTestLog(io.Writer)                      {}
 func (t testDeps) StopTestLog() error                          { return nil }
+func (t testDeps) SetPanicOnExit0(bool)                        {}
