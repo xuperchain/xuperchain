@@ -219,8 +219,7 @@ func (c *contractProcess) makeStartCommand() (string, error) {
 	case "go":
 		return c.binpath, nil
 	case "py":
-		//TODO @fengjin
-		// only support python3 as python2 is meeting its EOL in
+		// only support python3 as python2 is meeting its EOL
 		return "python3 " + c.binpath, nil
 	default:
 		return "", fmt.Errorf("unsupported native contract runtime %s", c.desc.GetRuntime())
@@ -235,5 +234,4 @@ func makeFreePort() (int, error) {
 	addr := l.Addr().(*net.TCPAddr)
 	l.Close()
 	return addr.Port, nil
-	//return 9999, nil
 }
