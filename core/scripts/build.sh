@@ -11,7 +11,7 @@ cp core/xvm/compile/wabt/build/wasm2c ./
 
 # build framework and tools
 if [ 0"${XCHAIN_BUILD_DEBUG}" = "0" ]; then
-  XCHAIN_PLUGIN_BUILD_GCFLAGS=-gcflags "all=-N -l"
+  XCHAIN_PLUGIN_BUILD_GCFLAGS='-gcflags "all=-N -l"'
 fi
 
 function buildpkg() {
