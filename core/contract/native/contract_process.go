@@ -12,8 +12,8 @@ import (
 	log15 "github.com/xuperchain/log15"
 	"github.com/xuperchain/xuperchain/core/common/config"
 	"github.com/xuperchain/xuperchain/core/common/log"
-	pb "github.com/xuperchain/xuperchain/core/contractsdk/go/pb"
-	pbrpc "github.com/xuperchain/xuperchain/core/contractsdk/go/pbrpc"
+	"github.com/xuperchain/xuperchain/core/contractsdk/go/pb"
+	"github.com/xuperchain/xuperchain/core/contractsdk/go/pbrpc"
 	xpb "github.com/xuperchain/xuperchain/core/pb"
 
 	"google.golang.org/grpc"
@@ -218,6 +218,10 @@ func (c *contractProcess) makeStartCommand() (string, error) {
 		return "java -jar " + c.binpath, nil
 	case "go":
 		return c.binpath, nil
+	case "py":
+		//TODO @fengjin
+		// only support python3 as python2 is meeting its EOL in
+		return "python3 " + c.binpath, nil
 	default:
 		return "", fmt.Errorf("unsupported native contract runtime %s", c.desc.GetRuntime())
 	}
@@ -231,4 +235,5 @@ func makeFreePort() (int, error) {
 	addr := l.Addr().(*net.TCPAddr)
 	l.Close()
 	return addr.Port, nil
+	//return 9999, nil
 }
