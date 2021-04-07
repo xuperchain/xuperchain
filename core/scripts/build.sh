@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e -x
 
-cd $(dirname $0)/../../
+cd `dirname $0`/../../
 
 # build wasm2c
 make -C core/xvm/compile/wabt -j 4
