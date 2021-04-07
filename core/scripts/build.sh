@@ -14,11 +14,12 @@ fi
 
 # build framework and tools
 function buildpkg() {
+        output=$1
+        pkg=$2
         buildDate=$(date "+%Y-%m-%d-%H:%M:%S")
         commitHash=$(git rev-parse --short HEAD 2>/dev/null || echo unknown)
         buildVersion=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)
-        output=$1
-        pkg=$2
+
         go build -o $output -gcflags "${XCHAIN_CUSTOME_BUILD_GCFLAGS}" -ldflags "-X main.buildVersion=$buildVersion -X main.buildDate=$buildDate -X main.commitHash=$commitHash" $pkg
 }
 
