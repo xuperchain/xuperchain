@@ -1,17 +1,16 @@
 #!/bin/bash
 set -e -x
 
-cd `dirname $0`/../../
+cd $(dirname $0)/../../
 
 # build wasm2c
 make -C core/xvm/compile/wabt -j 4
 cp core/xvm/compile/wabt/build/wasm2c ./
 
-
-
 # build framework and tools
-if [ 0"${XCHAIN_BUILD_DEBUG}" = "0" ]; then
-  XCHAIN_PLUGIN_BUILD_GCFLAGS='-gcflags "all=-N -l"'
+
+if [ 0"${XCHAIN_BUILD_DEBUG}" = "01" ]; then
+        XCHAIN_CUSTOME_BUILD_GCFLAGS="all=-N -l"
 fi
 
 function buildpkg() {
@@ -22,11 +21,7 @@ function buildpkg() {
 
         output=$1
         pkg=$2
-        if [ 0"${XCHAIN_BUILD_DEBUG}" = "0" ]; then
-                go build  -o $output -ldflags "-X main.buildVersion=$buildVersion -X main.buildDate=$buildDate -X main.commitHash=$commitHash" $pkg
-        else
-                go build  -o $output ${XCHAIN_PLUGIN_BUILD_GCFLAGS} -ldflags "-X main.buildVersion=$buildVersion -X main.buildDate=$buildDate -X main.commitHash=$commitHash" $pkg
-        fi
+        go build -o $output -gcflags "${XCHAIN_CUSTOME_BUILD_GCFLAGS}" -ldflags "-X main.buildVersion=$buildVersion -X main.buildDate=$buildDate -X main.commitHash=$commitHash" $pkg
 }
 
 buildpkg xchain-cli github.com/xuperchain/xuperchain/core/cmd/cli
@@ -36,30 +31,28 @@ buildpkg xchain-httpgw github.com/xuperchain/xuperchain/core/gateway
 buildpkg dump_chain github.com/xuperchain/xuperchain/core/test
 buildpkg relayer github.com/xuperchain/xuperchain/core/cmd/relayer/relayer
 
-
-
 # build plugins
 echo "OS:"${PLATFORM}
 echo "## Build Plugins..."
 
 mkdir -p core/plugins/kv core/plugins/crypto core/plugins/consensus core/plugins/contract
 
-go build --buildmode=plugin  ${XCHAIN_PLUGIN_BUILD_GCFLAGS} -o core/plugins/crypto/crypto-default.so.1.0.0 github.com/xuperchain/xuperchain/core/crypto/client/xchain/plugin_impl
-go build --buildmode=plugin  ${XCHAIN_PLUGIN_BUILD_GCFLAGS}  --tags multi -o core/plugins/kv/kv-ldb-multi.so.1.0.0 github.com/xuperchain/xuperchain/core/kv/kvdb/plugin-ldb
-go build --buildmode=plugin  ${XCHAIN_PLUGIN_BUILD_GCFLAGS}  --tags single -o core/plugins/kv/kv-ldb-single.so.1.0.0 github.com/xuperchain/xuperchain/core/kv/kvdb/plugin-ldb
-go build --buildmode=plugin  ${XCHAIN_PLUGIN_BUILD_GCFLAGS}  --tags cloud -o core/plugins/kv/kv-ldb-cloud.so.1.0.0 github.com/xuperchain/xuperchain/core/kv/kvdb/plugin-ldb
-go build --buildmode=plugin  ${XCHAIN_PLUGIN_BUILD_GCFLAGS}  -o core/plugins/kv/kv-badger.so.1.0.0 github.com/xuperchain/xuperchain/core/kv/kvdb/plugin-badger
-go build --buildmode=plugin  ${XCHAIN_PLUGIN_BUILD_GCFLAGS}  -o core/plugins/crypto/crypto-default.so.1.0.0 github.com/xuperchain/xuperchain/core/crypto/client/xchain/plugin_impl
-go build --buildmode=plugin  ${XCHAIN_PLUGIN_BUILD_GCFLAGS}  -o core/plugins/crypto/crypto-schnorr.so.1.0.0 github.com/xuperchain/xuperchain/core/crypto/client/schnorr/plugin_impl
-go build --buildmode=plugin  ${XCHAIN_PLUGIN_BUILD_GCFLAGS}  -o core/plugins/crypto/crypto-gm.so.1.0.0 github.com/xuperchain/xuperchain/core/crypto/client/gm/gmclient/plugin_impl
-go build --buildmode=plugin  ${XCHAIN_PLUGIN_BUILD_GCFLAGS}  -o core/plugins/consensus/consensus-pow.so.1.0.0 github.com/xuperchain/xuperchain/core/consensus/pow
-go build --buildmode=plugin  ${XCHAIN_PLUGIN_BUILD_GCFLAGS}  -o core/plugins/consensus/consensus-single.so.1.0.0 github.com/xuperchain/xuperchain/core/consensus/single
-go build --buildmode=plugin  ${XCHAIN_PLUGIN_BUILD_GCFLAGS}  -o core/plugins/consensus/consensus-tdpos.so.1.0.0 github.com/xuperchain/xuperchain/core/consensus/tdpos/main
-go build --buildmode=plugin  ${XCHAIN_PLUGIN_BUILD_GCFLAGS}  -o core/plugins/consensus/consensus-xpoa.so.1.0.0 github.com/xuperchain/xuperchain/core/consensus/xpoa/main
-go build --buildmode=plugin  ${XCHAIN_PLUGIN_BUILD_GCFLAGS}  -o core/plugins/p2p/p2p-p2pv1.so.1.0.0 github.com/xuperchain/xuperchain/core/p2p/p2pv1/plugin_impl
-go build --buildmode=plugin  ${XCHAIN_PLUGIN_BUILD_GCFLAGS}  -o core/plugins/p2p/p2p-p2pv2.so.1.0.0 github.com/xuperchain/xuperchain/core/p2p/p2pv2/plugin_impl
-go build --buildmode=plugin  ${XCHAIN_PLUGIN_BUILD_GCFLAGS}  -o core/plugins/xendorser/xendorser-default.so.1.0.0 github.com/xuperchain/xuperchain/core/server/xendorser/plugin-default
-go build --buildmode=plugin  ${XCHAIN_PLUGIN_BUILD_GCFLAGS}  -o core/plugins/xendorser/xendorser-proxy.so.1.0.0 github.com/xuperchain/xuperchain/core/server/xendorser/plugin-proxy
+go build --buildmode=plugin -gcflags "${XCHAIN_CUSTOME_BUILD_GCFLAGS}" -o core/plugins/crypto/crypto-default.so.1.0.0 github.com/xuperchain/xuperchain/core/crypto/client/xchain/plugin_impl
+go build --buildmode=plugin -gcflags "${XCHAIN_CUSTOME_BUILD_GCFLAGS}" --tags multi -o core/plugins/kv/kv-ldb-multi.so.1.0.0 github.com/xuperchain/xuperchain/core/kv/kvdb/plugin-ldb
+go build --buildmode=plugin -gcflags "${XCHAIN_CUSTOME_BUILD_GCFLAGS}" --tags single -o core/plugins/kv/kv-ldb-single.so.1.0.0 github.com/xuperchain/xuperchain/core/kv/kvdb/plugin-ldb
+go build --buildmode=plugin -gcflags "${XCHAIN_CUSTOME_BUILD_GCFLAGS}" --tags cloud -o core/plugins/kv/kv-ldb-cloud.so.1.0.0 github.com/xuperchain/xuperchain/core/kv/kvdb/plugin-ldb
+go build --buildmode=plugin -gcflags "${XCHAIN_CUSTOME_BUILD_GCFLAGS}" -o core/plugins/kv/kv-badger.so.1.0.0 github.com/xuperchain/xuperchain/core/kv/kvdb/plugin-badger
+go build --buildmode=plugin -gcflags "${XCHAIN_CUSTOME_BUILD_GCFLAGS}" -o core/plugins/crypto/crypto-default.so.1.0.0 github.com/xuperchain/xuperchain/core/crypto/client/xchain/plugin_impl
+go build --buildmode=plugin -gcflags "${XCHAIN_CUSTOME_BUILD_GCFLAGS}" -o core/plugins/crypto/crypto-schnorr.so.1.0.0 github.com/xuperchain/xuperchain/core/crypto/client/schnorr/plugin_impl
+go build --buildmode=plugin -gcflags "${XCHAIN_CUSTOME_BUILD_GCFLAGS}" -o core/plugins/crypto/crypto-gm.so.1.0.0 github.com/xuperchain/xuperchain/core/crypto/client/gm/gmclient/plugin_impl
+go build --buildmode=plugin -gcflags "${XCHAIN_CUSTOME_BUILD_GCFLAGS}" -o core/plugins/consensus/consensus-pow.so.1.0.0 github.com/xuperchain/xuperchain/core/consensus/pow
+go build --buildmode=plugin -gcflags "${XCHAIN_CUSTOME_BUILD_GCFLAGS}" -o core/plugins/consensus/consensus-single.so.1.0.0 github.com/xuperchain/xuperchain/core/consensus/single
+go build --buildmode=plugin -gcflags "${XCHAIN_CUSTOME_BUILD_GCFLAGS}" -o core/plugins/consensus/consensus-tdpos.so.1.0.0 github.com/xuperchain/xuperchain/core/consensus/tdpos/main
+go build --buildmode=plugin -gcflags "${XCHAIN_CUSTOME_BUILD_GCFLAGS}" -o core/plugins/consensus/consensus-xpoa.so.1.0.0 github.com/xuperchain/xuperchain/core/consensus/xpoa/main
+go build --buildmode=plugin -gcflags "${XCHAIN_CUSTOME_BUILD_GCFLAGS}" -o core/plugins/p2p/p2p-p2pv1.so.1.0.0 github.com/xuperchain/xuperchain/core/p2p/p2pv1/plugin_impl
+go build --buildmode=plugin -gcflags "${XCHAIN_CUSTOME_BUILD_GCFLAGS}" -o core/plugins/p2p/p2p-p2pv2.so.1.0.0 github.com/xuperchain/xuperchain/core/p2p/p2pv2/plugin_impl
+go build --buildmode=plugin -gcflags "${XCHAIN_CUSTOME_BUILD_GCFLAGS}" -o core/plugins/xendorser/xendorser-default.so.1.0.0 github.com/xuperchain/xuperchain/core/server/xendorser/plugin-default
+go build --buildmode=plugin -gcflags "${XCHAIN_CUSTOME_BUILD_GCFLAGS}" -o core/plugins/xendorser/xendorser-proxy.so.1.0.0 github.com/xuperchain/xuperchain/core/server/xendorser/plugin-proxy
 
 # build output dir
 mkdir -p output
