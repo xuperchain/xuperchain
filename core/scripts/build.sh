@@ -7,18 +7,16 @@ cd `dirname $0`/../../
 make -C core/xvm/compile/wabt -j 4
 cp core/xvm/compile/wabt/build/wasm2c ./
 
-# build framework and tools
 
 if [ 0"${XCHAIN_BUILD_DEBUG}" = "01" ]; then
         XCHAIN_CUSTOME_BUILD_GCFLAGS="all=-N -l"
 fi
 
+# build framework and tools
 function buildpkg() {
-
         buildDate=$(date "+%Y-%m-%d-%H:%M:%S")
         commitHash=$(git rev-parse --short HEAD 2>/dev/null || echo unknown)
         buildVersion=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)
-
         output=$1
         pkg=$2
         go build -o $output -gcflags "${XCHAIN_CUSTOME_BUILD_GCFLAGS}" -ldflags "-X main.buildVersion=$buildVersion -X main.buildDate=$buildDate -X main.commitHash=$commitHash" $pkg
