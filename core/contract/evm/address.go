@@ -74,6 +74,9 @@ func EVMAddressToContractName(evmAddr crypto.Address) (string, error) {
 	contractNameWithPrefix := evmAddr.Bytes()
 	contractNameStrWithPrefix := string(contractNameWithPrefix)
 	prefixIndex := strings.LastIndex(contractNameStrWithPrefix, evmAddressFiller)
+	if prefixIndex == -1 {
+		return contractNameStrWithPrefix[4:], nil
+	}
 	return contractNameStrWithPrefix[prefixIndex+1:], nil
 }
 
