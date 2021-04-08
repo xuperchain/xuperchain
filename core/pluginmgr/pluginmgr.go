@@ -116,8 +116,7 @@ func (pm *PluginMgr) loadOnePlugin(name string, subtype string) (pi interface{},
 	pg, err := plugin.Open(pluginPath)
 	if err != nil {
 		pm.xlog.Warn("Warn: plugin open failed!", "pluginname", name, "err", err)
-		err = errors.New("plugin open failed")
-		return
+		return nil, err
 	}
 
 	// get instance
