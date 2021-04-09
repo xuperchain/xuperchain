@@ -637,8 +637,8 @@ github.com/xeipuuv/gojsonschema v1.1.0/go.mod h1:5yf86TLmAcydyeJq5YvxkGPE2fm/u4m
 github.com/xiang90/probing v0.0.0-20190116061207-43a291ad63a2/go.mod h1:UETIi67q53MR2AWcXfiuqkDkRtnGDLqkBTpCHuJHxtU=
 github.com/xlab/treeprint v0.0.0-20181112141820-a009c3971eca/go.mod h1:ce1O1j6UtZfjr22oyGxGLbauSBp2YVXpARAosm7dHBg=
 github.com/xordataexchange/crypt v0.0.3-0.20170626215501-b2862e3d0a77/go.mod h1:aYKd//L2LvnjZzWKhF00oedf4jCCReLcmhLdhm1A27Q=
-github.com/xuperchain/burrow v0.30.6-0.20210115120720-3da1be35a1e2 h1:v1HtuZh4qwFJ8fH4/au9rkdC07CMTrrBfNgfz77S0tw=
-github.com/xuperchain/burrow v0.30.6-0.20210115120720-3da1be35a1e2/go.mod h1:ll86BjptGSd24apjKypG189UBzkaw4GPVRKDWvoOkn0=
+github.com/xuperchain/burrow v0.30.6-0.20210317023017-369050d94f4a h1:Zv0JPGDKoSY+czG5aJ+RjJ6bXoYa9j8b1Xdp8iBHb8A=
+github.com/xuperchain/burrow v0.30.6-0.20210317023017-369050d94f4a/go.mod h1:ll86BjptGSd24apjKypG189UBzkaw4GPVRKDWvoOkn0=
 github.com/xuperchain/log15 v0.0.0-20190620081506-bc88a9198230 h1:AWFZFbmLhY6VG6IIHD+9ZCgTCuvVRKoK+PRNaxqahl0=
 github.com/xuperchain/log15 v0.0.0-20190620081506-bc88a9198230/go.mod h1:90Da9GDXy9Yle79ZHSJY1c7X+1meBKsoX0vkRy09xis=
 github.com/xuperchain/wagon v0.6.1-0.20200313164333-db544e251599 h1:xh8MpzUZFmNOpeJyiiBCYOJq7gq7nRBU647y6e78Qms=

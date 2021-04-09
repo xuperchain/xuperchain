@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"reflect"
 
 	"github.com/hyperledger/burrow/crypto"
 	"github.com/hyperledger/burrow/execution/engine"
@@ -206,7 +207,15 @@ func unpackEventFromAbi(abiByte []byte, contractName string, log *exec.LogEvent)
 	event := &xchainpb.ContractEvent{
 		Contract: contractName,
 	}
+	var uint8type = reflect.TypeOf((*[]uint8)(nil))
 	event.Name = eventSpec.Name
+	for i := 0; i < len(vals); i++ {
+		t := reflect.TypeOf(vals[i])
+		if t == uint8type {
+			s := fmt.Sprintf("%x", vals[i])
+			vals[i] = s[1:]
+		}
+	}
 	data, err := json.Marshal(vals)
 	if err != nil {
 		return nil, err
