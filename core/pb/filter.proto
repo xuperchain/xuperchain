@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package pb;
+
+import "xchain.proto";
+
+service evmFilter {
+  rpc NewFilter(evmFilterBody) returns (evmFilterResponse);
+  rpc UninstallFilter(evmFilterBody) returns (evmFilterResponse);
+//  rpc GetFilterLogs(evmFilterBody) returns (stream Event);
+  rpc GetFilter(evmFilterBody) returns (evmFilterBody);
+}
+
+message evmFilterBody{
+    Header header = 1;
+    string bcname = 2;
+    string start = 3;
+    string end = 4;
+    string contract = 5;
+    string event_name = 6;
+    string initiator = 7;
+    string auth_require = 8;
+    string from_addr = 9;
+    string to_addr = 10;
+    int64 time = 11;
+    string FilterID = 12;
+}
+
+
+message evmFilterResponse{
+    Header header = 1;
+    string FilterID = 2;
+    string status = 3;
+}
