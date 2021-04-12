@@ -28,7 +28,7 @@ func (fs *evmFilter)NewFilter(ctx context.Context,filter *pb.EvmFilterBody) (*pb
 	filter.FilterID = filterID
 	FilterMap[filterID] = filter
 
-	//go FilterRecycling(filterID)					// 启动gourutine,定期清除Filter，防止Filter过多，占用内存
+	go filterRecycling(filterID)					// 启动gourutine,定期清除Filter，防止Filter过多，占用内存
 	resp := &pb.EvmFilterResponse{
 		FilterID:filterID,
 		Status:"SUCCESS",
@@ -60,7 +60,7 @@ func (fs evmFilter)GetFilter(ctx context.Context, in *pb.EvmFilterBody) (*pb.Evm
 	}
 }
 
-func FilterRecycling(filterID string){
+func filterRecycling(filterID string){
 	deadDuration := int64(deadline.Seconds())
 	ticker := time.NewTicker(deadline)
 	for {
@@ -73,9 +73,7 @@ func FilterRecycling(filterID string){
 		timeNow := time.Now().Unix()
 		lastUpdateTime := filter.Time
 		if (timeNow - lastUpdateTime )> deadDuration {
-
 			delete(FilterMap, filterID)
-
 		}
 	}
 }
