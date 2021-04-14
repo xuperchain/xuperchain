@@ -34,7 +34,7 @@ func newProcessManager(cfg *config.NativeConfig, basedir string, chainAddr strin
 	}, nil
 }
 
-func (p *processManager) makeProcess(name string, desc *pb.WasmCodeDesc, code []byte) (*contractProcess, error) {
+func (p *processManager) makeProcess(name string, desc *pb.WasmCodeDesc, code []byte, n int) (*contractProcess, error) {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
@@ -107,7 +107,7 @@ func (p *processManager) GetProcess(name string, cp bridge.ContractCodeProvider)
 		return nil, err
 	}
 
-	process, err = p.makeProcess(name, desc, code)
+	process, err = p.makeProcess(name, desc, code, n)
 	if err != nil {
 		return nil, err
 	}
