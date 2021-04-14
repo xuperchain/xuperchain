@@ -3,6 +3,7 @@ package native
 import (
 	"encoding/hex"
 	"io/ioutil"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"sync"
@@ -17,7 +18,7 @@ type processManager struct {
 	basedir   string
 	chainAddr string
 	mutex     sync.Mutex
-	contracts map[string]*contractProcess
+	contracts map[string][]*contractProcess
 }
 
 func newProcessManager(cfg *config.NativeConfig, basedir string, chainAddr string) (*processManager, error) {
@@ -25,20 +26,21 @@ func newProcessManager(cfg *config.NativeConfig, basedir string, chainAddr strin
 		cfg:       cfg,
 		basedir:   basedir,
 		chainAddr: chainAddr,
-		contracts: make(map[string]*contractProcess),
+		contracts: make(map[string][]*contractProcess),
 	}, nil
 }
 
-func (p *processManager) makeProcess(name string, desc *pb.WasmCodeDesc, code []byte) (*contractProcess, error) {
+func (p *processManager) makeProcess(name string, desc *pb.WasmCodeDesc, code []byte, n int) (*contractProcess, error) {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
 	hash := nativeCodeHash(name, desc)
-	process, ok := p.contracts[hash]
-	if ok {
-		process.Stop()
+	processes, ok := p.contracts[hash]
+	if !ok {
+		processes = make([]*contractProcess, 4)
+		p.contracts[hash] = processes
 	}
-	delete(p.contracts, hash)
+	//delete(p.contracts, hash)
 
 	processDir := filepath.Join(p.basedir, name)
 	err := os.MkdirAll(processDir, 0755)
@@ -47,12 +49,14 @@ func (p *processManager) makeProcess(name string, desc *pb.WasmCodeDesc, code []
 	}
 	contractFile := nativeCodeFileName(desc)
 	processBin := filepath.Join(processDir, contractFile)
-	err = ioutil.WriteFile(processBin, code, 0755)
-	if err != nil {
-		return nil, err
+	if _, err := os.Stat(processBin); err != nil {
+		err = ioutil.WriteFile(processBin, code, 0755)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	process, err = newContractProcess(p.cfg, name, processDir, p.chainAddr, desc)
+	process, err := newContractProcess(p.cfg, name, processDir, p.chainAddr, desc)
 	if err != nil {
 		return nil, err
 	}
@@ -61,20 +65,23 @@ func (p *processManager) makeProcess(name string, desc *pb.WasmCodeDesc, code []
 	if err != nil {
 		return nil, err
 	}
-	p.contracts[hash] = process
+	processes[n] = process
 
 	return process, nil
 }
 
-func (p *processManager) lookupProcess(name string, desc *pb.WasmCodeDesc) (*contractProcess, bool) {
+func (p *processManager) lookupProcess(name string, desc *pb.WasmCodeDesc, n int) (*contractProcess, bool) {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 	hash := nativeCodeHash(name, desc)
-	process, ok := p.contracts[hash]
+	processes, ok := p.contracts[hash]
 	if !ok {
 		return nil, false
 	}
-	return process, true
+	if processes == nil || processes[n] == nil {
+		return nil, false
+	}
+	return processes[n], true
 }
 
 func (p *processManager) GetProcess(name string, cp bridge.ContractCodeProvider) (*contractProcess, error) {
@@ -83,7 +90,9 @@ func (p *processManager) GetProcess(name string, cp bridge.ContractCodeProvider)
 		return nil, err
 	}
 
-	process, ok := p.lookupProcess(name, desc)
+	n := rand.Int() % 4
+
+	process, ok := p.lookupProcess(name, desc, n)
 	if ok {
 		return process, nil
 	}
@@ -93,7 +102,7 @@ func (p *processManager) GetProcess(name string, cp bridge.ContractCodeProvider)
 		return nil, err
 	}
 
-	process, err = p.makeProcess(name, desc, code)
+	process, err = p.makeProcess(name, desc, code, n)
 	if err != nil {
 		return nil, err
 	}
