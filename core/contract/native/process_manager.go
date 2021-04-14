@@ -13,6 +13,10 @@ import (
 	"github.com/xuperchain/xuperchain/core/pb"
 )
 
+const (
+	processCount = 4
+)
+
 type processManager struct {
 	cfg       *config.NativeConfig
 	basedir   string
@@ -30,17 +34,16 @@ func newProcessManager(cfg *config.NativeConfig, basedir string, chainAddr strin
 	}, nil
 }
 
-func (p *processManager) makeProcess(name string, desc *pb.WasmCodeDesc, code []byte, n int) (*contractProcess, error) {
+func (p *processManager) makeProcess(name string, desc *pb.WasmCodeDesc, code []byte) (*contractProcess, error) {
 	p.mutex.Lock()
 	defer p.mutex.Unlock()
 
 	hash := nativeCodeHash(name, desc)
 	processes, ok := p.contracts[hash]
 	if !ok {
-		processes = make([]*contractProcess, 4)
+		processes = make([]*contractProcess, processCount)
 		p.contracts[hash] = processes
 	}
-	//delete(p.contracts, hash)
 
 	processDir := filepath.Join(p.basedir, name)
 	err := os.MkdirAll(processDir, 0755)
@@ -50,8 +53,10 @@ func (p *processManager) makeProcess(name string, desc *pb.WasmCodeDesc, code []
 	contractFile := nativeCodeFileName(desc)
 	processBin := filepath.Join(processDir, contractFile)
 	if _, err := os.Stat(processBin); err != nil {
-		err = ioutil.WriteFile(processBin, code, 0755)
-		if err != nil {
+		if !os.IsNotExist(err) {
+			return nil, err
+		}
+		if err := ioutil.WriteFile(processBin, code, 0755); err != nil {
 			return nil, err
 		}
 	}
@@ -90,7 +95,7 @@ func (p *processManager) GetProcess(name string, cp bridge.ContractCodeProvider)
 		return nil, err
 	}
 
-	n := rand.Int() % 4
+	n := rand.Int() % processCount
 
 	process, ok := p.lookupProcess(name, desc, n)
 	if ok {
@@ -102,7 +107,7 @@ func (p *processManager) GetProcess(name string, cp bridge.ContractCodeProvider)
 		return nil, err
 	}
 
-	process, err = p.makeProcess(name, desc, code, n)
+	process, err = p.makeProcess(name, desc, code)
 	if err != nil {
 		return nil, err
 	}
