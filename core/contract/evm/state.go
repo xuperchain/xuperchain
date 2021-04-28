@@ -120,28 +120,34 @@ func newBlockStateManager(ctx *bridge.Context) *blockStateManager {
 
 // LastBlockHeight
 func (s *blockStateManager) LastBlockHeight() uint64 {
-	block, err := s.ctx.Core.QueryLastBlock()
-	if err != nil {
-		return 0
-	}
-	return uint64(block.GetHeight())
+	// TODO
+	return 0
+	//block, err := s.ctx.Core.QueryLastBlock()
+	//if err != nil {
+	//	return 0
+	//}
+	//return uint64(block.GetHeight())
 }
 
 // LastBlockTime
 func (s *blockStateManager) LastBlockTime() time.Time {
-	block, err := s.ctx.Core.QueryLastBlock()
-	if err != nil {
-		return time.Time{}
-	}
-	timestamp := block.GetTimestamp()
-	return time.Unix(timestamp/1e9, timestamp%1e9)
+	// TODO
+	return time.Time{}
+	//block, err := s.ctx.Core.QueryLastBlock()
+	//if err != nil {
+	//	return time.Time{}
+	//}
+	//timestamp := block.GetTimestamp()
+	//return time.Unix(timestamp/1e9, timestamp%1e9)
 }
 
 // LastBlockHeight
 func (s *blockStateManager) BlockHash(height uint64) ([]byte, error) {
-	block, err := s.ctx.Core.QueryBlockByHeight(int64(height))
-	if err != nil {
-		return nil, err
-	}
-	return block.GetBlockid(), nil
+	return nil, nil
+	// TODO
+	//block, err := s.ctx.Core.QueryBlockByHeight(int64(height))
+	//if err != nil {
+	//	return nil, err
+	//}
+	//return block.GetBlockid(), nil
 }
