@@ -16,9 +16,9 @@ import (
 
 // ContractQueryCommand wasm/native/evm query cmd
 type ContractQueryCommand struct {
-	cli *Cli
-	cmd *cobra.Command
-
+	cli        *Cli
+	cmd        *cobra.Command
+	account    string
 	module     string
 	args       string
 	methodName string
@@ -49,6 +49,7 @@ func NewContractQueryCommand(cli *Cli, module string) *cobra.Command {
 
 func (c *ContractQueryCommand) addFlags() {
 	c.cmd.Flags().StringVarP(&c.args, "args", "a", "{}", "query method args")
+	c.cmd.Flags().StringVarP(&c.account, "account", "", "", "account name")
 	c.cmd.Flags().StringVarP(&c.methodName, "method", "", "get", "contract method name")
 	c.cmd.Flags().BoolVarP(&c.isMulti, "isMulti", "m", false, "multisig scene")
 	c.cmd.Flags().BoolVarP(&c.verbose, "verbose", "v", false, "show query result verbosely")
@@ -67,6 +68,7 @@ xchain wasm|native|evm query $codeaddr -a '{"Your contract parameters in json fo
 func (c *ContractQueryCommand) query(ctx context.Context, codeName string) error {
 	ct := &CommTrans{
 		ModuleName:   c.module,
+		From:         c.account,
 		ContractName: codeName,
 		MethodName:   c.methodName,
 		Args:         make(map[string][]byte),

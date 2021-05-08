@@ -12,6 +12,7 @@ require (
 	github.com/docker/go-connections v0.4.1-0.20180821093606-97c2040d34df // indirect
 	github.com/docker/go-units v0.4.0
 	github.com/fsouza/go-dockerclient v1.6.0
+	github.com/go-playground/validator/v10 v10.4.1
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang/protobuf v1.3.3
 	github.com/golang/snappy v0.0.1
@@ -45,7 +46,7 @@ require (
 	github.com/syndtr/goleveldb v1.0.1-0.20190923125748-758128399b1d
 	github.com/xuperchain/log15 v0.0.0-20190620081506-bc88a9198230
 	github.com/xuperchain/wagon v0.6.1-0.20200313164333-db544e251599
-	golang.org/x/crypto v0.0.0-20191206172530-e9b2fee46413
+	golang.org/x/crypto v0.0.0-20200622213623-75b288015ac9
 	golang.org/x/net v0.0.0-20200202094626-16171245cfb2
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
 	google.golang.org/genproto v0.0.0-20190927181202-20e1ac93f88c

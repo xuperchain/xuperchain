@@ -26,7 +26,6 @@ type Context interface {
 	CrossQuery(uri string, args map[string][]byte) (*Response, error)
 	EmitEvent(name string, body []byte) error
 	EmitJSONEvent(name string, body interface{}) error
-
 	Logf(fmt string, args ...interface{})
 }
 
