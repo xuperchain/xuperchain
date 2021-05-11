@@ -451,11 +451,11 @@ var fileDescriptor_2d17a9d3f0ddf27e = []byte{
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
-var _ grpc.ClientConn
+var _ grpc.ClientConnInterface
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion4
+const _ = grpc.SupportPackageIsVersion6
 
 // EventServiceClient is the client API for EventService service.
 //
@@ -465,10 +465,10 @@ type EventServiceClient interface {
 }
 
 type eventServiceClient struct {
-	cc *grpc.ClientConn
+	cc grpc.ClientConnInterface
 }
 
-func NewEventServiceClient(cc *grpc.ClientConn) EventServiceClient {
+func NewEventServiceClient(cc grpc.ClientConnInterface) EventServiceClient {
 	return &eventServiceClient{cc}
 }
 
