@@ -105,11 +105,35 @@ func TestEncodeDeployInput(t *testing.T) {
 }
 
 func TestUnpackEventFromAbi(t *testing.T) {
-	abiJson := `[{"inputs":[],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"string","name":"key","type":"string"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"increaseEvent","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"string","name":"key","type":"string"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"increaseEvent1","type":"event"},{"inputs":[{"internalType":"string","name":"key","type":"string"}],"name":"get","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"getOwner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"string","name":"key","type":"string"}],"name":"increase","outputs":[],"stateMutability":"payable","type":"function"}]`
-	contractName := "increaseEvent"
+	testCases := []struct {
+		abiJson      string
+		contractName string
+		eventAbi     string
+	}{
+		{
+			abiJson:      `[{"inputs":[],"stateMutability"{"indexed":false,"internalType":"string","name":"key","type":"string"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"increaseEvent","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"string","name":"key","type":"string"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"increaseEvent1","type":"event"},{"inputs":[{"internalType":"string","name":"key","type":"string"}],"name":"get","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"getOwner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"string","name":"key","type":"string"}],"name":"increase","outputs":[],"stateMutability":"payable","type":"function"}]`,
+			contractName: "increaseEvent",
+			eventAbi:     `{"anonymous":false,"inputs":[{"indexed":false,"internalType":"string","name":"key","type":"string"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"increaseEvent","type":"event"}`, //
 
-	//==== 以下为组装log
-	eventAbi := `{"anonymous":false,"inputs":[{"indexed":false,"internalType":"string","name":"key","type":"string"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"increaseEvent","type":"event"}` //
+		},
+		{
+			abiJson:      `[{"inputs":[],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"string","name":"key","type":"string"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"increaseEvent","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"string","name":"key","type":"string"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"increaseEvent1","type":"event"},{"inputs":[{"internalType":"string","name":"key","type":"string"}],"name":"get","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"getOwner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"string","name":"key","type":"string"}],"name":"increase","outputs":[],"stateMutability":"payable","type":"function"}]`,
+			contractName: "",
+			eventAbi:     `{"anonymous":false,"inputs":[{"indexed":false,"internalType":"string","name":"key","type":"string"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"increaseEvent","type":"event"}`, //
+
+		}, {
+			abiJson:      `[{"inputs":[],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"string","name":"key","type":"string"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"increaseEvent","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"string","name":"key","type":"string"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"increaseEvent1","type":"event"},{"inputs":[{"internalType":"string","name":"key","type":"string"}],"name":"get","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"getOwner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"string","name":"key","type":"string"}],"name":"increase","outputs":[],"stateMutability":"payable","type":"function"}]`,
+			contractName: "increaseEvent",
+			eventAbi:     `{"anonymous":false,"inputs":[{"indexed":false,"internalType":"string","name":"key","type":"string"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"increaseEvent","type":"event"}`, //
+
+		}, {
+			abiJson:      `[{"inputs":[],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"string","name":"key","type":"string"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"increaseEvent","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"string","name":"key","type":"string"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"increaseEvent1","type":"event"},{"inputs":[{"internalType":"string","name":"key","type":"string"}],"name":"get","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"getOwner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"string","name":"key","type":"string"}],"name":"increase","outputs":[],"stateMutability":"payable","type":"function"}]`,
+			contractName: "increaseEvent",
+			eventAbi:     `{"anonymous":false,"inputs":[{"indexed":false,"internalType":"string","name":"key","type":"string"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"increaseEvent","type":"event"}`, //
+
+		},
+	}
+
 	type args struct {
 		Key   string
 		Value int64
@@ -118,19 +142,24 @@ func TestUnpackEventFromAbi(t *testing.T) {
 		Key:   "test",
 		Value: 12,
 	}
-	eventSpec := new(abi.EventSpec)
-	err := json.Unmarshal([]byte(eventAbi), eventSpec)
-	if err != nil {
-		t.Error(err)
-	}
-	topics, data, err := abi.PackEvent(eventSpec, in)
-	log := &exec.LogEvent{}
-	log.Topics = topics
-	log.Data = data
 
-	event, err := unpackEventFromAbi([]byte(abiJson), contractName, log)
-	if err != nil {
-		t.Error(err)
+	for k, param := range testCases {
+		eventSpec := new(abi.EventSpec)
+		err := json.Unmarshal([]byte(param.eventAbi), eventSpec)
+		if err != nil {
+			t.Error(err)
+		}
+		topics, data, err := abi.PackEvent(eventSpec, in)
+		log := &exec.LogEvent{}
+		log.Topics = topics
+		log.Data = data
+
+		event, err := unpackEventFromAbi([]byte(param.abiJson), param.contractName, log)
+		if err != nil && k == len(testCases)-1 {
+			t.Error(err)
+		} else {
+			fmt.Println("expect err:", err)
+		}
+		fmt.Printf("%+v\n", event)
 	}
-	fmt.Printf("%+v\n", event)
 }
