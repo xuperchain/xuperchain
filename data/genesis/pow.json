@@ -1,0 +1,26 @@
+{
+    "version" : "1"
+    , "predistribution":[
+        {
+            "address" : "TeyyPLpp9L7QAcxHangtcHTu7HUZ6iydY"
+            , "quota" : "1000000000000000"
+        }
+    ]
+    , "maxblocksize" : "128"
+    , "award" : "1000000"
+    , "decimals" : "8"
+    , "award_decay": {
+        "height_gap": 31536000,
+        "ratio": 0.5
+    }
+    , "new_account_resource_amount": 1000
+    , "genesis_consensus":{
+       "name": "pow",
+       "config": {
+			"defaultTarget": "545259519",
+			"adjustHeightGap": "5",
+			"expectedPeriod": "15",
+			"maxTarget": "486604799"
+       }
+    }
+}

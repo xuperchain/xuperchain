@@ -1,0 +1,6 @@
+# 账本配置
+
+# 存储引擎配置，不支持中途更换
+kvEngineType: leveldb
+# 数据存储方式
+storageType: single

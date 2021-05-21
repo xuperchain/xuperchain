@@ -1,0 +1,10 @@
+{
+  "module_name": "xkernel",
+  "contract_name": "$acl",
+  "method_name": "SetMethodAcl",
+  "args" : {
+    "contract_name": "counter.wasm",
+    "method_name": "increase",
+    "acl": "{\"pm\": {\"rule\": 1,\"acceptValue\": 1.0},\"aksWeight\": {\"TeyyPLpp9L7QAcxHangtcHTu7HUZ6iydY\": 1.0,\"SmJG3rH2ZzYQ9ojxhbRCPwFiE9y6pD1Co\": 1.0}}"
+  }
+}

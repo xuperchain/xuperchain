@@ -1,0 +1,19 @@
+# p2p network config
+
+# Module is the name of p2p module plugin.(p2pv1 | p2pv2)
+module: p2pv2
+# Port the p2p network listened
+port: 38202
+# Address multiaddr string
+address: /ip4/127.0.0.1/tcp/38202
+# IsTls config the node use tls secure transparent
+isTls: true
+# KeyPath is the netdisk private key path
+keyPath: netkeys
+# BootNodes config the bootNodes the node to connect
+bootNodes:
+  - "/ip4/127.0.0.1/tcp/38201/p2p/Qmf2HeHe4sspGkfRCTq6257Vm3UHzvh2TeQJHHvHzzuFw6"
+  - "/ip4/127.0.0.1/tcp/38202/p2p/QmQKp8pLWSgV4JiGjuULKV1JsdpxUtnDEUMP8sGaaUbwVL"
+  - "/ip4/127.0.0.1/tcp/38203/p2p/QmZXjZibcL5hy2Ttv5CnAQnssvnCbPEGBzqk7sAnL69R1E"
+# service name
+serviceName: localhost

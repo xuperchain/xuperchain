@@ -1,0 +1,39 @@
+syntax = "proto3";
+
+// import "xupercore/bcs/ledger/xledger/xldgpb/xledger.proto";
+// import "xupercore/protos/contract.proto";
+
+package xupospb;
+
+// 通用请求Header
+message ReqHeader {
+    // 请求id
+    string log_id = 1;
+    // 标记请求方，方便问题定位
+    string self_name = 2;
+}
+
+// 通用响应Header
+message RespHeader {
+    // 请求id
+    string log_id = 1;
+    // 错误码
+    int64 err_code = 2;
+    // 错误信息
+    string err_msg = 3;
+    // 节点追踪信息，方便问题定位
+    string trace_id = 4;
+}
+
+message BaseReq {
+    ReqHeader header = 1;
+}
+
+message BaseResp {
+    RespHeader header = 1;
+}
+
+service XuperOS {
+    // 示例接口
+    rpc CheckAlive(BaseReq) returns (BaseResp) {}
+}
