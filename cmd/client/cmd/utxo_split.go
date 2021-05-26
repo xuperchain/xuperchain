@@ -11,8 +11,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/xuperchain/xuperchain/common/xupospb/pb"
 	"github.com/xuperchain/xuperchain/service/common"
+	"github.com/xuperchain/xuperchain/service/xchainpb/pb"
 	"github.com/xuperchain/xupercore/bcs/ledger/xledger/state/utxo"
 	aclUtils "github.com/xuperchain/xupercore/kernel/permission/acl/utils"
 	"github.com/xuperchain/xupercore/lib/utils"

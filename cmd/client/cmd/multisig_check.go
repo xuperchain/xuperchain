@@ -13,7 +13,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/spf13/cobra"
 
-	"github.com/xuperchain/xuperchain/common/xupospb/pb"
+	"github.com/xuperchain/xuperchain/service/xchainpb/pb"
 )
 
 // MultisigCheckCommand multisig check struct

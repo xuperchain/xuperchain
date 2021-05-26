@@ -21,9 +21,9 @@ import (
 	ecom "github.com/xuperchain/xupercore/kernel/engines/xuperos/common"
 	"github.com/xuperchain/xupercore/lib/logs"
 
-	sconf "github.com/xuperchain/xuperchain/common/config"
-	"github.com/xuperchain/xuperchain/common/def"
-	"github.com/xuperchain/xuperchain/common/xupospb/pb"
+	scom "github.com/xuperchain/xuperchain/service/common"
+	sconf "github.com/xuperchain/xuperchain/service/config"
+	"github.com/xuperchain/xuperchain/service/xchainpb/pb"
 )
 
 // rpc server启停控制管理
@@ -46,7 +46,7 @@ func NewRpcServMG(scfg *sconf.ServConf, engine engines.BCEngine) (*RpcServMG, er
 		return nil, fmt.Errorf("not xuperos engine")
 	}
 
-	log, _ := logs.NewLogger("", def.SubModName)
+	log, _ := logs.NewLogger("", scom.SubModName)
 	obj := &RpcServMG{
 		scfg:     scfg,
 		engine:   xosEngine,

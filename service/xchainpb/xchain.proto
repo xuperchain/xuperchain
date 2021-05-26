@@ -3,7 +3,7 @@ syntax = "proto3";
 // import "xupercore/bcs/ledger/xledger/xldgpb/xledger.proto";
 // import "xupercore/protos/contract.proto";
 
-package xupospb;
+package xchainpb;
 
 // 通用请求Header
 message ReqHeader {

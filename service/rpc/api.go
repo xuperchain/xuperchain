@@ -4,9 +4,9 @@ import (
 	"context"
 	"math/big"
 
-	"github.com/xuperchain/xuperchain/common/xupospb/pb"
 	"github.com/xuperchain/xuperchain/models"
 	acom "github.com/xuperchain/xuperchain/service/common"
+	"github.com/xuperchain/xuperchain/service/xchainpb/pb"
 	sctx "github.com/xuperchain/xupercore/example/xchain/common/context"
 	ecom "github.com/xuperchain/xupercore/kernel/engines/xuperos/common"
 	"github.com/xuperchain/xupercore/kernel/network/p2p"

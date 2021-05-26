@@ -3,7 +3,7 @@ package common
 import (
 	"fmt"
 
-	"github.com/xuperchain/xuperchain/common/xupospb/pb"
+	"github.com/xuperchain/xuperchain/service/xchainpb/pb"
 	"github.com/xuperchain/xupercore/bcs/ledger/xledger/state/utxo/txhash"
 	crypto_base "github.com/xuperchain/xupercore/lib/crypto/client/base"
 )

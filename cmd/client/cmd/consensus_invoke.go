@@ -8,7 +8,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/xuperchain/xuperchain/common/xupospb/pb"
+	"github.com/xuperchain/xuperchain/service/xchainpb/pb"
 	"github.com/xuperchain/xupercore/bcs/ledger/xledger/state/utxo"
 	"github.com/xuperchain/xupercore/lib/utils"
 )
@@ -93,7 +93,6 @@ func (c *ConsensusInvokeCommand) invoke(ctx context.Context) error {
 		Keys:         c.cli.RootOptions.Keys,
 		XchainClient: c.cli.XchainClient(),
 		CryptoType:   c.cli.RootOptions.Crypto,
-		CliConf:      c.cli.CliConf,
 		Fee:          c.fee,
 		Output:       c.output,
 	}

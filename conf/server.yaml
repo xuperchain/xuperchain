@@ -1,8 +1,8 @@
 # rpcPort service listen port for xuperos
-rpcPort: 36201
-metricPort: 36801
+rpcPort: 37101
+metricPort: 37200
 # GWPort gateway service listen port for xchain
-GWPort: 36301
+GWPort: 37301
 # enableEndorser switch for endorser service
 enableEndorser: true
 # endorserHosts

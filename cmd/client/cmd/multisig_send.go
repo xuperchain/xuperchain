@@ -16,8 +16,8 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/spf13/cobra"
 
-	"github.com/xuperchain/xuperchain/common/xupospb/pb"
 	"github.com/xuperchain/xuperchain/service/common"
+	"github.com/xuperchain/xuperchain/service/xchainpb/pb"
 	crypto_client "github.com/xuperchain/xupercore/lib/crypto/client"
 	"github.com/xuperchain/xupercore/lib/utils"
 )

@@ -1,9 +1,9 @@
 # Rpc service listen port
-rpcPort: 36202
+rpcPort: 37102
 # GWPort
-GWPort: 36302
+GWPort: 37302
 # MetricPort
-metricPort: 36802
+metricPort: 37202
 # EnableEndorser
 enableEndorser: true
 ## EndorserHosts

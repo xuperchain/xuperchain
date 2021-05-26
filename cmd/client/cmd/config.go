@@ -8,17 +8,6 @@ import (
 	"github.com/spf13/viper"
 )
 
-type CliConfig struct {
-	Host               string                `yaml:"host,omitempty"`
-	Name               string                `yaml:"name,omitempty"`
-	Keys               string                `yaml:"keys,omitempty"`
-	Crypto             string                `yaml:"crypto,omitempty"`
-	TLS                TLSOptions            `yaml:"tls,omitempty"`
-	EndorseServiceHost string                `yaml:"endorseServiceHost,omitempty"`
-	ComplianceCheck    ComplianceCheckConfig `yaml:"complianceCheck,omitempty"`
-	MinNewChainAmount  string                `yaml:"minNewChainAmount,omitempty"`
-}
-
 // TLSOptions TLS part
 type TLSOptions struct {
 	Cert   string `yaml:"cert,omitempty"`
@@ -39,15 +28,15 @@ type ComplianceCheckConfig struct {
 	ComplianceCheckEndorseServiceAddr string `yaml:"complianceCheckEndorseServiceAddr,omitempty"`
 }
 
-// NewNodeConfig new a NodeConfig instance
-func NewCliConfig() *CliConfig {
-	xendorserConfig := &CliConfig{}
+// NewRootOptions new a RootOptions instance
+func NewRootOptions() *RootOptions {
+	xendorserConfig := &RootOptions{}
 	xendorserConfig.setDefaultConf()
 	return xendorserConfig
 }
 
 // LoadConfig load Node Config from the specific path/file
-func (nc *CliConfig) LoadConfig(fileName string) error {
+func (nc *RootOptions) LoadConfig(fileName string) error {
 	confPath, fileNameOnly := filepath.Split(fileName)
 	fileSuffix := path.Ext(fileName)
 	confName := fileNameOnly[0 : len(fileNameOnly)-len(fileSuffix)]
@@ -59,7 +48,7 @@ func (nc *CliConfig) LoadConfig(fileName string) error {
 	return nil
 }
 
-func (nc *CliConfig) loadConfigFile(configPath string, confName string) error {
+func (nc *RootOptions) loadConfigFile(configPath string, confName string) error {
 	viper.SetConfigName(confName)
 	viper.AddConfigPath(configPath)
 	err := viper.ReadInConfig()
@@ -74,8 +63,8 @@ func (nc *CliConfig) loadConfigFile(configPath string, confName string) error {
 	return nil
 }
 
-func (nc *CliConfig) setDefaultConf() {
-	nc.Host = "127.0.0.1:36201"
+func (nc *RootOptions) setDefaultConf() {
+	nc.Host = "127.0.0.1:37101"
 	nc.Name = "xuper"
 	nc.Keys = "./data/keys"
 	nc.Crypto = "default"

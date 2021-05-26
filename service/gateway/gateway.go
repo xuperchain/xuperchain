@@ -11,9 +11,9 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"google.golang.org/grpc"
 
-	sconf "github.com/xuperchain/xuperchain/common/config"
-	"github.com/xuperchain/xuperchain/common/def"
-	"github.com/xuperchain/xuperchain/common/xupospb/pb"
+	scom "github.com/xuperchain/xuperchain/service/common"
+	sconf "github.com/xuperchain/xuperchain/service/config"
+	"github.com/xuperchain/xuperchain/service/xchainpb/pb"
 	"github.com/xuperchain/xupercore/lib/logs"
 )
 
@@ -30,7 +30,7 @@ func NewGateway(scfg *sconf.ServConf) (*Gateway, error) {
 		return nil, fmt.Errorf("param error")
 	}
 
-	log, _ := logs.NewLogger("", def.SubModName)
+	log, _ := logs.NewLogger("", scom.SubModName)
 	obj := &Gateway{
 		scfg:     scfg,
 		log:      log,

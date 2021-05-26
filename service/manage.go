@@ -6,8 +6,8 @@ import (
 	"github.com/xuperchain/xupercore/kernel/engines"
 	"github.com/xuperchain/xupercore/lib/logs"
 
-	sconf "github.com/xuperchain/xuperchain/common/config"
-	"github.com/xuperchain/xuperchain/common/def"
+	scom "github.com/xuperchain/xuperchain/service/common"
+	sconf "github.com/xuperchain/xuperchain/service/config"
 	gw "github.com/xuperchain/xuperchain/service/gateway"
 	"github.com/xuperchain/xuperchain/service/rpc"
 )
@@ -30,7 +30,7 @@ func NewServMG(scfg *sconf.ServConf, engine engines.BCEngine) (*ServMG, error) {
 		return nil, fmt.Errorf("param error")
 	}
 
-	log, _ := logs.NewLogger("", def.SubModName)
+	log, _ := logs.NewLogger("", scom.SubModName)
 	obj := &ServMG{
 		scfg:    scfg,
 		log:     log,

@@ -8,9 +8,9 @@ import (
 	"golang.org/x/net/context"
 	"google.golang.org/grpc/peer"
 
-	sconf "github.com/xuperchain/xuperchain/common/config"
-	"github.com/xuperchain/xuperchain/common/xupospb/pb"
 	acom "github.com/xuperchain/xuperchain/service/common"
+	sconf "github.com/xuperchain/xuperchain/service/config"
+	"github.com/xuperchain/xuperchain/service/xchainpb/pb"
 	ecom "github.com/xuperchain/xupercore/kernel/engines/xuperos/common"
 	"github.com/xuperchain/xupercore/kernel/engines/xuperos/event"
 )

@@ -12,7 +12,7 @@ import (
 	"io/ioutil"
 
 	"github.com/spf13/cobra"
-	"github.com/xuperchain/xuperchain/common/xupospb/pb"
+	"github.com/xuperchain/xuperchain/service/xchainpb/pb"
 	"github.com/xuperchain/xupercore/bcs/ledger/xledger/state/utxo"
 	"github.com/xuperchain/xupercore/kernel/permission/acl/utils"
 )
@@ -73,7 +73,6 @@ func (c *AccountNewCommand) newAccount(ctx context.Context) error {
 		Keys:         c.cli.RootOptions.Keys,
 		XchainClient: c.cli.XchainClient(),
 		CryptoType:   c.cli.RootOptions.Crypto,
-		CliConf:      c.cli.CliConf,
 
 		DebugTx: c.debug,
 	}

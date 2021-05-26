@@ -6,8 +6,8 @@ import (
 	"sync"
 	"syscall"
 
-	sconf "github.com/xuperchain/xuperchain/common/config"
 	"github.com/xuperchain/xuperchain/service"
+	sconf "github.com/xuperchain/xuperchain/service/config"
 	econf "github.com/xuperchain/xupercore/kernel/common/xconfig"
 	"github.com/xuperchain/xupercore/kernel/engines"
 	"github.com/xuperchain/xupercore/kernel/engines/xuperos/common"

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/xuperchain/xuperchain/common/def"
+	scom "github.com/xuperchain/xuperchain/service/common"
 	"github.com/xuperchain/xupercore/kernel/engines/xuperos/common"
 	"github.com/xuperchain/xupercore/lib/logs"
 	"github.com/xuperchain/xupercore/lib/timer"
@@ -36,7 +36,7 @@ func NewReqCtx(engine common.Engine, reqId, clientIp string) (ReqCtx, error) {
 		return nil, fmt.Errorf("new request context failed because engine is nil")
 	}
 
-	log, err := logs.NewLogger(reqId, def.SubModName)
+	log, err := logs.NewLogger(reqId, scom.SubModName)
 	if err != nil {
 		return nil, fmt.Errorf("new request context failed because new logger failed.err:%s", err)
 	}

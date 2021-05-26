@@ -20,8 +20,8 @@ import (
 	"github.com/golang/protobuf/proto"
 	"google.golang.org/grpc"
 
-	"github.com/xuperchain/xuperchain/common/xupospb/pb"
 	"github.com/xuperchain/xuperchain/service/common"
+	"github.com/xuperchain/xuperchain/service/xchainpb/pb"
 	"github.com/xuperchain/xupercore/bcs/ledger/xledger/state/utxo"
 	"github.com/xuperchain/xupercore/kernel/contract"
 	crypto_client "github.com/xuperchain/xupercore/lib/crypto/client"
@@ -57,10 +57,10 @@ type CommTrans struct {
 	Keys         string
 	XchainClient pb.XchainClient
 	CryptoType   string
+	RootOptions  RootOptions
 
 	// DebugTx if enabled, tx will be printed instead of being posted
 	DebugTx bool
-	CliConf *CliConfig
 }
 
 // GenerateTx generate raw tx
@@ -386,7 +386,7 @@ func (c *CommTrans) GenTxInputs(ctx context.Context, totalNeed *big.Int) (
 func (c *CommTrans) Transfer(ctx context.Context) error {
 	var err error
 	tx := &pb.Transaction{}
-	if c.CliConf.ComplianceCheck.IsNeedComplianceCheck == true {
+	if c.RootOptions.ComplianceCheck.IsNeedComplianceCheck == true {
 		preSelectUTXORes, err := c.GenPreExeWithSelectUtxoRes(ctx)
 		if err != nil {
 			return err
@@ -752,7 +752,7 @@ func (c *CommTrans) GenPreExeWithSelectUtxoRes(ctx context.Context) (
 			return nil, fmt.Errorf("Get auth require error: %s", err.Error())
 		}
 	}
-	extraAmount := int64(c.CliConf.ComplianceCheck.ComplianceCheckEndorseServiceFee)
+	extraAmount := int64(c.RootOptions.ComplianceCheck.ComplianceCheckEndorseServiceFee)
 	if c.Fee != "" && c.Fee != "0" {
 		fee, err := strconv.ParseInt(c.Fee, 10, 64)
 		if err != nil {
@@ -760,7 +760,7 @@ func (c *CommTrans) GenPreExeWithSelectUtxoRes(ctx context.Context) (
 		}
 		extraAmount += fee
 	}
-	preExeRPCReq.AuthRequire = append(preExeRPCReq.AuthRequire, c.CliConf.ComplianceCheck.ComplianceCheckEndorseServiceAddr)
+	preExeRPCReq.AuthRequire = append(preExeRPCReq.AuthRequire, c.RootOptions.ComplianceCheck.ComplianceCheckEndorseServiceAddr)
 	preSelUTXOReq := &pb.PreExecWithSelectUTXORequest{
 		Bcname:      c.ChainName,
 		Address:     initiator,
@@ -909,7 +909,7 @@ func (c *CommTrans) GenRealTx(response *pb.PreExecWithSelectUTXOResponse,
 		authRequire = fromAddr
 	}
 	tx.AuthRequire = append(tx.AuthRequire, authRequire)
-	tx.AuthRequire = append(tx.AuthRequire, c.CliConf.ComplianceCheck.ComplianceCheckEndorseServiceAddr)
+	tx.AuthRequire = append(tx.AuthRequire, c.RootOptions.ComplianceCheck.ComplianceCheckEndorseServiceAddr)
 
 	cryptoClient, err := crypto_client.CreateCryptoClient(c.CryptoType)
 	if err != nil {
@@ -1015,7 +1015,7 @@ func (c *CommTrans) ComplianceCheck(tx *pb.Transaction, fee *pb.Transaction) (
 		RequestData: requestData,
 	}
 
-	conn, err := grpc.Dial(c.CliConf.EndorseServiceHost, grpc.WithInsecure(), grpc.WithMaxMsgSize(64<<20-1))
+	conn, err := grpc.Dial(c.RootOptions.EndorseServiceHost, grpc.WithInsecure(), grpc.WithMaxMsgSize(64<<20-1))
 	if err != nil {
 		fmt.Printf("ComplianceCheck connect EndorseServiceHost err: %v", err)
 		return nil, err
@@ -1035,15 +1035,15 @@ func (c *CommTrans) ComplianceCheck(tx *pb.Transaction, fee *pb.Transaction) (
 }
 
 func (c *CommTrans) GenComplianceCheckTx(utxoOutput *pb.UtxoOutput) (*pb.Transaction, error) {
-	totalNeed := new(big.Int).SetInt64(int64(c.CliConf.ComplianceCheck.ComplianceCheckEndorseServiceFee))
+	totalNeed := new(big.Int).SetInt64(int64(c.RootOptions.ComplianceCheck.ComplianceCheckEndorseServiceFee))
 	txInputs, deltaTxOutput, err := c.GenerateTxInput(utxoOutput, totalNeed)
 	if err != nil {
 		fmt.Printf("GenerateComplianceTx GenerateTxInput failed.")
 		return nil, fmt.Errorf("GenerateComplianceTx GenerateTxInput err: %v", err)
 	}
 
-	checkAmount := strconv.Itoa(c.CliConf.ComplianceCheck.ComplianceCheckEndorseServiceFee)
-	txOutputs, err := c.GenerateTxOutput(c.CliConf.ComplianceCheck.ComplianceCheckEndorseFeeAddr, checkAmount, "0")
+	checkAmount := strconv.Itoa(c.RootOptions.ComplianceCheck.ComplianceCheckEndorseServiceFee)
+	txOutputs, err := c.GenerateTxOutput(c.RootOptions.ComplianceCheck.ComplianceCheckEndorseFeeAddr, checkAmount, "0")
 	if err != nil {
 		fmt.Printf("GenerateComplianceTx GenerateTxOutput failed.")
 		return nil, fmt.Errorf("GenerateComplianceTx GenerateTxOutput err: %v", err)

@@ -14,7 +14,7 @@ import (
 	"github.com/xuperchain/xupercore/lib/logs"
 	"github.com/xuperchain/xupercore/protos"
 
-	sctx "github.com/xuperchain/xuperchain/common/context"
+	sctx "github.com/xuperchain/xuperchain/service/context"
 )
 
 type ChainHandle struct {

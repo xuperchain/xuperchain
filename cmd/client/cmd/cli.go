@@ -23,8 +23,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
-	"github.com/xuperchain/xuperchain/common/xupospb/pb"
 	"github.com/xuperchain/xuperchain/service/common"
+	"github.com/xuperchain/xuperchain/service/xchainpb/pb"
 	crypto_client "github.com/xuperchain/xupercore/lib/crypto/client"
 	crypto_base "github.com/xuperchain/xupercore/lib/crypto/client/base"
 	cryptoHash "github.com/xuperchain/xupercore/lib/crypto/hash"
@@ -41,17 +41,20 @@ var (
 
 // RootOptions 代表全局通用的flag，可以以嵌套结构体的方式组织flags.
 type RootOptions struct {
-	Host   string
-	Name   string
-	Keys   string
-	Crypto string
-	Config string
+	Host               string
+	Name               string
+	Keys               string
+	Crypto             string
+	Config             string
+	TLS                TLSOptions            `yaml:"tls,omitempty"`
+	EndorseServiceHost string                `yaml:"endorseServiceHost,omitempty"`
+	ComplianceCheck    ComplianceCheckConfig `yaml:"complianceCheck,omitempty"`
+	MinNewChainAmount  string                `yaml:"minNewChainAmount,omitempty"`
 }
 
 // Cli 是所有子命令执行的上下文.
 type Cli struct {
 	RootOptions RootOptions
-	CliConf     *CliConfig
 
 	rootCmd *cobra.Command
 	xclient pb.XchainClient
@@ -88,22 +91,21 @@ func (c *Cli) initXchainClient() error {
 func (c *Cli) initFlags() error {
 	// 参数设置优先级：1.命令行指定 2.配置文件指定 3.默认值
 	// 加载配置文件
-	var cliCfgFile string
+	var cfgFile string
 	rootFlag := c.rootCmd.PersistentFlags()
-	rootFlag.StringVarP(&cliCfgFile, "conf", "C", "./conf/client.yaml", "client config file")
-	cliCfg := NewCliConfig()
-	err := cliCfg.LoadConfig(cliCfgFile)
+	rootFlag.StringVarP(&cfgFile, "conf", "C", "./conf/xchain-cli.yaml", "client config file")
+	cliCfg := NewRootOptions()
+	err := cliCfg.LoadConfig(cfgFile)
 	if err != nil {
-		fmt.Printf("load client config failed.config:%s err:%v\n", cliCfgFile, err)
+		fmt.Printf("load client config failed.config:%s err:%v\n", cfgFile, err)
 		os.Exit(-1)
 	}
-	c.CliConf = cliCfg
 
 	// 设置命令行参数和默认值
-	rootFlag.StringP("host", "H", c.CliConf.Host, "server node ip:port")
-	rootFlag.String("name", c.CliConf.Name, "block chain name")
-	rootFlag.String("keys", c.CliConf.Keys, "directory of keys")
-	rootFlag.String("crypto", c.CliConf.Crypto, "crypto type")
+	rootFlag.StringP("host", "H", c.RootOptions.Host, "server node ip:port")
+	rootFlag.String("name", c.RootOptions.Name, "block chain name")
+	rootFlag.String("keys", c.RootOptions.Keys, "directory of keys")
+	rootFlag.String("crypto", c.RootOptions.Crypto, "crypto type")
 	viper.BindPFlags(rootFlag)
 
 	cobra.OnInitialize(func() {
@@ -205,8 +207,8 @@ func (c *Cli) RangeNodes(ctx context.Context, f func(addr string, client pb.Xcha
 		return err
 	}
 	options := []grpc.DialOption{grpc.WithMaxMsgSize(64<<20 - 1)}
-	if c.CliConf.TLS.Enable {
-		cred, err := genCreds(c.CliConf.TLS.Cert, c.CliConf.TLS.Server)
+	if c.RootOptions.TLS.Enable {
+		cred, err := genCreds(c.RootOptions.TLS.Cert, c.RootOptions.TLS.Server)
 		if err != nil {
 			return err
 		}

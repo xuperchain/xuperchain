@@ -12,7 +12,7 @@ import (
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 
-	"github.com/xuperchain/xuperchain/common/xupospb/pb"
+	"github.com/xuperchain/xuperchain/service/xchainpb/pb"
 	"github.com/xuperchain/xupercore/bcs/ledger/xledger/state/utxo"
 )
 
@@ -83,7 +83,7 @@ func (c *GetComplianceCheckSignCommand) get(ctx context.Context) error {
 		Keys:         c.cli.RootOptions.Keys,
 		XchainClient: c.cli.XchainClient(),
 		CryptoType:   c.cli.RootOptions.Crypto,
-		CliConf:      c.cli.CliConf,
+		RootOptions:  c.cli.RootOptions,
 	}
 
 	var fromAddr string
@@ -96,7 +96,7 @@ func (c *GetComplianceCheckSignCommand) get(ctx context.Context) error {
 		}
 	}
 
-	totalNeed := big.NewInt(0).SetInt64(int64(c.cli.CliConf.ComplianceCheck.ComplianceCheckEndorseServiceFee))
+	totalNeed := big.NewInt(0).SetInt64(int64(c.cli.RootOptions.ComplianceCheck.ComplianceCheckEndorseServiceFee))
 	utxoInput := &pb.UtxoInput{
 		Bcname:    ct.ChainName,
 		Address:   fromAddr,
