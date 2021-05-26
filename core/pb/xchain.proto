@@ -197,7 +197,12 @@ service Xchain {
   }
 
   // GetNetURL return net url
-  rpc GetNetURL(CommonIn) returns (RawUrl) {}
+  rpc GetNetURL(CommonIn) returns (RawUrl) {
+    option (google.api.http) = {
+      post : "/v1/get_net_url"
+      body : "*"
+    };
+  }
 
   // 新的Select utxos接口, 不需要签名，可以支持选择账户的utxo
   rpc SelectUTXO(UtxoInput) returns (UtxoOutput) {
@@ -220,24 +225,59 @@ service Xchain {
    * DPoS query interface
    */
   //  DposCandidates get all candidates of the tdpos consensus
-  rpc DposCandidates(DposCandidatesRequest) returns (DposCandidatesResponse);
+  rpc DposCandidates(DposCandidatesRequest) returns (DposCandidatesResponse) {
+    option (google.api.http) = {
+      post : "/v1/get_dpos_candidates"
+      body : "*"
+    };
+  }
   //  DposNominateRecords get all records nominated by an user
   rpc DposNominateRecords(DposNominateRecordsRequest)
-      returns (DposNominateRecordsResponse);
+      returns (DposNominateRecordsResponse) {
+    option (google.api.http) = {
+      post : "/v1/get_dpos_nominaterecords"
+      body : "*"
+    };
+  }
   //  DposNomineeRecords get nominated record of a candidate
   rpc DposNomineeRecords(DposNomineeRecordsRequest)
-      returns (DposNomineeRecordsResponse);
+      returns (DposNomineeRecordsResponse) {
+    option (google.api.http) = {
+      post : "/v1/get_dpos_nomineerecords"
+      body : "*"
+    };
+  }
   //  DposVoteRecords get all vote records voted by an user
-  rpc DposVoteRecords(DposVoteRecordsRequest) returns (DposVoteRecordsResponse);
+  rpc DposVoteRecords(DposVoteRecordsRequest) returns (DposVoteRecordsResponse) {
+    option (google.api.http) = {
+      post : "/v1/get_dpos_voterecords"
+      body : "*"
+    };
+  }
   //  DposVotedRecords get all vote records of a candidate
   rpc DposVotedRecords(DposVotedRecordsRequest)
-      returns (DposVotedRecordsResponse);
+      returns (DposVotedRecordsResponse) {
+    option (google.api.http) = {
+      post : "/v1/get_dpos_votedrecords"
+      body : "*"
+    };
+  }
   //  DposCheckResults get check results of a specific term
   rpc DposCheckResults(DposCheckResultsRequest)
-      returns (DposCheckResultsResponse);
+      returns (DposCheckResultsResponse) {
+    option (google.api.http) = {
+      post : "/v1/get_dpos_checkresult"
+      body : "*"
+    };
+  }
 
   // DposStatus get dpos status
-  rpc DposStatus(DposStatusRequest) returns (DposStatusResponse);
+  rpc DposStatus(DposStatusRequest) returns (DposStatusResponse) {
+    option (google.api.http) = {
+      post : "/v1/get_dpos_status"
+      body : "*"
+    };
+  }
 
   // GetAccountByAK get account sets contain a specific address
   rpc GetAccountByAK(AK2AccountRequest) returns (AK2AccountResponse) {
