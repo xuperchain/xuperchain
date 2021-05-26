@@ -10,7 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/xuperchain/xuperchain/service/xchainpb/pb"
+	"github.com/xuperchain/xuperchain/service/pb"
 )
 
 // QueryNomineeRecordsCommand query nominee records

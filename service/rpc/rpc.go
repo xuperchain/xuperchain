@@ -18,7 +18,7 @@ import (
 	"github.com/xuperchain/xupercore/lib/utils"
 
 	acom "github.com/xuperchain/xuperchain/service/common"
-	"github.com/xuperchain/xuperchain/service/xchainpb/pb"
+	"github.com/xuperchain/xuperchain/service/pb"
 )
 
 type RpcServ struct {

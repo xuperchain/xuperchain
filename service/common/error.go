@@ -1,7 +1,7 @@
 package common
 
 import (
-	"github.com/xuperchain/xuperchain/service/xchainpb/pb"
+	"github.com/xuperchain/xuperchain/service/pb"
 	ecom "github.com/xuperchain/xupercore/kernel/engines/xuperos/common"
 )
 

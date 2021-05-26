@@ -1,5 +1,5 @@
 package common
 
 const (
-	SubModName = "xuperos"
+	SubModName = "xchain"
 )

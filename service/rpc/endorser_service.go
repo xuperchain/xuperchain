@@ -14,7 +14,7 @@ import (
 
 	scom "github.com/xuperchain/xuperchain/service/common"
 	sconf "github.com/xuperchain/xuperchain/service/config"
-	"github.com/xuperchain/xuperchain/service/xchainpb/pb"
+	"github.com/xuperchain/xuperchain/service/pb"
 	"github.com/xuperchain/xupercore/bcs/ledger/xledger/state/utxo/txhash"
 	sctx "github.com/xuperchain/xupercore/example/xchain/common/context"
 	ecom "github.com/xuperchain/xupercore/kernel/engines/xuperos/common"

@@ -21,7 +21,7 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/xuperchain/xuperchain/service/common"
-	"github.com/xuperchain/xuperchain/service/xchainpb/pb"
+	"github.com/xuperchain/xuperchain/service/pb"
 	"github.com/xuperchain/xupercore/bcs/ledger/xledger/state/utxo"
 	"github.com/xuperchain/xupercore/kernel/contract"
 	crypto_client "github.com/xuperchain/xupercore/lib/crypto/client"

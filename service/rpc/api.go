@@ -6,7 +6,7 @@ import (
 
 	"github.com/xuperchain/xuperchain/models"
 	acom "github.com/xuperchain/xuperchain/service/common"
-	"github.com/xuperchain/xuperchain/service/xchainpb/pb"
+	"github.com/xuperchain/xuperchain/service/pb"
 	sctx "github.com/xuperchain/xupercore/example/xchain/common/context"
 	ecom "github.com/xuperchain/xupercore/kernel/engines/xuperos/common"
 	"github.com/xuperchain/xupercore/kernel/network/p2p"

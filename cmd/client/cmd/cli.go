@@ -24,7 +24,7 @@ import (
 	"google.golang.org/grpc/credentials"
 
 	"github.com/xuperchain/xuperchain/service/common"
-	"github.com/xuperchain/xuperchain/service/xchainpb/pb"
+	"github.com/xuperchain/xuperchain/service/pb"
 	crypto_client "github.com/xuperchain/xupercore/lib/crypto/client"
 	crypto_base "github.com/xuperchain/xupercore/lib/crypto/client/base"
 	cryptoHash "github.com/xuperchain/xupercore/lib/crypto/hash"

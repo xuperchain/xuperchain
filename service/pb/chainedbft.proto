@@ -4,7 +4,7 @@ package pb;
 
 // QCState is the phase of hotstuff
 enum QCState {
-    NEW_VIEW = 0; 
+    NEW_VIEW = 0;
     PREPARE = 1;
     PRE_COMMIT = 2;
     COMMIT = 3;
