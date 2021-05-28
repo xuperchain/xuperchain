@@ -1,0 +1,28 @@
+enableUpgrade: true
+
+wasm:
+  driver: "xvm"
+  xvm:
+    optLevel: 0
+
+# evm合约配置
+evm:
+  driver: "evm"
+  enable: true
+
+# 管理native合约的配置
+native:
+  enable: true
+
+  # docker相关配置
+  docker:
+    enable: false
+    # 合约运行的镜像名字
+    imageName: "docker.io/centos:7.5.1804"
+    # cpu核数限制，可以为小数
+    cpus: 1
+    # 内存大小限制
+    memory: "1G"
+
+  # 停止合约的等待秒数，超时强制杀死
+  stopTimeout: 3
