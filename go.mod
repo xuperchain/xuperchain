@@ -17,7 +17,7 @@ require (
 	github.com/google/gofuzz v1.1.1-0.20200604201612-c04b05f3adfa // indirect
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
-	github.com/grpc-ecosystem/grpc-gateway v1.9.3
+	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/hyperledger/burrow v0.30.5
 	github.com/ipfs/go-ipfs-addr v0.0.1 // indirect
 	github.com/libp2p/go-libp2p-kad-dht v0.8.2 // indirect
@@ -35,7 +35,7 @@ require (
 	github.com/syndtr/goleveldb v1.0.1-0.20200815110645-5c35d600f0ca
 	github.com/xuperchain/crypto v0.0.0-20201028025054-4d560674bcd6
 	github.com/xuperchain/log15 v0.0.0-20190620081506-bc88a9198230
-	github.com/xuperchain/xupercore v0.0.0-20210525054057-4162b6943567
+	github.com/xuperchain/xupercore v0.0.0-20210528082019-f4a06ec81401
 	github.com/xuperchain/xvm v0.0.0-20210126142521-68fd016c56d7 // indirect
 	golang.org/x/crypto v0.0.0-20200728195943-123391ffb6de
 	golang.org/x/mod v0.1.1-0.20191209134235-331c550502dd // indirect
@@ -45,7 +45,7 @@ require (
 	golang.org/x/text v0.3.3 // indirect
 	golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
 	google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013
-	google.golang.org/grpc v1.32.0
+	google.golang.org/grpc v1.33.1
 	gopkg.in/yaml.v2 v2.3.0 // indirect
 )
 

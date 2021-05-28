@@ -94,13 +94,12 @@ func (c *Cli) initFlags() error {
 	var cfgFile string
 	rootFlag := c.rootCmd.PersistentFlags()
 	rootFlag.StringVarP(&cfgFile, "conf", "C", "./conf/xchain-cli.yaml", "client config file")
-	cliCfg := NewRootOptions()
-	err := cliCfg.LoadConfig(cfgFile)
+	c.RootOptions = NewRootOptions()
+	err := c.RootOptions.LoadConfig(cfgFile)
 	if err != nil {
 		fmt.Printf("load client config failed.config:%s err:%v\n", cfgFile, err)
 		os.Exit(-1)
 	}
-
 	// 设置命令行参数和默认值
 	rootFlag.StringP("host", "H", c.RootOptions.Host, "server node ip:port")
 	rootFlag.String("name", c.RootOptions.Name, "block chain name")

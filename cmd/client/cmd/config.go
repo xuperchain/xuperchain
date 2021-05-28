@@ -29,10 +29,10 @@ type ComplianceCheckConfig struct {
 }
 
 // NewRootOptions new a RootOptions instance
-func NewRootOptions() *RootOptions {
-	xendorserConfig := &RootOptions{}
-	xendorserConfig.setDefaultConf()
-	return xendorserConfig
+func NewRootOptions() RootOptions {
+	rootOptionConfig := RootOptions{}
+	rootOptionConfig.setDefaultConf()
+	return rootOptionConfig
 }
 
 // LoadConfig load Node Config from the specific path/file

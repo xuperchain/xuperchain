@@ -73,6 +73,7 @@ func (c *AccountNewCommand) newAccount(ctx context.Context) error {
 		Keys:         c.cli.RootOptions.Keys,
 		XchainClient: c.cli.XchainClient(),
 		CryptoType:   c.cli.RootOptions.Crypto,
+		RootOptions:  c.cli.RootOptions,
 
 		DebugTx: c.debug,
 	}
