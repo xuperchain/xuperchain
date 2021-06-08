@@ -7,10 +7,13 @@ import (
 	"fmt"
 	"io/ioutil"
 	"math/rand"
+	"net"
+	"strings"
 	"sync"
 	"time"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/peer"
 
 	scom "github.com/xuperchain/xuperchain/service/common"
 	sconf "github.com/xuperchain/xuperchain/service/config"
@@ -41,7 +44,7 @@ type ProxyXEndorser struct {
 func newEndorserService(cfg *sconf.ServConf, engine ecom.Engine, svr XEndorserServer) (XEndorser, error) {
 	switch cfg.EndorserModule {
 	case EndorserModuleDefault:
-		dxe := NewDefaultXEndorser(svr)
+		dxe := NewDefaultXEndorser(svr, engine)
 		return dxe, nil
 	case EndorserModuleProxy:
 		return &ProxyXEndorser{
@@ -122,6 +125,7 @@ type XEndorserServer interface {
 type DefaultXEndorser struct {
 	svr         XEndorserServer
 	requestType map[string]bool
+	engine      ecom.Engine
 }
 
 var _ XEndorser = (*DefaultXEndorser)(nil)
@@ -131,7 +135,7 @@ const (
 	DefaultKeyPath = "./data/endorser/keys/"
 )
 
-func NewDefaultXEndorser(svr XEndorserServer) *DefaultXEndorser {
+func NewDefaultXEndorser(svr XEndorserServer, engine ecom.Engine) *DefaultXEndorser {
 	return &DefaultXEndorser{
 		requestType: map[string]bool{
 			"PreExecWithFee":    true,
@@ -139,7 +143,8 @@ func NewDefaultXEndorser(svr XEndorserServer) *DefaultXEndorser {
 			"CrossQueryPreExec": true,
 			"TxQuery":           true,
 		},
-		svr: svr,
+		svr:    svr,
+		engine: engine,
 	}
 }
 
@@ -158,6 +163,12 @@ func (dxe *DefaultXEndorser) EndorserCall(ctx context.Context, req *pb.EndorserR
 		resHeader.Error = pb.XChainErrorEnum_SERVICE_REFUSED_ERROR
 		return dxe.generateErrorResponse(req, resHeader, errors.New("request name not supported"))
 	}
+
+	reqCtx, err := dxe.createReqCtx(ctx, req.Header)
+	if err != nil {
+		return nil, err
+	}
+	ctx = sctx.WithReqCtx(ctx, reqCtx)
 
 	switch req.GetRequestName() {
 	case "ComplianceCheck":
@@ -414,4 +425,34 @@ func (dxe *DefaultXEndorser) getEndorserKey(keypath string) ([]byte, []byte, []b
 
 	addr, err := ioutil.ReadFile(keypath + "address")
 	return addr, sk, ak, err
+}
+
+func (dxe *DefaultXEndorser) createReqCtx(gctx context.Context, reqHeader *pb.Header) (sctx.ReqCtx, error) {
+	// 获取客户端ip
+	clientIp, err := dxe.getClietIP(gctx)
+	if err != nil {
+		return nil, fmt.Errorf("get client ip failed.err:%v", err)
+	}
+
+	// 创建请求上下文
+	rctx, err := sctx.NewReqCtx(dxe.engine, reqHeader.GetLogid(), clientIp)
+	if err != nil {
+		return nil, fmt.Errorf("create request context failed.err:%v", err)
+	}
+
+	return rctx, nil
+}
+
+func (dxe *DefaultXEndorser) getClietIP(gctx context.Context) (string, error) {
+	pr, ok := peer.FromContext(gctx)
+	if !ok {
+		return "", nil
+	}
+
+	if pr.Addr == nil || pr.Addr == net.Addr(nil) {
+		return "", fmt.Errorf("get client_ip failed because peer.Addr is nil")
+	}
+
+	addrSlice := strings.Split(pr.Addr.String(), ":")
+	return addrSlice[0], nil
 }

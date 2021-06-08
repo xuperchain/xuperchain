@@ -802,6 +802,8 @@ github.com/xuperchain/xupercore v0.0.0-20210525054057-4162b6943567 h1:OJgWdS4Glr
 github.com/xuperchain/xupercore v0.0.0-20210525054057-4162b6943567/go.mod h1:v5Kvim5rpha4A/+BTXwVpFxlk+bHR+3YW1D98bN+ICY=
 github.com/xuperchain/xupercore v0.0.0-20210528082019-f4a06ec81401 h1:/qkVRGYqCAREYirbBkHwkhfVbCQZaLrjE+bUhIRMiXw=
 github.com/xuperchain/xupercore v0.0.0-20210528082019-f4a06ec81401/go.mod h1:EGiBvEJUzLvzSQSj6npe+f5wsIu/Kwks9A2K7qEzlRU=
+github.com/xuperchain/xupercore v0.0.0-20210608021245-b15f81dd9ecf h1:kM+UGhXEXRx+z3Z5mH3gg5F//35GvPoSNqAItQExTlM=
+github.com/xuperchain/xupercore v0.0.0-20210608021245-b15f81dd9ecf/go.mod h1:EGiBvEJUzLvzSQSj6npe+f5wsIu/Kwks9A2K7qEzlRU=
 github.com/xuperchain/xuperos v0.0.0-20210425064837-c6380230648d h1:iCzYiQXYdtWlwwb4I3Ogp8nGz1H48IVgoikQEuDceGE=
 github.com/xuperchain/xuperos v0.0.0-20210425064837-c6380230648d/go.mod h1:ljmFj9aM6xbFtwzLsoF554X0auFceAA+BrvNRFZoe94=
 github.com/xuperchain/xvm v0.0.0-20210126142521-68fd016c56d7 h1:ARg101vOoX4N+6hbwtud6b0P/bb+7JtrCfVXAHa/xHU=

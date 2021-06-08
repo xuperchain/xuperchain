@@ -44,7 +44,7 @@ func GetPruneLedgerCommand() *PruneLedgerCommand {
 	c := new(PruneLedgerCommand)
 	c.Cmd = &cobra.Command{
 		Use:   "pruneLedger",
-		Short: "prune ledger to target block id.",
+		Short: "prune ledger to target block id.(Please stop node before prune ledger!)",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			return c.pruneLedger()
 		},
