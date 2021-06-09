@@ -26,21 +26,5 @@
             "miner": "TeyyPLpp9L7QAcxHangtcHTu7HUZ6iydY",
             "period": "3000"
         }
-    },
-    "reserved_contracts": [
-        {
-            "module_name": "wasm",
-            "contract_name": "unified_check",
-            "method_name": "verify",
-            "args": {
-                "contract": "{{.ContractNames}}"
-            }
-        }
-    ],
-    "forbidden_contract": {
-        "module_name": "wasm",
-        "contract_name": "forbidden",
-        "method_name": "get",
-        "args":{}
     }
 }
