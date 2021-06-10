@@ -267,11 +267,11 @@ var fileDescriptor_aefefab36e604b7f = []byte{
 
 // Reference imports to suppress errors if they are not otherwise used.
 var _ context.Context
-var _ grpc.ClientConn
+var _ grpc.ClientConnInterface
 
 // This is a compile-time assertion to ensure that this generated file
 // is compatible with the grpc package it is being compiled against.
-const _ = grpc.SupportPackageIsVersion4
+const _ = grpc.SupportPackageIsVersion6
 
 // XcheckClient is the client API for Xcheck service.
 //
@@ -285,10 +285,10 @@ type XcheckClient interface {
 }
 
 type xcheckClient struct {
-	cc *grpc.ClientConn
+	cc grpc.ClientConnInterface
 }
 
-func NewXcheckClient(cc *grpc.ClientConn) XcheckClient {
+func NewXcheckClient(cc grpc.ClientConnInterface) XcheckClient {
 	return &xcheckClient{cc}
 }
 
