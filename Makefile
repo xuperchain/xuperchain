@@ -16,8 +16,14 @@ XCHAIN_ROOT := ${PWD}/core
 export XCHAIN_ROOT
 PATH := ${PWD}/core/xvm/compile/wabt/build:$(PATH)
 
-build:
+build: build-release
+
+build-release:
 	PLATFORM=$(PLATFORM) ./core/scripts/build.sh
+
+
+build-debug:
+	PLATFORM=$(PLATFORM) XCHAIN_BUILD_DEBUG=1 ./core/scripts/build.sh
 
 test:
 	go test -coverprofile=coverage.txt -covermode=atomic ./...
@@ -29,6 +35,7 @@ contractsdk:
 	make -C core/contractsdk/cpp test
 
 clean:
+	rm -rf core/plugins
 	rm -rf output
 	rm -f xchain-cli
 	rm -f xchain
