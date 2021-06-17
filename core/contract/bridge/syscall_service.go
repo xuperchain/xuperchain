@@ -13,6 +13,7 @@ import (
 	"github.com/xuperchain/xuperchain/core/contract"
 	pb "github.com/xuperchain/xuperchain/core/contractsdk/go/pb"
 	xchainpb "github.com/xuperchain/xuperchain/core/pb"
+	"github.com/xuperchain/xuperchain/core/xmodel"
 )
 
 var (
@@ -308,6 +309,9 @@ func (c *SyscallService) NewIterator(ctx context.Context, in *pb.IteratorRequest
 	}
 	out := new(pb.IteratorResponse)
 	for iter.Next() && limit > 0 {
+		if xmodel.IsEmptyVersionedData(iter.Data()) {
+			continue
+		}
 		out.Items = append(out.Items, &pb.IteratorItem{
 			Key:   append([]byte(""), iter.Data().GetPureData().GetKey()...), //make a copy
 			Value: append([]byte(""), iter.Data().GetPureData().GetValue()...),
