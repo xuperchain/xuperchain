@@ -7,13 +7,13 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/xuperchain/xuperchain/core/xmodel"
 	"math/big"
 	"sort"
 
 	"github.com/xuperchain/xuperchain/core/contract"
 	pb "github.com/xuperchain/xuperchain/core/contractsdk/go/pb"
 	xchainpb "github.com/xuperchain/xuperchain/core/pb"
+	"github.com/xuperchain/xuperchain/core/xmodel"
 )
 
 var (
