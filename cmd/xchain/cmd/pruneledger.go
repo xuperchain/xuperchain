@@ -31,8 +31,6 @@ type PruneLedgerCommand struct {
 	Name string
 	//裁剪到的目标区块链区块idr
 	Target string
-	// 创世块配置文件
-	GenesisConf string
 	// 环境配置文件
 	EnvConf string
 	// 加密类型
@@ -46,7 +44,11 @@ func GetPruneLedgerCommand() *PruneLedgerCommand {
 		Use:   "pruneLedger",
 		Short: "prune ledger to target block id.(Please stop node before prune ledger!)",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			return c.pruneLedger()
+			econf, err := c.genEnvConfig(c.EnvConf)
+			if err != nil {
+				return err
+			}
+			return c.pruneLedger(econf)
 		},
 	}
 
@@ -54,8 +56,6 @@ func GetPruneLedgerCommand() *PruneLedgerCommand {
 		"name", "n", "block chain name")
 	c.Cmd.Flags().StringVar(&c.Target,
 		"target", "t", "target block id")
-	c.Cmd.Flags().StringVarP(&c.GenesisConf,
-		"genesis_conf", "g", "./data/genesis/xuper.json", "genesis config file path")
 	c.Cmd.Flags().StringVarP(&c.EnvConf,
 		"env_conf", "e", "./conf/env.yaml", "env config file path")
 	c.Cmd.Flags().StringVarP(&c.Crypto,
@@ -64,20 +64,9 @@ func GetPruneLedgerCommand() *PruneLedgerCommand {
 	return c
 }
 
-func (c *PruneLedgerCommand) pruneLedger() error {
-	log.Printf("start prune ledger.bc_name:%s block_id:%s genesis_conf:%s env_conf:%s\n",
-		c.Name, c.Target, c.GenesisConf, c.EnvConf)
-
-	if !xutils.FileIsExist(c.GenesisConf) || !xutils.FileIsExist(c.EnvConf) {
-		log.Printf("config file not exist.genesis_conf:%s env_conf:%s\n", c.GenesisConf, c.EnvConf)
-		return fmt.Errorf("config file not exist")
-	}
-
-	econf, err := xconfig.LoadEnvConf(c.EnvConf)
-	if err != nil {
-		log.Printf("load env config failed.env_conf:%s err:%v\n", c.EnvConf, err)
-		return fmt.Errorf("load env config failed")
-	}
+func (c *PruneLedgerCommand) pruneLedger(econf *xconfig.EnvConf) error {
+	log.Printf("start prune ledger.bc_name:%s block_id:%s env_conf:%s\n",
+		c.Name, c.Target, c.EnvConf)
 
 	logs.InitLog(econf.GenConfFilePath(econf.LogConf), econf.GenDirAbsPath(econf.LogDir))
 	lctx, err := ledger.NewLedgerCtx(econf, c.Name)
@@ -170,4 +159,18 @@ func (c *PruneLedgerCommand) pruneLedger() error {
 	}
 	log.Printf("prune ledger success")
 	return nil
+}
+
+func (c *PruneLedgerCommand) genEnvConfig(path string) (*xconfig.EnvConf, error) {
+	if !xutils.FileIsExist(path) {
+		log.Printf("config file not exist.env_conf:%s\n", c.EnvConf)
+		return nil, fmt.Errorf("config file not exist")
+	}
+
+	econf, err := xconfig.LoadEnvConf(c.EnvConf)
+	if err != nil {
+		log.Printf("load env config failed.env_conf:%s err:%v\n", c.EnvConf, err)
+		return nil, fmt.Errorf("load env config failed")
+	}
+	return econf, nil
 }
