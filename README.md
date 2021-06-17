@@ -202,7 +202,7 @@ make test
 ```
 cd ./output
 sh ./control.sh start
-./xchain-cli status
+./bin/xchain-cli status
 ```
 
 多节点xchain
