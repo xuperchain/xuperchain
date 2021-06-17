@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"github.com/xuperchain/xuperchain/core/xmodel"
 	"math/big"
 	"sort"
 
@@ -308,6 +309,9 @@ func (c *SyscallService) NewIterator(ctx context.Context, in *pb.IteratorRequest
 	}
 	out := new(pb.IteratorResponse)
 	for iter.Next() && limit > 0 {
+		if xmodel.IsEmptyVersionedData(iter.Data()) {
+			continue
+		}
 		out.Items = append(out.Items, &pb.IteratorItem{
 			Key:   append([]byte(""), iter.Data().GetPureData().GetKey()...), //make a copy
 			Value: append([]byte(""), iter.Data().GetPureData().GetValue()...),
