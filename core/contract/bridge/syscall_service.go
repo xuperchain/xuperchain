@@ -11,7 +11,7 @@ import (
 	"sort"
 
 	"github.com/xuperchain/xuperchain/core/contract"
-	pb "github.com/xuperchain/xuperchain/core/contractsdk/go/pb"
+	"github.com/xuperchain/xuperchain/core/contractsdk/go/pb"
 	xchainpb "github.com/xuperchain/xuperchain/core/pb"
 )
 
@@ -283,7 +283,6 @@ func (c *SyscallService) DeleteObject(ctx context.Context, in *pb.DeleteRequest)
 	if !ok {
 		return nil, fmt.Errorf("bad ctx id:%d", in.Header.Ctxid)
 	}
-
 	err := nctx.Cache.Del(nctx.ContractName, in.Key)
 	if err != nil {
 		return nil, err

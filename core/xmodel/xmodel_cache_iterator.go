@@ -101,13 +101,13 @@ func (mci *XMCacheIterator) data(iter iterator.Iterator) *xmodel_pb.VersionedDat
 func (mci *XMCacheIterator) Next() bool {
 	if mci.dir == dirEOI || mci.err != nil {
 		return false
-	} else if mci.dir == dirReleased {
+	}
+	if mci.dir == dirReleased {
 		mci.err = iterator.ErrIterReleased
 		return false
 	}
 
-	switch mci.dir {
-	case dirSOI:
+	if mci.dir == dirSOI {
 		return mci.First()
 	}
 
@@ -226,7 +226,9 @@ func (mci *XMCacheIterator) setMciCiKey(index int, st setType) bool {
 			}
 			return true
 		}
-	} else if st == setTypeNext {
+		return false
+	}
+	if st == setTypeNext {
 		isNext := mci.iters[index].Next()
 		if isNext {
 			for {
@@ -246,8 +248,9 @@ func (mci *XMCacheIterator) setMciCiKey(index int, st setType) bool {
 			}
 			return true
 		}
+		return false
 	}
-	return true
+	return false
 }
 
 func (mci *XMCacheIterator) setMciMiKey(st setType) bool {
