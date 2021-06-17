@@ -10,9 +10,14 @@
 -----
 ## What is XuperChain
 
-**XuperChain**, the first open source project of **XuperChain Lab**, introduces a highly flexible blockchain architecture with great transaction performance.
- 
+**XuperChain**, the first open source project of **XuperChain Lab**, introduces a underlying solution to build the super alliance network. Based on the dynamic kernel of xupercore. You can use xuberchain as a blockchain infrastructure to build a compliant blockchain network.
+
 XuperChain is the underlying solution for union networks with following highlight features:
+* **Dynamic kernel**
+
+    * Based on the dynamic kernel technology, the free extension kernel components without kernel code intrusion and lightweight extension customized kernel engine are implemented to meet the needs of blockchain implementation for various scenarios.
+    * It provides a comprehensive and high-performance implementation of standard kernel components.
+    * Comprehensively reduce the cost of blockchain research and development, and open a new era of one click chain development.
 
 * **High Performance**
 
@@ -70,51 +75,48 @@ Run test:
 make test
 ```
 
-Use Docker to build xuperchain see [docker build](core/scripts/README.md)
-
 ### Run 
 
-There is an output folder if build successfully. Enter the output folder, create a default chain firstly:
+####Run single node blockchain
+There is an output folder if build successfully. Enter the output folder, create a default chain & start blockchains:
 
 ```
 cd ./output
-./xchain-cli createChain
+sh control.sh start
 ```
 
 By doing this, a blockchain named "xuper" is created, you can find the data of this blockchain at `./data/blockchain/xuper/`.
 
-Then start the node and run XuperChain full node servers:
-
-```
-nohup ./xchain &
-```
-
 By default, the `xuper` chain will produce a block every 3 seconds, try the following command to see the `trunkHeight` of chain and make sure it's growing.
 
 ```
-./xchain-cli status
+./bin/xchain-cli status
 ```
 
-## Run with Docker
+####Run multi nodes blockchain
 
-### Build image
-
-```bash
-docker build . -t xuperchain
+Generate multi nodes.
+Before running the following command, make sure you have run `make` to make the code.
+```
+make testnet
 ```
 
-### Run image
-
-```bash
-# run xchain daemon
-docker run -d -p 37101:37101 -p 47101:47101 --rm --name xchain xuperchain
-# enter running container
-docker exec -ti xchain bash
-# run command
-./xchain-cli status
+Enter the testnet directory, and then start three nodes separately (make sure the port is not used)
+```
+cd ./testnet/node1
+sh ./control.sh start
+cd ../node2
+sh ./control.sh start
+cd ../node3
+sh ./control.sh start
 ```
 
-> This is only a demo for local single container, you can use volume to mount and overwrite configurations.
+Observe the status of each node
+```
+./bin/xchain-cli status -H :37101
+./bin/xchain-cli status -H :37102
+./bin/xchain-cli status -H :37103
+```
 
 ## Documentation
 
@@ -139,9 +141,14 @@ XuperChain is under the [Apache License, Version 2.0](https://github.com/xuperch
 
 ## XuperChain是什么?
 
-**XuperUion**是超级链体系下的第一个开源项目，是构建超级联盟网络的底层方案。
+**XuperChain**是超级链体系下的第一个开源项目，是构建超级联盟网络的底层方案。基于XuperCore动态内核实现的。您可以使用XuperChain，作为区块链基础设施，构建合规的区块链网络。
+。
 
 核心特点
+* **动态内核**
+    * 基于动态内核技术，实现无内核代码侵入的自由扩展内核核心组件和轻量级的扩展订制内核引擎，满足面向各类场景的区块链实现的需要。
+    * 提供了全面的、高性能的标准内核组件实现。
+    * 全面降低区块链研发成本，开启一键发链新时代。
 
 * **高性能**
     * 原创的XuperModel模型，真正实现了智能合约的并发执行和验证。
@@ -178,7 +185,7 @@ XuperChain is under the [Apache License, Version 2.0](https://github.com/xuperch
 git clone https://github.com/xuperchain/xuperchain
 ```
 
-**注意**: `master` 分支是日常开发分支，会包含最新的功能，但是 **不稳定**。生产环境请使用最新的已发布分支，最新的已发布分支是`v3.7`。
+**注意**: `master` 分支是日常开发分支，会包含最新的功能，但是 **不稳定**。生产环境请使用最新的已发布分支，最新的已发布分支是`v3.10`。
 
 编译
 ```
@@ -191,36 +198,37 @@ make
 make test
 ```
 
-使用docker来编译xueprchain见[docker build](core/scripts/README.md)
-
 单机版xchain
 ```
 cd ./output
-./xchain-cli createChain
-nohup ./xchain &
+sh ./control.sh start
 ./xchain-cli status
 ```
 
-## 容器运行
+多节点xchain
 
-### 编译镜像
-
-```bash
-docker build . -t xuperchain
+生成多节点。
+在运行下面的命令之前，请确保已经运行`make`去编译代码。
+```
+make testnet
 ```
 
-### 运行镜像
-
-```bash
-# 运行容器 daemon
-docker run -d -p 37101:37101 -p 47101:47101 --rm --name xchain xuperchain
-# 进入容器
-docker exec -ti xchain bash
-# 运行指令
-./xchain-cli status
+进入testnet目录，分别启动三个节点(确保端口未被占用)。
+```
+cd ./testnet/node1
+sh ./control.sh start
+cd ../node2
+sh ./control.sh start
+cd ../node3
+sh ./control.sh start
 ```
 
-> 本地容器化运行的示例，实际场景中可以用卷的方式挂载并覆盖配置。
+观察每个节点状态
+```
+./bin/xchain-cli status -H :37101
+./bin/xchain-cli status -H :37102
+./bin/xchain-cli status -H :37103
+```
 
 ## 文档
 
