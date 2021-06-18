@@ -4,10 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"testing"
 
+	"github.com/xuperchain/xuperchain/data/mock"
 	scom "github.com/xuperchain/xuperchain/service/common"
 	"github.com/xuperchain/xuperchain/service/pb"
 
@@ -28,7 +30,6 @@ import (
 	_ "github.com/xuperchain/xupercore/kernel/contract/manager"
 	"github.com/xuperchain/xupercore/kernel/engines/xuperos"
 	"github.com/xuperchain/xupercore/kernel/engines/xuperos/common"
-	"github.com/xuperchain/xupercore/kernel/mock"
 	_ "github.com/xuperchain/xupercore/lib/crypto/client"
 	"github.com/xuperchain/xupercore/lib/logs"
 	_ "github.com/xuperchain/xupercore/lib/storage/kvdb/leveldb"
@@ -40,7 +41,16 @@ var (
 )
 
 func TestEndorserCall(t *testing.T) {
-	engine, err := MockEngine("p2pv2/node1/conf/env.yaml")
+	workspace, dirErr := ioutil.TempDir("/tmp", "")
+	if dirErr != nil {
+		t.Fatal(dirErr)
+	}
+	os.RemoveAll(workspace)
+	defer os.RemoveAll(workspace)
+	conf, _ := mock.NewEnvConfForTest()
+	defer RemoveLedger(conf)
+
+	engine, err := MockEngine()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -130,8 +140,8 @@ func TestEndorserCall(t *testing.T) {
 	t.Log(resp)
 }
 
-func MockEngine(path string) (common.Engine, error) {
-	conf, err := mock.NewEnvConfForTest(path)
+func MockEngine() (common.Engine, error) {
+	conf, err := mock.NewEnvConfForTest()
 	if err != nil {
 		return nil, fmt.Errorf("new env conf error: %v", err)
 	}

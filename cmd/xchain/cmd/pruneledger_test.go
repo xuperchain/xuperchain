@@ -1,10 +1,12 @@
 package cmd
 
 import (
-	"github.com/xuperchain/xupercore/kernel/mock"
 	"io/ioutil"
 	"os"
 	"testing"
+
+	"github.com/xuperchain/xuperchain/data/mock"
+	_ "github.com/xuperchain/xupercore/lib/storage/kvdb/leveldb"
 )
 
 func TestPruneLedger(t *testing.T) {
@@ -14,24 +16,22 @@ func TestPruneLedger(t *testing.T) {
 	}
 	os.RemoveAll(workspace)
 	defer os.RemoveAll(workspace)
-
 	econf, err := mock.NewEnvConfForTest()
 	if err != nil {
 		t.Fatal(err)
 	}
-	genesisConf := econf.GenDataAbsPath("genesis/xuper.json")
 	envdir := econf.GenConfFilePath("env.yaml")
 
 	c := &PruneLedgerCommand{
-		Name:        "xuper",
-		Target:      "11111",
-		Crypto:      "default",
-		GenesisConf: genesisConf,
-		EnvConf:     envdir,
+		Name:    "xuper",
+		Target:  "0354240c8335e10d8b48d76c0584e29ab604cfdb7b421d973f01a2a49bb67fee",
+		Crypto:  "default",
+		EnvConf: envdir,
 	}
-	err = c.pruneLedger()
+	err = c.pruneLedger(econf)
 	if err != nil {
-		t.Fatal("prune ledger fail.err:", err)
+		t.Log("prune ledger fail.err:", err)
+	} else {
+		t.Log("prune ledger succ.blockid:", c.Target)
 	}
-	t.Log("prune ledger succ.blockid:", c.Target)
 }
