@@ -263,6 +263,12 @@ service Xchain {
       body : "*"
     };
   }
+
+    // 获取ContractCode
+    rpc GetCode(ContractCode) returns (ContractCode);
+
+    // 获取TransactionReceipt
+    rpc GetTransactionReceipt(TxStatus) returns (txReceipt);
 }
 
 message Header {
@@ -1072,4 +1078,43 @@ message ContractEvent {
     string contract = 1;
     string name = 2;
     bytes body = 3;
+}
+
+message ContractCode{
+    Header header = 1;
+    string bcname = 2;
+    string name = 3;
+    bytes  code = 4;
+}
+
+
+message Fileter {
+    Header header = 1;
+    string bcname = 2;
+    string fromBlock = 3;
+    string toBlock = 4;
+    repeated string address = 5;
+    repeated string topics =6;
+    string blockId =7;
+}
+
+
+message Log {
+    Header header = 1;
+    string bcname = 2;
+    string address = 3;
+    repeated string topics = 4;
+    bytes data = 5;
+    int64 blockNumber = 6;
+    bytes txId = 7;
+    string txIndex = 8;
+    bytes blockId = 9;
+    string logIndex = 10;
+}
+
+message txReceipt {
+    Header header = 1;
+    TxStatus txStatus = 2;
+    int64 blockNumber = 3;
+    repeated Log log = 4;
 }

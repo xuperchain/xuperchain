@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	"io/ioutil"
 	"path/filepath"
 	"sync"
@@ -26,6 +27,7 @@ import (
 	cons_base "github.com/xuperchain/xuperchain/core/consensus/base"
 	"github.com/xuperchain/xuperchain/core/consensus/tdpos"
 	"github.com/xuperchain/xuperchain/core/contract/bridge"
+	"github.com/xuperchain/xuperchain/core/contract/evm"
 	"github.com/xuperchain/xuperchain/core/contract/kernel"
 	"github.com/xuperchain/xuperchain/core/contract/proposal"
 	"github.com/xuperchain/xuperchain/core/crypto/account"
@@ -38,6 +40,7 @@ import (
 	xuper_p2p "github.com/xuperchain/xuperchain/core/p2p/pb"
 	"github.com/xuperchain/xuperchain/core/pb"
 	"github.com/xuperchain/xuperchain/core/utxo"
+	"github.com/xuperchain/xuperchain/core/xmodel"
 )
 
 var (
@@ -910,6 +913,109 @@ func (xc *XChainCore) PostTx(in *pb.TxStatus, hd *global.XContext) (*pb.CommonRe
 	return out, true
 }
 
+func (xc *XChainCore) QueryTxReceipt(in *pb.TxStatus) *pb.TxReceipt {
+	txStatus := &pb.TxStatus{Header: in.Header}
+	receipt := &pb.TxReceipt{
+		TxStatus: txStatus,
+	}
+	txStatus.Header.Error = pb.XChainErrorEnum_SUCCESS
+	txStatus.Txid = in.Txid
+	if xc.Status() != global.Normal {
+		txStatus.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE
+		xc.log.Debug("refused a connection a function call QueryTx", "logid", in.Header.Logid)
+		return receipt
+	}
+	t, err := xc.Ledger.QueryTransaction(txStatus.Txid)
+	if err != nil {
+		xc.log.Debug("Query Transaction Error", "logid", in.Header.Logid, "Txid", global.F(txStatus.Txid), "error", err)
+		txStatus.Status = pb.TransactionStatus_NOEXIST
+		/*if err == ledger.parser_err {
+			this.log.Warn("Parser error")
+		}*/
+		if err == ledger.ErrTxNotFound {
+			// 查询unconfirm表，看看
+			t, err = xc.Utxovm.QueryTx(txStatus.Txid)
+			if err != nil {
+				xc.log.Debug("Query Transaction Unconfirm table Error", "logid", in.Header.Logid, "Txid", global.F(txStatus.Txid), "error", err)
+				return receipt
+			}
+			xc.log.Debug("Query Transaction Unconfirm table Success", "logid", in.Header.Logid, "Txid", global.F(txStatus.Txid))
+			txStatus.Status = pb.TransactionStatus_UNCONFIRM
+			txStatus.Tx = t
+			return receipt
+		}
+	} else {
+		xc.log.Debug("Query Transaction Successa", "logid", in.Header.Logid, "Txid", global.F(txStatus.Txid))
+		txStatus.Status = pb.TransactionStatus_CONFIRM
+		// 根据blockid查block状态，看是否被分叉
+		ib, err := xc.Ledger.QueryBlockHeader(t.Blockid)
+		if err != nil {
+			xc.log.Debug("Query Block Error", "logid", in.Header.Logid, "Txid", global.F(txStatus.Txid), "blockid", global.F(t.Blockid), "error", err)
+			txStatus.Header.Error = pb.XChainErrorEnum_UNKNOW_ERROR
+		} else {
+			xc.log.Debug("Query Block Success", "logid", in.Header.Logid, "Txid", global.F(txStatus.Txid), "blockid", global.F(t.Blockid))
+			meta := xc.Ledger.GetMeta()
+			txStatus.Tx = t
+			if ib.InTrunk {
+				// out.Distance =  height - ib.height
+				txStatus.Distance = meta.TrunkHeight - ib.Height
+				txStatus.Status = pb.TransactionStatus_CONFIRM
+			} else {
+				txStatus.Status = pb.TransactionStatus_FURCATION
+			}
+		}
+	}
+	if txStatus.Status != pb.TransactionStatus_CONFIRM {
+		return receipt
+	}
+	b, err := xc.Ledger.QueryBlock(txStatus.Tx.Blockid)
+	if err != nil {
+		xc.log.Debug("Query Block Error", "logid", in.Header.Logid, "blockid", global.F(t.Blockid), "error", err)
+		txStatus.Header.Error = pb.XChainErrorEnum_UNKNOW_ERROR
+	}
+
+	events, err := xmodel.ParseContractEvents(t)
+	if err != nil {
+		log.Error("parse contract event error", "txid", hex.EncodeToString(t.GetTxid()), "error", err)
+		return nil
+	}
+	receipt = assembleReceipt(txStatus, events, b)
+	return receipt
+}
+
+func assembleReceipt(txStatus *pb.TxStatus, events []*pb.ContractEvent, b *pb.InternalBlock) *pb.TxReceipt {
+	logs := []*pb.Log{}
+	receipt := &pb.TxReceipt{}
+	receipt.TxStatus = txStatus
+
+	receipt.BlockNumber = b.GetCurBlockNum()
+
+	if len(events) > 0 {
+		for _, event := range events {
+			log := &pb.Log{}
+			log.Header = txStatus.Header
+			log.Bcname = txStatus.Bcname
+
+			//addr, addrType, err = evm.DetermineXchainAddress(c.from)
+			//if err != nil {
+			//	return err
+			//}
+			addr, _, _ := evm.DetermineXchainAddress(event.Name)
+			log.Address = "0x" + addr // todo 有点疑问
+			log.Topics = []string{""} // todo
+			log.Data = event.GetBody()
+			log.TxId = txStatus.Txid
+			//log.TxIndex =     //todo
+			log.BlockId = txStatus.Tx.Blockid
+			log.BlockNumber = b.GetCurBlockNum()
+			//log.LogIndex = "0"      todo
+			logs = append(logs, log)
+		}
+	}
+	receipt.Log = logs
+	return receipt
+}
+
 // QueryTx query transaction from ledger
 func (xc *XChainCore) QueryTx(in *pb.TxStatus) *pb.TxStatus {
 	out := &pb.TxStatus{Header: in.Header}
@@ -1394,4 +1500,29 @@ func (xc *XChainCore) GetAccountContractsStatus(account string, needContent bool
 	}
 
 	return res, nil
+}
+
+func (xc *XChainCore) GetCode(name string) (*pb.ContractCode, error) {
+	vm := xc.Utxovm
+	XModelCache, err := xmodel.NewXModelCache(vm.GetXModel(), vm)
+	if err != nil {
+		return nil, err
+	}
+	value, err := XModelCache.Get("contract", contractCodeKey(name))
+	if err != nil {
+		return nil, fmt.Errorf("get contract code for '%s' error:%s", name, err)
+	}
+	codebuf := value.GetPureData().GetValue()
+	if len(codebuf) == 0 {
+		return nil, errors.New("empty wasm code")
+	}
+	contractCode := &pb.ContractCode{
+		Name: name,
+		Code: codebuf,
+	}
+	return contractCode, nil
+}
+
+func contractCodeKey(contractName string) []byte {
+	return []byte(contractName + "." + "code")
 }

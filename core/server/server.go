@@ -202,6 +202,32 @@ func (s *Server) QueryTx(ctx context.Context, in *pb.TxStatus) (*pb.TxStatus, er
 	return out, nil
 }
 
+
+// QueryTx Get transaction details
+func (s *Server) GetTransactionReceipt(ctx context.Context,in *pb.TxStatus) (*pb.TxReceipt, error) {
+	if in.Header == nil {
+		in.Header = global.GHeader()
+	}
+	txStatus := &pb.TxStatus{
+		Header:&pb.Header{},
+	}
+	receipt := &pb.TxReceipt{
+		TxStatus:txStatus,
+	}
+
+	bc := s.mg.Get(in.Bcname)
+	if bc == nil {
+		txStatus.Header.Error = pb.XChainErrorEnum_CONNECT_REFUSE // 拒绝
+		return receipt, nil
+	}
+	if bc.QueryTxFromForbidden([]byte(in.Txid)) {
+		return receipt, errors.New("tx has been forbidden")
+	}
+	receipt = bc.QueryTxReceipt(in)
+	return receipt, nil
+}
+
+
 // GetBalance get balance for account or addr
 func (s *Server) GetBalance(ctx context.Context, in *pb.AddressStatus) (*pb.AddressStatus, error) {
 	if in.Header == nil {
@@ -768,6 +794,18 @@ func (s *Server) PreExec(ctx context.Context, in *pb.InvokeRPCRequest) (*pb.Invo
 	return out, nil
 }
 
+// shikenian
+func (s *Server) GetCode(ctx context.Context, in *pb.ContractCode) (*pb.ContractCode, error){
+	bc := s.mg.Get(in.GetBcname())
+	name := in.Name
+	contraactCode,err := bc.GetCode(name)
+	if err != nil {
+		s.log.Error("GetCode error", "logid", in.Header.Logid, "error", err)
+	}
+	in.Code = contraactCode.Code
+	return in,nil
+}
+
 // GetBlockByHeight  get trunk block by height
 func (s *Server) GetBlockByHeight(ctx context.Context, in *pb.BlockHeight) (*pb.Block, error) {
 	if in.Header == nil {
@@ -1121,6 +1159,9 @@ func startTCPServer(xchainmg *xchaincore.XChainMG) error {
 	// event involved rpc
 	eventService := newEventService(&cfg.Event, xchainmg)
 	pb.RegisterEventServiceServer(s, eventService)
+
+	filterService := newFilterService()
+	pb.RegisterEvmFilterServer(s,filterService)
 
 	lis, err := net.Listen("tcp", cfg.TCPServer.Port)
 	if err != nil {

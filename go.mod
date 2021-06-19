@@ -14,7 +14,7 @@ require (
 	github.com/fsouza/go-dockerclient v1.6.0
 	github.com/go-playground/validator/v10 v10.4.1
 	github.com/gogo/protobuf v1.3.1
-	github.com/golang/protobuf v1.3.3
+	github.com/golang/protobuf v1.5.0
 	github.com/golang/snappy v0.0.1
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.0
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
@@ -51,6 +51,7 @@ require (
 	golang.org/x/sync v0.0.0-20190423024810-112230192c58
 	google.golang.org/genproto v0.0.0-20190927181202-20e1ac93f88c
 	google.golang.org/grpc v1.27.1
+	google.golang.org/protobuf v1.26.0
 	gopkg.in/sourcemap.v1 v1.0.5 // indirect
 	gopkg.in/yaml.v2 v2.2.4
 )
