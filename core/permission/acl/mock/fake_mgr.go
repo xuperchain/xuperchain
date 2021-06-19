@@ -37,7 +37,7 @@ func (fm *FakeACLManager) GetAccountACLWithConfirmed(accountName string) (*pb.Ac
 
 // SetContractMethodACL save contract method acl in memory
 func (fm *FakeACLManager) SetContractMethodACL(contractName string, methodName string, acl *pb.Acl) error {
-	fm.accountACL[contractName+methodName] = acl
+	fm.contractACL[contractName+methodName] = acl
 	return nil
 }
 
