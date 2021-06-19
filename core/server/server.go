@@ -714,8 +714,8 @@ func (s *Server) PreExecWithSelectUTXO(ctx context.Context, in *pb.PreExecWithSe
 	}
 
 	totalAmount := in.GetTotalAmount() + fee
-
-	if totalAmount > 0 {
+    // when nofee is true,totalAmount is 0
+	if totalAmount >= 0 {
 		utxoInput := &pb.UtxoInput{
 			Bcname:    in.GetBcname(),
 			Address:   in.GetAddress(),
