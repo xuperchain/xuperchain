@@ -51,20 +51,19 @@ XuperChain 当前在 Linux 和 MacOS 上进行验证，当前尚未在 Windows �
 3. 修改本地代码
 4. 增加单元测试
    你需要为你增加的功能增加单元测试，确保你提交不会被后续的提交破坏
-5. [可选]本地运行单元测试，确保你的更改导致其他的的测试 break
+5. [可选]本地运行单元测试，确保你的更改没有导致其他的的测试 break
    ``` bash 
    make test
    ```
-
-6. [可选] 确保你的代码符合代码风格
+    你也可以选择将单测试推迟到 github CI 阶段执行。
+<!-- 6. [可选] 确保你的代码符合代码风格
    ```bash
    make lint 
-   ```
-    如果不执行以上命令，可能会导致 CI 失败，从而导致 Pull Request 无法合入
+   ``` -->
 
-7. 提交 Pull Request
-   完成以上内容之后你就可以提交你的代码了。
-   你可以查看 [代码提交指南](https://xuper.baidu.com/n/xuperdoc/contribution/pull_requests.html) 获取更多关于代码提交的内容
+5. 提交 Pull Request
+   完成以上内容之后，你就可以通过 Pull Request 提交你的代码了。
+   你可以查看 [代码提交指南](https://xuper.baidu.com/n/xuperdoc/contribution/pull_requests.html) 获取更多关于代码提交的指南
 
 
 <!-- ## Pull Request 规范 -->
