@@ -32,7 +32,7 @@ XuperChain 当前在 Linux 和 MacOS 上进行验证，当前尚未在 Windows �
     XuperChain 使用 Docker 来实现原生合约的资源隔离以及 C++ 合约编译构建，如果你需要使用 C++ 合约，或者希望在 Docker 中运行 native 合约，你需要安装 Docker  
 4. (可选) 安装 JAVA 开发环境
     如果你使用 XuperChain 的 JAVA SDK 进行应用开发， 或者使用 JAVA 语言进行合约开发 ，需要安装 JAVA 1.8+
-    你也需要安装以完成项目的构建
+    你也需要安装 maven 以完成项目的构建
 
 
 ## 提交第一个Pull Request
