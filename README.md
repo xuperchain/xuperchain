@@ -120,8 +120,6 @@ Observe the status of each node
 
 ## Documentation
 
-Please refer to our [wiki](https://github.com/xuperchain/xuperchain/wiki) for more  information, including how to build multi-node network, transfer to others, deploy and invoke smart contract.
-
 We have new documentation of Chinese version at [XuperChain Chinese Docs](https://xuperchain.readthedocs.io/zh/latest/), the English version is comming soon.
 
 ## How to Contribute
@@ -233,7 +231,7 @@ sh ./control.sh start
 ## 文档
 
 
-关于XuperChain更详细、更深入的使用方法链接请查看[XuperChain文档库](https://xuperchain.readthedocs.io/zh/latest/)和[wiki](https://github.com/xuperchain/xuperchain/wiki)
+关于XuperChain更详细、更深入的使用方法链接请查看[XuperChain文档库](https://xuperchain.readthedocs.io/zh/latest/)
 
 ## 如何参与开发
 1. 阅读源代码，了解我们当前的开发方向
