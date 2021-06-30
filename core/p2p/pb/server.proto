@@ -1,9 +1,0 @@
-syntax = "proto3";
-
-package xuperp2p;
-
-import "message.proto";
-
-service p2pService {
-    rpc SendP2pMessage(stream XuperMessage) returns (stream XuperMessage) {};
-}

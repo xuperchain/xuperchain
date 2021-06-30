@@ -1,0 +1,20 @@
+# 日志配置文件
+
+# 模块名
+module: xchain
+# 日志文件名
+filename: xchain
+# 日志输出格式（logfmt | json）
+fmt: logfmt
+# 日志输出级别：debug、trace、info、warn、error
+level: debug
+# 日志分割周期（单位：分钟）
+rotateInterval: 60
+# 日志保留天数（单位：小时）
+rotateBackups: 168
+# 是否输出到标准输出
+console: false
+# 设置日志模式是否是异步
+async: false
+# 设置异步模式下缓冲区大小
+bufSize: 102400
