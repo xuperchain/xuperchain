@@ -1,5 +1,6 @@
 output
 logs
+.compile_cache
 
 # Compiled source
 *.com
