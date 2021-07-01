@@ -5,9 +5,8 @@ COMPILECACHEDIR := $(HOMEDIR)/.compile_cache
 XVMDIR  := $(COMPILECACHEDIR)/xvm
 TESTNETDIR := $(HOMEDIR)/testnet
 
-export VERSION:=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)
-export COMMIT_ID:=$(git rev-parse --short HEAD 2>/dev/null ||echo unknown)
-
+VERSION:=$(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)
+COMMIT_ID:=$(shell git rev-parse --short HEAD 2>/dev/null ||echo unknown)
 
 # init command params
 export GO111MODULE=on
