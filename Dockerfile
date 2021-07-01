@@ -1,12 +1,19 @@
-FROM golang:1.12.5 AS builder
-RUN apt update
-WORKDIR /go/src/github.com/xuperchain/xuperchain
+FROM golang:1.13 AS builder
+WORKDIR /home/xchain
+
+RUN apt update && apt install -y unzip git
+
+# small trick to take advantage of  docker build cache
+COPY go.* .
+COPY Makefile .
+RUN GOPROXY=goproxy.cn make prepare
+
 COPY . .
-RUN make clean && make
+RUN make
 
 # ---
-FROM ubuntu:16.04
-WORKDIR /home/work/xuperunion/
-COPY --from=builder /go/src/github.com/xuperchain/xuperchain/output/ .
-EXPOSE 37101 47101
-CMD ./xchain-cli createChain && ./xchain
+FROM ubuntu:18.04
+WORKDIR /home/xchain
+COPY --from=builder /home/xchain/output .
+EXPOSE 37101 37101
+CMD bash control.sh start -f

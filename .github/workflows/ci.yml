@@ -16,10 +16,16 @@ jobs:
       uses: actions/checkout@v2
     - name: Test
       run: |
-        diff -u <(echo -n) <(gofmt -d $(find . -type f -name '*.go' -not -path "./vendor/*")) 
+        diff -u <(echo -n) <(gofmt -d $(find . -type f -name '*.go'))
         make && make test
         cd ./auto && bash -x ci_pipeline.sh
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v1
       with:
         file: ./coverage.txt
+
+  # Only  build image for test  as docker support is  not production available
+    - name: Build Image
+      docker
+
+

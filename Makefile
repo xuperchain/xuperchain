@@ -5,6 +5,10 @@ COMPILECACHEDIR := $(HOMEDIR)/.compile_cache
 XVMDIR  := $(COMPILECACHEDIR)/xvm
 TESTNETDIR := $(HOMEDIR)/testnet
 
+export VERSION:=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)
+export COMMIT_ID:=$(git rev-parse --short HEAD 2>/dev/null ||echo unknown)
+
+
 # init command params
 export GO111MODULE=on
 X_ROOT_PATH := $(HOMEDIR)
@@ -18,7 +22,8 @@ all: clean compile
 compile: xvm xchain
 xchain:
 	bash $(HOMEDIR)/auto/build.sh
-
+prepare:
+	go mod download
 # make xvm
 xvm:
 	bash $(HOMEDIR)/auto/build_xvm.sh
@@ -41,5 +46,8 @@ cleancache:
 testnet:
 	bash $(HOMEDIR)/auto/deploy_testnet.sh
 
+# Docker related tasks
+build-image:
+	docker build -t xchain:dev .
 # avoid filename conflict and speed up build
 .PHONY: all compile test clean
