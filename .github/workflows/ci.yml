@@ -26,7 +26,8 @@ jobs:
 
   # Only  build image for test  as docker support is  not production available
     - name: Build Image
-      make build-image
+      run: |
+        make build-image
 
 
 
