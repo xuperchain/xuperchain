@@ -22,8 +22,6 @@ function buildpkg() {
     output=$1
     pkg=$2
 
-#    version=VERSION
-#    commitId=COMMIT_ID
     buildTime=$(date "+%Y-%m-%d-%H:%M:%S")
     
     

@@ -6,7 +6,7 @@ RUN apt update && apt install -y unzip git
 # small trick to take advantage of  docker build cache
 COPY go.* .
 COPY Makefile .
-RUN GOPROXY=goproxy.cn make prepare
+RUN  make prepare
 
 COPY . .
 RUN make

@@ -27,10 +27,6 @@ if [ "$0" != "./$Self" ] && [ "$0" != "$Self" ]; then
     exit 1
 fi
 
-#if [ $# -ne 1 ]; then
-#    echo "Param error. $# Example:$Usage"
-#    exit 1
-#fi
 
 # file check
 BinPath="$Pwd/bin/$AppName"
