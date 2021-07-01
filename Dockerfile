@@ -4,7 +4,7 @@ WORKDIR /home/xchain
 RUN apt update && apt install -y unzip git
 
 # small trick to take advantage of  docker build cache
-COPY go.* .
+COPY go.* ./
 COPY Makefile .
 RUN  make prepare
 
