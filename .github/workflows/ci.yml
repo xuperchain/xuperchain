@@ -12,6 +12,10 @@ jobs:
       uses: actions/setup-go@v1
       with:
         go-version: ${{ matrix.go-version }}
+
+    - name: setup Docker
+      uses: docker-practice/actions-setup-docker@master
+
     - name: Checkout code
       uses: actions/checkout@v2
     - name: Test
