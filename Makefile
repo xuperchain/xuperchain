@@ -21,7 +21,7 @@ all: clean compile
 # make compile, go build
 compile: xvm xchain
 xchain:
-	bash $(HOMEDIR)/auto/build.sh
+	VERSION=$(VERSION) COMMIT_ID=$(COMMIT_ID) bash $(HOMEDIR)/auto/build.sh
 prepare:
 	go mod download
 # make xvm
