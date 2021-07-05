@@ -74,6 +74,9 @@ xchain wasm|native|evm invoke $codeaddr --method invoke -a '{"Your method args i
 }
 
 func (c *ContractInvokeCommand) invoke(ctx context.Context, codeName string) error {
+	if c.module == "xkernel" {
+		codeName = "$" + codeName
+	}
 	ct := &CommTrans{
 		Fee:          c.fee,
 		FrozenHeight: 0,

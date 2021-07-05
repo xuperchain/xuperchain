@@ -65,6 +65,9 @@ xchain wasm|native|evm query $codeaddr -a '{"Your contract parameters in json fo
 }
 
 func (c *ContractQueryCommand) query(ctx context.Context, codeName string) error {
+	if c.module == "xkernel" {
+		codeName = "$" + codeName
+	}
 	ct := &CommTrans{
 		ModuleName:   c.module,
 		ContractName: codeName,
