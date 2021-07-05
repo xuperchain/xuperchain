@@ -6,11 +6,11 @@ package cmd
 
 import "github.com/spf13/cobra"
 
-// WasmCommand wasm cmd
+// XKernelCommand xkernel cmd
 type XKernelCommand struct {
 }
 
-// NewWasmCommand new wasm cmd
+// NewXKernelCommand new xkernel cmd
 func NewXKernelCommand(cli *Cli) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "xkernel",
