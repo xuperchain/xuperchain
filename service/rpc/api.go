@@ -332,6 +332,7 @@ func (t *RpcServ) QueryACL(gctx context.Context, req *pb.AclStatus) (*pb.AclStat
 		return resp, ecom.ErrInternal
 	}
 
+	resp.Bcname = req.GetBcname()
 	resp.AccountName = req.GetAccountName()
 	resp.ContractName = req.GetContractName()
 	resp.MethodName = req.GetMethodName()
