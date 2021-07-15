@@ -77,7 +77,7 @@ make test
 
 ### Run 
 
-####Run single node blockchain
+#### Run single node blockchain
 There is an output folder if build successfully. Enter the output folder, create a default chain & start blockchains:
 
 ```
@@ -93,7 +93,7 @@ By default, the `xuper` chain will produce a block every 3 seconds, try the foll
 ./bin/xchain-cli status
 ```
 
-####Run multi nodes blockchain
+#### Run multi nodes blockchain
 
 Generate multi nodes.
 Before running the following command, make sure you have run `make` to make the code.
