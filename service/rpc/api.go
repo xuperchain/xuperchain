@@ -115,6 +115,10 @@ func (t *RpcServ) PreExecWithSelectUTXO(gctx context.Context,
 		return resp, err
 	}
 
+	// no fee, set response must.
+	resp.Bcname = req.GetBcname()
+	resp.Response = preExecRes.GetResponse()
+
 	// SelectUTXO
 	totalAmount := req.GetTotalAmount() + preExecRes.GetResponse().GetGasUsed()
 	if totalAmount < 1 {
@@ -136,8 +140,6 @@ func (t *RpcServ) PreExecWithSelectUTXO(gctx context.Context,
 	utxoOut.Header = req.GetHeader()
 
 	// 设置响应
-	resp.Bcname = req.GetBcname()
-	resp.Response = preExecRes.GetResponse()
 	resp.UtxoOutput = utxoOut
 
 	return resp, nil
