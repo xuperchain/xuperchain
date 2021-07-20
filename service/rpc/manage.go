@@ -145,7 +145,7 @@ func (t *RpcServMG) runRpcServ() error {
 		http.Handle("/metrics", promhttp.Handler())
 		go func() {
 			if err := http.ListenAndServe(fmt.Sprintf(":%d", t.scfg.MetricPort), nil); err != nil {
-				t.log.Error("unable to start pprof http server")
+				panic(fmt.Errorf("pprof server failed to listen: %v", err))
 			}
 		}()
 	}

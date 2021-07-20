@@ -34,9 +34,13 @@ function testnet() {
 
   cd "$WorkPath" || exit
 
-  sleep 1s
   info "start testnet path=$(pwd)"
-  ./bin/xchain-cli status || exit
+  sleep 3s && xchain-cli status || \
+  sleep 3s && xchain-cli status || \
+  sleep 3s && xchain-cli status || \
+  sleep 3s && xchain-cli status || \
+  sleep 3s && xchain-cli status || \
+  sleep 3s && xchain-cli status || exit
 }
 
 # account
