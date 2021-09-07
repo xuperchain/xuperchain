@@ -118,25 +118,25 @@ func (c *ConsensusInvokeCommand) invoke(ctx context.Context) error {
 }
 
 func (c *ConsensusInvokeCommand) tdposInvoke(ctx context.Context, ct *CommTrans) error {
+	if c.method == "getTdposInfos" {
+		_, _, err := ct.GenPreExeRes(ctx)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
 	// tdpos必须有input json数据
-	if c.descfile == "" && c.method != "getTdposInfos" {
-		// trick处理
+	if c.descfile == "" {
 		return fmt.Errorf("tdpos needs desc file.\n")
 	}
-	var err error
-	args := map[string]interface{}{
-		"height": string(ct.Args["height"]),
+	args := make(map[string]interface{})
+	desc, err := ioutil.ReadFile(c.descfile)
+	if err != nil {
+		return err
 	}
-	if c.method != "getTdposInfos" {
-		desc, err := ioutil.ReadFile(c.descfile)
-		if err != nil {
-			return err
-		}
-
-		err = json.Unmarshal(desc, &args)
-		if err != nil {
-			return err
-		}
+	err = json.Unmarshal(desc, &args)
+	if err != nil {
+		return err
 	}
 
 	ct.Args, err = convertToXuper3Args(args)
