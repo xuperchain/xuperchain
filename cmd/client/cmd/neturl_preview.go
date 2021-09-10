@@ -48,9 +48,9 @@ func (n *NetURLPreviewCommand) previewNetURL(ctx context.Context) error {
 	}
 
 	if n.ipv6 != "" {
-		fmt.Printf("/ip6/%s/tcp/%s/p2p/%s\n", n.ipv6, n.port, pid)
+		fmt.Printf("/ip6/%s/tcp/%s/p2p/%s", n.ipv6, n.port, pid)
 	} else {
-		fmt.Printf("/ip4/%s/tcp/%s/p2p/%s\n", n.ip, n.port, pid)
+		fmt.Printf("/ip4/%s/tcp/%s/p2p/%s", n.ip, n.port, pid)
 	}
 
 	return nil
