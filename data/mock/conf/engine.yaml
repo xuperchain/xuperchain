@@ -1,0 +1,12 @@
+# root chain name
+rootChain: xuper
+# blockBroadcastMode is the mode for broadcast new block
+blockBroadcastMode: 0
+# txCacheExpiredTime set expired time for tx cache
+txidCacheExpiredTime: 3m 
+# txIdCacheGCInterval set clean up interval for tx cache
+txIdCacheGCInterval: 10m
+# maxBlockQueueSize set the queue size of the processing block
+maxBlockQueueSize: 100
+# min new parachain amount
+minNewChainAmount: "100"

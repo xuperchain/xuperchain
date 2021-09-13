@@ -1,0 +1,17 @@
+# endorseService Info
+# testNet addrs
+#endorseServiceHost: "39.156.69.83:37100"
+endorseServiceHost: "127.0.0.1:8848"
+complianceCheck:
+  # 是否需要进行合规性背书
+  isNeedComplianceCheck: false
+  # 是否需要支付合规性背书费用
+  isNeedComplianceCheckFee: true
+  # 合规性背书费用
+  complianceCheckEndorseServiceFee: 400
+  # 合规性背书收费地址
+  complianceCheckEndorseFeeAddr: aB2hpHnTBDxko3UoP2BpBZRujwhdcAFoT
+  # 如果通过合规性检查，签发认证签名的地址
+  complianceCheckEndorseServiceAddr: jknGxa6eyum1JrATWvSJKW3thJ9GKHA9n
+#创建平行链所需要的最低费用
+minNewChainAmount: "100"
