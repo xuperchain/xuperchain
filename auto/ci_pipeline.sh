@@ -27,8 +27,8 @@ function testnet() {
   source $WorkRoot/auto/deploy_testnet.sh || exit
 
   # start node
-  (cd "$TestNet/node1" && bash control.sh start) 
-  (cd "$TestNet/node2" && bash control.sh start) 
+  (cd "$TestNet/node1" && bash control.sh start) &
+  (cd "$TestNet/node2" && bash control.sh start) &
   (cd "$TestNet/node3" && bash control.sh start)
   wait
 
