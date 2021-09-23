@@ -35,8 +35,7 @@ require (
 	github.com/syndtr/goleveldb v1.0.1-0.20200815110645-5c35d600f0ca
 	github.com/xuperchain/crypto v0.0.0-20201028025054-4d560674bcd6
 	github.com/xuperchain/log15 v0.0.0-20190620081506-bc88a9198230
-	github.com/xuperchain/xupercore v0.0.0-20210608021245-b15f81dd9ecf
-	github.com/xuperchain/xvm v0.0.0-20210126142521-68fd016c56d7 // indirect
+	github.com/xuperchain/xupercore v0.0.0-20210918081251-05788c449a44
 	golang.org/x/crypto v0.0.0-20200728195943-123391ffb6de
 	golang.org/x/mod v0.1.1-0.20191209134235-331c550502dd // indirect
 	golang.org/x/net v0.0.0-20200822124328-c89045814202
