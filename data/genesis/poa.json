@@ -27,16 +27,12 @@
                 "block_num":10,
                 "contract_name":"xpoa_validates",
                 "method_name":"get_validates",
-                "init_proposer": [
-                        {
-                                "address" : "TeyyPLpp9L7QAcxHangtcHTu7HUZ6iydY"
-                                 , "neturl" : "/ip4/127.0.0.1/tcp/38101/p2p/Qmf2HeHe4sspGkfRCTq6257Vm3UHzvh2TeQJHHvHzzuFw6e"
-                         },
-                         {
-                                "address" : "SmJG3rH2ZzYQ9ojxhbRCPwFiE9y6pD1Co"
-                                , "neturl" : "/ip4/127.0.0.1/tcp/38102/p2p/QmQKp8pLWSgV4JiGjuULKV1JsdpxUtnDEUMP8sGaaUbwVL"
-                         }
-                ]
+                "init_proposer": {
+                    "address":[
+                      "TeyyPLpp9L7QAcxHangtcHTu7HUZ6iydY",
+                      "SmJG3rH2ZzYQ9ojxhbRCPwFiE9y6pD1Co"            
+                    ]
+                }
            }
         }
 }

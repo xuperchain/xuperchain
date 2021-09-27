@@ -76,7 +76,7 @@ start() {
     waitRun
     if [ "$?" != "0" ]; then
         echo "start timeout,force stop app."
-        forceStop
+        forcestop
         echo "start fail."
         exit 1
     fi
