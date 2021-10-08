@@ -12,11 +12,6 @@ jobs:
       uses: actions/setup-go@v1
       with:
         go-version: ${{ matrix.go-version }}
-
-    # - name: setup Docker
-    #   if: contains(matrix.platform, 'ubuntu')
-    #   uses: docker-practice/actions-setup-docker@master
-
     - name: Checkout code
       uses: actions/checkout@v2
     - name: Test
@@ -29,10 +24,6 @@ jobs:
       with:
         file: ./coverage.txt
 
-  # Only  build image for test  as docker support is  not production available
-    # - name: Build Image
-    #   run: |
-    #     make build-image
 
 
 
