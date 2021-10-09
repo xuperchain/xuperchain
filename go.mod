@@ -13,9 +13,7 @@ require (
 	github.com/manifoldco/promptui v0.7.0
 	github.com/prometheus/client_golang v1.11.0
 	github.com/spf13/cobra v1.0.0
-	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.6.2
-	github.com/syndtr/goleveldb v1.0.1-0.20200815110645-5c35d600f0ca
 	github.com/xuperchain/crypto v0.0.0-20201028025054-4d560674bcd6
 	github.com/xuperchain/log15 v0.0.0-20190620081506-bc88a9198230
 	github.com/xuperchain/xupercore v0.0.0-20210720112551-29ed46a49f02

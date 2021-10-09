@@ -22,16 +22,6 @@ function buildpkg() {
     output=$1
     pkg=$2
 
-    version=`git rev-parse --abbrev-ref HEAD`
-    if [ $? != 0 ]; then
-        version="unknow"
-    fi
-    
-    commitId=`git rev-parse --short HEAD`
-    if [ $? != 0 ]; then
-        commitId="unknow"
-    fi
-
     buildTime=$(date "+%Y-%m-%d-%H:%M:%S")
     
     
@@ -40,11 +30,11 @@ function buildpkg() {
         mkdir "$OUTDIR/bin"
     fi
 
-    ldflags="-X main.Version=$version -X main.BuildTime=$buildTime -X main.CommitID=$commitId"
+    ldflags="-X main.Version=$VERSION -X main.BuildTime=$buildTime -X main.CommitID=$COMMIT_ID"
     echo "go build -o "$OUTDIR/bin/$output" -ldflags \"$ldflags\" $pkg"
 
     go build -o "$OUTDIR/bin/$output" -ldflags \
-        "-X main.Version=$version -X main.BuildTime=$buildTime -X main.CommitID=$commitId" $pkg
+        "-X main.Version=$VERSION -X main.BuildTime=$buildTime -X main.CommitID=$COMMIT_ID" $pkg
 }
 
 # build xchain
