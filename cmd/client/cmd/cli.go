@@ -95,17 +95,18 @@ func (c *Cli) initFlags() error {
 	rootFlag := c.rootCmd.PersistentFlags()
 	rootFlag.StringVarP(&cfgFile, "conf", "C", "./conf/xchain-cli.yaml", "client config file")
 	c.RootOptions = NewRootOptions()
-	err := c.RootOptions.LoadConfig(cfgFile)
-	if err != nil {
-		fmt.Printf("load client config failed.config:%s err:%v\n", cfgFile, err)
-		os.Exit(-1)
-	}
+
 	// 设置命令行参数和默认值
 	rootFlag.StringP("host", "H", c.RootOptions.Host, "server node ip:port")
 	rootFlag.String("name", c.RootOptions.Name, "block chain name")
 	rootFlag.String("keys", c.RootOptions.Keys, "directory of keys")
 	rootFlag.String("crypto", c.RootOptions.Crypto, "crypto type")
 	viper.BindPFlags(rootFlag)
+	err := c.RootOptions.LoadConfig(cfgFile)
+	if err != nil {
+		fmt.Printf("load client config failed.config:%s err:%v\n", cfgFile, err)
+		os.Exit(-1)
+	}
 
 	cobra.OnInitialize(func() {
 		viper.Unmarshal(&c.RootOptions)

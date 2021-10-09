@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"os"
 	"path"
 	"path/filepath"
 
@@ -37,6 +38,13 @@ func NewRootOptions() RootOptions {
 
 // LoadConfig load Node Config from the specific path/file
 func (nc *RootOptions) LoadConfig(fileName string) error {
+	if _, err := os.Stat(fileName); err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+
+	}
 	confPath, fileNameOnly := filepath.Split(fileName)
 	fileSuffix := path.Ext(fileName)
 	confName := fileNameOnly[0 : len(fileNameOnly)-len(fileSuffix)]
