@@ -22,6 +22,7 @@ compile: xvm xchain
 xchain:
 	VERSION=$(VERSION) COMMIT_ID=$(COMMIT_ID) bash $(HOMEDIR)/auto/build.sh
 prepare:
+	go env -w GOPROXY=https://goproxy.cn,direct
 	go mod download
 # make xvm
 xvm:
