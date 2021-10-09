@@ -17,6 +17,7 @@ type NetURLConvertCommand struct {
 	cli  *Cli
 	cmd  *cobra.Command
 	path string
+	from string
 }
 
 // NewNetURLGenCommand new neturl gen cmd
@@ -36,8 +37,13 @@ func NewNetURLConvertCommand(cli *Cli) *cobra.Command {
 
 func (n *NetURLConvertCommand) addFlags() {
 	n.cmd.Flags().StringVar(&n.path, "path", "./data/netkeys", "path where net_private.key saved (default is ./data/netkeys)")
+	n.cmd.Flags().StringVar(&n.from, "from", "net", "net|pem")
 }
 
 func (n *NetURLConvertCommand) convertKey(ctx context.Context) error {
-	return p2p.GeneratePemKeyFromNetKey(n.path)
+	if n.from == "net" {
+		return p2p.GeneratePemKeyFromNetKey(n.path)
+	} else {
+		return p2p.GenerateNetKeyFromPemKey(n.path)
+	}
 }

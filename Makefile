@@ -5,6 +5,9 @@ COMPILECACHEDIR := $(HOMEDIR)/.compile_cache
 XVMDIR  := $(COMPILECACHEDIR)/xvm
 TESTNETDIR := $(HOMEDIR)/testnet
 
+VERSION:=$(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)
+COMMIT_ID:=$(shell git rev-parse --short HEAD 2>/dev/null ||echo unknown)
+
 # init command params
 export GO111MODULE=on
 X_ROOT_PATH := $(HOMEDIR)
@@ -17,8 +20,10 @@ all: clean compile
 # make compile, go build
 compile: xvm xchain
 xchain:
-	bash $(HOMEDIR)/auto/build.sh
-
+	VERSION=$(VERSION) COMMIT_ID=$(COMMIT_ID) bash $(HOMEDIR)/auto/build.sh
+prepare:
+	go env -w GOPROXY=https://goproxy.cn,direct
+	go mod download
 # make xvm
 xvm:
 	bash $(HOMEDIR)/auto/build_xvm.sh
@@ -41,5 +46,8 @@ cleancache:
 testnet:
 	bash $(HOMEDIR)/auto/deploy_testnet.sh
 
+# Docker related tasks
+build-image:
+	docker build -t xchain:dev .
 # avoid filename conflict and speed up build
 .PHONY: all compile test clean

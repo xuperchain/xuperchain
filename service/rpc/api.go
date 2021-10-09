@@ -115,6 +115,10 @@ func (t *RpcServ) PreExecWithSelectUTXO(gctx context.Context,
 		return resp, err
 	}
 
+	// no fee, set response must.
+	resp.Bcname = req.GetBcname()
+	resp.Response = preExecRes.GetResponse()
+
 	// SelectUTXO
 	totalAmount := req.GetTotalAmount() + preExecRes.GetResponse().GetGasUsed()
 	if totalAmount < 1 {
@@ -136,8 +140,6 @@ func (t *RpcServ) PreExecWithSelectUTXO(gctx context.Context,
 	utxoOut.Header = req.GetHeader()
 
 	// 设置响应
-	resp.Bcname = req.GetBcname()
-	resp.Response = preExecRes.GetResponse()
 	resp.UtxoOutput = utxoOut
 
 	return resp, nil
@@ -332,6 +334,7 @@ func (t *RpcServ) QueryACL(gctx context.Context, req *pb.AclStatus) (*pb.AclStat
 		return resp, ecom.ErrInternal
 	}
 
+	resp.Bcname = req.GetBcname()
 	resp.AccountName = req.GetAccountName()
 	resp.ContractName = req.GetContractName()
 	resp.MethodName = req.GetMethodName()
@@ -433,7 +436,9 @@ func (t *RpcServ) GetBalance(gctx context.Context, req *pb.AddressStatus) (*pb.A
 	}
 
 	for i := 0; i < len(req.Bcs); i++ {
-		tmpTokenDetail := &pb.TokenDetail{}
+		tmpTokenDetail := &pb.TokenDetail{
+			Bcname: req.Bcs[i].Bcname,
+		}
 		handle, err := models.NewChainHandle(req.Bcs[i].Bcname, rctx)
 		if err != nil {
 			tmpTokenDetail.Error = pb.XChainErrorEnum_BLOCKCHAIN_NOTEXIST

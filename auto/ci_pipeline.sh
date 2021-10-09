@@ -34,9 +34,13 @@ function testnet() {
 
   cd "$WorkPath" || exit
 
-  sleep 1s
   info "start testnet path=$(pwd)"
-  ./bin/xchain-cli status || exit
+  sleep 3s && ./bin/xchain-cli status || \
+  sleep 3s && ./bin/xchain-cli status || \
+  sleep 3s && ./bin/xchain-cli status || \
+  sleep 3s && ./bin/xchain-cli status || \
+  sleep 3s && ./bin/xchain-cli status || \
+  sleep 3s && ./bin/xchain-cli status || exit
 }
 
 # account
@@ -44,19 +48,19 @@ function account() {
   ## 账户
   ./bin/xchain-cli account newkeys --output data/alice || exit
   ./bin/xchain-cli transfer --to "$(cat data/alice/address)" --amount 10000000 || exit
-  balance=$(xchain-cli account balance --keys data/alice)
+  balance=$(./bin/xchain-cli account balance --keys data/alice)
   info "account $(cat data/alice/address) balance $balance"
 
   ## 合约账户
   ./bin/xchain-cli account new --account 1111111111111111 --fee 1000 || exit
   ./bin/xchain-cli transfer --to XC1111111111111111@xuper --amount 100000001 || exit
-  balance=$(xchain-cli account balance XC1111111111111111@xuper)
+  balance=$(./bin/xchain-cli account balance XC1111111111111111@xuper)
   info "account XC1111111111111111@xuper balance $balance"
 
   ## 合约账户：desc 文件
   ./bin/xchain-cli account new --desc $WorkRoot/data/desc/NewAccount.json --fee 1000 || exit
   ./bin/xchain-cli transfer --to XC2222222222222222@xuper --amount 100000002 || exit
-  balance=$(xchain-cli account balance XC2222222222222222@xuper)
+  balance=$(./bin/xchain-cli account balance XC2222222222222222@xuper)
   info "account XC2222222222222222@xuper balance $balance"
 }
 

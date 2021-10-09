@@ -42,6 +42,8 @@ type invokeMethodFunc func(c *ConsensusInvokeCommand, ctx context.Context, ct *C
 
 var invokeMap = map[string]invokeMethodFunc{
 	"tdpos": (*ConsensusInvokeCommand).tdposInvoke,
+	"xpos":  (*ConsensusInvokeCommand).tdposInvoke,
+	"poa":   (*ConsensusInvokeCommand).xpoaInvoke,
 	"xpoa":  (*ConsensusInvokeCommand).xpoaInvoke,
 }
 
@@ -104,23 +106,25 @@ func (c *ConsensusInvokeCommand) invoke(ctx context.Context) error {
 }
 
 func (c *ConsensusInvokeCommand) tdposInvoke(ctx context.Context, ct *CommTrans) error {
+	if c.method == "getTdposInfos" {
+		_, _, err := ct.GenPreExeRes(ctx)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
 	// tdpos必须有input json数据
-	if c.descfile == "" && c.method != "getTdposInfos" {
-		// trick处理
+	if c.descfile == "" {
 		return fmt.Errorf("tdpos needs desc file.\n")
 	}
-	var err error
 	args := make(map[string]interface{})
-	if c.method != "getTdposInfos" {
-		desc, err := ioutil.ReadFile(c.descfile)
-		if err != nil {
-			return err
-		}
-
-		err = json.Unmarshal(desc, &args)
-		if err != nil {
-			return err
-		}
+	desc, err := ioutil.ReadFile(c.descfile)
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal(desc, &args)
+	if err != nil {
+		return err
 	}
 
 	ct.Args, err = convertToXuper3Args(args)
@@ -142,6 +146,14 @@ func (c *ConsensusInvokeCommand) tdposInvoke(ctx context.Context, ct *CommTrans)
 }
 
 func (c *ConsensusInvokeCommand) xpoaInvoke(ctx context.Context, ct *CommTrans) error {
+	if c.method == "getValidates" {
+		// TODO:: 读接口是否需要增加权限
+		_, _, err := ct.GenPreExeRes(ctx)
+		if err != nil {
+			return err
+		}
+		return nil
+	}
 	if c.account == "" {
 		return fmt.Errorf("xpoa needs acl account.\n")
 	}
@@ -159,34 +171,33 @@ func (c *ConsensusInvokeCommand) xpoaInvoke(ctx context.Context, ct *CommTrans) 
 	if err != nil {
 		return err
 	}
-
-	// xpoa不一定需要input json，如getValidates读接口
-	if c.descfile != "" {
-		desc, err := ioutil.ReadFile(c.descfile)
-		if err != nil {
-			return err
-		}
-		args := make(map[string]interface{})
-		err = json.Unmarshal(desc, &args)
-		if err != nil {
-			return err
-		}
-		// 此时填充acl信息
-		acl := reply.GetAcl()
-		aksB, err := json.Marshal(acl.AksWeight)
-		if err != nil {
-			return fmt.Errorf("xpoa query acl marshal error.\n")
-		}
-		args["aksWeight"] = string(aksB)
-		if acl.Pm == nil {
-			return fmt.Errorf("xpoa query acl error.\n")
-		}
-		args["acceptValue"] = fmt.Sprintf("%f", acl.Pm.AcceptValue)
-		args["rule"] = fmt.Sprintf("%d", acl.Pm.Rule)
-		ct.Args, err = convertToXuper3Args(args)
-		if err != nil {
-			return err
-		}
+	args := make(map[string]interface{})
+	desc, err := ioutil.ReadFile(c.descfile)
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal(desc, &args)
+	if err != nil {
+		return err
+	}
+	// 此时填充acl信息
+	acl := reply.GetAcl()
+	if acl == nil {
+		return fmt.Errorf("xpoa query acl error. pls check.\n")
+	}
+	aksB, err := json.Marshal(acl.AksWeight)
+	if err != nil {
+		return fmt.Errorf("xpoa query acl marshal error.\n")
+	}
+	args["aksWeight"] = string(aksB)
+	if acl.Pm == nil {
+		return fmt.Errorf("xpoa query acl error.\n")
+	}
+	args["acceptValue"] = fmt.Sprintf("%f", acl.Pm.AcceptValue)
+	args["rule"] = fmt.Sprintf("%d", acl.Pm.Rule)
+	ct.Args, err = convertToXuper3Args(args)
+	if err != nil {
+		return err
 	}
 	ct.To, err = readAddress(ct.Keys)
 	if err != nil {
