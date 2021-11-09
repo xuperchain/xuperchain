@@ -1,0 +1,25 @@
+# Rpc service listen port
+rpcPort: 37102
+# GWPort
+GWPort: 37302
+# MetricPort
+metricPort: 37202
+# EnableEndorser
+enableEndorser: true
+## EndorserHosts
+endorserHosts:
+  - "127.0.0.1:8848"
+endorserModule: "default"
+# Set the max message size in bytes the server can receive.
+# If this is not set, gRPC uses the default 4MB.
+maxRecvMsgSize: 134217728
+# readBufSize lets you set the size of read buffer, this determines how much data can be read at most for one read syscall. The default value for this buffer is 32KB. Zero will disable read buffer for a connection so data framer can access the underlying conn directly.
+readBufSize: 32768
+# writeBufSize determines how much data can be batched before doing a write on the wire. The corresponding memory allocation for this buffer will be twice the size to keep syscalls low. The default value for this buffer is 32KB. Zero will disable the write buffer such that each write will be on underlying connection. Note: A Send call may not directly translate to a write.
+writeBufSize: 32768
+# Window size for stream
+# The lower bound for window size is 64K and any value smaller than that will be ignored
+initWindowSize: 131072
+# Window size for a connection
+# The lower bound for window size is 64K and any value smaller than that will be ignored
+initConnWindowSize: 65536

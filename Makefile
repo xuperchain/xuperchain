@@ -1,46 +1,53 @@
-ifeq ($(OS),Windows_NT)
-  PLATFORM="Windows"
-else
-  ifeq ($(shell uname),Darwin)
-    PLATFORM="MacOS"
-  else
-    PLATFORM="Linux"
-  endif
-endif
+# init project PATH
+HOMEDIR := $(shell pwd)
+OUTDIR  := $(HOMEDIR)/output
+COMPILECACHEDIR := $(HOMEDIR)/.compile_cache
+XVMDIR  := $(COMPILECACHEDIR)/xvm
+TESTNETDIR := $(HOMEDIR)/testnet
 
+VERSION:=$(shell git rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)
+COMMIT_ID:=$(shell git rev-parse --short HEAD 2>/dev/null ||echo unknown)
 
-all: build
-
+# init command params
 export GO111MODULE=on
-XCHAIN_ROOT := ${PWD}/core
-export XCHAIN_ROOT
-PATH := ${PWD}/core/xvm/compile/wabt/build:$(PATH)
+X_ROOT_PATH := $(HOMEDIR)
+export X_ROOT_PATH
+export PATH := $(OUTDIR)/bin:$(XVMDIR):$(PATH)
 
-build: build-release
+# make, make all
+all: clean compile
 
-build-release:
-	PLATFORM=$(PLATFORM) ./core/scripts/build.sh
+# make compile, go build
+compile: xvm xchain
+xchain:
+	VERSION=$(VERSION) COMMIT_ID=$(COMMIT_ID) bash $(HOMEDIR)/auto/build.sh
+prepare:
+	go env -w GOPROXY=https://goproxy.cn,direct
+	go mod download
+# make xvm
+xvm:
+	bash $(HOMEDIR)/auto/build_xvm.sh
 
-
-build-debug:
-	PLATFORM=$(PLATFORM) XCHAIN_BUILD_DEBUG=1 ./core/scripts/build.sh
-
-test:
+# make test, test your code
+test: xvm unit
+unit:
 	go test -coverprofile=coverage.txt -covermode=atomic ./...
-	# test wasm sdk
-	GOOS=js GOARCH=wasm go build github.com/xuperchain/xuperchain/core/contractsdk/go/driver
 
-contractsdk:
-	make -C core/contractsdk/cpp build
-	make -C core/contractsdk/cpp test
-
+# make clean
+cleanall: clean cleantest cleancache
 clean:
-	rm -rf core/plugins
-	rm -rf output
-	rm -f xchain-cli
-	rm -f xchain
-	rm -f dump_chain
-	rm -f event_client
-	rm -rf ./core/xvm/compile/wabt/build/
+	rm -rf $(OUTDIR)
+cleantest:
+	rm -rf $(TESTNETDIR)
+cleancache:
+	rm -rf $(COMPILECACHEDIR)
 
-.PHONY: all test clean
+# deploy test network
+testnet:
+	bash $(HOMEDIR)/auto/deploy_testnet.sh
+
+# Docker related tasks
+build-image:
+	docker build -t xchain:dev .
+# avoid filename conflict and speed up build
+.PHONY: all compile test clean

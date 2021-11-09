@@ -1,0 +1,8 @@
+{
+    "module_name": "wasm",
+    "contract_name": "unified_check",
+    "method_name": "register_aks",
+    "args":{
+        "aks":"SmJG3rH2ZzYQ9ojxhbRCPwFiE9y6pD1Co,iYjtLcW6SVCiousAb5DFKWtWroahhEj4u"
+    }
+}

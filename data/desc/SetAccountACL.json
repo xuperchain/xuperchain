@@ -1,0 +1,9 @@
+{
+  "module_name": "xkernel",
+  "contract_name": "$acl",
+  "method_name": "SetAccountAcl",
+  "args" : {
+    "account_name": "XC1111111111111111@xuper",
+    "acl": "{\"pm\": {\"rule\": 1,\"acceptValue\": 0.3},\"aksWeight\": {\"TeyyPLpp9L7QAcxHangtcHTu7HUZ6iydY\": 0.3,\"SmJG3rH2ZzYQ9ojxhbRCPwFiE9y6pD1Co\": 0.3}}"
+  }
+}
