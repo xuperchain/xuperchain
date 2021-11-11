@@ -396,9 +396,12 @@ type SystemStatus struct {
 }
 
 // FromSystemStatusPB systemstatus info
-func FromSystemStatusPB(statuspb *pb.SystemsStatus) *SystemStatus {
+func FromSystemStatusPB(statuspb *pb.SystemsStatus, cname string) *SystemStatus {
 	status := &SystemStatus{}
 	for _, chain := range statuspb.GetBcsStatus() {
+		if cname != "xuper" && chain.Bcname != cname {
+			continue
+		}
 		ledgerMeta := chain.GetMeta()
 		utxoMeta := chain.GetUtxoMeta()
 		ReservedContracts := utxoMeta.GetReservedContracts()

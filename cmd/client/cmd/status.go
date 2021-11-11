@@ -65,7 +65,7 @@ func (s *StatusCommand) printXchainStatus(ctx context.Context) error {
 	if reply.Header.Error != pb.XChainErrorEnum_SUCCESS {
 		return errors.New(reply.Header.Error.String())
 	}
-	status := FromSystemStatusPB(reply.GetSystemsStatus())
+	status := FromSystemStatusPB(reply.GetSystemsStatus(), s.cli.RootOptions.Name)
 	if s.extractSpecificInfo(status) {
 		return nil
 	}
