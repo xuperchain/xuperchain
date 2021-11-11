@@ -17,5 +17,5 @@ FROM ubuntu:18.04
 WORKDIR /home/xchain
 RUN apt update&& apt install -y build-essential
 COPY --from=builder /home/xchain/output .
-EXPOSE 37101 37101
+EXPOSE 37101 47101
 CMD bash control.sh start -f
