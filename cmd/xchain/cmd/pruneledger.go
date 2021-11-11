@@ -6,8 +6,10 @@ package cmd
 
 import (
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"log"
+	"path/filepath"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/spf13/cobra"
@@ -21,6 +23,7 @@ import (
 	"github.com/xuperchain/xupercore/lib/crypto/client"
 	"github.com/xuperchain/xupercore/lib/logs"
 	_ "github.com/xuperchain/xupercore/lib/storage/kvdb/leveldb"
+	"github.com/xuperchain/xupercore/lib/utils"
 	xutils "github.com/xuperchain/xupercore/lib/utils"
 )
 
@@ -52,10 +55,10 @@ func GetPruneLedgerCommand() *PruneLedgerCommand {
 		},
 	}
 
-	c.Cmd.Flags().StringVar(&c.Name,
-		"name", "n", "block chain name")
-	c.Cmd.Flags().StringVar(&c.Target,
-		"target", "t", "target block id")
+	c.Cmd.Flags().StringVarP(&c.Name,
+		"name", "n", "xuper", "block chain name")
+	c.Cmd.Flags().StringVarP(&c.Target,
+		"target", "t", "", "target block id")
 	c.Cmd.Flags().StringVarP(&c.EnvConf,
 		"env_conf", "e", "./conf/env.yaml", "env config file path")
 	c.Cmd.Flags().StringVarP(&c.Crypto,
@@ -73,6 +76,13 @@ func (c *PruneLedgerCommand) pruneLedger(econf *xconfig.EnvConf) error {
 	if err != nil {
 		return err
 	}
+
+	ledgerPath := lctx.EnvCfg.GenDataAbsPath(lctx.EnvCfg.ChainDir)
+	ledgerPath = filepath.Join(ledgerPath, lctx.BCName)
+	if !utils.PathExists(ledgerPath) {
+		return errors.New("invalid name:" + lctx.BCName)
+	}
+
 	xledger, err := ledger.OpenLedger(lctx)
 	if err != nil {
 		return err

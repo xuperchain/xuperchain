@@ -27,10 +27,6 @@ if [ "$0" != "./$Self" ] && [ "$0" != "$Self" ]; then
     exit 1
 fi
 
-if [ $# -ne 1 ]; then
-    echo "Param error. $# Example:$Usage"
-    exit 1
-fi
 
 # file check
 BinPath="$Pwd/bin/$AppName"
@@ -70,9 +66,15 @@ start() {
     cmd="nohup $BinPath startup --conf $ConfPath >$LogDir/nohup.out 2>&1 &"
     echo "start $AppName. cmd:$cmd"
 
+    # foreground running for docker runtime and foreground log
+    if [ 1"$1"  = 1"-f" ];then
+      $BinPath startup --conf $ConfPath
+      exit $?
+    fi
+
     nohup $BinPath startup --conf $ConfPath >"$LogDir/nohup.out" 2>&1 &
     
-    # 检查确保经常启动运行
+    # 检查确保正常启动运行
     waitRun
     if [ "$?" != "0" ]; then
         echo "start timeout,force stop app."
@@ -202,7 +204,7 @@ waitExit() {
 
 case "$1" in
     start)
-        start
+        start $2
         echo "Done!"
         ;;
     stop)
