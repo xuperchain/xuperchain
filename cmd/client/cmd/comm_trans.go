@@ -25,6 +25,7 @@ import (
 	"github.com/xuperchain/xupercore/bcs/ledger/xledger/state/utxo"
 	"github.com/xuperchain/xupercore/kernel/contract"
 	crypto_client "github.com/xuperchain/xupercore/lib/crypto/client"
+	cryptoHash "github.com/xuperchain/xupercore/lib/crypto/hash"
 	"github.com/xuperchain/xupercore/lib/utils"
 )
 
@@ -660,6 +661,12 @@ func (c *CommTrans) GenTxInputsWithMergeUTXO(ctx context.Context) ([]*pb.TxInput
 		NeedLock: true,
 	}
 
+	pubKey, signature, err := signForLockUtxo(c.ChainName, fromAddr, c.Keys, c.CryptoType, big.NewInt(0))
+	if err != nil {
+		return nil, nil, err
+	}
+	utxoInput.Publickey = pubKey
+	utxoInput.UserSign = signature
 	utxoOutputs, err := c.XchainClient.SelectUTXOBySize(ctx, utxoInput)
 	if err != nil {
 		return nil, nil, fmt.Errorf("%v, details:%v", ErrSelectUtxo, err)
@@ -1192,4 +1199,34 @@ func (xc *CommTrans) GenerateTxOutput(to, amount, fee string) ([]*pb.TxOutput, e
 	}
 
 	return txOutputs, nil
+}
+
+func signForLockUtxo(bcName, account, keyPath, cryptoType string, need *big.Int) (string, []byte, error) {
+	hashStr := bcName + account + need.String() + strconv.FormatBool(true)
+	doubleHash := cryptoHash.DoubleSha256([]byte(hashStr))
+
+	pubkey, err := readPublicKey(keyPath)
+	if err != nil {
+		return "", nil, err
+	}
+
+	initScrkey, err := readPrivateKey(keyPath)
+	if err != nil {
+		return "", nil, err
+	}
+
+	cryptoClient, err := crypto_client.CreateCryptoClient(cryptoType)
+	if err != nil {
+		return "", nil, errors.New("Create crypto client error")
+	}
+	privateKey, err := cryptoClient.GetEcdsaPrivateKeyFromJsonStr(initScrkey)
+	if err != nil {
+		return "", nil, err
+	}
+
+	sign, sErr := cryptoClient.SignECDSA(privateKey, doubleHash)
+	if sErr != nil {
+		return "", nil, sErr
+	}
+	return pubkey, sign, nil
 }
