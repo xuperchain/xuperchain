@@ -661,7 +661,7 @@ func (c *CommTrans) GenTxInputsWithMergeUTXO(ctx context.Context) ([]*pb.TxInput
 		NeedLock: true,
 	}
 
-	pubKey, signature, err := c.signForLockUtxo(c.ChainName, fromAddr, c.Keys, big.NewInt(0))
+	pubKey, signature, err := signForLockUtxo(c.ChainName, fromAddr, c.Keys, c.CryptoType, big.NewInt(0))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -1201,7 +1201,7 @@ func (xc *CommTrans) GenerateTxOutput(to, amount, fee string) ([]*pb.TxOutput, e
 	return txOutputs, nil
 }
 
-func (c *CommTrans) signForLockUtxo(bcName, account, keyPath string, need *big.Int) (string, []byte, error) {
+func signForLockUtxo(bcName, account, keyPath, cryptoType string, need *big.Int) (string, []byte, error) {
 	hashStr := bcName + account + need.String() + strconv.FormatBool(true)
 	doubleHash := cryptoHash.DoubleSha256([]byte(hashStr))
 
@@ -1215,7 +1215,7 @@ func (c *CommTrans) signForLockUtxo(bcName, account, keyPath string, need *big.I
 		return "", nil, err
 	}
 
-	cryptoClient, err := crypto_client.CreateCryptoClient(c.CryptoType)
+	cryptoClient, err := crypto_client.CreateCryptoClient(cryptoType)
 	if err != nil {
 		return "", nil, errors.New("Create crypto client error")
 	}
