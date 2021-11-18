@@ -3,8 +3,6 @@ module github.com/xuperchain/xuperchain
 go 1.14
 
 require (
-	github.com/btcsuite/btcutil v0.0.0-20190425235716-9e5f4b9a998d
-	github.com/cncf/xds/go v0.0.0-20210312221358-fbca930ec8ed // indirect
 	github.com/golang/protobuf v1.4.3
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/grpc-ecosystem/go-grpc-prometheus v1.2.0
@@ -15,9 +13,7 @@ require (
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/viper v1.6.2
 	github.com/xuperchain/crypto v0.0.0-20201028025054-4d560674bcd6
-	github.com/xuperchain/log15 v0.0.0-20190620081506-bc88a9198230
-	github.com/xuperchain/xupercore v0.0.0-20210720112551-29ed46a49f02
-	golang.org/x/crypto v0.0.0-20200728195943-123391ffb6de
+	github.com/xuperchain/xupercore v0.0.0-20211009102144-808ff6fbfeac
 	golang.org/x/net v0.0.0-20200822124328-c89045814202
 	google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013
 	google.golang.org/grpc v1.35.0
