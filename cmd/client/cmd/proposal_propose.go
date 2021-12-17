@@ -6,10 +6,14 @@ package cmd
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"io/ioutil"
+	"math/big"
 
 	"github.com/spf13/cobra"
 
+	"github.com/xuperchain/xuperchain/service/pb"
 	"github.com/xuperchain/xupercore/bcs/ledger/xledger/state/utxo"
 )
 
@@ -20,6 +24,13 @@ type ProposalProposeCommand struct {
 
 	proposal string
 	fee      string
+}
+
+type proposalArgs struct {
+	StopVotingHeight string `json:"stop_vote_height"`
+}
+type proposalData struct {
+	Args proposalArgs `json:"args"`
 }
 
 // NewProposalProposeCommand propose a proposal cmd
@@ -74,6 +85,9 @@ func (c *ProposalProposeCommand) proposeProposal(ctx context.Context) error {
 		return err
 	}
 
+	if err := c.validateProposal(proposal); err != nil {
+		return err
+	}
 	ct.ModuleName = "xkernel"
 	ct.ContractName = "$proposal"
 	ct.Args["proposal"] = proposal
@@ -91,4 +105,27 @@ func (c *ProposalProposeCommand) getProposal() ([]byte, error) {
 		return []byte("no proposal"), nil
 	}
 	return ioutil.ReadFile(c.proposal)
+}
+
+func (c *ProposalProposeCommand) validateProposal(data []byte) error {
+	pData := &proposalData{}
+	if err := json.Unmarshal(data, pData); err != nil {
+		return err
+	}
+	in := &pb.CommonIn{}
+
+	status, err := c.cli.XchainClient().GetSystemStatus(context.Background(), in)
+	if err != nil {
+		return err
+	}
+
+	stopVotingHeight, ok := big.NewInt(0).SetString(pData.Args.StopVotingHeight, 10)
+	if !ok {
+		return errors.New("invalid stop_voting_height")
+	}
+
+	if big.NewInt(status.SystemsStatus.BcsStatus[0].Meta.TrunkHeight).Cmp(stopVotingHeight) >= 0 {
+		return errors.New("stop voting height must be larger than current trunk height")
+	}
+	return nil
 }
