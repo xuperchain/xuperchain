@@ -844,8 +844,8 @@ github.com/xuperchain/log15 v0.0.0-20190620081506-bc88a9198230 h1:AWFZFbmLhY6VG6
 github.com/xuperchain/log15 v0.0.0-20190620081506-bc88a9198230/go.mod h1:90Da9GDXy9Yle79ZHSJY1c7X+1meBKsoX0vkRy09xis=
 github.com/xuperchain/wagon v0.6.1-0.20200313164333-db544e251599 h1:xh8MpzUZFmNOpeJyiiBCYOJq7gq7nRBU647y6e78Qms=
 github.com/xuperchain/wagon v0.6.1-0.20200313164333-db544e251599/go.mod h1:PjShksGcTLuvtHxudQ7nOdlvlw2NdbZrTn8jvdY9Mkw=
-github.com/xuperchain/xupercore v0.0.0-20210720112551-29ed46a49f02 h1:9g/qjCZfm4q0pskvWbajvM/lFbFTromBJw/pZ4+wwE0=
-github.com/xuperchain/xupercore v0.0.0-20210720112551-29ed46a49f02/go.mod h1:dhjYhA0OFTiCtwvnZb3pksr0PJwQ5uORZaiFf/umR00=
+github.com/xuperchain/xupercore v0.0.0-20211009102144-808ff6fbfeac h1:pDNbg6SO8ELQK5J9w31GMp3OKYVJ/dA4eKZn6MDRXQw=
+github.com/xuperchain/xupercore v0.0.0-20211009102144-808ff6fbfeac/go.mod h1:dhjYhA0OFTiCtwvnZb3pksr0PJwQ5uORZaiFf/umR00=
 github.com/xuperchain/xvm v0.0.0-20210126142521-68fd016c56d7 h1:ARg101vOoX4N+6hbwtud6b0P/bb+7JtrCfVXAHa/xHU=
 github.com/xuperchain/xvm v0.0.0-20210126142521-68fd016c56d7/go.mod h1:XTaJSLDGYlcAPFb5vWH4vVALckO3V5+wa4zl1mpKMjg=
 gitlab.com/NebulousLabs/errors v0.0.0-20171229012116-7ead97ef90b8/go.mod h1:ZkMZ0dpQyWwlENaeZVBiQRjhMEZvk6VTXquzl3FOFP8=
