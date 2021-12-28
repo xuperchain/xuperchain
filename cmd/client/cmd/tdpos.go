@@ -26,6 +26,6 @@ func NewTDposCommand(cli *Cli) *cobra.Command {
 	return cmd
 }
 
-func init() {
-	AddCommand(NewTDposCommand)
-}
+//func init() {
+//	AddCommand(NewTDposCommand)
+//}
