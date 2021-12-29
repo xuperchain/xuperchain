@@ -7,7 +7,7 @@ port: 47103
 # Address multiaddr string
 address: /ip4/127.0.0.1/tcp/47103
 # IsTls config the node use tls secure transparent
-isTls: true
+isTls: false
 # KeyPath is the netdisk private key path
 keyPath: netkeys
 # BootNodes config the bootNodes the node to connect
