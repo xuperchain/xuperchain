@@ -62,7 +62,7 @@ func GetPruneLedgerCommand() *PruneLedgerCommand {
 	c.Cmd.Flags().StringVarP(&c.EnvConf,
 		"env_conf", "e", "./conf/env.yaml", "env config file path")
 	c.Cmd.Flags().StringVarP(&c.Crypto,
-		"crypto", "c", "default", "block chain name")
+		"crypto", "c", "default", "crypto type")
 
 	return c
 }
