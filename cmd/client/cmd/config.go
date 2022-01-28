@@ -22,11 +22,11 @@ type TLSOptions struct {
 // ComplianceCheckEndorseServiceFee: fee for compliance check
 // ComplianceCheckEndorseServiceAddr: compliance check addr
 type ComplianceCheckConfig struct {
-	IsNeedComplianceCheck             bool   `yaml:"isNeedComplianceCheck,omitempty"`
-	IsNeedComplianceCheckFee          bool   `yaml:"isNeedComplianceCheckFee,omitempty"`
-	ComplianceCheckEndorseServiceFee  int    `yaml:"complianceCheckEndorseServiceFee,omitempty"`
-	ComplianceCheckEndorseFeeAddr     string `yaml:"complianceCheckEndorseFeeAddr,omitempty"`
-	ComplianceCheckEndorseServiceAddr string `yaml:"complianceCheckEndorseServiceAddr,omitempty"`
+	IsNeedComplianceCheck                bool   `yaml:"isNeedComplianceCheck,omitempty"`
+	IsNeedComplianceCheckFee             bool   `yaml:"isNeedComplianceCheckFee,omitempty"`
+	ComplianceCheckEndorseServiceFee     int    `yaml:"complianceCheckEndorseServiceFee,omitempty"`
+	ComplianceCheckEndorseServiceFeeAddr string `yaml:"complianceCheckEndorseServiceFeeAddr,omitempty"`
+	ComplianceCheckEndorseServiceAddr    string `yaml:"complianceCheckEndorseServiceAddr,omitempty"`
 }
 
 // NewRootOptions new a RootOptions instance
