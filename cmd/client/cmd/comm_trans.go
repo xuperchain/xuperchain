@@ -1050,7 +1050,7 @@ func (c *CommTrans) GenComplianceCheckTx(utxoOutput *pb.UtxoOutput) (*pb.Transac
 	}
 
 	checkAmount := strconv.Itoa(c.RootOptions.ComplianceCheck.ComplianceCheckEndorseServiceFee)
-	txOutputs, err := c.GenerateTxOutput(c.RootOptions.ComplianceCheck.ComplianceCheckEndorseFeeAddr, checkAmount, "0")
+	txOutputs, err := c.GenerateTxOutput(c.RootOptions.ComplianceCheck.ComplianceCheckEndorseServiceFeeAddr, checkAmount, "0")
 	if err != nil {
 		fmt.Printf("GenerateComplianceTx GenerateTxOutput failed.")
 		return nil, fmt.Errorf("GenerateComplianceTx GenerateTxOutput err: %v", err)

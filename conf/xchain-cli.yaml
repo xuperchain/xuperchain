@@ -10,7 +10,7 @@ complianceCheck:
   # 合规性背书费用
   complianceCheckEndorseServiceFee: 400
   # 合规性背书收费地址
-  complianceCheckEndorseFeeAddr: aB2hpHnTBDxko3UoP2BpBZRujwhdcAFoT
+  complianceCheckEndorseServiceFeeAddr: aB2hpHnTBDxko3UoP2BpBZRujwhdcAFoT
   # 如果通过合规性检查，签发认证签名的地址
   complianceCheckEndorseServiceAddr: jknGxa6eyum1JrATWvSJKW3thJ9GKHA9n
 #创建平行链所需要的最低费用
