@@ -123,9 +123,16 @@ func (c *ProposalProposeCommand) validateProposal(data []byte) error {
 	if !ok {
 		return errors.New("invalid stop_voting_height")
 	}
+	bcname := c.cli.RootOptions.Name
 
-	if big.NewInt(status.SystemsStatus.BcsStatus[0].Meta.TrunkHeight).Cmp(stopVotingHeight) >= 0 {
-		return errors.New("stop voting height must be larger than current trunk height")
+	for _, bcsStatus := range status.SystemsStatus.BcsStatus {
+		if bcsStatus.Bcname == bcname {
+			if big.NewInt(bcsStatus.GetMeta().TrunkHeight).Cmp(stopVotingHeight) >= 0 {
+				return errors.New("stop voting height must be larger than current trunk height")
+			}
+			return nil
+		}
 	}
+
 	return nil
 }
