@@ -783,7 +783,7 @@ func (c *CommTrans) GenPreExeWithSelectUtxoRes(ctx context.Context) (
 
 	for _, res := range preExecWithSelectUTXOResponse.GetResponse().GetResponses() {
 		if res.Status >= contract.StatusErrorThreshold {
-			return nil, errors.New("contract error status:" + string(res.Status) + " message:" + res.Message)
+			return nil, fmt.Errorf("contract error status:%d message:%s", res.Status, res.Message) 
 		}
 		fmt.Printf("contract response: %s\n", string(res.Body))
 	}
