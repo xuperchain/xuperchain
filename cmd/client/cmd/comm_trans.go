@@ -781,6 +781,13 @@ func (c *CommTrans) GenPreExeWithSelectUtxoRes(ctx context.Context) (
 		return nil, err
 	}
 
+	for _, res := range preExecWithSelectUTXOResponse.GetResponse().GetResponses() {
+		if res.Status >= contract.StatusErrorThreshold {
+			return nil, errors.New("contract error status:" + string(res.Status) + " message:" + res.Message)
+		}
+		fmt.Printf("contract response: %s\n", string(res.Body))
+	}
+
 	gasUsed := preExecWithSelectUTXOResponse.GetResponse().GetGasUsed()
 	fmt.Printf("The gas you cousume is: %v\n", gasUsed)
 	if gasUsed > 0 {
