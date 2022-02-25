@@ -10,3 +10,7 @@ txIdCacheGCInterval: 10m
 maxBlockQueueSize: 100
 # min new parachain amount
 minNewChainAmount: "100"
+# SyncBlockFilterMode is the mode for filter peerID list policies, 0-SyncWithNearestBucket, 1-SyncWithFactorBucket
+syncBlockFilterMode: 0
+# SyncFactorForFactorBucketMode only use for SyncWithFactorBucket mode of SyncBlockFilterMode configuration item
+SyncFactorForFactorBucketMode: 0.5
