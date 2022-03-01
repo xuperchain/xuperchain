@@ -44,6 +44,8 @@ func NewServiceCommand() (*cobra.Command, error) {
 	rootCmd.AddCommand(cmd.GetCreateChainCommand().GetCmd())
 	// cmd ledgerPrune
 	rootCmd.AddCommand(cmd.GetPruneLedgerCommand().GetCmd())
+	// cmd offlineQuery
+	rootCmd.AddCommand(cmd.GetOfflineQueryCommand().GetCmd())
 
 	return rootCmd, nil
 }
