@@ -192,7 +192,9 @@ func (oqt *OfflineQueryTxCommand) QueryByTxId(ctx context.Context, txid string) 
 	}
 	if !has {
 		fmt.Printf("txid:%s not found", txid)
+		return nil
 	}
+
 	// attention：这里利用指针强转，必须保持前后结构内容一致
 	output, err := json.MarshalIndent(cmdcli.FromPBTx((*pb.Transaction)(unsafe.Pointer(targetTxInfo))), "", "  ")
 	if err != nil {
@@ -246,9 +248,7 @@ func (oqkv *OfflineQueryKVStoreCommand) Get(ctx context.Context, bucket string, 
 	defer ledgerHandle.Close()
 	defer stateHandle.Close()
 
-	var (
-		val []byte
-	)
+	var val []byte
 	if height > 0 {
 		// 在指定高度进行快照读取操作
 		block, errQuery := ledgerHandle.QueryBlockHeaderByHeight(height)
