@@ -205,6 +205,7 @@ type OfflineQueryKVStoreCommand struct {
 	root   *OfflineQueryCommand
 	Bucket string
 	Key    string
+	HexKey bool // 标识用户输入的key是否为16进制字符
 	Height int64
 
 	DecodeType string
@@ -223,18 +224,30 @@ func NewOfflineQueryKVStoreCommand(root *OfflineQueryCommand) *OfflineQueryKVSto
 			if c.Key == "" {
 				return errors.New("expect key")
 			}
+			var key []byte
+			if c.HexKey {
+				var err error
+				key, err = hex.DecodeString(c.Key)
+				if err != nil {
+					return err
+				}
+			} else {
+				key = []byte(c.Key)
+			}
+
 			ctx := context.Background()
-			return c.Get(ctx, c.Bucket, c.Key, c.Height)
+			return c.Get(ctx, c.Bucket, key, c.Height)
 		},
 	}
 	c.Cmd.Flags().StringVarP(&c.Bucket, "bucket", "b", "", "bucket space in kvstore")
 	c.Cmd.Flags().StringVarP(&c.Key, "key", "k", "", "key in kvstore")
+	c.Cmd.Flags().BoolVarP(&c.HexKey, "HexKey", "", false, "the parameter key is hexadecimal")
 	c.Cmd.Flags().Int64VarP(&c.Height, "height", "N", -1, "snapshoot query by height. The default value is -1, query the latest value.")
 	c.Cmd.Flags().StringVarP(&c.DecodeType, "decode", "d", "raw", "val decode type. [raw|json|hex]")
 	return c
 }
 
-func (oqkv *OfflineQueryKVStoreCommand) Get(ctx context.Context, bucket string, key string, height int64) error {
+func (oqkv *OfflineQueryKVStoreCommand) Get(ctx context.Context, bucket string, key []byte, height int64) error {
 	// fmt.Printf("query kvstore info bucket=%s key=%s height=%d\n", bucket, key, height)
 
 	ledgerHandle, stateHandle, err := oqkv.root.createLedgerAndStateHandle()
@@ -256,14 +269,14 @@ func (oqkv *OfflineQueryKVStoreCommand) Get(ctx context.Context, bucket string, 
 			return errCreate
 		}
 
-		val, err = readerSnapshot.Get(bucket, []byte(key))
+		val, err = readerSnapshot.Get(bucket, key)
 		if err != nil {
 			return err
 		}
 	} else {
 		// 读取最新值
 		reader := stateHandle.CreateXMReader()
-		versionedData, errGet := reader.Get(bucket, []byte(key))
+		versionedData, errGet := reader.Get(bucket, key)
 		if errGet != nil {
 			return errGet
 		}
