@@ -76,7 +76,7 @@ func NewOfflineQueryBlockCommand(root *OfflineQueryCommand) *OfflineQueryBlockCo
 		Args:  cobra.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			if len(args) < 1 {
-				return errors.New("expect blockId")
+				return errors.New("expect blockId or height")
 			}
 			ctx := context.Background()
 			if c.ByHeight {
@@ -94,7 +94,7 @@ func NewOfflineQueryBlockCommand(root *OfflineQueryCommand) *OfflineQueryBlockCo
 }
 
 func (oqb *OfflineQueryBlockCommand) QueryByBlockId(ctx context.Context, blockId string) error {
-	fmt.Println("query block by blockId", blockId)
+	// fmt.Println("query block by blockId", blockId)
 	ledgerHandle, stateHandle, err := oqb.root.createLedgerAndStateHandle()
 	if err != nil {
 		return err
@@ -108,20 +108,19 @@ func (oqb *OfflineQueryBlockCommand) QueryByBlockId(ctx context.Context, blockId
 	}
 	targetBlock, err := ledgerHandle.QueryBlock(targetBlockId)
 	if err != nil {
-		fmt.Printf("query block by blockId %s failed.", blockId)
-		return err
+		return fmt.Errorf("query block by blockId %s failed. err:%v", blockId, err)
 	}
 	// attention：这里利用指针强转，必须保持前后结构内容一致
 	output, err := json.MarshalIndent(cmdcli.FromInternalBlockPB((*pb.InternalBlock)(unsafe.Pointer(targetBlock))), "", "  ")
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
 	fmt.Println(string(output))
 	return nil
 }
 
 func (oqb *OfflineQueryBlockCommand) QueryByBlockHeight(ctx context.Context, height int64) error {
-	fmt.Println("query block by height", height)
+	// fmt.Println("query block by height", height)
 	ledgerHandle, stateHandle, err := oqb.root.createLedgerAndStateHandle()
 	if err != nil {
 		return err
@@ -131,13 +130,12 @@ func (oqb *OfflineQueryBlockCommand) QueryByBlockHeight(ctx context.Context, hei
 
 	targetBlock, err := ledgerHandle.QueryBlockByHeight(height)
 	if err != nil {
-		fmt.Printf("query block by height %d failed.", height)
-		return err
+		return fmt.Errorf("query block by height %d failed. err:%v", height, err)
 	}
 	// attention：这里利用指针强转，必须保持前后结构内容一致
 	output, err := json.MarshalIndent(cmdcli.FromInternalBlockPB((*pb.InternalBlock)(unsafe.Pointer(targetBlock))), "", "  ")
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
 	fmt.Println(string(output))
 	return nil
@@ -171,7 +169,7 @@ func NewOfflineQueryTxCommand(root *OfflineQueryCommand) *OfflineQueryTxCommand 
 }
 
 func (oqt *OfflineQueryTxCommand) QueryByTxId(ctx context.Context, txid string) error {
-	fmt.Println("query tx by txid", txid)
+	// fmt.Println("query tx by txid", txid)
 	ledgerHandle, stateHandle, err := oqt.root.createLedgerAndStateHandle()
 	if err != nil {
 		return err
@@ -181,13 +179,11 @@ func (oqt *OfflineQueryTxCommand) QueryByTxId(ctx context.Context, txid string) 
 
 	targetTxId, err := hex.DecodeString(txid)
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 
 	targetTxInfo, has, err := stateHandle.QueryTx(targetTxId)
 	if err != nil {
-		fmt.Println(err)
 		return err
 	}
 	if !has {
@@ -198,7 +194,7 @@ func (oqt *OfflineQueryTxCommand) QueryByTxId(ctx context.Context, txid string) 
 	// attention：这里利用指针强转，必须保持前后结构内容一致
 	output, err := json.MarshalIndent(cmdcli.FromPBTx((*pb.Transaction)(unsafe.Pointer(targetTxInfo))), "", "  ")
 	if err != nil {
-		fmt.Println(err)
+		return err
 	}
 	fmt.Println(string(output))
 	return nil
@@ -233,13 +229,13 @@ func NewOfflineQueryKVStoreCommand(root *OfflineQueryCommand) *OfflineQueryKVSto
 	}
 	c.Cmd.Flags().StringVarP(&c.Bucket, "bucket", "b", "", "bucket space in kvstore")
 	c.Cmd.Flags().StringVarP(&c.Key, "key", "k", "", "key in kvstore")
-	c.Cmd.Flags().Int64VarP(&c.Height, "height", "N", 0, "snapshoot query by height. The default value is 0, query the latest value.")
-	c.Cmd.Flags().StringVarP(&c.DecodeType, "decode", "d", "native", "val decode type. [native|json|hex]")
+	c.Cmd.Flags().Int64VarP(&c.Height, "height", "N", -1, "snapshoot query by height. The default value is -1, query the latest value.")
+	c.Cmd.Flags().StringVarP(&c.DecodeType, "decode", "d", "raw", "val decode type. [raw|json|hex]")
 	return c
 }
 
 func (oqkv *OfflineQueryKVStoreCommand) Get(ctx context.Context, bucket string, key string, height int64) error {
-	fmt.Printf("query kvstore info bucket=%s key=%s height=%d\n", bucket, key, height)
+	// fmt.Printf("query kvstore info bucket=%s key=%s height=%d\n", bucket, key, height)
 
 	ledgerHandle, stateHandle, err := oqkv.root.createLedgerAndStateHandle()
 	if err != nil {
@@ -249,22 +245,19 @@ func (oqkv *OfflineQueryKVStoreCommand) Get(ctx context.Context, bucket string, 
 	defer stateHandle.Close()
 
 	var val []byte
-	if height > 0 {
+	if height >= 0 {
 		// 在指定高度进行快照读取操作
 		block, errQuery := ledgerHandle.QueryBlockHeaderByHeight(height)
 		if errQuery != nil {
-			fmt.Println(errQuery)
 			return errQuery
 		}
 		readerSnapshot, errCreate := stateHandle.CreateXMSnapshotReader(block.Blockid)
 		if errCreate != nil {
-			fmt.Println(errCreate)
 			return errCreate
 		}
 
 		val, err = readerSnapshot.Get(bucket, []byte(key))
 		if err != nil {
-			fmt.Println(err)
 			return err
 		}
 	} else {
@@ -272,7 +265,6 @@ func (oqkv *OfflineQueryKVStoreCommand) Get(ctx context.Context, bucket string, 
 		reader := stateHandle.CreateXMReader()
 		versionedData, errGet := reader.Get(bucket, []byte(key))
 		if errGet != nil {
-			fmt.Println(errGet)
 			return errGet
 		}
 		val = versionedData.GetPureData().GetValue()
@@ -294,7 +286,7 @@ func (oqkv *OfflineQueryKVStoreCommand) Get(ctx context.Context, bucket string, 
 		fmt.Println(jsonVal)
 	case "hex":
 		fmt.Println(hex.EncodeToString(val))
-	case "native":
+	case "raw":
 		fmt.Println(string(val))
 	default:
 		fmt.Println(string(val))
@@ -304,14 +296,12 @@ func (oqkv *OfflineQueryKVStoreCommand) Get(ctx context.Context, bucket string, 
 
 func createEnvConfig(path string) (*xconfig.EnvConf, error) {
 	if !xutils.FileIsExist(path) {
-		fmt.Printf("config file not exist.env_conf:%s\n", path)
-		return nil, fmt.Errorf("config file not exist")
+		return nil, fmt.Errorf("config file not exist.env_conf:%s", path)
 	}
 
 	econf, err := xconfig.LoadEnvConf(path)
 	if err != nil {
-		fmt.Printf("load env config failed.env_conf:%s err:%v\n", path, err)
-		return nil, fmt.Errorf("load env config failed")
+		return nil, fmt.Errorf("load env config failed.env_conf:%s err:%v\n", path, err)
 	}
 	return econf, nil
 }
