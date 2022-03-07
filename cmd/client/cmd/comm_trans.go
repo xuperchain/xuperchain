@@ -770,7 +770,7 @@ func (c *CommTrans) GenPreExeWithSelectUtxoRes(ctx context.Context) (
 	if c.Amount != "" {
 		amount, err := strconv.ParseInt(c.Amount, 10, 64)
 		if err != nil {
-			return nil, fmt.Errorf("Invalid Amount: %s", c.Amount)
+			return nil, fmt.Errorf("invalid Amount: %s", c.Amount)
 		}
 		extraAmount += amount
 	}
@@ -1007,7 +1007,6 @@ func (c *CommTrans) GenerateMultiTxOutputs(selfAmount string, gasUsed string) ([
 	if c.Amount != "" {
 		amount, ok := new(big.Int).SetString(c.Amount, 10)
 		if !ok {
-			fmt.Printf("amount convert to bigint failed")
 			return nil, ErrInvalidAmount
 		}
 		txOutputCountractAmount := new(pb.TxOutput)
