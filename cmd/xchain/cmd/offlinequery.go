@@ -29,6 +29,9 @@ type OfflineQueryCommand struct {
 	ChainName  string
 	EnvConf    string
 	CryptoType string
+
+	// RootPath only for ut
+	RootPath string
 }
 
 func GetOfflineQueryCommand() *OfflineQueryCommand {
@@ -45,6 +48,7 @@ func GetOfflineQueryCommand() *OfflineQueryCommand {
 	c.Cmd.PersistentFlags().StringVarP(&c.CryptoType,
 		"crypto", "c", "default", "crypto type")
 
+	c.Cmd.AddCommand(NewOfflineQueryStatusCommand(c).GetCmd())
 	c.Cmd.AddCommand(NewOfflineQueryBlockCommand(c).GetCmd())
 	c.Cmd.AddCommand(NewOfflineQueryTxCommand(c).GetCmd())
 	c.Cmd.AddCommand(NewOfflineQueryKVStoreCommand(c).GetCmd())
@@ -58,7 +62,56 @@ func (oq *OfflineQueryCommand) createLedgerAndStateHandle() (*ledger.Ledger, *st
 		return nil, nil, err
 	}
 
+	if oq.RootPath != "" {
+		econf.RootPath = oq.RootPath
+	}
 	return createHandle(econf, oq.ChainName, oq.CryptoType)
+}
+
+type OfflineQueryStatusCommand struct {
+	BaseCmd
+	root *OfflineQueryCommand
+}
+
+func NewOfflineQueryStatusCommand(root *OfflineQueryCommand) *OfflineQueryStatusCommand {
+	c := new(OfflineQueryStatusCommand)
+	c.root = root
+	c.Cmd = &cobra.Command{
+		Use:   "status",
+		Short: "offline query chain meta info (Please stop node before offline query!)",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx := context.Background()
+			return c.QueryStatus(ctx)
+		},
+	}
+	return c
+}
+
+func (oqb *OfflineQueryStatusCommand) QueryStatus(ctx context.Context) error {
+	ledgerHandle, stateHandle, err := oqb.root.createLedgerAndStateHandle()
+	if err != nil {
+		return err
+	}
+	defer ledgerHandle.Close()
+	defer stateHandle.Close()
+
+	meta := ledgerHandle.GetMeta()
+	jsonMeta := struct {
+		RootBlockId cmdcli.HexID `json:"root_blockid,omitempty"`
+		TipBlockId  cmdcli.HexID `json:"tip_blockid,omitempty"`
+		TrunkHeight int64        `json:"trunk_height,omitempty"`
+	}{
+		RootBlockId: meta.RootBlockid,
+		TipBlockId:  meta.TipBlockid,
+		TrunkHeight: meta.TrunkHeight,
+	}
+
+	output, err := json.MarshalIndent(jsonMeta, "", "  ")
+	if err != nil {
+		return err
+	}
+	fmt.Println(string(output))
+	return nil
 }
 
 type OfflineQueryBlockCommand struct {
