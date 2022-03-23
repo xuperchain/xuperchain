@@ -10,7 +10,7 @@
 -----
 ## What is XuperChain
 
-**XuperChain**, the first open source project of **XuperChain Lab**, introduces a underlying solution to build the super alliance network. Based on the dynamic kernel of xupercore. You can use xuberchain as a blockchain infrastructure to build a compliant blockchain network.
+**XuperChain**, the first open source project of **XuperChain Lab**, introduces a underlying solution to build the super alliance network. Based on the dynamic kernel of xupercore. You can use xuperchain as a blockchain infrastructure to build a compliant blockchain network.
 
 XuperChain is the underlying solution for union networks with following highlight features:
 * **Dynamic kernel**
@@ -59,7 +59,7 @@ Clone the repository
 git clone https://github.com/xuperchain/xuperchain
 ```
 
-**Note**: `master` branch contains latest features but might be **unstable**. for production use, please checkout our release branch. the latest release branch is `v3.7`.
+**Note**: `master` branch contains latest features but might be **unstable**. for production use, please checkout our release branch. the latest release branch is `v5.2.0`.
 
 Enter the xuperchain folder and build the code:
 
