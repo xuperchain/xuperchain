@@ -140,7 +140,6 @@ XuperChain is under the [Apache License, Version 2.0](https://github.com/xuperch
 ## XuperChain是什么?
 
 **XuperChain**是超级链体系下的第一个开源项目，是构建超级联盟网络的底层方案。基于XuperCore动态内核实现的。您可以使用XuperChain，作为区块链基础设施，构建合规的区块链网络。
-。
 
 核心特点
 * **动态内核**
