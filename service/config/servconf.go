@@ -20,7 +20,7 @@ type ServConf struct {
 	EndorserHosts      []string `yaml:"endorserHosts,omitempty"`
 	EndorserModule     string   `yaml:"endorserModule,omitempty"`
 	AdapterAllowCROS   bool     `yaml:"adapterAllowCROS,omitempty"`
-	MaxMsgSize         int      `yaml:"maxMsgSize,omitempty"`
+	MaxRecvMsgSize     int      `yaml:"maxRecvMsgSize,omitempty"`
 	ReadBufSize        int      `yaml:"readBufSize,omitempty"`
 	WriteBufSize       int      `yaml:"writeBufSize,omitempty"`
 	InitWindowSize     int32    `yaml:"initWindowSize,omitempty"`
@@ -51,7 +51,7 @@ func GetDefServConf() *ServConf {
 		EndorserHosts:      []string{},
 		EndorserModule:     "default",
 		AdapterAllowCROS:   false,
-		MaxMsgSize:         128 << 20,
+		MaxRecvMsgSize:         128 << 20,
 		ReadBufSize:        32 << 10,
 		WriteBufSize:       32 << 10,
 		InitWindowSize:     128 << 10,
