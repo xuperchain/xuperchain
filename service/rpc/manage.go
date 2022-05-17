@@ -105,7 +105,7 @@ func (t *RpcServMG) runRpcServ() error {
 
 	rpcOptions := []grpc.ServerOption{
 		middleware.WithUnaryServerChain(unaryInterceptors...),
-		grpc.MaxRecvMsgSize(t.scfg.MaxMsgSize),
+		grpc.MaxRecvMsgSize(t.scfg.MaxRecvMsgSize),
 		grpc.ReadBufferSize(t.scfg.ReadBufSize),
 		grpc.InitialWindowSize(t.scfg.InitWindowSize),
 		grpc.InitialConnWindowSize(t.scfg.InitConnWindowSize),
