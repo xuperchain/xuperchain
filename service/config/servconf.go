@@ -51,7 +51,7 @@ func GetDefServConf() *ServConf {
 		EndorserHosts:      []string{},
 		EndorserModule:     "default",
 		AdapterAllowCROS:   false,
-		MaxRecvMsgSize:         128 << 20,
+		MaxRecvMsgSize:     128 << 20,
 		ReadBufSize:        32 << 10,
 		WriteBufSize:       32 << 10,
 		InitWindowSize:     128 << 10,
