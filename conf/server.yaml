@@ -20,9 +20,9 @@ enableTls: false
 # tlsServerName
 tlsServerName: localhost
 
-# maxRecvMsgSize set the max message size in bytes the server can receive.
+# maxMsgSize set the max message size in bytes the server can receive.
 # If this is not set, gRPC uses the default 4MB.
-maxRecvMsgSize: 134217728
+maxMsgSize: 134217728
 # readBufSize lets you set the size of read buffer, this determines how much data can be read at most for one read syscall. The default value for this buffer is 32KB. Zero will disable read buffer for a connection so data framer can access the underlying conn directly.
 readBufSize: 32768
 # writeBufSize determines how much data can be batched before doing a write on the wire. The corresponding memory allocation for this buffer will be twice the size to keep syscalls low. The default value for this buffer is 32KB. Zero will disable the write buffer such that each write will be on underlying connection. Note: A Send call may not directly translate to a write.
