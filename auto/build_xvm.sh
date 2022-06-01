@@ -4,7 +4,7 @@ cd `dirname $0`/../
 
 HOMEDIR=`pwd`
 OUTDIR="$HOMEDIR/.compile_cache/xvm"
-XVMPKG="https://codeload.github.com/xuperchain/xvm/zip/main"
+XVMPKG="https://codeload.github.com/xuperchain/xvm/zip/v0.1.0"
 
 function buildxvm() {
     # clean dir
@@ -21,7 +21,7 @@ function buildxvm() {
 
     # unzip
     unzip -d "$OUTDIR" "$OUTDIR/xvm.zip"
-    mv "$OUTDIR/xvm-main" "$OUTDIR/xvm"
+    mv "$OUTDIR/xvm-0.1.0" "$OUTDIR/xvm"
 
     # make
     make -C "$OUTDIR/xvm/compile/wabt" -j 4
