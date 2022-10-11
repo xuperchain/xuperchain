@@ -247,4 +247,4 @@ XuperChain使用的许可证是Apache 2.0
 商务合作，请Email：xchain-help@baidu.com, 来源请注明Github。
 如果你对XuperChain开源技术及应用感兴趣，欢迎添加“百度超级链·小助手“微信，回复“技术论坛进群”，加入“百度超级链开发者社区”，与百度资深工程师深度交流!微信二维码如下:
 
-![微信二维码](https://github.com/ToWorld/xuperchain-image/blob/master/baidu-image-xuperchain.png)
+![微信二维码](<img width="291" alt="496bd829f51cda8f4c8027daf0e6b543" src="https://user-images.githubusercontent.com/51440377/186586870-1c147ed5-6d8b-4bb6-9151-c3110b19f318.png">)
