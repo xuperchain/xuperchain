@@ -10,7 +10,7 @@
 -----
 ## What is XuperChain
 
-**XuperChain**, the first open source project of **XuperChain Lab**, introduces a underlying solution to build the super alliance network. Based on the dynamic kernel of xupercore. You can use xuberchain as a blockchain infrastructure to build a compliant blockchain network.
+**XuperChain**, the first open source project of **XuperChain Lab**, introduces a underlying solution to build the super alliance network. Based on the dynamic kernel of xupercore. You can use xuperchain as a blockchain infrastructure to build a compliant blockchain network.
 
 XuperChain is the underlying solution for union networks with following highlight features:
 * **Dynamic kernel**
@@ -59,7 +59,7 @@ Clone the repository
 git clone https://github.com/xuperchain/xuperchain
 ```
 
-**Note**: `master` branch contains latest features but might be **unstable**. for production use, please checkout our release branch. the latest release branch is `v3.7`.
+**Note**: `master` branch contains latest features but might be **unstable**. for production use, please checkout our release branch. the latest release branch is `v5.2.0`.
 
 Enter the xuperchain folder and build the code:
 
@@ -140,7 +140,6 @@ XuperChain is under the [Apache License, Version 2.0](https://github.com/xuperch
 ## XuperChain是什么?
 
 **XuperChain**是超级链体系下的第一个开源项目，是构建超级联盟网络的底层方案。基于XuperCore动态内核实现的。您可以使用XuperChain，作为区块链基础设施，构建合规的区块链网络。
-。
 
 核心特点
 * **动态内核**
@@ -247,4 +246,4 @@ XuperChain使用的许可证是Apache 2.0
 商务合作，请Email：xchain-help@baidu.com, 来源请注明Github。
 如果你对XuperChain开源技术及应用感兴趣，欢迎添加“百度超级链·小助手“微信，回复“技术论坛进群”，加入“百度超级链开发者社区”，与百度资深工程师深度交流!微信二维码如下:
 
-![微信二维码](https://github.com/ToWorld/xuperchain-image/blob/master/baidu-image-xuperchain.png)
+<img width="291" alt="496bd829f51cda8f4c8027daf0e6b543" src="https://user-images.githubusercontent.com/51440377/198224997-05527281-435e-4d10-8057-7ae9c15ea353.png">
