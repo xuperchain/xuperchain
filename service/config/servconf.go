@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"github.com/mitchellh/mapstructure"
 
 	"github.com/xuperchain/xupercore/lib/utils"
 
@@ -20,7 +21,7 @@ type ServConf struct {
 	EndorserHosts      []string `yaml:"endorserHosts,omitempty"`
 	EndorserModule     string   `yaml:"endorserModule,omitempty"`
 	AdapterAllowCROS   bool     `yaml:"adapterAllowCROS,omitempty"`
-	MaxMsgSize         int      `yaml:"maxMsgSize,omitempty"`
+	MaxRecvMsgSize     int      `yaml:"maxRecvMsgSize,omitempty"`
 	ReadBufSize        int      `yaml:"readBufSize,omitempty"`
 	WriteBufSize       int      `yaml:"writeBufSize,omitempty"`
 	InitWindowSize     int32    `yaml:"initWindowSize,omitempty"`
@@ -51,7 +52,7 @@ func GetDefServConf() *ServConf {
 		EndorserHosts:      []string{},
 		EndorserModule:     "default",
 		AdapterAllowCROS:   false,
-		MaxMsgSize:         128 << 20,
+		MaxRecvMsgSize:     128 << 20,
 		ReadBufSize:        32 << 10,
 		WriteBufSize:       32 << 10,
 		InitWindowSize:     128 << 10,
@@ -73,7 +74,9 @@ func (t *ServConf) loadConf(cfgFile string) error {
 		return fmt.Errorf("read config failed.path:%s,err:%v", cfgFile, err)
 	}
 
-	if err = viperObj.Unmarshal(t); err != nil {
+	if err = viperObj.Unmarshal(t, func(config *mapstructure.DecoderConfig) {
+		config.TagName = "yaml"
+	}); err != nil {
 		return fmt.Errorf("unmatshal config failed.path:%s,err:%v", cfgFile, err)
 	}
 

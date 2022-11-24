@@ -9,6 +9,7 @@ require (
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/hyperledger/burrow v0.30.5
 	github.com/manifoldco/promptui v0.7.0
+	github.com/mitchellh/mapstructure v1.1.2
 	github.com/prometheus/client_golang v1.11.0
 	github.com/spf13/cobra v1.0.0
 	github.com/spf13/viper v1.6.2
