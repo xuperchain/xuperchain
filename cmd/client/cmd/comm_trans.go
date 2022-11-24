@@ -767,6 +767,13 @@ func (c *CommTrans) GenPreExeWithSelectUtxoRes(ctx context.Context) (
 		}
 		extraAmount += fee
 	}
+	if c.Amount != "" {
+		amount, err := strconv.ParseInt(c.Amount, 10, 64)
+		if err != nil {
+			return nil, fmt.Errorf("invalid Amount: %s", c.Amount)
+		}
+		extraAmount += amount
+	}
 	preExeRPCReq.AuthRequire = append(preExeRPCReq.AuthRequire, c.RootOptions.ComplianceCheck.ComplianceCheckEndorseServiceAddr)
 	preSelUTXOReq := &pb.PreExecWithSelectUTXORequest{
 		Bcname:      c.ChainName,
@@ -779,6 +786,13 @@ func (c *CommTrans) GenPreExeWithSelectUtxoRes(ctx context.Context) (
 	preExecWithSelectUTXOResponse, err := c.XchainClient.PreExecWithSelectUTXO(ctx, preSelUTXOReq)
 	if err != nil {
 		return nil, err
+	}
+
+	for _, res := range preExecWithSelectUTXOResponse.GetResponse().GetResponses() {
+		if res.Status >= contract.StatusErrorThreshold {
+			return nil, fmt.Errorf("contract error status:%d message:%s", res.Status, res.Message)
+		}
+		fmt.Printf("contract response: %s\n", string(res.Body))
 	}
 
 	gasUsed := preExecWithSelectUTXOResponse.GetResponse().GetGasUsed()
@@ -868,6 +882,13 @@ func (c *CommTrans) GenRealTx(response *pb.PreExecWithSelectUTXOResponse,
 	}
 	amount.Add(amount, fee)
 	totalNeed.Add(totalNeed, amount)
+	if c.Amount != "" {
+		amount, ok := big.NewInt(0).SetString(c.Amount, 10)
+		if !ok {
+			return nil, ErrInvalidAmount
+		}
+		totalNeed.Add(totalNeed, amount)
+	}
 
 	selfAmount := totalSelected.Sub(totalSelected, totalNeed)
 	txOutputs, err := c.GenerateMultiTxOutputs(selfAmount.String(), c.Fee)
@@ -981,6 +1002,17 @@ func (c *CommTrans) GenerateMultiTxOutputs(selfAmount string, gasUsed string) ([
 		txOutputFee.ToAddr = []byte("$")
 		txOutputFee.Amount = realFeeAmount.Bytes()
 		txOutputs = append(txOutputs, txOutputFee)
+	}
+
+	if c.Amount != "" {
+		amount, ok := new(big.Int).SetString(c.Amount, 10)
+		if !ok {
+			return nil, ErrInvalidAmount
+		}
+		txOutputCountractAmount := new(pb.TxOutput)
+		txOutputCountractAmount.ToAddr = []byte(c.ContractName)
+		txOutputCountractAmount.Amount = amount.Bytes()
+		txOutputs = append(txOutputs, txOutputCountractAmount)
 	}
 
 	return txOutputs, nil

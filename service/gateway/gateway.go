@@ -77,6 +77,7 @@ func (t *Gateway) runGateway() error {
 	mux := runtime.NewServeMux()
 	opts := []grpc.DialOption{
 		grpc.WithInsecure(),
+		grpc.WithMaxMsgSize(t.scfg.MaxMsgSize),
 		grpc.WithInitialWindowSize(t.scfg.InitWindowSize),
 		grpc.WithWriteBufferSize(t.scfg.WriteBufSize),
 		grpc.WithInitialConnWindowSize(t.scfg.InitConnWindowSize),
