@@ -10,7 +10,7 @@
 -----
 ## What is XuperChain
 
-**XuperChain**, the first open source project of **XuperChain Lab**, introduces a underlying solution to build the super alliance network. Based on the dynamic kernel of xupercore. You can use xuberchain as a blockchain infrastructure to build a compliant blockchain network.
+**XuperChain**, the first open source project of **XuperChain Lab**, introduces a underlying solution to build the super alliance network. Based on the dynamic kernel of xupercore. You can use xuperchain as a blockchain infrastructure to build a compliant blockchain network.
 
 XuperChain is the underlying solution for union networks with following highlight features:
 * **Dynamic kernel**
@@ -59,7 +59,7 @@ Clone the repository
 git clone https://github.com/xuperchain/xuperchain
 ```
 
-**Note**: `master` branch contains latest features but might be **unstable**. for production use, please checkout our release branch. the latest release branch is `v3.7`.
+**Note**: `master` branch contains latest features but might be **unstable**. for production use, please checkout our release branch. the latest release branch is `v5.2.0`.
 
 Enter the xuperchain folder and build the code:
 
@@ -140,7 +140,6 @@ XuperChain is under the [Apache License, Version 2.0](https://github.com/xuperch
 ## XuperChain是什么?
 
 **XuperChain**是超级链体系下的第一个开源项目，是构建超级联盟网络的底层方案。基于XuperCore动态内核实现的。您可以使用XuperChain，作为区块链基础设施，构建合规的区块链网络。
-。
 
 核心特点
 * **动态内核**
