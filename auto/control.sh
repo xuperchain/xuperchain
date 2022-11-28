@@ -1,5 +1,4 @@
-#!/bin/bash
-# Adapt for Ubuntu
+#!/bin/sh
 
 cd `dirname $0`
 
@@ -53,7 +52,7 @@ ulimit -c 0
 
 start() {
     pid=$(getpid)
-    if [ "$pid" != "" ]; then
+    if [ -n "$pid" ]; then
         echo "process exist, app is running? pid:$pid"
         exit 1
     fi
@@ -84,7 +83,7 @@ start() {
     fi
 
     nohup $BinPath startup --conf $ConfPath >"$LogDir/nohup.out" 2>&1 &
-    
+
     # 检查确保正常启动运行
     waitRun
     if [ "$?" != "0" ]; then
@@ -106,7 +105,7 @@ forcestop() {
         echo "force stop failed"
         exit 1
     fi
-    
+
     echo "force stop succ"
 }
 
@@ -117,7 +116,7 @@ stop() {
         echo "stop failed"
         exit 1
     fi
-    
+
     echo "stop succ"
 }
 
@@ -125,7 +124,7 @@ killProc() {
     signal=$1
 
     pid=$(getpid)
-    if [ "$pid" != "" ]; then
+    if [ -n "$pid" ]; then
         echo "$BinPath"
         echo "kill $signal $pid"
         kill "$signal" "$pid"
@@ -145,7 +144,7 @@ killProc() {
 
 procIsRun() {
     pid1=$(getpid)
-    if [ "$pid1" == "" ]; then
+    if [ -z "$pid1" ]; then
         return 1
     fi
 
@@ -153,7 +152,7 @@ procIsRun() {
     sleep 3s
 
     pid2=$(getpid)
-    if [ "$pid1" == "$pid2" ]; then
+    if [ "$pid1" = "$pid2" ]; then
         return 0
     fi
 
@@ -162,7 +161,7 @@ procIsRun() {
 
 getpid() {
     pid=`ps -ef | grep "$BinPath" | grep -v grep | awk -F' ' '{print $2}'`
-    if [ "$pid" == "" ]; then
+    if [ -z "$pid" ]; then
         echo ""
         return
     fi
@@ -170,11 +169,11 @@ getpid() {
 }
 
 waitRun() {
-    for((i=0;i<10;i++));
+    for i in $(seq 10);
     do
         echo -n "."
         procIsRun
-        if [ "$?" == "0" ]; then
+        if [ "$?" = "0" ]; then
             echo "start proc succ."
             return 0
         fi
@@ -188,21 +187,21 @@ waitRun() {
 waitExit() {
     pid=$1
     bin=$2
-    if [ "$pid" == "" ]; then
+    if [ -z "$pid" ]; then
         echo "pid is empty!"
         return 1
     fi
 
-    if [ "$bin" == "" ]; then
+    if [ -z "$bin" ]; then
         echo "bin name is empty!"
         return 1
     fi
 
-    for((i=0;i<60;i++));
+    for i in $(seq 60);
     do
         echo -n "."
         p=`ps -ef | grep "$pid" | grep "$bin" | grep -v grep | awk -F' ' '{print $2}'`
-        if [ "$p" == "" ]; then
+        if [ -z "$p" ]; then
             echo "exit finish!"
             return 0
         fi
