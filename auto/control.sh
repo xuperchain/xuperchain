@@ -1,12 +1,23 @@
-#!/bin/sh
+#!/bin/bash
+# Adapt for Ubuntu
 
 cd `dirname $0`
 
 Pwd=`pwd`
-Usage="sh ./control.sh {stop|start|restart|forcestop}"
 Self="control.sh"
 AppName="xchain"
 ClientName="xchain-cli"
+
+RecommendShell="sh"
+if [ -e /etc/os-release ]; then
+    . /etc/os-release
+    if [ "x$NAME" = "xUbuntu" ]; then
+        # recommend bash in Ubuntu
+        RecommendShell="bash"
+    fi
+fi
+UsageArgs="{stop|start|restart|forcestop}"
+Usage="$RecommendShell ./$Self $UsageArgs"
 
 # 默认启动环境
 LogDir="$Pwd/logs"
@@ -222,7 +233,7 @@ case "$1" in
         echo "Done!"
         ;;
     *)
-        echo "$0 $Usage"
+        echo "$Usage"
         ;;
 esac
 
