@@ -178,17 +178,19 @@ func (h *ChainHandle) checkSelectUtxoSign(account, pubKey string, sign []byte,
 	if err != nil {
 		return false
 	}
+	hashKey := h.bcName + account + need.String() + strconv.FormatBool(isLock)
+	hashValue := cryptoHash.DoubleSha256([]byte(hashKey))
 
-	hashStr := h.bcName + account + need.String() + strconv.FormatBool(isLock)
-	doubleHash := cryptoHash.DoubleSha256([]byte(hashStr))
-	checkSignResult, err := crypto.VerifyECDSA(publicKey, sign, doubleHash)
+	// verify sign
+	passed, err := crypto.VerifyECDSA(publicKey, sign, hashValue)
 	if err != nil {
 		return false
 	}
-	if checkSignResult != true {
+	if !passed {
 		return false
 	}
 
+	// verify account
 	matched, _ := crypto.VerifyAddressUsingPublicKey(account, publicKey)
 	return matched
 }
