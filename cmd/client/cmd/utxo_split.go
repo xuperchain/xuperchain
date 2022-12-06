@@ -10,22 +10,22 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	"github.com/xuperchain/xupercore/bcs/ledger/xledger/state/utxo"
+	"github.com/xuperchain/xupercore/lib/utils"
 
 	"github.com/xuperchain/xuperchain/service/common"
 	"github.com/xuperchain/xuperchain/service/pb"
-	"github.com/xuperchain/xupercore/bcs/ledger/xledger/state/utxo"
 	aclUtils "github.com/xuperchain/xupercore/kernel/permission/acl/utils"
-	"github.com/xuperchain/xupercore/lib/utils"
 )
 
 // SplitUtxoCommand split utxo of ak or account
 type SplitUtxoCommand struct {
 	cli *Cli
 	cmd *cobra.Command
-	// account will be splited
+	// account will be split
 	account string
 	num     int64
-	// while spliting a Account, it can not be null
+	// while splitting an account, it can not be null
 	accountPath string
 	isGenRawTx  bool
 	multiAddrs  string
@@ -49,7 +49,7 @@ func NewSplitUtxoCommand(cli *Cli) *cobra.Command {
 }
 
 func (c *SplitUtxoCommand) addFlags() {
-	c.cmd.Flags().StringVarP(&c.account, "account", "A", "", "The account/address to be splited (default ./data/keys/address).")
+	c.cmd.Flags().StringVarP(&c.account, "account", "A", "", "The account/address to be split (default ./data/keys/address).")
 	c.cmd.Flags().Int64VarP(&c.num, "num", "N", 1, "The number to split.")
 	c.cmd.Flags().StringVarP(&c.accountPath, "accountPath", "P", "", "The account path, which is required for an account.")
 	c.cmd.Flags().BoolVarP(&c.isGenRawTx, "raw", "m", false, "Is only generate raw tx output.")
@@ -57,11 +57,11 @@ func (c *SplitUtxoCommand) addFlags() {
 	c.cmd.Flags().StringVarP(&c.multiAddrs, "multiAddrs", "M", "data/acl/addrs", "MultiAddrs to fill required accounts/addresses.")
 }
 
-func (c *SplitUtxoCommand) splitUtxo(ctx context.Context) error {
+func (c *SplitUtxoCommand) splitUtxo(_ context.Context) error {
 	if c.num <= 0 {
-		return errors.New("illegal splitutxo num, num > 0 required")
+		return errors.New("illegal split utxo num, num > 0 required")
 	}
-	if aclUtils.IsAccount(c.account) == 0 && c.accountPath == "" {
+	if aclUtils.IsAK(c.account) && c.accountPath == "" {
 		return errors.New("accountPath can not be null because account is an Account name")
 	}
 
@@ -70,7 +70,7 @@ func (c *SplitUtxoCommand) splitUtxo(ctx context.Context) error {
 		c.account = initAk
 	}
 
-	if aclUtils.IsAccount(c.account) == 1 && c.account != initAk {
+	if aclUtils.IsAccount(c.account) && c.account != initAk {
 		return errors.New("parse account error")
 	}
 
@@ -163,13 +163,13 @@ func (c *SplitUtxoCommand) splitUtxo(ctx context.Context) error {
 		return err
 	}
 
-	// calculate txid
+	// calculate tx ID
 	tx.Txid, err = common.MakeTxId(tx)
 	if err != nil {
 		return err
 	}
-	txid, err := ct.postTx(context.Background(), tx)
-	fmt.Println(txid)
+	txID, err := ct.postTx(context.Background(), tx)
+	fmt.Println(txID)
 	return err
 }
 
@@ -187,12 +187,12 @@ func (c *SplitUtxoCommand) getBalanceHelper() (string, error) {
 	return r.Bcs[0].Balance, nil
 }
 
-func (c *SplitUtxoCommand) genSplitOutputs(toralNeed *big.Int) ([]*pb.TxOutput, error) {
+func (c *SplitUtxoCommand) genSplitOutputs(totalNeed *big.Int) ([]*pb.TxOutput, error) {
 	txOutputs := []*pb.TxOutput{}
 	amount := big.NewInt(0)
-	rest := toralNeed
+	rest := totalNeed
 	if big.NewInt(c.num).Cmp(rest) == 1 {
-		return nil, errors.New("illegal splitutxo, splitutxo <= BALANCE required")
+		return nil, errors.New("illegal split utxo, split utxo <= BALANCE required")
 	}
 	amount.Div(rest, big.NewInt(c.num))
 	output := pb.TxOutput{}

@@ -5,33 +5,33 @@ import (
 	"strconv"
 
 	lpb "github.com/xuperchain/xupercore/bcs/ledger/xledger/xldgpb"
-	xctx "github.com/xuperchain/xupercore/kernel/common/xcontext"
-	ecom "github.com/xuperchain/xupercore/kernel/engines/xuperos/common"
+	xCtx "github.com/xuperchain/xupercore/kernel/common/xcontext"
+	"github.com/xuperchain/xupercore/kernel/engines/xuperos/common"
 	"github.com/xuperchain/xupercore/kernel/engines/xuperos/reader"
 	"github.com/xuperchain/xupercore/kernel/engines/xuperos/xpb"
-	aclUtils "github.com/xuperchain/xupercore/kernel/permission/acl/utils"
-	cryptoHash "github.com/xuperchain/xupercore/lib/crypto/hash"
 	"github.com/xuperchain/xupercore/lib/logs"
 	"github.com/xuperchain/xupercore/protos"
 
-	sctx "github.com/xuperchain/xuperchain/service/context"
+	sCtx "github.com/xuperchain/xuperchain/service/context"
+	aclUtils "github.com/xuperchain/xupercore/kernel/permission/acl/utils"
+	cryptoHash "github.com/xuperchain/xupercore/lib/crypto/hash"
 )
 
 type ChainHandle struct {
 	bcName string
-	reqCtx sctx.ReqCtx
+	reqCtx sCtx.ReqCtx
 	log    logs.Logger
-	chain  ecom.Chain
+	chain  common.Chain
 }
 
-func NewChainHandle(bcName string, reqCtx sctx.ReqCtx) (*ChainHandle, error) {
+func NewChainHandle(bcName string, reqCtx sCtx.ReqCtx) (*ChainHandle, error) {
 	if bcName == "" || reqCtx == nil || reqCtx.GetEngine() == nil {
-		return nil, ecom.ErrParameter
+		return nil, common.ErrParameter
 	}
 
 	chain, err := reqCtx.GetEngine().Get(bcName)
 	if err != nil {
-		return nil, ecom.ErrChainNotExist
+		return nil, common.ErrChainNotExist
 	}
 
 	obj := &ChainHandle{
@@ -43,124 +43,144 @@ func NewChainHandle(bcName string, reqCtx sctx.ReqCtx) (*ChainHandle, error) {
 	return obj, nil
 }
 
-func (t *ChainHandle) SubmitTx(tx *lpb.Transaction) error {
-	return t.chain.SubmitTx(t.genXctx(), tx)
+func (h *ChainHandle) SubmitTx(tx *lpb.Transaction) error {
+	return h.chain.SubmitTx(h.ctx(), tx)
 }
 
-func (t *ChainHandle) PreExec(req []*protos.InvokeRequest,
+func (h *ChainHandle) PreExec(req []*protos.InvokeRequest,
 	initiator string, authRequires []string) (*protos.InvokeResponse, error) {
-	return t.chain.PreExec(t.genXctx(), req, initiator, authRequires)
+	return h.chain.PreExec(h.ctx(), req, initiator, authRequires)
 }
 
-func (t *ChainHandle) QueryTx(txId []byte) (*xpb.TxInfo, error) {
-	return reader.NewLedgerReader(t.chain.Context(), t.genXctx()).QueryTx(txId)
+func (h *ChainHandle) QueryTx(txId []byte) (*xpb.TxInfo, error) {
+	return h.ledgerReader().QueryTx(txId)
 }
 
-func (t *ChainHandle) SelectUtxo(account string, need *big.Int, isLock, isExclude bool,
+func (h *ChainHandle) SelectUtxo(account string, need *big.Int, isLock, isExclude bool,
 	pubKey string, sign []byte) (*lpb.UtxoOutput, error) {
 	// 如果需要临时锁定utxo，需要校验权限
-	ok := t.checkSelectUtxoSign(account, pubKey, sign, isLock, need)
+	ok := h.checkSelectUtxoSign(account, pubKey, sign, isLock, need)
 	if !ok {
-		t.reqCtx.GetLog().Warn("select utxo verify sign failed", "account", account, "isLock", isLock)
-		return nil, ecom.ErrUnauthorized
+		h.reqCtx.GetLog().Warn("select utxo verify sign failed", "account", account, "isLock", isLock)
+		return nil, common.ErrUnauthorized
 	}
 
-	return reader.NewUtxoReader(t.chain.Context(), t.genXctx()).SelectUTXO(account, need,
+	return h.utxoReader().SelectUTXO(account, need,
 		isLock, isExclude)
 }
 
-func (t *ChainHandle) SelectUTXOBySize(account string, isLock, isExclude bool,
+func (h *ChainHandle) SelectUTXOBySize(account string, isLock, isExclude bool,
 	pubKey string, sign []byte) (*lpb.UtxoOutput, error) {
 	// 如果需要临时锁定utxo，需要校验权限
-	ok := t.checkSelectUtxoSign(account, pubKey, sign, isLock, big.NewInt(0))
+	ok := h.checkSelectUtxoSign(account, pubKey, sign, isLock, big.NewInt(0))
 	if !ok {
-		t.reqCtx.GetLog().Warn("select utxo verify sign failed", "account", account, "isLock", isLock)
-		return nil, ecom.ErrUnauthorized
+		h.reqCtx.GetLog().Warn("select utxo verify sign failed", "account", account, "isLock", isLock)
+		return nil, common.ErrUnauthorized
 	}
 
-	return reader.NewUtxoReader(t.chain.Context(), t.genXctx()).SelectUTXOBySize(account,
+	return h.utxoReader().SelectUTXOBySize(account,
 		isLock, isExclude)
 }
 
-func (t *ChainHandle) QueryContractStatData() (*protos.ContractStatData, error) {
-	return reader.NewContractReader(t.chain.Context(), t.genXctx()).QueryContractStatData()
+func (h *ChainHandle) QueryContractStatData() (*protos.ContractStatData, error) {
+	return h.contractReader().QueryContractStatData()
 }
 
-func (t *ChainHandle) QueryUtxoRecord(account string, count int64) (*lpb.UtxoRecordDetail, error) {
-	return reader.NewUtxoReader(t.chain.Context(), t.genXctx()).QueryUtxoRecord(account, count)
+func (h *ChainHandle) QueryUtxoRecord(account string, count int64) (*lpb.UtxoRecordDetail, error) {
+	return h.utxoReader().QueryUtxoRecord(account, count)
 }
 
-func (t *ChainHandle) QueryAccountACL(account string) (*protos.Acl, error) {
-	return reader.NewContractReader(t.chain.Context(), t.genXctx()).QueryAccountACL(account)
+func (h *ChainHandle) QueryAccountACL(account string) (*protos.Acl, error) {
+	return h.contractReader().QueryAccountACL(account)
 }
 
-func (t *ChainHandle) QueryContractMethodACL(contract, method string) (*protos.Acl, error) {
-	return reader.NewContractReader(t.chain.Context(),
-		t.genXctx()).QueryContractMethodACL(contract, method)
+func (h *ChainHandle) QueryContractMethodACL(contract, method string) (*protos.Acl, error) {
+	return h.contractReader().QueryContractMethodACL(contract, method)
 }
 
-func (t *ChainHandle) GetAccountContracts(account string) ([]*protos.ContractStatus, error) {
-	return reader.NewContractReader(t.chain.Context(),
-		t.genXctx()).GetAccountContracts(account)
+func (h *ChainHandle) GetAccountContracts(account string) ([]*protos.ContractStatus, error) {
+	return h.contractReader().GetAccountContracts(account)
 }
 
-func (t *ChainHandle) GetBalance(account string) (string, error) {
-	return reader.NewUtxoReader(t.chain.Context(), t.genXctx()).GetBalance(account)
+func (h *ChainHandle) GetBalance(account string) (string, error) {
+	return h.utxoReader().GetBalance(account)
 }
 
-func (t *ChainHandle) GetFrozenBalance(account string) (string, error) {
-	return reader.NewUtxoReader(t.chain.Context(), t.genXctx()).GetFrozenBalance(account)
+func (h *ChainHandle) GetFrozenBalance(account string) (string, error) {
+	return h.utxoReader().GetFrozenBalance(account)
 }
 
-func (t *ChainHandle) GetBalanceDetail(account string) ([]*lpb.BalanceDetailInfo, error) {
-	return reader.NewUtxoReader(t.chain.Context(), t.genXctx()).GetBalanceDetail(account)
+func (h *ChainHandle) GetBalanceDetail(account string) ([]*lpb.BalanceDetailInfo, error) {
+	return h.utxoReader().GetBalanceDetail(account)
 }
 
-func (t *ChainHandle) QueryBlock(blkId []byte, needContent bool) (*xpb.BlockInfo, error) {
-	return reader.NewLedgerReader(t.chain.Context(), t.genXctx()).QueryBlock(blkId, needContent)
+func (h *ChainHandle) QueryBlock(blkId []byte, needContent bool) (*xpb.BlockInfo, error) {
+	return h.ledgerReader().QueryBlock(blkId, needContent)
 }
 
-func (t *ChainHandle) QueryChainStatus() (*xpb.ChainStatus, error) {
-	return reader.NewChainReader(t.chain.Context(), t.genXctx()).GetChainStatus()
+func (h *ChainHandle) QueryChainStatus() (*xpb.ChainStatus, error) {
+	return h.chainReader().GetChainStatus()
 }
 
-func (t *ChainHandle) QueryConsensusStatus() (*xpb.ConsensusStatus, error) {
-	return reader.NewChainReader(t.chain.Context(), t.genXctx()).GetConsensusStatus()
+func (h *ChainHandle) QueryConsensusStatus() (*xpb.ConsensusStatus, error) {
+	return h.chainReader().GetConsensusStatus()
 }
 
-func (t *ChainHandle) IsTrunkTipBlock(blockId []byte) (bool, error) {
-	return reader.NewChainReader(t.chain.Context(), t.genXctx()).IsTrunkTipBlock(blockId)
+func (h *ChainHandle) IsTrunkTipBlock(blockId []byte) (bool, error) {
+	return h.chainReader().IsTrunkTipBlock(blockId)
 }
 
-func (t *ChainHandle) QueryBlockByHeight(height int64, needContent bool) (*xpb.BlockInfo, error) {
-	return reader.NewLedgerReader(t.chain.Context(), t.genXctx()).QueryBlockByHeight(height, needContent)
+func (h *ChainHandle) QueryBlockByHeight(height int64, needContent bool) (*xpb.BlockInfo, error) {
+	return h.ledgerReader().QueryBlockByHeight(height, needContent)
 }
 
-func (t *ChainHandle) GetAccountByAK(address string) ([]string, error) {
-	return reader.NewContractReader(t.chain.Context(), t.genXctx()).GetAccountByAK(address)
+func (h *ChainHandle) GetAccountByAK(address string) ([]string, error) {
+	return h.contractReader().GetAccountByAK(address)
 }
 
-func (t *ChainHandle) genXctx() xctx.XContext {
-	return &xctx.BaseCtx{
-		XLog:  t.reqCtx.GetLog(),
-		Timer: t.reqCtx.GetTimer(),
+// Helper functions
+
+// contractReader generate a new contract reader
+func (h *ChainHandle) contractReader() reader.ContractReader {
+	return reader.NewContractReader(h.chain.Context(), h.ctx())
+}
+
+// ledgerReader generate a new ledger reader
+func (h *ChainHandle) ledgerReader() reader.LedgerReader {
+	return reader.NewLedgerReader(h.chain.Context(), h.ctx())
+}
+
+// chainReader generate a new chain reader
+func (h *ChainHandle) chainReader() reader.ChainReader {
+	return reader.NewChainReader(h.chain.Context(), h.ctx())
+}
+
+// utxoReader generate a new UTXO reader
+func (h *ChainHandle) utxoReader() reader.UtxoReader {
+	return reader.NewUtxoReader(h.chain.Context(), h.ctx())
+}
+
+func (h *ChainHandle) ctx() xCtx.XContext {
+	return &xCtx.BaseCtx{
+		XLog:  h.reqCtx.GetLog(),
+		Timer: h.reqCtx.GetTimer(),
 	}
 }
 
-func (t *ChainHandle) checkSelectUtxoSign(account, pubKey string, sign []byte,
+func (h *ChainHandle) checkSelectUtxoSign(account, pubKey string, sign []byte,
 	isLock bool, need *big.Int) bool {
 	// 只对需要临时锁定utxo的校验
-	if aclUtils.IsAccount(account) == 1 || !isLock {
+	if aclUtils.IsAccount(account) || !isLock {
 		return true
 	}
 
-	crypto := t.chain.Context().Crypto
+	crypto := h.chain.Context().Crypto
 	publicKey, err := crypto.GetEcdsaPublicKeyFromJsonStr(pubKey)
 	if err != nil {
 		return false
 	}
 
-	hashStr := t.bcName + account + need.String() + strconv.FormatBool(isLock)
+	hashStr := h.bcName + account + need.String() + strconv.FormatBool(isLock)
 	doubleHash := cryptoHash.DoubleSha256([]byte(hashStr))
 	checkSignResult, err := crypto.VerifyECDSA(publicKey, sign, doubleHash)
 	if err != nil {
