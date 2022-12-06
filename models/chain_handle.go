@@ -78,8 +78,7 @@ func (h *ChainHandle) SelectUTXOBySize(account string, isLock, isExclude bool,
 		return nil, common.ErrUnauthorized
 	}
 
-	return h.utxoReader().SelectUTXOBySize(account,
-		isLock, isExclude)
+	return h.utxoReader().SelectUTXOBySize(account, isLock, isExclude)
 }
 
 func (h *ChainHandle) QueryContractStatData() (*protos.ContractStatData, error) {
@@ -189,10 +188,7 @@ func (h *ChainHandle) checkSelectUtxoSign(account, pubKey string, sign []byte,
 	if checkSignResult != true {
 		return false
 	}
-	addrMatchCheckResult, _ := crypto.VerifyAddressUsingPublicKey(account, publicKey)
-	if addrMatchCheckResult != true {
-		return false
-	}
 
-	return true
+	matched, _ := crypto.VerifyAddressUsingPublicKey(account, publicKey)
+	return matched
 }
