@@ -8,7 +8,7 @@ assignees: ''
 ---
 
 **Brief of the issue**
-Describe here
+Describe here.
 
 **Your environment**
 XuperChain and OS/Go/gcc version etc.
@@ -23,4 +23,10 @@ Describe what you expected to happen.
 Describe what actually happened. Include the full traceback if there was an exception.
 
 **Additional information**
-If possible, include a minimal, complete, and verifiable example to help us identify the issue. This also helps check that the issue is not with your own code.
+
+Additional helpful information, including but not limited to:
+- Logs
+- Screenshot
+- Minimal, complete, and verifiable example codes
+
+This also helps check that the issue is not with your own code.

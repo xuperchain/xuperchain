@@ -1,0 +1,18 @@
+header:
+  license:
+    spdx-id: Apache-2.0
+    copyright-owner: The XuperChain Authors
+
+  paths-ignore:
+    - 'conf'
+    - 'docs'
+    - '**/go.mod'
+    - '**/go.sum'
+    - '**/*.md'
+    - 'LICENSE'
+
+  comment: on-failure
+
+dependency:
+  files:
+    - go.mod
