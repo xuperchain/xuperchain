@@ -15,20 +15,18 @@ import (
 	"io/ioutil"
 	"math/big"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"github.com/xuperchain/xupercore/lib/crypto/client"
+	"github.com/xuperchain/xupercore/lib/crypto/client/base"
+	"github.com/xuperchain/xupercore/lib/utils"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
 	"github.com/xuperchain/xuperchain/service/common"
 	"github.com/xuperchain/xuperchain/service/pb"
-	crypto_client "github.com/xuperchain/xupercore/lib/crypto/client"
-	crypto_base "github.com/xuperchain/xupercore/lib/crypto/client/base"
-	cryptoHash "github.com/xuperchain/xupercore/lib/crypto/hash"
-	"github.com/xuperchain/xupercore/lib/utils"
 )
 
 // CommandFunc 代表了一个子命令，用于往Cli注册子命令
@@ -247,59 +245,51 @@ func (c *Cli) RangeNodes(ctx context.Context, f func(addr string, client pb.Xcha
 
 // Transfer transfer cli entrance
 func (c *Cli) Transfer(ctx context.Context, opt *TransferOptions) (string, error) {
-	fromAddr, err := readAddress(opt.KeyPath)
-	if err != nil {
-		return "", err
-	}
-	fromPubkey, err := readPublicKey(opt.KeyPath)
-	if err != nil {
-		return "", err
-	}
 
-	fromScrkey, err := readPrivateKey(opt.KeyPath)
+	from := newAK(opt.KeyPath)
+	fromInfo, err := from.Info()
 	if err != nil {
 		return "", err
 	}
 
 	// create crypto client
-	cryptoClient, cryptoErr := crypto_client.CreateCryptoClient(opt.CryptoType)
+	crypto, cryptoErr := client.CreateCryptoClient(opt.CryptoType)
 	if cryptoErr != nil {
 		fmt.Println("fail to create crypto client, err=", cryptoErr)
 		return "", cryptoErr
 	}
 
-	return c.transfer(ctx, c.xclient, opt, fromAddr, fromPubkey, fromScrkey, cryptoClient)
+	return c.transfer(ctx, c.xclient, opt, fromInfo, crypto)
 }
 
-func (c *Cli) transfer(ctx context.Context, client pb.XchainClient, opt *TransferOptions, fromAddr,
-	fromPubkey, fromScrkey string, cryptoClient crypto_base.CryptoClient) (string, error) {
+func (c *Cli) transfer(ctx context.Context, client pb.XchainClient, opt *TransferOptions, initiator AKInfo,
+	cryptoClient base.CryptoClient) (string, error) {
+
 	if opt.From == "" {
-		opt.From = fromAddr
+		opt.From = initiator.address
 	}
-	return c.tansferSupportAccount(ctx, client, opt, fromAddr, fromPubkey, fromScrkey, cryptoClient)
+	return c.transferSupportAccount(ctx, client, opt, initiator, cryptoClient)
 }
 
-func (c *Cli) tansferSupportAccount(ctx context.Context, client pb.XchainClient, opt *TransferOptions,
-	initAddr, initPubkey, initScrkey string, cryptoClient crypto_base.CryptoClient) (string, error) {
+func (c *Cli) transferSupportAccount(ctx context.Context, client pb.XchainClient, opt *TransferOptions,
+	initiator AKInfo, cryptoClient base.CryptoClient) (string, error) {
+
 	// 组装交易
-	txStatus, err := assembleTxSupportAccount(ctx, client, opt, initAddr, initPubkey, initScrkey, cryptoClient)
+	txStatus, err := assembleTxSupportAccount(ctx, client, opt, initiator, cryptoClient)
 	if err != nil {
 		return "", err
 	}
 
-	// 签名和生成txid
-	signTx, err := common.ComputeTxSign(cryptoClient, txStatus.Tx, []byte(initScrkey))
+	// 签名和生成 Tx ID
+	signInfo, err := initiator.KeyPair.SignTx(txStatus.Tx, cryptoClient)
 	if err != nil {
 		return "", err
 	}
-	signInfo := &pb.SignatureInfo{
-		PublicKey: initPubkey,
-		Sign:      signTx,
-	}
+
 	txStatus.Tx.InitiatorSigns = append(txStatus.Tx.InitiatorSigns, signInfo)
-	txStatus.Tx.AuthRequireSigns, err = genAuthRequireSigns(opt, cryptoClient, txStatus.Tx, initScrkey, initPubkey)
+	txStatus.Tx.AuthRequireSigns, err = signTx(opt, cryptoClient, txStatus.Tx, initiator.KeyPair)
 	if err != nil {
-		return "", fmt.Errorf("Failed to genAuthRequireSigns %s", err)
+		return "", fmt.Errorf("Failed to signTx %s", err)
 	}
 	txStatus.Tx.Txid, err = common.MakeTxId(txStatus.Tx)
 	if err != nil {
@@ -325,8 +315,9 @@ func (c *Cli) tansferSupportAccount(ctx context.Context, client pb.XchainClient,
 	return hex.EncodeToString(txStatus.GetTxid()), nil
 }
 
-func assembleTxSupportAccount(ctx context.Context, client pb.XchainClient, opt *TransferOptions, initAddr, initPubkey,
-	initScrkey string, cryptoClient crypto_base.CryptoClient) (*pb.TxStatus, error) {
+func assembleTxSupportAccount(ctx context.Context, client pb.XchainClient, opt *TransferOptions, initiator AKInfo,
+	cryptoClient base.CryptoClient) (*pb.TxStatus, error) {
+
 	bigZero := big.NewInt(0)
 	totalNeed := big.NewInt(0)
 	tx := &pb.Transaction{
@@ -335,7 +326,7 @@ func assembleTxSupportAccount(ctx context.Context, client pb.XchainClient, opt *
 		Desc:      opt.Desc,
 		Nonce:     utils.GenNonce(),
 		Timestamp: time.Now().UnixNano(),
-		Initiator: initAddr,
+		Initiator: initiator.address,
 	}
 	account := &pb.TxDataAccount{
 		Address:      opt.To,
@@ -363,8 +354,7 @@ func assembleTxSupportAccount(ctx context.Context, client pb.XchainClient, opt *
 		tx.TxOutputs = append(tx.TxOutputs, txOutput)
 	}
 	// 组装input 和 剩余output
-	txInputs, deltaTxOutput, err := assembleTxInputsSupportAccount(ctx, client, opt, totalNeed, initAddr,
-		initPubkey, initScrkey, cryptoClient)
+	txInputs, deltaTxOutput, err := assembleTxInputsSupportAccount(ctx, client, opt, totalNeed, initiator, cryptoClient)
 	if err != nil {
 		return nil, err
 	}
@@ -373,7 +363,7 @@ func assembleTxSupportAccount(ctx context.Context, client pb.XchainClient, opt *
 		tx.TxOutputs = append(tx.TxOutputs, deltaTxOutput)
 	}
 	// 设置auth require
-	tx.AuthRequire, err = genAuthRequire(opt.From, opt.AccountPath)
+	tx.AuthRequire, err = genAuthRequirement(opt.From, opt.AccountPath)
 	if err != nil {
 		return nil, err
 	}
@@ -384,7 +374,7 @@ func assembleTxSupportAccount(ctx context.Context, client pb.XchainClient, opt *
 		Header: &pb.Header{
 			Logid: utils.GenLogId(),
 		},
-		Initiator:   initAddr,
+		Initiator:   initiator.address,
 		AuthRequire: tx.AuthRequire,
 	}
 
@@ -408,86 +398,92 @@ func assembleTxSupportAccount(ctx context.Context, client pb.XchainClient, opt *
 	return txStatus, nil
 }
 
-func genAuthRequire(from, path string) ([]string, error) {
-	authRequire := []string{}
+// genAuthRequirement generates auth requirement for AK or Account
+func genAuthRequirement(from, path string) (authRequirements []string, err error) {
+
+	// generate auth requirement for AK: require self
 	if path == "" {
-		authRequire = append(authRequire, from)
-		return authRequire, nil
+		authRequirements = []string{from}
+		return
 	}
-	dir, err := ioutil.ReadDir(path)
+
+	// generate auth requirements for account: require all AK in account path
+	// TODO: is that necessary for all AK
+	akList, err := listAKs(path)
 	if err != nil {
 		return nil, err
 	}
-	for _, fi := range dir {
-		if fi.IsDir() {
-			addr, err := readAddress(path + "/" + fi.Name())
-			if err != nil {
-				return nil, err
-			}
-			authRequire = append(authRequire, from+"/"+addr)
-		}
-	}
-	return authRequire, nil
-}
-
-func genAuthRequireSigns(opt *TransferOptions, cryptoClient crypto_base.CryptoClient, tx *pb.Transaction, initScrkey, initPubkey string) ([]*pb.SignatureInfo, error) {
-	authRequireSigns := []*pb.SignatureInfo{}
-	if opt.AccountPath == "" {
-		signTx, err := common.ComputeTxSign(cryptoClient, tx, []byte(initScrkey))
+	for _, ak := range akList {
+		authRequirement, err := ak.AuthRequirementFrom(from)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("requires auth error: %s", err)
 		}
-		signInfo := &pb.SignatureInfo{
-			PublicKey: initPubkey,
-			Sign:      signTx,
-		}
-		authRequireSigns = append(authRequireSigns, signInfo)
-		return authRequireSigns, nil
+		authRequirements = append(authRequirements, authRequirement)
+	}
+	return authRequirements, nil
+}
+
+// signTx generates Tx signatures for AK or Account
+func signTx(opt *TransferOptions, crypto base.CryptoClient, tx *pb.Transaction,
+	initiator KeyPair) ([]*pb.SignatureInfo, error) {
+
+	// generate for AK
+	if opt.AccountPath == "" {
+		return signTxForAK(tx, initiator, crypto)
 	}
 
-	dir, err := ioutil.ReadDir(opt.AccountPath)
+	// generate for account
+	return signTxForAccount(tx, opt.AccountPath, crypto)
+}
+
+// signTxForAK generates transaction signature for AK with its key pair
+func signTxForAK(tx *pb.Transaction, keyPair KeyPair, crypto base.CryptoClient) ([]*pb.SignatureInfo, error) {
+	sign, err := keyPair.SignTx(tx, crypto)
 	if err != nil {
 		return nil, err
 	}
-	for _, fi := range dir {
-		if fi.IsDir() {
-			sk, err := readPrivateKey(opt.AccountPath + "/" + fi.Name())
-			if err != nil {
-				return nil, err
-			}
-			pk, err := readPublicKey(opt.AccountPath + "/" + fi.Name())
-			if err != nil {
-				return nil, err
-			}
-			signTx, err := common.ComputeTxSign(cryptoClient, tx, []byte(sk))
-			if err != nil {
-				return nil, err
-			}
-			signInfo := &pb.SignatureInfo{
-				PublicKey: pk,
-				Sign:      signTx,
-			}
-			authRequireSigns = append(authRequireSigns, signInfo)
-		}
-	}
-	return authRequireSigns, nil
+	return []*pb.SignatureInfo{sign}, nil
 }
 
-func assembleTxInputsSupportAccount(ctx context.Context, client pb.XchainClient, opt *TransferOptions, totalNeed *big.Int,
-	initAddr, initPubkey, initScrkey string, cryptoClient crypto_base.CryptoClient) ([]*pb.TxInput, *pb.TxOutput, error) {
+// signTxForAccount generates transaction signatures for account: signed by each AK in account path
+// Params:
+// 	tx: transaction
+//	path: root path for accounts
+// 	crypto: crypto client
+// TODO: is that necessary for all AK
+func signTxForAccount(tx *pb.Transaction, path string, crypto base.CryptoClient) ([]*pb.SignatureInfo, error) {
+	signs := []*pb.SignatureInfo{}
+
+	akList, err := listAKs(path)
+	if err != nil {
+		return nil, err
+	}
+	for _, ak := range akList {
+		sign, err := ak.SignTx(tx, crypto)
+		if err != nil {
+			return nil, fmt.Errorf("sign error: %s", err)
+		}
+		signs = append(signs, sign)
+	}
+	return signs, nil
+}
+
+func assembleTxInputsSupportAccount(ctx context.Context, client pb.XchainClient, opt *TransferOptions,
+	totalNeed *big.Int, initiator AKInfo, crypto base.CryptoClient) ([]*pb.TxInput, *pb.TxOutput, error) {
+
 	ui := &pb.UtxoInput{
 		Bcname:    opt.BlockchainName,
 		Address:   opt.From,
 		TotalNeed: totalNeed.String(),
 		NeedLock:  true,
-		Publickey: initPubkey,
+		Publickey: initiator.publicKey,
 	}
 
-	sign, err := computeSelectUtxoSign(opt.BlockchainName, initAddr, totalNeed.String(), initScrkey, strconv.FormatBool(true), cryptoClient)
+	sign, err := initiator.SignUtxo(opt.BlockchainName, totalNeed, crypto)
 	if err != nil {
 		return nil, nil, err
 	}
-	ui.UserSign = sign
+	ui.UserSign = sign.Sign
 	utxoRes, selectErr := client.SelectUTXO(ctx, ui)
 	if selectErr != nil || utxoRes.Header.Error != pb.XChainErrorEnum_SUCCESS {
 		return nil, nil, ErrSelectUtxo
@@ -515,21 +511,6 @@ func assembleTxInputsSupportAccount(ctx context.Context, client pb.XchainClient,
 		}
 	}
 	return txTxInputs, txOutput, nil
-}
-
-func computeSelectUtxoSign(bcName, account, need, initScrKey, isLock string, cryptoClient crypto_base.CryptoClient) ([]byte, error) {
-	privateKey, err := cryptoClient.GetEcdsaPrivateKeyFromJsonStr(initScrKey)
-	if err != nil {
-		return nil, err
-	}
-
-	hashStr := bcName + account + need + isLock
-	doubleHash := cryptoHash.DoubleSha256([]byte(hashStr))
-	signResult, err := cryptoClient.SignECDSA(privateKey, doubleHash)
-	if err != nil {
-		return nil, err
-	}
-	return signResult, nil
 }
 
 // AddCommand add sub cmd

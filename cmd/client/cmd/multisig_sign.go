@@ -12,10 +12,10 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/spf13/cobra"
+	"github.com/xuperchain/xupercore/lib/crypto/client"
 
 	"github.com/xuperchain/xuperchain/service/common"
 	"github.com/xuperchain/xuperchain/service/pb"
-	crypto_client "github.com/xuperchain/xupercore/lib/crypto/client"
 )
 
 // MultisigSignCommand multisig sign struct
@@ -61,7 +61,8 @@ func (c *MultisigSignCommand) sign() error {
 		return err
 	}
 
-	fromPubkey, err := readPublicKey(c.cli.RootOptions.Keys)
+	ak := newAK(c.cli.RootOptions.Keys)
+	from, err := ak.keyPair()
 	if err != nil {
 		return err
 	}
@@ -77,16 +78,12 @@ func (c *MultisigSignCommand) sign() error {
 		if err != nil {
 			return err
 		}
-		fromScrkey, err := readPrivateKey(c.cli.RootOptions.Keys)
-		if err != nil {
-			return err
-		}
 
-		xcc, err := crypto_client.CreateCryptoClientFromJSONPrivateKey([]byte(fromScrkey))
+		crypto, err := client.CreateCryptoClientFromJSONPrivateKey([]byte(from.secretKey))
 		if err != nil {
 			return err
 		}
-		priv, err := xcc.GetEcdsaPrivateKeyFromJsonStr(fromScrkey)
+		ecdsaPrivateKey, err := crypto.GetEcdsaPrivateKeyFromJsonStr(from.secretKey)
 		if err != nil {
 			return err
 		}
@@ -95,11 +92,11 @@ func (c *MultisigSignCommand) sign() error {
 			return err
 		}
 		// TODO get partial sign
-		ki, idx, err := c.findKfromKlist(msd, []byte(fromPubkey))
+		ki, idx, err := c.findKFromKList(msd, []byte(from.publicKey))
 		if err != nil {
 			return err
 		}
-		si := xcc.GetSiUsingKCRM(priv, ki, msd.C, msd.R, digestHash)
+		si := crypto.GetSiUsingKCRM(ecdsaPrivateKey, ki, msd.C, msd.R, digestHash)
 		psd := &PartialSign{
 			Si:    si,
 			Index: idx,
@@ -116,12 +113,16 @@ func (c *MultisigSignCommand) sign() error {
 	} else if c.signType != "" {
 		return fmt.Errorf("SignType[%s] is not supported", c.signType)
 	} else {
-		signTx, err := c.genSignTx(tx)
-		if err != nil {
-			return errors.New("Sign tx error")
-		}
 
-		err = c.genSignFile(fromPubkey, signTx)
+		crypto, err := client.CreateCryptoClient(c.cli.RootOptions.Crypto)
+		if err != nil {
+			return err
+		}
+		signInfo, err := from.SignTx(tx, crypto)
+		if err != nil {
+			return err
+		}
+		err = c.genSignFile(signInfo)
 		if err != nil {
 			return err
 		}
@@ -129,33 +130,8 @@ func (c *MultisigSignCommand) sign() error {
 	return nil
 }
 
-// GetSignTx use privatekey to get sign
-func (c *MultisigSignCommand) genSignTx(tx *pb.Transaction) ([]byte, error) {
-	// create crypto client
-	cryptoClient, err := crypto_client.CreateCryptoClient(c.cli.RootOptions.Crypto)
-	if err != nil {
-		return nil, errors.New("Create crypto client error")
-	}
-	fromScrkey, err := readPrivateKey(c.cli.RootOptions.Keys)
-	if err != nil {
-		return nil, err
-	}
-
-	signTx, err := common.ComputeTxSign(cryptoClient, tx, []byte(fromScrkey))
-	if err != nil {
-		return nil, err
-	}
-
-	return signTx, nil
-}
-
 // genSignFile output to file
-func (c *MultisigSignCommand) genSignFile(pubkey string, sign []byte) error {
-	signInfo := &pb.SignatureInfo{
-		PublicKey: pubkey,
-		Sign:      sign,
-	}
-
+func (c *MultisigSignCommand) genSignFile(signInfo *pb.SignatureInfo) error {
 	signJSON, err := json.MarshalIndent(signInfo, "", "  ")
 	if err != nil {
 		return err
@@ -170,8 +146,8 @@ func (c *MultisigSignCommand) genSignFile(pubkey string, sign []byte) error {
 	return nil
 }
 
-func (c *MultisigSignCommand) findKfromKlist(msd *MultisigData, pubJSON []byte) ([]byte, int, error) {
-	xcc, err := crypto_client.CreateCryptoClientFromJSONPublicKey(pubJSON)
+func (c *MultisigSignCommand) findKFromKList(msd *MultisigData, pubJSON []byte) ([]byte, int, error) {
+	xcc, err := client.CreateCryptoClientFromJSONPublicKey(pubJSON)
 	if err != nil {
 		return nil, 0, err
 	}

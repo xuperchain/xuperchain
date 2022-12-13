@@ -9,12 +9,12 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	"github.com/xuperchain/xupercore/bcs/ledger/xledger/state/utxo"
+	"github.com/xuperchain/xupercore/lib/utils"
 
 	"github.com/xuperchain/xuperchain/service/common"
 	"github.com/xuperchain/xuperchain/service/pb"
-	"github.com/xuperchain/xupercore/bcs/ledger/xledger/state/utxo"
 	aclUtils "github.com/xuperchain/xupercore/kernel/permission/acl/utils"
-	"github.com/xuperchain/xupercore/lib/utils"
 )
 
 // MergeUtxoCommand necessary parameter for merge utxo
@@ -23,7 +23,7 @@ type MergeUtxoCommand struct {
 	cmd *cobra.Command
 	// account will be merged
 	account string
-	// white merge an contract account, it can not be null
+	// white merge a contract account, it can not be null
 	accountPath string
 }
 
@@ -48,8 +48,8 @@ func (c *MergeUtxoCommand) addFlags() {
 	c.cmd.Flags().StringVarP(&c.accountPath, "accountPath", "P", "", "The account path, which is required for an account.")
 }
 
-func (c *MergeUtxoCommand) mergeUtxo(ctx context.Context) error {
-	if aclUtils.IsAccount(c.account) == 1 && c.accountPath == "" {
+func (c *MergeUtxoCommand) mergeUtxo(_ context.Context) error {
+	if aclUtils.IsAccount(c.account) && c.accountPath == "" {
 		return errors.New("accountPath can not be null because account is an Account name")
 	}
 
@@ -89,9 +89,9 @@ func (c *MergeUtxoCommand) mergeUtxo(ctx context.Context) error {
 	txOutputs = append(txOutputs, txOutput)
 	tx.TxOutputs = txOutputs
 
-	tx.AuthRequire, err = genAuthRequire(c.account, c.accountPath)
+	tx.AuthRequire, err = genAuthRequirement(c.account, c.accountPath)
 	if err != nil {
-		return errors.New("genAuthRequire error")
+		return fmt.Errorf("genAuthRequirement error: %s", err)
 	}
 
 	// preExe
@@ -112,25 +112,25 @@ func (c *MergeUtxoCommand) mergeUtxo(ctx context.Context) error {
 	tx.TxInputsExt = preExeRes.GetResponse().GetInputs()
 	tx.TxOutputsExt = preExeRes.GetResponse().GetOutputs()
 
-	tx.InitiatorSigns, err = ct.genInitSign(tx)
+	tx.InitiatorSigns, err = ct.signTxForInitiator(tx)
 	if err != nil {
 		return err
 	}
-	tx.AuthRequireSigns, err = ct.genAuthRequireSignsFromPath(tx, c.accountPath)
+	tx.AuthRequireSigns, err = ct.signTx(tx, c.accountPath)
 	if err != nil {
 		return err
 	}
 
-	// calculate txid
+	// calculate tx ID
 	tx.Txid, err = common.MakeTxId(tx)
 	if err != nil {
 		return err
 	}
-	txid, err := ct.postTx(context.Background(), tx)
+	txID, err := ct.postTx(context.Background(), tx)
 	if err != nil {
 		return err
 	}
-	fmt.Println(txid)
+	fmt.Println(txID)
 
 	return nil
 }
