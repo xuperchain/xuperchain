@@ -62,7 +62,6 @@ func (c *SplitUtxoCommand) splitUtxo(_ context.Context) error {
 		return errors.New("illegal split utxo num, num > 0 required")
 	}
 
-
 	initiator, err := readAddress(c.cli.RootOptions.Keys)
 	if err != nil {
 		return fmt.Errorf("read init AK error: %s", err)
@@ -171,7 +170,7 @@ func (c *SplitUtxoCommand) splitUtxo(_ context.Context) error {
 	return err
 }
 
-// SetUpAccount will setup a valid account as one of below:
+// SetUpAccount will set up a valid account as one of below:
 // 1. account
 // 2. initiator AK (default value)
 func (c *SplitUtxoCommand) SetUpAccount(initiator string) error {

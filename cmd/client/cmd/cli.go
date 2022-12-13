@@ -291,7 +291,7 @@ func (c *Cli) transferSupportAccount(ctx context.Context, client pb.XchainClient
 	txStatus.Tx.InitiatorSigns = append(txStatus.Tx.InitiatorSigns, signInfo)
 	txStatus.Tx.AuthRequireSigns, err = signTx(opt, cryptoClient, txStatus.Tx, initiator.KeyPair)
 	if err != nil {
-		return "", fmt.Errorf("Failed to sign %s", err)
+		return "", fmt.Errorf("Failed to signTx %s", err)
 	}
 	txStatus.Tx.Txid, err = common.MakeTxId(txStatus.Tx)
 	if err != nil {

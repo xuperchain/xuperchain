@@ -20,8 +20,8 @@ import (
 
 // file names in AK directory
 const (
-	FileAddress = "address"
-	FilePublicKey = "public.key"
+	FileAddress    = "address"
+	FilePublicKey  = "public.key"
 	FilePrivateKey = "private.key"
 )
 
@@ -62,7 +62,7 @@ func newAK(path string) AK {
 Params:
 	root: root path refers to <root>
 */
-func listAKs(root string) ([]AK, error)  {
+func listAKs(root string) ([]AK, error) {
 	dirs, err := ioutil.ReadDir(root)
 	if err != nil {
 		return nil, err
