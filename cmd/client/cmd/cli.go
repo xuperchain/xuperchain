@@ -15,14 +15,12 @@ import (
 	"io/ioutil"
 	"math/big"
 	"os"
-	"strconv"
 	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/xuperchain/xupercore/lib/crypto/client"
 	"github.com/xuperchain/xupercore/lib/crypto/client/base"
-	"github.com/xuperchain/xupercore/lib/crypto/hash"
 	"github.com/xuperchain/xupercore/lib/utils"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -471,7 +469,7 @@ func signTxForAccount(tx *pb.Transaction, path string, crypto base.CryptoClient)
 }
 
 func assembleTxInputsSupportAccount(ctx context.Context, client pb.XchainClient, opt *TransferOptions,
-	totalNeed *big.Int, initiator AKInfo, cryptoClient base.CryptoClient) ([]*pb.TxInput, *pb.TxOutput, error) {
+	totalNeed *big.Int, initiator AKInfo, crypto base.CryptoClient) ([]*pb.TxInput, *pb.TxOutput, error) {
 
 	ui := &pb.UtxoInput{
 		Bcname:    opt.BlockchainName,
@@ -481,12 +479,11 @@ func assembleTxInputsSupportAccount(ctx context.Context, client pb.XchainClient,
 		Publickey: initiator.publicKey,
 	}
 
-	sign, err := computeSelectUtxoSign(opt.BlockchainName, initiator.address, totalNeed.String(), initiator.secretKey,
-		strconv.FormatBool(true), cryptoClient)
+	sign, err := initiator.SignUtxo(opt.BlockchainName, totalNeed, crypto)
 	if err != nil {
 		return nil, nil, err
 	}
-	ui.UserSign = sign
+	ui.UserSign = sign.Sign
 	utxoRes, selectErr := client.SelectUTXO(ctx, ui)
 	if selectErr != nil || utxoRes.Header.Error != pb.XChainErrorEnum_SUCCESS {
 		return nil, nil, ErrSelectUtxo
@@ -514,21 +511,6 @@ func assembleTxInputsSupportAccount(ctx context.Context, client pb.XchainClient,
 		}
 	}
 	return txTxInputs, txOutput, nil
-}
-
-func computeSelectUtxoSign(bcName, account, need, initScrKey, isLock string, cryptoClient base.CryptoClient) ([]byte, error) {
-	privateKey, err := cryptoClient.GetEcdsaPrivateKeyFromJsonStr(initScrKey)
-	if err != nil {
-		return nil, err
-	}
-
-	hashStr := bcName + account + need + isLock
-	doubleHash := hash.DoubleSha256([]byte(hashStr))
-	signResult, err := cryptoClient.SignECDSA(privateKey, doubleHash)
-	if err != nil {
-		return nil, err
-	}
-	return signResult, nil
 }
 
 // AddCommand add sub cmd

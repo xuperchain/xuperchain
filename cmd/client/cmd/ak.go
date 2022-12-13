@@ -151,6 +151,15 @@ type AKInfo struct {
 	KeyPair // public & private key pair
 }
 
+// SignUtxo self signs for an UTXO with given crypto client
+// Params:
+// 	bcName: UTXO blockchain name
+// 	amount: UTXO amount
+// 	crypto: crypto client
+func (i *AKInfo) SignUtxo(bcName string, amount *big.Int, crypto base.CryptoClient) (pb.SignatureInfo, error) {
+	return i.KeyPair.SignUtxo(bcName, i.address, amount, crypto)
+}
+
 // KeyPair is key-pair for crypto
 type KeyPair struct {
 	publicKey, secretKey string
