@@ -137,7 +137,7 @@ func (c *AccountNewCommand) printRealAccountName(name string) error {
 }
 
 func (c *AccountNewCommand) readPreExeParamWithDesc(buf []byte) (*pb.InvokeRequest, error) {
-	params := new(invokeRequestWraper)
+	params := new(invokeRequestWrapper)
 	err := json.Unmarshal(buf, params)
 	if err != nil {
 		return nil, fmt.Errorf("unmarshal json error:%s", err)

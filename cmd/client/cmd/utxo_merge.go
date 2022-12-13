@@ -89,9 +89,9 @@ func (c *MergeUtxoCommand) mergeUtxo(_ context.Context) error {
 	txOutputs = append(txOutputs, txOutput)
 	tx.TxOutputs = txOutputs
 
-	tx.AuthRequire, err = genAuthRequire(c.account, c.accountPath)
+	tx.AuthRequire, err = genAuthRequirement(c.account, c.accountPath)
 	if err != nil {
-		return errors.New("genAuthRequire error")
+		return fmt.Errorf("genAuthRequirement error: %s", err)
 	}
 
 	// preExe
@@ -112,11 +112,11 @@ func (c *MergeUtxoCommand) mergeUtxo(_ context.Context) error {
 	tx.TxInputsExt = preExeRes.GetResponse().GetInputs()
 	tx.TxOutputsExt = preExeRes.GetResponse().GetOutputs()
 
-	tx.InitiatorSigns, err = ct.genInitSign(tx)
+	tx.InitiatorSigns, err = ct.signTxForInitiator(tx)
 	if err != nil {
 		return err
 	}
-	tx.AuthRequireSigns, err = ct.genAuthRequireSignsFromPath(tx, c.accountPath)
+	tx.AuthRequireSigns, err = ct.signTx(tx, c.accountPath)
 	if err != nil {
 		return err
 	}

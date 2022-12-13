@@ -61,17 +61,15 @@ func (c *SplitUtxoCommand) splitUtxo(_ context.Context) error {
 	if c.num <= 0 {
 		return errors.New("illegal split utxo num, num > 0 required")
 	}
-	if aclUtils.IsAK(c.account) && c.accountPath == "" {
-		return errors.New("accountPath can not be null because account is an Account name")
+
+
+	initiator, err := readAddress(c.cli.RootOptions.Keys)
+	if err != nil {
+		return fmt.Errorf("read init AK error: %s", err)
 	}
 
-	initAk, err := readAddress(c.cli.RootOptions.Keys)
-	if c.account == "" {
-		c.account = initAk
-	}
-
-	if aclUtils.IsAccount(c.account) && c.account != initAk {
-		return errors.New("parse account error")
+	if err := c.SetUpAccount(initiator); err != nil {
+		return err
 	}
 
 	tx := &pb.Transaction{
@@ -79,7 +77,7 @@ func (c *SplitUtxoCommand) splitUtxo(_ context.Context) error {
 		Coinbase:  false,
 		Nonce:     utils.GenNonce(),
 		Timestamp: time.Now().UnixNano(),
-		Initiator: initAk,
+		Initiator: initiator,
 	}
 
 	amount, err := c.getBalanceHelper()
@@ -126,9 +124,9 @@ func (c *SplitUtxoCommand) splitUtxo(_ context.Context) error {
 		}
 		tx.AuthRequire = multiAddrs
 	} else {
-		tx.AuthRequire, err = genAuthRequire(c.account, c.accountPath)
+		tx.AuthRequire, err = genAuthRequirement(c.account, c.accountPath)
 		if err != nil {
-			return errors.New("genAuthRequire error")
+			return errors.New("genAuthRequirement error")
 		}
 	}
 
@@ -139,7 +137,7 @@ func (c *SplitUtxoCommand) splitUtxo(_ context.Context) error {
 		Header: &pb.Header{
 			Logid: utils.GenLogId(),
 		},
-		Initiator:   initAk,
+		Initiator:   initiator,
 		AuthRequire: tx.AuthRequire,
 	}
 	preExeRes, err := ct.XchainClient.PreExec(context.Background(), preExeRPCReq)
@@ -154,11 +152,11 @@ func (c *SplitUtxoCommand) splitUtxo(_ context.Context) error {
 		return ct.GenTxFile(tx)
 	}
 
-	tx.InitiatorSigns, err = ct.genInitSign(tx)
+	tx.InitiatorSigns, err = ct.signTxForInitiator(tx)
 	if err != nil {
 		return err
 	}
-	tx.AuthRequireSigns, err = ct.genAuthRequireSignsFromPath(tx, c.accountPath)
+	tx.AuthRequireSigns, err = ct.signTx(tx, c.accountPath)
 	if err != nil {
 		return err
 	}
@@ -171,6 +169,30 @@ func (c *SplitUtxoCommand) splitUtxo(_ context.Context) error {
 	txID, err := ct.postTx(context.Background(), tx)
 	fmt.Println(txID)
 	return err
+}
+
+// SetUpAccount will setup a valid account as one of below:
+// 1. account
+// 2. initiator AK (default value)
+func (c *SplitUtxoCommand) SetUpAccount(initiator string) error {
+	// set default value
+	if c.account == "" {
+		c.account = initiator
+	}
+
+	t, isValid := aclUtils.ParseAddressType(c.account)
+	if !isValid {
+		return errors.New("empty account")
+	}
+
+	if t == aclUtils.AddressAccount && c.accountPath == "" {
+		return errors.New("accountPath can not be null because account is an Account name")
+	}
+
+	if t == aclUtils.AddressAK && c.account != initiator {
+		return errors.New("parse account error")
+	}
+	return nil
 }
 
 func (c *SplitUtxoCommand) getBalanceHelper() (string, error) {

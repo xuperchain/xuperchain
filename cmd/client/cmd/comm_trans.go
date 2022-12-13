@@ -18,15 +18,14 @@ import (
 	"time"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/xuperchain/xupercore/bcs/ledger/xledger/state/utxo"
+	"github.com/xuperchain/xupercore/kernel/contract"
+	"github.com/xuperchain/xupercore/lib/crypto/client"
+	"github.com/xuperchain/xupercore/lib/utils"
 	"google.golang.org/grpc"
 
 	"github.com/xuperchain/xuperchain/service/common"
 	"github.com/xuperchain/xuperchain/service/pb"
-	"github.com/xuperchain/xupercore/bcs/ledger/xledger/state/utxo"
-	"github.com/xuperchain/xupercore/kernel/contract"
-	crypto_client "github.com/xuperchain/xupercore/lib/crypto/client"
-	cryptoHash "github.com/xuperchain/xupercore/lib/crypto/hash"
-	"github.com/xuperchain/xupercore/lib/utils"
 )
 
 const (
@@ -65,45 +64,45 @@ type CommTrans struct {
 }
 
 // GenerateTx generate raw tx
-func (c *CommTrans) GenerateTx(ctx context.Context) (*pb.Transaction, error) {
-	preExeRPCRes, preExeReqs, err := c.GenPreExeRes(ctx)
+func (t *CommTrans) GenerateTx(ctx context.Context) (*pb.Transaction, error) {
+	preExeRPCRes, preExeReqs, err := t.GenPreExeRes(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	desc, _ := c.GetDesc()
+	desc, _ := t.GetDesc()
 
-	tx, err := c.GenRawTx(ctx, desc, preExeRPCRes.GetResponse(), preExeReqs)
+	tx, err := t.GenRawTx(ctx, desc, preExeRPCRes.GetResponse(), preExeReqs)
 	return tx, err
 }
 
 // GenPreExeRes 得到预执行的结果
-func (c *CommTrans) GenPreExeRes(ctx context.Context) (
+func (t *CommTrans) GenPreExeRes(ctx context.Context) (
 	*pb.InvokeRPCResponse, []*pb.InvokeRequest, error) {
 	preExeReqs := []*pb.InvokeRequest{}
-	if c.ModuleName != "" {
-		if c.ModuleName == "xkernel" {
+	if t.ModuleName != "" {
+		if t.ModuleName == "xkernel" {
 			preExeReqs = append(preExeReqs, &pb.InvokeRequest{
-				ModuleName:   c.ModuleName,
-				ContractName: c.ContractName,
-				MethodName:   c.MethodName,
-				Args:         c.Args,
+				ModuleName:   t.ModuleName,
+				ContractName: t.ContractName,
+				MethodName:   t.MethodName,
+				Args:         t.Args,
 			})
 		} else {
 			invokeReq := &pb.InvokeRequest{
-				ModuleName:   c.ModuleName,
-				ContractName: c.ContractName,
-				MethodName:   c.MethodName,
-				Args:         c.Args,
+				ModuleName:   t.ModuleName,
+				ContractName: t.ContractName,
+				MethodName:   t.MethodName,
+				Args:         t.Args,
 			}
 			// transfer to contract
-			if c.To == c.ContractName {
-				invokeReq.Amount = c.Amount
+			if t.To == t.ContractName {
+				invokeReq.Amount = t.Amount
 			}
 			preExeReqs = append(preExeReqs, invokeReq)
 		}
 	} else {
-		tmpReq, err := c.GetInvokeRequestFromDesc()
+		tmpReq, err := t.GetInvokeRequestFromDesc()
 		if err != nil {
 			return nil, nil, fmt.Errorf("Get pb.InvokeRPCRequest error:%s", err)
 		}
@@ -113,31 +112,31 @@ func (c *CommTrans) GenPreExeRes(ctx context.Context) (
 	}
 
 	preExeRPCReq := &pb.InvokeRPCRequest{
-		Bcname: c.ChainName,
+		Bcname: t.ChainName,
 		Header: &pb.Header{
 			Logid: utils.GenLogId(),
 		},
 		Requests: preExeReqs,
 	}
 
-	initiator, err := c.genInitiator()
+	initiator, err := t.genInitiator()
 	if err != nil {
 		return nil, nil, fmt.Errorf("Get initiator error: %s", err.Error())
 	}
 
 	preExeRPCReq.Initiator = initiator
-	if !c.IsQuick {
-		preExeRPCReq.AuthRequire, err = c.genAuthRequireQuick()
+	if !t.IsQuick {
+		preExeRPCReq.AuthRequire, err = t.genAuthRequireQuick()
 		if err != nil {
 			return nil, nil, fmt.Errorf("Get auth require quick error: %s", err.Error())
 		}
 	} else {
-		preExeRPCReq.AuthRequire, err = c.GenAuthRequire(c.MultiAddrs)
+		preExeRPCReq.AuthRequire, err = t.GenAuthRequire(t.MultiAddrs)
 		if err != nil {
 			return nil, nil, fmt.Errorf("Get auth require error: %s", err.Error())
 		}
 	}
-	preExeRPCRes, err := c.XchainClient.PreExec(ctx, preExeRPCReq)
+	preExeRPCRes, err := t.XchainClient.PreExec(ctx, preExeRPCReq)
 	if err != nil {
 		return nil, nil, fmt.Errorf("PreExe contract response : %v, logid:%s", err, preExeRPCReq.Header.Logid)
 	}
@@ -151,14 +150,14 @@ func (c *CommTrans) GenPreExeRes(ctx context.Context) (
 }
 
 // GetInvokeRequestFromDesc get invokerequest from desc file
-func (c *CommTrans) GetInvokeRequestFromDesc() (*pb.InvokeRequest, error) {
-	desc, err := c.GetDesc()
+func (t *CommTrans) GetInvokeRequestFromDesc() (*pb.InvokeRequest, error) {
+	desc, err := t.GetDesc()
 	if err != nil {
 		return nil, fmt.Errorf("get desc error:%s", err)
 	}
 
 	var preExeReq *pb.InvokeRequest
-	preExeReq, err = c.ReadPreExeReq(desc)
+	preExeReq, err = t.ReadPreExeReq(desc)
 	if err != nil {
 		return nil, err
 	}
@@ -167,16 +166,16 @@ func (c *CommTrans) GetInvokeRequestFromDesc() (*pb.InvokeRequest, error) {
 }
 
 // GetDesc 解析desc字段，主要是针对合约
-func (c *CommTrans) GetDesc() ([]byte, error) {
-	if c.Descfile == "" {
+func (t *CommTrans) GetDesc() ([]byte, error) {
+	if t.Descfile == "" {
 		return []byte(defaultDesc), nil
 	}
-	return ioutil.ReadFile(c.Descfile)
+	return ioutil.ReadFile(t.Descfile)
 }
 
 // ReadPreExeReq 从desc中填充出发起合约调用的结构体
-func (c *CommTrans) ReadPreExeReq(buf []byte) (*pb.InvokeRequest, error) {
-	params := new(invokeRequestWraper)
+func (t *CommTrans) ReadPreExeReq(buf []byte) (*pb.InvokeRequest, error) {
+	params := new(invokeRequestWrapper)
 	err := json.Unmarshal(buf, params)
 	if err != nil {
 		return nil, nil
@@ -194,7 +193,7 @@ func (c *CommTrans) ReadPreExeReq(buf []byte) (*pb.InvokeRequest, error) {
 }
 
 // GenRawTx 生成一个完整raw的交易
-func (c *CommTrans) GenRawTx(ctx context.Context, desc []byte, preExeRes *pb.InvokeResponse,
+func (t *CommTrans) GenRawTx(ctx context.Context, desc []byte, preExeRes *pb.InvokeResponse,
 	preExeReqs []*pb.InvokeRequest) (*pb.Transaction, error) {
 	tx := &pb.Transaction{
 		Desc:      desc,
@@ -217,13 +216,13 @@ func (c *CommTrans) GenRawTx(ctx context.Context, desc []byte, preExeRes *pb.Inv
 		tx.TxOutputs = append(tx.TxOutputs, preExeRes.GetUtxoOutputs()...)
 	}
 
-	txOutputs, totalNeed, err := c.GenTxOutputs(gasUsed)
+	txOutputs, totalNeed, err := t.GenTxOutputs(gasUsed)
 	if err != nil {
 		return nil, err
 	}
 	tx.TxOutputs = append(tx.TxOutputs, txOutputs...)
 
-	txInputs, deltaTxOutput, err := c.GenTxInputs(ctx, totalNeed)
+	txInputs, deltaTxOutput, err := t.GenTxInputs(ctx, totalNeed)
 	if err != nil {
 		return nil, err
 	}
@@ -241,7 +240,7 @@ func (c *CommTrans) GenRawTx(ctx context.Context, desc []byte, preExeRes *pb.Inv
 	}
 
 	// 填充交易发起者的addr
-	fromAddr, err := c.genInitiator()
+	fromAddr, err := t.genInitiator()
 	if err != nil {
 		return nil, err
 	}
@@ -251,11 +250,11 @@ func (c *CommTrans) GenRawTx(ctx context.Context, desc []byte, preExeRes *pb.Inv
 }
 
 // genInitiator generate initiator of transaction
-func (c *CommTrans) genInitiator() (string, error) {
-	if c.From != "" {
-		return c.From, nil
+func (t *CommTrans) genInitiator() (string, error) {
+	if t.From != "" {
+		return t.From, nil
 	}
-	fromAddr, err := readAddress(c.Keys)
+	fromAddr, err := readAddress(t.Keys)
 	if err != nil {
 		return "", err
 	}
@@ -263,35 +262,35 @@ func (c *CommTrans) genInitiator() (string, error) {
 }
 
 // GenTxOutputs 填充得到transaction的repeated TxOutput tx_outputs
-func (c *CommTrans) GenTxOutputs(gasUsed int64) ([]*pb.TxOutput, *big.Int, error) {
+func (t *CommTrans) GenTxOutputs(gasUsed int64) ([]*pb.TxOutput, *big.Int, error) {
 	// 组装转账的账户信息
 	account := &pb.TxDataAccount{
-		Address:      c.To,
-		Amount:       c.Amount,
-		FrozenHeight: c.FrozenHeight,
+		Address:      t.To,
+		Amount:       t.Amount,
+		FrozenHeight: t.FrozenHeight,
 	}
 
 	accounts := []*pb.TxDataAccount{}
-	if c.To != "" {
+	if t.To != "" {
 		accounts = append(accounts, account)
 	}
 
 	// 如果有小费,增加转个小费地址的账户
 	// 如果有合约，需要支付gas
 	if gasUsed > 0 {
-		if c.Fee != "" && c.Fee != "0" {
-			fee, _ := strconv.ParseInt(c.Fee, 10, 64)
+		if t.Fee != "" && t.Fee != "0" {
+			fee, _ := strconv.ParseInt(t.Fee, 10, 64)
 			if fee < gasUsed {
 				return nil, nil, errors.New("Fee not enough")
 			}
 		} else {
 			return nil, nil, errors.New("You need add fee")
 		}
-		fmt.Printf("The fee you pay is: %v\n", c.Fee)
-		accounts = append(accounts, newFeeAccount(c.Fee))
-	} else if c.Fee != "" && c.Fee != "0" && gasUsed <= 0 {
-		fmt.Printf("The fee you pay is: %v\n", c.Fee)
-		accounts = append(accounts, newFeeAccount(c.Fee))
+		fmt.Printf("The fee you pay is: %v\n", t.Fee)
+		accounts = append(accounts, newFeeAccount(t.Fee))
+	} else if t.Fee != "" && t.Fee != "0" && gasUsed <= 0 {
+		fmt.Printf("The fee you pay is: %v\n", t.Fee)
+		accounts = append(accounts, newFeeAccount(t.Fee))
 	}
 
 	// 组装txOutputs
@@ -325,27 +324,27 @@ func (c *CommTrans) GenTxOutputs(gasUsed int64) ([]*pb.TxOutput, *big.Int, error
 
 // GenTxInputs 填充得到transaction的repeated TxInput tx_inputs,
 // 如果输入大于输出，增加一个转给自己(data/keys/)的输入-输出的交易
-func (c *CommTrans) GenTxInputs(ctx context.Context, totalNeed *big.Int) (
+func (t *CommTrans) GenTxInputs(ctx context.Context, totalNeed *big.Int) (
 	[]*pb.TxInput, *pb.TxOutput, error) {
 	var fromAddr string
 	var err error
-	if c.From != "" {
-		fromAddr = c.From
+	if t.From != "" {
+		fromAddr = t.From
 	} else {
-		fromAddr, err = readAddress(c.Keys)
+		fromAddr, err = readAddress(t.Keys)
 		if err != nil {
 			return nil, nil, err
 		}
 	}
 
 	utxoInput := &pb.UtxoInput{
-		Bcname:    c.ChainName,
+		Bcname:    t.ChainName,
 		Address:   fromAddr,
 		TotalNeed: totalNeed.String(),
 		NeedLock:  false,
 	}
 
-	utxoOutputs, err := c.XchainClient.SelectUTXO(ctx, utxoInput)
+	utxoOutputs, err := t.XchainClient.SelectUTXO(ctx, utxoInput)
 	if err != nil {
 		return nil, nil, fmt.Errorf("%v, details:%v", ErrSelectUtxo, err)
 	}
@@ -384,48 +383,48 @@ func (c *CommTrans) GenTxInputs(ctx context.Context, totalNeed *big.Int) (
 }
 
 // Transfer quick access to transfer
-func (c *CommTrans) Transfer(ctx context.Context) error {
+func (t *CommTrans) Transfer(ctx context.Context) error {
 	var err error
 	tx := &pb.Transaction{}
-	if c.RootOptions.ComplianceCheck.IsNeedComplianceCheck == true {
-		preSelectUTXORes, err := c.GenPreExeWithSelectUtxoRes(ctx)
+	if t.RootOptions.ComplianceCheck.IsNeedComplianceCheck == true {
+		preSelectUTXORes, err := t.GenPreExeWithSelectUtxoRes(ctx)
 		if err != nil {
 			return err
 		}
-		return c.GenCompleteTxAndPost(ctx, preSelectUTXORes)
+		return t.GenCompleteTxAndPost(ctx, preSelectUTXORes)
 	} else {
-		tx, err = c.GenerateTx(ctx)
+		tx, err = t.GenerateTx(ctx)
 		if err != nil {
 			return err
 		}
 
-		if c.DebugTx {
+		if t.DebugTx {
 			ttx := FromPBTx(tx)
 			out, _ := json.MarshalIndent(ttx, "", "  ")
 			fmt.Println(string(out))
 			return nil
 		}
 
-		return c.SendTx(ctx, tx)
+		return t.SendTx(ctx, tx)
 	}
 }
 
 // SendTx post tx
-func (c *CommTrans) SendTx(ctx context.Context, tx *pb.Transaction) error {
-	fromAddr, err := readAddress(c.Keys)
+func (t *CommTrans) SendTx(ctx context.Context, tx *pb.Transaction) error {
+	fromAddr, err := readAddress(t.Keys)
 	if err != nil {
 		return err
 	}
 
 	var authRequire string
-	if c.From != "" {
-		authRequire = c.From + "/" + fromAddr
+	if t.From != "" {
+		authRequire = t.From + "/" + fromAddr
 	} else {
 		authRequire = fromAddr
 	}
 	tx.AuthRequire = append(tx.AuthRequire, authRequire)
 
-	signInfos, err := c.genInitSign(tx)
+	signInfos, err := t.signTxForInitiator(tx)
 	if err != nil {
 		return err
 	}
@@ -434,107 +433,63 @@ func (c *CommTrans) SendTx(ctx context.Context, tx *pb.Transaction) error {
 
 	tx.Txid, err = common.MakeTxId(tx)
 	if err != nil {
-		return errors.New("MakeTxDigesthash txid error")
+		return errors.New("MakeTxId error")
 	}
 
-	txid, err := c.postTx(ctx, tx)
+	txID, err := t.postTx(ctx, tx)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Tx id: %s\n", txid)
+	fmt.Printf("Tx id: %s\n", txID)
 
 	return nil
 }
 
-func (c *CommTrans) genInitSign(tx *pb.Transaction) ([]*pb.SignatureInfo, error) {
-	fromPubkey, err := readPublicKey(c.Keys)
-	if err != nil {
-		return nil, err
-	}
+// signTx generates auth required signatures for transaction according to path
+func (t *CommTrans) signTx(tx *pb.Transaction, path string) ([]*pb.SignatureInfo, error) {
 
-	cryptoClient, err := crypto_client.CreateCryptoClient(c.CryptoType)
-	if err != nil {
-		return nil, errors.New("Create crypto client error")
-	}
-	fromScrkey, err := readPrivateKey(c.Keys)
-	if err != nil {
-		return nil, err
-	}
-	signTx, err := common.ComputeTxSign(cryptoClient, tx, []byte(fromScrkey))
-	if err != nil {
-		return nil, err
-	}
-
-	signInfo := &pb.SignatureInfo{
-		PublicKey: fromPubkey,
-		Sign:      signTx,
-	}
-
-	signInfos := []*pb.SignatureInfo{}
-	signInfos = append(signInfos, signInfo)
-
-	return signInfos, nil
-}
-
-func (c *CommTrans) genAuthRequireSignsFromPath(tx *pb.Transaction, path string) ([]*pb.SignatureInfo, error) {
-	cryptoClient, err := crypto_client.CreateCryptoClient(c.CryptoType)
-	if err != nil {
-		return nil, errors.New("Create crypto client error")
-	}
-
-	authRequireSigns := []*pb.SignatureInfo{}
+	// generate signature for AK: signed by initiator
 	if path == "" {
-		initPubkey, err := readPublicKey(c.Keys)
-		if err != nil {
-			return nil, err
-		}
-
-		initScrkey, err := readPrivateKey(c.Keys)
-		if err != nil {
-			return nil, err
-		}
-		signTx, err := common.ComputeTxSign(cryptoClient, tx, []byte(initScrkey))
-		if err != nil {
-			return nil, err
-		}
-		signInfo := &pb.SignatureInfo{
-			PublicKey: initPubkey,
-			Sign:      signTx,
-		}
-		authRequireSigns = append(authRequireSigns, signInfo)
-		return authRequireSigns, nil
+		return t.signTxForInitiator(tx)
 	}
-	dir, err := ioutil.ReadDir(path)
+
+	// generate signatures for account: signed by all AK in account path
+	return t.signTxForAccount(tx, path)
+}
+
+// signTxForInitiator generates initiator's signature for this Tx
+func (t *CommTrans) signTxForInitiator(tx *pb.Transaction) ([]*pb.SignatureInfo, error) {
+	initiator := newAK(t.Keys)
+	keyPair, err := initiator.keyPair()
 	if err != nil {
 		return nil, err
 	}
-	for _, fi := range dir {
-		if fi.IsDir() {
-			sk, err := readPrivateKey(path + "/" + fi.Name())
-			if err != nil {
-				return nil, err
-			}
-			pk, err := readPublicKey(path + "/" + fi.Name())
-			if err != nil {
-				return nil, err
-			}
-			signTx, err := common.ComputeTxSign(cryptoClient, tx, []byte(sk))
-			if err != nil {
-				return nil, err
-			}
-			signInfo := &pb.SignatureInfo{
-				PublicKey: pk,
-				Sign:      signTx,
-			}
-			authRequireSigns = append(authRequireSigns, signInfo)
-		}
+
+	// create crypto client
+	crypto, err := client.CreateCryptoClient(t.CryptoType)
+	if err != nil {
+		return nil, errors.New("Create crypto client error")
 	}
-	return authRequireSigns, nil
+
+	// sign by initiator
+	return signTxForAK(tx, keyPair, crypto)
 }
 
-func (c *CommTrans) postTx(ctx context.Context, tx *pb.Transaction) (string, error) {
+// signTxForAccount generates transaction signatures for account
+func (t *CommTrans) signTxForAccount(tx *pb.Transaction, path string) ([]*pb.SignatureInfo, error) {
+
+	// create crypto client
+	crypto, err := client.CreateCryptoClient(t.CryptoType)
+	if err != nil {
+		return nil, errors.New("Create crypto client error")
+	}
+
+	return signTxForAccount(tx, path, crypto)
+}
+
+func (t *CommTrans) postTx(ctx context.Context, tx *pb.Transaction) (string, error) {
 	txStatus := &pb.TxStatus{
-		Bcname: c.ChainName,
+		Bcname: t.ChainName,
 		Status: pb.TransactionStatus_UNCONFIRM,
 		Tx:     tx,
 		Header: &pb.Header{
@@ -543,7 +498,7 @@ func (c *CommTrans) postTx(ctx context.Context, tx *pb.Transaction) (string, err
 		Txid: tx.Txid,
 	}
 
-	reply, err := c.XchainClient.PostTx(ctx, txStatus)
+	reply, err := t.XchainClient.PostTx(ctx, txStatus)
 	if err != nil {
 		return "", err
 	}
@@ -554,32 +509,32 @@ func (c *CommTrans) postTx(ctx context.Context, tx *pb.Transaction) (string, err
 	return hex.EncodeToString(txStatus.Txid), nil
 }
 
-// GenerateMultisigGenRawTx for mulitisig gen cmd
-func (c *CommTrans) GenerateMultisigGenRawTx(ctx context.Context) error {
-	tx, err := c.GenerateTx(ctx)
+// GenerateMultisigGenRawTx for multisig gen cmd
+func (t *CommTrans) GenerateMultisigGenRawTx(ctx context.Context) error {
+	tx, err := t.GenerateTx(ctx)
 	if err != nil {
 		return err
 	}
 
 	// 填充需要多重签名的addr
-	multiAddrs, err := c.GenAuthRequire(c.MultiAddrs)
+	multiAddrs, err := t.GenAuthRequire(t.MultiAddrs)
 	if err != nil {
 		return err
 	}
 	tx.AuthRequire = multiAddrs
 
-	return c.GenTxFile(tx)
+	return t.GenTxFile(tx)
 }
 
-func (c *CommTrans) genAuthRequireQuick() ([]string, error) {
+func (t *CommTrans) genAuthRequireQuick() ([]string, error) {
 
-	fromAddr, err := readAddress(c.Keys)
+	fromAddr, err := readAddress(t.Keys)
 	if err != nil {
 		return nil, err
 	}
 	authRequires := []string{}
-	if c.From != "" {
-		authRequires = append(authRequires, c.From+"/"+fromAddr)
+	if t.From != "" {
+		authRequires = append(authRequires, t.From+"/"+fromAddr)
 	} else {
 		authRequires = append(authRequires, fromAddr)
 	}
@@ -587,7 +542,7 @@ func (c *CommTrans) genAuthRequireQuick() ([]string, error) {
 }
 
 // GenAuthRequire get auth require aks from file
-func (c *CommTrans) GenAuthRequire(filename string) ([]string, error) {
+func (t *CommTrans) GenAuthRequire(filename string) ([]string, error) {
 	var addrs []string
 
 	fileIn, err := os.Open(filename)
@@ -613,17 +568,17 @@ func (c *CommTrans) GenAuthRequire(filename string) ([]string, error) {
 }
 
 // GenTxFile generate raw tx file
-func (c *CommTrans) GenTxFile(tx *pb.Transaction) error {
+func (t *CommTrans) GenTxFile(tx *pb.Transaction) error {
 	data, err := proto.Marshal(tx)
 	if err != nil {
 		return errors.New("Tx marshal error")
 	}
-	err = ioutil.WriteFile(c.Output, data, 0755)
+	err = ioutil.WriteFile(t.Output, data, 0755)
 	if err != nil {
 		return errors.New("WriteFile error")
 	}
 
-	if c.IsPrint {
+	if t.IsPrint {
 		return printTx(tx)
 	}
 
@@ -643,31 +598,31 @@ func printTx(tx *pb.Transaction) error {
 }
 
 // GenTxInputsWithMergeUTXO generate tx with merge utxo
-func (c *CommTrans) GenTxInputsWithMergeUTXO(ctx context.Context) ([]*pb.TxInput, *pb.TxOutput, error) {
+func (t *CommTrans) GenTxInputsWithMergeUTXO(ctx context.Context) ([]*pb.TxInput, *pb.TxOutput, error) {
 	var fromAddr string
 	var err error
-	if c.From != "" {
-		fromAddr = c.From
+	if t.From != "" {
+		fromAddr = t.From
 	} else {
-		fromAddr, err = readAddress(c.Keys)
+		fromAddr, err = readAddress(t.Keys)
 		if err != nil {
 			return nil, nil, err
 		}
 	}
 
 	utxoInput := &pb.UtxoInput{
-		Bcname:   c.ChainName,
+		Bcname:   t.ChainName,
 		Address:  fromAddr,
 		NeedLock: true,
 	}
 
-	pubKey, signature, err := signForLockUtxo(c.ChainName, fromAddr, c.Keys, c.CryptoType, big.NewInt(0))
+	signature, err := t.signLockUtxo(t.ChainName, fromAddr, big.NewInt(0))
 	if err != nil {
 		return nil, nil, err
 	}
-	utxoInput.Publickey = pubKey
-	utxoInput.UserSign = signature
-	utxoOutputs, err := c.XchainClient.SelectUTXOBySize(ctx, utxoInput)
+	utxoInput.Publickey = signature.PublicKey
+	utxoInput.UserSign = signature.Sign
+	utxoOutputs, err := t.XchainClient.SelectUTXOBySize(ctx, utxoInput)
 	if err != nil {
 		return nil, nil, fmt.Errorf("%v, details:%v", ErrSelectUtxo, err)
 	}
@@ -700,32 +655,32 @@ func (c *CommTrans) GenTxInputsWithMergeUTXO(ctx context.Context) ([]*pb.TxInput
 	return txInputs, txOutput, nil
 }
 
-func (c *CommTrans) GenPreExeWithSelectUtxoRes(ctx context.Context) (
+func (t *CommTrans) GenPreExeWithSelectUtxoRes(ctx context.Context) (
 	*pb.PreExecWithSelectUTXOResponse, error) {
 	preExeReqs := []*pb.InvokeRequest{}
-	if c.ModuleName != "" {
-		if c.ModuleName == "xkernel" {
+	if t.ModuleName != "" {
+		if t.ModuleName == "xkernel" {
 			preExeReqs = append(preExeReqs, &pb.InvokeRequest{
-				ModuleName:   c.ModuleName,
-				ContractName: c.ContractName,
-				MethodName:   c.MethodName,
-				Args:         c.Args,
+				ModuleName:   t.ModuleName,
+				ContractName: t.ContractName,
+				MethodName:   t.MethodName,
+				Args:         t.Args,
 			})
 		} else {
 			invokeReq := &pb.InvokeRequest{
-				ModuleName:   c.ModuleName,
-				ContractName: c.ContractName,
-				MethodName:   c.MethodName,
-				Args:         c.Args,
+				ModuleName:   t.ModuleName,
+				ContractName: t.ContractName,
+				MethodName:   t.MethodName,
+				Args:         t.Args,
 			}
 			// transfer to contract
-			if c.To == c.ContractName {
-				invokeReq.Amount = c.Amount
+			if t.To == t.ContractName {
+				invokeReq.Amount = t.Amount
 			}
 			preExeReqs = append(preExeReqs, invokeReq)
 		}
 	} else {
-		tmpReq, err := c.GetInvokeRequestFromDesc()
+		tmpReq, err := t.GetInvokeRequestFromDesc()
 		if err != nil {
 			return nil, fmt.Errorf("Get pb.InvokeRPCRequest error:%s", err)
 		}
@@ -735,55 +690,55 @@ func (c *CommTrans) GenPreExeWithSelectUtxoRes(ctx context.Context) (
 	}
 
 	preExeRPCReq := &pb.InvokeRPCRequest{
-		Bcname: c.ChainName,
+		Bcname: t.ChainName,
 		Header: &pb.Header{
 			Logid: utils.GenLogId(),
 		},
 		Requests: preExeReqs,
 	}
 
-	initiator, err := c.genInitiator()
+	initiator, err := t.genInitiator()
 	if err != nil {
 		return nil, fmt.Errorf("Get initiator error: %s", err.Error())
 	}
 
 	preExeRPCReq.Initiator = initiator
-	if !c.IsQuick {
-		preExeRPCReq.AuthRequire, err = c.genAuthRequireQuick()
+	if !t.IsQuick {
+		preExeRPCReq.AuthRequire, err = t.genAuthRequireQuick()
 		if err != nil {
 			return nil, fmt.Errorf("Get auth require quick error: %s", err.Error())
 		}
 	} else {
-		preExeRPCReq.AuthRequire, err = c.GenAuthRequire(c.MultiAddrs)
+		preExeRPCReq.AuthRequire, err = t.GenAuthRequire(t.MultiAddrs)
 		if err != nil {
 			return nil, fmt.Errorf("Get auth require error: %s", err.Error())
 		}
 	}
-	extraAmount := int64(c.RootOptions.ComplianceCheck.ComplianceCheckEndorseServiceFee)
-	if c.Fee != "" && c.Fee != "0" {
-		fee, err := strconv.ParseInt(c.Fee, 10, 64)
+	extraAmount := int64(t.RootOptions.ComplianceCheck.ComplianceCheckEndorseServiceFee)
+	if t.Fee != "" && t.Fee != "0" {
+		fee, err := strconv.ParseInt(t.Fee, 10, 64)
 		if err != nil {
-			return nil, fmt.Errorf("Invalid Fee: %s", c.Fee)
+			return nil, fmt.Errorf("Invalid Fee: %s", t.Fee)
 		}
 		extraAmount += fee
 	}
-	if c.Amount != "" {
-		amount, err := strconv.ParseInt(c.Amount, 10, 64)
+	if t.Amount != "" {
+		amount, err := strconv.ParseInt(t.Amount, 10, 64)
 		if err != nil {
-			return nil, fmt.Errorf("invalid Amount: %s", c.Amount)
+			return nil, fmt.Errorf("invalid Amount: %s", t.Amount)
 		}
 		extraAmount += amount
 	}
-	preExeRPCReq.AuthRequire = append(preExeRPCReq.AuthRequire, c.RootOptions.ComplianceCheck.ComplianceCheckEndorseServiceAddr)
+	preExeRPCReq.AuthRequire = append(preExeRPCReq.AuthRequire, t.RootOptions.ComplianceCheck.ComplianceCheckEndorseServiceAddr)
 	preSelUTXOReq := &pb.PreExecWithSelectUTXORequest{
-		Bcname:      c.ChainName,
+		Bcname:      t.ChainName,
 		Address:     initiator,
 		TotalAmount: extraAmount,
 		Request:     preExeRPCReq,
 	}
 
 	// preExe
-	preExecWithSelectUTXOResponse, err := c.XchainClient.PreExecWithSelectUTXO(ctx, preSelUTXOReq)
+	preExecWithSelectUTXOResponse, err := t.XchainClient.PreExecWithSelectUTXO(ctx, preSelUTXOReq)
 	if err != nil {
 		return nil, err
 	}
@@ -798,43 +753,43 @@ func (c *CommTrans) GenPreExeWithSelectUtxoRes(ctx context.Context) (
 	gasUsed := preExecWithSelectUTXOResponse.GetResponse().GetGasUsed()
 	fmt.Printf("The gas you cousume is: %v\n", gasUsed)
 	if gasUsed > 0 {
-		if c.Fee != "" && c.Fee != "0" {
-			fee, _ := strconv.ParseInt(c.Fee, 10, 64)
+		if t.Fee != "" && t.Fee != "0" {
+			fee, _ := strconv.ParseInt(t.Fee, 10, 64)
 			if fee < gasUsed {
 				return nil, errors.New("Fee not enough")
 			}
 		} else {
 			return nil, errors.New("You need add fee")
 		}
-		fmt.Printf("The fee you pay is: %v\n", c.Fee)
-	} else if c.Fee != "" && c.Fee != "0" && gasUsed <= 0 {
-		fmt.Printf("The fee you pay is: %v\n", c.Fee)
+		fmt.Printf("The fee you pay is: %v\n", t.Fee)
+	} else if t.Fee != "" && t.Fee != "0" && gasUsed <= 0 {
+		fmt.Printf("The fee you pay is: %v\n", t.Fee)
 	}
 
 	return preExecWithSelectUTXOResponse, nil
 }
 
-func (c *CommTrans) GenCompleteTxAndPost(ctx context.Context, preExeResp *pb.PreExecWithSelectUTXOResponse) error {
-	complianceCheckTx, err := c.GenComplianceCheckTx(preExeResp.GetUtxoOutput())
+func (t *CommTrans) GenCompleteTxAndPost(ctx context.Context, preExeResp *pb.PreExecWithSelectUTXOResponse) error {
+	complianceCheckTx, err := t.GenComplianceCheckTx(preExeResp.GetUtxoOutput())
 	if err != nil {
 		fmt.Printf("GenCompleteTxAndPost GenComplianceCheckTx failed, err: %v", err)
 		return err
 	}
 	fmt.Printf("ComplianceCheck txid: %v\n", hex.EncodeToString(complianceCheckTx.Txid))
 
-	tx, err := c.GenRealTx(preExeResp, complianceCheckTx)
+	tx, err := t.GenRealTx(preExeResp, complianceCheckTx)
 	if err != nil {
 		fmt.Printf("GenRealTx failed, err: %v", err)
 		return err
 	}
-	endorserSign, err := c.ComplianceCheck(tx, complianceCheckTx)
+	endorserSign, err := t.ComplianceCheck(tx, complianceCheckTx)
 	if err != nil {
 		return err
 	}
 	tx.AuthRequireSigns = append(tx.AuthRequireSigns, endorserSign)
 	tx.Txid, _ = common.MakeTxId(tx)
 
-	txid, err := c.postTx(ctx, tx)
+	txid, err := t.postTx(ctx, tx)
 	if err != nil {
 		return err
 	}
@@ -843,11 +798,11 @@ func (c *CommTrans) GenCompleteTxAndPost(ctx context.Context, preExeResp *pb.Pre
 	return nil
 }
 
-func (c *CommTrans) GenRealTx(response *pb.PreExecWithSelectUTXOResponse,
+func (t *CommTrans) GenRealTx(response *pb.PreExecWithSelectUTXOResponse,
 	complianceCheckTx *pb.Transaction) (*pb.Transaction, error) {
 	utxolist := []*pb.Utxo{}
 	totalSelected := big.NewInt(0)
-	initiator, err := c.genInitiator()
+	initiator, err := t.genInitiator()
 	if err != nil {
 		return nil, err
 	}
@@ -871,19 +826,19 @@ func (c *CommTrans) GenRealTx(response *pb.PreExecWithSelectUTXOResponse,
 
 	totalNeed := big.NewInt(0)
 
-	// no need to double check
+	// no need to double-check
 	amount, ok := big.NewInt(0).SetString("0", 10)
 	if !ok {
 		return nil, ErrInvalidAmount
 	}
-	fee, ok := big.NewInt(0).SetString(c.Fee, 10)
+	fee, ok := big.NewInt(0).SetString(t.Fee, 10)
 	if !ok {
 		return nil, ErrInvalidAmount
 	}
 	amount.Add(amount, fee)
 	totalNeed.Add(totalNeed, amount)
-	if c.Amount != "" {
-		amount, ok := big.NewInt(0).SetString(c.Amount, 10)
+	if t.Amount != "" {
+		amount, ok := big.NewInt(0).SetString(t.Amount, 10)
 		if !ok {
 			return nil, ErrInvalidAmount
 		}
@@ -891,13 +846,13 @@ func (c *CommTrans) GenRealTx(response *pb.PreExecWithSelectUTXOResponse,
 	}
 
 	selfAmount := totalSelected.Sub(totalSelected, totalNeed)
-	txOutputs, err := c.GenerateMultiTxOutputs(selfAmount.String(), c.Fee)
+	txOutputs, err := t.GenerateMultiTxOutputs(selfAmount.String(), t.Fee)
 	if err != nil {
 		fmt.Printf("GenRealTx GenerateTxOutput failed.")
 		return nil, fmt.Errorf("GenRealTx GenerateTxOutput err: %v", err)
 	}
 
-	txInputs, err := c.GeneratePureTxInputs(utxoOutput)
+	txInputs, err := t.GeneratePureTxInputs(utxoOutput)
 	if err != nil {
 		fmt.Printf("GenRealTx GenerateTxInput failed.")
 		return nil, fmt.Errorf("GenRealTx GenerateTxInput err: %v", err)
@@ -920,60 +875,39 @@ func (c *CommTrans) GenRealTx(response *pb.PreExecWithSelectUTXOResponse,
 		tx.TxOutputs = append(tx.TxOutputs, response.GetResponse().GetUtxoOutputs()...)
 	}
 
-	desc, _ := c.GetDesc()
+	desc, _ := t.GetDesc()
 	tx.Desc = desc
 	tx.TxInputsExt = response.GetResponse().GetInputs()
 	tx.TxOutputsExt = response.GetResponse().GetOutputs()
 	tx.ContractRequests = response.GetResponse().GetRequests()
 
-	fromAddr, err := readAddress(c.Keys)
+	fromAddr, err := readAddress(t.Keys)
 	if err != nil {
 		return nil, err
 	}
 	var authRequire string
-	if c.From != "" {
-		authRequire = c.From + "/" + fromAddr
+	if t.From != "" {
+		authRequire = t.From + "/" + fromAddr
 	} else {
 		authRequire = fromAddr
 	}
 	tx.AuthRequire = append(tx.AuthRequire, authRequire)
-	tx.AuthRequire = append(tx.AuthRequire, c.RootOptions.ComplianceCheck.ComplianceCheckEndorseServiceAddr)
+	tx.AuthRequire = append(tx.AuthRequire, t.RootOptions.ComplianceCheck.ComplianceCheckEndorseServiceAddr)
 
-	cryptoClient, err := crypto_client.CreateCryptoClient(c.CryptoType)
-	if err != nil {
-		return nil, errors.New("Create crypto client error")
-	}
-	fromPubkey, err := readPublicKey(c.Keys)
+	signInfos, err := t.signTxForInitiator(tx)
 	if err != nil {
 		return nil, err
 	}
-	fromScrkey, err := readPrivateKey(c.Keys)
-	if err != nil {
-		return nil, err
-	}
-	signTx, err := common.ComputeTxSign(cryptoClient, tx, []byte(fromScrkey))
-	if err != nil {
-		return nil, err
-	}
-
-	signatureInfo := &pb.SignatureInfo{
-		PublicKey: fromPubkey,
-		Sign:      signTx,
-	}
-
-	var signatureInfos []*pb.SignatureInfo
-	signatureInfos = append(signatureInfos, signatureInfo)
-
-	tx.InitiatorSigns = signatureInfos
-	tx.AuthRequireSigns = signatureInfos
+	tx.InitiatorSigns = signInfos
+	tx.AuthRequireSigns = signInfos
 
 	// make txid
 	tx.Txid, _ = common.MakeTxId(tx)
 	return tx, nil
 }
 
-func (c *CommTrans) GenerateMultiTxOutputs(selfAmount string, gasUsed string) ([]*pb.TxOutput, error) {
-	selfAddr, err := c.genInitiator()
+func (t *CommTrans) GenerateMultiTxOutputs(selfAmount string, gasUsed string) ([]*pb.TxOutput, error) {
+	selfAddr, err := t.genInitiator()
 	if err != nil {
 		return nil, err
 	}
@@ -1004,13 +938,13 @@ func (c *CommTrans) GenerateMultiTxOutputs(selfAmount string, gasUsed string) ([
 		txOutputs = append(txOutputs, txOutputFee)
 	}
 
-	if c.Amount != "" {
-		amount, ok := new(big.Int).SetString(c.Amount, 10)
+	if t.Amount != "" {
+		amount, ok := new(big.Int).SetString(t.Amount, 10)
 		if !ok {
 			return nil, ErrInvalidAmount
 		}
 		txOutputCountractAmount := new(pb.TxOutput)
-		txOutputCountractAmount.ToAddr = []byte(c.ContractName)
+		txOutputCountractAmount.ToAddr = []byte(t.ContractName)
 		txOutputCountractAmount.Amount = amount.Bytes()
 		txOutputs = append(txOutputs, txOutputCountractAmount)
 	}
@@ -1018,7 +952,7 @@ func (c *CommTrans) GenerateMultiTxOutputs(selfAmount string, gasUsed string) ([
 	return txOutputs, nil
 }
 
-func (c *CommTrans) GeneratePureTxInputs(utxoOutputs *pb.UtxoOutput) (
+func (t *CommTrans) GeneratePureTxInputs(utxoOutputs *pb.UtxoOutput) (
 	[]*pb.TxInput, error) {
 	// gen txInputs
 	var txInputs []*pb.TxInput
@@ -1034,10 +968,10 @@ func (c *CommTrans) GeneratePureTxInputs(utxoOutputs *pb.UtxoOutput) (
 	return txInputs, nil
 }
 
-func (c *CommTrans) ComplianceCheck(tx *pb.Transaction, fee *pb.Transaction) (
+func (t *CommTrans) ComplianceCheck(tx *pb.Transaction, fee *pb.Transaction) (
 	*pb.SignatureInfo, error) {
 	txStatus := &pb.TxStatus{
-		Bcname: c.ChainName,
+		Bcname: t.ChainName,
 		Tx:     tx,
 	}
 
@@ -1049,12 +983,12 @@ func (c *CommTrans) ComplianceCheck(tx *pb.Transaction, fee *pb.Transaction) (
 
 	endorserRequest := &pb.EndorserRequest{
 		RequestName: "ComplianceCheck",
-		BcName:      c.ChainName,
+		BcName:      t.ChainName,
 		Fee:         fee,
 		RequestData: requestData,
 	}
 
-	conn, err := grpc.Dial(c.RootOptions.EndorseServiceHost, grpc.WithInsecure(), grpc.WithMaxMsgSize(64<<20-1))
+	conn, err := grpc.Dial(t.RootOptions.EndorseServiceHost, grpc.WithInsecure(), grpc.WithMaxMsgSize(64<<20-1))
 	if err != nil {
 		fmt.Printf("ComplianceCheck connect EndorseServiceHost err: %v", err)
 		return nil, err
@@ -1073,16 +1007,16 @@ func (c *CommTrans) ComplianceCheck(tx *pb.Transaction, fee *pb.Transaction) (
 	return endorserResponse.GetEndorserSign(), nil
 }
 
-func (c *CommTrans) GenComplianceCheckTx(utxoOutput *pb.UtxoOutput) (*pb.Transaction, error) {
-	totalNeed := new(big.Int).SetInt64(int64(c.RootOptions.ComplianceCheck.ComplianceCheckEndorseServiceFee))
-	txInputs, deltaTxOutput, err := c.GenerateTxInput(utxoOutput, totalNeed)
+func (t *CommTrans) GenComplianceCheckTx(utxoOutput *pb.UtxoOutput) (*pb.Transaction, error) {
+	totalNeed := new(big.Int).SetInt64(int64(t.RootOptions.ComplianceCheck.ComplianceCheckEndorseServiceFee))
+	txInputs, deltaTxOutput, err := t.GenerateTxInput(utxoOutput, totalNeed)
 	if err != nil {
 		fmt.Printf("GenerateComplianceTx GenerateTxInput failed.")
 		return nil, fmt.Errorf("GenerateComplianceTx GenerateTxInput err: %v", err)
 	}
 
-	checkAmount := strconv.Itoa(c.RootOptions.ComplianceCheck.ComplianceCheckEndorseServiceFee)
-	txOutputs, err := c.GenerateTxOutput(c.RootOptions.ComplianceCheck.ComplianceCheckEndorseServiceFeeAddr, checkAmount, "0")
+	checkAmount := strconv.Itoa(t.RootOptions.ComplianceCheck.ComplianceCheckEndorseServiceFee)
+	txOutputs, err := t.GenerateTxOutput(t.RootOptions.ComplianceCheck.ComplianceCheckEndorseServiceFeeAddr, checkAmount, "0")
 	if err != nil {
 		fmt.Printf("GenerateComplianceTx GenerateTxOutput failed.")
 		return nil, fmt.Errorf("GenerateComplianceTx GenerateTxOutput err: %v", err)
@@ -1090,7 +1024,7 @@ func (c *CommTrans) GenComplianceCheckTx(utxoOutput *pb.UtxoOutput) (*pb.Transac
 	if deltaTxOutput != nil {
 		txOutputs = append(txOutputs, deltaTxOutput)
 	}
-	// populates fields
+	// populate fields
 	tx := &pb.Transaction{
 		Desc:      []byte(""),
 		Version:   utxo.TxVersion,
@@ -1100,59 +1034,38 @@ func (c *CommTrans) GenComplianceCheckTx(utxoOutput *pb.UtxoOutput) (*pb.Transac
 		TxOutputs: txOutputs,
 		Nonce:     utils.GenNonce(),
 	}
-	initiator, err := c.genInitiator()
+	initiator, err := t.genInitiator()
 	if err != nil {
 		return nil, err
 	}
 	tx.Initiator = initiator
 
-	cryptoClient, err := crypto_client.CreateCryptoClient(c.CryptoType)
-	if err != nil {
-		return nil, errors.New("Create crypto client error")
-	}
-	fromPubkey, err := readPublicKey(c.Keys)
-	if err != nil {
-		return nil, err
-	}
-	fromScrkey, err := readPrivateKey(c.Keys)
-	if err != nil {
-		return nil, err
-	}
-	fromAddr, err := readAddress(c.Keys)
+	fromAddr, err := readAddress(t.Keys)
 	if err != nil {
 		return nil, err
 	}
 
 	var authRequire string
-	if c.From != "" {
-		authRequire = c.From + "/" + fromAddr
+	if t.From != "" {
+		authRequire = t.From + "/" + fromAddr
 	} else {
 		authRequire = fromAddr
 	}
 	tx.AuthRequire = append(tx.AuthRequire, authRequire)
 
-	signTx, err := common.ComputeTxSign(cryptoClient, tx, []byte(fromScrkey))
+	signInfos, err := t.signTxForInitiator(tx)
 	if err != nil {
 		return nil, err
 	}
+	tx.InitiatorSigns = signInfos
+	tx.AuthRequireSigns = signInfos
 
-	signatureInfo := &pb.SignatureInfo{
-		PublicKey: fromPubkey,
-		Sign:      signTx,
-	}
-
-	var signatureInfos []*pb.SignatureInfo
-	signatureInfos = append(signatureInfos, signatureInfo)
-
-	tx.InitiatorSigns = signatureInfos
-	tx.AuthRequireSigns = signatureInfos
-
-	// make txid
+	// make Tx ID
 	tx.Txid, _ = common.MakeTxId(tx)
 	return tx, nil
 }
 
-func (c *CommTrans) GenerateTxInput(utxoOutputs *pb.UtxoOutput, totalNeed *big.Int) (
+func (t *CommTrans) GenerateTxInput(utxoOutputs *pb.UtxoOutput, totalNeed *big.Int) (
 	[]*pb.TxInput, *pb.TxOutput, error) {
 	var txInputs []*pb.TxInput
 	var txOutput *pb.TxOutput
@@ -1172,10 +1085,10 @@ func (c *CommTrans) GenerateTxInput(utxoOutputs *pb.UtxoOutput, totalNeed *big.I
 
 	var fromAddr string
 	var err error
-	if c.From != "" {
-		fromAddr = c.From
+	if t.From != "" {
+		fromAddr = t.From
 	} else {
-		fromAddr, err = readAddress(c.Keys)
+		fromAddr, err = readAddress(t.Keys)
 		if err != nil {
 			return nil, nil, err
 		}
@@ -1192,7 +1105,7 @@ func (c *CommTrans) GenerateTxInput(utxoOutputs *pb.UtxoOutput, totalNeed *big.I
 	return txInputs, txOutput, nil
 }
 
-func (xc *CommTrans) GenerateTxOutput(to, amount, fee string) ([]*pb.TxOutput, error) {
+func (t *CommTrans) GenerateTxOutput(to, amount, fee string) ([]*pb.TxOutput, error) {
 	accounts := []*pb.TxDataAccount{}
 	if to != "" {
 		account := &pb.TxDataAccount{
@@ -1233,32 +1146,18 @@ func (xc *CommTrans) GenerateTxOutput(to, amount, fee string) ([]*pb.TxOutput, e
 	return txOutputs, nil
 }
 
-func signForLockUtxo(bcName, account, keyPath, cryptoType string, need *big.Int) (string, []byte, error) {
-	hashStr := bcName + account + need.String() + strconv.FormatBool(true)
-	doubleHash := cryptoHash.DoubleSha256([]byte(hashStr))
+func (t *CommTrans) signLockUtxo(bcName, account string, need *big.Int) (pb.SignatureInfo, error) {
 
-	pubkey, err := readPublicKey(keyPath)
+	ak := newAK(t.Keys)
+	keyPair, err := ak.keyPair()
 	if err != nil {
-		return "", nil, err
-	}
-
-	initScrkey, err := readPrivateKey(keyPath)
-	if err != nil {
-		return "", nil, err
+		return pb.SignatureInfo{}, err
 	}
 
-	cryptoClient, err := crypto_client.CreateCryptoClient(cryptoType)
+	crypto, err := client.CreateCryptoClient(t.CryptoType)
 	if err != nil {
-		return "", nil, errors.New("Create crypto client error")
-	}
-	privateKey, err := cryptoClient.GetEcdsaPrivateKeyFromJsonStr(initScrkey)
-	if err != nil {
-		return "", nil, err
+		return pb.SignatureInfo{}, errors.New("Create crypto client error")
 	}
 
-	sign, sErr := cryptoClient.SignECDSA(privateKey, doubleHash)
-	if sErr != nil {
-		return "", nil, sErr
-	}
-	return pubkey, sign, nil
+	return keyPair.SignUtxo(bcName, account, need, crypto)
 }

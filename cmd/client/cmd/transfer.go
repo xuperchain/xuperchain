@@ -100,19 +100,20 @@ func readKeys(file string) (string, error) {
 	return string(buf), nil
 }
 
-func readAddress(keypath string) (string, error) {
-	return readKeys(filepath.Join(keypath, "address"))
+// TODO: remove redundant caller
+func readAddress(path string) (string, error) {
+	return readKeys(filepath.Join(path, FileAddress))
 }
 
-func readPublicKey(keypath string) (string, error) {
-	return readKeys(filepath.Join(keypath, "public.key"))
+func readPublicKey(path string) (string, error) {
+	return readKeys(filepath.Join(path, FilePublicKey))
 }
 
-func readPrivateKey(keypath string) (string, error) {
-	return readKeys(filepath.Join(keypath, "private.key"))
+func readPrivateKey(path string) (string, error) {
+	return readKeys(filepath.Join(path, FilePrivateKey))
 }
 
-type invokeRequestWraper struct {
+type invokeRequestWrapper struct {
 	pb.InvokeRequest
 	// 取巧的手段来shadow pb.InvokeRequest里面的Args字段
 	Args map[string]string `json:"args,omitempty"`
