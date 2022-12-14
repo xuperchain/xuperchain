@@ -19,7 +19,6 @@ type ProposalThawCommand struct {
 	cmd *cobra.Command
 
 	proposalID string
-	amount     string
 	fee        string
 }
 

@@ -18,8 +18,6 @@ type ProposalQueryCommand struct {
 	cmd *cobra.Command
 
 	module     string
-	args       string
-	methodName string
 	isMulti    bool
 	verbose    bool
 	multiAddrs string

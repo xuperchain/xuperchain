@@ -111,7 +111,7 @@ func (t *Gateway) runGateway() error {
 
 func (t *Gateway) stopGateway() {
 	if t.server != nil {
-		t.server.Shutdown(context.Background())
+		_ = t.server.Shutdown(context.Background())
 	}
 }
 
@@ -143,5 +143,4 @@ func (t *Gateway) preflightHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Headers", strings.Join(headers, ","))
 	methods := []string{"GET", "HEAD", "POST", "PUT", "DELETE"}
 	w.Header().Set("Access-Control-Allow-Methods", strings.Join(methods, ","))
-	return
 }

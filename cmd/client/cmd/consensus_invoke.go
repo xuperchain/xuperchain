@@ -27,10 +27,9 @@ type ConsensusInvokeCommand struct {
 	cmd *cobra.Command
 
 	module     string
-	chain      string
 	bucket     string
 	method     string
-	descfile   string
+	descFile   string
 	account    string
 	fee        string
 	isMulti    bool
@@ -66,7 +65,7 @@ func NewConsensusInvokeCommand(cli *Cli) *cobra.Command {
 }
 
 func (c *ConsensusInvokeCommand) addFlags() {
-	c.cmd.Flags().StringVar(&c.descfile, "desc", "", "The json config file for consensus.")
+	c.cmd.Flags().StringVar(&c.descFile, "desc", "", "The json config file for consensus.")
 	c.cmd.Flags().StringVarP(&c.bucket, "type", "t", "", "consensus bucket name")
 	c.cmd.Flags().StringVarP(&c.method, "method", "", "", "kernel method name")
 	c.cmd.Flags().StringVarP(&c.account, "account", "", "", "account name")
@@ -114,11 +113,11 @@ func (c *ConsensusInvokeCommand) tdposInvoke(ctx context.Context, ct *CommTrans)
 		return nil
 	}
 	// tdpos必须有input json数据
-	if c.descfile == "" {
+	if c.descFile == "" {
 		return fmt.Errorf("tdpos needs desc file.\n")
 	}
 	args := make(map[string]interface{})
-	desc, err := ioutil.ReadFile(c.descfile)
+	desc, err := ioutil.ReadFile(c.descFile)
 	if err != nil {
 		return err
 	}
@@ -172,7 +171,7 @@ func (c *ConsensusInvokeCommand) xpoaInvoke(ctx context.Context, ct *CommTrans) 
 		return err
 	}
 	args := make(map[string]interface{})
-	desc, err := ioutil.ReadFile(c.descfile)
+	desc, err := ioutil.ReadFile(c.descFile)
 	if err != nil {
 		return err
 	}

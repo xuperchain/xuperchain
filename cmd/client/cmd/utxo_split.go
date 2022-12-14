@@ -104,6 +104,9 @@ func (c *SplitUtxoCommand) splitUtxo(_ context.Context) error {
 	}
 
 	txInputs, txOutput, err := ct.GenTxInputs(context.Background(), totalNeed)
+	if err != nil {
+		return err
+	}
 	tx.TxInputs = txInputs
 
 	txOutputs, err := c.genSplitOutputs(totalNeed)

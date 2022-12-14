@@ -77,7 +77,7 @@ func (c *Cli) SetVer(ver string) {
 }
 
 func (c *Cli) initXchainClient() error {
-	conn, err := grpc.Dial(c.RootOptions.Host, grpc.WithInsecure(), grpc.WithMaxMsgSize(64<<20-1))
+	conn, err := grpc.Dial(c.RootOptions.Host, grpc.WithInsecure(), grpc.WithMaxMsgSize(64<<20-1)) //nolint:SA1019
 	if err != nil {
 		return err
 	}
@@ -99,7 +99,9 @@ func (c *Cli) initFlags() error {
 	rootFlag.String("name", c.RootOptions.Name, "block chain name")
 	rootFlag.String("keys", c.RootOptions.Keys, "directory of keys")
 	rootFlag.String("crypto", c.RootOptions.Crypto, "crypto type")
-	viper.BindPFlags(rootFlag)
+	if err := viper.BindPFlags(rootFlag); err != nil {
+		return err
+	}
 	err := c.RootOptions.LoadConfig(cfgFile)
 	if err != nil {
 		fmt.Printf("load client config failed.config:%s err:%v\n", cfgFile, err)
@@ -107,11 +109,14 @@ func (c *Cli) initFlags() error {
 	}
 
 	cobra.OnInitialize(func() {
-		viper.Unmarshal(&c.RootOptions)
+		if err := viper.Unmarshal(&c.RootOptions); err != nil {
+			fmt.Printf("viper unmarshal failed. err: %s\n", err)
+			os.Exit(1)
+		}
 		err = c.initXchainClient()
 		if err != nil {
 			fmt.Printf("init xchain client failed.err:%v\n", err)
-			os.Exit(-1)
+			os.Exit(2)
 		}
 	})
 
@@ -204,7 +209,7 @@ func (c *Cli) RangeNodes(ctx context.Context, f func(addr string, client pb.Xcha
 	if err != nil {
 		return err
 	}
-	options := []grpc.DialOption{grpc.WithMaxMsgSize(64<<20 - 1)}
+	options := []grpc.DialOption{grpc.WithMaxMsgSize(64<<20 - 1)} //nolint:SA1019
 	if c.RootOptions.TLS.Enable {
 		cred, err := genCreds(c.RootOptions.TLS.Cert, c.RootOptions.TLS.Server)
 		if err != nil {
@@ -230,7 +235,7 @@ func (c *Cli) RangeNodes(ctx context.Context, f func(addr string, client pb.Xcha
 		}
 	}
 
-	optionsRPC := []grpc.DialOption{grpc.WithMaxMsgSize(64<<20 - 1), grpc.WithInsecure()}
+	optionsRPC := []grpc.DialOption{grpc.WithMaxMsgSize(64<<20 - 1), grpc.WithInsecure()} //nolint:SA1019
 	conn, err := grpc.Dial(c.RootOptions.Host, optionsRPC...)
 	if err != nil {
 		return err

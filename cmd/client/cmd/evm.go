@@ -6,10 +6,6 @@ package cmd
 
 import "github.com/spf13/cobra"
 
-// EvmCommand evm cmd struct
-type EvmCommand struct {
-}
-
 // NewEvmCommand new evm cmd
 func NewEvmCommand(cli *Cli) *cobra.Command {
 	cmd := &cobra.Command{
