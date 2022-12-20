@@ -9,7 +9,7 @@ case "$1" in
         for node_name in $(ls "${work_root}" | grep node);
         do
           cd "${work_root}/${node_name}"
-          sh control.sh start
+          sh control.sh "$1"
         done
         ;;
     *)
