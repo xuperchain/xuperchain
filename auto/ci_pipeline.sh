@@ -16,6 +16,8 @@ WorkRoot=$AbsPath/..
 TestNet=$WorkRoot/testnet
 # 工作路径：所有命令在node1路径下运行
 WorkPath=$TestNet/node1
+# mine period (in second)
+mine_period=3
 
 alias xchain-cli='$WorkPath/bin/xchain-cli'
 alias info='echo INFO $(date +"%Y-%m-%d %H:%M:%S") ${BASH_SOURCE##*/}:$LINENO'
@@ -98,7 +100,7 @@ function builtin() {
   ./bin/xchain-cli wasm deploy $WorkPath/build/forbidden --cname forbidden \
             --account XC1111111111111111@xuper \
             --runtime c -a '{"creator": "TeyyPLpp9L7QAcxHangtcHTu7HUZ6iydY"}' --fee 155679 || exit
-  sleep 3s
+  sleep ${mine_period}
 }
 
 function acl() {
@@ -112,7 +114,7 @@ function acl() {
   ./bin/xchain-cli multisig gen --desc $WorkRoot/data/desc/SetAccountACL.json --fee 100
   ./bin/xchain-cli multisig sign --output sign.out
   ./bin/xchain-cli multisig send sign.out sign.out --tx tx.out || exit
-  sleep 2s
+  sleep ${mine_period}
   ./bin/xchain-cli acl query --account XC1111111111111111@xuper
 
   # 设置合约方法acl
@@ -121,8 +123,9 @@ function acl() {
   ./bin/xchain-cli multisig gen --desc $WorkRoot/data/desc/SetMethodACL.json --fee 100
   ./bin/xchain-cli multisig sign --keys $TestNet/node1/data/keys --output sign1.out
   ./bin/xchain-cli multisig sign --keys $TestNet/node2/data/keys --output sign2.out
+  sleep ${mine_period}
   ./bin/xchain-cli multisig send sign1.out,sign2.out sign1.out,sign2.out --tx tx.out  || exit
-  sleep 2s
+  sleep ${mine_period}
   ./bin/xchain-cli acl query --contract counter.wasm --method increase
 
   # 调用合约方法
