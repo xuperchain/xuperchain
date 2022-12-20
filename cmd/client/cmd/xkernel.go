@@ -6,10 +6,6 @@ package cmd
 
 import "github.com/spf13/cobra"
 
-// XKernelCommand xkernel cmd
-type XKernelCommand struct {
-}
-
 // NewXKernelCommand new xkernel cmd
 func NewXKernelCommand(cli *Cli) *cobra.Command {
 	cmd := &cobra.Command{

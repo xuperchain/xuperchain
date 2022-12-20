@@ -134,7 +134,10 @@ func (c *PruneLedgerCommand) pruneLedger(econf *xconfig.EnvConf) error {
 		log.Printf("meta proto marshal error:%v", err)
 		return pbErr
 	}
-	batch.Put([]byte(xldgpb.MetaTablePrefix), metaBuf)
+	if err := batch.Put([]byte(xldgpb.MetaTablePrefix), metaBuf); err != nil {
+		log.Printf("write meta error:%v", err)
+		return err
+	}
 	// 剪掉所有无效分支
 	// step1: 获取所有无效分支
 	branchHeadArr, branchErr := xledger.GetBranchInfo(targetBlockId, targetBlock.Height)

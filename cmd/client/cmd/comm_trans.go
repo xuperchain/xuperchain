@@ -24,6 +24,7 @@ import (
 	"github.com/xuperchain/xupercore/lib/utils"
 	"google.golang.org/grpc"
 
+	"github.com/xuperchain/xuperchain/models"
 	"github.com/xuperchain/xuperchain/service/common"
 	"github.com/xuperchain/xuperchain/service/pb"
 )
@@ -384,16 +385,14 @@ func (t *CommTrans) GenTxInputs(ctx context.Context, totalNeed *big.Int) (
 
 // Transfer quick access to transfer
 func (t *CommTrans) Transfer(ctx context.Context) error {
-	var err error
-	tx := &pb.Transaction{}
-	if t.RootOptions.ComplianceCheck.IsNeedComplianceCheck == true {
+	if t.RootOptions.ComplianceCheck.IsNeedComplianceCheck {
 		preSelectUTXORes, err := t.GenPreExeWithSelectUtxoRes(ctx)
 		if err != nil {
 			return err
 		}
 		return t.GenCompleteTxAndPost(ctx, preSelectUTXORes)
 	} else {
-		tx, err = t.GenerateTx(ctx)
+		tx, err := t.GenerateTx(ctx)
 		if err != nil {
 			return err
 		}
@@ -615,8 +614,7 @@ func (t *CommTrans) GenTxInputsWithMergeUTXO(ctx context.Context) ([]*pb.TxInput
 		Address:  fromAddr,
 		NeedLock: true,
 	}
-
-	signature, err := t.signLockUtxo(t.ChainName, fromAddr, big.NewInt(0))
+	signature, err := t.signLockUtxo(utxoInput)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -917,7 +915,7 @@ func (t *CommTrans) GenerateMultiTxOutputs(selfAmount string, gasUsed string) ([
 	txOutputSelf := new(pb.TxOutput)
 	txOutputSelf.ToAddr = []byte(selfAddr)
 	realSelfAmount, isSuccess := new(big.Int).SetString(selfAmount, 10)
-	if isSuccess != true {
+	if !isSuccess {
 		fmt.Printf("selfAmount convert to bigint failed")
 		return nil, ErrInvalidAmount
 	}
@@ -925,7 +923,7 @@ func (t *CommTrans) GenerateMultiTxOutputs(selfAmount string, gasUsed string) ([
 	txOutputs = append(txOutputs, txOutputSelf)
 	if feeAmount != "" && feeAmount != "0" {
 		realFeeAmount, isSuccess := new(big.Int).SetString(feeAmount, 10)
-		if isSuccess != true {
+		if !isSuccess {
 			fmt.Printf("feeAmount convert to bigint failed")
 			return nil, ErrInvalidAmount
 		}
@@ -988,11 +986,13 @@ func (t *CommTrans) ComplianceCheck(tx *pb.Transaction, fee *pb.Transaction) (
 		RequestData: requestData,
 	}
 
+	//nolint:SA1019
 	conn, err := grpc.Dial(t.RootOptions.EndorseServiceHost, grpc.WithInsecure(), grpc.WithMaxMsgSize(64<<20-1))
 	if err != nil {
 		fmt.Printf("ComplianceCheck connect EndorseServiceHost err: %v", err)
 		return nil, err
 	}
+
 	defer conn.Close()
 	ctx, cancel := context.WithTimeout(context.Background(), 15000*time.Millisecond)
 	defer cancel()
@@ -1146,7 +1146,7 @@ func (t *CommTrans) GenerateTxOutput(to, amount, fee string) ([]*pb.TxOutput, er
 	return txOutputs, nil
 }
 
-func (t *CommTrans) signLockUtxo(bcName, account string, need *big.Int) (pb.SignatureInfo, error) {
+func (t *CommTrans) signLockUtxo(utxo *pb.UtxoInput) (pb.SignatureInfo, error) {
 
 	ak := newAK(t.Keys)
 	keyPair, err := ak.keyPair()
@@ -1159,5 +1159,6 @@ func (t *CommTrans) signLockUtxo(bcName, account string, need *big.Int) (pb.Sign
 		return pb.SignatureInfo{}, errors.New("Create crypto client error")
 	}
 
-	return keyPair.SignUtxo(bcName, account, need, crypto)
+	lockedUtxoAll := models.NewLockedUtxoAll(utxo.Bcname, utxo.Address)
+	return keyPair.SignUtxo(lockedUtxoAll, crypto)
 }

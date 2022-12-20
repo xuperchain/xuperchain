@@ -17,7 +17,7 @@ type watchCommand struct {
 	cmd *cobra.Command
 
 	filter      string
-	oneline     bool
+	oneLine     bool
 	skipEmptyTx bool
 }
 
@@ -38,7 +38,7 @@ func newWatchCommand(cli *Cli) *cobra.Command {
 
 func (c *watchCommand) addFlags() {
 	c.cmd.Flags().StringVarP(&c.filter, "filter", "f", "{}", "filter options")
-	c.cmd.Flags().BoolVarP(&c.oneline, "oneline", "", false, "whether print one event one line")
+	c.cmd.Flags().BoolVarP(&c.oneLine, "oneline", "", false, "whether print one event one line")
 	c.cmd.Flags().BoolVarP(&c.skipEmptyTx, "skip-empty-tx", "", false, "whether print block with no tx matched")
 }
 
@@ -57,8 +57,8 @@ func (c *watchCommand) watch(ctx context.Context) error {
 		Filter: buf,
 	}
 
-	xclient := c.cli.EventClient()
-	stream, err := xclient.Subscribe(ctx, request)
+	client := c.cli.EventClient()
+	stream, err := client.Subscribe(ctx, request)
 	if err != nil {
 		return err
 	}
@@ -80,13 +80,12 @@ func (c *watchCommand) watch(ctx context.Context) error {
 		}
 		c.printBlock(&block)
 	}
-	return nil
 }
 
 func (c *watchCommand) printBlock(pbblock *pb.FilteredBlock) {
 	block := FromFilteredBlockPB(pbblock)
 	var buf []byte
-	if c.oneline {
+	if c.oneLine {
 		buf, _ = json.Marshal(block)
 	} else {
 		buf, _ = json.MarshalIndent(block, "", "  ")

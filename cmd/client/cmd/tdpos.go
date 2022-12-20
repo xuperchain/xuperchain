@@ -6,10 +6,6 @@ package cmd
 
 import "github.com/spf13/cobra"
 
-// TDposCommand tdpos cmd
-type TDposCommand struct {
-}
-
 // NewTDposCommand new tdpos cmd
 func NewTDposCommand(cli *Cli) *cobra.Command {
 	cmd := &cobra.Command{

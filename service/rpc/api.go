@@ -51,7 +51,9 @@ func (t *RpcServ) PostTx(gctx context.Context, req *pb.TxStatus) (*pb.CommonRepl
 			p2p.WithBCName(req.GetBcname()),
 			p2p.WithLogId(rctx.GetLog().GetLogId()),
 		)
-		go t.engine.Context().Net.SendMessage(rctx, msg)
+		go func() {
+			_ = t.engine.Context().Net.SendMessage(rctx, msg)
+		}()
 	}
 	rctx.GetLog().SetInfoField("bc_name", req.GetBcname())
 	rctx.GetLog().SetInfoField("txid", utils.F(req.GetTxid()))
@@ -369,7 +371,7 @@ func (t *RpcServ) GetAccountContracts(gctx context.Context, req *pb.GetAccountCo
 		return resp, err
 	}
 	xchainContractStatus, err := acom.ContractStatusListToXchain(res)
-	if xchainContractStatus == nil {
+	if err != nil || xchainContractStatus == nil {
 		rctx.GetLog().Warn("convert acl failed")
 		return resp, ecom.ErrInternal
 	}

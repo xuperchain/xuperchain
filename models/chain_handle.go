@@ -2,19 +2,17 @@ package models
 
 import (
 	"math/big"
-	"strconv"
 
 	lpb "github.com/xuperchain/xupercore/bcs/ledger/xledger/xldgpb"
 	xCtx "github.com/xuperchain/xupercore/kernel/common/xcontext"
 	"github.com/xuperchain/xupercore/kernel/engines/xuperos/common"
 	"github.com/xuperchain/xupercore/kernel/engines/xuperos/reader"
 	"github.com/xuperchain/xupercore/kernel/engines/xuperos/xpb"
+	aclUtils "github.com/xuperchain/xupercore/kernel/permission/acl/utils"
 	"github.com/xuperchain/xupercore/lib/logs"
 	"github.com/xuperchain/xupercore/protos"
 
 	sCtx "github.com/xuperchain/xuperchain/service/context"
-	aclUtils "github.com/xuperchain/xupercore/kernel/permission/acl/utils"
-	cryptoHash "github.com/xuperchain/xupercore/lib/crypto/hash"
 )
 
 type ChainHandle struct {
@@ -178,11 +176,10 @@ func (h *ChainHandle) checkSelectUtxoSign(account, pubKey string, sign []byte,
 	if err != nil {
 		return false
 	}
-	hashKey := h.bcName + account + need.String() + strconv.FormatBool(isLock)
-	hashValue := cryptoHash.DoubleSha256([]byte(hashKey))
+	lockedUtxo := NewLockedUtxo(h.bcName, account, need)
 
 	// verify sign
-	passed, err := crypto.VerifyECDSA(publicKey, sign, hashValue)
+	passed, err := crypto.VerifyECDSA(publicKey, sign, lockedUtxo.Hash())
 	if err != nil {
 		return false
 	}

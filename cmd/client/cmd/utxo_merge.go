@@ -79,6 +79,9 @@ func (c *MergeUtxoCommand) mergeUtxo(_ context.Context) error {
 	}
 
 	txInputs, txOutput, err := ct.GenTxInputsWithMergeUTXO(context.Background())
+	if err != nil {
+		return err
+	}
 	tx.TxInputs = txInputs
 	// validation check
 	if len(tx.TxInputs) == 0 {

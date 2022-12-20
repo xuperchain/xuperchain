@@ -13,6 +13,8 @@ import (
 	"testing"
 
 	"github.com/xuperchain/crypto/common/account"
+
+	"github.com/xuperchain/xuperchain/models"
 	"github.com/xuperchain/xuperchain/service/pb"
 )
 
@@ -288,7 +290,6 @@ func TestAK_SignTx(t *testing.T) {
 // TODO: mock common.ComputeTxSign after unit test covers
 func TestKeyPair_SignTx(t *testing.T) {
 	type fields struct {
-		publicKey string
 		secretKey string
 	}
 	type args struct {
@@ -349,7 +350,6 @@ func TestKeyPair_SignTx(t *testing.T) {
 
 func TestKeyPair_SignUtxo(t *testing.T) {
 	type fields struct {
-		publicKey string
 		secretKey string
 	}
 	tests := []struct {
@@ -383,7 +383,8 @@ func TestKeyPair_SignUtxo(t *testing.T) {
 				publicKey: testPublicKey,
 				secretKey: tt.fields.secretKey,
 			}
-			got, err := p.SignUtxo("xuper", testAccount, big.NewInt(1), mockCryptoClient{})
+			utxo := models.NewLockedUtxo("xuper", testAccount, big.NewInt(1))
+			got, err := p.SignUtxo(utxo, mockCryptoClient{})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("KeyPair.SignUtxo() error = %v, wantErr %v", err, tt.wantErr)
 				return
