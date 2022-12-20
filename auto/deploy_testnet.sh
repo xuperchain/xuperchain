@@ -30,7 +30,7 @@ function installNode() {
     cp -r "$HOMEDIR/data/mock/$node/conf" "$INSTALLDIR/$node/conf"
     cp -r "$HOMEDIR/data/mock/$node/data" "$INSTALLDIR/$node/data"
     cp -r "$HOMEDIR/data/genesis" "$INSTALLDIR/$node/data/genesis"
-    
+
     echo "finish $node install."
 }
 
@@ -38,5 +38,6 @@ function installNode() {
 installNode "node1"
 installNode "node2"
 installNode "node3"
+cp "$HOMEDIR/auto/control_all.sh" "$INSTALLDIR/"
 
 echo "install done!"
