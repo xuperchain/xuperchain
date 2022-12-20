@@ -42,17 +42,19 @@ func NewGetComplianceCheckSignCommand(cli *Cli) *cobra.Command {
 	return c.cmd
 }
 
-func (c *GetComplianceCheckSignCommand) initXendorserClient() error {
+func (c *GetComplianceCheckSignCommand) initXEndorserClient() error {
+	//nolint:SA1019
 	conn, err := grpc.Dial(c.cli.RootOptions.Host, grpc.WithInsecure(), grpc.WithMaxMsgSize(64<<20-1))
 	if err != nil {
 		return err
 	}
+
 	c.xendorserclient = pb.NewXendorserClient(conn)
 	return nil
 }
 
 func (c *GetComplianceCheckSignCommand) XEndorserClient() pb.XendorserClient {
-	c.initXendorserClient()
+	_ = c.initXEndorserClient()
 	return c.xendorserclient
 }
 

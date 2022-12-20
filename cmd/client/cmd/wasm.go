@@ -6,10 +6,6 @@ package cmd
 
 import "github.com/spf13/cobra"
 
-// WasmCommand wasm cmd
-type WasmCommand struct {
-}
-
 // NewWasmCommand new wasm cmd
 func NewWasmCommand(cli *Cli) *cobra.Command {
 	cmd := &cobra.Command{

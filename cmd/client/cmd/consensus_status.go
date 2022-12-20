@@ -13,8 +13,6 @@ import (
 // 本文件封装了和共识模块有关的client调用接口, 具体格式为:
 // xchain-cli consensus status 当前共识状态
 
-const statusBucket = "$consensus"
-
 type ConsensusStatusCommand struct {
 	cli *Cli
 	cmd *cobra.Command

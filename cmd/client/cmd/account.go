@@ -8,28 +8,20 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// AccountCommand account cmd entrance
-type AccountCommand struct {
-	cli *Cli
-	cmd *cobra.Command
-}
-
 // NewAccountCommand new account cmd
 func NewAccountCommand(cli *Cli) *cobra.Command {
-	c := new(AccountCommand)
-	c.cli = cli
-	c.cmd = &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "account",
 		Short: "Operate an account or address: balance|new|newkeys|contracts|restore|decrypt.",
 	}
-	c.cmd.AddCommand(NewAccountBalanceCommand(cli))
-	c.cmd.AddCommand(NewAccountNewkeysCommand(cli))
-	c.cmd.AddCommand(NewAccountNewCommand(cli))
-	c.cmd.AddCommand(NewAccountContractsCommand(cli))
-	c.cmd.AddCommand(NewAccountQueryCommand(cli))
-	c.cmd.AddCommand(NewAccountRestoreCommand(cli))
-	c.cmd.AddCommand(NewAccountDecryptCommand(cli))
-	return c.cmd
+	cmd.AddCommand(NewAccountBalanceCommand(cli))
+	cmd.AddCommand(NewAccountNewkeysCommand(cli))
+	cmd.AddCommand(NewAccountNewCommand(cli))
+	cmd.AddCommand(NewAccountContractsCommand(cli))
+	cmd.AddCommand(NewAccountQueryCommand(cli))
+	cmd.AddCommand(NewAccountRestoreCommand(cli))
+	cmd.AddCommand(NewAccountDecryptCommand(cli))
+	return cmd
 }
 
 func init() {

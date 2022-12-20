@@ -54,7 +54,7 @@ func NewServMG(scfg *sconf.ServConf, engine engines.BCEngine) (*ServMG, error) {
 
 // 启动rpc服务
 func (t *ServMG) Run() error {
-	ch := make(chan error, 0)
+	ch := make(chan error)
 	defer close(ch)
 
 	for _, serv := range t.servers {
@@ -71,11 +71,9 @@ func (t *ServMG) Run() error {
 			break
 		}
 
-		select {
-		case err := <-ch:
-			t.log.Warn("service exit", "err", err)
-			exitCnt++
-		}
+		err := <-ch
+		t.log.Warn("service exit", "err", err)
+		exitCnt++
 	}
 
 	return nil

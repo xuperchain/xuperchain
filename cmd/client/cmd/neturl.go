@@ -8,10 +8,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// NetURLCommand neturl cmd
-type NetURLCommand struct {
-}
-
 // NewNetURLCommand new neturl cmd
 func NewNetURLCommand(cli *Cli) *cobra.Command {
 	cmd := &cobra.Command{

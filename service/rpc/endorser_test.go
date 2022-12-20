@@ -48,7 +48,7 @@ func TestEndorserCall(t *testing.T) {
 	os.RemoveAll(workspace)
 	defer os.RemoveAll(workspace)
 	conf, _ := mock.NewEnvConfForTest()
-	defer RemoveLedger(conf)
+	defer removeLedger(conf)
 
 	engine, err := MockEngine()
 	if err != nil {
@@ -59,6 +59,9 @@ func TestEndorserCall(t *testing.T) {
 
 	endor := NewDefaultXEndorser(rpcServ, engine)
 	awardTx, err := txn.GenerateAwardTx("miner", "1000", []byte("award"))
+	if err != nil {
+		t.Fatalf("txn.GenerateAwardTx() err: %s", err)
+	}
 
 	txStatus := &pb.TxStatus{
 		Bcname: "xuper",
@@ -146,8 +149,7 @@ func MockEngine() (common.Engine, error) {
 		return nil, fmt.Errorf("new env conf error: %v", err)
 	}
 
-	RemoveLedger(conf)
-	if err = CreateLedger(conf); err != nil {
+	if err = createLedger(conf); err != nil {
 		return nil, err
 	}
 
@@ -164,16 +166,17 @@ func MockEngine() (common.Engine, error) {
 	return eng, nil
 }
 
-func RemoveLedger(conf *xconf.EnvConf) error {
+func removeLedger(conf *xconf.EnvConf) {
 	path := conf.GenDataAbsPath("blockchain")
 	if err := os.RemoveAll(path); err != nil {
 		log.Printf("remove ledger failed.err:%v\n", err)
-		return err
 	}
-	return nil
 }
 
-func CreateLedger(conf *xconf.EnvConf) error {
+func createLedger(conf *xconf.EnvConf) error {
+	// init env
+	removeLedger(conf)
+
 	mockConf, err := mock.NewEnvConfForTest()
 	if err != nil {
 		return fmt.Errorf("new mock env conf error: %v", err)

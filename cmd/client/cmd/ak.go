@@ -9,11 +9,10 @@ import (
 	"math/big"
 	"os"
 	"path/filepath"
-	"strconv"
 
 	"github.com/xuperchain/xupercore/lib/crypto/client/base"
-	"github.com/xuperchain/xupercore/lib/crypto/hash"
 
+	"github.com/xuperchain/xuperchain/models"
 	"github.com/xuperchain/xuperchain/service/common"
 	"github.com/xuperchain/xuperchain/service/pb"
 )
@@ -157,7 +156,8 @@ type AKInfo struct {
 // 	amount: UTXO amount
 // 	crypto: crypto client
 func (i *AKInfo) SignUtxo(bcName string, amount *big.Int, crypto base.CryptoClient) (pb.SignatureInfo, error) {
-	return i.KeyPair.SignUtxo(bcName, i.address, amount, crypto)
+	lockedUtxo := models.NewLockedUtxo(bcName, i.address, amount)
+	return i.KeyPair.SignUtxo(lockedUtxo, crypto)
 }
 
 // KeyPair is key-pair for crypto
@@ -179,15 +179,9 @@ func (p *KeyPair) SignTx(tx *pb.Transaction, crypto base.CryptoClient) (*pb.Sign
 
 // SignUtxo signs for an UTXO with given crypto client by AK key pair
 // Params:
-// 	bcName: UTXO blockchain name
-// 	account: UTXO account
-// 	amount: UTXO amount
+// 	utxo: locked UTXO
 // 	crypto: crypto client
-func (p *KeyPair) SignUtxo(bcName, account string, amount *big.Int, crypto base.CryptoClient) (pb.SignatureInfo, error) {
-
-	// prepare raw content
-	hashKey := bcName + account + amount.String() + strconv.FormatBool(true)
-	hashValue := hash.DoubleSha256([]byte(hashKey))
+func (p *KeyPair) SignUtxo(utxo *models.LockedUtxo, crypto base.CryptoClient) (pb.SignatureInfo, error) {
 
 	// prepare private key
 	ecdsaPrivateKey, err := crypto.GetEcdsaPrivateKeyFromJsonStr(p.secretKey)
@@ -196,7 +190,7 @@ func (p *KeyPair) SignUtxo(bcName, account string, amount *big.Int, crypto base.
 	}
 
 	// sign
-	sign, err := crypto.SignECDSA(ecdsaPrivateKey, hashValue)
+	sign, err := crypto.SignECDSA(ecdsaPrivateKey, utxo.Hash())
 	if err != nil {
 		return pb.SignatureInfo{}, err
 	}

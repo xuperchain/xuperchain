@@ -6,10 +6,6 @@ package cmd
 
 import "github.com/spf13/cobra"
 
-// MultisigCommand Multisig set command
-type MultisigCommand struct {
-}
-
 // MultisigData generated multisig data
 type MultisigData struct {
 	R       []byte   // common random value

@@ -8,10 +8,6 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// TxCommand tx cmd
-type TxCommand struct {
-}
-
 // NewTxCommand new tx cmd
 func NewTxCommand(cli *Cli) *cobra.Command {
 	cmd := &cobra.Command{

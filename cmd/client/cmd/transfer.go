@@ -53,7 +53,7 @@ type TransferCommand struct {
 
 	to           string
 	amount       string
-	descfile     string
+	descFile     string
 	fee          string
 	frozenHeight int64
 	version      int32
@@ -69,7 +69,7 @@ func NewTransferCommand(cli *Cli) *cobra.Command {
 	t.cli = cli
 	t.cmd = &cobra.Command{
 		Use:   "transfer",
-		Short: "Operate transfer trasaction, transfer tokens between accounts or aks",
+		Short: "Operate transfer transaction, transfer tokens between accounts or aks",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			ctx := context.TODO()
 			return t.transfer(ctx)
@@ -82,7 +82,7 @@ func NewTransferCommand(cli *Cli) *cobra.Command {
 func (t *TransferCommand) addFlags() {
 	t.cmd.Flags().StringVar(&t.to, "to", "", "common transfer transaction to whom")
 	t.cmd.Flags().StringVar(&t.amount, "amount", "0", "transfer tokens")
-	t.cmd.Flags().StringVar(&t.descfile, "desc", "", "desc file of tx, eg. contract or tdpos consensus")
+	t.cmd.Flags().StringVar(&t.descFile, "desc", "", "desc file of tx, eg. contract or tdpos consensus")
 	t.cmd.Flags().StringVar(&t.fee, "fee", "0", "fee of one tx")
 	t.cmd.Flags().Int64Var(&t.frozenHeight, "frozen", 0, "frozen height of one tx")
 	t.cmd.Flags().Int32Var(&t.version, "txversion", utxo.TxVersion, "tx version")
@@ -116,7 +116,7 @@ func readPrivateKey(path string) (string, error) {
 type invokeRequestWrapper struct {
 	pb.InvokeRequest
 	// 取巧的手段来shadow pb.InvokeRequest里面的Args字段
-	Args map[string]string `json:"args,omitempty"`
+	Args map[string]string `json:"args,omitempty"` //nolint:structtag
 }
 
 func newFeeAccount(fee string) *pb.TxDataAccount {
@@ -127,10 +127,10 @@ func newFeeAccount(fee string) *pb.TxDataAccount {
 }
 
 func (t *TransferCommand) getDesc() ([]byte, error) {
-	if t.descfile == "" {
+	if t.descFile == "" {
 		return []byte("transfer from console"), nil
 	}
-	return ioutil.ReadFile(t.descfile)
+	return ioutil.ReadFile(t.descFile)
 }
 
 func (t *TransferCommand) transfer(ctx context.Context) error {

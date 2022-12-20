@@ -17,9 +17,7 @@ type GovernInitCommand struct {
 	cli *Cli
 	cmd *cobra.Command
 
-	receiver string
-	amount   string
-	fee      string
+	fee string
 }
 
 // NewGovernInitCommand new transfer govern token cmd

@@ -6,10 +6,6 @@ package cmd
 
 import "github.com/spf13/cobra"
 
-// NativeCommand native cmd struct
-type NativeCommand struct {
-}
-
 // NewNativeCommand new native cmd
 func NewNativeCommand(cli *Cli) *cobra.Command {
 	cmd := &cobra.Command{
