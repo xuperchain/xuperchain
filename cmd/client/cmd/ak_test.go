@@ -298,9 +298,9 @@ func TestAKInfo_SignUtxo(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name:    "succeed",
-			fields:  fields{KeyPair: KeyPair{secretKey: secretKeySucc}},
-			want:    pb.SignatureInfo{
+			name:   "succeed",
+			fields: fields{KeyPair: KeyPair{secretKey: secretKeySucc}},
+			want: pb.SignatureInfo{
 				PublicKey: testPublicKey,
 				Sign:      mockSign,
 			},
