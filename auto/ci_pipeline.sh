@@ -10,7 +10,7 @@
 
 # 脚本绝对路径
 AbsPath=$(
-    cd "$(dirname "${BASH_SOURCE[0]}")" || exit
+    cd "$(dirname "${BASH_SOURCE[0]}")" || exit 1
     pwd
 )
 
@@ -25,7 +25,7 @@ WorkKeys=${WorkData}/keys
 # log
 LogPath="${WorkPath}/logs"
 ErrorLogFile="${LogPath}/xchain.log.wf"
-# mine period
+# mine period (in second)
 mine_period=3
 
 # Make `alias` work in GitHub actions
@@ -34,11 +34,6 @@ alias xchain-cli='$WorkPath/bin/xchain-cli'
 alias log_info='echo INFO $(date +"%Y-%m-%d %H:%M:%S") ${BASH_SOURCE##*/}:$LINENO'
 alias log_error='echo ERROR $(date +"%Y-%m-%d %H:%M:%S") ${BASH_SOURCE##*/}:$LINENO'
 
-# address
-## AK
-ak_node1=$(cat "${TestNet}"/node1/data/keys/address)
-ak_node2=$(cat "${TestNet}"/node2/data/keys/address)
-ak_node3=$(cat "${TestNet}"/node3/data/keys/address)
 ## contract account
 contract_account_number_utxo=3333333333333333
 contract_account_utxo="XC${contract_account_number_utxo}@xuper"
@@ -48,6 +43,11 @@ function testnet() {
     # install
     # shellcheck source=/dev/null
     source "$WorkRoot"/auto/deploy_testnet.sh || exit 2
+
+    ## AK
+    ak_node1=$(cat "${TestNet}"/node1/data/keys/address)
+    ak_node2=$(cat "${TestNet}"/node2/data/keys/address)
+    ak_node3=$(cat "${TestNet}"/node3/data/keys/address)
 
     # start nodes parallel
     (cd "$TestNet/node1" && bash control.sh start) &
@@ -139,12 +139,14 @@ function acl() {
 
     # 设置合约账户acl
     log_info "acl account"
-    echo "XC1111111111111111@xuper/${ak_node1}" >data/acl/addrs
+    echo "XC1111111111111111@xuper/${ak_node1}" > data/acl/addrs
     xchain-cli acl query --account XC1111111111111111@xuper
     xchain-cli multisig gen --desc "$WorkRoot"/data/desc/SetAccountACL.json --fee 100
     xchain-cli multisig sign --output sign.out
-    sleep ${mine_period}
-    xchain-cli multisig send sign.out sign.out --tx tx.out || exit 5
+    xchain-cli multisig send sign.out sign.out --tx tx.out || {
+        tail "${ErrorLogFile}"
+        exit 5
+    }
     sleep ${mine_period}
     xchain-cli acl query --account XC1111111111111111@xuper | grep "${ak_node1}" || exit 5
 
