@@ -13,7 +13,6 @@ import (
 	"testing"
 
 	"github.com/xuperchain/crypto/common/account"
-
 	"github.com/xuperchain/xuperchain/models"
 	"github.com/xuperchain/xuperchain/service/pb"
 )
@@ -287,6 +286,51 @@ func TestAK_SignTx(t *testing.T) {
 	}
 }
 
+func TestAKInfo_SignUtxo(t *testing.T) {
+	type fields struct {
+		KeyPair KeyPair
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		want    pb.SignatureInfo
+		wantErr bool
+	}{
+		{
+			name:    "succeed",
+			fields:  fields{KeyPair: KeyPair{secretKey: secretKeySucc}},
+			want:    pb.SignatureInfo{
+				PublicKey: testPublicKey,
+				Sign:      mockSign,
+			},
+		},
+		{
+			name:    "sign fail",
+			fields:  fields{KeyPair: KeyPair{secretKey: secretKeySignECDSAErr}},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			i := &AKInfo{
+				address: testAccount,
+				KeyPair: KeyPair{
+					publicKey: testPublicKey,
+					secretKey: tt.fields.KeyPair.secretKey,
+				},
+			}
+			got, err := i.SignUtxo("xuper", big.NewInt(0), mockCryptoClient{})
+			if (err != nil) != tt.wantErr {
+				t.Errorf("AKInfo.SignUtxo() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("AKInfo.SignUtxo() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
 // TODO: mock common.ComputeTxSign after unit test covers
 func TestKeyPair_SignTx(t *testing.T) {
 	type fields struct {
@@ -359,7 +403,7 @@ func TestKeyPair_SignUtxo(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name:   "normal",
+			name:   "succeed",
 			fields: fields{secretKey: secretKeySucc},
 			want: pb.SignatureInfo{
 				PublicKey: testPublicKey,
