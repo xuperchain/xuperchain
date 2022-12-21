@@ -49,7 +49,7 @@ function testnet() {
     # shellcheck source=/dev/null
     source "$WorkRoot"/auto/deploy_testnet.sh || exit 2
 
-    # start node parallel
+    # start nodes parallel
     (cd "$TestNet/node1" && bash control.sh start) &
     (cd "$TestNet/node2" && bash control.sh start) &
     (cd "$TestNet/node3" && bash control.sh start)
