@@ -143,6 +143,7 @@ function acl() {
     xchain-cli acl query --account XC1111111111111111@xuper
     xchain-cli multisig gen --desc "$WorkRoot"/data/desc/SetAccountACL.json --fee 100
     xchain-cli multisig sign --output sign.out
+    sleep ${mine_period}
     xchain-cli multisig send sign.out sign.out --tx tx.out || exit 5
     sleep ${mine_period}
     xchain-cli acl query --account XC1111111111111111@xuper | grep "${ak_node1}" || exit 5
