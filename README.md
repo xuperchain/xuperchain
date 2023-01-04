@@ -149,7 +149,7 @@ join the Baidu Super Chain Developer Community by replying `技术论坛进群`,
 and have in-depth exchanges with Baidu senior engineers!
 
 WeChat QR code is as follows:
-![微信二维码](<img width="291" alt="496bd829f51cda8f4c8027daf0e6b543" src="https://user-images.githubusercontent.com/51440377/186586870-1c147ed5-6d8b-4bb6-9151-c3110b19f318.png">)
+<img width="291" alt="496bd829f51cda8f4c8027daf0e6b543" src="https://user-images.githubusercontent.com/51440377/210493618-b0b5ee12-4809-4702-accf-4954aa74d86d.png">
 
 [Contribution]: docs/en_us/contribute/contribute-guideline.md
 [LatestRelease]: https://github.com/xuperchain/xuperchain/releases/latest
