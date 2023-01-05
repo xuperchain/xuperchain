@@ -653,38 +653,51 @@ func (t *CommTrans) GenTxInputsWithMergeUTXO(ctx context.Context) ([]*pb.TxInput
 	return txInputs, txOutput, nil
 }
 
-func (t *CommTrans) GenPreExeWithSelectUtxoRes(ctx context.Context) (
-	*pb.PreExecWithSelectUTXOResponse, error) {
-	preExeReqs := []*pb.InvokeRequest{}
-	if t.ModuleName != "" {
-		if t.ModuleName == "xkernel" {
-			preExeReqs = append(preExeReqs, &pb.InvokeRequest{
-				ModuleName:   t.ModuleName,
-				ContractName: t.ContractName,
-				MethodName:   t.MethodName,
-				Args:         t.Args,
-			})
-		} else {
-			invokeReq := &pb.InvokeRequest{
-				ModuleName:   t.ModuleName,
-				ContractName: t.ContractName,
-				MethodName:   t.MethodName,
-				Args:         t.Args,
-			}
-			// transfer to contract
-			if t.To == t.ContractName {
-				invokeReq.Amount = t.Amount
-			}
-			preExeReqs = append(preExeReqs, invokeReq)
-		}
-	} else {
-		tmpReq, err := t.GetInvokeRequestFromDesc()
+// invokeReq generates invoke request by module name
+func (t *CommTrans) invokeReq() (*pb.InvokeRequest, error) {
+	if t.ModuleName == "" {
+		req, err := t.GetInvokeRequestFromDesc()
 		if err != nil {
 			return nil, fmt.Errorf("Get pb.InvokeRPCRequest error:%s", err)
 		}
-		if tmpReq != nil {
-			preExeReqs = append(preExeReqs, tmpReq)
+		return req, nil
+	}
+
+	// TODO: extract to constant
+	if t.ModuleName == "xkernel" {
+		req := &pb.InvokeRequest{
+			ModuleName:   t.ModuleName,
+			ContractName: t.ContractName,
+			MethodName:   t.MethodName,
+			Args:         t.Args,
 		}
+		return req, nil
+	}
+
+	req := &pb.InvokeRequest{
+		ModuleName:   t.ModuleName,
+		ContractName: t.ContractName,
+		MethodName:   t.MethodName,
+		Args:         t.Args,
+	}
+	// transfer to contract
+	if t.To == t.ContractName {
+		req.Amount = t.Amount
+	}
+	return req, nil
+}
+
+// preExecWithSelectUTXOReq generates preExecWithSelectUTXO request
+func (t *CommTrans) preExecWithSelectUTXOReq() (*pb.PreExecWithSelectUTXORequest, error) {
+
+	// prepare request
+	preExeReqs := []*pb.InvokeRequest{}
+	preExeReq, err := t.invokeReq()
+	if err != nil {
+		return nil, err
+	}
+	if preExeReq != nil {
+		preExeReqs = append(preExeReqs, preExeReq)
 	}
 
 	preExeRPCReq := &pb.InvokeRPCRequest{
@@ -695,6 +708,7 @@ func (t *CommTrans) GenPreExeWithSelectUtxoRes(ctx context.Context) (
 		Requests: preExeReqs,
 	}
 
+	// prepare address
 	initiator, err := t.genInitiator()
 	if err != nil {
 		return nil, fmt.Errorf("Get initiator error: %s", err.Error())
@@ -712,6 +726,8 @@ func (t *CommTrans) GenPreExeWithSelectUtxoRes(ctx context.Context) (
 			return nil, fmt.Errorf("Get auth require error: %s", err.Error())
 		}
 	}
+
+	// prepare total amount
 	extraAmount := int64(t.RootOptions.ComplianceCheck.ComplianceCheckEndorseServiceFee)
 	if t.Fee != "" && t.Fee != "0" {
 		fee, err := strconv.ParseInt(t.Fee, 10, 64)
@@ -728,11 +744,23 @@ func (t *CommTrans) GenPreExeWithSelectUtxoRes(ctx context.Context) (
 		extraAmount += amount
 	}
 	preExeRPCReq.AuthRequire = append(preExeRPCReq.AuthRequire, t.RootOptions.ComplianceCheck.ComplianceCheckEndorseServiceAddr)
+
+	// pack
 	preSelUTXOReq := &pb.PreExecWithSelectUTXORequest{
 		Bcname:      t.ChainName,
 		Address:     initiator,
 		TotalAmount: extraAmount,
 		Request:     preExeRPCReq,
+	}
+	return preSelUTXOReq, err
+}
+
+func (t *CommTrans) GenPreExeWithSelectUtxoRes(ctx context.Context) (
+	*pb.PreExecWithSelectUTXOResponse, error) {
+
+	preSelUTXOReq, err := t.preExecWithSelectUTXOReq()
+	if err != nil {
+		return nil, err
 	}
 
 	// preExe
@@ -751,13 +779,13 @@ func (t *CommTrans) GenPreExeWithSelectUtxoRes(ctx context.Context) (
 	gasUsed := preExecWithSelectUTXOResponse.GetResponse().GetGasUsed()
 	fmt.Printf("The gas you cousume is: %v\n", gasUsed)
 	if gasUsed > 0 {
-		if t.Fee != "" && t.Fee != "0" {
-			fee, _ := strconv.ParseInt(t.Fee, 10, 64)
-			if fee < gasUsed {
-				return nil, errors.New("Fee not enough")
-			}
-		} else {
+		if t.Fee == "" || t.Fee == "0" {
 			return nil, errors.New("You need add fee")
+		}
+
+		fee, _ := strconv.ParseInt(t.Fee, 10, 64)
+		if fee < gasUsed {
+			return nil, errors.New("Fee not enough")
 		}
 		fmt.Printf("The fee you pay is: %v\n", t.Fee)
 	} else if t.Fee != "" && t.Fee != "0" && gasUsed <= 0 {

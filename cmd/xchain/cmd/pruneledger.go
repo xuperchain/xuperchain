@@ -13,7 +13,6 @@ import (
 
 	"github.com/golang/protobuf/proto"
 	"github.com/spf13/cobra"
-
 	"github.com/xuperchain/xupercore/bcs/ledger/xledger/def"
 	"github.com/xuperchain/xupercore/bcs/ledger/xledger/ledger"
 	"github.com/xuperchain/xupercore/bcs/ledger/xledger/state"
@@ -22,6 +21,7 @@ import (
 	"github.com/xuperchain/xupercore/kernel/common/xconfig"
 	"github.com/xuperchain/xupercore/lib/crypto/client"
 	"github.com/xuperchain/xupercore/lib/logs"
+	"github.com/xuperchain/xupercore/lib/storage/kvdb"
 	_ "github.com/xuperchain/xupercore/lib/storage/kvdb/leveldb"
 	"github.com/xuperchain/xupercore/lib/utils"
 	xutils "github.com/xuperchain/xupercore/lib/utils"
@@ -138,22 +138,40 @@ func (c *PruneLedgerCommand) pruneLedger(econf *xconfig.EnvConf) error {
 		log.Printf("write meta error:%v", err)
 		return err
 	}
+
 	// 剪掉所有无效分支
+	pruneErr := pruneInvalidBranch(xledger, targetBlock, batch)
+	if pruneErr != nil {
+		return pruneErr
+	}
+
+	kvErr := batch.Write()
+	if kvErr != nil {
+		log.Printf("batch write error:%v", err)
+		return kvErr
+	}
+	log.Printf("prune ledger success")
+	return nil
+}
+
+// pruneInvalidBranch deletes invalid branch in batch according to target block
+func pruneInvalidBranch(xLedger *ledger.Ledger, targetBlock *xldgpb.InternalBlock, batch kvdb.Batch) error {
 	// step1: 获取所有无效分支
-	branchHeadArr, branchErr := xledger.GetBranchInfo(targetBlockId, targetBlock.Height)
+	branchHeadArr, branchErr := xLedger.GetBranchInfo(targetBlock.Blockid, targetBlock.Height)
 	if branchErr != nil {
 		log.Printf("pruneLedger GetTargetRangeBranchInfo error:%v", branchErr)
 		return branchErr
 	}
+
 	// step2: 将无效分支剪掉
 	for _, v := range branchHeadArr {
 		// get common parent from higher to lower and truncate all of them
-		commonParentBlockid, err := xledger.GetCommonParentBlockid(targetBlockId, []byte(v))
+		commonParentBlockID, err := xLedger.GetCommonParentBlockid(targetBlock.Blockid, []byte(v))
 		if err != nil && def.NormalizedKVError(err) != def.ErrKVNotFound && err != ledger.ErrBlockNotExist {
 			log.Printf("get parent blockid error:%v", err)
 			return err
 		}
-		err = xledger.RemoveBlocks([]byte(v), commonParentBlockid, batch)
+		err = xLedger.RemoveBlocks([]byte(v), commonParentBlockID, batch)
 		if err != nil && def.NormalizedKVError(err) != def.ErrKVNotFound && err != ledger.ErrBlockNotExist {
 			log.Printf("branch prune RemoveBlocks error:%v", err)
 			return err
@@ -165,12 +183,6 @@ func (c *PruneLedgerCommand) pruneLedger(econf *xconfig.EnvConf) error {
 			return err
 		}
 	}
-	kvErr := batch.Write()
-	if kvErr != nil {
-		log.Printf("batch write error:%v", err)
-		return kvErr
-	}
-	log.Printf("prune ledger success")
 	return nil
 }
 
