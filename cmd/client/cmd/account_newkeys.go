@@ -9,6 +9,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
+	"github.com/xuperchain/crypto/gm/hdwallet/rand"
 
 	crypto_client "github.com/xuperchain/xupercore/lib/crypto/client"
 )
@@ -93,12 +94,12 @@ func (c *AccountNewkeysCommand) createSimpleAccount() error {
 
 // create a account with mnemonic
 func (c *AccountNewkeysCommand) createMnmAccount(strength uint8, langstr string) error {
-	lang := 1
+	var lang int
 	switch langstr {
 	case "zh":
-		lang = 1
+		lang = rand.SimplifiedChinese
 	case "en":
-		lang = 2
+		lang = rand.English
 	default:
 		return fmt.Errorf("bad lang:%s use zh|en instead", langstr)
 	}
