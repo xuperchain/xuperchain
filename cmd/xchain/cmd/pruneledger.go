@@ -11,7 +11,7 @@ import (
 	"log"
 	"path/filepath"
 
-	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/proto" //nolint:staticcheck
 	"github.com/spf13/cobra"
 	"github.com/xuperchain/xupercore/bcs/ledger/xledger/def"
 	"github.com/xuperchain/xupercore/bcs/ledger/xledger/ledger"
@@ -24,7 +24,6 @@ import (
 	"github.com/xuperchain/xupercore/lib/storage/kvdb"
 	_ "github.com/xuperchain/xupercore/lib/storage/kvdb/leveldb"
 	"github.com/xuperchain/xupercore/lib/utils"
-	xutils "github.com/xuperchain/xupercore/lib/utils"
 )
 
 // PruneLedgerCommand prune ledger  cmd
@@ -187,7 +186,7 @@ func pruneInvalidBranch(xLedger *ledger.Ledger, targetBlock *xldgpb.InternalBloc
 }
 
 func (c *PruneLedgerCommand) genEnvConfig(path string) (*xconfig.EnvConf, error) {
-	if !xutils.FileIsExist(path) {
+	if !utils.FileIsExist(path) {
 		log.Printf("config file not exist.env_conf:%s\n", c.EnvConf)
 		return nil, fmt.Errorf("config file not exist")
 	}

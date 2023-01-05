@@ -88,7 +88,7 @@ func StartupXchain(envCfgPath string) error {
 	servChan := runServ(serv)
 
 	// 阻塞等待进程退出指令
-	sigChan := make(chan os.Signal)
+	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
 	go func() {
 		// 退出调用幂等

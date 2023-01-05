@@ -17,7 +17,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/proto" //nolint:staticcheck
 	"github.com/xuperchain/xupercore/bcs/ledger/xledger/state/utxo"
 	"github.com/xuperchain/xupercore/kernel/contract"
 	"github.com/xuperchain/xupercore/lib/crypto/client"
@@ -1014,7 +1014,7 @@ func (t *CommTrans) ComplianceCheck(tx *pb.Transaction, fee *pb.Transaction) (
 		RequestData: requestData,
 	}
 
-	//nolint:SA1019
+	//nolint:staticcheck
 	conn, err := grpc.Dial(t.RootOptions.EndorseServiceHost, grpc.WithInsecure(), grpc.WithMaxMsgSize(64<<20-1))
 	if err != nil {
 		fmt.Printf("ComplianceCheck connect EndorseServiceHost err: %v", err)

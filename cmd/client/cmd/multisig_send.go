@@ -13,7 +13,7 @@ import (
 	"io/ioutil"
 	"strings"
 
-	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/proto" //nolint:staticcheck
 	"github.com/spf13/cobra"
 	"github.com/xuperchain/xupercore/lib/crypto/client"
 	"github.com/xuperchain/xupercore/lib/utils"
@@ -108,7 +108,7 @@ func (c *MultisigSendCommand) sendXuper(ctx context.Context, signs string) error
 		return err
 	}
 
-	msd, err := c.loadMultisig()
+	msd, err := loadMultisig(c.tx)
 	if err != nil {
 		return err
 	}
@@ -178,21 +178,6 @@ func loadPartialSign(file string) (*PartialSign, error) {
 		return nil, fmt.Errorf("Unmarshal PartialSign failed, err=%v", err)
 	}
 	return psi, nil
-}
-
-// loadMultisig loads multisig data from file
-func (c *MultisigSendCommand) loadMultisig() (*MultisigData, error) {
-	signData, err := ioutil.ReadFile(c.tx + ".ext")
-	if err != nil {
-		return nil, err
-	}
-
-	msd := &MultisigData{}
-	err = json.Unmarshal(signData, msd)
-	if err != nil {
-		return nil, fmt.Errorf("Unmarshal MultisigData failed, err=%v", err)
-	}
-	return msd, err
 }
 
 // loadTx loads transaction from file

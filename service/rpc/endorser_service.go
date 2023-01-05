@@ -336,12 +336,14 @@ func (dxe *DefaultXEndorser) processFee(ctx context.Context, req *pb.EndorserReq
 	}
 
 	res, err := dxe.svr.PostTx(ctx, txStatus)
+	errCode := res.GetHeader().GetError()
 	if err != nil {
-		return res.GetHeader().GetError(), err
-	} else if res.GetHeader().GetError() != pb.XChainErrorEnum_SUCCESS {
-		return res.GetHeader().GetError(), errors.New("Fee post to chain failed")
+		return errCode, err
 	}
 
+	if errCode != pb.XChainErrorEnum_SUCCESS {
+		return errCode, errors.New("Fee post to chain failed")
+	}
 	return pb.XChainErrorEnum_SUCCESS, nil
 }
 

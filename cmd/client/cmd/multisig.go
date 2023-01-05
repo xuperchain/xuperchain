@@ -4,7 +4,13 @@
 
 package cmd
 
-import "github.com/spf13/cobra"
+import (
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+
+	"github.com/spf13/cobra"
+)
 
 // MultisigData generated multisig data
 type MultisigData struct {
@@ -36,4 +42,21 @@ func NewMultisigCommand(cli *Cli) *cobra.Command {
 
 func init() {
 	AddCommand(NewMultisigCommand)
+}
+
+// loadMultisig loads multisig data from file
+// Params:
+// 	txFile: tx file path
+func loadMultisig(txFile string) (*MultisigData, error) {
+	signData, err := ioutil.ReadFile(txFile + ".ext")
+	if err != nil {
+		return nil, err
+	}
+
+	msd := &MultisigData{}
+	err = json.Unmarshal(signData, msd)
+	if err != nil {
+		return nil, fmt.Errorf("Unmarshal MultisigData failed, err=%v", err)
+	}
+	return msd, err
 }

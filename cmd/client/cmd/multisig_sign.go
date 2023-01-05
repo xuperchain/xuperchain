@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/proto" //nolint:staticcheck
 	"github.com/spf13/cobra"
 	"github.com/xuperchain/xupercore/lib/crypto/client"
 
@@ -84,12 +84,7 @@ func (c *MultisigSignCommand) sign() error {
 // signMulti signs as type multi
 func (c *MultisigSignCommand) signMulti(from KeyPair, tx *pb.Transaction) error {
 	fmt.Println("Note: this is a demo feature, do NOT use it in production environment.")
-	signData, err := ioutil.ReadFile(c.tx + ".ext")
-	if err != nil {
-		return err
-	}
-	msd := &MultisigData{}
-	err = json.Unmarshal(signData, msd)
+	msd, err := loadMultisig(c.tx)
 	if err != nil {
 		return err
 	}

@@ -8,12 +8,12 @@ import (
 	"io/ioutil"
 	"math/big"
 
-	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/proto" //nolint:staticcheck
 	"github.com/spf13/cobra"
+	"github.com/xuperchain/xupercore/bcs/ledger/xledger/state/utxo"
 	"google.golang.org/grpc"
 
 	"github.com/xuperchain/xuperchain/service/pb"
-	"github.com/xuperchain/xupercore/bcs/ledger/xledger/state/utxo"
 )
 
 type GetComplianceCheckSignCommand struct {
@@ -43,7 +43,7 @@ func NewGetComplianceCheckSignCommand(cli *Cli) *cobra.Command {
 }
 
 func (c *GetComplianceCheckSignCommand) initXEndorserClient() error {
-	//nolint:SA1019
+	//nolint:staticcheck
 	conn, err := grpc.Dial(c.cli.RootOptions.Host, grpc.WithInsecure(), grpc.WithMaxMsgSize(64<<20-1))
 	if err != nil {
 		return err
