@@ -100,7 +100,7 @@ func (t *Gateway) runGateway() error {
 	addr := fmt.Sprintf(":%d", t.scfg.GWPort)
 	t.server = &http.Server{
 		Addr:    addr,
-		Handler: t.interupt(mux),
+		Handler: t.interrupt(mux),
 	}
 	err = t.server.ListenAndServe()
 	if err != http.ErrServerClosed {
@@ -115,8 +115,8 @@ func (t *Gateway) stopGateway() {
 	}
 }
 
-// interupt
-func (t *Gateway) interupt(h http.Handler) http.Handler {
+// interrupt
+func (t *Gateway) interrupt(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// allow CROS requests
 		// Note: CROS is kind of dangerous in production environment

@@ -81,7 +81,7 @@ type SignatureInfo struct {
 // QCState is the phase of hotstuff
 type QCState int32
 
-// QCState defination
+// QCState definition
 const (
 	QCState_NEW_VIEW   QCState = 0
 	QCState_PREPARE    QCState = 1
