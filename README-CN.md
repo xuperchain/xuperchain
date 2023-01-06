@@ -131,7 +131,7 @@ XuperChain使用的许可证是Apache 2.0
 
 微信二维码如下:
 
-![微信二维码](<img width="291" alt="496bd829f51cda8f4c8027daf0e6b543" src="https://user-images.githubusercontent.com/51440377/186586870-1c147ed5-6d8b-4bb6-9151-c3110b19f318.png">)
+<img width="291" alt="496bd829f51cda8f4c8027daf0e6b543" src="https://user-images.githubusercontent.com/51440377/210507301-84a45cc8-0841-4c55-9398-6d03f395c0b7.png">
 
 [Contribution]: docs/zh_cn/contribute/contribute-guideline.md
 [LatestRelease]: https://github.com/xuperchain/xuperchain/releases/latest
