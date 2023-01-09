@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/proto" //nolint:staticcheck
 	"github.com/spf13/cobra"
 
 	"github.com/xuperchain/xuperchain/service/pb"

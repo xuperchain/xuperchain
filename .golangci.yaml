@@ -1,0 +1,6 @@
+# see: https://golangci-lint.run/usage/configuration/
+run:
+  skip-dirs: # TODO: update after corrected
+    - service/context
+  skip-files:
+    - ".*\\.pb\\.go$"

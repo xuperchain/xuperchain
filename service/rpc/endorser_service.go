@@ -172,9 +172,9 @@ func (dxe *DefaultXEndorser) EndorserCall(ctx context.Context, req *pb.EndorserR
 
 	switch req.GetRequestName() {
 	case "ComplianceCheck":
-		success, errcode, err := dxe.processFee(ctx, req)
-		if err != nil || !success {
-			resHeader.Error = errcode
+		errCode, err := dxe.processFee(ctx, req)
+		if err != nil {
+			resHeader.Error = errCode
 			return dxe.generateErrorResponse(req, resHeader, err)
 		}
 		addr, sign, err := dxe.generateTxSign(ctx, req)
@@ -196,44 +196,46 @@ func (dxe *DefaultXEndorser) EndorserCall(ctx context.Context, req *pb.EndorserR
 		return dxe.generateSuccessResponse(req, resData, addr, sign, resHeader)
 
 	case "PreExecWithFee":
-		resData, errcode, err := dxe.getPreExecResult(ctx, req)
+		resData, errCode, err := dxe.getPreExecResult(ctx, req)
 		if err != nil {
-			resHeader.Error = errcode
+			resHeader.Error = errCode
 			return dxe.generateErrorResponse(req, resHeader, err)
 		}
 		return dxe.generateSuccessResponse(req, resData, nil, nil, resHeader)
 
 	case "CrossQueryPreExec":
-		resData, errcode, err := dxe.getCrossQueryResult(ctx, req)
-		if err != nil {
-			resHeader.Error = errcode
-			return dxe.generateErrorResponse(req, resHeader, err)
-		}
-		data := append(req.RequestData[:], resData[:]...)
-		digest := hash.UsingSha256(data)
-		addr, sign, err := dxe.signData(ctx, digest, DefaultKeyPath)
-		if err != nil {
-			resHeader.Error = errcode
-			return dxe.generateErrorResponse(req, resHeader, err)
-		}
-		return dxe.generateSuccessResponse(req, resData, addr, sign, resHeader)
+		resData, errCode, err := dxe.getCrossQueryResult(ctx, req)
+		resHeader.Error = errCode
+		return dxe.genSignedResp(ctx, req, err, resHeader, resData)
+
 	case "TxQuery":
-		resData, errcode, err := dxe.getTxResult(ctx, req)
-		if err != nil {
-			resHeader.Error = errcode
-			return dxe.generateErrorResponse(req, resHeader, err)
-		}
-		data := append(req.RequestData[:], resData[:]...)
-		digest := hash.UsingSha256(data)
-		addr, sign, err := dxe.signData(ctx, digest, DefaultKeyPath)
-		if err != nil {
-			resHeader.Error = errcode
-			return dxe.generateErrorResponse(req, resHeader, err)
-		}
-		return dxe.generateSuccessResponse(req, resData, addr, sign, resHeader)
+		resData, errCode, err := dxe.getTxResult(ctx, req)
+		resHeader.Error = errCode
+		return dxe.genSignedResp(ctx, req, err, resHeader, resData)
 	}
 
 	return nil, nil
+}
+
+// genSignedResp generate response signed by endorser
+func (dxe *DefaultXEndorser) genSignedResp(ctx context.Context, req *pb.EndorserRequest, err error,
+	resHeader *pb.Header, resData []byte) (*pb.EndorserResponse, error) {
+
+	// failed response for origin request error
+	if err != nil {
+		return dxe.generateErrorResponse(req, resHeader, err)
+	}
+
+	data := append(req.RequestData, resData...)
+	digest := hash.UsingSha256(data)
+	addr, sign, err := dxe.signData(ctx, digest, DefaultKeyPath)
+	if err != nil {
+		// failed response for sign error
+		return dxe.generateErrorResponse(req, resHeader, err)
+	}
+
+	// success response
+	return dxe.generateSuccessResponse(req, resData, addr, sign, resHeader)
 }
 
 func (dxe *DefaultXEndorser) getPreExecResult(ctx context.Context, req *pb.EndorserRequest) ([]byte, pb.XChainErrorEnum, error) {
@@ -321,10 +323,10 @@ func (dxe *DefaultXEndorser) getTxResult(ctx context.Context, req *pb.EndorserRe
 	return sData, pb.XChainErrorEnum_SUCCESS, nil
 }
 
-func (dxe *DefaultXEndorser) processFee(ctx context.Context, req *pb.EndorserRequest) (bool, pb.XChainErrorEnum, error) {
+func (dxe *DefaultXEndorser) processFee(ctx context.Context, req *pb.EndorserRequest) (pb.XChainErrorEnum, error) {
 	if req.GetFee() == nil {
 		// no fee provided, default to true
-		return true, pb.XChainErrorEnum_SUCCESS, nil
+		return pb.XChainErrorEnum_SUCCESS, nil
 	}
 
 	txStatus := &pb.TxStatus{
@@ -334,13 +336,15 @@ func (dxe *DefaultXEndorser) processFee(ctx context.Context, req *pb.EndorserReq
 	}
 
 	res, err := dxe.svr.PostTx(ctx, txStatus)
+	errCode := res.GetHeader().GetError()
 	if err != nil {
-		return false, res.GetHeader().GetError(), err
-	} else if res.GetHeader().GetError() != pb.XChainErrorEnum_SUCCESS {
-		return false, res.GetHeader().GetError(), errors.New("Fee post to chain failed")
+		return errCode, err
 	}
 
-	return true, pb.XChainErrorEnum_SUCCESS, nil
+	if errCode != pb.XChainErrorEnum_SUCCESS {
+		return errCode, errors.New("Fee post to chain failed")
+	}
+	return pb.XChainErrorEnum_SUCCESS, nil
 }
 
 func (dxe *DefaultXEndorser) generateTxSign(ctx context.Context, req *pb.EndorserRequest) ([]byte, *pb.SignatureInfo, error) {

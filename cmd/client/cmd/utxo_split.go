@@ -79,28 +79,9 @@ func (c *SplitUtxoCommand) splitUtxo(_ context.Context) error {
 		Initiator: initiator,
 	}
 
-	amount, err := c.getBalanceHelper()
+	ct, totalNeed, err := c.baseCommonTrans()
 	if err != nil {
 		return err
-	}
-	ct := &CommTrans{
-		Amount:       amount,
-		FrozenHeight: 0,
-		Version:      utxo.TxVersion,
-		From:         c.account,
-		Args:         make(map[string][]byte),
-		IsQuick:      false,
-		ChainName:    c.cli.RootOptions.Name,
-		Keys:         c.cli.RootOptions.Keys,
-		XchainClient: c.cli.XchainClient(),
-		CryptoType:   c.cli.RootOptions.Crypto,
-		MultiAddrs:   c.multiAddrs,
-		Output:       c.output,
-	}
-
-	totalNeed, ok := big.NewInt(0).SetString(amount, 10)
-	if !ok {
-		return errors.New("get totalNeed error")
 	}
 
 	txInputs, txOutput, err := ct.GenTxInputs(context.Background(), totalNeed)
@@ -120,16 +101,12 @@ func (c *SplitUtxoCommand) splitUtxo(_ context.Context) error {
 
 	if c.isGenRawTx {
 		// 填充需要多重签名的addr
-		multiAddrs, err := ct.GenAuthRequire(c.multiAddrs)
-		if err != nil {
-			return err
-		}
-		tx.AuthRequire = multiAddrs
+		tx.AuthRequire, err = ct.GenAuthRequire(c.multiAddrs)
 	} else {
 		tx.AuthRequire, err = genAuthRequirement(c.account, c.accountPath)
-		if err != nil {
-			return errors.New("genAuthRequirement error")
-		}
+	}
+	if err != nil {
+		return fmt.Errorf("generate Auth Requirement error: %s", err)
 	}
 
 	// preExec
@@ -168,9 +145,43 @@ func (c *SplitUtxoCommand) splitUtxo(_ context.Context) error {
 	if err != nil {
 		return err
 	}
+
+	// post tx
 	txID, err := ct.postTx(context.Background(), tx)
 	fmt.Println(txID)
 	return err
+}
+
+// baseCommonTrans return base info for transaction
+// Returns:
+// 	*CommTrans: base of CommTrans
+// 	*big.Int: UTXO balance, which is total need amount for splitting
+func (c *SplitUtxoCommand) baseCommonTrans() (*CommTrans, *big.Int, error) {
+	amount, err := c.getBalanceHelper()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	ct := &CommTrans{
+		Amount:       amount,
+		FrozenHeight: 0,
+		Version:      utxo.TxVersion,
+		From:         c.account,
+		Args:         make(map[string][]byte),
+		IsQuick:      false,
+		ChainName:    c.cli.RootOptions.Name,
+		Keys:         c.cli.RootOptions.Keys,
+		XchainClient: c.cli.XchainClient(),
+		CryptoType:   c.cli.RootOptions.Crypto,
+		MultiAddrs:   c.multiAddrs,
+		Output:       c.output,
+	}
+
+	totalNeed, ok := big.NewInt(0).SetString(amount, 10)
+	if !ok {
+		return nil, nil, errors.New("get totalNeed error")
+	}
+	return ct, totalNeed, nil
 }
 
 // SetUpAccount will set up a valid account as one of below:

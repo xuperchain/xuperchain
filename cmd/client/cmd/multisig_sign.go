@@ -10,7 +10,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/proto" //nolint:staticcheck
 	"github.com/spf13/cobra"
 	"github.com/xuperchain/xupercore/lib/crypto/client"
 
@@ -67,67 +67,73 @@ func (c *MultisigSignCommand) sign() error {
 		return err
 	}
 
-	if c.signType == "multi" {
-		fmt.Println("Note: this is a demo feature, do NOT use it in production environment.")
-		signData, err := ioutil.ReadFile(c.tx + ".ext")
-		if err != nil {
-			return err
-		}
-		msd := &MultisigData{}
-		err = json.Unmarshal(signData, msd)
-		if err != nil {
-			return err
-		}
-
-		crypto, err := client.CreateCryptoClientFromJSONPrivateKey([]byte(from.secretKey))
-		if err != nil {
-			return err
-		}
-		ecdsaPrivateKey, err := crypto.GetEcdsaPrivateKeyFromJsonStr(from.secretKey)
-		if err != nil {
-			return err
-		}
-		digestHash, err := common.MakeTxDigestHash(tx)
-		if err != nil {
-			return err
-		}
-		// TODO get partial sign
-		ki, idx, err := c.findKFromKList(msd, []byte(from.publicKey))
-		if err != nil {
-			return err
-		}
-		si := crypto.GetSiUsingKCRM(ecdsaPrivateKey, ki, msd.C, msd.R, digestHash)
-		psd := &PartialSign{
-			Si:    si,
-			Index: idx,
-		}
-		jsonContent, err := json.Marshal(psd)
-		if err != nil {
-			return err
-		}
-		err = ioutil.WriteFile(c.output, jsonContent, 0755)
-		if err != nil {
-			return errors.New("WriteFile error")
-		}
-		fmt.Println(string(jsonContent))
-	} else if c.signType != "" {
+	// invalid sign type
+	if c.signType != "" {
 		return fmt.Errorf("SignType[%s] is not supported", c.signType)
-	} else {
-
-		crypto, err := client.CreateCryptoClient(c.cli.RootOptions.Crypto)
-		if err != nil {
-			return err
-		}
-		signInfo, err := from.SignTx(tx, crypto)
-		if err != nil {
-			return err
-		}
-		err = c.genSignFile(signInfo)
-		if err != nil {
-			return err
-		}
 	}
+
+	// sign type: multi
+	if c.signType == "multi" {
+		return c.signMulti(from, tx)
+	}
+
+	// sign type: default
+	return c.signDefault(from, tx)
+}
+
+// signMulti signs as type multi
+func (c *MultisigSignCommand) signMulti(from KeyPair, tx *pb.Transaction) error {
+	fmt.Println("Note: this is a demo feature, do NOT use it in production environment.")
+	msd, err := loadMultisig(c.tx)
+	if err != nil {
+		return err
+	}
+
+	crypto, err := client.CreateCryptoClientFromJSONPrivateKey([]byte(from.secretKey))
+	if err != nil {
+		return err
+	}
+	ecdsaPrivateKey, err := crypto.GetEcdsaPrivateKeyFromJsonStr(from.secretKey)
+	if err != nil {
+		return err
+	}
+	digestHash, err := common.MakeTxDigestHash(tx)
+	if err != nil {
+		return err
+	}
+	// TODO get partial sign
+	ki, idx, err := c.findKFromKList(msd, []byte(from.publicKey))
+	if err != nil {
+		return err
+	}
+	si := crypto.GetSiUsingKCRM(ecdsaPrivateKey, ki, msd.C, msd.R, digestHash)
+	psd := &PartialSign{
+		Si:    si,
+		Index: idx,
+	}
+	jsonContent, err := json.Marshal(psd)
+	if err != nil {
+		return err
+	}
+	err = ioutil.WriteFile(c.output, jsonContent, 0755)
+	if err != nil {
+		return errors.New("WriteFile error")
+	}
+	fmt.Println(string(jsonContent))
 	return nil
+}
+
+// signDefault signs as type default
+func (c *MultisigSignCommand) signDefault(from KeyPair, tx *pb.Transaction) error {
+	crypto, err := client.CreateCryptoClient(c.cli.RootOptions.Crypto)
+	if err != nil {
+		return err
+	}
+	signInfo, err := from.SignTx(tx, crypto)
+	if err != nil {
+		return err
+	}
+	return c.genSignFile(signInfo)
 }
 
 // genSignFile output to file

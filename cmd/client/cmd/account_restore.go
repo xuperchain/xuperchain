@@ -8,6 +8,8 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+	"github.com/xuperchain/crypto/gm/hdwallet/rand"
+
 	crypto_client "github.com/xuperchain/xupercore/lib/crypto/client"
 )
 
@@ -47,15 +49,14 @@ func (c *AccountRestoreCommand) addFlags() {
 func (c *AccountRestoreCommand) restoreAccount() error {
 	mnemonic := c.mnemonic
 	outputdir := c.outputdir
-	langstr := c.lang
-	lang := 1
-	switch langstr {
+	var lang int
+	switch c.lang {
 	case "zh":
-		lang = 1
+		lang = rand.SimplifiedChinese
 	case "en":
-		lang = 2
+		lang = rand.English
 	default:
-		return fmt.Errorf("bad lang:%s use zh|en instead", langstr)
+		return fmt.Errorf("bad lang:%s use zh|en instead", c.lang)
 	}
 	c.cryptoType = c.cli.RootOptions.Crypto
 	cryptoClient, cryptoErr := crypto_client.CreateCryptoClient(c.cryptoType)

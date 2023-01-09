@@ -77,7 +77,8 @@ func (c *Cli) SetVer(ver string) {
 }
 
 func (c *Cli) initXchainClient() error {
-	conn, err := grpc.Dial(c.RootOptions.Host, grpc.WithInsecure(), grpc.WithMaxMsgSize(64<<20-1)) //nolint:SA1019
+	//nolint:staticcheck
+	conn, err := grpc.Dial(c.RootOptions.Host, grpc.WithInsecure(), grpc.WithMaxMsgSize(64<<20-1))
 	if err != nil {
 		return err
 	}
@@ -209,7 +210,7 @@ func (c *Cli) RangeNodes(ctx context.Context, f func(addr string, client pb.Xcha
 	if err != nil {
 		return err
 	}
-	options := []grpc.DialOption{grpc.WithMaxMsgSize(64<<20 - 1)} //nolint:SA1019
+	options := []grpc.DialOption{grpc.WithMaxMsgSize(64<<20 - 1)} //nolint:staticcheck
 	if c.RootOptions.TLS.Enable {
 		cred, err := genCreds(c.RootOptions.TLS.Cert, c.RootOptions.TLS.Server)
 		if err != nil {
@@ -235,7 +236,7 @@ func (c *Cli) RangeNodes(ctx context.Context, f func(addr string, client pb.Xcha
 		}
 	}
 
-	optionsRPC := []grpc.DialOption{grpc.WithMaxMsgSize(64<<20 - 1), grpc.WithInsecure()} //nolint:SA1019
+	optionsRPC := []grpc.DialOption{grpc.WithMaxMsgSize(64<<20 - 1), grpc.WithInsecure()} //nolint:staticcheck
 	conn, err := grpc.Dial(c.RootOptions.Host, optionsRPC...)
 	if err != nil {
 		return err

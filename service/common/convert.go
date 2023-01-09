@@ -3,7 +3,7 @@ package common
 import (
 	"fmt"
 
-	"github.com/golang/protobuf/proto"
+	"github.com/golang/protobuf/proto" //nolint:staticcheck
 
 	"github.com/xuperchain/xuperchain/service/pb"
 	"github.com/xuperchain/xupercore/bcs/ledger/xledger/xldgpb"
