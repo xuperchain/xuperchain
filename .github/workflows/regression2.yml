@@ -1,5 +1,5 @@
 on: pull_request
-name: regression_test_1 
+name: regression_test_2 
 jobs:
   test:
     strategy:
@@ -37,4 +37,4 @@ jobs:
         sleep 15
     - name: Test with pytest
       run: |
-        cd regression-pytest && bash run_case.sh batch1
+        cd regression-pytest && bash run_case.sh batch2
