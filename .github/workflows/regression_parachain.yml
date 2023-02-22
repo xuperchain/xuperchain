@@ -1,5 +1,5 @@
 on: pull_request
-name: regression_test_3 
+name: regression_parachain # 测试平行链
 jobs:
   test:
     strategy:
@@ -28,9 +28,7 @@ jobs:
     - name: Deploy xchainnet for test
       run: |
         make && make testnet && cd testnet/
-        sed -i' ' 's#level: debug#level: warn#g' node1/conf/log.yaml
-        sed -i' ' 's#level: debug#level: warn#g' node2/conf/log.yaml
-        sed -i' ' 's#level: debug#level: warn#g' node3/conf/log.yaml
+        sed -i' ' 's#level: debug#level: warn#g' node*/conf/log.yaml
         sh control_all.sh start
         pwd
         cd .. && cp output/bin/xchain-cli regression-pytest/client/bin/
