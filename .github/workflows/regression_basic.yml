@@ -1,5 +1,5 @@
 on: pull_request
-name: regression_test_2 
+name: regression_basic # 测试账号、合约账号、转账、acl、合约、事件、提案投票
 jobs:
   test:
     strategy:
@@ -28,13 +28,11 @@ jobs:
     - name: Deploy xchainnet for test
       run: |
         make && make testnet && cd testnet/
-        sed -i' ' 's#level: debug#level: warn#g' node1/conf/log.yaml
-        sed -i' ' 's#level: debug#level: warn#g' node2/conf/log.yaml
-        sed -i' ' 's#level: debug#level: warn#g' node3/conf/log.yaml
+        sed -i' ' 's#level: debug#level: warn#g' node*/conf/log.yaml
         sh control_all.sh start
         pwd
         cd .. && cp output/bin/xchain-cli regression-pytest/client/bin/
         sleep 15
     - name: Test with pytest
       run: |
-        cd regression-pytest && bash run_case.sh batch2
+        cd regression-pytest && bash run_case.sh batch1
