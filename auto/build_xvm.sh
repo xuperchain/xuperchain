@@ -3,6 +3,8 @@ set -e
 
 cd `dirname $0`/../
 
+export XVM_BUILD_MAIN=0
+
 HOMEDIR=`pwd`
 OUTDIR="$HOMEDIR/.compile_cache/xvm"
 XVMPKG="https://github.com/xuperchain/xvm.git"
