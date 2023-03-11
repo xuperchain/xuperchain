@@ -1,0 +1,9 @@
+{
+    "module_name": "xkernel",
+    "method_name": "SetMethodAcl",
+    "args" : {
+        "contract_name": "auction",
+        "method_name": "redeem",
+        "acl": "{\"pm\": {\"rule\": 1,\"acceptValue\": 1.0},\"aksWeight\": {\"gNhga8vLc4JcmoHB2yeef2adBhntkc5d1\": 1}}"
+        }
+}
