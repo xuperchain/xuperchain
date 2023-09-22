@@ -8,7 +8,6 @@ import (
 	"io/ioutil"
 	"net"
 	"net/http"
-
 	"path/filepath"
 	"sync"
 
