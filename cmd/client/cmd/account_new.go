@@ -9,7 +9,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/xuperchain/xuperchain/service/pb"
@@ -121,7 +121,7 @@ func (c *AccountNewCommand) printRealAccountName(name string) error {
 		return nil
 	}
 
-	desc, err := ioutil.ReadFile(c.descfile)
+	desc, err := os.ReadFile(c.descfile)
 	if err != nil {
 		return err
 	}

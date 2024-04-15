@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"math/rand"
 	"net"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -417,17 +417,17 @@ func (dxe *DefaultXEndorser) generateSuccessResponse(req *pb.EndorserRequest, re
 }
 
 func (dxe *DefaultXEndorser) getEndorserKey(keypath string) ([]byte, []byte, []byte, error) {
-	sk, err := ioutil.ReadFile(keypath + "private.key")
+	sk, err := os.ReadFile(keypath + "private.key")
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
-	ak, err := ioutil.ReadFile(keypath + "public.key")
+	ak, err := os.ReadFile(keypath + "public.key")
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
-	addr, err := ioutil.ReadFile(keypath + "address")
+	addr, err := os.ReadFile(keypath + "address")
 	return addr, sk, ak, err
 }
 

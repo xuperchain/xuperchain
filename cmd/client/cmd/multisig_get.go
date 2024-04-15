@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"math/big"
+	"os"
 
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 	"github.com/spf13/cobra"
@@ -66,7 +66,7 @@ func (c *GetComplianceCheckSignCommand) addFlags() {
 }
 
 func (c *GetComplianceCheckSignCommand) get(ctx context.Context) error {
-	data, err := ioutil.ReadFile(c.tx)
+	data, err := os.ReadFile(c.tx)
 	if err != nil {
 		return errors.New("Fail to open serialized transaction data file")
 	}
@@ -149,7 +149,7 @@ func (c *GetComplianceCheckSignCommand) get(ctx context.Context) error {
 		return err3
 	}
 	fmt.Println(string(signJSON))
-	err3 = ioutil.WriteFile(c.output, signJSON, 0755)
+	err3 = os.WriteFile(c.output, signJSON, 0755)
 	if err3 != nil {
 		return errors.New("WriteFile error")
 	}

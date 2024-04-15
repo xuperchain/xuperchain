@@ -9,7 +9,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
@@ -92,7 +92,7 @@ func (t *TransferCommand) addFlags() {
 }
 
 func readKeys(file string) (string, error) {
-	buf, err := ioutil.ReadFile(file)
+	buf, err := os.ReadFile(file)
 	if err != nil {
 		return "", err
 	}
@@ -130,7 +130,7 @@ func (t *TransferCommand) getDesc() ([]byte, error) {
 	if t.descFile == "" {
 		return []byte("transfer from console"), nil
 	}
-	return ioutil.ReadFile(t.descFile)
+	return os.ReadFile(t.descFile)
 }
 
 func (t *TransferCommand) transfer(ctx context.Context) error {

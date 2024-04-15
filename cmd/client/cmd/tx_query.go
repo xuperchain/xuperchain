@@ -10,7 +10,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 	"github.com/spf13/cobra"
@@ -79,7 +79,7 @@ func (t *TxQueryCommand) queryTx(ctx context.Context, txid string) error {
 
 	if t.pbfile != "" {
 		buf, _ := proto.Marshal(reply.Tx)
-		err = ioutil.WriteFile(t.pbfile, buf, 0644)
+		err = os.WriteFile(t.pbfile, buf, 0644)
 		if err != nil {
 			return err
 		}

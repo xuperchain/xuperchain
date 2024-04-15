@@ -12,7 +12,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+
 	"math/big"
 	"os"
 	"time"
@@ -178,7 +178,7 @@ func (c *Cli) GetNodes(ctx context.Context) ([]string, error) {
 }
 
 func genCreds(certPath, serverName string) (credentials.TransportCredentials, error) {
-	bs, err := ioutil.ReadFile(certPath + "/cert.crt")
+	bs, err := os.ReadFile(certPath + "/cert.crt")
 
 	if err != nil {
 		return nil, err
@@ -453,9 +453,11 @@ func signTxForAK(tx *pb.Transaction, keyPair KeyPair, crypto base.CryptoClient) 
 
 // signTxForAccount generates transaction signatures for account: signed by each AK in account path
 // Params:
-// 	tx: transaction
+//
+//	tx: transaction
 //	path: root path for accounts
-// 	crypto: crypto client
+//	crypto: crypto client
+//
 // TODO: is that necessary for all AK
 func signTxForAccount(tx *pb.Transaction, path string, crypto base.CryptoClient) ([]*pb.SignatureInfo, error) {
 	signs := []*pb.SignatureInfo{}

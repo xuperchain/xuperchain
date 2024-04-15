@@ -5,10 +5,10 @@ import (
 	"crypto/x509"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"net/http"
 	_ "net/http/pprof"
+	"os"
 	"path/filepath"
 	"sync"
 
@@ -169,7 +169,7 @@ func (t *RpcServMG) runRpcServ() error {
 func (t *RpcServMG) newTls() (credentials.TransportCredentials, error) {
 	envConf := t.engine.Context().EnvCfg
 	tlsPath := envConf.GenDataAbsPath(envConf.TlsDir)
-	bs, err := ioutil.ReadFile(filepath.Join(tlsPath, "cert.crt"))
+	bs, err := os.ReadFile(filepath.Join(tlsPath, "cert.crt"))
 	if err != nil {
 		return nil, err
 	}

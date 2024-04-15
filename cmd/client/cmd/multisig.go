@@ -7,7 +7,7 @@ package cmd
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/spf13/cobra"
 )
@@ -46,9 +46,10 @@ func init() {
 
 // loadMultisig loads multisig data from file
 // Params:
-// 	txFile: tx file path
+//
+//	txFile: tx file path
 func loadMultisig(txFile string) (*MultisigData, error) {
-	signData, err := ioutil.ReadFile(txFile + ".ext")
+	signData, err := os.ReadFile(txFile + ".ext")
 	if err != nil {
 		return nil, err
 	}

@@ -6,7 +6,7 @@ package cmd
 
 import (
 	"context"
-	"io/ioutil"
+	"os"
 
 	"github.com/spf13/cobra"
 
@@ -79,7 +79,7 @@ func (c *ContractUpgradeCommand) upgrade(ctx context.Context, codepath string) e
 		return err
 	}
 
-	codebuf, err := ioutil.ReadFile(codepath)
+	codebuf, err := os.ReadFile(codepath)
 	if err != nil {
 		return err
 	}

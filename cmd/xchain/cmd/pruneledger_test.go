@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -10,10 +9,7 @@ import (
 )
 
 func TestPruneLedger(t *testing.T) {
-	workspace, dirErr := ioutil.TempDir("/tmp", "")
-	if dirErr != nil {
-		t.Fatal(dirErr)
-	}
+	workspace := os.TempDir()
 	os.RemoveAll(workspace)
 	defer os.RemoveAll(workspace)
 	econf, err := mock.NewEnvConfForTest()

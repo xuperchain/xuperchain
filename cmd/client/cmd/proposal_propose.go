@@ -8,8 +8,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"io/ioutil"
 	"math/big"
+	"os"
 
 	"github.com/spf13/cobra"
 
@@ -104,7 +104,7 @@ func (c *ProposalProposeCommand) getProposal() ([]byte, error) {
 	if c.proposal == "" {
 		return []byte("no proposal"), nil
 	}
-	return ioutil.ReadFile(c.proposal)
+	return os.ReadFile(c.proposal)
 }
 
 func (c *ProposalProposeCommand) validateProposal(data []byte) error {

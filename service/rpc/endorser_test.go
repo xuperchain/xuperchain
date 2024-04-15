@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"testing"
@@ -41,10 +40,7 @@ var (
 )
 
 func TestEndorserCall(t *testing.T) {
-	workspace, dirErr := ioutil.TempDir("/tmp", "")
-	if dirErr != nil {
-		t.Fatal(dirErr)
-	}
+	workspace := os.TempDir()
 	os.RemoveAll(workspace)
 	defer os.RemoveAll(workspace)
 	conf, _ := mock.NewEnvConfForTest()

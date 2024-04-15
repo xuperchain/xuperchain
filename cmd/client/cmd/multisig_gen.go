@@ -10,7 +10,6 @@ import (
 	"crypto/ecdsa"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -132,7 +131,7 @@ func (c *MultisigGenCommand) generateTx(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
-		err = ioutil.WriteFile(c.output+".ext", jsonData, 0755)
+		err = os.WriteFile(c.output+".ext", jsonData, 0755)
 		if err != nil {
 			return fmt.Errorf("write file error")
 		}

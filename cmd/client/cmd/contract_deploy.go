@@ -7,7 +7,7 @@ package cmd
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"os"
 
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 	"github.com/spf13/cobra"
@@ -104,7 +104,7 @@ func (c *ContractDeployCommand) deploy(ctx context.Context, codepath string) err
 	var x3args map[string][]byte
 
 	if c.module == string(bridge.TypeEvm) {
-		if abiCode, err = ioutil.ReadFile(c.abiFile); err != nil {
+		if abiCode, err = os.ReadFile(c.abiFile); err != nil {
 			return err
 		}
 
@@ -117,7 +117,7 @@ func (c *ContractDeployCommand) deploy(ctx context.Context, codepath string) err
 		}
 	}
 
-	codeBuf, err = ioutil.ReadFile(codepath)
+	codeBuf, err = os.ReadFile(codepath)
 	if err != nil {
 		return err
 	}

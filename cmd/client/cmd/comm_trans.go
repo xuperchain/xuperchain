@@ -11,7 +11,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"math/big"
 	"os"
 	"strconv"
@@ -171,7 +170,7 @@ func (t *CommTrans) GetDesc() ([]byte, error) {
 	if t.Descfile == "" {
 		return []byte(defaultDesc), nil
 	}
-	return ioutil.ReadFile(t.Descfile)
+	return os.ReadFile(t.Descfile)
 }
 
 // ReadPreExeReq 从desc中填充出发起合约调用的结构体
@@ -572,7 +571,7 @@ func (t *CommTrans) GenTxFile(tx *pb.Transaction) error {
 	if err != nil {
 		return errors.New("Tx marshal error")
 	}
-	err = ioutil.WriteFile(t.Output, data, 0755)
+	err = os.WriteFile(t.Output, data, 0755)
 	if err != nil {
 		return errors.New("WriteFile error")
 	}
