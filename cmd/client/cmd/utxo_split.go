@@ -154,8 +154,9 @@ func (c *SplitUtxoCommand) splitUtxo(_ context.Context) error {
 
 // baseCommonTrans return base info for transaction
 // Returns:
-// 	*CommTrans: base of CommTrans
-// 	*big.Int: UTXO balance, which is total need amount for splitting
+//
+//	*CommTrans: base of CommTrans
+//	*big.Int: UTXO balance, which is total need amount for splitting
 func (c *SplitUtxoCommand) baseCommonTrans() (*CommTrans, *big.Int, error) {
 	amount, err := c.getBalanceHelper()
 	if err != nil {
