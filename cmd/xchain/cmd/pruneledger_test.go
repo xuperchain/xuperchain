@@ -9,7 +9,10 @@ import (
 )
 
 func TestPruneLedger(t *testing.T) {
-	workspace := os.TempDir()
+	workspace, dirErr := os.MkdirTemp("/tmp", "")
+	if dirErr != nil {
+		t.Fatal(dirErr)
+	}
 	os.RemoveAll(workspace)
 	defer os.RemoveAll(workspace)
 	econf, err := mock.NewEnvConfForTest()

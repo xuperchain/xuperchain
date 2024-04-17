@@ -40,7 +40,10 @@ var (
 )
 
 func TestEndorserCall(t *testing.T) {
-	workspace := os.TempDir()
+	workspace, dirErr := os.MkdirTemp("/tmp", "")
+	if dirErr != nil {
+		t.Fatal(dirErr)
+	}
 	os.RemoveAll(workspace)
 	defer os.RemoveAll(workspace)
 	conf, _ := mock.NewEnvConfForTest()
