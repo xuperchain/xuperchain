@@ -8,7 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 	"github.com/spf13/cobra"
@@ -51,7 +51,7 @@ func (c *MultisigSignCommand) addFlags() {
 
 // sign 命令的主入口
 func (c *MultisigSignCommand) sign() error {
-	data, err := ioutil.ReadFile(c.tx)
+	data, err := os.ReadFile(c.tx)
 	if err != nil {
 		return err
 	}
@@ -115,7 +115,7 @@ func (c *MultisigSignCommand) signMulti(from KeyPair, tx *pb.Transaction) error 
 	if err != nil {
 		return err
 	}
-	err = ioutil.WriteFile(c.output, jsonContent, 0755)
+	err = os.WriteFile(c.output, jsonContent, 0755)
 	if err != nil {
 		return errors.New("WriteFile error")
 	}
@@ -144,7 +144,7 @@ func (c *MultisigSignCommand) genSignFile(signInfo *pb.SignatureInfo) error {
 	}
 	fmt.Println(string(signJSON))
 
-	err = ioutil.WriteFile(c.output, signJSON, 0755)
+	err = os.WriteFile(c.output, signJSON, 0755)
 	if err != nil {
 		return errors.New("WriteFile error")
 	}

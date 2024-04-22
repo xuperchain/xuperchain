@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/spf13/cobra"
 
@@ -15,9 +15,10 @@ import (
 
 // 本文件封装了和共识模块有关的client调用接口, 具体格式为:
 // xchain-cli consensus invoke 当前共识kernel调用
-//   --type 标识共识名称，需符合当前共识状态
-//   --method 标识共识方法，即调用的目标kernerl方法
-//   --desc 标识输入参数，json格式
+//
+//	--type 标识共识名称，需符合当前共识状态
+//	--method 标识共识方法，即调用的目标kernerl方法
+//	--desc 标识输入参数，json格式
 const (
 	ModuleName = "xkernel"
 )
@@ -117,7 +118,7 @@ func (c *ConsensusInvokeCommand) tdposInvoke(ctx context.Context, ct *CommTrans)
 		return fmt.Errorf("tdpos needs desc file.\n")
 	}
 	args := make(map[string]interface{})
-	desc, err := ioutil.ReadFile(c.descFile)
+	desc, err := os.ReadFile(c.descFile)
 	if err != nil {
 		return err
 	}
@@ -171,7 +172,7 @@ func (c *ConsensusInvokeCommand) xpoaInvoke(ctx context.Context, ct *CommTrans) 
 		return err
 	}
 	args := make(map[string]interface{})
-	desc, err := ioutil.ReadFile(c.descFile)
+	desc, err := os.ReadFile(c.descFile)
 	if err != nil {
 		return err
 	}

@@ -10,7 +10,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
@@ -167,7 +167,7 @@ func (c *MultisigSendCommand) sendXuper(ctx context.Context, signs string) error
 
 // loadPartialSign load PartialSign from file
 func loadPartialSign(file string) (*PartialSign, error) {
-	sign, err := ioutil.ReadFile(file)
+	sign, err := os.ReadFile(file)
 	if err != nil {
 		return nil, errors.New("Failed to open sign file")
 	}
@@ -182,7 +182,7 @@ func loadPartialSign(file string) (*PartialSign, error) {
 
 // loadTx loads transaction from file
 func (c *MultisigSendCommand) loadTx() (*pb.Transaction, error) {
-	data, err := ioutil.ReadFile(c.tx)
+	data, err := os.ReadFile(c.tx)
 	if err != nil {
 		return nil, errors.New("Fail to open serialized transaction data file")
 	}
@@ -199,7 +199,7 @@ func (c *MultisigSendCommand) loadTx() (*pb.Transaction, error) {
 func (c *MultisigSendCommand) getSigns(path string) ([]*pb.SignatureInfo, error) {
 	signs := []*pb.SignatureInfo{}
 	for _, file := range strings.Split(path, ",") {
-		buf, err := ioutil.ReadFile(file)
+		buf, err := os.ReadFile(file)
 		if err != nil {
 			return nil, errors.New("Failed to open sign file")
 		}

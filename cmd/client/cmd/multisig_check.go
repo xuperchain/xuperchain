@@ -8,7 +8,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/golang/protobuf/proto" //nolint:staticcheck
 	"github.com/spf13/cobra"
@@ -47,7 +47,7 @@ func (c *MultisigCheckCommand) addFlags() {
 
 // check 命令的主入口
 func (c *MultisigCheckCommand) check() error {
-	data, err := ioutil.ReadFile(c.input)
+	data, err := os.ReadFile(c.input)
 	if err != nil {
 		return err
 	}
@@ -64,7 +64,7 @@ func (c *MultisigCheckCommand) check() error {
 		fmt.Println(err)
 	}
 	fmt.Println(string(output))
-	err = ioutil.WriteFile(c.output, output, 0755)
+	err = os.WriteFile(c.output, output, 0755)
 	if err != nil {
 		return errors.New("Write visual file error")
 	}

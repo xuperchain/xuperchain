@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"testing"
@@ -41,7 +40,7 @@ var (
 )
 
 func TestEndorserCall(t *testing.T) {
-	workspace, dirErr := ioutil.TempDir("/tmp", "")
+	workspace, dirErr := os.MkdirTemp("/tmp", "")
 	if dirErr != nil {
 		t.Fatal(dirErr)
 	}

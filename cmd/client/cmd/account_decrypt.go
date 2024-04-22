@@ -12,7 +12,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 
 	"github.com/manifoldco/promptui"
@@ -53,7 +52,7 @@ func (c *AccountDecryptCommand) addFlags() {
 	c.cmd.Flags().StringVar(&c.file, "key", "private.key", "The encrypted private key file path")
 }
 
-func (c *AccountDecryptCommand) decrypt(ctx context.Context) error {
+func (c *AccountDecryptCommand) decrypt(_ context.Context) error {
 	// check parameters
 	if _, err := os.Stat(c.output); err == nil {
 		return fmt.Errorf("output directory exists, abort")
@@ -64,7 +63,7 @@ func (c *AccountDecryptCommand) decrypt(ctx context.Context) error {
 	}
 
 	// get encrypted key
-	content, err := ioutil.ReadFile(c.file)
+	content, err := os.ReadFile(c.file)
 	if err != nil {
 		fmt.Println("failed to read encrypted private key")
 		return err
@@ -139,15 +138,15 @@ func (c *AccountDecryptCommand) saveAccount(addr, pk, sk []byte) error {
 		return fmt.Errorf("failed to create output dir before restore account:%s", err)
 	}
 
-	if err := ioutil.WriteFile(c.output+"/address", addr, 0644); err != nil {
+	if err := os.WriteFile(c.output+"/address", addr, 0644); err != nil {
 		return fmt.Errorf("failed to save address:%s", err)
 	}
 
-	if err := ioutil.WriteFile(c.output+"/private.key", sk, 0644); err != nil {
+	if err := os.WriteFile(c.output+"/private.key", sk, 0644); err != nil {
 		return fmt.Errorf("failed to save private key:%s", err)
 	}
 
-	if err := ioutil.WriteFile(c.output+"/public.key", pk, 0644); err != nil {
+	if err := os.WriteFile(c.output+"/public.key", pk, 0644); err != nil {
 		return fmt.Errorf("failed to save public key:%s", err)
 	}
 	return nil

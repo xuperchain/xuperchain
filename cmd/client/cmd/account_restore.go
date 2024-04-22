@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"strings"
@@ -79,22 +78,22 @@ func (c *AccountRestoreCommand) restoreAccount() error {
 		if strings.LastIndex(outputdir, "/") != len([]rune(outputdir))-1 {
 			outputdir = outputdir + "/"
 		}
-		err = ioutil.WriteFile(outputdir+"mnemonic", []byte(ecdsaAccount.Mnemonic), 0666)
+		err = os.WriteFile(outputdir+"mnemonic", []byte(ecdsaAccount.Mnemonic), 0666)
 		if err != nil {
 			log.Printf("Export mnemonic file failed, the err is %v", err)
 			return err
 		}
-		err = ioutil.WriteFile(outputdir+"private.key", []byte(ecdsaAccount.JsonPrivateKey), 0666)
+		err = os.WriteFile(outputdir+"private.key", []byte(ecdsaAccount.JsonPrivateKey), 0666)
 		if err != nil {
 			log.Printf("Export private key file failed, the err is %v", err)
 			return err
 		}
-		err = ioutil.WriteFile(outputdir+"public.key", []byte(ecdsaAccount.JsonPublicKey), 0666)
+		err = os.WriteFile(outputdir+"public.key", []byte(ecdsaAccount.JsonPublicKey), 0666)
 		if err != nil {
 			log.Printf("Export public key file failed, the err is %v", err)
 			return err
 		}
-		err = ioutil.WriteFile(outputdir+"address", []byte(ecdsaAccount.Address), 0666)
+		err = os.WriteFile(outputdir+"address", []byte(ecdsaAccount.Address), 0666)
 		if err != nil {
 			log.Printf("Export address file failed, the err is %v", err)
 			return err
