@@ -1,0 +1,33 @@
+syntax = "proto3";
+option optimize_for = LITE_RUNTIME;
+
+package auction;
+
+enum Status {
+    INVALID = 0;    // 无效状态
+    PROGRESS = 1;   // 拍卖中
+    ENDED = 2;      // 结束
+}
+
+// 拍卖品
+// Lot_{id} = marshal(lot)
+message Lot {
+    string id = 1;         // 拍卖唯一键
+    string auctioneer = 2; // 拍卖人
+    uint64 floor = 3;      // 底价
+    string bidder = 4;     // 最高竞价人
+    uint64 bid = 5;        // 最高竞价
+    Status status = 6;     // 拍卖状态
+}
+
+// 筹码
+// Chip_{id}_{bidder} = marshal(chip)
+message Chip {
+    string bidder = 2;     // 竞价人
+    uint64 amount = 3;     // 筹码总量
+    uint64 bid = 4;        // 竞价
+    Status status = 8;     // 筹码状态
+}
+
+// 竞拍记录
+// Record_{id}_{bid} = bidder
